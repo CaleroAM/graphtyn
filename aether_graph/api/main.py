@@ -108,24 +108,41 @@ def _enrich_with_ai(graph: dict, engine: str):
         return graph
 
     top_nodes = sorted(graph.get("nodes", []), key=lambda n: n.get("degree", 0), reverse=True)[:10]
-    
+
     if engine == "ast_local_llm":
-        # Local Ollama AI enrichment
-        try:
-            url = os.environ.get("OLLAMA_HOST", "http://localhost:11434") + "/api/generate"
-            prompt = f"Resume en 1 frase corta en espanol la funcion principal de los componentes: {[n['name'] for n in top_nodes]}"
-            req = urllib.request.Request(url, data=json.dumps({
-                "model": "qwen2.5-coder", "prompt": prompt, "stream": False
-            }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                res = json.loads(resp.read().decode('utf-8'))
-                ans = res.get("response", "")
-                if ans:
-                    graph["metadata"]["ai_summary"] = ans
-                    for n in top_nodes:
-                        n["details"] = f"🤖 [Ollama AI] {n.get('details', '')}"
-        except Exception as e:
-            graph["metadata"]["ai_note"] = f"Ollama no disponible ({e})"
+        ollama_hosts = [
+            os.environ.get("OLLAMA_HOST"),
+            "http://172.17.0.1:11434",
+            "http://host.docker.internal:11434",
+            "http://localhost:11434"
+        ]
+        for host in ollama_hosts:
+            if not host: continue
+            try:
+                # 1. Fetch available models
+                req_m = urllib.request.Request(f"{host}/api/tags")
+                with urllib.request.urlopen(req_m, timeout=2) as r:
+                    m_data = json.loads(r.read().decode('utf-8'))
+                    models = [m["name"] for m in m_data.get("models", [])]
+                    model_name = models[0] if models else "qwen2.5-coder:0.5b"
+
+                # 2. Generate summary
+                url = f"{host}/api/generate"
+                prompt = f"Resume en 1 frase corta en espanol la funcion principal de los componentes: {[n['name'] for n in top_nodes]}"
+                req = urllib.request.Request(url, data=json.dumps({
+                    "model": model_name, "prompt": prompt, "stream": False
+                }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req, timeout=12) as resp:
+                    res = json.loads(resp.read().decode('utf-8'))
+                    ans = res.get("response", "")
+                    if ans:
+                        graph["metadata"]["ai_summary"] = ans.strip()
+                        graph["metadata"]["ai_model"] = model_name
+                        for n in top_nodes:
+                            n["details"] = f"🤖 [Ollama {model_name}] {n.get('details', '')}"
+                break
+            except Exception as e:
+                graph["metadata"]["ai_note"] = f"Ollama Error ({e})"
 
     elif engine == "ast_cloud":
         gemini_key = os.environ.get("GEMINI_API_KEY")
@@ -146,6 +163,7 @@ def _enrich_with_ai(graph: dict, engine: str):
                 graph["metadata"]["ai_note"] = f"Gemini API Error ({e})"
 
     return graph
+
 
 @app.post("/api/reindex")
 def reindex_project(payload: dict = Body(...)):
