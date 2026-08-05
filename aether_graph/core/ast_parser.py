@@ -195,16 +195,55 @@ class ASTParser:
 
     @classmethod
     def get_agent_topology_graph(cls, *args, **kwargs) -> Dict[str, Any]:
-        nodes = [
-            {"id": "agent:nexus", "name": "Nexus Orchestrator", "kind": "orchestrator_agent", "val": 30, "details": "Controlador principal de harness"},
-            {"id": "agent:openclaw", "name": "OpenClaw Harness", "kind": "sub_agent", "val": 15, "details": "Harness de ejecución OpenClaw"},
-            {"id": "agent:hermes", "name": "Hermes Agent", "kind": "sub_agent", "val": 15, "details": "Agente autónomo Hermes"},
-            {"id": "mcp:aether-graph", "name": "AetherGraph MCP", "kind": "mcp_tool", "val": 10, "details": "Servidor MCP determinista AST"}
+        nodes = [{
+            "id": "agent:nexus", "name": "Nexus Orchestrator", "kind": "orchestrator_agent",
+            "val": 30, "color": "#a855f7", "details": "Controlador principal Harness OpenClaw"
+        }]
+        links = []
+        found_agents = {"agent:nexus"}
+
+        search_dirs = [
+            Path("/home/developer/Documentos/openclaw/data/workspace"),
+            Path("/workspace"),
+            Path(".aether-graph/workspace"),
         ]
-        links = [
-            {"source": "agent:nexus", "target": "agent:openclaw", "label": "delegates"},
-            {"source": "agent:nexus", "target": "agent:hermes", "label": "spawns"},
-            {"source": "agent:openclaw", "target": "mcp:aether-graph", "label": "queries"},
-            {"source": "agent:hermes", "target": "mcp:aether-graph", "label": "queries"}
+        skip = {"nexus", "state", "proyectos", "skills", "UnityCommerceDemo", "aether-graph", "calculadora-stats", "floreria-demo"}
+
+        for sdir in search_dirs:
+            if sdir.exists():
+                for folder in sorted(sdir.iterdir()):
+                    if folder.is_dir() and not folder.name.startswith(".") and folder.name not in skip:
+                        aid = f"agent:{folder.name}"
+                        if aid not in found_agents:
+                            found_agents.add(aid)
+                            nodes.append({
+                                "id": aid, "name": f"{folder.name.capitalize()} Agent",
+                                "kind": "sub_agent", "val": 15, "color": "#7c3aed",
+                                "details": f"Subagente especializado ({folder.name})"
+                            })
+                            links.append({
+                                "source": "agent:nexus", "target": aid, "label": "delegates",
+                                "color": "rgba(168, 85, 247, 0.4)"
+                            })
+
+        ext_agents = [
+            ("agent:hermes", "Hermes Autonomous Agent", "Agente autónomo Hermes IC", "#06b6d4", "spawns"),
+            ("agent:antigravity", "Google Antigravity CLI", "Antigravity 2.0 (agy)", "#a78bfa", "spawns"),
+            ("agent:claude-code", "Claude Code CLI", "Anthropic Claude Code", "#a78bfa", "spawns"),
+            ("mcp:aether-graph", "AetherGraph MCP", "Servidor Contexto AST", "#38bdf8", "queries"),
         ]
+
+        for aid, aname, adetails, color, rel in ext_agents:
+            if aid not in found_agents:
+                found_agents.add(aid)
+                kind = "mcp_tool" if aid.startswith("mcp") else "sub_agent"
+                nodes.append({
+                    "id": aid, "name": aname, "kind": kind,
+                    "val": 12, "color": color, "details": adetails
+                })
+                links.append({
+                    "source": "agent:nexus", "target": aid, "label": rel,
+                    "color": "rgba(6, 182, 212, 0.4)"
+                })
+
         return ASTParser()._enrich_graph_with_degree({"nodes": nodes, "links": links})
