@@ -4,16 +4,29 @@ from fastapi import FastAPI, Query, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from ..core.ast_parser import ASTParser
 
-app = FastAPI(title="AetherGraph API", version="0.3.0")
+app = FastAPI(title="AetherGraph API", version="0.4.0")
 parser = ASTParser()
 
-# Registro dinámico de proyectos (memoria local .aether-graph/registered_projects.json)
-REGISTRATION_FILE = Path(".aether-graph/registered_projects.json")
+# Central writable index store — inside container at /app/.aether-graph/
+# This avoids OSError on read-only workspace mounts.
+INDEX_STORE = Path("/app/.aether-graph")
+INDEX_STORE.mkdir(parents=True, exist_ok=True)
+
+REGISTRATION_FILE = INDEX_STORE / "registered_projects.json"
 DEFAULT_MASTER_DIR = Path("/workspace") if Path("/workspace").exists() else Path("/home/developer/Documentos/docker/PROYECTOS")
+
+def _index_dir(project_path: Path) -> Path:
+    """Returns the writable index directory for a project."""
+    slug = project_path.name
+    d = INDEX_STORE / slug
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+def _is_indexed(project_path: Path) -> bool:
+    return (_index_dir(project_path) / "index.json").exists()
 
 def _load_registered_projects() -> list[dict]:
     projects = []
-    # 1. Proyectos descubiertos en la Carpeta Maestra por defecto
     if DEFAULT_MASTER_DIR.exists():
         for d in sorted(DEFAULT_MASTER_DIR.iterdir()):
             if d.is_dir() and not d.name.startswith("."):
@@ -22,9 +35,8 @@ def _load_registered_projects() -> list[dict]:
                     "name": d.name,
                     "path": str(d),
                     "mode": "master_folder",
-                    "indexed": (d / ".aether-graph" / "index.json").exists()
+                    "indexed": _is_indexed(d)
                 })
-    # 2. Cargar proyectos añadidos dinámicamente (single_folder o agent_discovered)
     if REGISTRATION_FILE.exists():
         try:
             custom = json.loads(REGISTRATION_FILE.read_text(encoding="utf-8"))
@@ -36,7 +48,7 @@ def _load_registered_projects() -> list[dict]:
                         "name": cp.get("name", p_path.name),
                         "path": str(p_path),
                         "mode": cp.get("mode", "single_folder"),
-                        "indexed": (p_path / ".aether-graph" / "index.json").exists()
+                        "indexed": _is_indexed(p_path)
                     })
         except Exception:
             pass
@@ -92,17 +104,16 @@ def register_project(payload: dict = Body(...)):
 @app.post("/api/reindex")
 def reindex_project(payload: dict = Body(...)):
     project_path = payload.get("path")
-    engine = payload.get("engine", "ast_local_llm") # ast_pure | ast_local_llm | ast_cloud_api
+    engine = payload.get("engine", "ast_local_llm")
     if not project_path:
         return JSONResponse({"ok": False, "error": "Falta la ruta del proyecto"}, status_code=400)
     root = Path(project_path).resolve()
     if not root.exists():
         return JSONResponse({"ok": False, "error": f"La ruta '{project_path}' no existe"}, status_code=404)
-    
+
     graph = parser.scan_directory(root)
-    dot_dir = root / ".aether-graph"
-    dot_dir.mkdir(exist_ok=True)
-    graph["metadata"] = {"indexed_with": engine, "status": "ok"}
+    graph["metadata"] = {"indexed_with": engine, "status": "ok", "path": str(root)}
+    dot_dir = _index_dir(root)
     (dot_dir / "index.json").write_text(json.dumps(graph, indent=2))
     return JSONResponse({"ok": True, "engine": engine, "nodes": len(graph["nodes"]), "links": len(graph["links"])})
 
@@ -112,10 +123,12 @@ def get_graph(path: str = ".", view: str = "code"):
         return JSONResponse(parser.get_agent_topology_graph())
     root = Path(path).resolve()
     data = parser.scan_directory(root)
-    if root.exists():
-        dot_dir = root / ".aether-graph"
-        dot_dir.mkdir(exist_ok=True)
+    # Try to save index — but workspace is read-only so store in central index dir
+    try:
+        dot_dir = _index_dir(root)
         (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
+    except OSError:
+        pass  # Read-only mount — index won't be persisted but graph still renders
     return JSONResponse(data)
 
 @app.get("/", response_class=HTMLResponse)
