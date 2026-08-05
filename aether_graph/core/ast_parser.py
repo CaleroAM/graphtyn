@@ -1,9 +1,34 @@
 import ast
 import re
 from pathlib import Path
-from typing import Dict, Any, List, Set
+from typing import Dict, Any, List, Set, Optional
 
 class ASTParser:
+    def _check_openclaw_preindexed_graph(self, project_name: str) -> Optional[Dict[str, Any]]:
+        search_paths = [
+            Path("/home/developer/Documentos/openclaw/data/code-graph") / f"graph.{project_name}.json",
+            Path("/workspace/nexus/data/code-graph") / f"graph.{project_name}.json",
+            Path("/workspace/data/code-graph") / f"graph.{project_name}.json",
+        ]
+        for path in search_paths:
+            if path.exists():
+                try:
+                    import json
+                    raw = json.loads(path.read_text(encoding="utf-8"))
+                    nodes = raw.get("nodes", [])
+                    links_raw = raw.get("links", [])
+                    links = []
+                    for l in links_raw:
+                        links.append({
+                            "source": l["source"],
+                            "target": l["target"],
+                            "label": l.get("kind", "rel"),
+                            "color": "rgba(148, 163, 184, 0.2)"
+                        })
+                    return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
+                except Exception as e:
+                    pass
+        return None
     """
     Deterministic zero-token AST code symbol parser.
     Parses Python, C#, JS/TS structural imports, classes, functions, calls and dependencies.
@@ -87,6 +112,9 @@ class ASTParser:
         }
 
     def scan_directory(self, root_dir: Path) -> Dict[str, Any]:
+        preindexed = self._check_openclaw_preindexed_graph(root_dir.name)
+        if preindexed and len(preindexed.get("nodes", [])) > 0:
+            return preindexed
         nodes = []
         links = []
         node_ids: Set[str] = set()
@@ -97,7 +125,7 @@ class ASTParser:
         }
 
         # Multi-language scanning: Python, C#, JS/TS
-        for ext in ("*.py", "*.cs", "*.js", "*.ts", "*.jsx", "*.tsx"):
+        for ext in ("*.py", "*.cs", "*.js", "*.ts", "*.jsx", "*.tsx", "*.unity", "*.prefab", "*.asset", "*.asmdef", "*.shader"):
             for path in root_dir.rglob(ext):
                 if any(part.startswith(".") or part in ignored_parts for part in path.parts):
                     continue

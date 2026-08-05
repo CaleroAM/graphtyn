@@ -378,6 +378,7 @@ def index():
               <option value="cyberpunk">Neon Cyberpunk</option>
               <option value="mono">Monochrome Slate</option>
               <option value="matrix">Emerald Matrix</option>
+              <option value="community">Por Comunidad (Carpetas)</option>
             </select>
             <label class="section-label" style="margin-top:8px;">Motor IA</label>
             <select id="engine-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;">
@@ -477,12 +478,12 @@ def index():
     let graphInst     = null;
     let fullData      = { nodes: [], links: [] };
 
-    // Palette only controls link color and accent. Node colors come from community.
     const PALETTES = {
-      obsidian  : { link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' },
-      cyberpunk : { link:'rgba(0,240,255,0.25)',   linkW:1.4, particle:'rgba(0,240,255,0.9)' },
-      mono      : { link:'rgba(226,232,240,0.18)', linkW:0.9, particle:'rgba(226,232,240,0.7)' },
-      matrix    : { link:'rgba(34,197,94,0.25)',   linkW:1.4, particle:'rgba(34,197,94,0.9)' },
+      obsidian  : { file:'#38bdf8', class:'#f59e0b', func:'#a78bfa', agent:'#a855f7', asset:'#10b981', link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' },
+      cyberpunk : { file:'#00f0ff', class:'#ffe600', func:'#ff007f', agent:'#9b00ff', asset:'#00ff7f', link:'rgba(0,240,255,0.25)',   linkW:1.4, particle:'rgba(0,240,255,0.9)' },
+      mono      : { file:'#e2e8f0', class:'#cbd5e1', func:'#94a3b8', agent:'#64748b', asset:'#f8fafc', link:'rgba(226,232,240,0.18)', linkW:0.9, particle:'rgba(226,232,240,0.7)' },
+      matrix    : { file:'#22c55e', class:'#4ade80', func:'#16a34a', agent:'#15803d', asset:'#86efac', link:'rgba(34,197,94,0.25)',   linkW:1.4, particle:'rgba(34,197,94,0.9)' },
+      community : { link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' }
     };
     // 12 distinct community colors (fixed — not affected by palette)
     const COMM_COLORS = ['#38bdf8','#f59e0b','#ef4444','#10b981','#a78bfa','#ec4899','#06b6d4','#84cc16','#eab308','#6366f1','#f97316','#14b8a6'];
@@ -501,14 +502,20 @@ def index():
     }
 
     function nodeColor(n) {
+      if (activePalette === 'community') {
+        const commKey = getCommKey(n);
+        return commColorMap[commKey] || '#38bdf8';
+      }
+      const p = PALETTES[activePalette] || PALETTES.obsidian;
       const k = n.kind || '';
-      // Agents always use purple/cyan regardless of community
       if (k.includes('orchestrator')) return '#a855f7';
       if (k.includes('agent'))        return '#7c3aed';
       if (k.includes('hermes'))       return '#06b6d4';
-      // Other nodes: use their community color
-      const commKey = getCommKey(n);
-      return commColorMap[commKey] || '#38bdf8';
+      if (k === 'file' || k === 'module') return p.file;
+      if (k === 'class' || k === 'interface' || k === 'csharp') return p.class;
+      if (k === 'function' || k === 'method') return p.func;
+      if (k === 'asset' || k === 'struct' || k === 'enum') return p.asset;
+      return p.file;
     }
 
     function destroyGraph() {
