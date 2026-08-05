@@ -111,6 +111,10 @@ def get_graph(path: str = ".", view: str = "code"):
         return JSONResponse(parser.get_agent_topology_graph())
     root = Path(path).resolve()
     data = parser.scan_directory(root)
+    if root.exists():
+        dot_dir = root / ".aether-graph"
+        dot_dir.mkdir(exist_ok=True)
+        (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
     return JSONResponse(data)
 
 @app.get("/", response_class=HTMLResponse)
@@ -125,9 +129,16 @@ def index():
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; padding: 0; background: #0b0e17; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+    
+    /* Modern Sleek Scrollbars */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0b0e17; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+
     header {
-      position: absolute; top: 0; left: 240px; right: 260px; height: 50px; z-index: 50;
-      background: rgba(11, 14, 23, 0.92); backdrop-filter: blur(12px);
+      position: absolute; top: 0; left: 240px; right: 260px; height: 52px; z-index: 50;
+      background: rgba(11, 14, 23, 0.95); backdrop-filter: blur(12px);
       border-bottom: 1px solid #1e293b;
       display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
     }
@@ -149,14 +160,22 @@ def index():
       display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; border: 1px solid #1e293b; background: #111827;
     }
     .project-item:hover { background: #1f2937; color: #f8fafc; border-color: #374151; }
-    .project-item.active { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; color: #38bdf8; font-weight: 600; }
+    .project-item.active { background: rgba(56, 189, 248, 0.12); border-color: #38bdf8; color: #38bdf8; font-weight: 600; }
+    
+    .community-item {
+      display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #cbd5e1; padding: 4px 6px; border-radius: 6px; transition: background 0.15s;
+    }
+    .community-item:hover { background: #111827; }
+    .community-item label { display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 1; min-width: 0; margin: 0; }
+    .comm-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .comm-badge { font-size: 10px; font-weight: 700; color: #64748b; background: #1f2937; padding: 2px 6px; border-radius: 10px; flex-shrink: 0; margin-left: 6px; }
     
     /* Custom SVG Checkbox Toggle */
-    .custom-chk { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #cbd5e1; cursor: pointer; padding: 4px 0; }
+    .custom-chk { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #cbd5e1; cursor: pointer; padding: 2px 0; }
     .custom-chk input { display: none; }
-    .chk-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid #4b5563; background: #1f2937; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+    .chk-box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #4b5563; background: #1f2937; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
     .custom-chk input:checked + .chk-box { background: #0284c7; border-color: #38bdf8; }
-    .chk-box svg { width: 10px; height: 10px; stroke: #fff; stroke-width: 3; fill: none; display: none; }
+    .chk-box svg { width: 9px; height: 9px; stroke: #fff; stroke-width: 3; fill: none; display: none; }
     .custom-chk input:checked + .chk-box svg { display: block; }
     
     /* Dropdown Menus */
@@ -171,7 +190,7 @@ def index():
 
     /* Custom Modal Overlay */
     .modal-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7);
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75);
       backdrop-filter: blur(8px); z-index: 200; display: none; align-items: center; justify-content: center;
     }
     .modal-overlay.active { display: flex; }
@@ -186,26 +205,28 @@ def index():
     .mode-card:hover { border-color: #4b5569; background: #374151; }
     .mode-card.selected { border-color: #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; }
 
+    /* Header High Contrast Buttons */
     .floating-top-actions { position: absolute; top: 62px; right: 280px; z-index: 70; display: flex; gap: 8px; }
     .select-input, .btn-action {
-      padding: 6px 12px; border-radius: 6px; border: 1px solid #374151;
-      background: #1f2937; color: #f8fafc; font-weight: 600; font-size: 11px; outline: none;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid #475569;
+      background: #1e293b; color: #f8fafc; font-weight: 600; font-size: 11px; outline: none;
       cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
     }
-    .btn-action:hover { background: #374151; border-color: #4b5569; }
-    .btn-primary { background: #0284c7; border-color: #0284c7; color: #fff; }
-    .btn-primary:hover { background: #0369a1; }
+    .btn-action:hover { background: #334155; border-color: #38bdf8; color: #38bdf8; }
+    .btn-primary { background: #0284c7; border-color: #38bdf8; color: #fff; }
+    .btn-primary:hover { background: #0369a1; border-color: #0284c7; }
     .mode-btn {
-      background: #1f2937; border: 1px solid #374151; color: #94a3b8;
-      padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s;
+      background: #1e293b; border: 1px solid #334155; color: #cbd5e1;
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s;
     }
-    .mode-btn.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
+    .mode-btn:hover { border-color: #475569; color: #fff; }
+    .mode-btn.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.15); }
     .search-input, .text-input {
-      background: #1f2937; border: 1px solid #374151; color: #f8fafc;
-      padding: 7px 10px; border-radius: 6px; font-size: 11px; outline: none; width: 100%;
+      background: #1e293b; border: 1px solid #334155; color: #f8fafc;
+      padding: 6px 10px; border-radius: 6px; font-size: 11px; outline: none; width: 140px;
     }
     .search-input:focus, .text-input:focus { border-color: #38bdf8; }
-    #graph-container { width: calc(100vw - 500px); margin-left: 240px; height: 100vh; pt: 50px; }
+    #graph-container { width: calc(100vw - 500px); margin-left: 240px; height: 100vh; pt: 52px; }
     .svg-ico { width: 14px; height: 14px; fill: currentColor; }
   </style>
 </head>
@@ -223,7 +244,7 @@ def index():
   <!-- Right Sidebar: Communities (Graphify Style 2.png) -->
   <aside class="right-aside">
     <div class="section-title">COMMUNITIES</div>
-    <div style="margin-bottom:10px;">
+    <div style="margin-bottom:8px;">
       <label class="custom-chk" style="font-weight:700;">
         <span>Select All</span>
         <input type="checkbox" id="select-all-comm" checked onchange="toggleSelectAllComm(this.checked)">
@@ -237,7 +258,7 @@ def index():
     <div style="display:flex; gap:6px; align-items:center;">
       <button class="mode-btn active" id="tab-code" onclick="setView('code')">Code AST</button>
       <button class="mode-btn" id="tab-agents" onclick="setView('agents')">Harness Topology</button>
-      <div style="width:1px; height:16px; background:#334155; margin:0 2px;"></div>
+      <div style="width:1px; height:16px; background:#334155; margin:0 4px;"></div>
       <button class="mode-btn active" id="dim-2d" onclick="setDimension('2d')">2D Canvas</button>
       <button class="mode-btn" id="dim-3d" onclick="setDimension('3d')">3D Force</button>
       
@@ -353,7 +374,7 @@ def index():
         </div>
       </div>
       <div style="font-size:11px; color:#94a3b8; margin-bottom:6px;">Ruta absoluta en el disco:</div>
-      <input type="text" class="text-input" id="reg-path-input" placeholder="/home/usuario/Documentos/mi-proyecto">
+      <input type="text" class="text-input" id="reg-path-input" style="width:100%;" placeholder="/home/usuario/Documentos/mi-proyecto">
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
         <button class="btn-action" onclick="closeRegisterModal()">Cancelar</button>
         <button class="btn-action btn-primary" onclick="submitRegisterModal()">Registrar e Indexar</button>
@@ -424,7 +445,7 @@ def index():
     });
 
     function openRegisterModal() {
-      document.getElementById('reg-path-input').value = activePath !== '.' ? activePath : '/home/developer/Documentos/docker/PROYECTOS/';
+      document.getElementById('reg-path-input').value = activePath !== '.' ? activePath : '';
       document.getElementById('register-modal').classList.add('active');
     }
     function closeRegisterModal() {
@@ -547,13 +568,13 @@ def index():
         const color = COMM_COLORS[idx % COMM_COLORS.length];
         return `
           <div class="community-item">
-            <label class="custom-chk" style="flex:1;">
+            <label class="custom-chk">
               <input type="checkbox" class="comm-chk" data-comm="${c}" checked onchange="filterGraph()">
               <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-              <span class="comm-dot" style="background:${color}; margin-left:6px;"></span>
+              <span class="comm-dot" style="background:${color};"></span>
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c}</span>
             </label>
-            <span style="font-size:11px; color:#64748b;">${commMap[c]}</span>
+            <span class="comm-badge">${commMap[c]}</span>
           </div>
         `;
       }).join('');
@@ -659,6 +680,3 @@ def index():
 </body>
 </html>
 """
-
-
-

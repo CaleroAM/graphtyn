@@ -1,12 +1,40 @@
 import ast
+import re
 from pathlib import Path
 from typing import Dict, Any, List, Set
 
 class ASTParser:
     """
     Deterministic zero-token AST code symbol parser.
-    Parses Python, JS/TS structural imports, classes, functions, calls and dependencies.
+    Parses Python, C#, JS/TS structural imports, classes, functions, calls and dependencies.
     """
+
+    def parse_csharp_file(self, file_path: Path, root_dir: Path) -> Dict[str, Any]:
+        rel_path = str(file_path.relative_to(root_dir))
+        symbols = []
+        imports = []
+        try:
+            content = file_path.read_text(encoding="utf-8", errors="ignore")
+        except Exception as e:
+            return {"file": rel_path, "error": str(e), "symbols": [], "imports": []}
+
+        # Regex for using namespaces
+        for match in re.finditer(r'using\s+([A-Za-z0-9_.]+);', content):
+            imports.append(match.group(1))
+
+        # Regex for class, interface, struct, enum
+        for match in re.finditer(r'(public|private|protected|internal)?\s*(abstract|sealed|partial)?\s*(class|interface|enum|struct)\s+([A-Za-z0-9_]+)(\s*:\s*([A-Za-z0-9_,\s]+))?', content):
+            kind = match.group(3)
+            name = match.group(4)
+            symbols.append({"name": name, "kind": kind, "line": content[:match.start()].count('\n') + 1, "file": rel_path})
+
+        # Regex for methods
+        for match in re.finditer(r'(public|private|protected|internal)\s+(static|virtual|override|async)?\s*([A-Za-z0-9_<>]+)\s+([A-Za-z0-9_]+)\s*\([^)]*\)\s*\{', content):
+            name = match.group(4)
+            if name not in ("if", "for", "while", "switch", "catch"):
+                symbols.append({"name": name, "kind": "function", "line": content[:match.start()].count('\n') + 1, "file": rel_path})
+
+        return {"file": rel_path, "symbols": symbols, "imports": list(set(imports))}
 
     def parse_python_file(self, file_path: Path, root_dir: Path) -> Dict[str, Any]:
         rel_path = str(file_path.relative_to(root_dir))
@@ -88,26 +116,42 @@ class ASTParser:
                     })
                     node_ids.add(f_id)
 
+                res = {"symbols": [], "imports": []}
                 if ext == "*.py":
                     res = self.parse_python_file(path, root_dir)
-                    for sym in res.get("symbols", []):
-                        sym_id = f"symbol:{rel_file}:{sym['name']}"
-                        if sym_id not in node_ids:
-                            nodes.append({
-                                "id": sym_id,
-                                "name": sym["name"],
-                                "kind": sym["kind"],
-                                "val": 4 if sym["kind"] == "class" else 2,
-                                "color": "#f59e0b" if sym["kind"] == "class" else "#a78bfa",
-                                "details": f"{sym['kind'].capitalize()} en {rel_file}:{sym['line']}"
-                            })
-                            node_ids.add(sym_id)
-                        links.append({
-                            "source": f_id,
-                            "target": sym_id,
-                            "label": "contiene",
-                            "color": "rgba(148, 163, 184, 0.2)"
+                elif ext == "*.cs":
+                    res = self.parse_csharp_file(path, root_dir)
+
+                for sym in res.get("symbols", []):
+                    sym_id = f"symbol:{rel_file}:{sym['name']}"
+                    if sym_id not in node_ids:
+                        nodes.append({
+                            "id": sym_id,
+                            "name": sym["name"],
+                            "kind": sym["kind"],
+                            "val": 4 if sym["kind"] in ("class", "interface", "struct") else 2,
+                            "color": "#f59e0b" if sym["kind"] in ("class", "interface") else "#a78bfa",
+                            "details": f"{sym['kind'].capitalize()} en {rel_file}:{sym['line']}"
                         })
+                        node_ids.add(sym_id)
+                    links.append({
+                        "source": f_id,
+                        "target": sym_id,
+                        "label": "contiene",
+                        "color": "rgba(148, 163, 184, 0.2)"
+                    })
+
+                # Connect C# using imports across files
+                for imp in res.get("imports", []):
+                    for other_node in nodes:
+                        if other_node["kind"] == "file" and imp in other_node["name"]:
+                            links.append({
+                                "source": f_id,
+                                "target": other_node["id"],
+                                "label": "using",
+                                "color": "rgba(56, 189, 248, 0.25)"
+                            })
+                            break
 
         return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
 
