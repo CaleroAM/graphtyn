@@ -403,7 +403,24 @@ def index():
               <option value="ast_cloud">AST + Cloud API (Gemini/Claude)</option>
               <option value="ast_pure">Solo AST (cero tokens)</option>
             </select>
-            <button class="btn-action" style="margin-top:8px;justify-content:center;width:100%;" onclick="openTutorial()">
+            <hr style="border:none;border-top:1px solid #1e293b;margin:8px 0;">
+            <label class="section-label">Estilo de Enlaces</label>
+            <select id="link-style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateLinkStyles()">
+              <option value="solid" selected>Línea Sólida (Recta)</option>
+              <option value="dashed">Línea Punteada</option>
+              <option value="curved">Línea Curva</option>
+            </select>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+              <div class="filter-row">
+                <span>Animación de Partículas</span>
+                <label class="chk-wrap"><input type="checkbox" id="chk-particles" checked onchange="updateLinkStyles()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+              </div>
+              <div class="filter-row">
+                <span>Flechas Direccionales</span>
+                <label class="chk-wrap"><input type="checkbox" id="chk-arrows" checked onchange="updateLinkStyles()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+              </div>
+            </div>
+            <button class="btn-action" style="margin-top:10px;justify-content:center;width:100%;" onclick="openTutorial()">
               📖 Tutorial Conexión IA
             </button>
           </div>
@@ -510,6 +527,9 @@ def index():
     let rotateRaf     = null;
     let rotateAngle   = 0;
     let activePalette = 'obsidian';
+    let showParticles = true;
+    let showArrows    = true;
+    let linkStyle     = 'solid'; // solid | dashed | curved
     let regMode       = 'single_folder';
     let graphInst     = null;
     let fullData      = { nodes: [], links: [] };
@@ -918,6 +938,26 @@ def index():
       a.click();
     }
 
+
+    function updateLinkStyles() {
+      const p = PALETTES[activePalette] || PALETTES.obsidian;
+      const particlesEl = document.getElementById('chk-particles');
+      const arrowsEl = document.getElementById('chk-arrows');
+      const styleEl = document.getElementById('link-style-sel');
+
+      showParticles = particlesEl ? particlesEl.checked : true;
+      showArrows    = arrowsEl ? arrowsEl.checked : true;
+      linkStyle     = styleEl ? styleEl.value : 'solid';
+
+      if (graphInst) {
+        graphInst
+          .linkDirectionalParticles(showParticles ? 2 : 0)
+          .linkDirectionalArrowLength(showArrows ? 5 : 0)
+          .linkCurvature(linkStyle === 'curved' ? 0.2 : 0.0)
+          .linkLineDash(linkStyle === 'dashed' ? [4, 4] : null);
+      }
+    }
+
 function loadGraph() {
       if (!activePath && activeView === 'code') {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
@@ -981,12 +1021,14 @@ function loadGraph() {
             .linkDirectionalParticleSpeed(0.006)
             .linkDirectionalArrowLength(4)
             .linkDirectionalArrowRelPos(0.95)
-            .linkDirectionalParticles(2)
+            .linkDirectionalParticles(() => (showParticles ? 2 : 0))
             .linkDirectionalParticleWidth(2.5)
             .linkDirectionalParticleSpeed(0.006)
             .linkDirectionalParticleColor(() => p.particle)
-            .linkDirectionalArrowLength(5)
+            .linkDirectionalArrowLength(() => (showArrows ? 5 : 0))
             .linkDirectionalArrowRelPos(0.95)
+            .linkCurvature(() => (linkStyle === 'curved' ? 0.2 : 0.0))
+            .linkLineDash(() => (linkStyle === 'dashed' ? [4, 4] : null))
             .d3AlphaDecay(0.012)
             .d3VelocityDecay(0.22)
             .d3Force('charge', d3.forceManyBody().strength(-300))
@@ -1008,11 +1050,12 @@ function loadGraph() {
             .nodeLabel(n => `${n.name} (${n.kind || ''}) — ${n.degree || 0} conexiones`).onNodeClick(onNodeClick)
             .linkColor(() => p.link)
             .linkWidth(p.linkW)
-            .linkDirectionalParticles(2)
+            .linkDirectionalParticles(() => (showParticles ? 2 : 0))
             .linkDirectionalParticleWidth(2.5)
             .linkDirectionalParticleSpeed(0.006)
-            .linkDirectionalArrowLength(5)
+            .linkDirectionalArrowLength(() => (showArrows ? 5 : 0))
             .linkDirectionalArrowRelPos(0.95)
+            .linkCurvature(() => (linkStyle === 'curved' ? 0.2 : 0.0))
             .nodeRelSize(5);
 
           // Use 3D internal force engine (prevents 2D planar flattening)
