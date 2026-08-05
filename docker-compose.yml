@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  aether-graph:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aether-graph-daemon
+    ports:
+      - "9210:9210"
+    environment:
+      - PORT=9210
+      - AETHER_ENV=production
+    volumes:
+      - ./.aether-graph:/app/.aether-graph
+      - ../:/workspace:ro
+    restart: unless-stopped
