@@ -13,5 +13,6 @@ services:
       - AETHER_ENV=production
     volumes:
       - ./.aether-graph:/app/.aether-graph
+      - ./aether_graph:/app/aether_graph
       - ../:/workspace:ro
     restart: unless-stopped

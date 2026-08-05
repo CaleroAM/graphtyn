@@ -5,7 +5,7 @@ from ..core.ast_parser import ASTParser
 
 app = FastAPI(title="AetherGraph API", version="0.2.0")
 parser = ASTParser()
-PROYECTOS_DIR = Path("/home/developer/Documentos/docker/PROYECTOS")
+PROYECTOS_DIR = Path("/workspace") if Path("/workspace").exists() else Path("/home/developer/Documentos/docker/PROYECTOS")
 
 @app.get("/api/projects")
 def list_projects():

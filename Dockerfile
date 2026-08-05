@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -e .
 
 EXPOSE 9210
 
-CMD ["aether-graph", "serve", "--host", "0.0.0.0", "--port", "9210"]
+CMD ["aether-graph", "serve", "--host", "0.0.0.0", "--port", "9210", "--reload"]

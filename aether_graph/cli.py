@@ -32,6 +32,7 @@ def main():
 
     # serve
     serve_parser = subparsers.add_parser("serve", help="Inicia el demonio HTTP local")
+    serve_parser.add_argument("--reload", action="store_true", help="Habilitar recarga automática en vivo (Hot-Reloading)")
     serve_parser.add_argument("--host", default="127.0.0.1", help="Host")
     serve_parser.add_argument("--port", type=int, default=9210, help="Puerto")
     serve_parser.add_argument("--path", default=".", help="Ruta del proyecto")
@@ -69,9 +70,12 @@ def main():
 
     elif args.command == "serve":
         import uvicorn
-        from .api.main import app
-        print(f"🚀 Servidor AetherGraph escuchando en http://{args.host}:{args.port}")
-        uvicorn.run(app, host=args.host, port=args.port)
+        print(f"🚀 Servidor AetherGraph escuchando en http://{args.host}:{args.port} (Hot-Reloading={args.reload})")
+        if args.reload:
+            uvicorn.run("aether_graph.api.main:app", host=args.host, port=args.port, reload=True)
+        else:
+            from .api.main import app
+            uvicorn.run(app, host=args.host, port=args.port)
 
     else:
         parser.print_help()
