@@ -360,6 +360,18 @@ def index():
               <span>Ocultar aislados</span>
               <label class="chk-wrap"><input type="checkbox" id="f-isolated" onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
             </div>
+            <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
+            <div class="section-label">Físicas del Grafo</div>
+            <div class="filter-row">
+              <span>Repulsión: <strong id="rep-val" style="color:#38bdf8;">-300</strong></span>
+            </div>
+            <input type="range" id="f-repulsion" min="-600" max="-50" value="-300" step="25" style="width:100%;"
+              oninput="document.getElementById('rep-val').textContent=this.value;updatePhysics();">
+            <div class="filter-row" style="margin-top:4px;">
+              <span>Distancia Enlaces: <strong id="dist-val" style="color:#38bdf8;">80</strong></span>
+            </div>
+            <input type="range" id="f-distance" min="30" max="180" value="80" step="5" style="width:100%;"
+              oninput="document.getElementById('dist-val').textContent=this.value;updatePhysics();">
           </div>
         </div>
       </div>
@@ -376,6 +388,10 @@ def index():
             <select id="palette-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changePalette()">
               <option value="obsidian" selected>Obsidian Dark</option>
               <option value="cyberpunk">Neon Cyberpunk</option>
+              <option value="dracula">Dracula Synthwave</option>
+              <option value="solarized">Solarized Dark</option>
+              <option value="nordic">Nordic Aurora</option>
+              <option value="vaporwave">Vaporwave Sunset</option>
               <option value="mono">Monochrome Slate</option>
               <option value="matrix">Emerald Matrix</option>
               <option value="community">Por Comunidad (Carpetas)</option>
@@ -400,6 +416,13 @@ def index():
 
   <!-- Floating quick actions -->
   <div class="float-actions">
+    <div style="font-size:10px;font-weight:700;color:#10b981;background:rgba(16,185,129,0.12);padding:4px 8px;border-radius:6px;border:1px solid rgba(16,185,129,0.25);display:flex;align-items:center;gap:5px;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></span> MCP Activo
+    </div>
+    <button class="btn-action" onclick="exportGraphData()" title="Descargar datos del grafo en JSON">
+      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      Exportar
+    </button>
     <button class="btn-action btn-primary" onclick="openRegister()">
       <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
       Registrar
@@ -412,6 +435,15 @@ def index():
 
   <!-- ===== GRAPH CANVAS ===== -->
   <div id="graph-container"></div>
+
+  <!-- ===== FLOATING BLAST RADIUS PANEL ===== -->
+  <div id="blast-panel" style="position:absolute;bottom:16px;right:276px;z-index:90;background:#111827;border:1px solid #374151;border-radius:10px;padding:12px 14px;width:280px;box-shadow:0 16px 36px rgba(0,0,0,0.6);display:none;">
+    <div style="font-weight:700;font-size:12px;color:#38bdf8;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="display:flex;align-items:center;gap:5px;">🎯 Radio de Impacto</span>
+      <button onclick="closeBlastPanel()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;">✕</button>
+    </div>
+    <div id="blast-content" style="font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
 
   <!-- ===== MODAL: Register ===== -->
   <div class="modal-bg" id="modal-reg">
@@ -481,6 +513,10 @@ def index():
     const PALETTES = {
       obsidian  : { file:'#38bdf8', class:'#f59e0b', func:'#a78bfa', agent:'#a855f7', asset:'#10b981', link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' },
       cyberpunk : { file:'#00f0ff', class:'#ffe600', func:'#ff007f', agent:'#9b00ff', asset:'#00ff7f', link:'rgba(0,240,255,0.25)',   linkW:1.4, particle:'rgba(0,240,255,0.9)' },
+      dracula   : { file:'#ff79c6', class:'#bd93f9', func:'#8be9fd', agent:'#ffb86c', asset:'#50fa7b', link:'rgba(189,147,249,0.30)', linkW:1.4, particle:'rgba(255,121,198,0.9)' },
+      solarized : { file:'#268bd2', class:'#b58900', func:'#d33682', agent:'#6c71c4', asset:'#2aa198', link:'rgba(38,139,210,0.30)',  linkW:1.4, particle:'rgba(42,161,152,0.9)' },
+      nordic    : { file:'#88c0d0', class:'#ebcb8b', func:'#b48ead', agent:'#d08770', asset:'#a3be8c', link:'rgba(136,192,208,0.30)', linkW:1.4, particle:'rgba(235,203,139,0.9)' },
+      vaporwave : { file:'#ff71ce', class:'#fffb96', func:'#b967ff', agent:'#fe75fe', asset:'#05ffa1', link:'rgba(255,113,206,0.30)', linkW:1.4, particle:'rgba(5,255,161,0.9)' },
       mono      : { file:'#e2e8f0', class:'#cbd5e1', func:'#94a3b8', agent:'#64748b', asset:'#f8fafc', link:'rgba(226,232,240,0.18)', linkW:0.9, particle:'rgba(226,232,240,0.7)' },
       matrix    : { file:'#22c55e', class:'#4ade80', func:'#16a34a', agent:'#15803d', asset:'#86efac', link:'rgba(34,197,94,0.25)',   linkW:1.4, particle:'rgba(34,197,94,0.9)' },
       community : { link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' }
@@ -734,7 +770,113 @@ def index():
         '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
     }
 
-    function loadGraph() {
+    
+    // ── Blast Radius & Interactive Node Inspector ───────────────────────────
+    let selectedNode = null;
+
+    function onNodeClick(node) {
+      selectedNode = node;
+      if (!node) return closeBlastPanel();
+
+      // Find direct neighbors
+      const neighbors = new Set();
+      const connectedLinks = [];
+      fullData.links.forEach(l => {
+        const s = typeof l.source === 'object' ? l.source.id : l.source;
+        const t = typeof l.target === 'object' ? l.target.id : l.target;
+        if (s === node.id) { neighbors.add(t); connectedLinks.push(l); }
+        if (t === node.id) { neighbors.add(s); connectedLinks.push(l); }
+      });
+
+      const neighborNodes = fullData.nodes.filter(n => neighbors.has(n.id));
+
+      const panel = document.getElementById('blast-panel');
+      const body = document.getElementById('blast-content');
+      panel.style.display = 'block';
+
+      body.innerHTML =
+        '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + node.name + '</span></div>' +
+        '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + (node.kind || 'nodo') + '</span></div>' +
+        (node.details ? '<div><strong>Ruta:</strong> <span style="color:#94a3b8;font-size:10px;">' + node.details + '</span></div>' : '') +
+        '<div style="display:flex;gap:12px;margin-top:2px;">' +
+          '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
+          '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
+        '</div>' +
+        '<button class="btn-action btn-primary" style="margin-top:4px;justify-content:center;" onclick="focusNode('' + node.id.replace(/'/g, "\'") + '')">🎯 Centrar y Enfocar</button>' +
+        '<hr style="border:none;border-top:1px solid #1e293b;margin:4px 0;">' +
+        '<div style="font-weight:700;color:#64748b;font-size:10px;">VECINOS DIRECTOS (BLAST RADIUS):</div>' +
+        '<div style="max-height:110px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">' +
+        (neighborNodes.length ? neighborNodes.slice(0, 15).map(n =>
+          '<div style="display:flex;justify-content:space-between;background:#1a2234;padding:3px 6px;border-radius:4px;cursor:pointer;" onclick="focusNode('' + n.id.replace(/'/g, "\'") + '')">' +
+            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">' + n.name + '</span>' +
+            '<span style="color:#64748b;font-size:9px;">' + (n.kind || '') + '</span>' +
+          '</div>'
+        ).join('') : '<div style="color:#64748b;">Sin conexiones directas</div>') +
+        '</div>';
+
+      // Highlight neighbors by dimming others
+      if (graphInst && activeDim === '2d') {
+        graphInst.nodeColor(n => {
+          if (n.id === node.id) return '#ff007f';
+          if (neighbors.has(n.id)) return nodeColor(n);
+          return 'rgba(255,255,255,0.08)';
+        });
+      }
+    }
+
+    function closeBlastPanel() {
+      selectedNode = null;
+      document.getElementById('blast-panel').style.display = 'none';
+      if (graphInst) {
+        graphInst.nodeColor(n => nodeColor(n));
+      }
+    }
+
+    function focusNode(nodeId) {
+      const node = fullData.nodes.find(n => n.id === nodeId);
+      if (node && graphInst) {
+        if (activeDim === '2d') {
+          graphInst.centerAt(node.x, node.y, 400);
+          graphInst.zoom(3, 400);
+        } else {
+          const dist = 120;
+          const ratio = 1 + dist / Math.hypot(node.x, node.y, node.z);
+          graphInst.cameraPosition(
+            { x: node.x * ratio, y: node.y * ratio, z: node.z * ratio },
+            node,
+            1200
+          );
+        }
+        onNodeClick(node);
+      }
+    }
+
+    function updatePhysics() {
+      const rep = parseInt(document.getElementById('f-repulsion').value || -300);
+      const dist = parseInt(document.getElementById('f-distance').value || 80);
+      if (graphInst) {
+        if (activeDim === '2d') {
+          graphInst.d3Force('charge', d3.forceManyBody().strength(rep));
+          graphInst.d3Force('link', d3.forceLink().distance(dist).strength(0.4));
+        } else {
+          graphInst.d3Force('charge').strength(rep);
+          graphInst.d3Force('link').distance(dist);
+        }
+        graphInst.numDimensions && graphInst.numDimensions(activeDim === '2d' ? 2 : 3);
+      }
+    }
+
+    function exportGraphData() {
+      if (!fullData || !fullData.nodes.length) return alert('No hay datos de grafo para exportar');
+      const jsonStr = JSON.stringify(fullData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `aether-graph-${activeView}-${Date.now()}.json`;
+      a.click();
+    }
+
+function loadGraph() {
       if (!activePath && activeView === 'code') {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
         document.getElementById('graph-container').innerHTML =
@@ -789,7 +931,7 @@ def index():
             .nodeId('id')
             .nodeVal(nodeVal)
             .nodeColor(n => nodeColor(n))
-            .nodeLabel(tooltip)
+            .nodeLabel(tooltip).onNodeClick(onNodeClick)
             .linkColor(() => p.link)
             .linkWidth(p.linkW)
             .linkDirectionalParticles(2)
@@ -821,7 +963,7 @@ def index():
             .nodeId('id')
             .nodeVal(nodeVal)
             .nodeColor(n => nodeColor(n))
-            .nodeLabel(n => `${n.name} (${n.kind || ''}) — ${n.degree || 0} conexiones`)
+            .nodeLabel(n => `${n.name} (${n.kind || ''}) — ${n.degree || 0} conexiones`).onNodeClick(onNodeClick)
             .linkColor(() => p.link)
             .linkWidth(p.linkW)
             .linkDirectionalParticles(2)
