@@ -138,8 +138,9 @@ def index():
 <head>
   <meta charset="UTF-8">
   <title>AetherGraph — Engine & Dashboard</title>
-  <script src="//unpkg.com/force-graph"></script>
-  <script src="//unpkg.com/3d-force-graph"></script>
+  <script src="https://unpkg.com/d3@7"></script>
+  <script src="https://unpkg.com/force-graph@1"></script>
+  <script src="https://unpkg.com/3d-force-graph@1"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { box-sizing: border-box; }
@@ -775,8 +776,9 @@ def index():
           `<br/><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#38bdf8;">Conexiones: ${n.degree || 0}</span>` +
           `</div>`;
 
-        if (activeDim === '2d') {
-          graphInst = ForceGraph()(container)
+        try {
+          if (activeDim === '2d') {
+            graphInst = ForceGraph()(container)
             .backgroundColor('#0b0e17')
             .graphData(data)
             .nodeId('id')
@@ -808,6 +810,16 @@ def index():
         }
 
         applyFilter();
+        } catch(err) {
+          console.error("Graph render error:", err);
+          document.getElementById('graph-container').innerHTML =
+            '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;padding:20px;text-align:center;">' +
+            '<strong>Error al renderizar el grafo</strong><br/><span style="color:#94a3b8;font-size:11px;margin-top:6px;">' + err.message + '</span></div>';
+        }
+      }).catch(err => {
+        console.error("Fetch error:", err);
+        document.getElementById('graph-container').innerHTML =
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;">Error al conectar con la API</div>';
       });
     }
 
