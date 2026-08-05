@@ -144,6 +144,9 @@ def index():
     }
     .project-item:hover { background: #334155; color: #f8fafc; border-color: #475569; }
     .project-item.active { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; color: #38bdf8; font-weight: 600; }
+    .filter-panel { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; margin-top: 10px; }
+    .filter-group { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: #cbd5e1; }
+    .filter-group label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
     .btn-action {
       width: 100%; padding: 9px; border-radius: 6px; border: 1px solid #334155;
       background: #1e293b; color: #f8fafc; font-weight: 600; font-size: 11px;
@@ -169,6 +172,20 @@ def index():
       <div class="brand">🌌 AetherGraph <span>Graphify Edition</span></div>
       <div class="section-title">Proyectos Registrados</div>
       <div class="project-list" id="project-list">Cargando...</div>
+      
+      <div class="filter-panel">
+        <div class="section-title">Filtros de Graphify</div>
+        <div class="filter-group">
+          <label><input type="checkbox" id="f-file" checked onchange="filterGraph()"> 📄 Archivos</label>
+          <label><input type="checkbox" id="f-class" checked onchange="filterGraph()"> 📦 Clases</label>
+          <label><input type="checkbox" id="f-func" checked onchange="filterGraph()"> ⚡ Funciones</label>
+          <label><input type="checkbox" id="f-agent" checked onchange="filterGraph()"> 🤖 Agentes</label>
+          <hr style="border:none; border-top:1px solid #334155; margin:4px 0;">
+          <label>Min Conexiones: <span id="min-deg-val">0</span></label>
+          <input type="range" id="min-degree" min="0" max="10" value="0" oninput="document.getElementById('min-deg-val').innerText=this.value; filterGraph();">
+          <label><input type="checkbox" id="f-hide-isolated" onchange="filterGraph()"> 🚫 Ocultar Nodos Aislados</label>
+        </div>
+      </div>
     </div>
     <div>
       <button class="btn-action" onclick="promptRegisterProject()">➕ Registrar Proyecto / Carpeta</button>
@@ -276,17 +293,32 @@ def index():
 
     function filterGraph() {
       const q = document.getElementById('search-box').value.toLowerCase();
-      if (!q) {
-        graphInstance.graphData(fullData);
-        return;
-      }
-      const filteredNodes = fullData.nodes.filter(n => n.name.toLowerCase().includes(q) || (n.details && n.details.toLowerCase().includes(q)));
+      const showFile = document.getElementById('f-file').checked;
+      const showClass = document.getElementById('f-class').checked;
+      const showFunc = document.getElementById('f-func').checked;
+      const showAgent = document.getElementById('f-agent').checked;
+      const minDegree = parseInt(document.getElementById('min-degree').value) || 0;
+      const hideIsolated = document.getElementById('f-hide-isolated').checked;
+
+      const filteredNodes = fullData.nodes.filter(n => {
+        const kind = n.kind || '';
+        if (kind === 'file' && !showFile) return false;
+        if (kind === 'class' && !showClass) return false;
+        if (kind === 'function' && !showFunc) return false;
+        if ((kind.includes('agent') || kind.includes('orchestrator')) && !showAgent) return false;
+        if ((n.degree || 0) < minDegree) return false;
+        if (hideIsolated && (n.degree || 0) === 0) return false;
+        if (q && !n.name.toLowerCase().includes(q) && !(n.details && n.details.toLowerCase().includes(q))) return false;
+        return true;
+      });
+
       const nodeIds = new Set(filteredNodes.map(n => n.id));
       const filteredLinks = fullData.links.filter(l => {
         const src = typeof l.source === 'object' ? l.source.id : l.source;
         const tgt = typeof l.target === 'object' ? l.target.id : l.target;
         return nodeIds.has(src) && nodeIds.has(tgt);
       });
+
       graphInstance.graphData({ nodes: filteredNodes, links: filteredLinks });
     }
 
@@ -314,7 +346,10 @@ def index():
               .linkColor(() => 'rgba(148, 163, 184, 0.25)')
               .linkWidth(1.2)
               .linkDirectionalArrowLength(3.5)
-              .linkDirectionalArrowRelPos(0.95);
+              .linkDirectionalArrowRelPos(0.95)
+              .d3Force('charge', d3.forceManyBody().strength(-200))
+              .d3Force('link', d3.forceLink().distance(60))
+              .d3Force('collide', d3.forceCollide().radius(n => 14 + (n.degree || 0) * 2));
           } else {
             if (!graphInstance) {
               graphInstance = ForceGraph3D()(container);
@@ -331,6 +366,8 @@ def index():
               .linkDirectionalArrowLength(4.0)
               .linkDirectionalArrowRelPos(0.95);
           }
+
+          filterGraph();
         });
     }
 
