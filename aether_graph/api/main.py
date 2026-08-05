@@ -187,14 +187,22 @@ def get_graph(path: str = ".", view: str = "code"):
     if view == "agents":
         return JSONResponse(parser.get_agent_topology_graph())
     root = Path(path).resolve()
+    dot_dir = _index_dir(root)
+    cached = dot_dir / "index.json"
+    if cached.exists():
+        try:
+            data = json.loads(cached.read_text(encoding="utf-8"))
+            return JSONResponse(data)
+        except Exception:
+            pass
+
     data = parser.scan_directory(root)
-    # Try to save index — but workspace is read-only so store in central index dir
     try:
-        dot_dir = _index_dir(root)
         (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
     except OSError:
-        pass  # Read-only mount — index won't be persisted but graph still renders
+        pass
     return JSONResponse(data)
+
 
 @app.get("/", response_class=HTMLResponse)
 def index():
