@@ -323,6 +323,7 @@ def index():
       <!-- Dimension tabs -->
       <button class="mode-btn active" id="btn-2d" onclick="setDim('2d')">2D</button>
       <button class="mode-btn" id="btn-3d" onclick="setDim('3d')">3D</button>
+      <button class="mode-btn" id="btn-rotate" style="display:none;" onclick="toggleRotate()">⟳ Rotar 3D</button>
       <div class="sep"></div>
 
       <!-- Node Filters dropdown -->
@@ -505,6 +506,9 @@ def index():
     let activePath    = null;   // null until first project loaded
     let activeView    = 'code';
     let activeDim     = '2d';
+    let isRotating    = false;
+    let rotateRaf     = null;
+    let rotateAngle   = 0;
     let activePalette = 'obsidian';
     let regMode       = 'single_folder';
     let graphInst     = null;
@@ -555,6 +559,7 @@ def index():
     }
 
     function destroyGraph() {
+      stop3DRotation();
       if (graphInst) {
         try { graphInst._destructor && graphInst._destructor(); } catch(e){}
         graphInst = null;
@@ -646,8 +651,36 @@ def index():
       activeDim = d;
       document.getElementById('btn-2d').classList.toggle('active', d === '2d');
       document.getElementById('btn-3d').classList.toggle('active', d === '3d');
+      const rotBtn = document.getElementById('btn-rotate');
+      if (rotBtn) rotBtn.style.display = (d === '3d') ? 'inline-block' : 'none';
+      if (d === '2d' && isRotating) toggleRotate();
       destroyGraph();
       loadGraph();
+    }
+
+    function toggleRotate() {
+      isRotating = !isRotating;
+      const btn = document.getElementById('btn-rotate');
+      if (btn) btn.classList.toggle('active', isRotating);
+      if (isRotating) start3DRotation();
+      else stop3DRotation();
+    }
+
+    function start3DRotation() {
+      if (rotateRaf) cancelAnimationFrame(rotateRaf);
+      const tick = () => {
+        if (!isRotating || activeDim !== '3d' || !graphInst || !graphInst.cameraPosition) return;
+        const p = graphInst.cameraPosition();
+        const r = Math.max(Math.hypot(p.x || 0, p.z || 0) || 500, 150);
+        rotateAngle += 0.0035;
+        graphInst.cameraPosition({ x: r * Math.sin(rotateAngle), y: p.y || 100, z: r * Math.cos(rotateAngle) }, undefined, 0);
+        rotateRaf = requestAnimationFrame(tick);
+      };
+      rotateRaf = requestAnimationFrame(tick);
+    }
+
+    function stop3DRotation() {
+      if (rotateRaf) { cancelAnimationFrame(rotateRaf); rotateRaf = null; }
     }
 
     function changePalette() {
