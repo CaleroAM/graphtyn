@@ -560,21 +560,24 @@ def index():
     function closeTutorial() { document.getElementById('modal-tutorial').classList.remove('show'); }
 
     // ── Projects ──────────────────────────────────────────────────────────────
-    function loadProjects() {
+    function loadProjects(thenLoadGraph) {
       fetch('/api/projects').then(r => r.json()).then(projects => {
         const el = document.getElementById('project-list');
-        if (!projects.length) { el.innerHTML = '<div style="color:#475569;font-size:11px;">Sin proyectos registrados</div>'; return; }
-
-        // Auto-select first project if none active
-        if (!activePath && projects.length) {
-          activePath = projects[0].path;
+        if (!projects.length) {
+          el.innerHTML = '<div style="color:#475569;font-size:11px;">Sin proyectos registrados</div>';
+          return;
         }
-
-        el.innerHTML = projects.map(p => `
-          <div class="project-item ${p.path === activePath ? 'active' : ''}" onclick="selectProject('${p.path.replace(/'/g,"\\'")}')">
-            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">${p.name}</span>
-            <span class="proj-badge ${p.indexed ? 'ok' : 'pend'}">${p.indexed ? 'OK' : 'PEND'}</span>
-          </div>`).join('');
+        if (!activePath && projects.length) activePath = projects[0].path;
+        el.innerHTML = projects.map(p =>
+          '<div class="project-item ' + (p.path === activePath ? 'active' : '') + '" onclick="selectProject(this.dataset.path)" data-path="' + p.path.replace(/"/g,'&quot;') + '">' +
+          '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">' + p.name + '</span>' +
+          '<span class="proj-badge ' + (p.indexed ? 'ok' : 'pend') + '">' + (p.indexed ? 'OK' : 'PEND') + '</span>' +
+          '</div>'
+        ).join('');
+        if (thenLoadGraph) loadGraph();
+      }).catch(() => {
+        document.getElementById('project-list').innerHTML =
+          '<div style="color:#ef4444;font-size:11px;">Error al cargar proyectos</div>';
       });
     }
 
@@ -716,16 +719,37 @@ def index():
     }
 
     // ── Graph render ──────────────────────────────────────────────────────────
+    function showGraphSpinner(msg) {
+      document.getElementById('graph-container').innerHTML =
+        '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;">' +
+        '<div style="width:36px;height:36px;border:3px solid #1e293b;border-top-color:#38bdf8;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
+        '<div style="color:#475569;font-size:12px;">' + msg + '</div>' +
+        '</div>' +
+        '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+    }
+
     function loadGraph() {
       if (!activePath && activeView === 'code') {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
+        document.getElementById('graph-container').innerHTML =
+          '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda</div>';
         return;
       }
       const url = activeView === 'agents'
         ? '/api/graph?view=agents'
-        : `/api/graph?path=${encodeURIComponent(activePath)}`;
+        : '/api/graph?path=' + encodeURIComponent(activePath);
+
+      showGraphSpinner(activeView === 'agents' ? 'Cargando topologia de agentes...' : 'Escaneando proyecto...');
+      document.getElementById('stats').textContent = 'Cargando...';
 
       fetch(url).then(r => r.json()).then(data => {
+        if (!data.nodes || data.nodes.length === 0) {
+          document.getElementById('graph-container').innerHTML =
+            '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Sin nodos. Haz clic en Reindexar para escanear el proyecto.</div>';
+          document.getElementById('stats').textContent = '0 nodos';
+          buildCommunities(data);
+          return;
+        }
         fullData = data;
         const p = PALETTES[activePalette];
         document.getElementById('stats').textContent =
@@ -788,9 +812,9 @@ def index():
     }
 
     // ── Boot ──────────────────────────────────────────────────────────────────
-    loadProjects();
-    // After projects load, trigger graph via selectProject on the auto-selected first
-    setTimeout(() => { if (activePath) loadGraph(); }, 350);
+    document.getElementById('graph-container').innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Cargando proyectos...</div>';
+    loadProjects(true);  // true = load graph after projects are ready
   </script>
 </body>
 </html>
