@@ -511,10 +511,10 @@ def index():
       if (k.includes('orchestrator')) return '#a855f7';
       if (k.includes('agent'))        return '#7c3aed';
       if (k.includes('hermes'))       return '#06b6d4';
-      if (k === 'file' || k === 'module') return p.file;
-      if (k === 'class' || k === 'interface' || k === 'csharp') return p.class;
+      if (k === 'file' || k === 'module' || k === 'scene') return p.file;
+      if (k === 'class' || k === 'interface' || k === 'csharp' || k === 'struct') return p.class;
       if (k === 'function' || k === 'method') return p.func;
-      if (k === 'asset' || k === 'struct' || k === 'enum') return p.asset;
+      if (k === 'asset' || k === 'ui' || k === 'enum') return p.asset;
       return p.file;
     }
 
@@ -697,10 +697,10 @@ def index():
 
       const filteredNodes = fullData.nodes.filter(n => {
         const k = n.kind || '';
-        if (k === 'file' && !showFile) return false;
-        if (k === 'class' && !showCls)  return false;
+        if ((k === 'file' || k === 'module' || k === 'scene') && !showFile) return false;
+        if ((k === 'class' || k === 'interface' || k === 'csharp' || k === 'struct') && !showCls) return false;
         if ((k === 'function' || k === 'method') && !showFn) return false;
-        if ((k.includes('agent') || k.includes('orchestrator') || k.includes('hermes')) && !showAgt) return false;
+        if ((k.includes('agent') || k.includes('orchestrator') || k.includes('hermes') || k === 'asset' || k === 'ui') && !showAgt) return false;
         if ((n.degree || 0) < minDeg)  return false;
         if (hideIso && (n.degree || 0) === 0) return false;
 

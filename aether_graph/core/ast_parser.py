@@ -6,9 +6,10 @@ from typing import Dict, Any, List, Set, Optional
 class ASTParser:
     def _check_openclaw_preindexed_graph(self, project_name: str) -> Optional[Dict[str, Any]]:
         search_paths = [
+            Path("/app/.aether-graph/code-graph") / f"graph.{project_name}.json",
+            Path(".aether-graph/code-graph") / f"graph.{project_name}.json",
             Path("/home/developer/Documentos/openclaw/data/code-graph") / f"graph.{project_name}.json",
             Path("/workspace/nexus/data/code-graph") / f"graph.{project_name}.json",
-            Path("/workspace/data/code-graph") / f"graph.{project_name}.json",
         ]
         for path in search_paths:
             if path.exists():
