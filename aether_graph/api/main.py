@@ -809,6 +809,12 @@ def index():
             .d3Force('link',   d3.forceLink().distance(80).strength(0.4))
             .d3Force('collide', d3.forceCollide().radius(22));
         } else {
+          // Assign initial 3D positions so nodes spread in X, Y, Z sphere
+          data.nodes.forEach(n => {
+            if (n.x === undefined) n.x = (Math.random() - 0.5) * 600;
+            if (n.y === undefined) n.y = (Math.random() - 0.5) * 600;
+            if (n.z === undefined) n.z = (Math.random() - 0.5) * 600;
+          });
           graphInst = ForceGraph3D()(container)
             .backgroundColor('#0b0e17')
             .graphData(data)
@@ -819,12 +825,15 @@ def index():
             .linkColor(() => p.link)
             .linkWidth(p.linkW)
             .linkDirectionalParticles(2)
-            .linkDirectionalParticleWidth(2.0)
+            .linkDirectionalParticleWidth(2.5)
             .linkDirectionalParticleSpeed(0.006)
-            .linkDirectionalArrowLength(4)
+            .linkDirectionalArrowLength(5)
             .linkDirectionalArrowRelPos(0.95)
-            .d3Force('charge', d3.forceManyBody ? d3.forceManyBody().strength(-200) : null)
-            .d3Force('collide', d3.forceCollide ? d3.forceCollide().radius(18) : null);
+            .nodeRelSize(5);
+
+          // Use 3D internal force engine (prevents 2D planar flattening)
+          graphInst.d3Force('charge').strength(-250);
+          graphInst.d3Force('link').distance(75);
         }
 
         applyFilter();
