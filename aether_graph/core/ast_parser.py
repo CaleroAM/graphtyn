@@ -5,9 +5,9 @@ from typing import Dict, Any, List, Set, Optional
 
 class ASTParser:
     """
-    Deterministic zero-token standalone AST code symbol parser for AetherGraph.
-    Parses Python, C#, JS/TS structural imports, classes, methods, calls, inheritance
-    and folder hierarchy without any external dependencies.
+    Deterministic zero-token standalone multi-language AST code symbol parser for AetherGraph.
+    Parses Python, C#, PHP, JS/TS, Java, Go, Rust, Ruby, C/C++ classes, functions, methods,
+    calls, inheritance and folder hierarchy without any external dependencies.
     """
 
     def parse_python_file(self, file_path: Path, root_dir: Path) -> Dict[str, Any]:
@@ -46,12 +46,19 @@ class ASTParser:
         symbol_name_map: Dict[str, str] = {}
 
         ignored_parts = {
-            "venv", ".venv", "node_modules", "__pycache__", "Library",
+            "vendor", "venv", ".venv", "node_modules", "__pycache__", "Library",
             "Logs", "Temp", "obj", "bin", "dist", "build", ".git", ".idea", "Captures", ".vs"
         }
 
         csharp_files: List[tuple] = []
         python_files: List[tuple] = []
+        php_files: List[tuple] = []
+        other_code_files: List[tuple] = []
+
+        valid_exts = (
+            ".py", ".cs", ".php", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".h", ".hpp",
+            ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json", ".md"
+        )
 
         # Pass 1: Build folder hierarchy backbone & file/asset nodes
         for path in root_dir.rglob("*"):
@@ -61,7 +68,7 @@ class ASTParser:
                 continue
 
             ext = path.suffix.lower()
-            if ext not in (".py", ".cs", ".js", ".ts", ".jsx", ".tsx", ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json", ".md"):
+            if ext not in valid_exts:
                 continue
 
             rel_file = str(path.relative_to(root_dir))
@@ -96,9 +103,53 @@ class ASTParser:
                 csharp_files.append((path, rel_file, f_id))
             elif ext == ".py":
                 python_files.append((path, rel_file, f_id))
+            elif ext == ".php":
+                php_files.append((path, rel_file, f_id))
+            elif ext in (".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp"):
+                other_code_files.append((path, rel_file, f_id, ext))
 
-        # Pass 2: Extract C# symbols, namespaces, methods, inheritance
         file_contents: Dict[str, str] = {}
+
+        # Pass 2A: Extract PHP symbols
+        for path, rel_file, f_id in php_files:
+            try:
+                content = path.read_text(encoding="utf-8", errors="ignore")
+                file_contents[rel_file] = content
+                ns_match = re.search(r"namespace\s+([A-Za-z0-9_\\]+);", content)
+                ns = ns_match.group(1) if ns_match else ""
+
+                for m in re.finditer(r"(class|interface|trait|enum)\s+([A-Za-z0-9_]+)(\s+extends\s+([A-Za-z0-9_\\]+))?", content):
+                    kind = m.group(1)
+                    cname = m.group(2)
+                    base = m.group(4)
+                    full_name = f"{ns}\\{cname}" if ns else cname
+                    sym_id = f"symbol:{rel_file}:{full_name}"
+
+                    if sym_id not in node_ids:
+                        nodes.append({
+                            "id": sym_id, "name": cname, "kind": kind,
+                            "val": 6, "color": "#f59e0b", "details": full_name
+                        })
+                        node_ids.add(sym_id)
+                        symbol_name_map[cname] = sym_id
+                        links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
+
+                for m in re.finditer(r"(public|private|protected|static|\s)*function\s+([A-Za-z0-9_]+)\s*\(", content):
+                    mname = m.group(2)
+                    if not mname.startswith("__") or mname in ("__construct", "__invoke"):
+                        sym_id = f"symbol:{rel_file}:{mname}"
+                        if sym_id not in node_ids:
+                            nodes.append({
+                                "id": sym_id, "name": mname, "kind": "function",
+                                "val": 3, "color": "#a78bfa", "details": f"Función/Método en {rel_file}"
+                            })
+                            node_ids.add(sym_id)
+                            symbol_name_map[mname] = sym_id
+                            links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
+            except Exception:
+                pass
+
+        # Pass 2B: Extract C# symbols, namespaces, methods, inheritance
         for path, rel_file, f_id in csharp_files:
             try:
                 content = path.read_text(encoding="utf-8", errors="ignore")
@@ -106,7 +157,6 @@ class ASTParser:
                 ns_match = re.search(r"namespace\s+([A-Za-z0-9_.]+)", content)
                 ns = ns_match.group(1) if ns_match else ""
 
-                # Classes / Interfaces / Structs / Enums
                 for m in re.finditer(r"(public|private|protected|internal)?\s*(abstract|sealed|partial)?\s*(class|interface|enum|struct)\s+([A-Za-z0-9_]+)(\s*:\s*([A-Za-z0-9_,\s]+))?", content):
                     kind = m.group(3)
                     cname = m.group(4)
@@ -131,7 +181,6 @@ class ASTParser:
                             if base_name in symbol_name_map:
                                 links.append({"source": sym_id, "target": symbol_name_map[base_name], "label": "hereda", "color": "rgba(245, 158, 11, 0.4)"})
 
-                # Methods
                 for m in re.finditer(r"(public|private|protected|internal)\s+(static|virtual|override|async)?\s*([A-Za-z0-9_<>]+)\s+([A-Za-z0-9_]+)\s*\([^)]*\)\s*\{", content):
                     mname = m.group(4)
                     if mname not in ("if", "for", "while", "switch", "catch"):
@@ -162,6 +211,28 @@ class ASTParser:
                     node_ids.add(sym_id)
                     symbol_name_map[sym["name"]] = sym_id
                 links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
+
+        # Pass 3B: Extract JS/TS/Java/Go/Rust symbols
+        for path, rel_file, f_id, ext in other_code_files:
+            try:
+                content = path.read_text(encoding="utf-8", errors="ignore")
+                file_contents[rel_file] = content
+                for m in re.finditer(r"(class|interface|struct|type|function|export function|fn|def)\s+([A-Za-z0-9_]+)", content):
+                    kind = m.group(1).replace("export ", "")
+                    cname = m.group(2)
+                    if cname not in ("if", "for", "while", "switch", "return"):
+                        sym_id = f"symbol:{rel_file}:{cname}"
+                        if sym_id not in node_ids:
+                            nodes.append({
+                                "id": sym_id, "name": cname, "kind": kind,
+                                "val": 4, "color": "#f59e0b" if kind in ("class", "interface", "struct") else "#a78bfa",
+                                "details": f"{kind} en {rel_file}"
+                            })
+                            node_ids.add(sym_id)
+                            symbol_name_map[cname] = sym_id
+                            links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
+            except Exception:
+                pass
 
         # Pass 4: Cross-symbol call / reference resolution
         for rel_file, content in file_contents.items():
