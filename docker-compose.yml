@@ -15,4 +15,5 @@ services:
       - ./.aether-graph:/app/.aether-graph
       - ./aether_graph:/app/aether_graph
       - ../:/workspace:ro
+      - /home/developer/Documentos/openclaw:/openclaw:ro
     restart: unless-stopped

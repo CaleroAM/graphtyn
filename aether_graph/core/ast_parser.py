@@ -146,36 +146,96 @@ class ASTParser:
         return graph
 
     def get_agent_topology_graph(self) -> Dict[str, Any]:
-        """Genera el grafo de topología de agentes del arnés y sus capacidades."""
-        nodes = [
-            {"id": "agent:nexus", "name": "Orchestrator (Nexus)", "kind": "orchestrator", "val": 28, "color": "#a855f7", "details": "Orquestador Conversacional Principal"},
-            {"id": "agent:career", "name": "Agent-Beta (Career)", "kind": "agent", "val": 20, "color": "#ec4899", "details": "Mentora de Carrera & Coach de Inglés"},
-            {"id": "agent:coord", "name": "Eva (Coord)", "kind": "agent", "val": 20, "color": "#eab308", "details": "Coordinadora de Proyectos"},
-            {"id": "agent:code", "name": "Agent-Code", "kind": "agent", "val": 20, "color": "#38bdf8", "details": "Estratega & Arquitecto de Código"},
-            {"id": "agent:db", "name": "Agent-DB", "kind": "agent", "val": 20, "color": "#f59e0b", "details": "Estratega de Bases de Datos & SQL"},
-            {"id": "agent:architect", "name": "Agent-Architect", "kind": "agent", "val": 20, "color": "#6366f1", "details": "Director Técnico & ADRs"},
-            {"id": "agent:devops", "name": "Agent-DevOps", "kind": "agent", "val": 20, "color": "#10b981", "details": "Estratega de Infraestructura & CI/CD"},
-            {"id": "agent:security", "name": "Agent-Security", "kind": "agent", "val": 20, "color": "#ef4444", "details": "Auditor DevSecOps & Zero-Trust"},
-            {"id": "agent:qa", "name": "Agent-QA", "kind": "agent", "val": 20, "color": "#14b8a6", "details": "Estratega de Testing & Visual QA"},
-            {"id": "agent:design", "name": "Agent-Design", "kind": "agent", "val": 20, "color": "#f43f5e", "details": "Estratega & Diseñador UI/UX"},
-            {"id": "agent:docs", "name": "Agent-Docs", "kind": "agent", "val": 20, "color": "#8b5cf6", "details": "Estratega de Documentación"},
+        """Descubre dinámicamente la topología de agentes y subagentes de OpenClaw y Hermes."""
+        nodes = []
+        links = []
+        node_ids: Set[str] = set()
 
-            {"id": "cap:file_operation", "name": "Gestión de Archivos", "kind": "capability", "val": 12, "color": "#94a3b8", "details": "Operaciones AST y Filesystem"},
-            {"id": "cap:data_operation", "name": "Operación de Datos", "kind": "capability", "val": 12, "color": "#94a3b8", "details": "Consultas SQLite y Schemas"},
-            {"id": "cap:security_audit", "name": "Auditoría de Seguridad", "kind": "capability", "val": 12, "color": "#94a3b8", "details": "Escaneo de vulnerabilidades y políticas"},
-            {"id": "cap:quality_assurance", "name": "Quality Assurance", "kind": "capability", "val": 12, "color": "#94a3b8", "details": "Pruebas unitarias y visual testing"},
-        ]
+        # 1. Agente Orquestador Raíz
+        nodes.append({
+            "id": "agent:nexus",
+            "name": "Orchestrator (Nexus)",
+            "kind": "orchestrator",
+            "val": 30,
+            "color": "#a855f7",
+            "details": "Orquestador Conversacional Principal (OpenClaw)"
+        })
+        node_ids.add("agent:nexus")
 
-        links = [
-            {"source": "agent:nexus", "target": "agent:code", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
-            {"source": "agent:nexus", "target": "agent:db", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
-            {"source": "agent:nexus", "target": "agent:security", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
-            {"source": "agent:nexus", "target": "agent:qa", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
-            {"source": "agent:nexus", "target": "agent:design", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
-            {"source": "agent:code", "target": "cap:file_operation", "label": "ejecuta", "color": "rgba(56, 189, 248, 0.85)"},
-            {"source": "agent:db", "target": "cap:data_operation", "label": "ejecuta", "color": "rgba(245, 158, 11, 0.85)"},
-            {"source": "agent:security", "target": "cap:security_audit", "label": "ejecuta", "color": "rgba(239, 68, 68, 0.85)"},
-            {"source": "agent:qa", "target": "cap:quality_assurance", "label": "ejecuta", "color": "rgba(20, 184, 166, 0.85)"},
+        # 2. Descubrir subagentes de OpenClaw desde data/workspace/
+        possible_workspace_dirs = [
+            Path("/openclaw/data/workspace"),
+            Path("/workspace/data/workspace"),
+            Path("/home/developer/Documentos/openclaw/data/workspace"),
         ]
+        workspace_dir = next((d for d in possible_workspace_dirs if d.exists()), None)
+        if workspace_dir:
+            for sub_dir in sorted(workspace_dir.iterdir()):
+                if sub_dir.is_dir() and not sub_dir.name.startswith("."):
+                    role_id = sub_dir.name
+                    if role_id == "nexus":
+                        continue
+                    
+                    ident_file = sub_dir / "IDENTITY.md"
+                    display_name = f"Agent-{role_id.capitalize()}"
+                    if ident_file.exists():
+                        for line in ident_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+                            if line.startswith("- **Name:**") or line.startswith("- **Nombre:**"):
+                                display_name = line.split(":", 1)[1].strip()
+                                break
+                    
+                    agent_node_id = f"agent:{role_id}"
+                    if agent_node_id not in node_ids:
+                        color_map = {
+                            "code": "#38bdf8", "db": "#f59e0b", "architect": "#6366f1",
+                            "devops": "#10b981", "security": "#ef4444", "qa": "#14b8a6",
+                            "design": "#f43f5e", "docs": "#8b5cf6", "career": "#ec4899", "coord": "#eab308"
+                        }
+                        nodes.append({
+                            "id": agent_node_id,
+                            "name": display_name,
+                            "kind": "subagent",
+                            "val": 22,
+                            "color": color_map.get(role_id, "#38bdf8"),
+                            "details": f"Subagente Especialista ({role_id})"
+                        })
+                        node_ids.add(agent_node_id)
+                        
+                        # Enlace de delegación desde Nexus
+                        links.append({
+                            "source": "agent:nexus",
+                            "target": agent_node_id,
+                            "label": "orquesta",
+                            "color": "rgba(168, 85, 247, 0.85)"
+                        })
+
+        # 3. Descubrir perfiles de Hermes (si existen)
+        possible_hermes_dirs = [
+            Path("/openclaw/hermes-data/profiles"),
+            Path("/workspace/hermes-data/profiles"),
+            Path("/home/developer/Documentos/openclaw/hermes-data/profiles"),
+        ]
+        hermes_dir = next((d for d in possible_hermes_dirs if d.exists()), None)
+        if hermes_dir:
+            for h_dir in sorted(hermes_dir.iterdir()):
+                if h_dir.is_dir() and not h_dir.name.startswith("."):
+                    h_id = f"hermes:{h_dir.name}"
+                    if h_id not in node_ids:
+                        nodes.append({
+                            "id": h_id,
+                            "name": f"Hermes-{h_dir.name}",
+                            "kind": "hermes_subagent",
+                            "val": 18,
+                            "color": "#06b6d4",
+                            "details": f"Perfil Hermes ({h_dir.name})"
+                        })
+                        node_ids.add(h_id)
+                        links.append({
+                            "source": "agent:nexus",
+                            "target": h_id,
+                            "label": "puente_hermes",
+                            "color": "rgba(6, 182, 212, 0.75)"
+                        })
+
         return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
 

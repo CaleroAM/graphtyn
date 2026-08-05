@@ -49,6 +49,18 @@ def run_mcp_server(workspace: Path):
                                 "properties": {"symbol": {"type": "string", "description": "Nombre de la función o clase"}},
                                 "required": ["symbol"]
                             }
+                        },
+                        {
+                            "name": "graph_register_project",
+                            "description": "Registra autónomamente una ruta de proyecto en AetherGraph (Opción 3: Registro por Agente).",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "path": {"type": "string", "description": "Ruta absoluta del proyecto"},
+                                    "name": {"type": "string", "description": "Nombre del proyecto"}
+                                },
+                                "required": ["path"]
+                            }
                         }
                     ]
                 }
@@ -78,6 +90,18 @@ def run_mcp_server(workspace: Path):
                         "content": [{"type": "text", "text": json.dumps({"symbol": symbol, "impacted_nodes": matches}, indent=2)}]
                     }
                 }
+            elif name == "graph_register_project":
+                path_str = args.get("path")
+                proj_name = args.get("name")
+                import urllib.request
+                data = json.dumps({"path": path_str, "name": proj_name, "mode": "agent_discovered"}).encode("utf-8")
+                req_obj = urllib.request.Request("http://127.0.0.1:9210/api/projects/register", data=data, headers={"Content-Type": "application/json"})
+                try:
+                    with urllib.request.urlopen(req_obj) as resp:
+                        res = json.loads(resp.read().decode())
+                        return {"jsonrpc": "2.0", "id": req_id, "result": {"content": [{"type": "text", "text": json.dumps(res, indent=2)}]}}
+                except Exception as e:
+                    return {"jsonrpc": "2.0", "id": req_id, "result": {"content": [{"type": "text", "text": json.dumps({"ok": False, "error": str(e)})}]}}
 
         return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": "Method not found"}}
 
