@@ -101,6 +101,52 @@ def register_project(payload: dict = Body(...)):
 
     return JSONResponse({"ok": True, "registered": new_entry, "mode": mode})
 
+import os, urllib.request
+
+def _enrich_with_ai(graph: dict, engine: str):
+    if engine == "ast_pure":
+        return graph
+
+    top_nodes = sorted(graph.get("nodes", []), key=lambda n: n.get("degree", 0), reverse=True)[:10]
+    
+    if engine == "ast_local_llm":
+        # Local Ollama AI enrichment
+        try:
+            url = os.environ.get("OLLAMA_HOST", "http://localhost:11434") + "/api/generate"
+            prompt = f"Resume en 1 frase corta en espanol la funcion principal de los componentes: {[n['name'] for n in top_nodes]}"
+            req = urllib.request.Request(url, data=json.dumps({
+                "model": "qwen2.5-coder", "prompt": prompt, "stream": False
+            }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                res = json.loads(resp.read().decode('utf-8'))
+                ans = res.get("response", "")
+                if ans:
+                    graph["metadata"]["ai_summary"] = ans
+                    for n in top_nodes:
+                        n["details"] = f"🤖 [Ollama AI] {n.get('details', '')}"
+        except Exception as e:
+            graph["metadata"]["ai_note"] = f"Ollama no disponible ({e})"
+
+    elif engine == "ast_cloud":
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+        if gemini_key:
+            try:
+                g_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+                req = urllib.request.Request(g_url, data=json.dumps({
+                    "contents": [{"parts": [{"text": f"Resume la arquitectura de estos 10 nodos de codigo: {[n['name'] for n in top_nodes]}"}]}]
+                }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    res = json.loads(resp.read().decode('utf-8'))
+                    text = res.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                    if text:
+                        graph["metadata"]["ai_summary"] = text
+                        for n in top_nodes:
+                            n["details"] = f"✨ [Gemini Cloud] {n.get('details', '')}"
+            except Exception as e:
+                graph["metadata"]["ai_note"] = f"Gemini API Error ({e})"
+
+    return graph
+
 @app.post("/api/reindex")
 def reindex_project(payload: dict = Body(...)):
     project_path = payload.get("path")
@@ -113,9 +159,10 @@ def reindex_project(payload: dict = Body(...)):
 
     graph = parser.scan_directory(root)
     graph["metadata"] = {"indexed_with": engine, "status": "ok", "path": str(root)}
+    graph = _enrich_with_ai(graph, engine)
     dot_dir = _index_dir(root)
     (dot_dir / "index.json").write_text(json.dumps(graph, indent=2))
-    return JSONResponse({"ok": True, "engine": engine, "nodes": len(graph["nodes"]), "links": len(graph["links"])})
+    return JSONResponse({"ok": True, "engine": engine, "nodes": len(graph["nodes"]), "links": len(graph["links"]), "metadata": graph["metadata"]})
 
 @app.get("/api/graph")
 def get_graph(path: str = ".", view: str = "code"):
@@ -407,7 +454,7 @@ def index():
             <label class="section-label">Estilo de Enlaces</label>
             <select id="link-style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateLinkStyles()">
               <option value="solid" selected>Línea Sólida (Recta)</option>
-              <option value="dashed">Línea Punteada</option>
+              <option value="dashed">Línea Punteada / Segmentada (3D)</option>
               <option value="curved">Línea Curva</option>
             </select>
             <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
@@ -1050,12 +1097,12 @@ function loadGraph() {
             .nodeLabel(n => `${n.name} (${n.kind || ''}) — ${n.degree || 0} conexiones`).onNodeClick(onNodeClick)
             .linkColor(() => p.link)
             .linkWidth(p.linkW)
-            .linkDirectionalParticles(() => (showParticles ? 2 : 0))
-            .linkDirectionalParticleWidth(2.5)
+            .linkDirectionalParticles(() => (showParticles ? 2 : (linkStyle === 'dashed' ? 3 : 0)))
+            .linkDirectionalParticleWidth(() => (linkStyle === 'dashed' ? 1.8 : 2.5))
             .linkDirectionalParticleSpeed(0.006)
             .linkDirectionalArrowLength(() => (showArrows ? 5 : 0))
             .linkDirectionalArrowRelPos(0.95)
-            .linkCurvature(() => (linkStyle === 'curved' ? 0.2 : 0.0))
+            .linkCurvature(() => (linkStyle === 'curved' ? 0.25 : (linkStyle === 'dashed' ? 0.15 : 0.0)))
             .nodeRelSize(5);
 
           // Use 3D internal force engine (prevents 2D planar flattening)
