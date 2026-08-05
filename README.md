@@ -53,13 +53,31 @@ Agrega lo siguiente a tu archivo `mcpServers` (ej. `~/.claude/claude.json`):
 
 ---
 
-## 🐳 Despliegue con Docker / Docker Compose
+## ⚡ Patrón de Desarrollo Autónomo (Zero-Downtime Hot-Reloading)
 
-```bash
-docker compose up -d
+Para permitir que agentes autónomos de IA (o desarrolladores) modifiquen código del servidor web y vistas de dashboard sin requerir reconstrucciones de Docker ni reinicios de proceso manuales, todos los nuevos servicios deben seguir este patrón en `docker-compose.yml`:
+
+```yaml
+version: "3.8"
+
+services:
+  aether-graph:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aether-graph-daemon
+    ports:
+      - "9210:9210"
+    environment:
+      - PORT=9210
+      - AETHER_ENV=development
+    volumes:
+      - ./.aether-graph:/app/.aether-graph
+      - ./aether_graph:/app/aether_graph # Montaje en vivo del código
+      - ../:/workspace:ro
+    command: ["aether-graph", "serve", "--host", "0.0.0.0", "--port", "9210", "--reload"]
+    restart: unless-stopped
 ```
-
-El demonio estará disponible en `http://localhost:9210`.
 
 ---
 
