@@ -119,7 +119,7 @@ def index():
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>AetherGraph — Graphify Style Engine</title>
+  <title>AetherGraph — Engine & Dashboard</title>
   <script src="//unpkg.com/force-graph"></script>
   <script src="//unpkg.com/3d-force-graph"></script>
   <style>
@@ -127,7 +127,7 @@ def index():
     body { margin: 0; padding: 0; background: #0b0e17; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
     header {
       position: absolute; top: 0; left: 240px; right: 260px; height: 50px; z-index: 50;
-      background: rgba(11, 14, 23, 0.9); backdrop-filter: blur(12px);
+      background: rgba(11, 14, 23, 0.92); backdrop-filter: blur(12px);
       border-bottom: 1px solid #1e293b;
       display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
     }
@@ -156,13 +156,24 @@ def index():
     .community-item label { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; overflow: hidden; }
     .comm-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
     
+    /* Dropdown Menus */
+    .dropdown-container { position: relative; display: inline-block; }
+    .dropdown-menu {
+      position: absolute; top: 100%; left: 0; margin-top: 6px; z-index: 100;
+      background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 12px;
+      width: 240px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
+    }
+    .dropdown-container.open .dropdown-menu { display: block; }
+    .filter-group { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: #cbd5e1; }
+    .filter-group label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+
     /* Floating Action Buttons Top Right */
     .floating-top-actions {
       position: absolute; top: 62px; right: 280px; z-index: 70; display: flex; gap: 8px;
     }
     
     .select-input, .btn-action {
-      padding: 7px 12px; border-radius: 6px; border: 1px solid #374151;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid #374151;
       background: #1f2937; color: #f8fafc; font-weight: 600; font-size: 11px; outline: none;
       cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
     }
@@ -176,7 +187,7 @@ def index():
     .mode-btn.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
     .search-input {
       background: #1f2937; border: 1px solid #374151; color: #f8fafc;
-      padding: 5px 10px; border-radius: 6px; font-size: 11px; outline: none; width: 140px;
+      padding: 5px 10px; border-radius: 6px; font-size: 11px; outline: none; width: 130px;
     }
     .search-input:focus { border-color: #38bdf8; }
     #graph-container { width: calc(100vw - 500px); margin-left: 240px; height: 100vh; pt: 50px; }
@@ -212,7 +223,57 @@ def index():
       <div style="width:1px; height:16px; background:#334155; margin:0 2px;"></div>
       <button class="mode-btn active" id="dim-2d" onclick="setDimension('2d')">2D Canvas</button>
       <button class="mode-btn" id="dim-3d" onclick="setDimension('3d')">3D Force</button>
-      <input type="text" class="search-input" id="search-box" placeholder="Filtrar nodo..." oninput="filterGraph()">
+      
+      <!-- Dropdown Menu: Node Filters -->
+      <div class="dropdown-container" id="filter-dd">
+        <button class="btn-action" onclick="toggleDropdown('filter-dd')">
+          <svg class="svg-ico" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+          Filtros de Nodo ▾
+        </button>
+        <div class="dropdown-menu">
+          <div class="section-title" style="margin-bottom:8px;">Tipo de Nodo</div>
+          <div class="filter-group">
+            <label><input type="checkbox" id="f-file" checked onchange="filterGraph()"> Archivos</label>
+            <label><input type="checkbox" id="f-class" checked onchange="filterGraph()"> Clases</label>
+            <label><input type="checkbox" id="f-func" checked onchange="filterGraph()"> Funciones</label>
+            <label><input type="checkbox" id="f-agent" checked onchange="filterGraph()"> Agentes</label>
+            <hr style="border:none; border-top:1px solid #374151; margin:6px 0;">
+            <div style="display:flex; justify-content:space-between; font-size:11px;">
+              <span>Min Conexiones:</span>
+              <span id="min-deg-val" style="color:#38bdf8; font-weight:700;">0</span>
+            </div>
+            <input type="range" id="min-degree" min="0" max="10" value="0" style="width:100%;" oninput="document.getElementById('min-deg-val').innerText=this.value; filterGraph();">
+            <label style="margin-top:4px;"><input type="checkbox" id="f-hide-isolated" onchange="filterGraph()"> Ocultar Aislados</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dropdown Menu: Settings -->
+      <div class="dropdown-container" id="settings-dd">
+        <button class="btn-action" onclick="toggleDropdown('settings-dd')">
+          <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+          Paleta & Motor ▾
+        </button>
+        <div class="dropdown-menu">
+          <div class="filter-group">
+            <label style="display:block;">Paleta de Color:</label>
+            <select id="palette-select" class="select-input" onchange="changePalette()">
+              <option value="obsidian" selected>Obsidian Dark</option>
+              <option value="cyberpunk">Neon Cyberpunk</option>
+              <option value="monochrome">Monochrome Slate</option>
+              <option value="matrix">Emerald Matrix</option>
+            </select>
+            <label style="display:block; margin-top:6px;">Motor de Reindexación:</label>
+            <select id="engine-select" class="select-input">
+              <option value="ast_local_llm" selected>AST + IA Local (Ollama Qwen2.5)</option>
+              <option value="ast_cloud_api">AST + IA Cloud API (Gemini/Claude)</option>
+              <option value="ast_pure">AST Cero Tokens (Pure AST)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <input type="text" class="search-input" id="search-box" placeholder="Buscar nodo..." oninput="filterGraph()">
     </div>
     <div id="stats" style="font-size:11px; color:#64748b;">Cargando grafo...</div>
   </header>
@@ -235,10 +296,34 @@ def index():
     let activePath = ".";
     let activeView = "code";
     let dimensionMode = "2d";
+    let activePalette = "obsidian";
     let graphInstance = null;
     let fullData = { nodes: [], links: [] };
 
+    const PALETTES = {
+      obsidian: { file: '#38bdf8', class: '#f59e0b', func: '#a78bfa', agent: '#a855f7', link: 'rgba(255, 255, 255, 0.12)' },
+      cyberpunk: { file: '#00f0ff', class: '#ffe600', func: '#ff007f', agent: '#7000ff', link: 'rgba(0, 240, 255, 0.18)' },
+      monochrome: { file: '#f8fafc', class: '#cbd5e1', func: '#94a3b8', agent: '#64748b', link: 'rgba(203, 213, 225, 0.12)' },
+      matrix: { file: '#10b981', class: '#34d399', func: '#059669', agent: '#047857', link: 'rgba(16, 185, 129, 0.18)' }
+    };
+
     const COMM_COLORS = ['#38bdf8', '#f59e0b', '#ef4444', '#10b981', '#a78bfa', '#ec4899', '#06b6d4', '#84cc16', '#eab308', '#6366f1'];
+
+    function toggleDropdown(id) {
+      const el = document.getElementById(id);
+      const isOpen = el.classList.contains('open');
+      document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('open'));
+      if (!isOpen) {
+        el.classList.add('open');
+      }
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown-container')) {
+        document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('open'));
+      }
+    });
 
     function loadProjects() {
       fetch('/api/projects')
@@ -301,13 +386,22 @@ def index():
       loadGraph();
     }
 
+    function changePalette() {
+      activePalette = document.getElementById('palette-select').value;
+      if (graphInstance) {
+        const p = PALETTES[activePalette] || PALETTES.obsidian;
+        graphInstance.nodeColor(n => getNodeColor(n)).linkColor(() => p.link);
+      }
+    }
+
     function reindexCurrent() {
       const btn = document.getElementById('reindex-btn');
+      const engine = document.getElementById('engine-select').value;
       btn.innerText = 'Indexando...';
       fetch('/api/reindex', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({path: activePath})
+        body: JSON.stringify({path: activePath, engine: engine})
       })
       .then(r => r.json())
       .then(() => {
@@ -315,6 +409,16 @@ def index():
         loadProjects();
         loadGraph();
       });
+    }
+
+    function getNodeColor(n) {
+      const p = PALETTES[activePalette] || PALETTES.obsidian;
+      const k = n.kind || '';
+      if (k === 'file') return p.file;
+      if (k === 'class') return p.class;
+      if (k === 'function') return p.func;
+      if (k.includes('agent') || k.includes('orchestrator')) return p.agent;
+      return p.file;
     }
 
     function renderCommunitiesSidebar(data) {
@@ -349,11 +453,26 @@ def index():
 
     function filterGraph() {
       const q = document.getElementById('search-box').value.toLowerCase();
+      const showFile = document.getElementById('f-file') ? document.getElementById('f-file').checked : true;
+      const showClass = document.getElementById('f-class') ? document.getElementById('f-class').checked : true;
+      const showFunc = document.getElementById('f-func') ? document.getElementById('f-func').checked : true;
+      const showAgent = document.getElementById('f-agent') ? document.getElementById('f-agent').checked : true;
+      const minDegree = document.getElementById('min-degree') ? parseInt(document.getElementById('min-degree').value) || 0 : 0;
+      const hideIsolated = document.getElementById('f-hide-isolated') ? document.getElementById('f-hide-isolated').checked : false;
+
       const activeComms = new Set(
         Array.from(document.querySelectorAll('.comm-chk:checked')).map(c => c.getAttribute('data-comm'))
       );
 
       const filteredNodes = fullData.nodes.filter(n => {
+        const kind = n.kind || '';
+        if (kind === 'file' && !showFile) return false;
+        if (kind === 'class' && !showClass) return false;
+        if (kind === 'function' && !showFunc) return false;
+        if ((kind.includes('agent') || kind.includes('orchestrator')) && !showAgent) return false;
+        if ((n.degree || 0) < minDegree) return false;
+        if (hideIsolated && (n.degree || 0) === 0) return false;
+
         const cName = n.name ? n.name.split('.')[0] : 'general';
         if (activeComms.size > 0 && !activeComms.has(cName)) return false;
         if (q && !n.name.toLowerCase().includes(q) && !(n.details && n.details.toLowerCase().includes(q))) return false;
@@ -382,6 +501,7 @@ def index():
           renderCommunitiesSidebar(data);
 
           const container = document.getElementById('graph-container');
+          const p = PALETTES[activePalette] || PALETTES.obsidian;
 
           if (dimensionMode === '2d') {
             if (!graphInstance) {
@@ -393,8 +513,8 @@ def index():
               .nodeId('id')
               .nodeVal(n => Math.max(2, Math.min(6, (n.degree || 1) * 0.8)))
               .nodeLabel(n => `${n.name}\n${n.details || ''}\nConexiones: ${n.degree || 0}`)
-              .nodeColor(n => n.color || '#38bdf8')
-              .linkColor(() => 'rgba(255, 255, 255, 0.12)')
+              .nodeColor(n => getNodeColor(n))
+              .linkColor(() => p.link)
               .linkWidth(0.8)
               .d3AlphaDecay(0.02)
               .d3VelocityDecay(0.3)
@@ -411,8 +531,8 @@ def index():
               .nodeId('id')
               .nodeVal(n => Math.max(3, Math.min(8, (n.degree || 1) * 1.0)))
               .nodeLabel(n => `${n.name}\n${n.details || ''}\nConexiones: ${n.degree || 0}`)
-              .nodeColor(n => n.color || '#38bdf8')
-              .linkColor(() => 'rgba(255, 255, 255, 0.15)')
+              .nodeColor(n => getNodeColor(n))
+              .linkColor(() => p.link)
               .linkWidth(1.0);
           }
 
