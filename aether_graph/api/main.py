@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from fastapi import FastAPI, Query, Body
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -476,17 +477,13 @@ def index():
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     function getCommKey(n) {
-      if (n.kind === 'file') {
-        const parts = (n.details || n.name).split(/[\/\\]/);
-        // Use parent folder name as community key
-        return parts.length > 1 ? parts[parts.length - 2] : parts[0].replace(/\.[^.]+$/, '');
-      }
-      // For symbols: use the file path's parent folder
-      if (n.details) {
-        const parts = n.details.split(/[\/\\]/);
-        if (parts.length > 1) return parts[parts.length - 2];
-      }
-      return n.name ? n.name.split('.')[0] : 'general';
+      const raw = (n.details && n.kind === 'file') ? n.details : (n.details || n.name || 'general');
+      const sep = raw.includes('/') ? '/' : '\\\\';
+      const parts = raw.split(sep).filter(Boolean);
+      if (parts.length > 1) return parts[parts.length - 2];
+      const leaf = parts[0] || 'general';
+      const dotIdx = leaf.indexOf('.');
+      return dotIdx > 0 ? leaf.substring(0, dotIdx) : leaf;
     }
 
     function nodeColor(n) {
@@ -686,7 +683,7 @@ def index():
         // Community filter — match by folder name or name prefix
         if (activeComms.size > 0) {
           let key = n.kind === 'file'
-            ? (n.details || n.name).split(/[\\/]/).slice(-2, -1)[0] || n.name.split('.')[0]
+            ? (n.details || n.name).split('/').slice(-2, -1)[0] || n.details.split('\\').slice(-2, -1)[0] || n.name.split('.')[0]
             : n.name.split('.')[0];
           if (!activeComms.has(key)) return false;
         }
