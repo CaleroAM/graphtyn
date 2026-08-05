@@ -91,6 +91,7 @@ def register_project(payload: dict = Body(...)):
 @app.post("/api/reindex")
 def reindex_project(payload: dict = Body(...)):
     project_path = payload.get("path")
+    engine = payload.get("engine", "ast_local_llm") # ast_pure | ast_local_llm | ast_cloud_api
     if not project_path:
         return JSONResponse({"ok": False, "error": "Falta la ruta del proyecto"}, status_code=400)
     root = Path(project_path).resolve()
@@ -100,8 +101,9 @@ def reindex_project(payload: dict = Body(...)):
     graph = parser.scan_directory(root)
     dot_dir = root / ".aether-graph"
     dot_dir.mkdir(exist_ok=True)
+    graph["metadata"] = {"indexed_with": engine, "status": "ok"}
     (dot_dir / "index.json").write_text(json.dumps(graph, indent=2))
-    return JSONResponse({"ok": True, "nodes": len(graph["nodes"]), "links": len(graph["links"])})
+    return JSONResponse({"ok": True, "engine": engine, "nodes": len(graph["nodes"]), "links": len(graph["links"])})
 
 @app.get("/api/graph")
 def get_graph(path: str = ".", view: str = "code"):
@@ -117,21 +119,21 @@ def index():
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>AetherGraph — Graphify Style Engine</title>
+  <title>AetherGraph — Engine & Dashboard</title>
   <script src="//unpkg.com/force-graph"></script>
   <script src="//unpkg.com/3d-force-graph"></script>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: #0f172a; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+    body { margin: 0; padding: 0; background: #0b0f19; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
     header {
-      position: absolute; top: 0; left: 260px; right: 0; height: 52px; z-index: 50;
-      background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px);
+      position: absolute; top: 0; left: 280px; right: 0; height: 54px; z-index: 50;
+      background: rgba(11, 15, 25, 0.92); backdrop-filter: blur(16px);
       border-bottom: 1px solid #1e293b;
       display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
     }
     aside {
-      position: absolute; top: 0; left: 0; bottom: 0; width: 260px; z-index: 60;
-      background: #0f172a; border-right: 1px solid #1e293b;
+      position: absolute; top: 0; left: 0; bottom: 0; width: 280px; z-index: 60;
+      background: #0b0f19; border-right: 1px solid #1e293b;
       display: flex; flex-direction: column; justify-content: space-between; padding: 16px 14px;
     }
     .brand { font-weight: 700; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; letter-spacing: -0.5px; }
@@ -147,15 +149,15 @@ def index():
     .filter-panel { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; margin-top: 10px; }
     .filter-group { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: #cbd5e1; }
     .filter-group label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    .btn-action {
-      width: 100%; padding: 9px; border-radius: 6px; border: 1px solid #334155;
-      background: #1e293b; color: #f8fafc; font-weight: 600; font-size: 11px;
-      cursor: pointer; transition: all 0.15s; margin-top: 6px;
+    .select-input, .btn-action {
+      width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334155;
+      background: #1e293b; color: #f8fafc; font-weight: 600; font-size: 11px; outline: none;
+      cursor: pointer; transition: all 0.15s; margin-top: 4px;
     }
     .btn-action:hover { background: #334155; border-color: #475569; }
     .mode-btn {
       background: #1e293b; border: 1px solid #334155; color: #94a3b8;
-      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s;
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s; display: flex; align-items: center; gap: 5px;
     }
     .mode-btn.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
     .search-input {
@@ -163,44 +165,62 @@ def index():
       padding: 6px 12px; border-radius: 6px; font-size: 11px; outline: none; width: 160px;
     }
     .search-input:focus { border-color: #38bdf8; }
-    #graph-container { width: calc(100vw - 260px); margin-left: 260px; height: 100vh; pt: 52px; }
+    #graph-container { width: calc(100vw - 280px); margin-left: 280px; height: 100vh; pt: 54px; }
+    .svg-ico { width: 14px; height: 14px; fill: currentColor; }
   </style>
 </head>
 <body>
   <aside>
     <div>
-      <div class="brand">🌌 AetherGraph <span>Graphify Edition</span></div>
+      <div class="brand">
+        <svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l10-5v10l-10 5V11zm0 0L2 6v10l10 5V11z"/></svg>
+        AetherGraph <span>Obsidian Edition</span>
+      </div>
       <div class="section-title">Proyectos Registrados</div>
       <div class="project-list" id="project-list">Cargando...</div>
       
       <div class="filter-panel">
-        <div class="section-title">Filtros de Graphify</div>
+        <div class="section-title">Filtros & Paleta de Colores</div>
         <div class="filter-group">
-          <label><input type="checkbox" id="f-file" checked onchange="filterGraph()"> 📄 Archivos</label>
-          <label><input type="checkbox" id="f-class" checked onchange="filterGraph()"> 📦 Clases</label>
-          <label><input type="checkbox" id="f-func" checked onchange="filterGraph()"> ⚡ Funciones</label>
-          <label><input type="checkbox" id="f-agent" checked onchange="filterGraph()"> 🤖 Agentes</label>
+          <label><input type="checkbox" id="f-file" checked onchange="filterGraph()"> Archivos</label>
+          <label><input type="checkbox" id="f-class" checked onchange="filterGraph()"> Clases</label>
+          <label><input type="checkbox" id="f-func" checked onchange="filterGraph()"> Funciones</label>
+          <label><input type="checkbox" id="f-agent" checked onchange="filterGraph()"> Agentes</label>
           <hr style="border:none; border-top:1px solid #334155; margin:4px 0;">
           <label>Min Conexiones: <span id="min-deg-val">0</span></label>
           <input type="range" id="min-degree" min="0" max="10" value="0" oninput="document.getElementById('min-deg-val').innerText=this.value; filterGraph();">
-          <label><input type="checkbox" id="f-hide-isolated" onchange="filterGraph()"> 🚫 Ocultar Nodos Aislados</label>
+          <label><input type="checkbox" id="f-hide-isolated" onchange="filterGraph()"> Ocultar Nodos Aislados</label>
+          <hr style="border:none; border-top:1px solid #334155; margin:4px 0;">
+          <label>Paleta de Color:</label>
+          <select id="palette-select" class="select-input" onchange="changePalette()">
+            <option value="obsidian" selected>Obsidian Dark</option>
+            <option value="cyberpunk">Neon Cyberpunk</option>
+            <option value="monochrome">Monochrome Slate</option>
+            <option value="matrix">Emerald Matrix</option>
+          </select>
+          <label style="margin-top:6px;">Motor de Reindexación:</label>
+          <select id="engine-select" class="select-input">
+            <option value="ast_local_llm" selected>AST + IA Local (Ollama Qwen2.5)</option>
+            <option value="ast_cloud_api">AST + IA Cloud API (Gemini/Claude)</option>
+            <option value="ast_pure">AST Cero Tokens (Pure AST)</option>
+          </select>
         </div>
       </div>
     </div>
     <div>
-      <button class="btn-action" onclick="promptRegisterProject()">➕ Registrar Proyecto / Carpeta</button>
-      <button class="btn-action" id="reindex-btn" onclick="reindexCurrent()">⚡ Reindexar Grafo AST</button>
+      <button class="btn-action" onclick="promptRegisterProject()">+ Registrar Proyecto</button>
+      <button class="btn-action" id="reindex-btn" onclick="reindexCurrent()">Reindexar Grafo AST</button>
     </div>
   </aside>
 
   <header>
     <div style="display:flex; gap:8px; align-items:center;">
-      <button class="mode-btn active" id="tab-code" onclick="setView('code')">🕸️ Code AST</button>
-      <button class="mode-btn" id="tab-agents" onclick="setView('agents')">🤖 Harness Topology</button>
+      <button class="mode-btn active" id="tab-code" onclick="setView('code')">Code AST</button>
+      <button class="mode-btn" id="tab-agents" onclick="setView('agents')">Harness Topology</button>
       <div style="width:1px; height:18px; background:#334155; margin:0 4px;"></div>
       <button class="mode-btn active" id="dim-2d" onclick="setDimension('2d')">2D Canvas</button>
       <button class="mode-btn" id="dim-3d" onclick="setDimension('3d')">3D Force</button>
-      <input type="text" class="search-input" id="search-box" placeholder="🔍 Filtrar nodo..." oninput="filterGraph()">
+      <input type="text" class="search-input" id="search-box" placeholder="Filtrar nodo..." oninput="filterGraph()">
     </div>
     <div id="stats" style="font-size:11px; color:#64748b;">Cargando grafo...</div>
   </header>
@@ -211,8 +231,16 @@ def index():
     let activePath = ".";
     let activeView = "code";
     let dimensionMode = "2d";
+    let activePalette = "obsidian";
     let graphInstance = null;
     let fullData = { nodes: [], links: [] };
+
+    const PALETTES = {
+      obsidian: { file: '#38bdf8', class: '#f59e0b', func: '#a78bfa', agent: '#a855f7', link: 'rgba(148, 163, 184, 0.45)' },
+      cyberpunk: { file: '#00f0ff', class: '#ffe600', func: '#ff007f', agent: '#7000ff', link: 'rgba(0, 240, 255, 0.45)' },
+      monochrome: { file: '#f8fafc', class: '#cbd5e1', func: '#94a3b8', agent: '#64748b', link: 'rgba(203, 213, 225, 0.35)' },
+      matrix: { file: '#10b981', class: '#34d399', func: '#059669', agent: '#047857', link: 'rgba(16, 185, 129, 0.45)' }
+    };
 
     function loadProjects() {
       fetch('/api/projects')
@@ -221,8 +249,8 @@ def index():
           const listEl = document.getElementById('project-list');
           listEl.innerHTML = projects.map(p => `
             <div class="project-item ${p.path === activePath ? 'active' : ''}" onclick="selectProject('${p.path}')">
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px;">${p.name}</span>
-              <span style="font-size:9px; color:${p.indexed ? '#10b981' : '#ef4444'};">${p.indexed ? '🟢' : '🔴'}</span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;">${p.name}</span>
+              <span style="font-size:9px; color:${p.indexed ? '#10b981' : '#ef4444'};">${p.indexed ? 'Indexado' : 'Pendiente'}</span>
             </div>
           `).join('');
         });
@@ -275,20 +303,36 @@ def index():
       loadGraph();
     }
 
+    function changePalette() {
+      activePalette = document.getElementById('palette-select').value;
+      loadGraph();
+    }
+
     function reindexCurrent() {
       const btn = document.getElementById('reindex-btn');
-      btn.innerText = '⚡ Indexando...';
+      const engine = document.getElementById('engine-select').value;
+      btn.innerText = 'Indexando...';
       fetch('/api/reindex', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({path: activePath})
+        body: JSON.stringify({path: activePath, engine: engine})
       })
       .then(r => r.json())
       .then(() => {
-        btn.innerText = '⚡ Reindexar Grafo AST';
+        btn.innerText = 'Reindexar Grafo AST';
         loadProjects();
         loadGraph();
       });
+    }
+
+    function getNodeColor(n) {
+      const p = PALETTES[activePalette] || PALETTES.obsidian;
+      const k = n.kind || '';
+      if (k === 'file') return p.file;
+      if (k === 'class') return p.class;
+      if (k === 'function') return p.func;
+      if (k.includes('agent') || k.includes('orchestrator')) return p.agent;
+      return p.file;
     }
 
     function filterGraph() {
@@ -328,42 +372,43 @@ def index():
         .then(res => res.json())
         .then(data => {
           fullData = data;
-          document.getElementById('stats').innerText = `${data.nodes.length} nodos · ${data.links.length} conectores (${dimensionMode.toUpperCase()} Graphify Style)`;
+          document.getElementById('stats').innerText = `${data.nodes.length} nodos · ${data.links.length} conectores (${dimensionMode.toUpperCase()} Obsidian Style)`;
 
           const container = document.getElementById('graph-container');
+          const p = PALETTES[activePalette] || PALETTES.obsidian;
 
           if (dimensionMode === '2d') {
             if (!graphInstance) {
               graphInstance = ForceGraph()(container);
             }
             graphInstance
-              .backgroundColor('#0f172a')
+              .backgroundColor('#0b0f19')
               .graphData(data)
               .nodeId('id')
-              .nodeVal(n => n.val || (4 + (n.degree || 0) * 1.5))
-              .nodeLabel(n => `${n.name}\n${n.details || ''}\n📊 Conexiones: ${n.degree || 0}`)
-              .nodeColor(n => n.color || '#38bdf8')
-              .linkColor(() => 'rgba(148, 163, 184, 0.25)')
-              .linkWidth(1.2)
-              .linkDirectionalArrowLength(3.5)
+              .nodeVal(n => n.val || (6 + (n.degree || 0) * 2))
+              .nodeLabel(n => `${n.name}\n${n.details || ''}\nConexiones: ${n.degree || 0}`)
+              .nodeColor(n => getNodeColor(n))
+              .linkColor(() => p.link)
+              .linkWidth(1.6)
+              .linkDirectionalArrowLength(4.5)
               .linkDirectionalArrowRelPos(0.95)
-              .d3Force('charge', d3.forceManyBody().strength(-200))
-              .d3Force('link', d3.forceLink().distance(60))
-              .d3Force('collide', d3.forceCollide().radius(n => 14 + (n.degree || 0) * 2));
+              .d3Force('charge', d3.forceManyBody().strength(-450))
+              .d3Force('link', d3.forceLink().distance(120))
+              .d3Force('collide', d3.forceCollide().radius(n => 24 + (n.degree || 0) * 3));
           } else {
             if (!graphInstance) {
               graphInstance = ForceGraph3D()(container);
             }
             graphInstance
-              .backgroundColor('#0f172a')
+              .backgroundColor('#0b0f19')
               .graphData(data)
               .nodeId('id')
-              .nodeVal(n => n.val || (6 + (n.degree || 0) * 2))
-              .nodeLabel(n => `${n.name}\n${n.details || ''}\n📊 Conexiones: ${n.degree || 0}`)
-              .nodeColor(n => n.color || '#38bdf8')
-              .linkColor(() => 'rgba(148, 163, 184, 0.3)')
-              .linkWidth(1.5)
-              .linkDirectionalArrowLength(4.0)
+              .nodeVal(n => n.val || (8 + (n.degree || 0) * 2.5))
+              .nodeLabel(n => `${n.name}\n${n.details || ''}\nConexiones: ${n.degree || 0}`)
+              .nodeColor(n => getNodeColor(n))
+              .linkColor(() => p.link)
+              .linkWidth(1.8)
+              .linkDirectionalArrowLength(5.0)
               .linkDirectionalArrowRelPos(0.95);
           }
 
