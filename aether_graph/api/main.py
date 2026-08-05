@@ -530,7 +530,7 @@ def index():
   <!-- ===== FLOATING BLAST RADIUS PANEL ===== -->
   <div id="blast-panel" style="position:absolute;bottom:16px;right:276px;z-index:90;background:#111827;border:1px solid #374151;border-radius:10px;padding:12px 14px;width:280px;box-shadow:0 16px 36px rgba(0,0,0,0.6);display:none;">
     <div style="font-weight:700;font-size:12px;color:#38bdf8;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <span style="display:flex;align-items:center;gap:5px;">🎯 Radio de Impacto</span>
+      <span style="display:flex;align-items:center;gap:5px;">Radio de Impacto</span>
       <button onclick="closeBlastPanel()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;">✕</button>
     </div>
     <div id="blast-content" style="font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:6px;"></div>
@@ -937,7 +937,7 @@ def index():
           '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
         '</div>' +
-        '<button class="btn-action btn-primary" style="margin-top:4px;justify-content:center;" data-node-id="' + node.id.replace(/"/g, '&quot;') + '" onclick="focusNode(this.dataset.nodeId)">🎯 Centrar y Enfocar</button>' +
+        '<button class="btn-action btn-primary" style="margin-top:4px;justify-content:center;" data-node-id="' + node.id.replace(/"/g, '&quot;') + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
         '<hr style="border:none;border-top:1px solid #1e293b;margin:4px 0;">' +
         '<div style="font-weight:700;color:#64748b;font-size:10px;">VECINOS DIRECTOS (BLAST RADIUS):</div>' +
         '<div style="max-height:110px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">' +
