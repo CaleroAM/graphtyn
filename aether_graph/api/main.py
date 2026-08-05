@@ -127,556 +127,640 @@ def index():
   <script src="//unpkg.com/force-graph"></script>
   <script src="//unpkg.com/3d-force-graph"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: #0b0e17; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
-    
-    /* Modern Sleek Scrollbars */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #0b0e17; }
-    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+    body { margin:0; padding:0; background:#0b0e17; color:#f8fafc; font-family:'Inter',ui-sans-serif,sans-serif; overflow:hidden; }
+
+    /* Thin dark scrollbar */
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#2d3748; border-radius:4px; }
+    ::-webkit-scrollbar-thumb:hover { background:#38bdf8; }
 
     header {
-      position: absolute; top: 0; left: 240px; right: 260px; height: 52px; z-index: 50;
-      background: rgba(11, 14, 23, 0.95); backdrop-filter: blur(12px);
-      border-bottom: 1px solid #1e293b;
-      display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+      position:absolute; top:0; left:240px; right:260px; height:52px; z-index:50;
+      background:rgba(11,14,23,0.97); backdrop-filter:blur(16px);
+      border-bottom:1px solid #1e293b;
+      display:flex; align-items:center; justify-content:space-between; padding:0 14px; gap:6px;
     }
+
     aside.left-aside {
-      position: absolute; top: 0; left: 0; bottom: 0; width: 240px; z-index: 60;
-      background: #0b0e17; border-right: 1px solid #1e293b;
-      display: flex; flex-direction: column; padding: 14px;
+      position:absolute; top:0; left:0; bottom:0; width:240px; z-index:60;
+      background:#0d1117; border-right:1px solid #1e293b;
+      display:flex; flex-direction:column; padding:14px;
     }
     aside.right-aside {
-      position: absolute; top: 0; right: 0; bottom: 0; width: 260px; z-index: 60;
-      background: #0b0e17; border-left: 1px solid #1e293b;
-      display: flex; flex-direction: column; padding: 14px; overflow-y: auto;
+      position:absolute; top:0; right:0; bottom:0; width:260px; z-index:60;
+      background:#0d1117; border-left:1px solid #1e293b;
+      display:flex; flex-direction:column; padding:14px;
+      overflow:hidden;
     }
-    .brand { font-weight: 700; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; letter-spacing: -0.5px; }
-    .section-title { font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 1.2px; margin-bottom: 8px; font-weight: 700; }
-    .project-list, .community-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 2px; }
+
+    .brand { font-weight:700; font-size:14px; color:#38bdf8; display:flex; align-items:center; gap:7px; margin-bottom:14px; }
+    .section-label { font-size:9px; text-transform:uppercase; letter-spacing:1.4px; color:#475569; font-weight:700; margin-bottom:8px; }
+
+    /* Left: project list */
+    .project-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:3px; }
     .project-item {
-      padding: 8px 10px; border-radius: 6px; font-size: 11px; color: #94a3b8; cursor: pointer;
-      display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; border: 1px solid #1e293b; background: #111827;
+      padding:7px 9px; border-radius:6px; font-size:11px; color:#94a3b8; cursor:pointer;
+      display:flex; justify-content:space-between; align-items:center;
+      transition:all 0.12s; border:1px solid transparent; background:#111827;
     }
-    .project-item:hover { background: #1f2937; color: #f8fafc; border-color: #374151; }
-    .project-item.active { background: rgba(56, 189, 248, 0.12); border-color: #38bdf8; color: #38bdf8; font-weight: 600; }
-    
+    .project-item:hover { background:#1a2234; color:#e2e8f0; border-color:#2d3748; }
+    .project-item.active { background:rgba(56,189,248,0.1); border-color:#38bdf8; color:#38bdf8; font-weight:600; }
+    .proj-badge { font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; flex-shrink:0; }
+    .proj-badge.ok { color:#10b981; background:rgba(16,185,129,0.12); }
+    .proj-badge.pend { color:#f59e0b; background:rgba(245,158,11,0.12); }
+
+    /* Right: communities */
+    .comm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .comm-select-all { font-size:10px; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:5px; }
+    .community-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1px; padding-right:2px; }
     .community-item {
-      display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #cbd5e1; padding: 4px 6px; border-radius: 6px; transition: background 0.15s;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:4px 4px; border-radius:5px; transition:background 0.1s; cursor:pointer;
     }
-    .community-item:hover { background: #111827; }
-    .community-item label { display: flex; align-items: center; gap: 6px; cursor: pointer; flex: 1; min-width: 0; margin: 0; }
-    .comm-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-    .comm-badge { font-size: 10px; font-weight: 700; color: #64748b; background: #1f2937; padding: 2px 6px; border-radius: 10px; flex-shrink: 0; margin-left: 6px; }
-    
-    /* Custom SVG Checkbox Toggle */
-    .custom-chk { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #cbd5e1; cursor: pointer; padding: 2px 0; }
-    .custom-chk input { display: none; }
-    .chk-box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #4b5563; background: #1f2937; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
-    .custom-chk input:checked + .chk-box { background: #0284c7; border-color: #38bdf8; }
-    .chk-box svg { width: 9px; height: 9px; stroke: #fff; stroke-width: 3; fill: none; display: none; }
-    .custom-chk input:checked + .chk-box svg { display: block; }
-    
-    /* Dropdown Menus */
-    .dropdown-container { position: relative; display: inline-block; }
-    .dropdown-menu {
-      position: absolute; top: 100%; left: 0; margin-top: 6px; z-index: 100;
-      background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 12px;
-      width: 250px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
-    }
-    .dropdown-container.open .dropdown-menu { display: block; }
-    .filter-group { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: #cbd5e1; }
+    .community-item:hover { background:#111827; }
+    .comm-left { display:flex; align-items:center; gap:6px; flex:1; min-width:0; }
+    .comm-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .comm-name { font-size:11px; color:#cbd5e1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .comm-badge { font-size:9px; font-weight:700; color:#64748b; background:#1f2937; padding:1px 6px; border-radius:8px; flex-shrink:0; margin-left:4px; }
 
-    /* Custom Modal Overlay */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(8px); z-index: 200; display: none; align-items: center; justify-content: center;
+    /* Custom checkbox */
+    .chk-wrap { display:flex; align-items:center; flex-shrink:0; }
+    .chk-wrap input { display:none; }
+    .chk-box {
+      width:13px; height:13px; border-radius:3px; border:1px solid #4b5563;
+      background:#1f2937; display:flex; align-items:center; justify-content:center;
+      transition:all 0.12s; flex-shrink:0; cursor:pointer;
     }
-    .modal-overlay.active { display: flex; }
-    .modal-card {
-      background: #111827; border: 1px solid #374151; border-radius: 12px; width: 440px; max-width: 90vw; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-    }
-    .modal-title { font-weight: 700; font-size: 15px; color: #f8fafc; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
-    .mode-card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-    .mode-card {
-      background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 10px; cursor: pointer; text-align: center; font-size: 11px; transition: all 0.15s;
-    }
-    .mode-card:hover { border-color: #4b5569; background: #374151; }
-    .mode-card.selected { border-color: #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; }
+    .chk-wrap input:checked + .chk-box { background:#0284c7; border-color:#38bdf8; }
+    .chk-box svg { width:8px; height:8px; stroke:#fff; stroke-width:3; fill:none; display:none; }
+    .chk-wrap input:checked + .chk-box svg { display:block; }
 
-    /* Header High Contrast Buttons */
-    .floating-top-actions { position: absolute; top: 62px; right: 280px; z-index: 70; display: flex; gap: 8px; }
-    .select-input, .btn-action {
-      padding: 6px 12px; border-radius: 6px; border: 1px solid #475569;
-      background: #1e293b; color: #f8fafc; font-weight: 600; font-size: 11px; outline: none;
-      cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
-    }
-    .btn-action:hover { background: #334155; border-color: #38bdf8; color: #38bdf8; }
-    .btn-primary { background: #0284c7; border-color: #38bdf8; color: #fff; }
-    .btn-primary:hover { background: #0369a1; border-color: #0284c7; }
+    /* Header buttons */
     .mode-btn {
-      background: #1e293b; border: 1px solid #334155; color: #cbd5e1;
-      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s;
+      background:#1a2234; border:1px solid #2d3748; color:#94a3b8;
+      padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px; font-weight:600;
+      transition:all 0.12s; white-space:nowrap;
     }
-    .mode-btn:hover { border-color: #475569; color: #fff; }
-    .mode-btn.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.15); }
-    .search-input, .text-input {
-      background: #1e293b; border: 1px solid #334155; color: #f8fafc;
-      padding: 6px 10px; border-radius: 6px; font-size: 11px; outline: none; width: 140px;
+    .mode-btn:hover { border-color:#475569; color:#e2e8f0; }
+    .mode-btn.active { border-color:#38bdf8; color:#38bdf8; background:rgba(56,189,248,0.12); }
+    .sep { width:1px; height:16px; background:#1e293b; flex-shrink:0; }
+
+    .btn-action {
+      padding:5px 10px; border-radius:5px; border:1px solid #2d3748;
+      background:#1a2234; color:#e2e8f0; font-weight:600; font-size:11px;
+      cursor:pointer; transition:all 0.12s; display:flex; align-items:center; gap:5px; white-space:nowrap;
     }
-    .search-input:focus, .text-input:focus { border-color: #38bdf8; }
-    #graph-container { width: calc(100vw - 500px); margin-left: 240px; height: 100vh; pt: 52px; }
-    .svg-ico { width: 14px; height: 14px; fill: currentColor; }
+    .btn-action:hover { border-color:#38bdf8; color:#38bdf8; }
+    .btn-primary { background:#0369a1; border-color:#0284c7; color:#fff; }
+    .btn-primary:hover { background:#0284c7; border-color:#38bdf8; }
+    .search-input {
+      background:#1a2234; border:1px solid #2d3748; color:#f8fafc;
+      padding:5px 9px; border-radius:5px; font-size:11px; outline:none; width:130px;
+    }
+    .search-input:focus { border-color:#38bdf8; }
+    .svg-ico { width:13px; height:13px; fill:currentColor; flex-shrink:0; }
+
+    /* Dropdowns */
+    .dd-wrap { position:relative; }
+    .dd-panel {
+      position:absolute; top:calc(100% + 6px); left:0; z-index:200;
+      background:#111827; border:1px solid #2d3748; border-radius:8px; padding:12px;
+      width:240px; box-shadow:0 12px 30px rgba(0,0,0,0.6); display:none;
+    }
+    .dd-wrap.open .dd-panel { display:block; }
+    .filter-section { display:flex; flex-direction:column; gap:5px; }
+    .filter-row { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#cbd5e1; padding:2px 0; }
+
+    /* Floating actions */
+    .float-actions { position:absolute; top:60px; right:270px; z-index:70; display:flex; gap:7px; }
+
+    /* Modals */
+    .modal-bg {
+      position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+      z-index:300; display:none; align-items:center; justify-content:center;
+    }
+    .modal-bg.show { display:flex; }
+    .modal-box {
+      background:#111827; border:1px solid #374151; border-radius:12px;
+      width:460px; max-width:92vw; padding:22px; box-shadow:0 24px 50px rgba(0,0,0,0.7);
+    }
+    .modal-hdr { font-weight:700; font-size:14px; color:#f8fafc; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+    .modal-close { background:none; border:none; color:#64748b; cursor:pointer; font-size:16px; line-height:1; }
+    .modal-close:hover { color:#f8fafc; }
+    .card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+    .reg-card {
+      background:#1a2234; border:1px solid #2d3748; border-radius:8px; padding:12px 8px;
+      cursor:pointer; text-align:center; font-size:11px; color:#94a3b8; transition:all 0.14s;
+    }
+    .reg-card:hover { border-color:#475569; color:#e2e8f0; }
+    .reg-card.sel { border-color:#38bdf8; background:rgba(56,189,248,0.12); color:#38bdf8; font-weight:700; }
+    .reg-card .icon { font-size:18px; margin-bottom:5px; }
+    .text-inp {
+      background:#1a2234; border:1px solid #2d3748; color:#f8fafc;
+      padding:7px 10px; border-radius:6px; font-size:11px; outline:none; width:100%;
+    }
+    .text-inp:focus { border-color:#38bdf8; }
+
+    #graph-container { position:absolute; top:0; left:240px; right:260px; bottom:0; }
   </style>
 </head>
 <body>
-  <!-- Left Sidebar: Projects -->
+
+  <!-- ===== LEFT SIDEBAR ===== -->
   <aside class="left-aside">
     <div class="brand">
-      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l10-5v10l-10 5V11zm0 0L2 6v10l10 5V11z"/></svg>
+      <svg class="svg-ico" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l10-5v10l-10 5V11zM2 17l10 5 10-5"/></svg>
       AetherGraph
     </div>
-    <div class="section-title">PROYECTOS REGISTRADOS</div>
-    <div class="project-list" id="project-list">Cargando...</div>
+    <div class="section-label">PROYECTOS REGISTRADOS</div>
+    <div class="project-list" id="project-list">
+      <div style="color:#475569;font-size:11px;">Cargando...</div>
+    </div>
   </aside>
 
-  <!-- Right Sidebar: Communities (Graphify Style 2.png) -->
+  <!-- ===== RIGHT SIDEBAR: COMMUNITIES ===== -->
   <aside class="right-aside">
-    <div class="section-title">COMMUNITIES</div>
-    <div style="margin-bottom:8px;">
-      <label class="custom-chk" style="font-weight:700;">
-        <span>Select All</span>
-        <input type="checkbox" id="select-all-comm" checked onchange="toggleSelectAllComm(this.checked)">
-        <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+    <div class="comm-header">
+      <div class="section-label" style="margin:0;">COMMUNITIES</div>
+      <label class="comm-select-all">
+        <span>Todo</span>
+        <span class="chk-wrap">
+          <input type="checkbox" id="sel-all-comm" checked onchange="toggleAllComm(this.checked)">
+          <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+        </span>
       </label>
     </div>
-    <div class="community-list" id="community-list">Cargando...</div>
+    <div class="community-list" id="community-list">
+      <div style="color:#475569;font-size:11px;">Cargando...</div>
+    </div>
   </aside>
 
+  <!-- ===== HEADER ===== -->
   <header>
-    <div style="display:flex; gap:6px; align-items:center;">
-      <button class="mode-btn active" id="tab-code" onclick="setView('code')">Code AST</button>
-      <button class="mode-btn" id="tab-agents" onclick="setView('agents')">Harness Topology</button>
-      <div style="width:1px; height:16px; background:#334155; margin:0 4px;"></div>
-      <button class="mode-btn active" id="dim-2d" onclick="setDimension('2d')">2D Canvas</button>
-      <button class="mode-btn" id="dim-3d" onclick="setDimension('3d')">3D Force</button>
-      
-      <!-- Dropdown Menu: Node Filters -->
-      <div class="dropdown-container" id="filter-dd">
-        <button class="btn-action" onclick="toggleDropdown('filter-dd')">
+    <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;min-width:0;">
+      <!-- View tabs -->
+      <button class="mode-btn active" id="btn-code" onclick="setView('code')">Code AST</button>
+      <button class="mode-btn" id="btn-agents" onclick="setView('agents')">Harness Topology</button>
+      <div class="sep"></div>
+      <!-- Dimension tabs -->
+      <button class="mode-btn active" id="btn-2d" onclick="setDim('2d')">2D</button>
+      <button class="mode-btn" id="btn-3d" onclick="setDim('3d')">3D</button>
+      <div class="sep"></div>
+
+      <!-- Node Filters dropdown -->
+      <div class="dd-wrap" id="dd-filter">
+        <button class="btn-action" onclick="toggleDD('dd-filter')">
           <svg class="svg-ico" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
-          Filtros de Nodo ▾
+          Filtros ▾
         </button>
-        <div class="dropdown-menu">
-          <div class="section-title" style="margin-bottom:8px;">Tipo de Nodo</div>
-          <div class="filter-group">
-            <label class="custom-chk">
+        <div class="dd-panel">
+          <div class="section-label">Tipo de Nodo</div>
+          <div class="filter-section">
+            <div class="filter-row">
               <span>Archivos</span>
-              <input type="checkbox" id="f-file" checked onchange="filterGraph()">
-              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-            </label>
-            <label class="custom-chk">
-              <span>Clases</span>
-              <input type="checkbox" id="f-class" checked onchange="filterGraph()">
-              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-            </label>
-            <label class="custom-chk">
-              <span>Funciones</span>
-              <input type="checkbox" id="f-func" checked onchange="filterGraph()">
-              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-            </label>
-            <label class="custom-chk">
-              <span>Agentes</span>
-              <input type="checkbox" id="f-agent" checked onchange="filterGraph()">
-              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-            </label>
-            <hr style="border:none; border-top:1px solid #374151; margin:6px 0;">
-            <div style="display:flex; justify-content:space-between; font-size:11px;">
-              <span>Min Conexiones:</span>
-              <span id="min-deg-val" style="color:#38bdf8; font-weight:700;">0</span>
+              <label class="chk-wrap"><input type="checkbox" id="f-file" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
             </div>
-            <input type="range" id="min-degree" min="0" max="10" value="0" style="width:100%;" oninput="document.getElementById('min-deg-val').innerText=this.value; filterGraph();">
-            <label class="custom-chk" style="margin-top:4px;">
-              <span>Ocultar Aislados</span>
-              <input type="checkbox" id="f-hide-isolated" onchange="filterGraph()">
-              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-            </label>
+            <div class="filter-row">
+              <span>Clases</span>
+              <label class="chk-wrap"><input type="checkbox" id="f-class" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+            </div>
+            <div class="filter-row">
+              <span>Funciones / Métodos</span>
+              <label class="chk-wrap"><input type="checkbox" id="f-func" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+            </div>
+            <div class="filter-row">
+              <span>Agentes</span>
+              <label class="chk-wrap"><input type="checkbox" id="f-agent" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+            </div>
+            <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
+            <div class="filter-row">
+              <span>Min conexiones: <strong id="deg-val" style="color:#38bdf8;">0</strong></span>
+            </div>
+            <input type="range" id="f-deg" min="0" max="20" value="0" style="width:100%;"
+              oninput="document.getElementById('deg-val').textContent=this.value;applyFilter();">
+            <div class="filter-row" style="margin-top:4px;">
+              <span>Ocultar aislados</span>
+              <label class="chk-wrap"><input type="checkbox" id="f-isolated" onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Dropdown Menu: Settings -->
-      <div class="dropdown-container" id="settings-dd">
-        <button class="btn-action" onclick="toggleDropdown('settings-dd')">
+      <!-- Settings dropdown -->
+      <div class="dd-wrap" id="dd-settings">
+        <button class="btn-action" onclick="toggleDD('dd-settings')">
           <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
           Paleta & Motor ▾
         </button>
-        <div class="dropdown-menu">
-          <div class="filter-group">
-            <label style="display:block;">Paleta de Color:</label>
-            <select id="palette-select" class="select-input" onchange="changePalette()">
+        <div class="dd-panel">
+          <div class="filter-section">
+            <label class="section-label">Paleta de Color</label>
+            <select id="palette-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changePalette()">
               <option value="obsidian" selected>Obsidian Dark</option>
               <option value="cyberpunk">Neon Cyberpunk</option>
-              <option value="monochrome">Monochrome Slate</option>
+              <option value="mono">Monochrome Slate</option>
               <option value="matrix">Emerald Matrix</option>
             </select>
-            <label style="display:block; margin-top:6px;">Motor de Reindexación:</label>
-            <select id="engine-select" class="select-input">
-              <option value="ast_local_llm" selected>AST + IA Local (Ollama Qwen2.5)</option>
-              <option value="ast_cloud_api">AST + IA Cloud API (Gemini/Claude)</option>
-              <option value="ast_pure">AST Cero Tokens (Pure AST)</option>
+            <label class="section-label" style="margin-top:8px;">Motor IA</label>
+            <select id="engine-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;">
+              <option value="ast_local_llm" selected>AST + Local (Ollama Qwen2.5)</option>
+              <option value="ast_cloud">AST + Cloud API (Gemini/Claude)</option>
+              <option value="ast_pure">Solo AST (cero tokens)</option>
             </select>
-            <button class="btn-action" style="margin-top:8px; justify-content:center;" onclick="openTutorialModal()">
-              📖 Guía / Tutorial Conexión IA
+            <button class="btn-action" style="margin-top:8px;justify-content:center;width:100%;" onclick="openTutorial()">
+              📖 Tutorial Conexión IA
             </button>
           </div>
         </div>
       </div>
 
-      <input type="text" class="search-input" id="search-box" placeholder="Buscar nodo..." oninput="filterGraph()">
+      <input type="text" class="search-input" id="search-box" placeholder="Buscar nodo…" oninput="applyFilter()">
     </div>
-    <div id="stats" style="font-size:11px; color:#64748b;">Cargando grafo...</div>
+    <div id="stats" style="font-size:11px;color:#475569;white-space:nowrap;padding-left:8px;">—</div>
   </header>
 
-  <!-- Floating Quick Actions Top-Right -->
-  <div class="floating-top-actions">
-    <button class="btn-action btn-primary" onclick="openRegisterModal()">
+  <!-- Floating quick actions -->
+  <div class="float-actions">
+    <button class="btn-action btn-primary" onclick="openRegister()">
       <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      Registrar Proyecto
+      Registrar
     </button>
-    <button class="btn-action" id="reindex-btn" onclick="reindexCurrent()">
+    <button class="btn-action" id="reindex-btn" onclick="doReindex()">
       <svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-      Reindexar Grafo
+      Reindexar
     </button>
   </div>
 
-  <!-- Custom Registration Modal (Replaces native prompt) -->
-  <div class="modal-overlay" id="register-modal">
-    <div class="modal-card">
-      <div class="modal-title">
-        <span>➕ Registrar Proyecto / Carpeta</span>
-        <button style="background:none; border:none; color:#94a3b8; cursor:pointer;" onclick="closeRegisterModal()">✕</button>
-      </div>
-      <div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Selecciona la modalidad de registro:</div>
-      <div class="mode-card-grid">
-        <div class="mode-card selected" id="mc-single" onclick="selectRegMode('single_folder')">
-          <div style="font-size:16px; margin-bottom:4px;">📦</div>
-          <div>Carpeta Única</div>
-        </div>
-        <div class="mode-card" id="mc-master" onclick="selectRegMode('master_folder')">
-          <div style="font-size:16px; margin-bottom:4px;">📂</div>
-          <div>Carpeta Maestra</div>
-        </div>
-        <div class="mode-card" id="mc-agent" onclick="selectRegMode('agent_discovered')">
-          <div style="font-size:16px; margin-bottom:4px;">🤖</div>
-          <div>Por Agente</div>
-        </div>
-      </div>
-      <div style="font-size:11px; color:#94a3b8; margin-bottom:6px;">Ruta absoluta en el disco:</div>
-      <input type="text" class="text-input" id="reg-path-input" style="width:100%;" placeholder="/home/usuario/Documentos/mi-proyecto">
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
-        <button class="btn-action" onclick="closeRegisterModal()">Cancelar</button>
-        <button class="btn-action btn-primary" onclick="submitRegisterModal()">Registrar e Indexar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Custom AI Connection Tutorial Modal -->
-  <div class="modal-overlay" id="tutorial-modal">
-    <div class="modal-card" style="width:520px;">
-      <div class="modal-title">
-        <span>📖 Guía de Conexión de IA (Local vs Cloud)</span>
-        <button style="background:none; border:none; color:#94a3b8; cursor:pointer;" onclick="closeTutorialModal()">✕</button>
-      </div>
-      <div style="font-size:12px; color:#cbd5e1; display:flex; flex-direction:column; gap:12px;">
-        <div style="background:#1f2937; padding:10px; border-radius:8px; border:1px solid #374151;">
-          <div style="font-weight:700; color:#38bdf8; margin-bottom:4px;">1. Conectar IA Local (Ollama Qwen2.5 / $0 Costo)</div>
-          <div>1. Instala Ollama: <code style="background:#111827; padding:2px 4px; border-radius:4px;">curl -fsSL https://ollama.com/install.sh | sh</code></div>
-          <div>2. Levanta el modelo: <code style="background:#111827; padding:2px 4px; border-radius:4px;">ollama run qwen2.5-coder</code></div>
-          <div>3. AetherGraph se conecta automáticamente a <code style="color:#10b981;">http://localhost:11434</code> sin API keys.</div>
-        </div>
-        <div style="background:#1f2937; padding:10px; border-radius:8px; border:1px solid #374151;">
-          <div style="font-weight:700; color:#f59e0b; margin-bottom:4px;">2. Conectar IA Cloud API (Gemini / Claude)</div>
-          <div>1. Declara tu llave en la terminal donde corre AetherGraph:</div>
-          <div style="background:#111827; padding:6px; border-radius:4px; font-family:monospace; margin:4px 0;">export GEMINI_API_KEY="AIzaSy..."</div>
-          <div>2. O crea un archivo <code style="background:#111827; padding:2px 4px; border-radius:4px;">.env</code> en la carpeta de AetherGraph.</div>
-        </div>
-      </div>
-      <div style="display:flex; justify-content:flex-end; margin-top:16px;">
-        <button class="btn-action btn-primary" onclick="closeTutorialModal()">Entendido</button>
-      </div>
-    </div>
-  </div>
-
+  <!-- ===== GRAPH CANVAS ===== -->
   <div id="graph-container"></div>
 
+  <!-- ===== MODAL: Register ===== -->
+  <div class="modal-bg" id="modal-reg">
+    <div class="modal-box">
+      <div class="modal-hdr">
+        Registrar Proyecto
+        <button class="modal-close" onclick="closeRegister()">✕</button>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:10px;">Selecciona el modo de registro:</div>
+      <div class="card-grid">
+        <div class="reg-card sel" id="mc-single" onclick="selMode('single_folder')">
+          <div class="icon">📦</div><div>Carpeta Única</div>
+        </div>
+        <div class="reg-card" id="mc-master" onclick="selMode('master_folder')">
+          <div class="icon">📂</div><div>Carpeta Maestra</div>
+        </div>
+        <div class="reg-card" id="mc-agent" onclick="selMode('agent_discovered')">
+          <div class="icon">🤖</div><div>Por Agente</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:5px;">Ruta absoluta:</div>
+      <input class="text-inp" id="reg-path" placeholder="/home/…/mi-proyecto">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+        <button class="btn-action" onclick="closeRegister()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="submitRegister()">Registrar e Indexar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: Tutorial ===== -->
+  <div class="modal-bg" id="modal-tutorial">
+    <div class="modal-box" style="width:520px;">
+      <div class="modal-hdr">
+        Tutorial — Conexión IA (Local vs Cloud)
+        <button class="modal-close" onclick="closeTutorial()">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;color:#cbd5e1;">
+        <div style="background:#0d1117;border:1px solid #1e293b;border-left:3px solid #38bdf8;border-radius:6px;padding:10px;">
+          <div style="font-weight:700;color:#38bdf8;margin-bottom:6px;">IA Local — $0 / Privacidad total</div>
+          <div>1. Instala Ollama: <code style="background:#1a2234;padding:2px 5px;border-radius:3px;">curl -fsSL https://ollama.com/install.sh | sh</code></div>
+          <div style="margin-top:4px;">2. Descarga el modelo: <code style="background:#1a2234;padding:2px 5px;border-radius:3px;">ollama run qwen2.5-coder</code></div>
+          <div style="margin-top:4px;">3. AetherGraph se conecta automáticamente a <code style="color:#10b981;">http://localhost:11434</code></div>
+        </div>
+        <div style="background:#0d1117;border:1px solid #1e293b;border-left:3px solid #f59e0b;border-radius:6px;padding:10px;">
+          <div style="font-weight:700;color:#f59e0b;margin-bottom:6px;">IA Cloud — Gemini / Claude / OpenAI</div>
+          <div>Declara la variable de entorno antes de iniciar AetherGraph:</div>
+          <div style="background:#1a2234;padding:6px 8px;border-radius:4px;font-family:monospace;margin-top:4px;">export GEMINI_API_KEY="AIzaSy..."</div>
+          <div style="margin-top:4px;">O añade las llaves en el archivo <code style="background:#1a2234;padding:2px 5px;border-radius:3px;">.env</code> (ver <strong>.env.example</strong>)</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+        <button class="btn-action btn-primary" onclick="closeTutorial()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    let activePath = ".";
-    let activeView = "code";
-    let dimensionMode = "2d";
-    let activePalette = "obsidian";
-    let selectedRegMode = "single_folder";
-    let graphInstance = null;
-    let fullData = { nodes: [], links: [] };
+    // ── State ─────────────────────────────────────────────────────────────────
+    let activePath    = null;   // null until first project loaded
+    let activeView    = 'code';
+    let activeDim     = '2d';
+    let activePalette = 'obsidian';
+    let regMode       = 'single_folder';
+    let graphInst     = null;
+    let fullData      = { nodes: [], links: [] };
 
     const PALETTES = {
-      obsidian: { file: '#38bdf8', class: '#f59e0b', func: '#a78bfa', agent: '#a855f7', link: 'rgba(255, 255, 255, 0.12)' },
-      cyberpunk: { file: '#00f0ff', class: '#ffe600', func: '#ff007f', agent: '#7000ff', link: 'rgba(0, 240, 255, 0.18)' },
-      monochrome: { file: '#f8fafc', class: '#cbd5e1', func: '#94a3b8', agent: '#64748b', link: 'rgba(203, 213, 225, 0.12)' },
-      matrix: { file: '#10b981', class: '#34d399', func: '#059669', agent: '#047857', link: 'rgba(16, 185, 129, 0.18)' }
+      obsidian  : { file:'#38bdf8', class:'#f59e0b', func:'#a78bfa', agent:'#a855f7', enum:'#10b981', link:'rgba(148,163,184,0.25)', linkW:1.2 },
+      cyberpunk : { file:'#00f0ff', class:'#ffe600', func:'#ff007f', agent:'#9b00ff', enum:'#00ff7f', link:'rgba(0,240,255,0.22)',   linkW:1.2 },
+      mono      : { file:'#e2e8f0', class:'#94a3b8', func:'#64748b', agent:'#475569', enum:'#f8fafc', link:'rgba(226,232,240,0.15)', linkW:0.8 },
+      matrix    : { file:'#22c55e', class:'#4ade80', func:'#16a34a', agent:'#15803d', enum:'#86efac', link:'rgba(34,197,94,0.22)',   linkW:1.2 },
     };
+    const COMM_COLORS = ['#38bdf8','#f59e0b','#ef4444','#10b981','#a78bfa','#ec4899','#06b6d4','#84cc16','#eab308','#6366f1','#f97316','#14b8a6'];
 
-    const COMM_COLORS = ['#38bdf8', '#f59e0b', '#ef4444', '#10b981', '#a78bfa', '#ec4899', '#06b6d4', '#84cc16', '#eab308', '#6366f1'];
-
-    function toggleDropdown(id) {
-      const el = document.getElementById(id);
-      const isOpen = el.classList.contains('open');
-      document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('open'));
-      if (!isOpen) {
-        el.classList.add('open');
-      }
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function nodeColor(n) {
+      const p = PALETTES[activePalette];
+      const k = n.kind || '';
+      if (k === 'file')        return p.file;
+      if (k === 'class')       return p.class;
+      if (k === 'function')    return p.func;
+      if (k === 'enum' || k === 'struct' || k === 'interface') return p.enum;
+      if (k.includes('agent') || k.includes('orchestrator') || k.includes('hermes')) return p.agent;
+      return p.file;
     }
 
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.dropdown-container')) {
-        document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('open'));
+    function destroyGraph() {
+      if (graphInst) {
+        try { graphInst._destructor && graphInst._destructor(); } catch(e){}
+        graphInst = null;
       }
+      document.getElementById('graph-container').innerHTML = '';
+    }
+
+    // ── Dropdown ──────────────────────────────────────────────────────────────
+    function toggleDD(id) {
+      const el = document.getElementById(id);
+      const was = el.classList.contains('open');
+      document.querySelectorAll('.dd-wrap').forEach(d => d.classList.remove('open'));
+      if (!was) el.classList.add('open');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.dd-wrap')) document.querySelectorAll('.dd-wrap').forEach(d => d.classList.remove('open'));
     });
 
-    function openRegisterModal() {
-      document.getElementById('reg-path-input').value = activePath !== '.' ? activePath : '';
-      document.getElementById('register-modal').classList.add('active');
+    // ── Modals ────────────────────────────────────────────────────────────────
+    function openRegister() {
+      document.getElementById('reg-path').value = activePath || '';
+      document.getElementById('modal-reg').classList.add('show');
     }
-    function closeRegisterModal() {
-      document.getElementById('register-modal').classList.remove('active');
-    }
-    function selectRegMode(mode) {
-      selectedRegMode = mode;
-      document.getElementById('mc-single').classList.toggle('selected', mode === 'single_folder');
-      document.getElementById('mc-master').classList.toggle('selected', mode === 'master_folder');
-      document.getElementById('mc-agent').classList.toggle('selected', mode === 'agent_discovered');
-    }
-    function submitRegisterModal() {
-      const path = document.getElementById('reg-path-input').value.trim();
-      if (!path) return alert("Por favor ingresa una ruta válida");
-      fetch('/api/projects/register', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({path: path, mode: selectedRegMode})
-      })
-      .then(r => r.json())
-      .then(res => {
-        if (res.ok) {
-          closeRegisterModal();
-          loadProjects();
-          selectProject(path);
-        } else {
-          alert("Error: " + res.error);
-        }
+    function closeRegister() { document.getElementById('modal-reg').classList.remove('show'); }
+
+    function selMode(m) {
+      regMode = m;
+      ['single_folder','master_folder','agent_discovered'].forEach(x => {
+        const id = x === 'single_folder' ? 'mc-single' : x === 'master_folder' ? 'mc-master' : 'mc-agent';
+        document.getElementById(id).classList.toggle('sel', x === m);
       });
     }
 
-    function openTutorialModal() { document.getElementById('tutorial-modal').classList.add('active'); }
-    function closeTutorialModal() { document.getElementById('tutorial-modal').classList.remove('active'); }
+    function submitRegister() {
+      const path = document.getElementById('reg-path').value.trim();
+      if (!path) return;
+      fetch('/api/projects/register', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ path, mode: regMode })
+      }).then(r => r.json()).then(res => {
+        if (res.ok) { closeRegister(); loadProjects(); selectProject(path); }
+        else alert('Error: ' + res.error);
+      });
+    }
 
+    function openTutorial()  { document.getElementById('modal-tutorial').classList.add('show'); }
+    function closeTutorial() { document.getElementById('modal-tutorial').classList.remove('show'); }
+
+    // ── Projects ──────────────────────────────────────────────────────────────
     function loadProjects() {
-      fetch('/api/projects')
-        .then(r => r.json())
-        .then(projects => {
-          const listEl = document.getElementById('project-list');
-          listEl.innerHTML = projects.map(p => `
-            <div class="project-item ${p.path === activePath ? 'active' : ''}" onclick="selectProject('${p.path}')">
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;">${p.name}</span>
-              <span style="font-size:9px; color:${p.indexed ? '#10b981' : '#ef4444'}; font-weight:700;">${p.indexed ? 'OK' : 'PEND'}</span>
-            </div>
-          `).join('');
-        });
+      fetch('/api/projects').then(r => r.json()).then(projects => {
+        const el = document.getElementById('project-list');
+        if (!projects.length) { el.innerHTML = '<div style="color:#475569;font-size:11px;">Sin proyectos registrados</div>'; return; }
+
+        // Auto-select first project if none active
+        if (!activePath && projects.length) {
+          activePath = projects[0].path;
+        }
+
+        el.innerHTML = projects.map(p => `
+          <div class="project-item ${p.path === activePath ? 'active' : ''}" onclick="selectProject('${p.path.replace(/'/g,"\\'")}')">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">${p.name}</span>
+            <span class="proj-badge ${p.indexed ? 'ok' : 'pend'}">${p.indexed ? 'OK' : 'PEND'}</span>
+          </div>`).join('');
+      });
     }
 
     function selectProject(path) {
       activePath = path;
+      if (activeView === 'agents') setView('code'); // switch to code view when selecting a project
+      else { loadProjects(); loadGraph(); }
+    }
+
+    // ── View / Dim ────────────────────────────────────────────────────────────
+    function setView(v) {
+      activeView = v;
+      document.getElementById('btn-code').classList.toggle('active', v === 'code');
+      document.getElementById('btn-agents').classList.toggle('active', v === 'agents');
+      destroyGraph();
       loadProjects();
       loadGraph();
     }
 
-    function setView(view) {
-      activeView = view;
-      document.getElementById('tab-code').classList.toggle('active', view === 'code');
-      document.getElementById('tab-agents').classList.toggle('active', view === 'agents');
-      loadGraph();
-    }
-
-    function setDimension(dim) {
-      if (dimensionMode === dim) return;
-      dimensionMode = dim;
-      document.getElementById('dim-2d').classList.toggle('active', dim === '2d');
-      document.getElementById('dim-3d').classList.toggle('active', dim === '3d');
-      if (graphInstance) {
-        document.getElementById('graph-container').innerHTML = '';
-        graphInstance = null;
-      }
+    function setDim(d) {
+      if (activeDim === d) return;
+      activeDim = d;
+      document.getElementById('btn-2d').classList.toggle('active', d === '2d');
+      document.getElementById('btn-3d').classList.toggle('active', d === '3d');
+      destroyGraph();
       loadGraph();
     }
 
     function changePalette() {
-      activePalette = document.getElementById('palette-select').value;
-      if (graphInstance) {
-        const p = PALETTES[activePalette] || PALETTES.obsidian;
-        graphInstance.nodeColor(n => getNodeColor(n)).linkColor(() => p.link);
+      activePalette = document.getElementById('palette-sel').value;
+      if (graphInst) {
+        const p = PALETTES[activePalette];
+        graphInst.nodeColor(n => nodeColor(n)).linkColor(() => p.link);
       }
     }
 
-    function reindexCurrent() {
+    function doReindex() {
       const btn = document.getElementById('reindex-btn');
-      const engine = document.getElementById('engine-select').value;
-      btn.innerText = 'Indexando...';
+      const engine = document.getElementById('engine-sel').value;
+      btn.textContent = 'Indexando…';
       fetch('/api/reindex', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({path: activePath, engine: engine})
-      })
-      .then(r => r.json())
-      .then(() => {
-        btn.innerText = 'Reindexar Grafo';
-        loadProjects();
-        loadGraph();
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ path: activePath, engine })
+      }).then(r => r.json()).then(() => {
+        btn.innerHTML = '<svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>Reindexar';
+        loadProjects(); loadGraph();
       });
     }
 
-    function getNodeColor(n) {
-      const p = PALETTES[activePalette] || PALETTES.obsidian;
-      const k = n.kind || '';
-      if (k === 'file') return p.file;
-      if (k === 'class') return p.class;
-      if (k === 'function') return p.func;
-      if (k.includes('agent') || k.includes('orchestrator')) return p.agent;
-      return p.file;
-    }
-
-    function renderCommunitiesSidebar(data) {
-      const commMap = {};
+    // ── Communities sidebar ───────────────────────────────────────────────────
+    function buildCommunities(data) {
+      // Group nodes by their "module" = first segment of file path or name
+      const groups = {};
       data.nodes.forEach(n => {
-        const cName = n.name ? n.name.split('.')[0] : 'general';
-        commMap[cName] = (commMap[cName] || 0) + 1;
+        let key = 'general';
+        if (n.kind === 'file') {
+          // Use parent folder of the file as community
+          const parts = (n.details || n.name).split(/[\\/]/);
+          key = parts.length > 1 ? parts[parts.length - 2] : parts[0].split('.')[0];
+        } else {
+          key = n.name ? n.name.split('.')[0] : 'general';
+        }
+        if (!groups[key]) groups[key] = 0;
+        groups[key]++;
       });
 
-      const sortedComms = Object.keys(commMap).sort((a,b) => commMap[b] - commMap[a]);
-      const listEl = document.getElementById('community-list');
-      
-      listEl.innerHTML = sortedComms.map((c, idx) => {
+      const sorted = Object.entries(groups).sort((a,b) => b[1] - a[1]);
+      const el = document.getElementById('community-list');
+      el.innerHTML = sorted.map(([name, count], idx) => {
         const color = COMM_COLORS[idx % COMM_COLORS.length];
         return `
-          <div class="community-item">
-            <label class="custom-chk">
-              <input type="checkbox" class="comm-chk" data-comm="${c}" checked onchange="filterGraph()">
-              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+          <div class="community-item" onclick="toggleComm('${name}')">
+            <div class="comm-left">
+              <label class="chk-wrap" onclick="event.stopPropagation()">
+                <input type="checkbox" class="comm-chk" data-comm="${name}" checked onchange="applyFilter()">
+                <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </label>
               <span class="comm-dot" style="background:${color};"></span>
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c}</span>
-            </label>
-            <span class="comm-badge">${commMap[c]}</span>
-          </div>
-        `;
+              <span class="comm-name" title="${name}">${name}</span>
+            </div>
+            <span class="comm-badge">${count}</span>
+          </div>`;
       }).join('');
     }
 
-    function toggleSelectAllComm(checked) {
-      document.querySelectorAll('.comm-chk').forEach(c => c.checked = checked);
-      filterGraph();
+    function toggleComm(name) {
+      const chk = document.querySelector(`.comm-chk[data-comm="${name}"]`);
+      if (chk) { chk.checked = !chk.checked; applyFilter(); }
     }
 
-    function filterGraph() {
-      const q = document.getElementById('search-box').value.toLowerCase();
-      const showFile = document.getElementById('f-file') ? document.getElementById('f-file').checked : true;
-      const showClass = document.getElementById('f-class') ? document.getElementById('f-class').checked : true;
-      const showFunc = document.getElementById('f-func') ? document.getElementById('f-func').checked : true;
-      const showAgent = document.getElementById('f-agent') ? document.getElementById('f-agent').checked : true;
-      const minDegree = document.getElementById('min-degree') ? parseInt(document.getElementById('min-degree').value) || 0 : 0;
-      const hideIsolated = document.getElementById('f-hide-isolated') ? document.getElementById('f-hide-isolated').checked : false;
+    function toggleAllComm(checked) {
+      document.querySelectorAll('.comm-chk').forEach(c => c.checked = checked);
+      applyFilter();
+    }
+
+    // ── Filter ────────────────────────────────────────────────────────────────
+    function applyFilter() {
+      const q        = (document.getElementById('search-box').value || '').toLowerCase();
+      const showFile = document.getElementById('f-file')?.checked ?? true;
+      const showCls  = document.getElementById('f-class')?.checked ?? true;
+      const showFn   = document.getElementById('f-func')?.checked ?? true;
+      const showAgt  = document.getElementById('f-agent')?.checked ?? true;
+      const minDeg   = parseInt(document.getElementById('f-deg')?.value || 0);
+      const hideIso  = document.getElementById('f-isolated')?.checked ?? false;
 
       const activeComms = new Set(
-        Array.from(document.querySelectorAll('.comm-chk:checked')).map(c => c.getAttribute('data-comm'))
+        Array.from(document.querySelectorAll('.comm-chk:checked')).map(c => c.dataset.comm)
       );
 
       const filteredNodes = fullData.nodes.filter(n => {
-        const kind = n.kind || '';
-        if (kind === 'file' && !showFile) return false;
-        if (kind === 'class' && !showClass) return false;
-        if (kind === 'function' && !showFunc) return false;
-        if ((kind.includes('agent') || kind.includes('orchestrator')) && !showAgent) return false;
-        if ((n.degree || 0) < minDegree) return false;
-        if (hideIsolated && (n.degree || 0) === 0) return false;
+        const k = n.kind || '';
+        if (k === 'file' && !showFile) return false;
+        if (k === 'class' && !showCls)  return false;
+        if ((k === 'function' || k === 'method') && !showFn) return false;
+        if ((k.includes('agent') || k.includes('orchestrator') || k.includes('hermes')) && !showAgt) return false;
+        if ((n.degree || 0) < minDeg)  return false;
+        if (hideIso && (n.degree || 0) === 0) return false;
 
-        const cName = n.name ? n.name.split('.')[0] : 'general';
-        if (activeComms.size > 0 && !activeComms.has(cName)) return false;
-        if (q && !n.name.toLowerCase().includes(q) && !(n.details && n.details.toLowerCase().includes(q))) return false;
+        // Community filter — match by folder name or name prefix
+        if (activeComms.size > 0) {
+          let key = n.kind === 'file'
+            ? (n.details || n.name).split(/[\\/]/).slice(-2, -1)[0] || n.name.split('.')[0]
+            : n.name.split('.')[0];
+          if (!activeComms.has(key)) return false;
+        }
+
+        if (q && !n.name.toLowerCase().includes(q) && !(n.details||'').toLowerCase().includes(q)) return false;
         return true;
       });
 
-      const nodeIds = new Set(filteredNodes.map(n => n.id));
+      const ids = new Set(filteredNodes.map(n => n.id));
       const filteredLinks = fullData.links.filter(l => {
-        const src = typeof l.source === 'object' ? l.source.id : l.source;
-        const tgt = typeof l.target === 'object' ? l.target.id : l.target;
-        return nodeIds.has(src) && nodeIds.has(tgt);
+        const s = typeof l.source === 'object' ? l.source.id : l.source;
+        const t = typeof l.target === 'object' ? l.target.id : l.target;
+        return ids.has(s) && ids.has(t);
       });
 
-      if (graphInstance) {
-        graphInstance.graphData({ nodes: filteredNodes, links: filteredLinks });
-      }
+      if (graphInst) graphInst.graphData({ nodes: filteredNodes, links: filteredLinks });
     }
 
+    // ── Graph render ──────────────────────────────────────────────────────────
     function loadGraph() {
-      const url = activeView === 'agents' ? '/api/graph?view=agents' : `/api/graph?path=${encodeURIComponent(activePath)}`;
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          fullData = data;
-          document.getElementById('stats').innerText = `${data.nodes.length} nodos · ${data.links.length} conectores (${dimensionMode.toUpperCase()})`;
-          renderCommunitiesSidebar(data);
+      if (!activePath && activeView === 'code') {
+        document.getElementById('stats').textContent = 'Selecciona un proyecto';
+        return;
+      }
+      const url = activeView === 'agents'
+        ? '/api/graph?view=agents'
+        : `/api/graph?path=${encodeURIComponent(activePath)}`;
 
-          const container = document.getElementById('graph-container');
-          const p = PALETTES[activePalette] || PALETTES.obsidian;
+      fetch(url).then(r => r.json()).then(data => {
+        fullData = data;
+        const p = PALETTES[activePalette];
+        document.getElementById('stats').textContent =
+          `${data.nodes.length} nodos · ${data.links.length} conectores`;
 
-          if (dimensionMode === '2d') {
-            if (!graphInstance) {
-              graphInstance = ForceGraph()(container);
-            }
-            graphInstance
-              .backgroundColor('#0b0e17')
-              .graphData(data)
-              .nodeId('id')
-              .nodeVal(n => Math.max(2, Math.min(6, (n.degree || 1) * 0.8)))
-              .nodeLabel(n => `${n.name}\n${n.details || ''}\nConexiones: ${n.degree || 0}`)
-              .nodeColor(n => getNodeColor(n))
-              .linkColor(() => p.link)
-              .linkWidth(0.8)
-              .d3AlphaDecay(0.02)
-              .d3VelocityDecay(0.3)
-              .d3Force('charge', d3.forceManyBody().strength(-80))
-              .d3Force('link', d3.forceLink().distance(35))
-              .d3Force('collide', d3.forceCollide().radius(10));
-          } else {
-            if (!graphInstance) {
-              graphInstance = ForceGraph3D()(container);
-            }
-            graphInstance
-              .backgroundColor('#0b0e17')
-              .graphData(data)
-              .nodeId('id')
-              .nodeVal(n => Math.max(3, Math.min(8, (n.degree || 1) * 1.0)))
-              .nodeLabel(n => `${n.name}\n${n.details || ''}\nConexiones: ${n.degree || 0}`)
-              .nodeColor(n => getNodeColor(n))
-              .linkColor(() => p.link)
-              .linkWidth(1.0);
-          }
+        buildCommunities(data);
 
-          filterGraph();
-        });
+        const container = document.getElementById('graph-container');
+
+        if (activeDim === '2d') {
+          graphInst = ForceGraph()(container)
+            .backgroundColor('#0b0e17')
+            .graphData(data)
+            .nodeId('id')
+            .nodeVal(n => {
+              const k = n.kind || '';
+              if (k.includes('orchestrator')) return 18;
+              if (k.includes('agent') || k.includes('hermes')) return 10;
+              if (k === 'class' || k === 'interface') return 6;
+              if (k === 'file') return 5;
+              return 3;
+            })
+            .nodeColor(n => nodeColor(n))
+            .nodeLabel(n => `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:6px 10px;font-size:12px;color:#f8fafc;"><strong>${n.name}</strong><br/><span style="color:#64748b;">${n.kind || ''}</span>${n.details ? '<br/><span style="color:#94a3b8;font-size:11px;">'+n.details+'</span>' : ''}<br/><span style="color:#38bdf8;">Conexiones: ${n.degree || 0}</span></div>`)
+            .linkColor(() => p.link)
+            .linkWidth(p.linkW)
+            .linkDirectionalParticles(2)
+            .linkDirectionalParticleWidth(1.5)
+            .linkDirectionalParticleColor(() => p.link.replace('0.25','0.9'))
+            .d3AlphaDecay(0.015)
+            .d3VelocityDecay(0.25)
+            .d3Force('charge', d3.forceManyBody().strength(-120))
+            .d3Force('link',   d3.forceLink().distance(60))
+            .d3Force('collide', d3.forceCollide().radius(18));
+        } else {
+          graphInst = ForceGraph3D()(container)
+            .backgroundColor('#0b0e17')
+            .graphData(data)
+            .nodeId('id')
+            .nodeVal(n => {
+              const k = n.kind || '';
+              if (k.includes('orchestrator')) return 22;
+              if (k.includes('agent') || k.includes('hermes')) return 12;
+              if (k === 'class' || k === 'interface') return 7;
+              if (k === 'file') return 5;
+              return 3;
+            })
+            .nodeColor(n => nodeColor(n))
+            .nodeLabel(n => `${n.name} (${n.kind || ''}) — ${n.degree || 0} conexiones`)
+            .linkColor(() => p.link)
+            .linkWidth(p.linkW);
+        }
+
+        applyFilter();
+      });
     }
 
+    // ── Boot ──────────────────────────────────────────────────────────────────
     loadProjects();
-    loadGraph();
+    // After projects load, trigger graph via selectProject on the auto-selected first
+    setTimeout(() => { if (activePath) loadGraph(); }, 350);
   </script>
 </body>
 </html>
 """
+
