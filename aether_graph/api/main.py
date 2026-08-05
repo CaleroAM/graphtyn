@@ -758,6 +758,15 @@ def index():
       });
 
       if (graphInst) graphInst.graphData({ nodes: filteredNodes, links: filteredLinks });
+
+      const statsEl = document.getElementById('stats');
+      if (statsEl && fullData && fullData.nodes) {
+        if (filteredNodes.length === fullData.nodes.length && filteredLinks.length === fullData.links.length) {
+          statsEl.textContent = `${fullData.nodes.length} nodos · ${fullData.links.length} conectores`;
+        } else {
+          statsEl.textContent = `${filteredNodes.length} / ${fullData.nodes.length} nodos · ${filteredLinks.length} / ${fullData.links.length} conectores`;
+        }
+      }
     }
 
     // ── Graph render ──────────────────────────────────────────────────────────
