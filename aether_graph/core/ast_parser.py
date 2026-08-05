@@ -63,68 +63,51 @@ class ASTParser:
         links = []
         node_ids: Set[str] = set()
 
-        for path in root_dir.rglob("*.py"):
-            if any(part.startswith(".") or part in ("venv", "node_modules", "__pycache__") for part in path.parts):
-                continue
-            
-            res = self.parse_python_file(path, root_dir)
-            f_id = f"file:{res['file']}"
-            
-            if f_id not in node_ids:
-                nodes.append({
-                    "id": f_id,
-                    "name": Path(res['file']).name,
-                    "kind": "file",
-                    "val": 5,
-                    "color": "#38bdf8",
-                    "details": f"Archivo de código: {res['file']}"
-                })
-                node_ids.add(f_id)
+        ignored_parts = {
+            "venv", ".venv", "node_modules", "__pycache__", "Library",
+            "Logs", "Temp", "obj", "bin", "dist", "build", ".git", ".idea", "Captures"
+        }
 
-            for sym in res.get("symbols", []):
-                sym_id = f"symbol:{res['file']}:{sym['name']}"
-                if sym_id not in node_ids:
+        # Multi-language scanning: Python, C#, JS/TS
+        for ext in ("*.py", "*.cs", "*.js", "*.ts", "*.jsx", "*.tsx"):
+            for path in root_dir.rglob(ext):
+                if any(part.startswith(".") or part in ignored_parts for part in path.parts):
+                    continue
+                
+                rel_file = str(path.relative_to(root_dir))
+                f_id = f"file:{rel_file}"
+
+                if f_id not in node_ids:
                     nodes.append({
-                        "id": sym_id,
-                        "name": sym["name"],
-                        "kind": sym["kind"],
-                        "val": 4 if sym["kind"] == "class" else 2,
-                        "color": "#f59e0b" if sym["kind"] == "class" else "#a78bfa",
-                        "details": f"{sym['kind'].capitalize()} en {res['file']}:{sym['line']}"
+                        "id": f_id,
+                        "name": path.name,
+                        "kind": "file",
+                        "val": 5,
+                        "color": "#38bdf8",
+                        "details": f"Archivo: {rel_file}"
                     })
-                    node_ids.add(sym_id)
-                links.append({
-                    "source": f_id,
-                    "target": sym_id,
-                    "label": "contiene",
-                    "color": "rgba(148, 163, 184, 0.2)"
-                })
+                    node_ids.add(f_id)
 
-            # Add import and call links
-            for imp in res.get("imports", []):
-                imp_clean = imp.split(".")[0]
-                for other_path in root_dir.rglob("*.py"):
-                    if other_path != path and imp_clean in other_path.stem:
-                        other_rel = str(other_path.relative_to(root_dir))
-                        other_fid = f"file:{other_rel}"
+                if ext == "*.py":
+                    res = self.parse_python_file(path, root_dir)
+                    for sym in res.get("symbols", []):
+                        sym_id = f"symbol:{rel_file}:{sym['name']}"
+                        if sym_id not in node_ids:
+                            nodes.append({
+                                "id": sym_id,
+                                "name": sym["name"],
+                                "kind": sym["kind"],
+                                "val": 4 if sym["kind"] == "class" else 2,
+                                "color": "#f59e0b" if sym["kind"] == "class" else "#a78bfa",
+                                "details": f"{sym['kind'].capitalize()} en {rel_file}:{sym['line']}"
+                            })
+                            node_ids.add(sym_id)
                         links.append({
                             "source": f_id,
-                            "target": other_fid,
-                            "label": "importa",
-                            "color": "rgba(234, 179, 8, 0.25)"
+                            "target": sym_id,
+                            "label": "contiene",
+                            "color": "rgba(148, 163, 184, 0.2)"
                         })
-                        break
-
-            for call_name in res.get("calls", []):
-                for node_item in nodes:
-                    if node_item["kind"] == "function" and node_item["name"] == call_name and node_item["id"] != f_id:
-                        links.append({
-                            "source": f_id,
-                            "target": node_item["id"],
-                            "label": "llama",
-                            "color": "rgba(236, 72, 153, 0.25)"
-                        })
-                        break
 
         return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
 

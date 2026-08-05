@@ -150,28 +150,43 @@ def index():
     }
     .project-item:hover { background: #1f2937; color: #f8fafc; border-color: #374151; }
     .project-item.active { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; color: #38bdf8; font-weight: 600; }
-    .community-item {
-      display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #cbd5e1; padding: 5px 0; cursor: pointer;
-    }
-    .community-item label { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; overflow: hidden; }
-    .comm-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    
+    /* Custom SVG Checkbox Toggle */
+    .custom-chk { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #cbd5e1; cursor: pointer; padding: 4px 0; }
+    .custom-chk input { display: none; }
+    .chk-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid #4b5563; background: #1f2937; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+    .custom-chk input:checked + .chk-box { background: #0284c7; border-color: #38bdf8; }
+    .chk-box svg { width: 10px; height: 10px; stroke: #fff; stroke-width: 3; fill: none; display: none; }
+    .custom-chk input:checked + .chk-box svg { display: block; }
     
     /* Dropdown Menus */
     .dropdown-container { position: relative; display: inline-block; }
     .dropdown-menu {
       position: absolute; top: 100%; left: 0; margin-top: 6px; z-index: 100;
       background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 12px;
-      width: 240px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
+      width: 250px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
     }
     .dropdown-container.open .dropdown-menu { display: block; }
     .filter-group { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: #cbd5e1; }
-    .filter-group label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-    /* Floating Action Buttons Top Right */
-    .floating-top-actions {
-      position: absolute; top: 62px; right: 280px; z-index: 70; display: flex; gap: 8px;
+    /* Custom Modal Overlay */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px); z-index: 200; display: none; align-items: center; justify-content: center;
     }
-    
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: #111827; border: 1px solid #374151; border-radius: 12px; width: 440px; max-width: 90vw; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+    .modal-title { font-weight: 700; font-size: 15px; color: #f8fafc; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .mode-card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .mode-card {
+      background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 10px; cursor: pointer; text-align: center; font-size: 11px; transition: all 0.15s;
+    }
+    .mode-card:hover { border-color: #4b5569; background: #374151; }
+    .mode-card.selected { border-color: #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; }
+
+    .floating-top-actions { position: absolute; top: 62px; right: 280px; z-index: 70; display: flex; gap: 8px; }
     .select-input, .btn-action {
       padding: 6px 12px; border-radius: 6px; border: 1px solid #374151;
       background: #1f2937; color: #f8fafc; font-weight: 600; font-size: 11px; outline: none;
@@ -185,11 +200,11 @@ def index():
       padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s;
     }
     .mode-btn.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
-    .search-input {
+    .search-input, .text-input {
       background: #1f2937; border: 1px solid #374151; color: #f8fafc;
-      padding: 5px 10px; border-radius: 6px; font-size: 11px; outline: none; width: 130px;
+      padding: 7px 10px; border-radius: 6px; font-size: 11px; outline: none; width: 100%;
     }
-    .search-input:focus { border-color: #38bdf8; }
+    .search-input:focus, .text-input:focus { border-color: #38bdf8; }
     #graph-container { width: calc(100vw - 500px); margin-left: 240px; height: 100vh; pt: 50px; }
     .svg-ico { width: 14px; height: 14px; fill: currentColor; }
   </style>
@@ -209,8 +224,10 @@ def index():
   <aside class="right-aside">
     <div class="section-title">COMMUNITIES</div>
     <div style="margin-bottom:10px;">
-      <label style="font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
-        <input type="checkbox" id="select-all-comm" checked onchange="toggleSelectAllComm(this.checked)"> Select All
+      <label class="custom-chk" style="font-weight:700;">
+        <span>Select All</span>
+        <input type="checkbox" id="select-all-comm" checked onchange="toggleSelectAllComm(this.checked)">
+        <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
       </label>
     </div>
     <div class="community-list" id="community-list">Cargando...</div>
@@ -233,17 +250,37 @@ def index():
         <div class="dropdown-menu">
           <div class="section-title" style="margin-bottom:8px;">Tipo de Nodo</div>
           <div class="filter-group">
-            <label><input type="checkbox" id="f-file" checked onchange="filterGraph()"> Archivos</label>
-            <label><input type="checkbox" id="f-class" checked onchange="filterGraph()"> Clases</label>
-            <label><input type="checkbox" id="f-func" checked onchange="filterGraph()"> Funciones</label>
-            <label><input type="checkbox" id="f-agent" checked onchange="filterGraph()"> Agentes</label>
+            <label class="custom-chk">
+              <span>Archivos</span>
+              <input type="checkbox" id="f-file" checked onchange="filterGraph()">
+              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </label>
+            <label class="custom-chk">
+              <span>Clases</span>
+              <input type="checkbox" id="f-class" checked onchange="filterGraph()">
+              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </label>
+            <label class="custom-chk">
+              <span>Funciones</span>
+              <input type="checkbox" id="f-func" checked onchange="filterGraph()">
+              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </label>
+            <label class="custom-chk">
+              <span>Agentes</span>
+              <input type="checkbox" id="f-agent" checked onchange="filterGraph()">
+              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </label>
             <hr style="border:none; border-top:1px solid #374151; margin:6px 0;">
             <div style="display:flex; justify-content:space-between; font-size:11px;">
               <span>Min Conexiones:</span>
               <span id="min-deg-val" style="color:#38bdf8; font-weight:700;">0</span>
             </div>
             <input type="range" id="min-degree" min="0" max="10" value="0" style="width:100%;" oninput="document.getElementById('min-deg-val').innerText=this.value; filterGraph();">
-            <label style="margin-top:4px;"><input type="checkbox" id="f-hide-isolated" onchange="filterGraph()"> Ocultar Aislados</label>
+            <label class="custom-chk" style="margin-top:4px;">
+              <span>Ocultar Aislados</span>
+              <input type="checkbox" id="f-hide-isolated" onchange="filterGraph()">
+              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </label>
           </div>
         </div>
       </div>
@@ -269,6 +306,9 @@ def index():
               <option value="ast_cloud_api">AST + IA Cloud API (Gemini/Claude)</option>
               <option value="ast_pure">AST Cero Tokens (Pure AST)</option>
             </select>
+            <button class="btn-action" style="margin-top:8px; justify-content:center;" onclick="openTutorialModal()">
+              📖 Guía / Tutorial Conexión IA
+            </button>
           </div>
         </div>
       </div>
@@ -280,7 +320,7 @@ def index():
 
   <!-- Floating Quick Actions Top-Right -->
   <div class="floating-top-actions">
-    <button class="btn-action btn-primary" onclick="promptRegisterProject()">
+    <button class="btn-action btn-primary" onclick="openRegisterModal()">
       <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
       Registrar Proyecto
     </button>
@@ -290,6 +330,64 @@ def index():
     </button>
   </div>
 
+  <!-- Custom Registration Modal (Replaces native prompt) -->
+  <div class="modal-overlay" id="register-modal">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>➕ Registrar Proyecto / Carpeta</span>
+        <button style="background:none; border:none; color:#94a3b8; cursor:pointer;" onclick="closeRegisterModal()">✕</button>
+      </div>
+      <div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Selecciona la modalidad de registro:</div>
+      <div class="mode-card-grid">
+        <div class="mode-card selected" id="mc-single" onclick="selectRegMode('single_folder')">
+          <div style="font-size:16px; margin-bottom:4px;">📦</div>
+          <div>Carpeta Única</div>
+        </div>
+        <div class="mode-card" id="mc-master" onclick="selectRegMode('master_folder')">
+          <div style="font-size:16px; margin-bottom:4px;">📂</div>
+          <div>Carpeta Maestra</div>
+        </div>
+        <div class="mode-card" id="mc-agent" onclick="selectRegMode('agent_discovered')">
+          <div style="font-size:16px; margin-bottom:4px;">🤖</div>
+          <div>Por Agente</div>
+        </div>
+      </div>
+      <div style="font-size:11px; color:#94a3b8; margin-bottom:6px;">Ruta absoluta en el disco:</div>
+      <input type="text" class="text-input" id="reg-path-input" placeholder="/home/usuario/Documentos/mi-proyecto">
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="btn-action" onclick="closeRegisterModal()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="submitRegisterModal()">Registrar e Indexar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom AI Connection Tutorial Modal -->
+  <div class="modal-overlay" id="tutorial-modal">
+    <div class="modal-card" style="width:520px;">
+      <div class="modal-title">
+        <span>📖 Guía de Conexión de IA (Local vs Cloud)</span>
+        <button style="background:none; border:none; color:#94a3b8; cursor:pointer;" onclick="closeTutorialModal()">✕</button>
+      </div>
+      <div style="font-size:12px; color:#cbd5e1; display:flex; flex-direction:column; gap:12px;">
+        <div style="background:#1f2937; padding:10px; border-radius:8px; border:1px solid #374151;">
+          <div style="font-weight:700; color:#38bdf8; margin-bottom:4px;">1. Conectar IA Local (Ollama Qwen2.5 / $0 Costo)</div>
+          <div>1. Instala Ollama: <code style="background:#111827; padding:2px 4px; border-radius:4px;">curl -fsSL https://ollama.com/install.sh | sh</code></div>
+          <div>2. Levanta el modelo: <code style="background:#111827; padding:2px 4px; border-radius:4px;">ollama run qwen2.5-coder</code></div>
+          <div>3. AetherGraph se conecta automáticamente a <code style="color:#10b981;">http://localhost:11434</code> sin API keys.</div>
+        </div>
+        <div style="background:#1f2937; padding:10px; border-radius:8px; border:1px solid #374151;">
+          <div style="font-weight:700; color:#f59e0b; margin-bottom:4px;">2. Conectar IA Cloud API (Gemini / Claude)</div>
+          <div>1. Declara tu llave en la terminal donde corre AetherGraph:</div>
+          <div style="background:#111827; padding:6px; border-radius:4px; font-family:monospace; margin:4px 0;">export GEMINI_API_KEY="AIzaSy..."</div>
+          <div>2. O crea un archivo <code style="background:#111827; padding:2px 4px; border-radius:4px;">.env</code> en la carpeta de AetherGraph.</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+        <button class="btn-action btn-primary" onclick="closeTutorialModal()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
   <div id="graph-container"></div>
 
   <script>
@@ -297,6 +395,7 @@ def index():
     let activeView = "code";
     let dimensionMode = "2d";
     let activePalette = "obsidian";
+    let selectedRegMode = "single_folder";
     let graphInstance = null;
     let fullData = { nodes: [], links: [] };
 
@@ -318,12 +417,47 @@ def index():
       }
     }
 
-    // Close dropdowns on outside click
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.dropdown-container')) {
         document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('open'));
       }
     });
+
+    function openRegisterModal() {
+      document.getElementById('reg-path-input').value = activePath !== '.' ? activePath : '/home/developer/Documentos/docker/PROYECTOS/';
+      document.getElementById('register-modal').classList.add('active');
+    }
+    function closeRegisterModal() {
+      document.getElementById('register-modal').classList.remove('active');
+    }
+    function selectRegMode(mode) {
+      selectedRegMode = mode;
+      document.getElementById('mc-single').classList.toggle('selected', mode === 'single_folder');
+      document.getElementById('mc-master').classList.toggle('selected', mode === 'master_folder');
+      document.getElementById('mc-agent').classList.toggle('selected', mode === 'agent_discovered');
+    }
+    function submitRegisterModal() {
+      const path = document.getElementById('reg-path-input').value.trim();
+      if (!path) return alert("Por favor ingresa una ruta válida");
+      fetch('/api/projects/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({path: path, mode: selectedRegMode})
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.ok) {
+          closeRegisterModal();
+          loadProjects();
+          selectProject(path);
+        } else {
+          alert("Error: " + res.error);
+        }
+      });
+    }
+
+    function openTutorialModal() { document.getElementById('tutorial-modal').classList.add('active'); }
+    function closeTutorialModal() { document.getElementById('tutorial-modal').classList.remove('active'); }
 
     function loadProjects() {
       fetch('/api/projects')
@@ -337,28 +471,6 @@ def index():
             </div>
           `).join('');
         });
-    }
-
-    function promptRegisterProject() {
-      const mode = prompt("Selecciona modalidad (1: Single Folder, 2: Master Folder, 3: Agent Discovered):", "1");
-      const path = prompt("Ingresa la ruta absoluta del proyecto o carpeta contenedora:");
-      if (path) {
-        const modeKey = mode === "2" ? "master_folder" : (mode === "3" ? "agent_discovered" : "single_folder");
-        fetch('/api/projects/register', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({path: path, mode: modeKey})
-        })
-        .then(r => r.json())
-        .then(res => {
-          if (res.ok) {
-            loadProjects();
-            selectProject(path);
-          } else {
-            alert("Error: " + res.error);
-          }
-        });
-      }
     }
 
     function selectProject(path) {
@@ -435,9 +547,10 @@ def index():
         const color = COMM_COLORS[idx % COMM_COLORS.length];
         return `
           <div class="community-item">
-            <label>
+            <label class="custom-chk" style="flex:1;">
               <input type="checkbox" class="comm-chk" data-comm="${c}" checked onchange="filterGraph()">
-              <span class="comm-dot" style="background:${color};"></span>
+              <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="comm-dot" style="background:${color}; margin-left:6px;"></span>
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c}</span>
             </label>
             <span style="font-size:11px; color:#64748b;">${commMap[c]}</span>
