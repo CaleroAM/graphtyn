@@ -146,30 +146,46 @@ class ASTParser:
         return graph
 
     def get_agent_topology_graph(self) -> Dict[str, Any]:
-        """Descubre dinámicamente la topología de agentes y subagentes de OpenClaw y Hermes."""
+        """
+        Descubre dinámicamente la topología de agentes del arnés:
+        - Solo OpenClaw (si existe data/workspace)
+        - Solo Hermes (si existe hermes-data/profiles)
+        - Híbrido (si existen ambos)
+        - Modo AST Standalone (si no existe ninguno)
+        """
         nodes = []
         links = []
         node_ids: Set[str] = set()
 
-        # 1. Agente Orquestador Raíz
-        nodes.append({
-            "id": "agent:nexus",
-            "name": "Orchestrator (Nexus)",
-            "kind": "orchestrator",
-            "val": 30,
-            "color": "#a855f7",
-            "details": "Orquestador Conversacional Principal (OpenClaw)"
-        })
-        node_ids.add("agent:nexus")
-
-        # 2. Descubrir subagentes de OpenClaw desde data/workspace/
         possible_workspace_dirs = [
             Path("/openclaw/data/workspace"),
             Path("/workspace/data/workspace"),
             Path("/home/developer/Documentos/openclaw/data/workspace"),
         ]
         workspace_dir = next((d for d in possible_workspace_dirs if d.exists()), None)
-        if workspace_dir:
+
+        possible_hermes_dirs = [
+            Path("/openclaw/hermes-data/profiles"),
+            Path("/workspace/hermes-data/profiles"),
+            Path("/home/developer/Documentos/openclaw/hermes-data/profiles"),
+        ]
+        hermes_dir = next((d for d in possible_hermes_dirs if d.exists()), None)
+
+        has_openclaw = workspace_dir is not None
+        has_hermes = hermes_dir is not None
+
+        # 1. OpenClaw Harness Detection
+        if has_openclaw:
+            nodes.append({
+                "id": "agent:nexus",
+                "name": "Orchestrator (Nexus)",
+                "kind": "orchestrator",
+                "val": 30,
+                "color": "#a855f7",
+                "details": "Orquestador Conversacional Principal (OpenClaw)"
+            })
+            node_ids.add("agent:nexus")
+
             for sub_dir in sorted(workspace_dir.iterdir()):
                 if sub_dir.is_dir() and not sub_dir.name.startswith("."):
                     role_id = sub_dir.name
@@ -201,7 +217,6 @@ class ASTParser:
                         })
                         node_ids.add(agent_node_id)
                         
-                        # Enlace de delegación desde Nexus
                         links.append({
                             "source": "agent:nexus",
                             "target": agent_node_id,
@@ -209,14 +224,20 @@ class ASTParser:
                             "color": "rgba(168, 85, 247, 0.85)"
                         })
 
-        # 3. Descubrir perfiles de Hermes (si existen)
-        possible_hermes_dirs = [
-            Path("/openclaw/hermes-data/profiles"),
-            Path("/workspace/hermes-data/profiles"),
-            Path("/home/developer/Documentos/openclaw/hermes-data/profiles"),
-        ]
-        hermes_dir = next((d for d in possible_hermes_dirs if d.exists()), None)
-        if hermes_dir:
+        # 2. Hermes Harness Detection
+        if has_hermes:
+            hermes_root_id = "agent:hermes_gateway"
+            if not has_openclaw:
+                nodes.append({
+                    "id": hermes_root_id,
+                    "name": "Hermes Gateway",
+                    "kind": "orchestrator",
+                    "val": 30,
+                    "color": "#06b6d4",
+                    "details": "Orquestador Principal de Perfiles Hermes"
+                })
+                node_ids.add(hermes_root_id)
+
             for h_dir in sorted(hermes_dir.iterdir()):
                 if h_dir.is_dir() and not h_dir.name.startswith("."):
                     h_id = f"hermes:{h_dir.name}"
@@ -230,12 +251,24 @@ class ASTParser:
                             "details": f"Perfil Hermes ({h_dir.name})"
                         })
                         node_ids.add(h_id)
+                        parent_id = "agent:nexus" if has_openclaw else hermes_root_id
                         links.append({
-                            "source": "agent:nexus",
+                            "source": parent_id,
                             "target": h_id,
-                            "label": "puente_hermes",
+                            "label": "perfil_hermes",
                             "color": "rgba(6, 182, 212, 0.75)"
                         })
+
+        # 3. Fallback: No harness active
+        if not has_openclaw and not has_hermes:
+            nodes.append({
+                "id": "mode:standalone",
+                "name": "Modo AST Standalone",
+                "kind": "notice",
+                "val": 20,
+                "color": "#64748b",
+                "details": "Sin arnés agéntico (Modo puro de análisis de código)"
+            })
 
         return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
 

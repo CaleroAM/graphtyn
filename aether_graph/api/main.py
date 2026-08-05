@@ -117,56 +117,56 @@ def index():
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>AetherGraph — Obsidian & Graphify Style Engine</title>
+  <title>AetherGraph — Graphify Style Engine</title>
+  <script src="//unpkg.com/force-graph"></script>
   <script src="//unpkg.com/3d-force-graph"></script>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: #0b0d12; color: #f8fafc; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; overflow: hidden; }
+    body { margin: 0; padding: 0; background: #0f172a; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
     header {
-      position: absolute; top: 0; left: 280px; right: 0; height: 56px; z-index: 50;
-      background: rgba(11, 13, 18, 0.88); backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+      position: absolute; top: 0; left: 260px; right: 0; height: 52px; z-index: 50;
+      background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px);
+      border-bottom: 1px solid #1e293b;
       display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
     }
     aside {
-      position: absolute; top: 0; left: 0; bottom: 0; width: 280px; z-index: 60;
-      background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(20px);
-      border-right: 1px solid rgba(56, 189, 248, 0.15);
+      position: absolute; top: 0; left: 0; bottom: 0; width: 260px; z-index: 60;
+      background: #0f172a; border-right: 1px solid #1e293b;
       display: flex; flex-direction: column; justify-content: space-between; padding: 16px 14px;
     }
-    .brand { font-weight: 800; font-size: 15px; color: #00f0ff; text-shadow: 0 0 12px rgba(0,240,255,0.4); display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-    .brand span { color: #94a3b8; font-weight: 400; font-size: 10px; text-shadow: none; }
-    .section-title { font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 1.5px; margin-bottom: 10px; font-weight: 700; }
-    .project-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; }
+    .brand { font-weight: 700; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; letter-spacing: -0.5px; }
+    .brand span { color: #64748b; font-weight: 500; font-size: 10px; }
+    .section-title { font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; margin-bottom: 8px; font-weight: 700; }
+    .project-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 2px; }
     .project-item {
-      padding: 9px 12px; border-radius: 8px; font-size: 11px; color: #cbd5e1; cursor: pointer;
-      display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; border: 1px solid rgba(148,163,184,0.08); background: rgba(30, 41, 59, 0.3);
+      padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #94a3b8; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; border: 1px solid transparent; background: #1e293b;
     }
-    .project-item:hover { background: rgba(30, 41, 59, 0.8); border-color: rgba(0, 240, 255, 0.3); color: #fff; transform: translateX(2px); }
-    .project-item.active { background: rgba(0, 240, 255, 0.12); border-color: #00f0ff; color: #00f0ff; font-weight: 700; box-shadow: 0 0 15px rgba(0,240,255,0.15); }
+    .project-item:hover { background: #334155; color: #f8fafc; border-color: #475569; }
+    .project-item.active { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; color: #38bdf8; font-weight: 600; }
     .btn-action {
-      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.4);
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.3)); color: #f8fafc; font-weight: 700; font-size: 11px;
-      cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 14px rgba(168, 85, 247, 0.2); margin-top: 8px;
+      width: 100%; padding: 9px; border-radius: 6px; border: 1px solid #334155;
+      background: #1e293b; color: #f8fafc; font-weight: 600; font-size: 11px;
+      cursor: pointer; transition: all 0.15s; margin-top: 6px;
     }
-    .btn-action:hover { filter: brightness(1.2); border-color: #a855f7; transform: translateY(-1px); }
-    .tab-btn {
-      background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(148, 163, 184, 0.2);
-      color: #cbd5e1; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 11px; font-family: monospace; transition: all 0.2s;
+    .btn-action:hover { background: #334155; border-color: #475569; }
+    .mode-btn {
+      background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s;
     }
-    .tab-btn.active { border-color: #00f0ff; color: #00f0ff; background: rgba(0, 240, 255, 0.15); font-weight: 700; box-shadow: 0 0 10px rgba(0,240,255,0.2); }
+    .mode-btn.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
     .search-input {
-      background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.2); color: #f8fafc;
-      padding: 6px 12px; border-radius: 8px; font-size: 11px; outline: none; width: 180px; transition: all 0.2s;
+      background: #1e293b; border: 1px solid #334155; color: #f8fafc;
+      padding: 6px 12px; border-radius: 6px; font-size: 11px; outline: none; width: 160px;
     }
-    .search-input:focus { border-color: #00f0ff; box-shadow: 0 0 8px rgba(0,240,255,0.3); }
-    #graph-container { width: calc(100vw - 280px); margin-left: 280px; height: 100vh; pt: 56px; }
+    .search-input:focus { border-color: #38bdf8; }
+    #graph-container { width: calc(100vw - 260px); margin-left: 260px; height: 100vh; pt: 52px; }
   </style>
 </head>
 <body>
   <aside>
     <div>
-      <div class="brand">🌌 AetherGraph <span>Obsidian Edition</span></div>
+      <div class="brand">🌌 AetherGraph <span>Graphify Edition</span></div>
       <div class="section-title">Proyectos Registrados</div>
       <div class="project-list" id="project-list">Cargando...</div>
     </div>
@@ -177,12 +177,15 @@ def index():
   </aside>
 
   <header>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button class="tab-btn active" id="tab-code" onclick="setView('code')">🕸️ Obsidian Code AST</button>
-      <button class="tab-btn" id="tab-agents" onclick="setView('agents')">🤖 Agent Harness Topology</button>
-      <input type="text" class="search-input" id="search-box" placeholder="🔍 Buscar nodo..." oninput="filterGraph()">
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="mode-btn active" id="tab-code" onclick="setView('code')">🕸️ Code AST</button>
+      <button class="mode-btn" id="tab-agents" onclick="setView('agents')">🤖 Harness Topology</button>
+      <div style="width:1px; height:18px; background:#334155; margin:0 4px;"></div>
+      <button class="mode-btn active" id="dim-2d" onclick="setDimension('2d')">2D Canvas</button>
+      <button class="mode-btn" id="dim-3d" onclick="setDimension('3d')">3D Force</button>
+      <input type="text" class="search-input" id="search-box" placeholder="🔍 Filtrar nodo..." oninput="filterGraph()">
     </div>
-    <div id="stats" style="font-size:11px; color:#94a3b8;">Cargando grafo...</div>
+    <div id="stats" style="font-size:11px; color:#64748b;">Cargando grafo...</div>
   </header>
 
   <div id="graph-container"></div>
@@ -190,6 +193,7 @@ def index():
   <script>
     let activePath = ".";
     let activeView = "code";
+    let dimensionMode = "2d";
     let graphInstance = null;
     let fullData = { nodes: [], links: [] };
 
@@ -200,16 +204,16 @@ def index():
           const listEl = document.getElementById('project-list');
           listEl.innerHTML = projects.map(p => `
             <div class="project-item ${p.path === activePath ? 'active' : ''}" onclick="selectProject('${p.path}')">
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;">${p.name}</span>
-              <span style="font-size:9px;">${p.status}</span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px;">${p.name}</span>
+              <span style="font-size:9px; color:${p.indexed ? '#10b981' : '#ef4444'};">${p.indexed ? '🟢' : '🔴'}</span>
             </div>
           `).join('');
         });
     }
 
     function promptRegisterProject() {
-      const mode = prompt("Escoge modo (1: Single Folder, 2: Master Folder, 3: Agent Discovered):", "1");
-      const path = prompt("Ingresa la ruta completa del proyecto o carpeta contenedora:");
+      const mode = prompt("Selecciona modalidad (1: Single Folder, 2: Master Folder, 3: Agent Discovered):", "1");
+      const path = prompt("Ingresa la ruta absoluta del proyecto o carpeta contenedora:");
       if (path) {
         const modeKey = mode === "2" ? "master_folder" : (mode === "3" ? "agent_discovered" : "single_folder");
         fetch('/api/projects/register', {
@@ -242,6 +246,18 @@ def index():
       loadGraph();
     }
 
+    function setDimension(dim) {
+      if (dimensionMode === dim) return;
+      dimensionMode = dim;
+      document.getElementById('dim-2d').classList.toggle('active', dim === '2d');
+      document.getElementById('dim-3d').classList.toggle('active', dim === '3d');
+      if (graphInstance) {
+        document.getElementById('graph-container').innerHTML = '';
+        graphInstance = null;
+      }
+      loadGraph();
+    }
+
     function reindexCurrent() {
       const btn = document.getElementById('reindex-btn');
       btn.innerText = '⚡ Indexando...';
@@ -264,7 +280,7 @@ def index():
         graphInstance.graphData(fullData);
         return;
       }
-      const filteredNodes = fullData.nodes.filter(n => n.name.toLowerCase().includes(q) || n.details.toLowerCase().includes(q));
+      const filteredNodes = fullData.nodes.filter(n => n.name.toLowerCase().includes(q) || (n.details && n.details.toLowerCase().includes(q)));
       const nodeIds = new Set(filteredNodes.map(n => n.id));
       const filteredLinks = fullData.links.filter(l => {
         const src = typeof l.source === 'object' ? l.source.id : l.source;
@@ -280,27 +296,41 @@ def index():
         .then(res => res.json())
         .then(data => {
           fullData = data;
-          document.getElementById('stats').innerText = `${data.nodes.length} nodos · ${data.links.length} conectores (Estilo Obsidian / Graphify)`;
+          document.getElementById('stats').innerText = `${data.nodes.length} nodos · ${data.links.length} conectores (${dimensionMode.toUpperCase()} Graphify Style)`;
 
-          if (!graphInstance) {
-            graphInstance = ForceGraph3D()(document.getElementById('graph-container'));
+          const container = document.getElementById('graph-container');
+
+          if (dimensionMode === '2d') {
+            if (!graphInstance) {
+              graphInstance = ForceGraph()(container);
+            }
+            graphInstance
+              .backgroundColor('#0f172a')
+              .graphData(data)
+              .nodeId('id')
+              .nodeVal(n => n.val || (4 + (n.degree || 0) * 1.5))
+              .nodeLabel(n => `${n.name}\n${n.details || ''}\n📊 Conexiones: ${n.degree || 0}`)
+              .nodeColor(n => n.color || '#38bdf8')
+              .linkColor(() => 'rgba(148, 163, 184, 0.25)')
+              .linkWidth(1.2)
+              .linkDirectionalArrowLength(3.5)
+              .linkDirectionalArrowRelPos(0.95);
+          } else {
+            if (!graphInstance) {
+              graphInstance = ForceGraph3D()(container);
+            }
+            graphInstance
+              .backgroundColor('#0f172a')
+              .graphData(data)
+              .nodeId('id')
+              .nodeVal(n => n.val || (6 + (n.degree || 0) * 2))
+              .nodeLabel(n => `${n.name}\n${n.details || ''}\n📊 Conexiones: ${n.degree || 0}`)
+              .nodeColor(n => n.color || '#38bdf8')
+              .linkColor(() => 'rgba(148, 163, 184, 0.3)')
+              .linkWidth(1.5)
+              .linkDirectionalArrowLength(4.0)
+              .linkDirectionalArrowRelPos(0.95);
           }
-
-          graphInstance
-            .graphData(data)
-            .nodeId('id')
-            .nodeVal(n => n.val || (8 + (n.degree || 0) * 3))
-            .nodeLabel(n => `${n.name}\n${n.details}\n📊 Conexiones: ${n.degree || 0}`)
-            .nodeColor(n => n.color || '#00f0ff')
-            .linkCurvature(0.2)
-            .linkColor(l => l.color || 'rgba(0, 240, 255, 0.75)')
-            .linkWidth(2.0)
-            .linkDirectionalArrowLength(5.0)
-            .linkDirectionalArrowRelPos(0.95)
-            .linkDirectionalParticles(3)
-            .linkDirectionalParticleWidth(2.5)
-            .linkDirectionalParticleSpeed(0.007)
-            .linkDirectionalParticleColor(l => l.color || '#00f0ff');
         });
     }
 
