@@ -462,24 +462,42 @@ def index():
     let graphInst     = null;
     let fullData      = { nodes: [], links: [] };
 
+    // Palette only controls link color and accent. Node colors come from community.
     const PALETTES = {
-      obsidian  : { file:'#38bdf8', class:'#f59e0b', func:'#a78bfa', agent:'#a855f7', enum:'#10b981', link:'rgba(148,163,184,0.25)', linkW:1.2 },
-      cyberpunk : { file:'#00f0ff', class:'#ffe600', func:'#ff007f', agent:'#9b00ff', enum:'#00ff7f', link:'rgba(0,240,255,0.22)',   linkW:1.2 },
-      mono      : { file:'#e2e8f0', class:'#94a3b8', func:'#64748b', agent:'#475569', enum:'#f8fafc', link:'rgba(226,232,240,0.15)', linkW:0.8 },
-      matrix    : { file:'#22c55e', class:'#4ade80', func:'#16a34a', agent:'#15803d', enum:'#86efac', link:'rgba(34,197,94,0.22)',   linkW:1.2 },
+      obsidian  : { link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' },
+      cyberpunk : { link:'rgba(0,240,255,0.25)',   linkW:1.4, particle:'rgba(0,240,255,0.9)' },
+      mono      : { link:'rgba(226,232,240,0.18)', linkW:0.9, particle:'rgba(226,232,240,0.7)' },
+      matrix    : { link:'rgba(34,197,94,0.25)',   linkW:1.4, particle:'rgba(34,197,94,0.9)' },
     };
+    // 12 distinct community colors (fixed — not affected by palette)
     const COMM_COLORS = ['#38bdf8','#f59e0b','#ef4444','#10b981','#a78bfa','#ec4899','#06b6d4','#84cc16','#eab308','#6366f1','#f97316','#14b8a6'];
+    // Map: communityKey -> color (built when graph loads)
+    let commColorMap = {};
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+    function getCommKey(n) {
+      if (n.kind === 'file') {
+        const parts = (n.details || n.name).split(/[\/\\]/);
+        // Use parent folder name as community key
+        return parts.length > 1 ? parts[parts.length - 2] : parts[0].replace(/\.[^.]+$/, '');
+      }
+      // For symbols: use the file path's parent folder
+      if (n.details) {
+        const parts = n.details.split(/[\/\\]/);
+        if (parts.length > 1) return parts[parts.length - 2];
+      }
+      return n.name ? n.name.split('.')[0] : 'general';
+    }
+
     function nodeColor(n) {
-      const p = PALETTES[activePalette];
       const k = n.kind || '';
-      if (k === 'file')        return p.file;
-      if (k === 'class')       return p.class;
-      if (k === 'function')    return p.func;
-      if (k === 'enum' || k === 'struct' || k === 'interface') return p.enum;
-      if (k.includes('agent') || k.includes('orchestrator') || k.includes('hermes')) return p.agent;
-      return p.file;
+      // Agents always use purple/cyan regardless of community
+      if (k.includes('orchestrator')) return '#a855f7';
+      if (k.includes('agent'))        return '#7c3aed';
+      if (k.includes('hermes'))       return '#06b6d4';
+      // Other nodes: use their community color
+      const commKey = getCommKey(n);
+      return commColorMap[commKey] || '#38bdf8';
     }
 
     function destroyGraph() {
@@ -598,25 +616,25 @@ def index():
 
     // ── Communities sidebar ───────────────────────────────────────────────────
     function buildCommunities(data) {
-      // Group nodes by their "module" = first segment of file path or name
+      // Build community groups by folder
       const groups = {};
       data.nodes.forEach(n => {
-        let key = 'general';
-        if (n.kind === 'file') {
-          // Use parent folder of the file as community
-          const parts = (n.details || n.name).split(/[\\/]/);
-          key = parts.length > 1 ? parts[parts.length - 2] : parts[0].split('.')[0];
-        } else {
-          key = n.name ? n.name.split('.')[0] : 'general';
-        }
+        const key = getCommKey(n);
         if (!groups[key]) groups[key] = 0;
         groups[key]++;
       });
 
       const sorted = Object.entries(groups).sort((a,b) => b[1] - a[1]);
+
+      // Build stable color map: community key -> fixed color (not affected by palette)
+      commColorMap = {};
+      sorted.forEach(([name], idx) => {
+        commColorMap[name] = COMM_COLORS[idx % COMM_COLORS.length];
+      });
+
       const el = document.getElementById('community-list');
-      el.innerHTML = sorted.map(([name, count], idx) => {
-        const color = COMM_COLORS[idx % COMM_COLORS.length];
+      el.innerHTML = sorted.map(([name, count]) => {
+        const color = commColorMap[name];
         return `
           <div class="community-item" onclick="toggleComm('${name}')">
             <div class="comm-left">
@@ -707,48 +725,52 @@ def index():
 
         const container = document.getElementById('graph-container');
 
+        const nodeVal = n => {
+          const k = n.kind || '';
+          if (k.includes('orchestrator')) return activeDim === '2d' ? 20 : 24;
+          if (k.includes('agent') || k.includes('hermes')) return activeDim === '2d' ? 12 : 14;
+          if (k === 'class' || k === 'interface') return activeDim === '2d' ? 8 : 9;
+          if (k === 'file') return activeDim === '2d' ? 6 : 7;
+          return activeDim === '2d' ? 3 : 4;
+        };
+        const tooltip = n =>
+          `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:220px;">` +
+          `<strong>${n.name}</strong>` +
+          `<br/><span style="color:#64748b;font-size:10px;">${n.kind || ''}</span>` +
+          (n.details ? `<br/><span style="color:#94a3b8;font-size:10px;">${n.details}</span>` : '') +
+          `<br/><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#38bdf8;">Conexiones: ${n.degree || 0}</span>` +
+          `</div>`;
+
         if (activeDim === '2d') {
           graphInst = ForceGraph()(container)
             .backgroundColor('#0b0e17')
             .graphData(data)
             .nodeId('id')
-            .nodeVal(n => {
-              const k = n.kind || '';
-              if (k.includes('orchestrator')) return 18;
-              if (k.includes('agent') || k.includes('hermes')) return 10;
-              if (k === 'class' || k === 'interface') return 6;
-              if (k === 'file') return 5;
-              return 3;
-            })
+            .nodeVal(nodeVal)
             .nodeColor(n => nodeColor(n))
-            .nodeLabel(n => `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:6px 10px;font-size:12px;color:#f8fafc;"><strong>${n.name}</strong><br/><span style="color:#64748b;">${n.kind || ''}</span>${n.details ? '<br/><span style="color:#94a3b8;font-size:11px;">'+n.details+'</span>' : ''}<br/><span style="color:#38bdf8;">Conexiones: ${n.degree || 0}</span></div>`)
+            .nodeLabel(tooltip)
             .linkColor(() => p.link)
             .linkWidth(p.linkW)
-            .linkDirectionalParticles(2)
+            .linkDirectionalParticles(n => (n.source?.degree || 0) > 2 ? 2 : 0)
             .linkDirectionalParticleWidth(1.5)
-            .linkDirectionalParticleColor(() => p.link.replace('0.25','0.9'))
-            .d3AlphaDecay(0.015)
-            .d3VelocityDecay(0.25)
-            .d3Force('charge', d3.forceManyBody().strength(-120))
-            .d3Force('link',   d3.forceLink().distance(60))
-            .d3Force('collide', d3.forceCollide().radius(18));
+            .linkDirectionalParticleColor(() => p.particle)
+            .d3AlphaDecay(0.012)
+            .d3VelocityDecay(0.22)
+            .d3Force('charge', d3.forceManyBody().strength(-300))
+            .d3Force('link',   d3.forceLink().distance(80).strength(0.4))
+            .d3Force('collide', d3.forceCollide().radius(22));
         } else {
           graphInst = ForceGraph3D()(container)
             .backgroundColor('#0b0e17')
             .graphData(data)
             .nodeId('id')
-            .nodeVal(n => {
-              const k = n.kind || '';
-              if (k.includes('orchestrator')) return 22;
-              if (k.includes('agent') || k.includes('hermes')) return 12;
-              if (k === 'class' || k === 'interface') return 7;
-              if (k === 'file') return 5;
-              return 3;
-            })
+            .nodeVal(nodeVal)
             .nodeColor(n => nodeColor(n))
             .nodeLabel(n => `${n.name} (${n.kind || ''}) — ${n.degree || 0} conexiones`)
             .linkColor(() => p.link)
-            .linkWidth(p.linkW);
+            .linkWidth(p.linkW)
+            .d3Force('charge', d3.forceManyBody ? d3.forceManyBody().strength(-200) : null)
+            .d3Force('collide', d3.forceCollide ? d3.forceCollide().radius(18) : null);
         }
 
         applyFilter();

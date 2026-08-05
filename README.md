@@ -1,46 +1,92 @@
-# 🌌 AetherGraph (`aether-graph`)
+# AetherGraph (`aether-graph`)
 
-> **Zero-Token AST Deterministic + Hybrid Semantic RAG Graph for AI Coding Agents (MCP & CLI)**
-
-`AetherGraph` es un motor de contexto e indexación determinista ultra-rápido para agentes de código (Claude Code, Cursor, Windsurf, Antigravity, OpenClaw).
-
-A diferencia de las herramientas de grafos pesadas basadas en LLMs que consumen miles de dólares en tokens y sufren de alucinaciones, `AetherGraph` analiza la estructura real del código usando **AST (Abstract Syntax Tree)** determinista en milisegundos a costo **$0.00 USD**.
+> **Motor de contexto de código determinista — Grafo AST + Semántico híbrido con visualizador WebGL y protocolo MCP para agentes de IA.**
 
 ---
 
-## 🌟 Características Principales
+## Propósito
 
-1. **Zero-Token AST Code Engine:** Extrae clases, funciones, llamadas e importaciones sin realizar una sola llamada a APIs de LLMs.
-2. **Protocolo MCP Estándar (Model Context Protocol):** Expone las herramientas `graph_neighborhood` y `graph_blast_radius` directamente a agentes de IA vía `stdio`.
-3. **Estructura por Repositorio (`.aether-graph/`):** Almacena el mapa del proyecto localmente de forma limpia sin ensuciar la raíz del código.
-4. **Visualizador WebGL 3D/2D Local:** Servidor en vivo (puerto `9210`) para explorar visualmente la red del código y gobernanza de agentes.
-5. **Cero Dependencias Pesadas:** Cero servidores Docker obligatorios para desarrollo local; instalable con un simple `pip install -e .`.
+AetherGraph analiza la estructura real de un proyecto de software usando **AST (Abstract Syntax Tree)** determinista y la convierte en un **grafo interactivo de nodos y conexiones** navegable en 2D y 3D. Proporciona contexto estructural preciso a agentes de IA (Antigravity, Claude Code, Cursor, Gemini, OpenClaw) vía protocolo MCP, sin consumir tokens de LLM para el análisis base.
+
+A diferencia de herramientas de grafo que dependen de embeddings o llamadas a LLM para construir el mapa del código, AetherGraph lo hace en **milisegundos a costo $0** utilizando el árbol de sintaxis abstracto del lenguaje (Python, C#, JavaScript/TypeScript).
 
 ---
 
-## 🚀 Uso Rápido (CLI)
+## Valor de Mercado — Por qué elegir AetherGraph vs otras herramientas
 
+| Característica | AetherGraph | Graphify / Obsidian Graph | CodeGraph / Sourcegraph |
+|---|---|---|---|
+| Analiza código real (AST) | **Si** | No (solo Markdown) | Si (requiere servidor pesado) |
+| Costo de indexación | **$0 USD** | $0 | $$$ Cloud |
+| Velocidad de indexación | **<50ms** | — | Minutos |
+| Motor IA local opcional | **Si (Ollama)** | No | No |
+| Motor IA Cloud opcional | **Si (Gemini/Claude)** | No | Si |
+| Protocolo MCP estándar | **Si** | No | No |
+| Topología de agentes IA | **Si (OpenClaw/Hermes)** | No | No |
+| Proyectos Unity / C# | **Si** | No | Limitado |
+| Visualizador 2D + 3D | **Si** | Solo 2D | Solo 2D |
+| Configurable por agente IA | **Si (AGY, Claude, Codex)** | No | No |
+| Licencia | **MIT** | MIT | Propietaria |
+
+---
+
+## Motor de Reindexación — IA Local vs IA Cloud
+
+AetherGraph soporta tres motores de reindexación. **No hay que escoger uno solo** — puedes usar el motor puro para indexación rápida y cambiar a semántico cuando necesitas profundidad.
+
+| Criterio | AST Puro (Cero tokens) | IA Local (Ollama) | IA Cloud (Gemini/Claude/OpenAI) |
+|---|---|---|---|
+| **Costo** | $0.00 | $0.00 (hardware local) | $0.001–$0.02 / 1K tokens |
+| **Velocidad** | <50 ms | 2–10 s (depende del modelo) | 1–5 s (depende de la red) |
+| **Privacidad** | Total — sin envío de datos | Total — todo local | Código se envía al proveedor |
+| **Calidad semántica** | Estructural (no semántico) | Alta (Qwen2.5-Coder, Nomic) | Muy alta (Gemini, Claude) |
+| **Requiere conexión** | No | No | Si |
+| **Tamaño proyecto** | Ilimitado | Limitado por RAM/GPU | Limitado por contexto del API |
+| **Modelos soportados** | — | `qwen2.5-coder`, `nomic-embed-text`, `codellama`, `deepseek-coder` | `gemini-2.0-flash`, `claude-sonnet-4`, `gpt-4o` |
+| **Configurable por agente** | Si | Si (AGY, Claude Code, Codex) | Si (AGY, Claude Code, Codex) |
+
+> **Recomendación:** Usa **AST Puro** para indexación cotidiana rápida. Usa **Ollama + `nomic-embed-text`** (el mismo modelo que usa OpenClaw) para análisis semántico profundo sin costo. Usa **Cloud API** cuando necesitas máxima precisión en proyectos complejos.
+
+---
+
+## Modelos de IA Recomendados
+
+### IA Local (Ollama — $0 / Privacidad Total)
 ```bash
-# Inicializar .aether-graph/ en el proyecto actual
-aether-graph init
+# Instalación única
+curl -fsSL https://ollama.com/install.sh | sh
 
-# Construir el mapa AST determinista
-aether-graph build
+# Para análisis de código (generación / comprensión)
+ollama run qwen2.5-coder
 
-# Consultar relaciones y radio de impacto de una función
-aether-graph query "MyFunction"
+# Para embeddings semánticos (el mismo que usa OpenClaw internamente)
+ollama pull nomic-embed-text
 
-# Levantar el servidor WebGL 3D visualizador (puerto 9210)
-aether-graph serve --port 9210
+# Para proyectos grandes
+ollama run codellama:13b
 ```
 
----
+AetherGraph se conecta automáticamente a `http://localhost:11434` (o a `OLLAMA_HOST` si está definido).
 
-## ⚙️ Conexión como Servidor MCP (Claude Code / Cursor / Windsurf)
+### IA Cloud API (Gemini / Claude / OpenAI)
+```bash
+# Gemini (recomendado — mismo ecosistema que AGY / Antigravity)
+export GEMINI_API_KEY="AIzaSy..."
 
-Agrega lo siguiente a tu archivo `mcpServers` (ej. `~/.claude/claude.json`):
+# Claude (excelente para razonamiento sobre código)
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# OpenAI / Codex
+export OPENAI_API_KEY="sk-..."
+```
+
+O añade las llaves en el archivo `.env` (ver `.env.example`).
+
+### Configuración por Agente de IA (AGY, Claude Code, Codex)
+Un agente de IA puede registrar proyectos, cambiar el motor de reindexación y lanzar la reindexación de forma autónoma vía MCP:
 
 ```json
+// ~/.claude/claude.json  (Claude Code)
 {
   "mcpServers": {
     "aether-graph": {
@@ -51,29 +97,62 @@ Agrega lo siguiente a tu archivo `mcpServers` (ej. `~/.claude/claude.json`):
 }
 ```
 
+```jsonc
+// AGY (Antigravity) — skills / MCP sidecar
+{
+  "name": "aether-graph",
+  "command": "aether-graph mcp",
+  "env": { "GEMINI_API_KEY": "..." }
+}
+```
+
 ---
 
-## ⚡ Patrón de Desarrollo Autónomo (Zero-Downtime Hot-Reloading)
+## Instalación Rápida
 
-Para permitir que agentes autónomos de IA (o desarrolladores) modifiquen código del servidor web y vistas de dashboard sin requerir reconstrucciones de Docker ni reinicios de proceso manuales, todos los nuevos servicios deben seguir este patrón en `docker-compose.yml`:
+```bash
+pip install -e .
+cp .env.example .env   # Configura tus llaves opcionalmente
+
+# Levantar el visualizador (puerto 9210)
+aether-graph serve --port 9210
+```
+
+O con Docker:
+
+```bash
+docker compose up -d
+```
+
+---
+
+## Uso CLI
+
+```bash
+# Indexar el proyecto actual
+aether-graph build
+
+# Consultar radio de impacto de una función
+aether-graph query "MiFuncion"
+
+# Levantar servidor WebGL
+aether-graph serve --port 9210
+```
+
+---
+
+## Patrón de Desarrollo Autónomo (Hot-Reload)
 
 ```yaml
-version: "3.8"
-
 services:
   aether-graph:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: aether-graph-daemon
     ports:
       - "9210:9210"
-    environment:
-      - PORT=9210
-      - AETHER_ENV=development
     volumes:
       - ./.aether-graph:/app/.aether-graph
-      - ./aether_graph:/app/aether_graph # Montaje en vivo del código
+      - ./aether_graph:/app/aether_graph   # live code mount
       - ../:/workspace:ro
     command: ["aether-graph", "serve", "--host", "0.0.0.0", "--port", "9210", "--reload"]
     restart: unless-stopped
@@ -81,6 +160,6 @@ services:
 
 ---
 
-## 📜 Licencia
+## Licencia
 
 MIT License — Libre para uso personal, Open Source y Comercial.
