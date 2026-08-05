@@ -197,34 +197,33 @@ class ASTParser:
     def get_agent_topology_graph(cls, *args, **kwargs) -> Dict[str, Any]:
         nodes = [{
             "id": "agent:nexus", "name": "Nexus Orchestrator", "kind": "orchestrator_agent",
-            "val": 30, "color": "#a855f7", "details": "Controlador principal Harness OpenClaw"
+            "val": 30, "color": "#a855f7", "details": "Controlador principal Harness Orchestrator / OpenClaw"
         }]
         links = []
-        found_agents = {"agent:nexus"}
 
-        search_dirs = [
-            Path("/home/developer/Documentos/openclaw/data/workspace"),
-            Path("/workspace"),
-            Path(".aether-graph/workspace"),
+        evi_specialists = [
+            ("agent:agent-alpha-code", "Agent-Code Agent", "Subagente especialista en generación y refactor de código", "#7c3aed"),
+            ("agent:agent-alpha-db", "Agent-DB Agent", "Subagente especialista en bases de datos y persistencia", "#7c3aed"),
+            ("agent:agent-alpha-design", "Agent-Design Agent", "Subagente especialista en UI/UX y tokens de diseño", "#7c3aed"),
+            ("agent:agent-alpha-devops", "Agent-DevOps Agent", "Subagente especialista en CI/CD y despliegue Docker", "#7c3aed"),
+            ("agent:agent-alpha-qa", "Agent-QA Agent", "Subagente especialista en pruebas unitarias y calidad", "#7c3aed"),
+            ("agent:agent-alpha-security", "Agent-Security Agent", "Subagente especialista en auditoría de seguridad", "#7c3aed"),
+            ("agent:agent-alpha-architect", "Agent-Architect Agent", "Subagente especialista en arquitectura del sistema", "#7c3aed"),
+            ("agent:agent-alpha-coord", "Agent-Coord Agent", "Subagente especialista en coordinación de tareas", "#7c3aed"),
+            ("agent:agent-alpha-docs", "Agent-Docs Agent", "Subagente especialista en documentación y ADRs", "#7c3aed"),
+            ("agent:agent-alpha-career", "Agent-Career Agent", "Subagente especialista en gestión de carreras y empleos", "#7c3aed"),
+            ("agent:agent-alpha-research", "Agent-Research Agent", "Subagente especialista en investigación profunda", "#7c3aed"),
         ]
-        skip = {"nexus", "state", "proyectos", "skills", "UnityCommerceDemo", "aether-graph", "calculadora-stats", "floreria-demo"}
 
-        for sdir in search_dirs:
-            if sdir.exists():
-                for folder in sorted(sdir.iterdir()):
-                    if folder.is_dir() and not folder.name.startswith(".") and folder.name not in skip:
-                        aid = f"agent:{folder.name}"
-                        if aid not in found_agents:
-                            found_agents.add(aid)
-                            nodes.append({
-                                "id": aid, "name": f"{folder.name.capitalize()} Agent",
-                                "kind": "sub_agent", "val": 15, "color": "#7c3aed",
-                                "details": f"Subagente especializado ({folder.name})"
-                            })
-                            links.append({
-                                "source": "agent:nexus", "target": aid, "label": "delegates",
-                                "color": "rgba(168, 85, 247, 0.4)"
-                            })
+        for aid, aname, adetails, color in evi_specialists:
+            nodes.append({
+                "id": aid, "name": aname, "kind": "sub_agent",
+                "val": 15, "color": color, "details": adetails
+            })
+            links.append({
+                "source": "agent:nexus", "target": aid, "label": "delegates",
+                "color": "rgba(168, 85, 247, 0.4)"
+            })
 
         ext_agents = [
             ("agent:hermes", "Hermes Autonomous Agent", "Agente autónomo Hermes IC", "#06b6d4", "spawns"),
@@ -234,16 +233,14 @@ class ASTParser:
         ]
 
         for aid, aname, adetails, color, rel in ext_agents:
-            if aid not in found_agents:
-                found_agents.add(aid)
-                kind = "mcp_tool" if aid.startswith("mcp") else "sub_agent"
-                nodes.append({
-                    "id": aid, "name": aname, "kind": kind,
-                    "val": 12, "color": color, "details": adetails
-                })
-                links.append({
-                    "source": "agent:nexus", "target": aid, "label": rel,
-                    "color": "rgba(6, 182, 212, 0.4)"
-                })
+            kind = "mcp_tool" if aid.startswith("mcp") else "sub_agent"
+            nodes.append({
+                "id": aid, "name": aname, "kind": kind,
+                "val": 12, "color": color, "details": adetails
+            })
+            links.append({
+                "source": "agent:nexus", "target": aid, "label": rel,
+                "color": "rgba(6, 182, 212, 0.4)"
+            })
 
         return ASTParser()._enrich_graph_with_degree({"nodes": nodes, "links": links})
