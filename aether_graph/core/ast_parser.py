@@ -97,7 +97,41 @@ class ASTParser:
                     "source": f_id,
                     "target": sym_id,
                     "label": "contiene",
-                    "color": "rgba(148,163,184,0.3)"
+                    "color": "rgba(56, 189, 248, 0.75)"
                 })
 
+        return {"nodes": nodes, "links": links}
+
+    def get_agent_topology_graph(self) -> Dict[str, Any]:
+        """Genera el grafo de topología de agentes del arnés y sus capacidades."""
+        nodes = [
+            {"id": "agent:nexus", "name": "Orchestrator (Nexus)", "kind": "orchestrator", "val": 28, "color": "#a855f7", "details": "Orquestador Conversacional Principal"},
+            {"id": "agent:career", "name": "Agent-Beta (Career)", "kind": "agent", "val": 20, "color": "#ec4899", "details": "Mentora de Carrera & Coach de Inglés"},
+            {"id": "agent:coord", "name": "Eva (Coord)", "kind": "agent", "val": 20, "color": "#eab308", "details": "Coordinadora de Proyectos"},
+            {"id": "agent:code", "name": "Agent-Code", "kind": "agent", "val": 20, "color": "#38bdf8", "details": "Estratega & Arquitecto de Código"},
+            {"id": "agent:db", "name": "Agent-DB", "kind": "agent", "val": 20, "color": "#f59e0b", "details": "Estratega de Bases de Datos & SQL"},
+            {"id": "agent:architect", "name": "Agent-Architect", "kind": "agent", "val": 20, "color": "#6366f1", "details": "Director Técnico & ADRs"},
+            {"id": "agent:devops", "name": "Agent-DevOps", "kind": "agent", "val": 20, "color": "#10b981", "details": "Estratega de Infraestructura & CI/CD"},
+            {"id": "agent:security", "name": "Agent-Security", "kind": "agent", "val": 20, "color": "#ef4444", "details": "Auditor DevSecOps & Zero-Trust"},
+            {"id": "agent:qa", "name": "Agent-QA", "kind": "agent", "val": 20, "color": "#14b8a6", "details": "Estratega de Testing & Visual QA"},
+            {"id": "agent:design", "name": "Agent-Design", "kind": "agent", "val": 20, "color": "#f43f5e", "details": "Estratega & Diseñador UI/UX"},
+            {"id": "agent:docs", "name": "Agent-Docs", "kind": "agent", "val": 20, "color": "#8b5cf6", "details": "Estratega de Documentación"},
+
+            {"id": "cap:file_operation", "name": "Gestión de Archivos", "kind": "capability", "val": 12, "color": "#94a3b8", "details": "Operaciones AST y Filesystem"},
+            {"id": "cap:data_operation", "name": "Operación de Datos", "kind": "capability", "val": 12, "color": "#94a3b8", "details": "Consultas SQLite y Schemas"},
+            {"id": "cap:security_audit", "name": "Auditoría de Seguridad", "kind": "capability", "val": 12, "color": "#94a3b8", "details": "Escaneo de vulnerabilidades y políticas"},
+            {"id": "cap:quality_assurance", "name": "Quality Assurance", "kind": "capability", "val": 12, "color": "#94a3b8", "details": "Pruebas unitarias y visual testing"},
+        ]
+
+        links = [
+            {"source": "agent:nexus", "target": "agent:code", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
+            {"source": "agent:nexus", "target": "agent:db", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
+            {"source": "agent:nexus", "target": "agent:security", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
+            {"source": "agent:nexus", "target": "agent:qa", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
+            {"source": "agent:nexus", "target": "agent:design", "label": "orquesta", "color": "rgba(168, 85, 247, 0.85)"},
+            {"source": "agent:code", "target": "cap:file_operation", "label": "ejecuta", "color": "rgba(56, 189, 248, 0.85)"},
+            {"source": "agent:db", "target": "cap:data_operation", "label": "ejecuta", "color": "rgba(245, 158, 11, 0.85)"},
+            {"source": "agent:security", "target": "cap:security_audit", "label": "ejecuta", "color": "rgba(239, 68, 68, 0.85)"},
+            {"source": "agent:qa", "target": "cap:quality_assurance", "label": "ejecuta", "color": "rgba(20, 184, 166, 0.85)"},
+        ]
         return {"nodes": nodes, "links": links}
