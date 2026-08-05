@@ -699,9 +699,7 @@ def index():
 
         // Community filter — match by folder name or name prefix
         if (activeComms.size > 0) {
-          let key = n.kind === 'file'
-            ? (n.details || n.name).split('/').slice(-2, -1)[0] || n.details.split('\\').slice(-2, -1)[0] || n.name.split('.')[0]
-            : n.name.split('.')[0];
+          const key = getCommKey(n);
           if (!activeComms.has(key)) return false;
         }
 
