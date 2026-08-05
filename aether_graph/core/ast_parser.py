@@ -100,7 +100,50 @@ class ASTParser:
                     "color": "rgba(56, 189, 248, 0.75)"
                 })
 
-        return {"nodes": nodes, "links": links}
+            # Add import links
+            for imp in res.get("imports", []):
+                imp_clean = imp.split(".")[0]
+                for other_path in root_dir.rglob("*.py"):
+                    if other_path != path and imp_clean in other_path.stem:
+                        other_rel = str(other_path.relative_to(root_dir))
+                        other_fid = f"file:{other_rel}"
+                        links.append({
+                            "source": f_id,
+                            "target": other_fid,
+                            "label": "importa",
+                            "color": "rgba(234, 179, 8, 0.75)"
+                        })
+                        break
+
+        return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
+
+    def _enrich_graph_with_degree(self, graph: Dict[str, Any]) -> Dict[str, Any]:
+        """Calcula in-degree, out-degree y escala dinámicamente el valor del nodo."""
+        in_degree: Dict[str, int] = {}
+        out_degree: Dict[str, int] = {}
+
+        for link in graph.get("links", []):
+            src = link.get("source")
+            tgt = link.get("target")
+            if src:
+                out_degree[src] = out_degree.get(src, 0) + 1
+            if tgt:
+                in_degree[tgt] = in_degree.get(tgt, 0) + 1
+
+        for node in graph.get("nodes", []):
+            nid = node.get("id")
+            in_d = in_degree.get(nid, 0)
+            out_d = out_degree.get(nid, 0)
+            total_d = in_d + out_d
+            node["in_degree"] = in_d
+            node["out_degree"] = out_d
+            node["degree"] = total_d
+            
+            # Dynamic scaling: base_val + degree * 3
+            base_val = node.get("val", 8)
+            node["val"] = base_val + (total_d * 3)
+
+        return graph
 
     def get_agent_topology_graph(self) -> Dict[str, Any]:
         """Genera el grafo de topología de agentes del arnés y sus capacidades."""
@@ -134,4 +177,5 @@ class ASTParser:
             {"source": "agent:security", "target": "cap:security_audit", "label": "ejecuta", "color": "rgba(239, 68, 68, 0.85)"},
             {"source": "agent:qa", "target": "cap:quality_assurance", "label": "ejecuta", "color": "rgba(20, 184, 166, 0.85)"},
         ]
-        return {"nodes": nodes, "links": links}
+        return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
+

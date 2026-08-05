@@ -168,7 +168,22 @@ def index():
       fetch(url)
         .then(res => res.json())
         .then(data => {
-          document.getElementById('stats').innerText = `${data.nodes.length} nodos · ${data.links.length} conectores (Alto Contraste)`;
+          document.getElementById('stats').innerText = `${data.nodes.length} nodos · ${data.links.length} conectores (Alto Contraste & Vértices Dirigidos)`;
+
+          const degreeMap = {};
+          data.nodes.forEach(n => { degreeMap[n.id] = { in: 0, out: 0, total: 0 }; });
+          data.links.forEach(l => {
+            const src = typeof l.source === 'object' ? l.source.id : l.source;
+            const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+            if (degreeMap[src]) { degreeMap[src].out += 1; degreeMap[src].total += 1; }
+            if (degreeMap[tgt]) { degreeMap[tgt].in += 1; degreeMap[tgt].total += 1; }
+          });
+          data.nodes.forEach(n => {
+            const stats = degreeMap[n.id] || { in: 0, out: 0, total: 0 };
+            n.in_degree = n.in_degree !== undefined ? n.in_degree : stats.in;
+            n.out_degree = n.out_degree !== undefined ? n.out_degree : stats.out;
+            n.degree = n.degree !== undefined ? n.degree : stats.total;
+          });
           
           if (!graphInstance) {
             graphInstance = ForceGraph3D()(document.getElementById('graph-container'));
@@ -177,10 +192,18 @@ def index():
           graphInstance
             .graphData(data)
             .nodeId('id')
-            .nodeLabel(n => `${n.name}\n${n.details}`)
+            .nodeVal(n => n.val || (8 + (n.degree || 0) * 3))
+            .nodeLabel(n => `${n.name}\n${n.details}\n📊 Conexiones: ${n.degree || 0} (Entrantes: ${n.in_degree || 0}, Salientes: ${n.out_degree || 0})`)
             .nodeColor(n => n.color || '#38bdf8')
+            .linkLabel(l => l.label || '')
             .linkColor(l => l.color || 'rgba(0, 240, 255, 0.85)')
-            .linkWidth(2.0);
+            .linkWidth(2.0)
+            .linkDirectionalArrowLength(4.0)
+            .linkDirectionalArrowRelPos(0.95)
+            .linkDirectionalParticles(2)
+            .linkDirectionalParticleWidth(2.0)
+            .linkDirectionalParticleSpeed(0.006)
+            .linkDirectionalParticleColor(l => l.color || '#00f0ff');
         });
     }
 

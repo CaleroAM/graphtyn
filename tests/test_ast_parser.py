@@ -19,10 +19,27 @@ def test_parse_python_file():
 def test_scan_directory():
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
-        (root / "app.py").write_text("def run():\n    print('ok')\n")
+        (root / "app.py").write_text("class Core:\n    def run(self):\n        pass\n")
 
         parser = ASTParser()
         graph = parser.scan_directory(root)
         
         assert len(graph["nodes"]) >= 2
         assert len(graph["links"]) >= 1
+
+        # Check dynamic scaling and degree metrics
+        file_node = next(n for n in graph["nodes"] if n["kind"] == "file")
+        assert "degree" in file_node
+        assert "in_degree" in file_node
+        assert "out_degree" in file_node
+        assert file_node["out_degree"] >= 2  # contains Core class and run method
+        assert file_node["val"] > 15  # Base val 15 + degree * 3
+
+def test_agent_topology_graph_degrees():
+    parser = ASTParser()
+    graph = parser.get_agent_topology_graph()
+    
+    nexus_node = next(n for n in graph["nodes"] if n["id"] == "agent:nexus")
+    assert nexus_node["out_degree"] == 5
+    assert nexus_node["degree"] == 5
+    assert nexus_node["val"] == 28 + (5 * 3)
