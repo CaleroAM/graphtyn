@@ -75,7 +75,7 @@ class ASTParser:
                     "id": f_id,
                     "name": Path(res['file']).name,
                     "kind": "file",
-                    "val": 15,
+                    "val": 5,
                     "color": "#38bdf8",
                     "details": f"Archivo de código: {res['file']}"
                 })
@@ -88,7 +88,7 @@ class ASTParser:
                         "id": sym_id,
                         "name": sym["name"],
                         "kind": sym["kind"],
-                        "val": 10 if sym["kind"] == "class" else 6,
+                        "val": 4 if sym["kind"] == "class" else 2,
                         "color": "#f59e0b" if sym["kind"] == "class" else "#a78bfa",
                         "details": f"{sym['kind'].capitalize()} en {res['file']}:{sym['line']}"
                     })
@@ -97,10 +97,10 @@ class ASTParser:
                     "source": f_id,
                     "target": sym_id,
                     "label": "contiene",
-                    "color": "rgba(56, 189, 248, 0.75)"
+                    "color": "rgba(148, 163, 184, 0.2)"
                 })
 
-            # Add import links
+            # Add import and call links
             for imp in res.get("imports", []):
                 imp_clean = imp.split(".")[0]
                 for other_path in root_dir.rglob("*.py"):
@@ -111,14 +111,25 @@ class ASTParser:
                             "source": f_id,
                             "target": other_fid,
                             "label": "importa",
-                            "color": "rgba(234, 179, 8, 0.75)"
+                            "color": "rgba(234, 179, 8, 0.25)"
+                        })
+                        break
+
+            for call_name in res.get("calls", []):
+                for node_item in nodes:
+                    if node_item["kind"] == "function" and node_item["name"] == call_name and node_item["id"] != f_id:
+                        links.append({
+                            "source": f_id,
+                            "target": node_item["id"],
+                            "label": "llama",
+                            "color": "rgba(236, 72, 153, 0.25)"
                         })
                         break
 
         return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
 
     def _enrich_graph_with_degree(self, graph: Dict[str, Any]) -> Dict[str, Any]:
-        """Calcula in-degree, out-degree y escala dinámicamente el valor del nodo."""
+        """Calcula in-degree, out-degree y escala moderadamente el valor del nodo."""
         in_degree: Dict[str, int] = {}
         out_degree: Dict[str, int] = {}
 
@@ -139,9 +150,9 @@ class ASTParser:
             node["out_degree"] = out_d
             node["degree"] = total_d
             
-            # Dynamic scaling: base_val + degree * 3
-            base_val = node.get("val", 8)
-            node["val"] = base_val + (total_d * 3)
+            # Moderated scaling for clean Graphify dots
+            base_val = node.get("val", 3)
+            node["val"] = base_val + (total_d * 0.4)
 
         return graph
 

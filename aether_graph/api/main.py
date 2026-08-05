@@ -119,91 +119,97 @@ def index():
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>AetherGraph — Engine & Dashboard</title>
+  <title>AetherGraph — Graphify Style Engine</title>
   <script src="//unpkg.com/force-graph"></script>
   <script src="//unpkg.com/3d-force-graph"></script>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: #0b0f19; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+    body { margin: 0; padding: 0; background: #0b0e17; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
     header {
-      position: absolute; top: 0; left: 280px; right: 0; height: 54px; z-index: 50;
-      background: rgba(11, 15, 25, 0.92); backdrop-filter: blur(16px);
+      position: absolute; top: 0; left: 240px; right: 260px; height: 50px; z-index: 50;
+      background: rgba(11, 14, 23, 0.9); backdrop-filter: blur(12px);
       border-bottom: 1px solid #1e293b;
-      display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
     }
-    aside {
-      position: absolute; top: 0; left: 0; bottom: 0; width: 280px; z-index: 60;
-      background: #0b0f19; border-right: 1px solid #1e293b;
-      display: flex; flex-direction: column; padding: 16px 14px;
+    aside.left-aside {
+      position: absolute; top: 0; left: 0; bottom: 0; width: 240px; z-index: 60;
+      background: #0b0e17; border-right: 1px solid #1e293b;
+      display: flex; flex-direction: column; padding: 14px;
     }
-    .brand { font-weight: 700; font-size: 16px; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; letter-spacing: -0.5px; }
-    .section-title { font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; margin-bottom: 8px; font-weight: 700; }
-    .project-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; }
+    aside.right-aside {
+      position: absolute; top: 0; right: 0; bottom: 0; width: 260px; z-index: 60;
+      background: #0b0e17; border-left: 1px solid #1e293b;
+      display: flex; flex-direction: column; padding: 14px; overflow-y: auto;
+    }
+    .brand { font-weight: 700; font-size: 15px; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; letter-spacing: -0.5px; }
+    .section-title { font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 1.2px; margin-bottom: 8px; font-weight: 700; }
+    .project-list, .community-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 2px; }
     .project-item {
-      padding: 10px 12px; border-radius: 8px; font-size: 12px; color: #94a3b8; cursor: pointer;
+      padding: 8px 10px; border-radius: 6px; font-size: 11px; color: #94a3b8; cursor: pointer;
       display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; border: 1px solid #1e293b; background: #111827;
     }
     .project-item:hover { background: #1f2937; color: #f8fafc; border-color: #374151; }
-    .project-item.active { background: rgba(56, 189, 248, 0.12); border-color: #38bdf8; color: #38bdf8; font-weight: 600; }
+    .project-item.active { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; color: #38bdf8; font-weight: 600; }
+    .community-item {
+      display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #cbd5e1; padding: 5px 0; cursor: pointer;
+    }
+    .community-item label { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; overflow: hidden; }
+    .comm-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
     
-    /* Floating Panels and Modals */
+    /* Floating Action Buttons Top Right */
     .floating-top-actions {
-      position: absolute; top: 66px; right: 20px; z-index: 70; display: flex; gap: 8px;
+      position: absolute; top: 62px; right: 280px; z-index: 70; display: flex; gap: 8px;
     }
-    .floating-bottom-controls {
-      position: absolute; bottom: 20px; left: 300px; z-index: 70; display: flex; gap: 8px;
-    }
-    .floating-card {
-      position: absolute; z-index: 80; background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(20px);
-      border: 1px solid #374151; border-radius: 12px; padding: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; width: 260px;
-    }
-    .floating-card.active { display: block; }
     
-    /* Custom SVG Toggle Switches */
-    .custom-checkbox { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #cbd5e1; cursor: pointer; padding: 4px 0; }
-    .custom-checkbox input { display: none; }
-    .chk-box { width: 18px; height: 18px; border-radius: 4px; border: 1px solid #4b5563; background: #1f2937; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-    .custom-checkbox input:checked + .chk-box { background: #38bdf8; border-color: #38bdf8; }
-    .chk-box svg { width: 12px; height: 12px; stroke: #0f172a; stroke-width: 3; fill: none; display: none; }
-    .custom-checkbox input:checked + .chk-box svg { display: block; }
-
     .select-input, .btn-action {
-      padding: 8px 14px; border-radius: 8px; border: 1px solid #374151;
+      padding: 7px 12px; border-radius: 6px; border: 1px solid #374151;
       background: #1f2937; color: #f8fafc; font-weight: 600; font-size: 11px; outline: none;
       cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
     }
     .btn-action:hover { background: #374151; border-color: #4b5569; }
-    .btn-primary { background: linear-gradient(135deg, #0284c7, #0369a1); border-color: #0284c7; color: #fff; }
-    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-primary { background: #0284c7; border-color: #0284c7; color: #fff; }
+    .btn-primary:hover { background: #0369a1; }
     .mode-btn {
       background: #1f2937; border: 1px solid #374151; color: #94a3b8;
-      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s; display: flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s;
     }
     .mode-btn.active { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
     .search-input {
       background: #1f2937; border: 1px solid #374151; color: #f8fafc;
-      padding: 6px 12px; border-radius: 6px; font-size: 11px; outline: none; width: 160px;
+      padding: 5px 10px; border-radius: 6px; font-size: 11px; outline: none; width: 140px;
     }
     .search-input:focus { border-color: #38bdf8; }
-    #graph-container { width: calc(100vw - 280px); margin-left: 280px; height: 100vh; pt: 54px; }
+    #graph-container { width: calc(100vw - 500px); margin-left: 240px; height: 100vh; pt: 50px; }
     .svg-ico { width: 14px; height: 14px; fill: currentColor; }
   </style>
 </head>
 <body>
-  <aside>
+  <!-- Left Sidebar: Projects -->
+  <aside class="left-aside">
     <div class="brand">
       <svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l10-5v10l-10 5V11zm0 0L2 6v10l10 5V11z"/></svg>
       AetherGraph
     </div>
-    <div class="section-title">Proyectos Registrados</div>
+    <div class="section-title">PROYECTOS REGISTRADOS</div>
     <div class="project-list" id="project-list">Cargando...</div>
   </aside>
 
+  <!-- Right Sidebar: Communities (Graphify Style 2.png) -->
+  <aside class="right-aside">
+    <div class="section-title">COMMUNITIES</div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px; color:#cbd5e1; display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+        <input type="checkbox" id="select-all-comm" checked onchange="toggleSelectAllComm(this.checked)"> Select All
+      </label>
+    </div>
+    <div class="community-list" id="community-list">Cargando...</div>
+  </aside>
+
   <header>
-    <div style="display:flex; gap:8px; align-items:center;">
+    <div style="display:flex; gap:6px; align-items:center;">
       <button class="mode-btn active" id="tab-code" onclick="setView('code')">Code AST</button>
       <button class="mode-btn" id="tab-agents" onclick="setView('agents')">Harness Topology</button>
-      <div style="width:1px; height:18px; background:#334155; margin:0 4px;"></div>
+      <div style="width:1px; height:16px; background:#334155; margin:0 2px;"></div>
       <button class="mode-btn active" id="dim-2d" onclick="setDimension('2d')">2D Canvas</button>
       <button class="mode-btn" id="dim-3d" onclick="setDimension('3d')">3D Force</button>
       <input type="text" class="search-input" id="search-box" placeholder="Filtrar nodo..." oninput="filterGraph()">
@@ -223,101 +229,16 @@ def index():
     </button>
   </div>
 
-  <!-- Floating Control Buttons Bottom-Left -->
-  <div class="floating-bottom-controls">
-    <button class="btn-action" onclick="toggleCard('filter-card')">
-      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
-      Filtros de Nodo
-    </button>
-    <button class="btn-action" onclick="toggleCard('settings-card')">
-      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-      Paleta & Motor
-    </button>
-  </div>
-
-  <!-- Floating Card: Filters -->
-  <div class="floating-card" id="filter-card" style="bottom:65px; left:300px;">
-    <div class="section-title" style="margin-bottom:10px;">Filtros de Nodo</div>
-    <div class="filter-group">
-      <label class="custom-checkbox">
-        <span>Archivos</span>
-        <input type="checkbox" id="f-file" checked onchange="filterGraph()">
-        <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-      </label>
-      <label class="custom-checkbox">
-        <span>Clases</span>
-        <input type="checkbox" id="f-class" checked onchange="filterGraph()">
-        <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-      </label>
-      <label class="custom-checkbox">
-        <span>Funciones</span>
-        <input type="checkbox" id="f-func" checked onchange="filterGraph()">
-        <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-      </label>
-      <label class="custom-checkbox">
-        <span>Agentes</span>
-        <input type="checkbox" id="f-agent" checked onchange="filterGraph()">
-        <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-      </label>
-      <hr style="border:none; border-top:1px solid #374151; margin:6px 0;">
-      <div style="display:flex; justify-content:space-between; font-size:11px;">
-        <span>Min Conexiones:</span>
-        <span id="min-deg-val" style="color:#38bdf8; font-weight:700;">0</span>
-      </div>
-      <input type="range" id="min-degree" min="0" max="10" value="0" style="width:100%;" oninput="document.getElementById('min-deg-val').innerText=this.value; filterGraph();">
-      <label class="custom-checkbox" style="margin-top:4px;">
-        <span>Ocultar Nodos Aislados</span>
-        <input type="checkbox" id="f-hide-isolated" onchange="filterGraph()">
-        <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-      </label>
-    </div>
-  </div>
-
-  <!-- Floating Card: Settings -->
-  <div class="floating-card" id="settings-card" style="bottom:65px; left:430px;">
-    <div class="section-title" style="margin-bottom:10px;">Configuración de Grafo</div>
-    <div class="filter-group">
-      <label style="display:block;">Paleta de Color:</label>
-      <select id="palette-select" class="select-input" onchange="changePalette()">
-        <option value="obsidian" selected>Obsidian Dark</option>
-        <option value="cyberpunk">Neon Cyberpunk</option>
-        <option value="monochrome">Monochrome Slate</option>
-        <option value="matrix">Emerald Matrix</option>
-      </select>
-      <label style="display:block; margin-top:8px;">Motor de Reindexación:</label>
-      <select id="engine-select" class="select-input">
-        <option value="ast_local_llm" selected>AST + IA Local (Ollama Qwen2.5)</option>
-        <option value="ast_cloud_api">AST + IA Cloud API (Gemini/Claude)</option>
-        <option value="ast_pure">AST Cero Tokens (Pure AST)</option>
-      </select>
-    </div>
-  </div>
-
   <div id="graph-container"></div>
 
   <script>
     let activePath = ".";
     let activeView = "code";
     let dimensionMode = "2d";
-    let activePalette = "obsidian";
     let graphInstance = null;
     let fullData = { nodes: [], links: [] };
 
-    const PALETTES = {
-      obsidian: { file: '#38bdf8', class: '#f59e0b', func: '#a78bfa', agent: '#a855f7', link: 'rgba(148, 163, 184, 0.4)' },
-      cyberpunk: { file: '#00f0ff', class: '#ffe600', func: '#ff007f', agent: '#7000ff', link: 'rgba(0, 240, 255, 0.4)' },
-      monochrome: { file: '#f8fafc', class: '#cbd5e1', func: '#94a3b8', agent: '#64748b', link: 'rgba(203, 213, 225, 0.3)' },
-      matrix: { file: '#10b981', class: '#34d399', func: '#059669', agent: '#047857', link: 'rgba(16, 185, 129, 0.4)' }
-    };
-
-    function toggleCard(cardId) {
-      const card = document.getElementById(cardId);
-      const isVisible = card.classList.contains('active');
-      document.querySelectorAll('.floating-card').forEach(c => c.classList.remove('active'));
-      if (!isVisible) {
-        card.classList.add('active');
-      }
-    }
+    const COMM_COLORS = ['#38bdf8', '#f59e0b', '#ef4444', '#10b981', '#a78bfa', '#ec4899', '#06b6d4', '#84cc16', '#eab308', '#6366f1'];
 
     function loadProjects() {
       fetch('/api/projects')
@@ -326,7 +247,7 @@ def index():
           const listEl = document.getElementById('project-list');
           listEl.innerHTML = projects.map(p => `
             <div class="project-item ${p.path === activePath ? 'active' : ''}" onclick="selectProject('${p.path}')">
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px;">${p.name}</span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;">${p.name}</span>
               <span style="font-size:9px; color:${p.indexed ? '#10b981' : '#ef4444'}; font-weight:700;">${p.indexed ? 'OK' : 'PEND'}</span>
             </div>
           `).join('');
@@ -380,22 +301,13 @@ def index():
       loadGraph();
     }
 
-    function changePalette() {
-      activePalette = document.getElementById('palette-select').value;
-      if (graphInstance) {
-        const p = PALETTES[activePalette] || PALETTES.obsidian;
-        graphInstance.nodeColor(n => getNodeColor(n)).linkColor(() => p.link);
-      }
-    }
-
     function reindexCurrent() {
       const btn = document.getElementById('reindex-btn');
-      const engine = document.getElementById('engine-select').value;
       btn.innerText = 'Indexando...';
       fetch('/api/reindex', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({path: activePath, engine: engine})
+        body: JSON.stringify({path: activePath})
       })
       .then(r => r.json())
       .then(() => {
@@ -405,33 +317,45 @@ def index():
       });
     }
 
-    function getNodeColor(n) {
-      const p = PALETTES[activePalette] || PALETTES.obsidian;
-      const k = n.kind || '';
-      if (k === 'file') return p.file;
-      if (k === 'class') return p.class;
-      if (k === 'function') return p.func;
-      if (k.includes('agent') || k.includes('orchestrator')) return p.agent;
-      return p.file;
+    function renderCommunitiesSidebar(data) {
+      const commMap = {};
+      data.nodes.forEach(n => {
+        const cName = n.name ? n.name.split('.')[0] : 'general';
+        commMap[cName] = (commMap[cName] || 0) + 1;
+      });
+
+      const sortedComms = Object.keys(commMap).sort((a,b) => commMap[b] - commMap[a]);
+      const listEl = document.getElementById('community-list');
+      
+      listEl.innerHTML = sortedComms.map((c, idx) => {
+        const color = COMM_COLORS[idx % COMM_COLORS.length];
+        return `
+          <div class="community-item">
+            <label>
+              <input type="checkbox" class="comm-chk" data-comm="${c}" checked onchange="filterGraph()">
+              <span class="comm-dot" style="background:${color};"></span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c}</span>
+            </label>
+            <span style="font-size:11px; color:#64748b;">${commMap[c]}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleSelectAllComm(checked) {
+      document.querySelectorAll('.comm-chk').forEach(c => c.checked = checked);
+      filterGraph();
     }
 
     function filterGraph() {
       const q = document.getElementById('search-box').value.toLowerCase();
-      const showFile = document.getElementById('f-file').checked;
-      const showClass = document.getElementById('f-class').checked;
-      const showFunc = document.getElementById('f-func').checked;
-      const showAgent = document.getElementById('f-agent').checked;
-      const minDegree = parseInt(document.getElementById('min-degree').value) || 0;
-      const hideIsolated = document.getElementById('f-hide-isolated').checked;
+      const activeComms = new Set(
+        Array.from(document.querySelectorAll('.comm-chk:checked')).map(c => c.getAttribute('data-comm'))
+      );
 
       const filteredNodes = fullData.nodes.filter(n => {
-        const kind = n.kind || '';
-        if (kind === 'file' && !showFile) return false;
-        if (kind === 'class' && !showClass) return false;
-        if (kind === 'function' && !showFunc) return false;
-        if ((kind.includes('agent') || kind.includes('orchestrator')) && !showAgent) return false;
-        if ((n.degree || 0) < minDegree) return false;
-        if (hideIsolated && (n.degree || 0) === 0) return false;
+        const cName = n.name ? n.name.split('.')[0] : 'general';
+        if (activeComms.size > 0 && !activeComms.has(cName)) return false;
         if (q && !n.name.toLowerCase().includes(q) && !(n.details && n.details.toLowerCase().includes(q))) return false;
         return true;
       });
@@ -455,45 +379,41 @@ def index():
         .then(data => {
           fullData = data;
           document.getElementById('stats').innerText = `${data.nodes.length} nodos · ${data.links.length} conectores (${dimensionMode.toUpperCase()})`;
+          renderCommunitiesSidebar(data);
 
           const container = document.getElementById('graph-container');
-          const p = PALETTES[activePalette] || PALETTES.obsidian;
 
           if (dimensionMode === '2d') {
             if (!graphInstance) {
               graphInstance = ForceGraph()(container);
             }
             graphInstance
-              .backgroundColor('#0b0f19')
+              .backgroundColor('#0b0e17')
               .graphData(data)
               .nodeId('id')
-              .nodeVal(n => n.val || (6 + (n.degree || 0) * 2))
+              .nodeVal(n => Math.max(2, Math.min(6, (n.degree || 1) * 0.8)))
               .nodeLabel(n => `${n.name}\n${n.details || ''}\nConexiones: ${n.degree || 0}`)
-              .nodeColor(n => getNodeColor(n))
-              .linkColor(() => p.link)
-              .linkWidth(1.6)
-              .linkDirectionalArrowLength(4.5)
-              .linkDirectionalArrowRelPos(0.95)
+              .nodeColor(n => n.color || '#38bdf8')
+              .linkColor(() => 'rgba(255, 255, 255, 0.12)')
+              .linkWidth(0.8)
               .d3AlphaDecay(0.02)
               .d3VelocityDecay(0.3)
-              .d3Force('charge', d3.forceManyBody().strength(-1400))
-              .d3Force('link', d3.forceLink().distance(180))
-              .d3Force('collide', d3.forceCollide().radius(n => 30 + (n.degree || 0) * 3));
+              .d3Force('charge', d3.forceManyBody().strength(-80))
+              .d3Force('link', d3.forceLink().distance(35))
+              .d3Force('collide', d3.forceCollide().radius(10));
           } else {
             if (!graphInstance) {
               graphInstance = ForceGraph3D()(container);
             }
             graphInstance
-              .backgroundColor('#0b0f19')
+              .backgroundColor('#0b0e17')
               .graphData(data)
               .nodeId('id')
-              .nodeVal(n => n.val || (8 + (n.degree || 0) * 2.5))
+              .nodeVal(n => Math.max(3, Math.min(8, (n.degree || 1) * 1.0)))
               .nodeLabel(n => `${n.name}\n${n.details || ''}\nConexiones: ${n.degree || 0}`)
-              .nodeColor(n => getNodeColor(n))
-              .linkColor(() => p.link)
-              .linkWidth(1.8)
-              .linkDirectionalArrowLength(5.0)
-              .linkDirectionalArrowRelPos(0.95);
+              .nodeColor(n => n.color || '#38bdf8')
+              .linkColor(() => 'rgba(255, 255, 255, 0.15)')
+              .linkWidth(1.0);
           }
 
           filterGraph();

@@ -33,13 +33,13 @@ def test_scan_directory():
         assert "in_degree" in file_node
         assert "out_degree" in file_node
         assert file_node["out_degree"] >= 2  # contains Core class and run method
-        assert file_node["val"] > 15  # Base val 15 + degree * 3
+        assert file_node["val"] > 5  # Base val 5 + degree * 0.4
 
 def test_agent_topology_graph_degrees():
     parser = ASTParser()
     graph = parser.get_agent_topology_graph()
-    
+
     nexus_node = next(n for n in graph["nodes"] if n["id"] == "agent:nexus")
     assert nexus_node["out_degree"] > 0
     assert nexus_node["degree"] == nexus_node["out_degree"]
-    assert nexus_node["val"] == 30 + (nexus_node["degree"] * 3)
+    assert nexus_node["val"] == 30 + (nexus_node["degree"] * 0.4)
