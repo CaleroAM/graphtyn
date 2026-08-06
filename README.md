@@ -27,18 +27,41 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 
 ---
 
-## 📦 Instalación
+## 📦 Guía de Instalación (Con Docker y Sin Docker)
+
+AetherGraph se puede ejecutar en cualquier sistema operativo en segundos. Elige la opción que prefieras:
+
+### 1️⃣ Opción A: Instalación Directa sin Docker (Recomendada - 1 solo clic)
+Ideal para usuarios finales que no usan Docker. Solo requiere tener Python 3.10+:
 
 ```bash
+# 1. Instalar mediante pip
 pip install aether-graph
+
+# 2. Iniciar el Dashboard visual en http://localhost:9210
+aether-graph serve
 ```
 
-O clonando el repositorio para desarrollo local:
+---
+
+### 2️⃣ Opción B: Ejecución con Docker (Para Servidores o Entornos Aislados)
+Si prefieres mantener tu sistema aislado o correr en servidores:
+
+```bash
+# Ejecutar contenedor Docker montando tu código local
+docker run -d -p 9210:9210 -v /ruta/a/tu/proyecto:/workspace --name aether-graph ghcr.io/caleroam/aether-graph
+```
+
+---
+
+### 3️⃣ Opción C: Desde Código Fuente (Para Desarrolladores)
+Si deseas modificar el código o contribuir al proyecto:
 
 ```bash
 git clone https://github.com/CaleroAM/openclaw.git
 cd openclaw/code-graph-host
 pip install -e .
+aether-graph serve --reload
 ```
 
 ---
