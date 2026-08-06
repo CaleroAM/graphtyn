@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI, Query, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from ..core.ast_parser import ASTParser
+from ..core.history import HistoryTracker
 
 app = FastAPI(title="AetherGraph API", version="0.4.0")
 parser = ASTParser()
@@ -277,6 +278,13 @@ def generate_semantic_graph(data: dict) -> dict:
     return parser._enrich_graph_with_degree({"nodes": nodes, "links": links})
 
 
+@app.get("/api/history")
+def get_history(path: str = ".", limit: int = 15):
+    root = Path(path).resolve()
+    ht = HistoryTracker(root)
+    return JSONResponse({"timeline": ht.get_timeline(limit=limit)})
+
+
 @app.get("/api/graph")
 def get_graph(path: str = ".", view: str = "code"):
     if view == "agents":
@@ -492,12 +500,26 @@ def index():
       <button class="mode-btn active" id="btn-code" onclick="setView('code')">Code AST</button>
       <button class="mode-btn" id="btn-semantic" onclick="setView('semantic')">Semántico IA</button>
       <button class="mode-btn" id="btn-agents" onclick="setView('agents')">Harness Topology</button>
+      <button class="mode-btn" id="btn-hist" onclick="toggleDD('dd-hist');loadHistoryUI()">🕒 Historial IA</button>
       <div class="sep"></div>
       <!-- Dimension tabs -->
       <button class="mode-btn active" id="btn-2d" onclick="setDim('2d')">2D</button>
       <button class="mode-btn" id="btn-3d" onclick="setDim('3d')">3D</button>
       <button class="mode-btn" id="btn-rotate" style="display:none;" onclick="toggleRotate()">⟳ Rotar 3D</button>
       <div class="sep"></div>
+
+      <!-- History dropdown -->
+      <div class="dd-wrap" id="dd-hist">
+        <div class="dd-panel" style="width:320px;max-height:360px;overflow-y:auto;">
+          <div class="section-label" style="display:flex;justify-space-between;align-items:center;">
+            <span>Línea de Tiempo de IA</span>
+            <span style="font-size:9px;color:#64748b;">SQLite Local</span>
+          </div>
+          <div id="hist-list" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+            <div style="font-size:11px;color:#64748b;">Cargando historial...</div>
+          </div>
+        </div>
+      </div>
 
       <!-- Node Filters dropdown -->
       <div class="dd-wrap" id="dd-filter">
@@ -1322,4 +1344,33 @@ function loadGraph() {
 </body>
 </html>
 """
+    async function loadHistoryUI() {
+      const container = document.getElementById('hist-list');
+      if (!container) return;
+      try {
+        const res = await fetch('/api/history?path=' + encodeURIComponent(activePath));
+        const data = await res.json();
+        const timeline = data.timeline || [];
+        if (timeline.length === 0) {
+          container.innerHTML = '<div style="font-size:11px;color:#64748b;">Sin acciones registradas aún.</div>';
+          return;
+        }
+        container.innerHTML = timeline.map(ev => {
+          const dateStr = new Date(ev.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          return `
+            <div style="background:#1a2234;border:1px solid #2d3748;border-radius:6px;padding:6px 8px;">
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:#38bdf8;font-weight:700;">
+                <span>${ev.action_type.toUpperCase()}</span>
+                <span style="color:#64748b;">${dateStr}</span>
+              </div>
+              <div style="font-size:11px;color:#e2e8f0;margin-top:3px;">${ev.summary}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = '<div style="font-size:11px;color:#ef4444;">Error al cargar historial.</div>';
+      }
+    }
+
+
 
