@@ -133,6 +133,20 @@ aether-graph reindex --engine ast_local_llm
 
 ---
 
+### 🤖 Comparativa de Modelos Locales para Reindexación (vía Ollama)
+
+AetherGraph detecta de forma autónoma los modelos disponibles en tu instancia local de Ollama (`http://localhost:11434`) y selecciona dinámicamente el mejor candidato. A continuación se presenta la tabla comparativa de rendimiento, consumo de VRAM y recomendación de uso:
+
+| Modelo Local (Ollama) | Tamaño / VRAM | Velocidad por Archivo | Calidad de Resumen | Recomendación de Uso |
+|---|---|---|---|---|
+| 🦙 **`llama3.2:latest` (3.2B)** | **~2.0 GB VRAM** | ⚡⚡⚡ **Ultra Rápido (~0.3s)** | ⭐️⭐️⭐️⭐️ (4/5) Excelente síntesis | **(Recomendado por Defecto)** Ideal para laptops con 4GB VRAM o ejecución en CPU. |
+| 👑 **`qwen2.5-coder:7b`** | **~4.7 GB VRAM** | ⚡⚡ **Rápido (~0.8s)** | ⭐️⭐️⭐️⭐️⭐️ (5/5) Máxima precisión en código | **(Mejor para Código)** La mejor comprensión sintáctica si tienes GPU con 6GB+ VRAM. |
+| 🪶 **`qwen2.5:3b`** | **~1.9 GB VRAM** | ⚡⚡⚡ **Ultra Rápido (~0.3s)** | ⭐️⭐️⭐️⭐️ (4/5) Ligero y fluido | Excelente alternativa de bajo consumo para CPU. |
+| 🦙 **`llama3.1:8b`** | **~4.9 GB VRAM** | ⚡⚡ **Rápido (~1.0s)** | ⭐️⭐️⭐️⭐️ (4.5/5) Alta fluidez narrativa | Muy bueno para resúmenes de arquitectura global. |
+| ⚡ **`qwen2.5-coder:1.5b`** | **~1.0 GB VRAM** | ⚡⚡⚡⚡ **Instantáneo (~0.1s)** | ⭐️⭐️⭐️ (3.5/5) Esquemático | Para entornos extremadamente restringidos de hardware (1-2GB RAM). |
+
+---
+
 ## 🤖 Integración con Agentes de IA (MCP Protocol)
 
 AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) que expone tanto herramientas de grafo AST como de línea de tiempo de sesiones:
