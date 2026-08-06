@@ -5,7 +5,7 @@
 [![MCP Compatible](https://img.shields.io/badge/MCP-Standard--Compatible-10b981.svg)](https://modelcontextprotocol.io/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 
-**El motor de mapa topológico de código y servidor MCP estándar para Agentes de IA (Google Antigravity, Claude Code, Codex, Cursor y Windsurf).**
+**El motor de mapa topológico de código, registro de sesiones local y servidor MCP estándar para Agentes de IA (Google Antigravity, Claude Code, Codex, Cursor y Windsurf).**
 
 AetherGraph convierte cualquier repositorio de código en un **grafo de conocimiento determinista de 2 pasadas**: analiza la estructura de archivos, módulos, clases, métodos y llamadas con **0 tokens de consumo** en 0.05 segundos y enriquece semánticamente los nodos principales mediante **IA Local (Ollama Qwen2.5)** o **Cloud APIs (Gemini/Claude)**.
 
@@ -15,13 +15,14 @@ AetherGraph convierte cualquier repositorio de código en un **grafo de conocimi
 
 Cuando un agente de IA explora un proyecto grande sin un mapa de código, recurre a búsquedas masivas a ciegas (`grep` o lectura completa de archivos). Esto provoca:
 * 💸 **Consumo masivo e innecesario de tokens** (30k - 100k tokens por tarea).
-* ⏳ **Lentitud extrema y pérdida de foco**.
+* ⏳ **Lentitud extrema y amnesia de contexto entre sesiones**.
 * 💥 **Riesgo de bugs inesperados** por no conocer las dependencias indirectas.
 
 ### 🌟 La Solución de AetherGraph
 AetherGraph actúa como un **GPS de código en tiempo real**:
 * 📉 **Reduce el consumo de tokens en un 99.5%**: La IA consulta la herramienta MCP (`graph_neighborhood`, `graph_blast_radius` o `graph_search_concepts`) y salta directamente al archivo y línea exactos.
 * ⚡ **Análisis sintáctico determinista de 15+ lenguajes** a costo **$0 USD y <0.05 segundos**.
+* 🕒 **Línea de Tiempo y Memoria de Sesiones Local (100% Gratis / SQLite)**: Registra el historial de acciones y decisiones de la IA en `.aether-graph/history.db` sin pagar servicios externos ni consumir tokens.
 * 🎯 **Radio de Impacto en vivo y pre-Commit**: Permite evaluar exactamente qué clases y métodos se verán afectados antes de hacer `git push` (`aether-graph diff`).
 * 📝 **Generador de ARCHITECTURE.md**: Exporta un mapa de arquitectura conciso (~150 tokens) que cualquier Agente de IA puede leer al iniciar (`aether-graph export-md`).
 * 🌐 **Dashboard Interactivo WebGL 2D/3D**: Visualizador en el puerto `9210` con 9 paletas de color, físicamente dinámicas, auto-rotación 3D y 3 modos de vista.
@@ -106,6 +107,9 @@ aether-graph mcp
 # Iniciar el Dashboard WebGL interactivo en el puerto 9210
 aether-graph serve --reload
 
+# Consultar la línea de tiempo del historial de acciones de la IA (SQLite Local)
+aether-graph timeline
+
 # Evaluar el radio de impacto de cambios sin confirmar (git status / git diff)
 aether-graph diff
 
@@ -155,7 +159,13 @@ aether-graph reindex --engine ast_local_llm
 
 ## 🤖 Integración con Agentes de IA (MCP Protocol)
 
-AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`).
+AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) que expone tanto herramientas de grafo AST como de línea de tiempo de sesiones:
+- `graph_neighborhood`
+- `graph_blast_radius`
+- `graph_search_concepts`
+- `graph_history_search`
+- `graph_history_timeline`
+- `graph_history_get`
 
 ### 1. Google Antigravity (AGY)
 Agrega lo siguiente en tu archivo de configuración de MCP (`mcp_config.json`):
@@ -175,7 +185,7 @@ Agrega lo siguiente en tu archivo de configuración de MCP (`mcp_config.json`):
 Agrega en tu archivo `~/.claude/CLAUDE.md`:
 
 ```markdown
-- **AetherGraph MCP**: Servidor de contexto topológico AST y radio de impacto.
+- **AetherGraph MCP**: Servidor de contexto topológico AST, radio de impacto e historial de sesiones.
   Comando MCP: `aether-graph mcp`
 ```
 
@@ -197,14 +207,15 @@ Agrega en tu configuración `AGENTS.md` o archivo `.cursor/mcp.json`:
 
 ## 🏆 Comparativa de Mercado
 
-| Característica | 📦 Graphify Labs | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
+| Característica | 📦 Graphify / claude-mem | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
 |---|---|---|---|
-| **Parsing Estático Multi-Lenguaje** | No (Llama a API pagada de Claude) | Sí (LSIF estático) | **Sí (AST Nativo 15+ lenguajes a $0)** |
-| **Consumo de Tokens** | **Alto** (Paga por cada archivo leído) | 0 Tokens | **0 Tokens en Pasada 1** + Enriquecimiento Opcional |
-| **Visualizador Interactivo** | Exporta HTML estático plano | No tiene | **Dashboard WebGL 2D/3D en Vivo (`:9210`)** |
+| **Parsing Estático Multi-Lenguaje** | No (Llama a API pagada o hooks) | Sí (LSIF estático) | **Sí (AST Nativo 15+ lenguajes a $0)** |
+| **Consumo de Tokens** | Paga tokens por cada archivo leído | 0 Tokens | **0 Tokens en Pasada 1** + Enriquecimiento Opcional |
+| **Memoria de Historial de Sesiones** | Sí (requiere Bun + ChromaDB) | No tiene | **Sí (100% Gratis / SQLite Local integrado)** |
+| **Visualizador Interactivo** | Exporta HTML estático o CLI | No tiene | **Dashboard WebGL 2D/3D en Vivo (`:9210`)** |
 | **Radio de Impacto Interactivo** | No | Parcial en CLI | **Sí (Inspector interactivo con aislamiento y foco)** |
 | **Vistas de Grafo** | 1 (Notas / Markdown) | 1 (Código) | **3 Vistas: Code AST, Semántico IA, Harness Topology** |
-| **Soporte Offline sin Internet** | No (Requiere Anthropic API) | Depende del servidor | **100% Funcional Offline con Ollama Local** |
+| **Soporte Offline sin Internet** | Parcial | Depende del servidor | **100% Funcional Offline con Ollama Local** |
 
 ---
 

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 from .core.ast_parser import ASTParser
+from .core.history import HistoryTracker
 
 def get_workspace_graph(workspace: Path, parser: ASTParser) -> dict:
     from .api.main import _index_dir
@@ -22,6 +23,7 @@ def run_mcp_server(workspace: Path):
     Provides tools for AI agents: graph_neighborhood, graph_blast_radius, graph_search_concepts, graph_register_project.
     """
     parser = ASTParser()
+    history = HistoryTracker(workspace)
 
     def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
         method = req.get("method")
@@ -71,6 +73,33 @@ def run_mcp_server(workspace: Path):
                             }
                         },
                         {
+                            "name": "graph_history_search",
+                            "description": "Busca en el historial de sesiones y acciones pasadas del agente para recordar eventos o decisiones.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {"query": {"type": "string", "description": "Término de búsqueda en el historial"}},
+                                "required": ["query"]
+                            }
+                        },
+                        {
+                            "name": "graph_history_timeline",
+                            "description": "Devuelve la secuencia cronológica de acciones de una sesión previa para contexto completo.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {"session_id": {"type": "string", "description": "ID de sesión opcional"}},
+                                "required": []
+                            }
+                        },
+                        {
+                            "name": "graph_history_get",
+                            "description": "Recupera la observación detallada de una acción pasada específica por su ID.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {"id": {"type": "integer", "description": "ID de la observación"}},
+                                "required": ["id"]
+                            }
+                        },
+                        {
                             "name": "graph_register_project",
                             "description": "Registra autónomamente una ruta de proyecto en AetherGraph.",
                             "inputSchema": {
@@ -114,6 +143,28 @@ def run_mcp_server(workspace: Path):
                 return {
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps({"query": query, "matches": matches}, indent=2)}]}
+                }
+            elif name == "graph_history_search":
+
+                q = args.get("query", "")
+                events = history.search_events(q)
+                return {
+                    "jsonrpc": "2.0", "id": req_id,
+                    "result": {"content": [{"type": "text", "text": json.dumps({"query": q, "results": events}, indent=2)}]}
+                }
+            elif name == "graph_history_timeline":
+                sid = args.get("session_id")
+                timeline = history.get_timeline(sid)
+                return {
+                    "jsonrpc": "2.0", "id": req_id,
+                    "result": {"content": [{"type": "text", "text": json.dumps({"session_id": sid, "timeline": timeline}, indent=2)}]}
+                }
+            elif name == "graph_history_get":
+                obs_id = args.get("id", 0)
+                obs = history.get_observation(obs_id)
+                return {
+                    "jsonrpc": "2.0", "id": req_id,
+                    "result": {"content": [{"type": "text", "text": json.dumps(obs, indent=2)}]}
                 }
             elif name == "graph_register_project":
                 path_str = args.get("path")

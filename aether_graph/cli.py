@@ -6,6 +6,7 @@ import urllib.request
 from pathlib import Path
 
 from .core.ast_parser import ASTParser
+from .core.history import HistoryTracker
 from .mcp_server import run_mcp_server
 
 def bfs_path(graph: dict, start_sym: str, end_sym: str):
@@ -79,6 +80,11 @@ def main():
     export_p = subparsers.add_parser("export-md", help="Exporta un mapa de arquitectura conciso en Markdown para Agentes de IA")
     export_p.add_argument("--output", default="ARCHITECTURE.md", help="Archivo de salida")
     export_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
+    # timeline
+    timeline_p = subparsers.add_parser("timeline", help="Muestra la línea de tiempo del historial de acciones de la IA")
+    timeline_p.add_argument("--session-id", default=None, help="ID de sesión opcional")
+    timeline_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
     # mcp
     mcp_p = subparsers.add_parser("mcp", help="Inicia el servidor Model Context Protocol (MCP) por stdio")
@@ -191,6 +197,17 @@ def main():
         out_path.write_text("\n".join(md_lines), encoding="utf-8")
 
         print(f"✓ Mapa de arquitectura exportado exitosamente en: {out_path}")
+
+    elif args.command == "timeline":
+        ht = HistoryTracker(root)
+        events = ht.get_timeline(args.session_id)
+        if not events:
+            print("✓ No hay eventos registrados en la línea de tiempo de este proyecto.")
+        else:
+            print(f"🕒 Línea de tiempo de la sesión ({len(events)} eventos):")
+            for ev in events:
+                print(f"  [{ev['id']}] {ev['action_type'].upper()} — {ev['summary']}")
+
 
     elif args.command == "mcp":
         run_mcp_server(root)
