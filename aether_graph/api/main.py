@@ -222,6 +222,61 @@ def reindex_project(payload: dict = Body(...)):
     (dot_dir / "index.json").write_text(json.dumps(graph, indent=2))
     return JSONResponse({"ok": True, "engine": engine, "nodes": len(graph["nodes"]), "links": len(graph["links"]), "metadata": graph["metadata"]})
 
+def generate_semantic_graph(data: dict) -> dict:
+    nodes = []
+    links = []
+    node_ids = set()
+
+    meta = data.get("metadata", {})
+    ai_sum = meta.get("ai_summary", "")
+    if ai_sum:
+        nodes.append({
+            "id": "concept:global_arch",
+            "name": "Arquitectura Global",
+            "kind": "semantic_concept",
+            "val": 16,
+            "color": "#ec4899",
+            "details": f"Propósito General: {ai_sum}"
+        })
+        node_ids.add("concept:global_arch")
+
+    for n in data.get("nodes", []):
+        kind = n.get("kind", "")
+        if kind in ("file", "class", "module"):
+            nodes.append(n)
+            node_ids.add(n["id"])
+            if "concept:global_arch" in node_ids:
+                links.append({
+                    "source": "concept:global_arch",
+                    "target": n["id"],
+                    "label": "engloba",
+                    "color": "rgba(236, 72, 153, 0.4)"
+                })
+
+            details = n.get("details", "")
+            if details and not details.startswith("Carpeta"):
+                c_name = f"Concepto: {n['name']}"
+                c_id = f"concept:{n['id']}"
+                nodes.append({
+                    "id": c_id,
+                    "name": c_name,
+                    "kind": "semantic_concept",
+                    "val": 10,
+                    "color": "#a855f7",
+                    "details": f"Resumen Semántico: {details}"
+                })
+                node_ids.add(c_id)
+                links.append({
+                    "source": c_id,
+                    "target": n["id"],
+                    "label": "implementa",
+                    "color": "rgba(168, 85, 247, 0.4)"
+                })
+
+    parser = ASTParser()
+    return parser._enrich_graph_with_degree({"nodes": nodes, "links": links})
+
+
 @app.get("/api/graph")
 def get_graph(path: str = ".", view: str = "code"):
     if view == "agents":
@@ -229,18 +284,22 @@ def get_graph(path: str = ".", view: str = "code"):
     root = Path(path).resolve()
     dot_dir = _index_dir(root)
     cached = dot_dir / "index.json"
+    data = None
     if cached.exists():
         try:
             data = json.loads(cached.read_text(encoding="utf-8"))
-            return JSONResponse(data)
         except Exception:
             pass
+    if not data:
+        data = parser.scan_directory(root)
+        try:
+            (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
+        except OSError:
+            pass
 
-    data = parser.scan_directory(root)
-    try:
-        (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
-    except OSError:
-        pass
+    if view == "semantic":
+        return JSONResponse(generate_semantic_graph(data))
+
     return JSONResponse(data)
 
 
@@ -431,6 +490,7 @@ def index():
     <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;min-width:0;">
       <!-- View tabs -->
       <button class="mode-btn active" id="btn-code" onclick="setView('code')">Code AST</button>
+      <button class="mode-btn" id="btn-semantic" onclick="setView('semantic')">Semántico IA</button>
       <button class="mode-btn" id="btn-agents" onclick="setView('agents')">Harness Topology</button>
       <div class="sep"></div>
       <!-- Dimension tabs -->
