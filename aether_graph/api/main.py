@@ -1389,6 +1389,12 @@ function loadGraph() {
       const file = e.target.files[0];
       let fullPath = '';
       const rootFolder = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : '';
+      
+      let baseInput = (document.getElementById('reg-path').value || activePath || '/home/developer/Documentos/docker/PROYECTOS').trim();
+      baseInput = baseInput.replace(/\/+$/, '');
+      const lastSlash = baseInput.lastIndexOf('/');
+      const parentDir = lastSlash > 0 ? baseInput.substring(0, lastSlash) : '/home/developer/Documentos/docker/PROYECTOS';
+
       if (file.path) {
         const parts = file.path.split('/');
         if (rootFolder && parts.includes(rootFolder)) {
@@ -1399,12 +1405,6 @@ function loadGraph() {
           fullPath = parts.join('/');
         }
       } else if (rootFolder) {
-        let parentDir = '/home/developer/Documentos/docker/PROYECTOS';
-        if (activePath) {
-          const trimmed = activePath.endsWith('/') ? activePath.slice(0, -1) : activePath;
-          const lastSlash = trimmed.lastIndexOf('/');
-          if (lastSlash > 0) parentDir = trimmed.substring(0, lastSlash);
-        }
         fullPath = parentDir + '/' + rootFolder;
       }
       if (fullPath) {
