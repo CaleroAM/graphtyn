@@ -500,18 +500,11 @@ def index():
       <button class="mode-btn active" id="btn-code" onclick="setView('code')">Code AST</button>
       <button class="mode-btn" id="btn-semantic" onclick="setView('semantic')">Semántico IA</button>
       <button class="mode-btn" id="btn-agents" onclick="setView('agents')">Harness Topology</button>
-      <button class="mode-btn" id="btn-hist" onclick="toggleDD('dd-hist');loadHistoryUI()">🕒 Historial IA</button>
-      <div class="sep"></div>
-      <!-- Dimension tabs -->
-      <button class="mode-btn active" id="btn-2d" onclick="setDim('2d')">2D</button>
-      <button class="mode-btn" id="btn-3d" onclick="setDim('3d')">3D</button>
-      <button class="mode-btn" id="btn-rotate" style="display:none;" onclick="toggleRotate()">⟳ Rotar 3D</button>
-      <div class="sep"></div>
-
       <!-- History dropdown -->
       <div class="dd-wrap" id="dd-hist">
+        <button class="mode-btn" id="btn-hist" onclick="toggleDD('dd-hist');loadHistoryUI()">🕒 Historial IA ▾</button>
         <div class="dd-panel" style="width:320px;max-height:360px;overflow-y:auto;">
-          <div class="section-label" style="display:flex;justify-space-between;align-items:center;">
+          <div class="section-label" style="display:flex;justify-content:space-between;align-items:center;">
             <span>Línea de Tiempo de IA</span>
             <span style="font-size:9px;color:#64748b;">SQLite Local</span>
           </div>
@@ -520,6 +513,12 @@ def index():
           </div>
         </div>
       </div>
+      <div class="sep"></div>
+      <!-- Dimension tabs -->
+      <button class="mode-btn active" id="btn-2d" onclick="setDim('2d')">2D</button>
+      <button class="mode-btn" id="btn-3d" onclick="setDim('3d')">3D</button>
+      <button class="mode-btn" id="btn-rotate" style="display:none;" onclick="toggleRotate()">⟳ Rotar 3D</button>
+      <div class="sep"></div>
 
       <!-- Node Filters dropdown -->
       <div class="dd-wrap" id="dd-filter">
