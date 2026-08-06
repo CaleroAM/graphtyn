@@ -103,11 +103,16 @@ def register_project(payload: dict = Body(...)):
 
 import os, urllib.request
 
-def _enrich_with_ai(graph: dict, engine: str):
-    if engine == "ast_pure":
+def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None):
+    if engine == "ast_pure" or not root_dir:
         return graph
 
-    top_nodes = sorted(graph.get("nodes", []), key=lambda n: n.get("degree", 0), reverse=True)[:10]
+    # Filter code file & class nodes for individual code snippet analysis
+    top_code_nodes = [
+        n for n in graph.get("nodes", [])
+        if n.get("kind") in ("file", "class", "function", "method") and n.get("id", "").startswith("file:")
+    ]
+    top_code_nodes = sorted(top_code_nodes, key=lambda n: n.get("degree", 0), reverse=True)[:6]
 
     if engine == "ast_local_llm":
         ollama_hosts = [
@@ -116,49 +121,71 @@ def _enrich_with_ai(graph: dict, engine: str):
             "http://host.docker.internal:11434",
             "http://localhost:11434"
         ]
+        connected_host = None
+        model_name = "qwen2.5-coder:0.5b"
+
         for host in ollama_hosts:
             if not host: continue
             try:
-                # 1. Fetch available models
                 req_m = urllib.request.Request(f"{host}/api/tags")
                 with urllib.request.urlopen(req_m, timeout=2) as r:
                     m_data = json.loads(r.read().decode('utf-8'))
                     models = [m["name"] for m in m_data.get("models", [])]
-                    model_name = models[0] if models else "qwen2.5-coder:0.5b"
+                    if models: model_name = models[0]
+                connected_host = host
+                break
+            except Exception:
+                pass
 
-                # 2. Generate summary
-                url = f"{host}/api/generate"
-                prompt = f"Resume en 1 frase corta en espanol la funcion principal de los componentes: {[n['name'] for n in top_nodes]}"
+        if connected_host:
+            # 1. Overall architecture summary
+            try:
+                top_names = [n['name'] for n in graph.get("nodes", [])[:10]]
+                url = f"{connected_host}/api/generate"
+                prompt = f"Resume en 1 frase en espanol el proposito general de un proyecto con estos componentes: {top_names}"
                 req = urllib.request.Request(url, data=json.dumps({
                     "model": model_name, "prompt": prompt, "stream": False
                 }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-                with urllib.request.urlopen(req, timeout=12) as resp:
+                with urllib.request.urlopen(req, timeout=10) as resp:
                     res = json.loads(resp.read().decode('utf-8'))
-                    ans = res.get("response", "")
-                    if ans:
-                        graph["metadata"]["ai_summary"] = ans.strip()
+                    if res.get("response"):
+                        graph["metadata"]["ai_summary"] = res.get("response").strip()
                         graph["metadata"]["ai_model"] = model_name
-                        for n in top_nodes:
-                            n["details"] = f"🤖 [Ollama {model_name}] {n.get('details', '')}"
-                break
-            except Exception as e:
-                graph["metadata"]["ai_note"] = f"Ollama Error ({e})"
+            except Exception:
+                pass
+
+            # 2. Individual file code snippet summaries
+            for n in top_code_nodes:
+                rel_path = n["id"].replace("file:", "")
+                file_path = root_dir / rel_path
+                if file_path.is_file():
+                    try:
+                        code_snippet = file_path.read_text(encoding="utf-8", errors="ignore")[:600]
+                        prompt = f"En 1 sola frase corta en espanol, explica que hace este codigo:\n{code_snippet}"
+                        req = urllib.request.Request(f"{connected_host}/api/generate", data=json.dumps({
+                            "model": model_name, "prompt": prompt, "stream": False
+                        }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                        with urllib.request.urlopen(req, timeout=10) as resp:
+                            res = json.loads(resp.read().decode('utf-8'))
+                            ans = res.get("response", "").strip()
+                            if ans:
+                                n["details"] = f"{ans} ({rel_path})"
+                    except Exception:
+                        pass
 
     elif engine == "ast_cloud":
         gemini_key = os.environ.get("GEMINI_API_KEY")
         if gemini_key:
             try:
+                top_names = [n['name'] for n in graph.get("nodes", [])[:10]]
                 g_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
                 req = urllib.request.Request(g_url, data=json.dumps({
-                    "contents": [{"parts": [{"text": f"Resume la arquitectura de estos 10 nodos de codigo: {[n['name'] for n in top_nodes]}"}]}]
+                    "contents": [{"parts": [{"text": f"Resume en 1 frase la arquitectura de: {top_names}"}]}]
                 }).encode('utf-8'), headers={'Content-Type': 'application/json'})
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     res = json.loads(resp.read().decode('utf-8'))
                     text = res.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                    if text:
-                        graph["metadata"]["ai_summary"] = text
-                        for n in top_nodes:
-                            n["details"] = f"✨ [Gemini Cloud] {n.get('details', '')}"
+                    if text: graph["metadata"]["ai_summary"] = text.strip()
             except Exception as e:
                 graph["metadata"]["ai_note"] = f"Gemini API Error ({e})"
 
@@ -177,7 +204,7 @@ def reindex_project(payload: dict = Body(...)):
 
     graph = parser.scan_directory(root)
     graph["metadata"] = {"indexed_with": engine, "status": "ok", "path": str(root)}
-    graph = _enrich_with_ai(graph, engine)
+    graph = _enrich_with_ai(graph, engine, root)
     dot_dir = _index_dir(root)
     (dot_dir / "index.json").write_text(json.dumps(graph, indent=2))
     return JSONResponse({"ok": True, "engine": engine, "nodes": len(graph["nodes"]), "links": len(graph["links"]), "metadata": graph["metadata"]})
@@ -1071,12 +1098,12 @@ function loadGraph() {
           return activeDim === '2d' ? 3 : 4;
         };
         const tooltip = n => {
-          const isAi = n.details && n.details.includes('🤖');
-          const detailsHtml = n.details ? `<br/><span style="color:${isAi ? '#38bdf8' : '#94a3b8'};font-size:11px;line-height:1.3;display:block;margin-top:3px;">${n.details}</span>` : '';
-          return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">` +
+          const hasDesc = n.details && n.details.length > 0;
+          const detailsHtml = hasDesc ? `<br/><span style="color:#38bdf8;font-size:11px;line-height:1.3;display:block;margin-top:3px;">${n.details}</span>` : '';
+          return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">` +
             `<strong>${n.name}</strong> <span style="color:#64748b;font-size:10px;">(${n.kind || ''})</span>` +
             detailsHtml +
-            `<div style="margin-top:5px;font-size:10px;"><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#38bdf8;">Conexiones: ${n.degree || 0}</span></div>` +
+            `<div style="margin-top:5px;font-size:10px;"><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#94a3b8;">Conexiones: ${n.degree || 0}</span></div>` +
             `</div>`;
         };
 
