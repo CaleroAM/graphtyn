@@ -932,7 +932,7 @@ def index():
       body.innerHTML =
         '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + node.name + '</span></div>' +
         '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + (node.kind || 'nodo') + '</span></div>' +
-        (node.details ? '<div><strong>Ruta:</strong> <span style="color:#94a3b8;font-size:10px;">' + node.details + '</span></div>' : '') +
+        (node.details ? '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;"><strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong><span style="color:#f8fafc;font-size:11px;line-height:1.4;">' + node.details + '</span></div>' : '') +
         '<div style="display:flex;gap:12px;margin-top:2px;">' +
           '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
@@ -1070,13 +1070,15 @@ function loadGraph() {
           if (k === 'file') return activeDim === '2d' ? 6 : 7;
           return activeDim === '2d' ? 3 : 4;
         };
-        const tooltip = n =>
-          `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:220px;">` +
-          `<strong>${n.name}</strong>` +
-          `<br/><span style="color:#64748b;font-size:10px;">${n.kind || ''}</span>` +
-          (n.details ? `<br/><span style="color:#94a3b8;font-size:10px;">${n.details}</span>` : '') +
-          `<br/><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#38bdf8;">Conexiones: ${n.degree || 0}</span>` +
-          `</div>`;
+        const tooltip = n => {
+          const isAi = n.details && n.details.includes('🤖');
+          const detailsHtml = n.details ? `<br/><span style="color:${isAi ? '#38bdf8' : '#94a3b8'};font-size:11px;line-height:1.3;display:block;margin-top:3px;">${n.details}</span>` : '';
+          return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">` +
+            `<strong>${n.name}</strong> <span style="color:#64748b;font-size:10px;">(${n.kind || ''})</span>` +
+            detailsHtml +
+            `<div style="margin-top:5px;font-size:10px;"><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#38bdf8;">Conexiones: ${n.degree || 0}</span></div>` +
+            `</div>`;
+        };
 
         try {
           if (activeDim === '2d') {
@@ -1120,7 +1122,7 @@ function loadGraph() {
             .nodeId('id')
             .nodeVal(nodeVal)
             .nodeColor(n => nodeColor(n))
-            .nodeLabel(n => `${n.name} (${n.kind || ''}) — ${n.degree || 0} conexiones`).onNodeClick(onNodeClick)
+            .nodeLabel(tooltip).onNodeClick(onNodeClick)
             .linkColor(() => p.link)
             .linkWidth(p.linkW)
             .linkDirectionalParticles(() => (showParticles ? 2 : (linkStyle === 'dashed' ? 3 : 0)))
