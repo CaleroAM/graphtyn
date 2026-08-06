@@ -22,7 +22,8 @@ Cuando un agente de IA explora un proyecto grande sin un mapa de código, recurr
 AetherGraph actúa como un **GPS de código en tiempo real**:
 * 📉 **Reduce el consumo de tokens en un 99.5%**: La IA consulta la herramienta MCP (`graph_neighborhood`, `graph_blast_radius` o `graph_search_concepts`) y salta directamente al archivo y línea exactos.
 * ⚡ **Análisis sintáctico determinista de 15+ lenguajes** a costo **$0 USD y <0.05 segundos**.
-* 🎯 **Radio de Impacto en vivo**: Permite ver exactamente qué módulos se romperán antes de editar una línea.
+* 🎯 **Radio de Impacto en vivo y pre-Commit**: Permite evaluar exactamente qué clases y métodos se verán afectados antes de hacer `git push` (`aether-graph diff`).
+* 📝 **Generador de ARCHITECTURE.md**: Exporta un mapa de arquitectura conciso (~150 tokens) que cualquier Agente de IA puede leer al iniciar (`aether-graph export-md`).
 * 🌐 **Dashboard Interactivo WebGL 2D/3D**: Visualizador en el puerto `9210` con 9 paletas de color, físicamente dinámicas, auto-rotación 3D y 3 modos de vista.
 
 ---
@@ -104,6 +105,12 @@ aether-graph mcp
 
 # Iniciar el Dashboard WebGL interactivo en el puerto 9210
 aether-graph serve --reload
+
+# Evaluar el radio de impacto de cambios sin confirmar (git status / git diff)
+aether-graph diff
+
+# Generar un archivo ARCHITECTURE.md compacto (~150 tokens) para Agentes de IA
+aether-graph export-md
 
 # Consultar conceptos o símbolos en el grafo
 aether-graph query "sistema de autenticación"

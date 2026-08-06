@@ -1,6 +1,7 @@
 import sys
 import json
 import argparse
+import subprocess
 import urllib.request
 from pathlib import Path
 
@@ -70,6 +71,15 @@ def main():
     explain_p.add_argument("symbol", help="Símbolo a explicar")
     explain_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
+    # diff
+    diff_p = subparsers.add_parser("diff", help="Calcula el radio de impacto de los cambios de git (git diff)")
+    diff_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
+    # export-md
+    export_p = subparsers.add_parser("export-md", help="Exporta un mapa de arquitectura conciso en Markdown para Agentes de IA")
+    export_p.add_argument("--output", default="ARCHITECTURE.md", help="Archivo de salida")
+    export_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
     # mcp
     mcp_p = subparsers.add_parser("mcp", help="Inicia el servidor Model Context Protocol (MCP) por stdio")
     mcp_p.add_argument("--path", default=".", help="Ruta del proyecto")
@@ -130,6 +140,57 @@ def main():
             print(f"   Conexiones: {target.get('degree', 0)}")
         else:
             print(f"No se encontró el símbolo '{args.symbol}'.")
+
+    elif args.command == "diff":
+        ast_p = ASTParser()
+        graph = ast_p.scan_directory(root)
+        try:
+            res = subprocess.run(["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True)
+            changed_files = [line.strip().split()[-1] for line in res.stdout.strip().splitlines() if line.strip()]
+        except Exception:
+            changed_files = []
+
+        if not changed_files:
+            print("✓ No hay archivos modificados en git status.")
+        else:
+            print(f"🔍 Evaluando radio de impacto de {len(changed_files)} archivos modificados:")
+            impacted = set()
+            for cf in changed_files:
+                f_id = f"file:{cf}"
+                for l in graph.get("links", []):
+                    src = l["source"] if isinstance(l["source"], str) else l["source"]["id"]
+                    tgt = l["target"] if isinstance(l["target"], str) else l["target"]["id"]
+                    if src == f_id:
+                        impacted.add(tgt)
+                    elif tgt == f_id:
+                        impacted.add(src)
+
+            nodes_map = {n["id"]: n for n in graph.get("nodes", [])}
+            print(f"💥 Radio de Impacto: {len(impacted)} símbolos o módulos potencialmente afectados:")
+            for imp_id in list(impacted)[:15]:
+                n = nodes_map.get(imp_id, {})
+                print(f"  • {n.get('name', imp_id)} ({n.get('kind', 'nodo')}) — {n.get('details', '')}")
+
+    elif args.command == "export-md":
+        ast_p = ASTParser()
+        graph = ast_p.scan_directory(root)
+        meta = graph.get("metadata", {})
+        top_nodes = sorted(graph.get("nodes", []), key=lambda x: x.get("degree", 0), reverse=True)[:10]
+
+        md_lines = [
+            f"# 🏗️ Arquitectura del Proyecto: {root.name}",
+            f"- **Nodos totales:** {meta.get('total_nodes', len(graph.get('nodes', [])))}",
+            f"- **Conexiones totales:** {meta.get('total_links', len(graph.get('links', [])))}",
+            "",
+            "## 📌 Componentes y Módulos Principales",
+        ]
+        for n in top_nodes:
+            md_lines.append(f"- **{n['name']}** (`{n.get('kind')}`): {n.get('details', '')} [{n.get('degree', 0)} conexiones]")
+
+        out_path = root / args.output
+        out_path.write_text("\n".join(md_lines), encoding="utf-8")
+
+        print(f"✓ Mapa de arquitectura exportado exitosamente en: {out_path}")
 
     elif args.command == "mcp":
         run_mcp_server(root)
