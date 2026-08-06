@@ -72,29 +72,29 @@ aether-graph reindex --engine ast_local_llm
 
 ---
 
-## 💻 Especificaciones Exactas de la Máquina y Tiempos Reales
+## 💻 Especificaciones de Hardware y Tiempos de Benchmark
 
-### ⚙️ Hardware Real de Referencia
-* **Procesador:** Intel Core i7 12a Gen Alder Lake (16 Hilos / Cores)
+### ⚙️ Hardware de Referencia de Pruebas
+* **Procesador:** Intel Core i7 12a Gen (16 Hilos / Cores)
 * **Memoria RAM:** 16 GB RAM DDR4/DDR5
 * **Tarjeta de Video Dedicada:** **NVIDIA GeForce RTX 3050 Mobile (4 GB VRAM)**
 * **Gráficos Integrados:** Intel Iris Xe Graphics
 * **Sistema Operativo:** Linux Ubuntu 24.04 LTS
 * **Modelo IA Local:** `qwen2.5-coder:0.5b` / `qwen2.5-coder:1.5b` (Vía Ollama)
 
-### 📊 Tiempos Reales de Reindexación
+### 📊 Tiempos Reales de Reindexación por Escala de Proyecto
 
-| Proyecto | Archivos / Símbolos | Motor Seleccionado | Modo CPU | Modo GPU (NVIDIA RTX 3050 4GB VRAM) | Consumo de Tokens |
-|---|---|---|---|---|---|
-| **calculadora-stats** | 15 Nodos · 14 Conectores | `Solo AST (Puro)` | **0.03 seg** | **0.03 seg** | **0 Tokens** |
-| **calculadora-stats** | 15 Nodos · 14 Conectores | `AST + Local (Ollama)` | **~1.5 seg** | **~0.3 seg** | **0 Tokens (Local)** |
-| **UnityCommerceDemo** | 970 Nodos · 1,682 Conectores | `Solo AST (Puro)` | **0.05 seg** | **0.05 seg** | **0 Tokens** |
-| **UnityCommerceDemo** | 970 Nodos · 1,682 Conectores | `AST + Local (Ollama)` | **~2.5 min** | **~25 seg** | **0 Tokens (Local)** |
-| **t-magneto** (Laravel/PHP) | 2,250 Nodos · 7,426 Conectores | `Solo AST (Puro)` | **0.08 seg** | **0.08 seg** | **0 Tokens** |
-| **t-magneto** (Laravel/PHP) | 2,250 Nodos · 7,426 Conectores | `AST + Local (Ollama)` | **~6.5 min** | **~45 seg** | **0 Tokens (Local)** |
+| Escala del Repositorio | Métricas del Código (LOC, Archivos, Nodos) | Lenguajes Principales | Motor Seleccionado | Modo CPU | Modo GPU (NVIDIA RTX 3050 4GB VRAM) | Consumo de Tokens |
+|---|---|---|---|---|---|---|
+| **Proyecto Pequeño** | ~250 LOC · 4 Archivos · 15 Nodos | Python | `Solo AST (Puro)` | **0.03 seg** | **0.03 seg** | **0 Tokens** |
+| **Proyecto Pequeño** | ~250 LOC · 4 Archivos · 15 Nodos | Python | `AST + Local (Ollama)` | **~1.5 seg** | **~0.3 seg** | **0 Tokens (Local)** |
+| **Proyecto Mediano** | ~45,000 LOC · 180 Archivos · 970 Nodos | C#, HLSL, UXML, JSON | `Solo AST (Puro)` | **0.05 seg** | **0.05 seg** | **0 Tokens** |
+| **Proyecto Mediano** | ~45,000 LOC · 180 Archivos · 970 Nodos | C#, HLSL, UXML, JSON | `AST + Local (Ollama)` | **~2.5 min** | **~25 seg** | **0 Tokens (Local)** |
+| **Proyecto Grande** | ~320,000 LOC · 8,700 Archivos · 2,250 Nodos | PHP (Laravel), TypeScript, SQL | `Solo AST (Puro)` | **0.08 seg** | **0.08 seg** | **0 Tokens** |
+| **Proyecto Grande** | ~320,000 LOC · 8,700 Archivos · 2,250 Nodos | PHP (Laravel), TypeScript, SQL | `AST + Local (Ollama)` | **~6.5 min** | **~45 seg** | **0 Tokens (Local)** |
 
 > 💡 **Nota sobre la VRAM / Memoria de Video:**  
-> Si ejecutas en Linux y ves que Ollama corre en CPU en lugar de la GPU NVIDIA RTX 3050, suele deberse a un *desfase de versión del módulo del kernel de NVIDIA* (`NVML driver mismatch`) tras una actualización del sistema. Al reiniciar el equipo, Docker/Ollama detectan automáticamente la **NVIDIA RTX 3050 de 4GB VRAM**, acelerando la reindexación con IA hasta **10 veces más rápido**.
+> Si ejecutas en Linux y observas que Ollama corre en CPU en lugar de la GPU NVIDIA RTX 3050, se debe habitualmente a una desincronización temporal del módulo del kernel tras una actualización del paquete del sistema (`NVML driver mismatch`). Tras un reinicio del equipo, Docker/Ollama toman automáticamente la **NVIDIA RTX 3050 de 4GB VRAM**, acelerando la reindexación con IA hasta **10 veces más rápido**.
 
 ---
 
