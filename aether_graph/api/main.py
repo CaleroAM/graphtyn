@@ -832,10 +832,13 @@ def index():
     // ── View / Dim ────────────────────────────────────────────────────────────
     function setView(v) {
       activeView = v;
-      document.getElementById('btn-code').classList.toggle('active', v === 'code');
-      document.getElementById('btn-agents').classList.toggle('active', v === 'agents');
+      const bCode = document.getElementById('btn-code');
+      const bSem = document.getElementById('btn-semantic');
+      const bAg = document.getElementById('btn-agents');
+      if (bCode) bCode.classList.toggle('active', v === 'code');
+      if (bSem) bSem.classList.toggle('active', v === 'semantic');
+      if (bAg) bAg.classList.toggle('active', v === 'agents');
       destroyGraph();
-      loadProjects();
       loadGraph();
     }
 
