@@ -1336,15 +1336,7 @@ function loadGraph() {
       });
     }
 
-    // ── Boot ──────────────────────────────────────────────────────────────────
-    document.getElementById('graph-container').innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Cargando proyectos...</div>';
-    loadProjects(true);  // true = load graph after projects are ready
-  </script>
-</body>
-</html>
-"""
-    async function loadHistoryUI() {
+        async function loadHistoryUI() {
       const container = document.getElementById('hist-list');
       if (!container) return;
       try {
@@ -1371,6 +1363,15 @@ function loadGraph() {
         container.innerHTML = '<div style="font-size:11px;color:#ef4444;">Error al cargar historial.</div>';
       }
     }
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+    document.getElementById('graph-container').innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Cargando proyectos...</div>';
+    loadProjects(true);  // true = load graph after projects are ready
+  </script>
+</body>
+</html>
+"""
 
 
 
