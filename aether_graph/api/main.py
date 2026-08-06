@@ -488,14 +488,14 @@ def index():
     body.right-collapsed .float-actions { right: 14px; }
     body.right-collapsed #blast-panel { right: 14px; }
 
-    /* Sidebar toggle buttons attached to edges */
+    /* Sidebar toggle buttons attached to edges (vertically centered) */
     .sidebar-toggle {
-      position: absolute; top: 12px; z-index: 65;
-      width: 22px; height: 28px; background: #111827; border: 1px solid #374151;
+      position: absolute; top: 50%; transform: translateY(-50%); z-index: 65;
+      width: 22px; height: 38px; background: #111827; border: 1px solid #374151;
       color: #38bdf8; font-size: 11px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5); user-select: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.6); user-select: none;
     }
     .sidebar-toggle:hover { background: #1f2937; border-color: #38bdf8; color: #fff; }
     .sidebar-toggle.left-toggle { left: 240px; border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-left: none; }
