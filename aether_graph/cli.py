@@ -1,10 +1,42 @@
 import sys
 import json
 import argparse
+import urllib.request
 from pathlib import Path
 
 from .core.ast_parser import ASTParser
 from .mcp_server import run_mcp_server
+
+def bfs_path(graph: dict, start_sym: str, end_sym: str):
+    nodes = {n['id']: n for n in graph.get('nodes', [])}
+    name_to_id = {}
+    for n in graph.get('nodes', []):
+        name_to_id[n['name'].lower()] = n['id']
+
+    s_id = name_to_id.get(start_sym.lower())
+    e_id = name_to_id.get(end_sym.lower())
+    if not s_id or not e_id:
+        return None
+
+    adj = {}
+    for l in graph.get('links', []):
+        src = l['source'] if isinstance(l['source'], str) else l['source']['id']
+        tgt = l['target'] if isinstance(l['target'], str) else l['target']['id']
+        adj.setdefault(src, []).append(tgt)
+        adj.setdefault(tgt, []).append(src)
+
+    queue = [[s_id]]
+    visited = {s_id}
+    while queue:
+        path = queue.pop(0)
+        curr = path[-1]
+        if curr == e_id:
+            return [nodes[nid]['name'] for nid in path]
+        for nxt in adj.get(curr, []):
+            if nxt not in visited:
+                visited.add(nxt)
+                queue.append(path + [nxt])
+    return None
 
 def main():
     parser = argparse.ArgumentParser(
@@ -14,28 +46,40 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Comandos disponibles")
 
     # init
-    init_parser = subparsers.add_parser("init", help="Inicializa .aether-graph/ en el repositorio actual")
-    init_parser.add_argument("--path", default=".", help="Ruta del proyecto")
+    init_p = subparsers.add_parser("init", help="Inicializa .aether-graph/ en el repositorio")
+    init_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
-    # build
-    build_parser = subparsers.add_parser("build", help="Construye el índice AST de código")
-    build_parser.add_argument("--path", default=".", help="Ruta del proyecto")
+    # build / reindex
+    reindex_p = subparsers.add_parser("reindex", help="Reindexa el código con motor AST + IA")
+    reindex_p.add_argument("--path", default=".", help="Ruta del proyecto")
+    reindex_p.add_argument("--engine", default="ast_local_llm", choices=["ast_local_llm", "ast_cloud", "ast_pure"], help="Motor de IA")
 
     # query
-    query_parser = subparsers.add_parser("query", help="Consulta símbolos y relaciones")
-    query_parser.add_argument("symbol", help="Símbolo o función a consultar")
-    query_parser.add_argument("--path", default=".", help="Ruta del proyecto")
+    query_p = subparsers.add_parser("query", help="Consulta conceptos o símbolos en el grafo")
+    query_p.add_argument("query_text", help="Término, símbolo o concepto a consultar")
+    query_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
+    # path
+    path_p = subparsers.add_parser("path", help="Encuentra la ruta de conexión entre dos símbolos")
+    path_p.add_argument("start_symbol", help="Símbolo inicial")
+    path_p.add_argument("end_symbol", help="Símbolo destino")
+    path_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
+    # explain
+    explain_p = subparsers.add_parser("explain", help="Explica el propósito y conexiones de un símbolo")
+    explain_p.add_argument("symbol", help="Símbolo a explicar")
+    explain_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
     # mcp
-    mcp_parser = subparsers.add_parser("mcp", help="Inicia el servidor Model Context Protocol (MCP) por stdio")
-    mcp_parser.add_argument("--path", default=".", help="Ruta del proyecto")
+    mcp_p = subparsers.add_parser("mcp", help="Inicia el servidor Model Context Protocol (MCP) por stdio")
+    mcp_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
     # serve
-    serve_parser = subparsers.add_parser("serve", help="Inicia el demonio HTTP local")
-    serve_parser.add_argument("--reload", action="store_true", help="Habilitar recarga automática en vivo (Hot-Reloading)")
-    serve_parser.add_argument("--host", default="127.0.0.1", help="Host")
-    serve_parser.add_argument("--port", type=int, default=9210, help="Puerto")
-    serve_parser.add_argument("--path", default=".", help="Ruta del proyecto")
+    serve_p = subparsers.add_parser("serve", help="Inicia el demonio HTTP local")
+    serve_p.add_argument("--reload", action="store_true", help="Habilitar recarga automática en vivo")
+    serve_p.add_argument("--host", default="0.0.0.0", help="Host")
+    serve_p.add_argument("--port", type=int, default=9210, help="Puerto")
+    serve_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
     args = parser.parse_args()
     root = Path(args.path if hasattr(args, 'path') else ".").resolve()
@@ -43,27 +87,49 @@ def main():
     if args.command == "init":
         dot_dir = root / ".aether-graph"
         dot_dir.mkdir(exist_ok=True)
-        config = {
-            "version": "0.1.0",
-            "name": root.name,
-            "ignore": [".git", "venv", "node_modules", "__pycache__"]
-        }
+        config = {"version": "0.1.0", "name": root.name}
         (dot_dir / "aether.json").write_text(json.dumps(config, indent=2))
         print(f"✓ Inicializado .aether-graph/ en {root}")
 
-    elif args.command == "build":
-        ast_p = ASTParser()
-        graph = ast_p.scan_directory(root)
-        dot_dir = root / ".aether-graph"
-        dot_dir.mkdir(exist_ok=True)
-        (dot_dir / "index.json").write_text(json.dumps(graph, indent=2))
-        print(f"✓ Índice AetherGraph construido: {len(graph['nodes'])} nodos, {len(graph['links'])} enlaces.")
+    elif args.command == "reindex":
+        data = json.dumps({"path": str(root), "engine": args.engine}).encode("utf-8")
+        req = urllib.request.Request("http://127.0.0.1:9210/api/reindex", data=data, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req) as resp:
+                res = json.loads(resp.read().decode())
+                print(f"✓ Reindexado completado ({args.engine}): {res.get('nodes')} nodos, {res.get('links')} conectores.")
+        except Exception:
+            ast_p = ASTParser()
+            graph = ast_p.scan_directory(root)
+            print(f"✓ Reindexado AST local completado: {len(graph['nodes'])} nodos, {len(graph['links'])} conectores.")
 
     elif args.command == "query":
         ast_p = ASTParser()
         graph = ast_p.scan_directory(root)
+        q = args.query_text.lower()
+        matches = [n for n in graph["nodes"] if q in n["name"].lower() or q in n.get("details", "").lower()]
+        print(json.dumps({"query": args.query_text, "matches": matches}, indent=2))
+
+    elif args.command == "path":
+        ast_p = ASTParser()
+        graph = ast_p.scan_directory(root)
+        found_path = bfs_path(graph, args.start_symbol, args.end_symbol)
+        if found_path:
+            print(" -> ".join(found_path))
+        else:
+            print(f"No se encontró ruta entre '{args.start_symbol}' y '{args.end_symbol}'.")
+
+    elif args.command == "explain":
+        ast_p = ASTParser()
+        graph = ast_p.scan_directory(root)
         matches = [n for n in graph["nodes"] if args.symbol.lower() in n["name"].lower()]
-        print(json.dumps({"symbol": args.symbol, "matches": matches}, indent=2))
+        if matches:
+            target = matches[0]
+            print(f"📌 {target['name']} ({target.get('kind')})")
+            print(f"   Detalle: {target.get('details', 'Sin detalle')}")
+            print(f"   Conexiones: {target.get('degree', 0)}")
+        else:
+            print(f"No se encontró el símbolo '{args.symbol}'.")
 
     elif args.command == "mcp":
         run_mcp_server(root)
