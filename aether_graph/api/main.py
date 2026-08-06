@@ -847,7 +847,16 @@ def index():
       fetch('/api/projects').then(r => r.json()).then(projects => {
         const el = document.getElementById('project-list');
         if (!Array.isArray(projects) || !projects.length) {
-          el.innerHTML = '<div style="color:#475569;font-size:11px;">Sin proyectos registrados</div>';
+          el.innerHTML = `
+            <div style="padding:14px 10px;text-align:center;background:#111827;border:1px dashed #374151;border-radius:8px;margin-top:6px;">
+              <div style="font-size:22px;margin-bottom:6px;">📂</div>
+              <div style="font-size:12px;font-weight:700;color:#f8fafc;margin-bottom:4px;">Sin Proyectos Aún</div>
+              <div style="font-size:10px;color:#94a3b8;margin-bottom:12px;line-height:1.4;">Por favor, añade alguna carpeta de código para empezar.</div>
+              <button class="btn-action btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:7px 10px;" onclick="openRegister()">
+                ➕ Registrar Proyecto
+              </button>
+            </div>
+          `;
           return;
         }
         if (!activePath && projects.length) activePath = projects[0].path;
