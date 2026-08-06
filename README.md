@@ -54,41 +54,16 @@ AetherGraph incluye un motor sintáctico determinista que soporta nativamente el
 
 ---
 
-## 📦 Guía de Instalación (Con Docker y Sin Docker)
+## 📦 Instalación Sencilla (1 Solo Comando - Sin Docker)
 
-AetherGraph se puede ejecutar en cualquier sistema operativo en segundos. Elige la opción que prefieras:
-
-### 1️⃣ Opción A: Instalación Directa sin Docker (Desde GitHub - Recomendada)
-Para usuarios que no usan Docker. Puedes instalarlo directamente en 1 comando desde GitHub:
+Instalar AetherGraph en cualquier sistema operativo requiere un único comando nativo de Pip:
 
 ```bash
-# Instalar directamente desde el repositorio (Próximamente en PyPI via pip install aether-graph)
+# Instalar AetherGraph globalmente
 pip install git+https://github.com/CaleroAM/openclaw.git#subdirectory=code-graph-host
 
-# Iniciar el Dashboard visual en http://localhost:9210
+# Iniciar el Dashboard WebGL interactivo en http://localhost:9210
 aether-graph serve
-```
-
----
-
-### 2️⃣ Opción B: Ejecución con Docker (Para Servidores o Entornos Aislados)
-Si prefieres mantener tu sistema aislado o correr en servidores:
-
-```bash
-# Ejecutar contenedor Docker montando tu código local
-docker run -d -p 9210:9210 -v /ruta/a/tu/proyecto:/workspace --name aether-graph ghcr.io/caleroam/aether-graph
-```
-
----
-
-### 3️⃣ Opción C: Desde Código Fuente (Para Desarrolladores)
-Si deseas modificar el código o contribuir al proyecto:
-
-```bash
-git clone https://github.com/CaleroAM/openclaw.git
-cd openclaw/code-graph-host
-pip install -e .
-aether-graph serve --reload
 ```
 
 ---
@@ -105,7 +80,7 @@ aether-graph init
 aether-graph mcp
 
 # Iniciar el Dashboard WebGL interactivo en el puerto 9210
-aether-graph serve --reload
+aether-graph serve
 
 # Consultar la línea de tiempo del historial de acciones de la IA (SQLite Local)
 aether-graph timeline
@@ -151,9 +126,6 @@ aether-graph reindex --engine ast_local_llm
 | **Proyecto Mediano** | ~45,000 LOC · 180 Archivos · 970 Nodos | C#, HLSL, UXML, JSON | `AST + Local (Ollama)` | **~2.5 min** | **~25 seg** | **0 Tokens (Local)** |
 | **Proyecto Grande** | ~320,000 LOC · 8,700 Archivos · 2,250 Nodos | PHP (Laravel), TypeScript, SQL | `Solo AST (Puro)` | **0.08 seg** | **0.08 seg** | **0 Tokens** |
 | **Proyecto Grande** | ~320,000 LOC · 8,700 Archivos · 2,250 Nodos | PHP (Laravel), TypeScript, SQL | `AST + Local (Ollama)` | **~6.5 min** | **~45 seg** | **0 Tokens (Local)** |
-
-> 💡 **Nota sobre la VRAM / Memoria de Video:**  
-> Si ejecutas en Linux y observas que Ollama corre en CPU en lugar de la GPU NVIDIA RTX 3050, se debe habitualmente a una desincronización temporal del módulo del kernel tras una actualización del paquete del sistema (`NVML driver mismatch`). Tras un reinicio del equipo, Docker/Ollama toman automáticamente la **NVIDIA RTX 3050 de 4GB VRAM**, acelerando la reindexación con IA hasta **10 veces más rápido**.
 
 ---
 
