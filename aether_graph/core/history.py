@@ -7,17 +7,29 @@ from typing import Dict, Any, List
 class HistoryTracker:
     def __init__(self, workspace: Path):
         self.workspace = workspace
-        try:
+        local_db = workspace / ".aether-graph" / "history.db"
+        home_db_dir = Path.home() / ".aether-graph" / workspace.name
+        home_db = home_db_dir / "history.db"
+
+        if local_db.exists():
             self.db_dir = workspace / ".aether-graph"
-            self.db_dir.mkdir(exist_ok=True)
-            # Test write access
-            test_file = self.db_dir / ".write_test"
-            test_file.touch()
-            test_file.unlink()
-        except OSError:
-            self.db_dir = Path.home() / ".aether-graph" / workspace.name
-            self.db_dir.mkdir(parents=True, exist_ok=True)
-        self.db_path = self.db_dir / "history.db"
+            self.db_path = local_db
+        elif home_db.exists():
+            self.db_dir = home_db_dir
+            self.db_path = home_db
+        else:
+            try:
+                self.db_dir = workspace / ".aether-graph"
+                self.db_dir.mkdir(exist_ok=True)
+                test_file = self.db_dir / ".write_test"
+                test_file.touch()
+                test_file.unlink()
+                self.db_path = local_db
+            except OSError:
+                self.db_dir = home_db_dir
+                self.db_dir.mkdir(parents=True, exist_ok=True)
+                self.db_path = home_db
+
         self._init_db()
 
 
