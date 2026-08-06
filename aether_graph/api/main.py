@@ -1384,9 +1384,9 @@ function loadGraph() {
     }
 
         function focusHistoryEvent(sum) {
-      if (!graphData || !graphData.nodes) return;
+      if (!fullData || !fullData.nodes) return;
       const lowerSum = sum.lower ? sum.lower() : sum.toLowerCase();
-      const match = graphData.nodes.find(n => lowerSum.includes(n.name.toLowerCase()));
+      const match = fullData.nodes.find(n => lowerSum.includes(n.name.toLowerCase()));
       if (match) {
         selectNode(match);
       }
