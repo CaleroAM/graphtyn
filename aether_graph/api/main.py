@@ -332,9 +332,9 @@ def index():
 <head>
   <meta charset="UTF-8">
   <title>AetherGraph — Engine & Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="https://cdn.jsdelivr.net/npm/force-graph@1"></script>
-  <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/force-graph@1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1" defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { box-sizing: border-box; }
@@ -1451,9 +1451,13 @@ function loadGraph() {
 
 
 // ── Boot ──────────────────────────────────────────────────────────────────
-    document.getElementById('graph-container').innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Cargando proyectos...</div>';
-    loadProjects(true);  // true = load graph after projects are ready
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProjects(true);
+    });
+    // Instant fallback if DOMContentLoaded already fired
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+      loadProjects(true);
+    }
   </script>
 </body>
 </html>
