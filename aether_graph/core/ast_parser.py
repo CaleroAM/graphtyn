@@ -105,7 +105,7 @@ class ASTParser:
                 python_files.append((path, rel_file, f_id))
             elif ext == ".php":
                 php_files.append((path, rel_file, f_id))
-            elif ext in (".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp"):
+            elif ext in (".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".kt", ".kts", ".swift", ".dart", ".sh", ".bash", ".sql", ".vue", ".svelte"):
                 other_code_files.append((path, rel_file, f_id, ext))
 
         file_contents: Dict[str, str] = {}
@@ -217,7 +217,7 @@ class ASTParser:
             try:
                 content = path.read_text(encoding="utf-8", errors="ignore")
                 file_contents[rel_file] = content
-                for m in re.finditer(r"(class|interface|struct|type|function|export function|fn|def)\s+([A-Za-z0-9_]+)", content):
+                for m in re.finditer(r"(class|interface|struct|type|function|export function|fn|def|func|fun|enum|protocol|extension)\s+([A-Za-z0-9_]+)", content):
                     kind = m.group(1).replace("export ", "")
                     cname = m.group(2)
                     if cname not in ("if", "for", "while", "switch", "return"):

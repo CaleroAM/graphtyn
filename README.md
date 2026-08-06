@@ -21,7 +21,7 @@ Cuando un agente de IA explora un proyecto grande sin un mapa de código, recurr
 ### 🌟 La Solución de AetherGraph
 AetherGraph actúa como un **GPS de código en tiempo real**:
 * 📉 **Reduce el consumo de tokens en un 99.5%**: La IA consulta la herramienta MCP (`graph_neighborhood`, `graph_blast_radius` o `graph_search_concepts`) y salta directamente al archivo y línea exactos.
-* ⚡ **Análisis sintáctico determinista de 10 lenguajes** (`C#`, `PHP`, `Python`, `JS/TS`, `Java`, `Go`, `Rust`, `Ruby`, `C/C++`, `Unity Assets`).
+* ⚡ **Análisis sintáctico determinista de 15+ lenguajes** (`C#`, `PHP`, `Python`, `JS/TS`, `Java`, `Go`, `Rust`, `Ruby`, `C/C++`, `Kotlin`, `Swift`, `Dart`, `Shell`, `SQL`, `Vue`, `Svelte`, `Unity Assets`).
 * 🎯 **Radio de Impacto en vivo**: Permite ver exactamente qué módulos se romperán antes de editar una línea.
 * 🌐 **Dashboard Interactivo WebGL 2D/3D**: Visualizador en el puerto `9210` con 9 paletas de color, físicamente dinámicas, auto-rotación 3D y 3 modos de vista.
 
@@ -167,7 +167,7 @@ Agrega en tu configuración `AGENTS.md` o archivo `.cursor/mcp.json`:
 
 | Característica | 📦 Graphify Labs | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
 |---|---|---|---|
-| **Parsing Estático Multi-Lenguaje** | No (Llama a API pagada de Claude) | Sí (LSIF estático) | **Sí (AST Nativo 10 lenguajes a $0)** |
+| **Parsing Estático Multi-Lenguaje** | No (Llama a API pagada de Claude) | Sí (LSIF estático) | **Sí (AST Nativo 15+ lenguajes a $0)** |
 | **Consumo de Tokens** | **Alto** (Paga por cada archivo leído) | 0 Tokens | **0 Tokens en Pasada 1** + Enriquecimiento Opcional |
 | **Visualizador Interactivo** | Exporta HTML estático plano | No tiene | **Dashboard WebGL 2D/3D en Vivo (`:9210`)** |
 | **Radio de Impacto Interactivo** | No | Parcial en CLI | **Sí (Inspector interactivo con aislamiento y foco)** |
