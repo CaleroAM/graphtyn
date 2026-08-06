@@ -154,24 +154,37 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None):
             except Exception:
                 pass
 
-            # 2. Individual file code snippet summaries
-            for n in top_code_nodes:
-                rel_path = n["id"].replace("file:", "")
-                file_path = root_dir / rel_path
-                if file_path.is_file():
-                    try:
-                        code_snippet = file_path.read_text(encoding="utf-8", errors="ignore")[:600]
-                        prompt = f"En 1 sola frase corta en espanol, explica que hace este codigo:\n{code_snippet}"
-                        req = urllib.request.Request(f"{connected_host}/api/generate", data=json.dumps({
-                            "model": model_name, "prompt": prompt, "stream": False
-                        }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-                        with urllib.request.urlopen(req, timeout=10) as resp:
-                            res = json.loads(resp.read().decode('utf-8'))
-                            ans = res.get("response", "").strip()
-                            if ans:
-                                n["details"] = f"{ans} ({rel_path})"
-                    except Exception:
-                        pass
+            # 2. Add descriptions for folder & module nodes
+            for n in graph.get("nodes", []):
+                if n.get("kind") in ("module", "dir") and not n.get("details"):
+                    n["details"] = f"Carpeta de módulos: {n.get('name')}"
+
+            # 3. Individual file code snippet summaries for ALL code nodes
+            all_code_nodes = [n for n in graph.get("nodes", []) if n.get("kind") not in ("module", "dir")]
+            for n in all_code_nodes:
+                nid = n.get("id", "")
+                if nid.startswith("file:"):
+                    rel_path = nid.replace("file:", "")
+                    file_path = root_dir / rel_path
+                    if file_path.is_file():
+                        try:
+                            code_snippet = file_path.read_text(encoding="utf-8", errors="ignore")[:500]
+                            prompt = f"En 1 sola frase corta en espanol, explica la responsabilidad de este archivo:\n{code_snippet}"
+                            req = urllib.request.Request(f"{connected_host}/api/generate", data=json.dumps({
+                                "model": model_name, "prompt": prompt, "stream": False
+                            }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                            with urllib.request.urlopen(req, timeout=8) as resp:
+                                res = json.loads(resp.read().decode('utf-8'))
+                                ans = res.get("response", "").strip()
+                                if ans: n["details"] = f"{ans} ({rel_path})"
+                        except Exception:
+                            pass
+                elif nid.startswith("symbol:"):
+                    parts = nid.split(":")
+                    if len(parts) >= 3:
+                        rel_path = parts[1]
+                        sym_name = parts[2]
+                        n["details"] = f"{n.get('kind', 'Símbolo').capitalize()} '{sym_name}' definido en {rel_path}" 
 
     elif engine == "ast_cloud":
         gemini_key = os.environ.get("GEMINI_API_KEY")
