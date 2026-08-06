@@ -1197,6 +1197,8 @@ function loadGraph() {
       }
       const url = activeView === 'agents'
         ? '/api/graph?view=agents'
+        : activeView === 'semantic'
+        ? '/api/graph?view=semantic&path=' + encodeURIComponent(activePath)
         : '/api/graph?path=' + encodeURIComponent(activePath);
 
       showGraphSpinner(activeView === 'agents' ? 'Cargando topologia de agentes...' : 'Escaneando proyecto...');
