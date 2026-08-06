@@ -28,9 +28,18 @@ def _is_indexed(project_path: Path) -> bool:
 
 def _load_registered_projects() -> list[dict]:
     projects = []
-    if DEFAULT_MASTER_DIR.exists():
-        for d in sorted(DEFAULT_MASTER_DIR.iterdir()):
-            if d.is_dir() and not d.name.startswith("."):
+    cwd = Path.cwd()
+    projects.append({
+        "id": cwd.name,
+        "name": cwd.name,
+        "path": str(cwd),
+        "mode": "single_folder",
+        "indexed": _is_indexed(cwd)
+    })
+    parent = cwd.parent
+    if parent.exists() and parent.name.lower() in ("proyectos", "projects", "code", "dev", "workspace", "documentos"):
+        for d in sorted(parent.iterdir()):
+            if d.is_dir() and not d.name.startswith(".") and d != cwd:
                 projects.append({
                     "id": d.name,
                     "name": d.name,
