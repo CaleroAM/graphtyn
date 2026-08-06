@@ -7,10 +7,19 @@ from typing import Dict, Any, List
 class HistoryTracker:
     def __init__(self, workspace: Path):
         self.workspace = workspace
-        self.db_dir = workspace / ".aether-graph"
-        self.db_dir.mkdir(exist_ok=True)
+        try:
+            self.db_dir = workspace / ".aether-graph"
+            self.db_dir.mkdir(exist_ok=True)
+            # Test write access
+            test_file = self.db_dir / ".write_test"
+            test_file.touch()
+            test_file.unlink()
+        except OSError:
+            self.db_dir = Path.home() / ".aether-graph" / workspace.name
+            self.db_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.db_dir / "history.db"
         self._init_db()
+
 
     def _init_db(self):
         with sqlite3.connect(self.db_path) as conn:
