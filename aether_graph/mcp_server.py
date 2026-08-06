@@ -121,6 +121,7 @@ def run_mcp_server(workspace: Path):
 
             if name == "graph_neighborhood":
                 graph = get_workspace_graph(workspace, parser)
+                history.log_event("mcp", "neighborhood", f"Escaneo de mapa de código para {workspace.name}", {"nodes": len(graph.get("nodes", []))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps(graph, indent=2)}]}
@@ -129,6 +130,7 @@ def run_mcp_server(workspace: Path):
                 symbol = args.get("symbol", "")
                 graph = get_workspace_graph(workspace, parser)
                 matches = [n for n in graph.get("nodes", []) if symbol.lower() in n.get("name", "").lower()]
+                history.log_event("mcp", "blast_radius", f"Evaluación de radio de impacto para {symbol}", {"symbol": symbol, "count": len(matches)})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps({"symbol": symbol, "impacted_nodes": matches}, indent=2)}]}
@@ -140,6 +142,7 @@ def run_mcp_server(workspace: Path):
                     n for n in graph.get("nodes", [])
                     if query in n.get("name", "").lower() or query in n.get("details", "").lower()
                 ]
+                history.log_event("mcp", "search_concepts", f"Búsqueda semántica de concepto: {query}", {"query": query, "count": len(matches)})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps({"query": query, "matches": matches}, indent=2)}]}

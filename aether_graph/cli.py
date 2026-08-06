@@ -150,6 +150,8 @@ def main():
     elif args.command == "diff":
         ast_p = ASTParser()
         graph = ast_p.scan_directory(root)
+        ht = HistoryTracker(root)
+        ht.log_event("cli", "diff", f"Análisis de radio de impacto git diff en {root.name}", {"path": str(root)})
         try:
             res = subprocess.run(["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True)
             changed_files = [line.strip().split()[-1] for line in res.stdout.strip().splitlines() if line.strip()]
