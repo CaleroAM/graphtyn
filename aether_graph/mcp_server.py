@@ -12,7 +12,19 @@ def run_mcp_server(workspace: Path):
     """
     parser = ASTParser()
 
-    def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
+    def get_workspace_graph(workspace: Path, parser: ASTParser) -> dict:
+    from .api.main import _index_dir
+    try:
+        dot_dir = _index_dir(workspace)
+        cached = dot_dir / "index.json"
+        if cached.exists():
+            return json.loads(cached.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return parser.scan_directory(workspace)
+
+
+def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
         method = req.get("method")
         req_id = req.get("id")
 
@@ -51,6 +63,15 @@ def run_mcp_server(workspace: Path):
                             }
                         },
                         {
+                            "name": "graph_search_concepts",
+                            "description": "Busca conceptos semánticos o palabras clave en las descripciones explicativas del código.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {"query": {"type": "string", "description": "Término o concepto semántico a buscar"}},
+                                "required": ["query"]
+                            }
+                        },
+                        {
                             "name": "graph_register_project",
                             "description": "Registra autónomamente una ruta de proyecto en AetherGraph (Opción 3: Registro por Agente).",
                             "inputSchema": {
@@ -71,7 +92,7 @@ def run_mcp_server(workspace: Path):
             args = params.get("arguments", {})
 
             if name == "graph_neighborhood":
-                graph = parser.scan_directory(workspace)
+                graph = get_workspace_graph(workspace, parser)
                 return {
                     "jsonrpc": "2.0",
                     "id": req_id,
@@ -81,7 +102,7 @@ def run_mcp_server(workspace: Path):
                 }
             elif name == "graph_blast_radius":
                 symbol = args.get("symbol", "")
-                graph = parser.scan_directory(workspace)
+                graph = get_workspace_graph(workspace, parser)
                 matches = [n for n in graph["nodes"] if symbol.lower() in n["name"].lower()]
                 return {
                     "jsonrpc": "2.0",
@@ -90,7 +111,21 @@ def run_mcp_server(workspace: Path):
                         "content": [{"type": "text", "text": json.dumps({"symbol": symbol, "impacted_nodes": matches}, indent=2)}]
                     }
                 }
-            elif name == "graph_register_project":
+                        elif name == "graph_search_concepts":
+                query = args.get("query", "").lower()
+                graph = get_workspace_graph(workspace, parser)
+                matches = [
+                    n for n in graph.get("nodes", [])
+                    if query in n.get("name", "").lower() or query in n.get("details", "").lower()
+                ]
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "result": {
+                        "content": [{"type": "text", "text": json.dumps({"query": query, "matches": matches}, indent=2)}]
+                    }
+                }
+elif name == "graph_register_project":
                 path_str = args.get("path")
                 proj_name = args.get("name")
                 import urllib.request
