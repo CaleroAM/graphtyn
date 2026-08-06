@@ -21,9 +21,34 @@ Cuando un agente de IA explora un proyecto grande sin un mapa de código, recurr
 ### 🌟 La Solución de AetherGraph
 AetherGraph actúa como un **GPS de código en tiempo real**:
 * 📉 **Reduce el consumo de tokens en un 99.5%**: La IA consulta la herramienta MCP (`graph_neighborhood`, `graph_blast_radius` o `graph_search_concepts`) y salta directamente al archivo y línea exactos.
-* ⚡ **Análisis sintáctico determinista de 15+ lenguajes** (`C#`, `PHP`, `Python`, `JS/TS`, `Java`, `Go`, `Rust`, `Ruby`, `C/C++`, `Kotlin`, `Swift`, `Dart`, `Shell`, `SQL`, `Vue`, `Svelte`, `Unity Assets`).
+* ⚡ **Análisis sintáctico determinista de 15+ lenguajes** a costo **$0 USD y <0.05 segundos**.
 * 🎯 **Radio de Impacto en vivo**: Permite ver exactamente qué módulos se romperán antes de editar una línea.
 * 🌐 **Dashboard Interactivo WebGL 2D/3D**: Visualizador en el puerto `9210` con 9 paletas de color, físicamente dinámicas, auto-rotación 3D y 3 modos de vista.
+
+---
+
+## 🛠️ Lenguajes Soportados Nativamente (15+ Lenguajes a $0 Tokens)
+
+AetherGraph incluye un motor sintáctico determinista que soporta nativamente el parsing de clases, funciones, módulos, herencia y llamadas en los siguientes lenguajes:
+
+| Lenguaje / Framework | Extensiones | Elementos Extraídos |
+|---|---|---|
+| 🐍 **Python** | `.py` | Módulos, Clases, Funciones, Métodos, AST Python, Llamadas |
+| 🐘 **PHP / Laravel** | `.php` | Namespaces, Clases, Traits, Interfaces, Métodos, Extends/Implements |
+| 🟨 **JavaScript / TypeScript** | `.js`, `.ts`, `.jsx`, `.tsx` | Classes, Interfaces, Types, Export Functions, Arrow Functions |
+| 🔷 **C# / .NET** | `.cs` | Namespaces, Structs, Classes, Interfaces, Enums, Inheritance |
+| ☕ **Java** | `.java` | Packages, Classes, Interfaces, Enums, Public Methods |
+| 🐹 **Go (Golang)** | `.go` | Packages, Structs, Interfaces, Functions, Methods |
+| 🦀 **Rust** | `.rs` | Structs, Enums, Impl Blocks, Functions (`fn`), Traits |
+| 💎 **Ruby** | `.rb` | Modules, Classes, Methods (`def`), Inheritance |
+| ⚙️ **C / C++** | `.c`, `.cpp`, `.h`, `.hpp` | Structs, Classes, Functions, Header Dependencies |
+| 📱 **Kotlin** | `.kt`, `.kts` | Classes, Interfaces, Objects, Functions (`fun`), Extension Functions |
+| 🍎 **Swift** | `.swift` | Classes, Structs, Protocols, Extensions, Functions (`func`) |
+| 🎯 **Dart / Flutter** | `.dart` | Classes, Mixins, Abstract Classes, Top-level Functions |
+| 🐚 **Shell / Bash** | `.sh`, `.bash` | Function definitions, Script modules, Subroutines |
+| 🗄️ **SQL / Database** | `.sql` | Schemas, Tables, Stored Procedures, Views |
+| ⚡ **Vue.js / Svelte** | `.vue`, `.svelte` | Single File Components, Script Blocks, Exported Properties |
+| 🎮 **Unity Engine Assets** | `.unity`, `.prefab`, `.asset`, `.shader`, `.uxml` | Prefabs, Scenes, ScriptableObjects, Shaders, UI Toolkit layouts |
 
 ---
 
