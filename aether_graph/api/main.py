@@ -332,9 +332,9 @@ def index():
 <head>
   <meta charset="UTF-8">
   <title>AetherGraph — Engine & Dashboard</title>
-  <script src="https://unpkg.com/d3@7"></script>
-  <script src="https://unpkg.com/force-graph@1"></script>
-  <script src="https://unpkg.com/3d-force-graph@1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/force-graph@1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { box-sizing: border-box; }
