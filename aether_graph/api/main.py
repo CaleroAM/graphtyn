@@ -1389,24 +1389,37 @@ function loadGraph() {
       const file = e.target.files[0];
       let fullPath = '';
       const rootFolder = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : '';
-      
-      let baseInput = (document.getElementById('reg-path').value || activePath || '/home/developer/Documentos/docker/PROYECTOS').trim();
-      baseInput = baseInput.replace(/\/+$/, '');
-      const lastSlash = baseInput.lastIndexOf('/');
-      const parentDir = lastSlash > 0 ? baseInput.substring(0, lastSlash) : '/home/developer/Documentos/docker/PROYECTOS';
 
+      // 1. If browser exposes absolute path (Electron, Native webviews)
       if (file.path) {
-        const parts = file.path.split('/');
+        const sep = file.path.includes('\\') ? '\\' : '/';
+        const parts = file.path.split(sep);
         if (rootFolder && parts.includes(rootFolder)) {
           const rootIdx = parts.lastIndexOf(rootFolder);
-          fullPath = parts.slice(0, rootIdx + 1).join('/');
+          fullPath = parts.slice(0, rootIdx + 1).join(sep);
         } else {
           parts.pop();
-          fullPath = parts.join('/');
+          fullPath = parts.join(sep);
         }
       } else if (rootFolder) {
-        fullPath = parentDir + '/' + rootFolder;
+        // 2. Cross-platform dynamic parent directory calculation (No hardcoded paths)
+        let currentInput = (document.getElementById('reg-path').value || activePath || '').trim();
+        const sep = currentInput.includes('\\') ? '\\' : '/';
+        currentInput = currentInput.replace(/[/\\]+$/, '');
+        
+        if (currentInput) {
+          const lastIndex = currentInput.lastIndexOf(sep);
+          if (lastIndex > 0) {
+            const parentDir = currentInput.substring(0, lastIndex);
+            fullPath = parentDir + sep + rootFolder;
+          } else {
+            fullPath = currentInput + sep + rootFolder;
+          }
+        } else {
+          fullPath = rootFolder;
+        }
       }
+
       if (fullPath) {
         document.getElementById('reg-path').value = fullPath;
       }
