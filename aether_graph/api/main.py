@@ -973,7 +973,21 @@ def index():
       body.innerHTML =
         '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + node.name + '</span></div>' +
         '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + (node.kind || 'nodo') + '</span></div>' +
-        (node.details ? '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;"><strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong><span style="color:#f8fafc;font-size:11px;line-height:1.4;">' + node.details + '</span></div>' : '') +
+        (node.details ? (function(){
+          const raw = node.details;
+          descExpanded = false;
+          if (raw.length > 130) {
+            const shortText = raw.substring(0, 130) + '...';
+            return '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;">' +
+              '<strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong>' +
+              '<span id="desc-short" style="color:#f8fafc;font-size:11px;line-height:1.4;">' + shortText + '</span>' +
+              '<span id="desc-full" style="color:#f8fafc;font-size:11px;line-height:1.4;display:none;">' + raw + '</span>' +
+              '<div><button id="btn-toggle-desc" onclick="toggleNodeDesc()" style="background:none;border:none;color:#38bdf8;cursor:pointer;font-size:10px;padding:2px 0 0 0;font-weight:600;">Ver más ▼</button></div>' +
+              '</div>';
+          } else {
+            return '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;"><strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong><span style="color:#f8fafc;font-size:11px;line-height:1.4;">' + raw + '</span></div>';
+          }
+        })() : '') +
         '<div style="display:flex;gap:12px;margin-top:2px;">' +
           '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
@@ -1099,6 +1113,21 @@ def index():
       }
     }
 
+
+    let descExpanded = false;
+
+    function toggleNodeDesc() {
+      descExpanded = !descExpanded;
+      const fullEl = document.getElementById('desc-full');
+      const shortEl = document.getElementById('desc-short');
+      const btn = document.getElementById('btn-toggle-desc');
+      if (fullEl && shortEl && btn) {
+        fullEl.style.display = descExpanded ? 'inline' : 'none';
+        shortEl.style.display = descExpanded ? 'none' : 'inline';
+        btn.textContent = descExpanded ? 'Ver menos' : 'Ver más';
+      }
+    }
+
 function loadGraph() {
       if (!activePath && activeView === 'code') {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
@@ -1141,7 +1170,7 @@ function loadGraph() {
         const tooltip = n => {
           const hasDesc = n.details && n.details.length > 0;
           const detailsHtml = hasDesc ? `<br/><span style="color:#38bdf8;font-size:11px;line-height:1.3;display:block;margin-top:3px;">${n.details}</span>` : '';
-          return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">` +
+          return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:320px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);">` +
             `<strong>${n.name}</strong> <span style="color:#64748b;font-size:10px;">(${n.kind || ''})</span>` +
             detailsHtml +
             `<div style="margin-top:5px;font-size:10px;"><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#94a3b8;">Conexiones: ${n.degree || 0}</span></div>` +
