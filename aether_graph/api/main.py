@@ -327,7 +327,7 @@ def get_graph(path: str = ".", view: str = "code"):
 
 @app.get("/")
 def index():
-    return HTMLResponse(content="""<!DOCTYPE html>
+    return HTMLResponse(content=r"""<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
