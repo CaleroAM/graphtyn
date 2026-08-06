@@ -132,37 +132,52 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None):
             "http://localhost:11434"
         ]
         connected_host = None
-        model_name = "qwen2.5-coder:0.5b"
+        model_name = "llama3.2:latest"
 
         for host in ollama_hosts:
             if not host: continue
             try:
                 req_m = urllib.request.Request(f"{host}/api/tags")
-                with urllib.request.urlopen(req_m, timeout=2) as r:
+                with urllib.request.urlopen(req_m, timeout=4) as r:
                     m_data = json.loads(r.read().decode('utf-8'))
                     models = [m["name"] for m in m_data.get("models", [])]
-                    if models: model_name = models[0]
+                    fast_models = [m for m in models if "3b" in m or "3.2" in m or "coder" in m or "llama" in m]
+                    if fast_models:
+                        model_name = fast_models[0]
+                    elif models:
+                        model_name = models[0]
                 connected_host = host
                 break
             except Exception:
                 pass
 
         if connected_host:
+            print(f"[AI Enrich] Connecting to Ollama at {connected_host} using model '{model_name}'...")
+            # Pre-warm model load (60s timeout to allow initial cold load)
+            try:
+                req_warm = urllib.request.Request(f"{connected_host}/api/generate", data=json.dumps({
+                    "model": model_name, "prompt": "hola", "stream": False
+                }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req_warm, timeout=60) as r:
+                    pass
+            except Exception:
+                pass
+
             # 1. Overall architecture summary
             try:
                 top_names = [n['name'] for n in graph.get("nodes", [])[:10]]
                 url = f"{connected_host}/api/generate"
-                prompt = f"Resume en 1 frase en espanol el proposito general de un proyecto con estos componentes: {top_names}"
+                prompt = f"Resume en 1 sola frase corta en espanol el proposito general de un proyecto con estos componentes: {top_names}"
                 req = urllib.request.Request(url, data=json.dumps({
                     "model": model_name, "prompt": prompt, "stream": False
                 }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-                with urllib.request.urlopen(req, timeout=10) as resp:
+                with urllib.request.urlopen(req, timeout=45) as resp:
                     res = json.loads(resp.read().decode('utf-8'))
                     if res.get("response"):
                         graph["metadata"]["ai_summary"] = res.get("response").strip()
                         graph["metadata"]["ai_model"] = model_name
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[AI Enrich] Architecture summary failed: {e}")
 
             # 2. Add descriptions for folder & module nodes
             for n in graph.get("nodes", []):
@@ -178,17 +193,18 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None):
                     file_path = root_dir / rel_path
                     if file_path.is_file():
                         try:
-                            code_snippet = file_path.read_text(encoding="utf-8", errors="ignore")[:500]
-                            prompt = f"En 1 sola frase corta en espanol, explica la responsabilidad de este archivo:\n{code_snippet}"
+                            code_snippet = file_path.read_text(encoding="utf-8", errors="ignore")[:700]
+                            prompt = f"En 1 sola frase corta en espanol, explica la funcion principal de este archivo Python:\n{code_snippet}"
                             req = urllib.request.Request(f"{connected_host}/api/generate", data=json.dumps({
                                 "model": model_name, "prompt": prompt, "stream": False
                             }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-                            with urllib.request.urlopen(req, timeout=8) as resp:
+                            with urllib.request.urlopen(req, timeout=45) as resp:
                                 res = json.loads(resp.read().decode('utf-8'))
                                 ans = res.get("response", "").strip()
-                                if ans: n["details"] = f"{ans} ({rel_path})"
-                        except Exception:
-                            pass
+                                if ans:
+                                    n["details"] = f"{ans} ({rel_path})"
+                        except Exception as e:
+                            print(f"[AI Enrich] File summary failed for {rel_path}: {e}")
                 elif nid.startswith("symbol:"):
                     parts = nid.split(":")
                     if len(parts) >= 3:
