@@ -474,9 +474,41 @@ def index():
     .text-inp:focus { border-color:#38bdf8; }
 
     #graph-container { position:absolute; top:0; left:240px; right:260px; bottom:0; }
+
+    /* Collapsible sidebars */
+    header, aside.left-aside, aside.right-aside, #graph-container, .float-actions, #blast-panel {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    aside.left-aside.collapsed { transform: translateX(-240px); }
+    aside.right-aside.collapsed { transform: translateX(260px); }
+    body.left-collapsed header { left: 0px; }
+    body.left-collapsed #graph-container { left: 0px; }
+    body.right-collapsed header { right: 0px; }
+    body.right-collapsed #graph-container { right: 0px; }
+    body.right-collapsed .float-actions { right: 14px; }
+    body.right-collapsed #blast-panel { right: 14px; }
+
+    /* Sidebar toggle buttons attached to edges */
+    .sidebar-toggle {
+      position: absolute; top: 12px; z-index: 65;
+      width: 22px; height: 28px; background: #111827; border: 1px solid #374151;
+      color: #38bdf8; font-size: 11px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5); user-select: none;
+    }
+    .sidebar-toggle:hover { background: #1f2937; border-color: #38bdf8; color: #fff; }
+    .sidebar-toggle.left-toggle { left: 240px; border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-left: none; }
+    body.left-collapsed .sidebar-toggle.left-toggle { left: 0px; }
+    .sidebar-toggle.right-toggle { right: 260px; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-right: none; }
+    body.right-collapsed .sidebar-toggle.right-toggle { right: 0px; }
   </style>
 </head>
 <body>
+
+  <!-- ===== SIDEBAR TOGGLE BUTTONS ===== -->
+  <button class="sidebar-toggle left-toggle" id="btn-toggle-left" onclick="toggleLeftSidebar()" title="Ocultar/Mostrar Proyectos">◀</button>
+  <button class="sidebar-toggle right-toggle" id="btn-toggle-right" onclick="toggleRightSidebar()" title="Ocultar/Mostrar Comunidades">▶</button>
 
   <!-- ===== LEFT SIDEBAR ===== -->
   <aside class="left-aside">
@@ -1446,6 +1478,25 @@ function loadGraph() {
 
       if (fullPath) {
         document.getElementById('reg-path').value = fullPath;
+      }
+    }
+
+
+    function toggleLeftSidebar() {
+      const isCollapsed = document.body.classList.toggle('left-collapsed');
+      document.querySelector('aside.left-aside').classList.toggle('collapsed', isCollapsed);
+      document.getElementById('btn-toggle-left').textContent = isCollapsed ? '▶' : '◀';
+      if (graphInst && typeof graphInst.width === 'function') {
+        setTimeout(() => graphInst.width(document.getElementById('graph-container').clientWidth), 260);
+      }
+    }
+
+    function toggleRightSidebar() {
+      const isCollapsed = document.body.classList.toggle('right-collapsed');
+      document.querySelector('aside.right-aside').classList.toggle('collapsed', isCollapsed);
+      document.getElementById('btn-toggle-right').textContent = isCollapsed ? '◀' : '▶';
+      if (graphInst && typeof graphInst.width === 'function') {
+        setTimeout(() => graphInst.width(document.getElementById('graph-container').clientWidth), 260);
       }
     }
 
