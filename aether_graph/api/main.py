@@ -1363,7 +1363,17 @@ function loadGraph() {
       }
     }
 
-    // ── Boot ──────────────────────────────────────────────────────────────────
+        function focusHistoryEvent(sum) {
+      if (!graphData || !graphData.nodes) return;
+      const lowerSum = sum.lower ? sum.lower() : sum.toLowerCase();
+      const match = graphData.nodes.find(n => lowerSum.includes(n.name.toLowerCase()));
+      if (match) {
+        selectNode(match);
+      }
+    }
+
+
+// ── Boot ──────────────────────────────────────────────────────────────────
     document.getElementById('graph-container').innerHTML =
       '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Cargando proyectos...</div>';
     loadProjects(true);  // true = load graph after projects are ready
