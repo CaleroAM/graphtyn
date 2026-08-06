@@ -846,21 +846,25 @@ def index():
     function loadProjects(thenLoadGraph) {
       fetch('/api/projects').then(r => r.json()).then(projects => {
         const el = document.getElementById('project-list');
-        if (!projects.length) {
+        if (!Array.isArray(projects) || !projects.length) {
           el.innerHTML = '<div style="color:#475569;font-size:11px;">Sin proyectos registrados</div>';
           return;
         }
         if (!activePath && projects.length) activePath = projects[0].path;
-        el.innerHTML = projects.map(p =>
-          '<div class="project-item ' + (p.path === activePath ? 'active' : '') + '" onclick="selectProject(this.dataset.path)" data-path="' + p.path.replace(/"/g,'&quot;') + '">' +
-          '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">' + p.name + '</span>' +
-          '<span class="proj-badge ' + (p.indexed ? 'ok' : 'pend') + '">' + (p.indexed ? 'OK' : 'PEND') + '</span>' +
-          '</div>'
-        ).join('');
+        el.innerHTML = projects.map(p => {
+          const pPath = (p.path || '').replace(/"/g, '&quot;');
+          const pName = p.name || p.id || 'Sin nombre';
+          const isActive = activePath && (p.path === activePath || pPath === activePath);
+          return '<div class="project-item ' + (isActive ? 'active' : '') + '" onclick="selectProject(this.dataset.path)" data-path="' + pPath + '">' +
+            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">' + pName + '</span>' +
+            '<span class="proj-badge ' + (p.indexed ? 'ok' : 'pend') + '">' + (p.indexed ? 'OK' : 'PEND') + '</span>' +
+            '</div>';
+        }).join('');
         if (thenLoadGraph) loadGraph();
-      }).catch(() => {
+      }).catch(err => {
+        console.error("Projects fetch error:", err);
         document.getElementById('project-list').innerHTML =
-          '<div style="color:#ef4444;font-size:11px;">Error al cargar proyectos</div>';
+          '<div style="color:#ef4444;font-size:11px;padding:4px;">Error: ' + (err.message || err) + '</div>';
       });
     }
 
