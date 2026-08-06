@@ -5,14 +5,7 @@ from typing import Dict, Any
 
 from .core.ast_parser import ASTParser
 
-def run_mcp_server(workspace: Path):
-    """
-    Stdio Model Context Protocol (MCP) Server for AetherGraph.
-    Provides tools for AI agents: graph_neighborhood, graph_who_calls, graph_blast_radius.
-    """
-    parser = ASTParser()
-
-    def get_workspace_graph(workspace: Path, parser: ASTParser) -> dict:
+def get_workspace_graph(workspace: Path, parser: ASTParser) -> dict:
     from .api.main import _index_dir
     try:
         dot_dir = _index_dir(workspace)
@@ -23,8 +16,14 @@ def run_mcp_server(workspace: Path):
         pass
     return parser.scan_directory(workspace)
 
+def run_mcp_server(workspace: Path):
+    """
+    Stdio Model Context Protocol (MCP) Server for AetherGraph.
+    Provides tools for AI agents: graph_neighborhood, graph_blast_radius, graph_search_concepts, graph_register_project.
+    """
+    parser = ASTParser()
 
-def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
         method = req.get("method")
         req_id = req.get("id")
 
@@ -46,7 +45,7 @@ def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
                     "tools": [
                         {
                             "name": "graph_neighborhood",
-                            "description": "Obtiene el mapa de código determinista (archivos y símbolos) alrededor del proyecto sin consumir tokens de LLM.",
+                            "description": "Obtiene el mapa de código determinista y explicaciones semánticas del proyecto sin consumir tokens.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {"path": {"type": "string", "description": "Ruta del proyecto"}},
@@ -73,7 +72,7 @@ def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
                         },
                         {
                             "name": "graph_register_project",
-                            "description": "Registra autónomamente una ruta de proyecto en AetherGraph (Opción 3: Registro por Agente).",
+                            "description": "Registra autónomamente una ruta de proyecto en AetherGraph.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
@@ -94,24 +93,18 @@ def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
             if name == "graph_neighborhood":
                 graph = get_workspace_graph(workspace, parser)
                 return {
-                    "jsonrpc": "2.0",
-                    "id": req_id,
-                    "result": {
-                        "content": [{"type": "text", "text": json.dumps(graph, indent=2)}]
-                    }
+                    "jsonrpc": "2.0", "id": req_id,
+                    "result": {"content": [{"type": "text", "text": json.dumps(graph, indent=2)}]}
                 }
             elif name == "graph_blast_radius":
                 symbol = args.get("symbol", "")
                 graph = get_workspace_graph(workspace, parser)
-                matches = [n for n in graph["nodes"] if symbol.lower() in n["name"].lower()]
+                matches = [n for n in graph.get("nodes", []) if symbol.lower() in n.get("name", "").lower()]
                 return {
-                    "jsonrpc": "2.0",
-                    "id": req_id,
-                    "result": {
-                        "content": [{"type": "text", "text": json.dumps({"symbol": symbol, "impacted_nodes": matches}, indent=2)}]
-                    }
+                    "jsonrpc": "2.0", "id": req_id,
+                    "result": {"content": [{"type": "text", "text": json.dumps({"symbol": symbol, "impacted_nodes": matches}, indent=2)}]}
                 }
-                        elif name == "graph_search_concepts":
+            elif name == "graph_search_concepts":
                 query = args.get("query", "").lower()
                 graph = get_workspace_graph(workspace, parser)
                 matches = [
@@ -119,13 +112,10 @@ def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
                     if query in n.get("name", "").lower() or query in n.get("details", "").lower()
                 ]
                 return {
-                    "jsonrpc": "2.0",
-                    "id": req_id,
-                    "result": {
-                        "content": [{"type": "text", "text": json.dumps({"query": query, "matches": matches}, indent=2)}]
-                    }
+                    "jsonrpc": "2.0", "id": req_id,
+                    "result": {"content": [{"type": "text", "text": json.dumps({"query": query, "matches": matches}, indent=2)}]}
                 }
-elif name == "graph_register_project":
+            elif name == "graph_register_project":
                 path_str = args.get("path")
                 proj_name = args.get("name")
                 import urllib.request
@@ -146,7 +136,8 @@ elif name == "graph_register_project":
         try:
             req = json.loads(line)
             resp = handle_request(req)
-            sys.stdout.write(json.dumps(resp) + "\n")
+            sys.stdout.write(json.dumps(resp) + "
+")
             sys.stdout.flush()
         except Exception as e:
             sys.stderr.write(f"[AetherGraph MCP Error] {e}\n")
