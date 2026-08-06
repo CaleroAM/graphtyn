@@ -254,30 +254,33 @@ def generate_semantic_graph(data: dict) -> dict:
     node_ids = set()
 
     meta = data.get("metadata", {})
-    ai_sum = meta.get("ai_summary", "")
-    if ai_sum:
-        nodes.append({
-            "id": "concept:global_arch",
-            "name": "Arquitectura Global",
-            "kind": "semantic_concept",
-            "val": 16,
-            "color": "#ec4899",
-            "details": f"Propósito General: {ai_sum}"
-        })
-        node_ids.add("concept:global_arch")
+    proj_name = Path(meta.get("path", "proyecto")).name
+    ai_sum = meta.get("ai_summary") or f"Módulo principal del sistema {proj_name}"
 
+    # 1. Root Global Architecture Concept Node
+    arch_id = "concept:global_arch"
+    nodes.append({
+        "id": arch_id,
+        "name": f"Arquitectura Global: {proj_name}",
+        "kind": "semantic_concept",
+        "val": 18,
+        "color": "#ec4899",
+        "details": f"Propósito General: {ai_sum}"
+    })
+    node_ids.add(arch_id)
+
+    # 2. Add Code File / Class / Module Nodes & Connect to Global Architecture
     for n in data.get("nodes", []):
         kind = n.get("kind", "")
         if kind in ("file", "class", "module"):
             nodes.append(n)
             node_ids.add(n["id"])
-            if "concept:global_arch" in node_ids:
-                links.append({
-                    "source": "concept:global_arch",
-                    "target": n["id"],
-                    "label": "engloba",
-                    "color": "rgba(236, 72, 153, 0.4)"
-                })
+            links.append({
+                "source": arch_id,
+                "target": n["id"],
+                "label": "engloba",
+                "color": "rgba(236, 72, 153, 0.35)"
+            })
 
             details = n.get("details", "")
             if details and not details.startswith("Carpeta"):
@@ -287,7 +290,7 @@ def generate_semantic_graph(data: dict) -> dict:
                     "id": c_id,
                     "name": c_name,
                     "kind": "semantic_concept",
-                    "val": 10,
+                    "val": 11,
                     "color": "#a855f7",
                     "details": f"Resumen Semántico: {details}"
                 })
@@ -295,9 +298,21 @@ def generate_semantic_graph(data: dict) -> dict:
                 links.append({
                     "source": c_id,
                     "target": n["id"],
-                    "label": "implementa",
-                    "color": "rgba(168, 85, 247, 0.4)"
+                    "label": "describe",
+                    "color": "rgba(168, 85, 247, 0.6)"
                 })
+
+    # 3. Include existing structural dependencies between files in the semantic graph
+    for link in data.get("links", []):
+        src = link.get("source")
+        tgt = link.get("target")
+        if src in node_ids and tgt in node_ids:
+            links.append({
+                "source": src,
+                "target": tgt,
+                "label": link.get("label", "conecta"),
+                "color": "rgba(56, 189, 248, 0.4)"
+            })
 
     parser = ASTParser()
     return parser._enrich_graph_with_degree({"nodes": nodes, "links": links})
