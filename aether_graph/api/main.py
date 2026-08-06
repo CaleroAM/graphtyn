@@ -8,13 +8,13 @@ from ..core.history import HistoryTracker
 app = FastAPI(title="AetherGraph API", version="0.4.0")
 parser = ASTParser()
 
-# Central writable index store — inside container at /app/.aether-graph/
-# This avoids OSError on read-only workspace mounts.
-INDEX_STORE = Path("/app/.aether-graph")
+# Central writable index store — user home ~/.aether-graph/
+INDEX_STORE = Path.home() / ".aether-graph"
 INDEX_STORE.mkdir(parents=True, exist_ok=True)
 
 REGISTRATION_FILE = INDEX_STORE / "registered_projects.json"
-DEFAULT_MASTER_DIR = Path("/workspace") if Path("/workspace").exists() else Path("/home/developer/Documentos/docker/PROYECTOS")
+DEFAULT_MASTER_DIR = Path.cwd()
+
 
 def _index_dir(project_path: Path) -> Path:
     """Returns the writable index directory for a project."""
@@ -276,6 +276,11 @@ def generate_semantic_graph(data: dict) -> dict:
 
     parser = ASTParser()
     return parser._enrich_graph_with_degree({"nodes": nodes, "links": links})
+
+
+@app.get("/health")
+def health_check():
+    return JSONResponse({"status": "ok", "service": "AetherGraph", "version": "0.4.0"})
 
 
 @app.get("/api/history")
@@ -676,8 +681,14 @@ def index():
           <div class="icon">🤖</div><div>Por Agente</div>
         </div>
       </div>
-      <div style="font-size:11px;color:#64748b;margin-bottom:5px;">Ruta absoluta:</div>
-      <input class="text-inp" id="reg-path" placeholder="/home/…/mi-proyecto">
+      <div style="font-size:11px;color:#64748b;margin-bottom:5px;">Ruta del proyecto:</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input class="text-inp" id="reg-path" placeholder="/home/…/mi-proyecto" style="flex:1;">
+        <button class="btn-action" style="white-space:nowrap;" onclick="document.getElementById('dir-picker').click()">
+          📂 Seleccionar...
+        </button>
+        <input type="file" id="dir-picker" webkitdirectory directory multiple style="display:none;" onchange="onFolderPicked(event)">
+      </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
         <button class="btn-action" onclick="closeRegister()">Cancelar</button>
         <button class="btn-action btn-primary" onclick="submitRegister()">Registrar e Indexar</button>
@@ -1369,6 +1380,25 @@ function loadGraph() {
       const match = graphData.nodes.find(n => lowerSum.includes(n.name.toLowerCase()));
       if (match) {
         selectNode(match);
+      }
+    }
+
+
+    async function onFolderPicked(e) {
+      if (!e.target.files || e.target.files.length === 0) return;
+      const file = e.target.files[0];
+      let fullPath = '';
+      if (file.path) {
+        const parts = file.path.split('/');
+        parts.pop();
+        fullPath = parts.join('/');
+      } else if (file.webkitRelativePath) {
+        const rootFolder = file.webkitRelativePath.split('/')[0];
+        const base = activePath ? activePath.substring(0, activePath.lastIndexOf('/') + 1) : '/home/';
+        fullPath = base + rootFolder;
+      }
+      if (fullPath) {
+        document.getElementById('reg-path').value = fullPath;
       }
     }
 
