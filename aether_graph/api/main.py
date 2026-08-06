@@ -827,7 +827,8 @@ def index():
     function doReindex() {
       const btn = document.getElementById('reindex-btn');
       const engine = document.getElementById('engine-sel').value;
-      btn.textContent = 'Indexando…';
+      const estVal = document.getElementById('est-time-val') ? document.getElementById('est-time-val').textContent : '';
+      btn.innerHTML = 'Indexando (' + estVal + ')…';
       fetch('/api/reindex', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ path: activePath, engine })
@@ -1071,6 +1072,33 @@ def index():
       }
     }
 
+
+    function updateEstTime() {
+      const valEl = document.getElementById('est-time-val');
+      if (!valEl) return;
+      const engine = document.getElementById('engine-sel') ? document.getElementById('engine-sel').value : 'ast_local_llm';
+      if (engine === 'ast_pure') {
+        valEl.textContent = '< 1 segundo';
+        return;
+      }
+      const nodeCount = (fullData && fullData.nodes) ? fullData.nodes.length : 20;
+      if (engine === 'ast_cloud') {
+        const sec = Math.ceil(nodeCount * 0.15);
+        valEl.textContent = sec >= 60 ? `~${Math.ceil(sec/60)} min` : `~${sec} seg`;
+        return;
+      }
+      if (engine === 'ast_local_llm') {
+        const codeNodes = (fullData && fullData.nodes) ? fullData.nodes.filter(n => n.kind !== 'module' && n.kind !== 'dir').length : nodeCount;
+        const totalSec = Math.ceil(codeNodes * 0.7);
+        if (totalSec < 60) {
+          valEl.textContent = `~${totalSec} seg`;
+        } else {
+          const mins = Math.ceil(totalSec / 60);
+          valEl.textContent = `~${mins} min`;
+        }
+      }
+    }
+
 function loadGraph() {
       if (!activePath && activeView === 'code') {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
@@ -1090,7 +1118,7 @@ function loadGraph() {
           document.getElementById('graph-container').innerHTML =
             '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Sin nodos. Haz clic en Reindexar para escanear el proyecto.</div>';
           document.getElementById('stats').textContent = '0 nodos';
-          buildCommunities(data);
+          buildCommunities(data); updateEstTime();
           return;
         }
         fullData = data;
@@ -1098,7 +1126,7 @@ function loadGraph() {
         document.getElementById('stats').textContent =
           `${data.nodes.length} nodos · ${data.links.length} conectores`;
 
-        buildCommunities(data);
+        buildCommunities(data); updateEstTime();
 
         const container = document.getElementById('graph-container');
 
