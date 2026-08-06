@@ -1388,14 +1388,24 @@ function loadGraph() {
       if (!e.target.files || e.target.files.length === 0) return;
       const file = e.target.files[0];
       let fullPath = '';
+      const rootFolder = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : '';
       if (file.path) {
         const parts = file.path.split('/');
-        parts.pop();
-        fullPath = parts.join('/');
-      } else if (file.webkitRelativePath) {
-        const rootFolder = file.webkitRelativePath.split('/')[0];
-        const base = activePath ? activePath.substring(0, activePath.lastIndexOf('/') + 1) : '/home/';
-        fullPath = base + rootFolder;
+        if (rootFolder && parts.includes(rootFolder)) {
+          const rootIdx = parts.lastIndexOf(rootFolder);
+          fullPath = parts.slice(0, rootIdx + 1).join('/');
+        } else {
+          parts.pop();
+          fullPath = parts.join('/');
+        }
+      } else if (rootFolder) {
+        let parentDir = '/home/developer/Documentos/docker/PROYECTOS';
+        if (activePath) {
+          const trimmed = activePath.endsWith('/') ? activePath.slice(0, -1) : activePath;
+          const lastSlash = trimmed.lastIndexOf('/');
+          if (lastSlash > 0) parentDir = trimmed.substring(0, lastSlash);
+        }
+        fullPath = parentDir + '/' + rootFolder;
       }
       if (fullPath) {
         document.getElementById('reg-path').value = fullPath;
