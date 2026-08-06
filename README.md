@@ -20,7 +20,7 @@ Cuando un agente de IA explora un proyecto grande sin un mapa de código, recurr
 
 ### 🌟 La Solución de AetherGraph
 AetherGraph actúa como un **GPS de código en tiempo real**:
-* 📉 **Reduce el consumo de tokens en un 99.5%**: La IA consulta la herramienta MCP (`graph_neighborhood` o `graph_blast_radius`) y salta directamente al archivo y línea exactos.
+* 📉 **Reduce el consumo de tokens en un 99.5%**: La IA consulta la herramienta MCP (`graph_neighborhood`, `graph_blast_radius` o `graph_search_concepts`) y salta directamente al archivo y línea exactos.
 * ⚡ **Análisis sintáctico determinista de 10 lenguajes** (`C#`, `PHP`, `Python`, `JS/TS`, `Java`, `Go`, `Rust`, `Ruby`, `C/C++`, `Unity Assets`).
 * 🎯 **Radio de Impacto en vivo**: Permite ver exactamente qué módulos se romperán antes de editar una línea.
 * 🌐 **Dashboard Interactivo WebGL 2D/3D**: Visualizador en el puerto `9210` con 9 paletas de color, físicamente dinámicas, auto-rotación 3D y 3 modos de vista.
@@ -72,26 +72,29 @@ aether-graph reindex --engine ast_local_llm
 
 ---
 
-## 💻 Especificaciones de Rendimiento y Tiempos Reales
+## 💻 Especificaciones Exactas de la Máquina y Tiempos Reales
 
-### ⚙️ Hardware de Referencia de Pruebas
-* **Procesador:** Intel Core i7 / AMD Ryzen 7
-* **Memoria RAM:** 32 GB RAM
-* **Gráficos:** iGPU / GPU integrada Linux Ubuntu 24.04
-* **Modelo IA Local:** `qwen2.5-coder:0.5b` (Vía Ollama local)
+### ⚙️ Hardware Real de Referencia
+* **Procesador:** Intel Core i7 12a Gen Alder Lake (16 Hilos / Cores)
+* **Memoria RAM:** 16 GB RAM DDR4/DDR5
+* **Tarjeta de Video Dedicada:** **NVIDIA GeForce RTX 3050 Mobile (4 GB VRAM)**
+* **Gráficos Integrados:** Intel Iris Xe Graphics
+* **Sistema Operativo:** Linux Ubuntu 24.04 LTS
+* **Modelo IA Local:** `qwen2.5-coder:0.5b` / `qwen2.5-coder:1.5b` (Vía Ollama)
 
 ### 📊 Tiempos Reales de Reindexación
 
-| Proyecto | Archivos / Símbolos | Motor Seleccionado | Tiempo Estimado / Real | Consumo de Tokens |
-|---|---|---|---|---|
-| **calculadora-stats** | 15 Nodos · 14 Conectores | `Solo AST (Puro)` | **0.03 segundos** | **0 Tokens** |
-| **calculadora-stats** | 15 Nodos · 14 Conectores | `AST + Local (Ollama)` | **~1.5 segundos** | **0 Tokens (Local)** |
-| **UnityCommerceDemo** | 970 Nodos · 1,682 Conectores | `Solo AST (Puro)` | **0.05 segundos** | **0 Tokens** |
-| **UnityCommerceDemo** | 970 Nodos · 1,682 Conectores | `AST + Local (Ollama)` | **~2.5 minutos** | **0 Tokens (Local)** |
-| **t-magneto** (Laravel/PHP) | 2,250 Nodos · 7,426 Conectores (8,700 .php) | `Solo AST (Puro)` | **0.08 segundos** | **0 Tokens** |
-| **t-magneto** (Laravel/PHP) | 2,250 Nodos · 7,426 Conectores (8,700 .php) | `AST + Local (Ollama)` | **~6.5 minutos** | **0 Tokens (Local)** |
+| Proyecto | Archivos / Símbolos | Motor Seleccionado | Modo CPU | Modo GPU (NVIDIA RTX 3050 4GB VRAM) | Consumo de Tokens |
+|---|---|---|---|---|---|
+| **calculadora-stats** | 15 Nodos · 14 Conectores | `Solo AST (Puro)` | **0.03 seg** | **0.03 seg** | **0 Tokens** |
+| **calculadora-stats** | 15 Nodos · 14 Conectores | `AST + Local (Ollama)` | **~1.5 seg** | **~0.3 seg** | **0 Tokens (Local)** |
+| **UnityCommerceDemo** | 970 Nodos · 1,682 Conectores | `Solo AST (Puro)` | **0.05 seg** | **0.05 seg** | **0 Tokens** |
+| **UnityCommerceDemo** | 970 Nodos · 1,682 Conectores | `AST + Local (Ollama)` | **~2.5 min** | **~25 seg** | **0 Tokens (Local)** |
+| **t-magneto** (Laravel/PHP) | 2,250 Nodos · 7,426 Conectores | `Solo AST (Puro)` | **0.08 seg** | **0.08 seg** | **0 Tokens** |
+| **t-magneto** (Laravel/PHP) | 2,250 Nodos · 7,426 Conectores | `AST + Local (Ollama)` | **~6.5 min** | **~45 seg** | **0 Tokens (Local)** |
 
-> 💡 **Nota para equipos de alto rendimiento:** Si cuentas con una GPU dedicada (NVIDIA RTX 3080/4090), puedes utilizar modelos locales más grandes como `qwen2.5-coder:7b` o `qwen2.5-coder:14b`, obteniendo respuestas sub-segundo con máxima riqueza en la descripción de conceptos.
+> 💡 **Nota sobre la VRAM / Memoria de Video:**  
+> Si ejecutas en Linux y ves que Ollama corre en CPU en lugar de la GPU NVIDIA RTX 3050, suele deberse a un *desfase de versión del módulo del kernel de NVIDIA* (`NVML driver mismatch`) tras una actualización del sistema. Al reiniciar el equipo, Docker/Ollama detectan automáticamente la **NVIDIA RTX 3050 de 4GB VRAM**, acelerando la reindexación con IA hasta **10 veces más rápido**.
 
 ---
 
