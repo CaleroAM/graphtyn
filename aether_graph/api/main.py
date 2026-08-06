@@ -325,9 +325,9 @@ def get_graph(path: str = ".", view: str = "code"):
     return JSONResponse(data)
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 def index():
-    return """<!DOCTYPE html>
+    return HTMLResponse(content="""<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -844,7 +844,9 @@ def index():
 
     // ── Projects ──────────────────────────────────────────────────────────────
     function loadProjects(thenLoadGraph) {
+      console.log("Fetching /api/projects...");
       fetch('/api/projects').then(r => r.json()).then(projects => {
+        console.log("Projects received:", projects);
         const el = document.getElementById('project-list');
         if (!Array.isArray(projects) || !projects.length) {
           el.innerHTML = `
@@ -1455,7 +1457,7 @@ function loadGraph() {
   </script>
 </body>
 </html>
-"""
+""", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
 
 
