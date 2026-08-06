@@ -136,8 +136,9 @@ def run_mcp_server(workspace: Path):
         try:
             req = json.loads(line)
             resp = handle_request(req)
-            sys.stdout.write(json.dumps(resp) + "
-")
+            sys.stdout.write(json.dumps(resp) + "\n")
             sys.stdout.flush()
+
         except Exception as e:
             sys.stderr.write(f"[AetherGraph MCP Error] {e}\n")
+
