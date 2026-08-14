@@ -39,7 +39,7 @@ class ASTParser:
 
         return {"file": rel_path, "symbols": symbols, "calls": list(set(calls)), "imports": list(set(imports))}
 
-    def scan_directory(self, root_dir: Path) -> Dict[str, Any]:
+    def scan_directory(self, root_dir: Path, respect_git: bool = True) -> Dict[str, Any]:
         nodes: List[Dict[str, Any]] = []
         links: List[Dict[str, Any]] = []
         node_ids: Set[str] = set()
@@ -49,6 +49,18 @@ class ASTParser:
             "vendor", "venv", ".venv", "node_modules", "__pycache__", "Library",
             "Logs", "Temp", "obj", "bin", "dist", "build", ".git", ".idea", "Captures", ".vs"
         }
+
+        tracked_files = None
+        if respect_git and (root_dir / ".git").exists():
+            try:
+                import subprocess
+                res = subprocess.run(
+                    ["git", "ls-files"], cwd=root_dir, capture_output=True, text=True, timeout=30
+                )
+                if res.returncode == 0:
+                    tracked_files = set(res.stdout.splitlines())
+            except Exception:
+                tracked_files = None
 
         csharp_files: List[tuple] = []
         python_files: List[tuple] = []
@@ -72,6 +84,8 @@ class ASTParser:
                 continue
 
             rel_file = str(path.relative_to(root_dir))
+            if tracked_files is not None and rel_file not in tracked_files:
+                continue
             f_id = f"file:{rel_file}"
 
             # Parent folder node
@@ -235,12 +249,36 @@ class ASTParser:
                 pass
 
         # Pass 4: Cross-symbol call / reference resolution
+        keyword_noise = {
+            "for", "foreach", "if", "else", "in", "is", "as", "and", "or", "not", "new", "var",
+            "int", "string", "bool", "void", "set", "get", "add", "remove", "this", "base",
+            "out", "ref", "return", "do", "while", "switch", "case", "class", "struct", "enum",
+            "interface", "public", "private", "protected", "static", "namespace", "using",
+            "select", "where", "from", "join", "group", "order", "by", "into", "default",
+            "value", "object", "true", "false", "null", "nameof", "typeof", "async", "await"
+        }
+        removed_ids = {
+            n.get("id") for n in nodes
+            if n.get("id", "").startswith("symbol:") and n.get("name", "").lower() in keyword_noise
+        }
+        if removed_ids:
+            nodes = [n for n in nodes if n.get("id") not in removed_ids]
+            links = [
+                l for l in links
+                if l.get("source") not in removed_ids and l.get("target") not in removed_ids
+            ]
         for rel_file, content in file_contents.items():
             f_id = f"file:{rel_file}"
             for cname, sym_id in symbol_name_map.items():
+                if len(cname) < 4 or cname.lower() in keyword_noise:
+                    continue
                 if cname in content and not sym_id.startswith(f"symbol:{rel_file}:"):
                     if re.search(r"\b" + re.escape(cname) + r"\b", content):
                         links.append({"source": f_id, "target": sym_id, "label": "usa", "color": "rgba(56, 189, 248, 0.25)"})
+
+        for l in links:
+            if "confidence" not in l:
+                l["confidence"] = "INFERRED" if l.get("label") == "usa" else "EXTRACTED"
 
         return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
 
@@ -293,7 +331,7 @@ class ASTParser:
             })
             links.append({
                 "source": "agent:nexus", "target": aid, "label": "delegates",
-                "color": "rgba(168, 85, 247, 0.4)"
+                "color": "rgba(168, 85, 247, 0.4)", "confidence": "EXTRACTED"
             })
 
         ext_agents = [
@@ -311,7 +349,7 @@ class ASTParser:
             })
             links.append({
                 "source": "agent:nexus", "target": aid, "label": rel,
-                "color": "rgba(6, 182, 212, 0.4)"
+                "color": "rgba(6, 182, 212, 0.4)", "confidence": "EXTRACTED"
             })
 
         return ASTParser()._enrich_graph_with_degree({"nodes": nodes, "links": links})

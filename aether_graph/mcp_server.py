@@ -17,6 +17,50 @@ def get_workspace_graph(workspace: Path, parser: ASTParser) -> dict:
         pass
     return parser.scan_directory(workspace)
 
+def blast_radius(graph: dict, symbol: str, depth: int = 2) -> dict:
+    nodes = graph.get("nodes", [])
+    links = graph.get("links", [])
+    nodes_map = {n["id"]: n for n in nodes}
+    matches = [n for n in nodes if symbol.lower() in n.get("name", "").lower()]
+
+    adj: Dict[str, list] = {}
+    edge_map = {}
+    for l in links:
+        s = l["source"]
+        t = l["target"]
+        adj.setdefault(s, []).append(t)
+        adj.setdefault(t, []).append(s)
+        edge_map[(s, t)] = l
+        edge_map[(t, s)] = l
+
+    impacted = []
+    seen = {n["id"] for n in matches}
+    frontier = [(n["id"], 0) for n in matches]
+    while frontier:
+        nid, d = frontier.pop(0)
+        if d >= depth:
+            continue
+        for nb in adj.get(nid, []):
+            if nb in seen:
+                continue
+            seen.add(nb)
+            edge = edge_map.get((nid, nb), {})
+            impacted.append({
+                "node": nodes_map.get(nb, {"id": nb}),
+                "hop": d + 1,
+                "via": nodes_map.get(nid, {}).get("name", nid),
+                "label": edge.get("label", "conecta"),
+                "confidence": edge.get("confidence", "EXTRACTED"),
+            })
+            frontier.append((nb, d + 1))
+
+    return {
+        "symbol": symbol,
+        "depth": depth,
+        "matched": matches[:10],
+        "impacted": impacted,
+    }
+
 def run_mcp_server(workspace: Path):
     """
     Stdio Model Context Protocol (MCP) Server for AetherGraph.
@@ -56,10 +100,13 @@ def run_mcp_server(workspace: Path):
                         },
                         {
                             "name": "graph_blast_radius",
-                            "description": "Calcula el radio de impacto de modificar un símbolo o archivo en el proyecto.",
+                            "description": "Calcula el radio de impacto de modificar un símbolo o archivo: recorre el grafo por aristas con su confianza (EXTRACTED/INFERRED) y devuelve los nodos afectados por salto (hop).",
                             "inputSchema": {
                                 "type": "object",
-                                "properties": {"symbol": {"type": "string", "description": "Nombre de la función o clase"}},
+                                "properties": {
+                                    "symbol": {"type": "string", "description": "Nombre de la función o clase"},
+                                    "depth": {"type": "integer", "description": "Profundidad máxima de recorrido (default 2)"}
+                                },
                                 "required": ["symbol"]
                             }
                         },
@@ -128,12 +175,13 @@ def run_mcp_server(workspace: Path):
                 }
             elif name == "graph_blast_radius":
                 symbol = args.get("symbol", "")
+                depth = int(args.get("depth", 2))
                 graph = get_workspace_graph(workspace, parser)
-                matches = [n for n in graph.get("nodes", []) if symbol.lower() in n.get("name", "").lower()]
-                history.log_event("mcp", "blast_radius", f"Evaluación de radio de impacto para {symbol}", {"symbol": symbol, "count": len(matches)})
+                result = blast_radius(graph, symbol, depth=depth)
+                history.log_event("mcp", "blast_radius", f"Evaluación de radio de impacto para {symbol}", {"symbol": symbol, "depth": depth, "impacted": len(result["impacted"])})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
-                    "result": {"content": [{"type": "text", "text": json.dumps({"symbol": symbol, "impacted_nodes": matches}, indent=2)}]}
+                    "result": {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
                 }
             elif name == "graph_search_concepts":
                 query = args.get("query", "").lower()

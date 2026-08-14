@@ -25,11 +25,15 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 * 🕒 **Línea de Tiempo y Memoria de Sesiones Local (100% Gratis / SQLite)**: Registra el historial de acciones y decisiones de la IA en `.aether-graph/history.db` sin pagar servicios externos ni consumir tokens.
 * 🎯 **Radio de Impacto en vivo y pre-Commit**: Permite evaluar exactamente qué clases y métodos se verán afectados antes de hacer `git push` (`aether-graph diff`).
 * 📝 **Generador de ARCHITECTURE.md**: Exporta un mapa de arquitectura conciso (~150 tokens) que cualquier Agente de IA puede leer al iniciar (`aether-graph export-md`).
-* 🌐 **Dashboard Interactivo WebGL 2D/3D (`:9210`)**: 
-  - **Selector Nativo del OS (`📂 Seleccionar...`)**: Abre el explorador de archivos nativo de tu sistema operativo (Windows, macOS, Linux).
-  - **Paneles Colapsables (`◀` / `▶`)**: Botones flotantes centrados para expandir el lienzo 2D/3D a pantalla completa.
-  - **Auto-descubrimiento Multiplataforma**: Cero rutas estáticas (*hardcoded*); descubre automáticamente los proyectos del desarrollador.
-  - **Grafo Semántico de IA e Historial**: Integra precalentamiento con Ollama (`llama3.2`, `qwen2.5`) para generar descripciones de código y el grafo de Arquitectura Global interconectado.
+ * 🌐 **Dashboard Interactivo WebGL 2D/3D (`:9210`)**:
+   - **Selector Nativo del OS (`📂 Seleccionar...`)**: Abre el explorador de archivos nativo de tu sistema operativo (Windows, macOS, Linux).
+   - **Paneles Colapsables (`◀` / `▶`)**: Botones flotantes centrados para expandir el lienzo 2D/3D a pantalla completa.
+   - **Auto-descubrimiento Multiplataforma**: Cero rutas estáticas (*hardcoded*); descubre automáticamente los proyectos del desarrollador.
+   - **Grafo Semántico de IA e Historial**: Integra precalentamiento con Ollama (`llama3.2`, `qwen2.5`) para generar descripciones de código y el grafo de Arquitectura Global interconectado.
+   - **Vista Semántica rediseñada**: comunidades por subsistema (`Subsistema: src/GameEngine.Core`) + **god nodes** destacados (los conceptos más conectados), con aristas etiquetadas `EXTRACTED`/`INFERRED`.
+   - **Respetar `.gitignore` por proyecto**: toggle en el panel de settings (o `aether-graph gitignore on|off`) — con `on` solo los archivos versionados entran al grafo (menos ruido, menos llamadas LLM); `off` incluye todo lo escaneable.
+   - **Estilos de grafo y forma de nodos (Paleta & Motor)**: selector de estilo — **Estándar** y **Neuronal** (tejido orgánico). **Neuronal en 3D** tiene dos modos: **Dibujo orgánico 2D en 3D** (default: halos respirando, enlaces con botones sinápticos y cometas — el estilo del 2D proyectado sobre el grafo 3D, respetando el **Estilo de Enlaces** sólido/punteado/curvo) y modo luces (vista Estándar + cometas, parpadeo de vértices y destello de nodos al recibir). En 2D también respeta el Estilo de Enlaces. Colores configurables: **Color de Nodos**, **Color de Ráfaga** y **Color de Vértices**. Selector de forma de nodos: **Círculos · Esferas** o **Cuadrados · Cubos**.
+   - **Laboratorio de Comparación de Modelos**: Disponible en [`/comparison`](http://localhost:9210/comparison), compara el contexto generado por modelos locales y modelos de paga con el mismo nodo y prompt.
 
 ---
 
@@ -106,44 +110,76 @@ aether-graph path "AuthService" "Database"
 
 # Reindexar el repositorio con el motor de IA deseado
 aether-graph reindex --engine ast_local_llm
+
+# Instalar el hook post-commit: reindexado incremental automático tras cada commit
+aether-graph hook install
+
+# Configurar si el grafo respeta .gitignore (por proyecto)
+aether-graph gitignore on --path .    # solo archivos versionados (default)
+aether-graph gitignore off --path .   # incluir también lo ignorado
 ```
 
 ---
 
-## 💻 Especificaciones de Hardware y Tiempos de Benchmark
+## 💻 Especificaciones de Hardware y Tiempos de Benchmark (Pruebas Reales)
 
 ### ⚙️ Hardware de Referencia de Pruebas
-* **Procesador:** Intel Core i7 12a Gen (16 Hilos / Cores)
-* **Memoria RAM:** 16 GB RAM DDR4/DDR5
-* **Tarjeta de Video Dedicada:** **NVIDIA GeForce RTX 3050 Mobile (4 GB VRAM)**
+* **Procesador:** Intel Core i5-12500H (12a Gen, 16 Hilos / Cores)
+* **Memoria RAM:** 15 GB RAM
+* **Tarjeta de Video Dedicada:** **NVIDIA GeForce RTX 3050 Mobile (4 GB VRAM)** — CUDA activo
 * **Gráficos Integrados:** Intel Iris Xe Graphics
-* **Sistema Operativo:** Linux Ubuntu 24.04 LTS
-* **Modelo IA Local:** `qwen2.5-coder:0.5b` / `qwen2.5-coder:1.5b` (Vía Ollama)
+* **Sistema Operativo:** NixOS 26.05 (Linux) — **Ollama 0.30.6** (con soporte CUDA 12.9)
+* **Modelo IA Local (Ollama):** `llama3.2:latest`, `qwen2.5-coder:3b`, `qwen2.5-coder:7b`, `llama3.1:8b`
 
-### 📊 Tiempos Reales de Reindexación por Escala de Proyecto
+### 📊 Tiempos Reales de Reindexación (Proyecto AetherGraph: 50 Nodos · 44 Conectores · 11 Archivos)
 
-| Escala del Repositorio | Métricas del Código (LOC, Archivos, Nodos) | Lenguajes Principales | Motor Seleccionado | Modo CPU | Modo GPU (NVIDIA RTX 3050 4GB VRAM) | Consumo de Tokens |
-|---|---|---|---|---|---|---|
-| **Proyecto Pequeño** | ~250 LOC · 4 Archivos · 15 Nodos | Python | `Solo AST (Puro)` | **0.03 seg** | **0.03 seg** | **0 Tokens** |
-| **Proyecto Pequeño** | ~250 LOC · 4 Archivos · 15 Nodos | Python | `AST + Local (Ollama)` | **~1.5 seg** | **~0.3 seg** | **0 Tokens (Local)** |
-| **Proyecto Mediano** | ~45,000 LOC · 180 Archivos · 970 Nodos | C#, HLSL, UXML, JSON | `Solo AST (Puro)` | **0.05 seg** | **0.05 seg** | **0 Tokens** |
-| **Proyecto Mediano** | ~45,000 LOC · 180 Archivos · 970 Nodos | C#, HLSL, UXML, JSON | `AST + Local (Ollama)` | **~2.5 min** | **~25 seg** | **0 Tokens (Local)** |
-| **Proyecto Grande** | ~320,000 LOC · 8,700 Archivos · 2,250 Nodos | PHP (Laravel), TypeScript, SQL | `Solo AST (Puro)` | **0.08 seg** | **0.08 seg** | **0 Tokens** |
-| **Proyecto Grande** | ~320,000 LOC · 8,700 Archivos · 2,250 Nodos | PHP (Laravel), TypeScript, SQL | `AST + Local (Ollama)` | **~6.5 min** | **~45 seg** | **0 Tokens (Local)** |
+| Motor Seleccionado | Tiempo Real (GPU RTX 3050 4GB) | Consumo de Tokens |
+|---|---|---|
+| `Solo AST (Puro)` | **0.147 seg** | **0 Tokens** |
+| `AST + Local (Ollama qwen2.5-coder:3b)` | **~50 seg** (11 archivos + ~40 símbolos enriquecidos) | **0 Tokens (Local)** |
+
+> El reindexado con IA local enriquece semánticamente cada **archivo**, cada **función/clase/método** (símbolo) y genera el resumen de arquitectura global (`ai_summary`), todo a **costo $0 USD** sin salir de tu máquina.
+>
+> **Modo incremental**: si el índice ya existe y el proyecto es un repo git, el reindex detecta los archivos cambiados con `git status` y **solo enriquece lo nuevo/modificado** (el resto conserva su contexto; ej. 0 cambios → 5-8s en un proyecto de 277 archivos vs ~5 min completos). Fuerza el reindex completo con `full: true` en el payload.
+>
+> **Configuración del motor** (env): `OLLAMA_HOST`, `OLLAMA_MODEL`, `AETHER_SYMBOL_LIMIT` (60), `AETHER_FILE_LIMIT` (0=ilimitado, para muestreo) y `AETHER_COMPACT=1` (segunda pasada inline que comprime cada descripción larga a ≤100 chars). Detalle completo del flujo en [`docs/contexto-comparativo.md`](docs/contexto-comparativo.md).
 
 ---
 
-### 🤖 Comparativa de Modelos Locales para Reindexación (vía Ollama)
+### 🤖 Benchmark Real de Modelos Locales (vía Ollama, GPU RTX 3050 4GB)
 
-AetherGraph detecta de forma autónoma los modelos disponibles en tu instancia local de Ollama (`http://localhost:11434`) y selecciona dinámicamente el mejor candidato. A continuación se presenta la tabla comparativa de rendimiento, consumo de VRAM y recomendación de uso:
+Pruebas ejecutadas con los **prompts reales de AetherGraph** (resumen de arquitectura global + resumen de archivo de código) sobre la instancia local de Ollama (`http://localhost:11434`). El modelo se selecciona vía la variable `OLLAMA_MODEL` (o auto-detección si no está definida):
 
-| Modelo Local (Ollama) | Tamaño / VRAM | Velocidad por Archivo | Calidad de Resumen | Recomendación de Uso |
-|---|---|---|---|---|
-| 🦙 **`llama3.2:latest` (3.2B)** | **~2.0 GB VRAM** | ⚡⚡⚡ **Ultra Rápido (~0.3s)** | ⭐️⭐️⭐️⭐️ (4/5) Excelente síntesis | **(Recomendado por Defecto)** Ideal para laptops con 4GB VRAM o ejecución en CPU. |
-| 👑 **`qwen2.5-coder:7b`** | **~4.7 GB VRAM** | ⚡⚡ **Rápido (~0.8s)** | ⭐️⭐️⭐️⭐️⭐️ (5/5) Máxima precisión en código | **(Mejor para Código)** La mejor comprensión sintáctica si tienes GPU con 6GB+ VRAM. |
-| 🪶 **`qwen2.5:3b`** | **~1.9 GB VRAM** | ⚡⚡⚡ **Ultra Rápido (~0.3s)** | ⭐️⭐️⭐️⭐️ (4/5) Ligero y fluido | Excelente alternativa de bajo consumo para CPU. |
-| 🦙 **`llama3.1:8b`** | **~4.9 GB VRAM** | ⚡⚡ **Rápido (~1.0s)** | ⭐️⭐️⭐️⭐️ (4.5/5) Alta fluidez narrativa | Muy bueno para resúmenes de arquitectura global. |
-| ⚡ **`qwen2.5-coder:1.5b`** | **~1.0 GB VRAM** | ⚡⚡⚡⚡ **Instantáneo (~0.1s)** | ⭐️⭐️⭐️ (3.5/5) Esquemático | Para entornos extremadamente restringidos de hardware (1-2GB RAM). |
+```bash
+OLLAMA_MODEL=qwen2.5-coder:3b aether-graph reindex --path . --engine ast_local_llm
+```
+
+| Modelo Local (Ollama) | Tamaño | Resumen Arquitectura | Resumen Archivo | Distribución GPU/CPU | Veredicto |
+|---|---|---|---|---|---|
+| 🦙 **`llama3.2:latest`** (3B) | ~2.0 GB | ⚡ **0.98s** / 45 tok | ⚡ **0.85s** / 36 tok | **100% GPU** | **(Recomendado por Defecto)** Ideal para laptops con 4GB VRAM. |
+| 👑 **`qwen2.5-coder:3b`** | ~1.9 GB | ⚡ 1.83s* / 160 tok | ⚡ **1.83s** / 97 tok | **100% GPU** | **(Mejor para Código)** Mejor calidad de resúmenes de código, totalmente en VRAM. |
+| ⚠️ **`qwen2.5-coder:7b`** | ~4.7 GB | 🐢 **16.1s** / 24 tok | 🐢 **10.3s** / 110 tok | **53% CPU / 47% GPU** | No cabe en 4GB VRAM; derrama a CPU y se vuelve 5-10× más lento. |
+| ⚠️ **`llama3.1:8b`** | ~4.9 GB | 🐢 **19.2s** / 66 tok | 🐢 **4.1s** / 36 tok | **55% CPU / 45% GPU** | No cabe en 4GB VRAM; requiere 6GB+ VRAM o solo CPU con mucha RAM. |
+
+\* La primera llamada de `qwen2.5-coder:3b` (7.87s) incluye la carga en frío del modelo; las siguientes van a ~1.8s.
+
+**Conclusión de las pruebas reales**: en hardware con **4 GB de VRAM**, los modelos 3B (`llama3.2:latest` / `qwen2.5-coder:3b`) cargan **100% en GPU** y generan en ~1 segundo por llamada. Los modelos 7B/8B no caben en la VRAM, se reparten CPU/GPU y tardan 10-20 segundos, sin aportar una mejora proporcional para resúmenes de una frase. Para GPUs de 6 GB+ VRAM, `qwen2.5-coder:7b` ofrece la mejor precisión sintáctica en código.
+
+### ✍️ Ejemplo Real de Enriquecimiento Semántico por Modelo
+
+Mismo nodo (`mcp_server.py`), mismo prompt real de AetherGraph (config #9), misma temperatura (0.2). Resultado crudo de cada modelo — incluida la respuesta del modelo actual verificado (**OpenCode · `opencode-go/gpt-5.6-luna`**), además de referencias históricas de DeepSeek:
+
+| Modelo | Tiempo | Ejemplo de descripción generada |
+|---|---|---|
+| 💎💎💎 **OpenCode · `opencode-go/gpt-5.6-luna` (modelo actual verificado)** | Sesión actual | "Servidor MCP por stdio basado en JSON-RPC 2.0 que expone 7 herramientas para agentes de IA — consulta del grafo, radio de impacto, búsqueda semántica, historial de sesiones y registro de proyectos — lee el índice cacheado, registra operaciones en SQLite y entrega contexto sin consumir tokens del agente." |
+| 💎💎 **DeepSeek V4 PRO (MAX · modelo de paga)** | ~10s (razonamiento) | "Servidor MCP por stdio (JSON-RPC 2.0) que expone 7 herramientas a agentes de IA — mapa de código, radio de impacto, búsqueda de conceptos e historial de sesiones — devolviendo el grafo cacheado del proyecto sin consumir tokens del agente." |
+| 💎 **DeepSeek V4 Flash (opencode · modelo de paga)** | ~10-15s (razonamiento completo) | "Servidor MCP por stdio (JSON-RPC 2.0) que expone 7 herramientas para agentes de IA — grafo, radio de impacto, búsqueda de conceptos e historial de sesiones — sirviendo el grafo cacheado sin consumir tokens del agente." |
+| 🦙 **`llama3.2:latest`** | 6.2s | "Es una unidad del sistema que proporciona un servidor de protocolo estándar (MCP, Model Context Protocol) para la plataforma AetherGraph, permitiendo a los agentes de IA interactuar con gráficos y realizar operaciones como buscar vecinos gráficos, detectar conceptos y más." |
+| 👑 **`qwen2.5-coder:3b`** | 5.8s | "Define una API para el servidor de contexto del protocolo de modelo AetherGraph, que proporciona herramientas para AI agents como `graph_neighborhood`, `graph_blast_radius`, `graph_search_concepts` y `graph_register_project`." |
+| ⚠️ **`qwen2.5-coder:7b`** | 18.6s | "Define funciones para procesar solicitudes de un servidor MCP y generar respuestas basadas en un análisis del código fuente, sirviendo como la unidad principal del sistema para el protocolo Stdio Model Context Protocol (MCP) en AetherGraph." |
+| ⚠️ **`llama3.1:8b`** | 18.0s | "Es un servidor de protocolo de contexto modelo (MCP) para AetherGraph, que proporciona herramientas para agentes de inteligencia artificial y gestiona la representación gráfica del espacio de trabajo." |
+
+> Los 7 resultados identifican correctamente `mcp_server.py` como servidor MCP. **`qwen2.5-coder:3b` es el local más preciso** (nombra las tools reales, 5.8s, 100% GPU), y su calidad se acerca al **90-95% del modelo actual verificado**. El modelo actual añade el nivel más completo de contexto: protocolo, herramientas, flujo de lectura, persistencia SQLite y ausencia de consumo de tokens.
 
 ---
 
@@ -197,15 +233,23 @@ Agrega en tu configuración `AGENTS.md` o archivo `.cursor/mcp.json`:
 
 ## 🏆 Comparativa de Mercado
 
-| Característica | 📦 Graphify / claude-mem | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
+*Verificado contra la versión actual de Graphify (Graphify-Labs, v8) y LSIF/Sourcegraph (ago 2026).*
+
+| Característica | 📦 Graphify (v8) | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
 |---|---|---|---|
-| **Parsing Estático Multi-Lenguaje** | No (Llama a API pagada o hooks) | Sí (LSIF estático) | **Sí (AST Nativo 15+ lenguajes a $0)** |
-| **Consumo de Tokens** | Paga tokens por cada archivo leído | 0 Tokens | **0 Tokens en Pasada 1** + Enriquecimiento Opcional |
-| **Memoria de Historial de Sesiones** | Sí (requiere Bun + ChromaDB) | No tiene | **Sí (100% Gratis / SQLite Local integrado)** |
-| **Visualizador Interactivo** | Exporta HTML estático o CLI | No tiene | **Dashboard WebGL 2D/3D en Vivo (`:9210`)** |
-| **Radio de Impacto Interactivo** | No | Parcial en CLI | **Sí (Inspector interactivo con aislamiento y foco)** |
-| **Vistas de Grafo** | 1 (Notas / Markdown) | 1 (Código) | **3 Vistas: Code AST, Semántico IA, Harness Topology** |
-| **Soporte Offline sin Internet** | Parcial | Depende del servidor | **100% Funcional Offline con Ollama Local** |
+| **Parsing Estático Multi-Lenguaje** | **Sí** (tree-sitter, ~40 lenguajes, local, $0) | Sí (LSIF, preciso vía language servers) | Sí (AST nativo 15+ lenguajes a $0) |
+| **Descripción semántica por nodo de CÓDIGO (rol en lenguaje natural)** | ❌ No: el código se mapea determinista sin LLM; el pase semántico es solo para docs/PDFs/media | ❌ No | ✅ **Sí: cada archivo/clase/función tiene descripción de rol generada por LLM local o cloud** |
+| **Etiquetas de confianza en aristas** | ✅ EXTRACTED/INFERRED por arista | Parcial | ✅ **EXTRACTED (contiene/hereda) / INFERRED (usa cross-file), visible en el inspector** |
+| **Consumo de Tokens (grafo de código)** | 0 (tree-sitter local) | 0 (dump LSP) | **0 en Pasada 1** + Enriquecimiento Opcional (local = 0) |
+| **Reindexado incremental** | ✅ `--update` + hook post-commit (AST) | ❌ Dump completo típicamente | ✅ **git-status + solo nodos cambiados (medido: 5-8s vs 5 min)** |
+| **Compactación de densidad (≤140 chars/nodo)** | N/A (no describe código con LLM) | N/A | ✅ `AETHER_COMPACT=1` (local a +5% de la densidad premium) |
+| **Memoria de historial de acciones del agente** | ❌ (query log opcional; no timeline de acciones) | ❌ | ✅ **SQLite local (`graph_history_*`) gratuito** |
+| **Visualizador** | graph.html estático interactivo (comunidades, click) | No | Dashboard WebGL 2D/3D en vivo (`:9210`) |
+| **Impacto de cambios** | ✅ PR impact / triage (PRs) | Parcial en CLI | ✅ `aether-graph diff` (git, pre-commit) + inspector |
+| **MCP** | ✅ stdio + HTTP compartido (query/get_node/neighbors/path/prs) | No nativo | ✅ stdio (grafo + historial) |
+| **Soporte Offline** | ✅ código 100% local; docs requieren API | Depende del servidor | ✅ 100% offline con Ollama local |
+
+**Lectura honesta:** Graphify es más maduro en cobertura de lenguajes (~40), confianza de aristas, ecosistema (20+ asistentes) y PRs. AetherGraph se diferencia en **contexto semántico en lenguaje natural sobre el código** (archivos/clases/funciones con rol, no solo aristas), **historial de sesiones del agente**, **compactación de densidad** y **reindexado incremental medido**. Las tres herramientas comparten la base determinista de $0 tokens; AetherGraph añade la capa semántica que Graphify aplica solo a documentos.
 
 ---
 

@@ -1,0 +1,372 @@
+import json
+import re
+import ast
+import os
+import subprocess
+import urllib.request
+from pathlib import Path
+
+_EXT_LANG = {
+    ".py": "Python", ".cs": "C#", ".php": "PHP", ".js": "JavaScript", ".ts": "TypeScript",
+    ".jsx": "JSX", ".tsx": "TSX", ".java": "Java", ".go": "Go", ".rs": "Rust", ".rb": "Ruby",
+    ".c": "C", ".cpp": "C++", ".h": "C/C++", ".hpp": "C++", ".kt": "Kotlin", ".kts": "Kotlin",
+    ".swift": "Swift", ".dart": "Dart", ".sh": "Shell", ".bash": "Bash", ".sql": "SQL",
+    ".vue": "Vue", ".svelte": "Svelte", ".md": "Markdown", ".json": "JSON",
+    ".unity": "Unity asset", ".prefab": "Unity prefab", ".asset": "Unity asset",
+    ".asmdef": "Unity assembly definition", ".shader": "Shader", ".uxml": "Unity UI Toolkit",
+}
+
+def _llm_ask(host: str, model: str, prompt: str, timeout: int = 45, temperature: float = 0.3) -> str:
+    try:
+        req = urllib.request.Request(f"{host}/api/generate", data=json.dumps({
+            "model": model, "prompt": prompt, "stream": False,
+            "options": {"temperature": temperature}
+        }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            res = json.loads(resp.read().decode('utf-8'))
+            return res.get("response", "").strip()
+    except Exception as e:
+        print(f"[AI Enrich] LLM request failed: {e}")
+        return ""
+
+_FEWSHOT_SYM = (
+    "EJEMPLO DE ESTILO (solo formato; el contenido del ejemplo NO tiene relacion con tu codigo): "
+    "para una clase de persistencia seria: \"Guarda y recupera los registros usando una base local, con estrategia segun permisos.\"\n"
+)
+
+def _role_hint_and_fix(full_text: str, answer: str) -> tuple:
+    hints = ""
+    role_label = None
+    if "argparse" in full_text and ("add_parser" in full_text or "ArgumentParser" in full_text):
+        hints += " PISTA: este archivo es una interfaz de linea de comandos (CLI) con argparse y subcomandos."
+        role_label = "CLI"
+    if "FastAPI" in full_text or "@app." in full_text or "uvicorn" in full_text:
+        hints += " PISTA: este archivo define un servidor web/API con FastAPI (endpoints HTTP)."
+        role_label = "API FastAPI"
+    if "pytest" in full_text or "def test_" in full_text:
+        hints += " PISTA: este archivo contiene pruebas unitarias automatizadas."
+        role_label = "pruebas"
+    if "sqlite3" in full_text:
+        hints += " PISTA: este archivo usa SQLite como base de datos local."
+    if 'if __name__ == "__main__"' in full_text:
+        hints += " PISTA: contiene el punto de entrada principal (__main__)."
+    fix = ""
+    if role_label == "CLI" and not re.search(r"cli|interfaz de linea|comandos|argparse", answer, re.I):
+        fix = "CLI que "
+    elif role_label == "API FastAPI" and not re.search(r"fastapi|servidor|api|web", answer, re.I):
+        fix = "API FastAPI que "
+    return hints, fix
+
+def _node_neighbors(graph: dict, node_id: str, limit: int = 6) -> list:
+    nbs = set()
+    for l in graph.get("links", []):
+        s = l.get("source")
+        t = l.get("target")
+        if s == node_id:
+            nbs.add(t)
+        elif t == node_id:
+            nbs.add(s)
+    names = []
+    for n in graph.get("nodes", []):
+        if n.get("id") in nbs and n.get("id") != node_id:
+            names.append(n.get("name", n.get("id", "")))
+        if len(names) >= limit:
+            break
+    return names
+
+def _detect_changed_files(root: Path):
+    try:
+        res = subprocess.run(
+            ["git", "status", "--porcelain", "-z"],
+            cwd=root, capture_output=True, text=True, timeout=15
+        )
+        if res.returncode != 0:
+            return None
+        changed = set()
+        for entry in res.stdout.split("\0"):
+            if len(entry) > 3:
+                changed.add(entry[3:].strip())
+        return changed
+    except Exception:
+        return None
+
+def _maybe_compact(host: str, model: str, ans: str) -> str:
+    if os.environ.get("AETHER_COMPACT", "0") != "1":
+        return ans
+    if len(ans) <= 140:
+        return ans
+    comp = _llm_ask(host, model,
+                    f"Comprime el siguiente texto a MAXIMO 100 caracteres, en espanol, conservando el significado tecnico:\n{ans}",
+                    temperature=0.2)
+    if comp:
+        ans = _clean_answer(comp)
+    if len(ans) > 140:
+        cut = ans[:140]
+        idx = cut.rfind(". ")
+        if idx > 60:
+            cut = cut[:idx + 1]
+        ans = cut
+    return ans
+
+def _clean_answer(text: str) -> str:
+    text = re.sub(r"\s+", " ", text.strip())
+    text = re.sub(r"^[\"'\u201c\u201d]+|[\"'\u201c\u201d]+$", "", text).strip()
+    text = re.sub(
+        r"^(?:esta|este|la|el)?\s*(?:la\s+)?(?:funcion|función|clase|metodo|método|archivo|modulo|módulo)\s+"
+        r"(?:`[^`]+`|'[^']+'|\S+)\s*(?:en\s+\S+)?\s*[:\-]?\s*",
+        "", text, flags=re.I)
+    text = re.sub(
+        r"^(?:este|esta|el|la|un|una|se trata de un|se trata de una)\s+"
+        r"(?:archivo|funcion|función|clase|metodo|método|modulo|módulo)\s+"
+        r"(?:python|c#|php|javascript|typescript|java|go|rust|ruby|markdown|json|shell|bash|sql|shader|unity|swift|dart|kotlin|svelte|vue)\s*",
+        "", text, flags=re.I)
+    text = text[:1].upper() + text[1:] if text else text
+    return text.strip()
+
+def _extract_symbol_source(root_dir: Path, rel_path: str, sym_name: str, kind: str = None) -> str:
+    fpath = root_dir / rel_path
+    try:
+        content = fpath.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return ""
+    lines = content.splitlines()
+    if not lines:
+        return ""
+    if fpath.suffix.lower() == ".py":
+        try:
+            tree = ast.parse(content)
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == sym_name:
+                    return "\n".join(lines[node.lineno - 1:node.end_lineno])[:2000]
+        except Exception:
+            return ""
+        return ""
+    kw_noise = {
+        "for", "foreach", "if", "else", "in", "is", "as", "and", "or", "not", "new", "var",
+        "int", "string", "bool", "void", "set", "get", "add", "remove", "this", "base",
+        "out", "ref", "return", "do", "while", "switch", "case", "class", "struct", "enum",
+        "interface", "public", "private", "protected", "static", "namespace", "using",
+        "select", "where", "from", "join", "group", "order", "by", "into", "default",
+        "value", "object", "true", "false", "null", "nameof", "typeof", "async", "await"
+    }
+    if sym_name.lower() in kw_noise:
+        return ""
+    m = None
+    if fpath.suffix.lower() in (".cs", ".cpp", ".c", ".h", ".hpp", ".java", ".go", ".rs"):
+        method_pat = re.compile(
+            r"^\s*(?:(?:public|private|protected|internal|static|virtual|override|abstract|async|sealed|partial|extern|final)\s+)+"
+            r"(?:[A-Za-z_][\w.<>\[\]?]*\s+)?"
+            + re.escape(sym_name) + r"\s*\(",
+            re.M)
+        m = method_pat.search(content)
+    if not m:
+        kw_pat = re.compile(
+            r"^\s*(?:(?:export|default|public|private|protected|static|abstract|async|sealed|partial|internal|virtual|override|final)\s+)*"
+            r"(?:class|interface|struct|enum|def|function|fn|func|fun|protocol|extension|trait)\s+"
+            + re.escape(sym_name) + r"\b", re.M)
+        m = kw_pat.search(content)
+    if not m:
+        return ""
+    start = content[:m.start()].count("\n")
+    depth = 0
+    end = start
+    for i in range(start, min(start + 60, len(lines))):
+        depth += lines[i].count("{") - lines[i].count("}")
+        end = i
+        if i > start and depth <= 0:
+            break
+    return "\n".join(lines[start:end + 1])[:2000]
+    m = kw_pat.search(content)
+    if not m:
+        return ""
+    start = content[:m.start()].count("\n")
+    depth = 0
+    end = start
+    for i in range(start, min(start + 60, len(lines))):
+        depth += lines[i].count("{") - lines[i].count("}")
+        end = i
+        if i > start and depth <= 0:
+            break
+    return "\n".join(lines[start:end + 1])[:2000]
+
+def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict = None, changed: set = None, model_override: str = None):
+    if engine == "ast_pure" or not root_dir:
+        return graph
+
+    # Filter code file & class nodes for individual code snippet analysis
+    top_code_nodes = [
+        n for n in graph.get("nodes", [])
+        if n.get("kind") in ("file", "class", "function", "method") and n.get("id", "").startswith("file:")
+    ]
+    top_code_nodes = sorted(top_code_nodes, key=lambda n: n.get("degree", 0), reverse=True)[:6]
+
+    if engine == "ast_local_llm":
+        ollama_hosts = [
+            os.environ.get("OLLAMA_HOST"),
+            "http://172.17.0.1:11434",
+            "http://host.docker.internal:11434",
+            "http://localhost:11434"
+        ]
+        connected_host = None
+        forced_model = model_override or os.environ.get("OLLAMA_MODEL")
+        model_name = forced_model or "llama3.2:latest"
+
+        for host in ollama_hosts:
+            if not host: continue
+            try:
+                req_m = urllib.request.Request(f"{host}/api/tags")
+                with urllib.request.urlopen(req_m, timeout=4) as r:
+                    m_data = json.loads(r.read().decode('utf-8'))
+                    models = [m["name"] for m in m_data.get("models", [])]
+                    if forced_model:
+                        if any(m == forced_model or m.split(":")[0] == forced_model.split(":")[0] for m in models):
+                            model_name = forced_model
+                        elif models:
+                            print(f"[AI Enrich] OLLAMA_MODEL='{forced_model}' no está en Ollama; usando '{models[0]}'. Disponibles: {models}")
+                            model_name = models[0]
+                    else:
+                        fast_models = [m for m in models if "3b" in m or "3.2" in m or "coder" in m or "llama" in m]
+                        if fast_models:
+                            model_name = fast_models[0]
+                        elif models:
+                            model_name = models[0]
+                connected_host = host
+                break
+            except Exception:
+                pass
+
+        if connected_host:
+            print(f"[AI Enrich] Connecting to Ollama at {connected_host} using model '{model_name}'...")
+            # Pre-warm model load (60s timeout to allow initial cold load)
+            try:
+                req_warm = urllib.request.Request(f"{connected_host}/api/generate", data=json.dumps({
+                    "model": model_name, "prompt": "hola", "stream": False
+                }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req_warm, timeout=60) as r:
+                    pass
+            except Exception:
+                pass
+
+            # 1. Fallback details for folder & module nodes
+            for n in graph.get("nodes", []):
+                if n.get("kind") in ("module", "dir") and not n.get("details"):
+                    n["details"] = f"Carpeta de módulos: {n.get('name')}"
+
+            prev_files = {n.get("id"): n.get("details", "") for n in (prev or {}).get("nodes", []) if n.get("id", "").startswith("file:")}
+            prev_syms = {n.get("id"): n.get("details", "") for n in (prev or {}).get("nodes", []) if n.get("id", "").startswith("symbol:")}
+            prev_meta = (prev or {}).get("metadata", {}) or {}
+
+            # 2. Semantic summaries for every code file (language-aware; incremental reuses unchanged)
+            all_code_nodes = [n for n in graph.get("nodes", []) if n.get("kind") not in ("module", "dir")]
+            file_limit = int(os.environ.get("AETHER_FILE_LIMIT", "0"))
+            file_nodes = sorted(
+                [n for n in all_code_nodes if n.get("id", "").startswith("file:")],
+                key=lambda n: n.get("degree", 0), reverse=True
+            )
+            if file_limit > 0 and changed is None:
+                file_nodes = file_nodes[:file_limit]
+            for n in file_nodes:
+                nid = n.get("id", "")
+                rel_path = nid.replace("file:", "")
+                if changed is not None and rel_path not in changed and prev_files.get(nid):
+                    n["details"] = prev_files[nid]
+                    continue
+                file_path = root_dir / rel_path
+                if not file_path.is_file():
+                    continue
+                lang = _EXT_LANG.get(file_path.suffix.lower(), "código")
+                try:
+                    full_text = file_path.read_text(encoding="utf-8", errors="ignore")
+                    if len(full_text) > 1600:
+                        code_snippet = full_text[:1300] + "\n... [recorte] ...\n" + full_text[-300:]
+                    else:
+                        code_snippet = full_text[:1600]
+                except Exception:
+                    continue
+                hints, _ = _role_hint_and_fix(full_text, "")
+                prompt = (f"Eres un ingeniero senior. "
+                          f"Analiza el codigo REAL de abajo. "
+                          f"En UNA sola frase corta y densa en espanol: QUE hace este archivo {lang} y PARA QUE sirve como unidad del sistema.{hints} "
+                          f"Usa vocabulario tecnico preciso. Responde SOLO con la frase, sin etiquetas, sin 'Este archivo', sin repetir el nombre.\n\n{code_snippet}")
+                ans = _llm_ask(connected_host, model_name, prompt, temperature=0.2)
+                if ans:
+                    hints2, fix2 = _role_hint_and_fix(full_text, ans)
+                    ans = fix2 + ans
+                    n["details"] = f"{_maybe_compact(connected_host, model_name, _clean_answer(ans))} ({rel_path})"
+
+            # 3. Semantic descriptions for symbol nodes (functions/classes/methods)
+            symbol_limit = int(os.environ.get("AETHER_SYMBOL_LIMIT", "60"))
+            symbol_nodes = sorted(
+                [n for n in all_code_nodes if n.get("id", "").startswith("symbol:")],
+                key=lambda n: n.get("degree", 0), reverse=True
+            )
+            for n in symbol_nodes[:symbol_limit]:
+                parts = n.get("id", "").split(":")
+                if len(parts) < 3:
+                    continue
+                rel_path = parts[1]
+                sym_name = parts[2]
+                if sym_name.startswith("__"):
+                    continue
+                nid = n.get("id", "")
+                if changed is not None and rel_path not in changed and prev_syms.get(nid):
+                    n["details"] = prev_syms[nid]
+                    continue
+                sym_kind = n.get("kind", "símbolo")
+                snippet = _extract_symbol_source(root_dir, rel_path, sym_name, kind=sym_kind)
+                if not snippet:
+                    continue
+                fctx = ""
+                try:
+                    fcontent = (root_dir / rel_path).read_text(encoding="utf-8", errors="ignore")
+                    fctx = "\n".join([ln for ln in fcontent.splitlines()[:12] if ln.strip()][:6])[:400]
+                except Exception:
+                    pass
+                neigh = _node_neighbors(graph, n.get("id", ""), 6)
+                neigh_txt = ", ".join(neigh) if neigh else "ningun vecino conocido"
+                prompt = (f"Eres un ingeniero senior. {_FEWSHOT_SYM}"
+                          f"AHORA analiza el codigo REAL de abajo y describe SOLO ese codigo (no el ejemplo). "
+                          f"El {sym_kind} '{sym_name}' esta definido en {rel_path}.\n"
+                          f"Contexto del archivo (primeras lineas):\n{fctx or 'sin contexto disponible'}\n"
+                          f"En el grafo del proyecto se relaciona con: {neigh_txt}.\n"
+                          f"Codigo del {sym_kind}:\n{snippet}\n\n"
+                          f"En UNA sola frase corta y densa en espanol: QUE hace y PARA QUE sirve dentro del sistema. "
+                          f"Responde SOLO con la frase, sin 'La funcion', 'El metodo' ni repetir el nombre '{sym_name}' ni la ruta.")
+                ans = _llm_ask(connected_host, model_name, prompt, temperature=0.2)
+                if ans:
+                    n["details"] = f"{_maybe_compact(connected_host, model_name, _clean_answer(ans))} ({rel_path}:{sym_name})"
+
+            # 4. Global architecture summary grounded in real enriched context
+            if changed is not None and not changed and prev_meta.get("ai_summary"):
+                graph["metadata"]["ai_summary"] = prev_meta["ai_summary"]
+                graph["metadata"]["ai_model"] = prev_meta.get("ai_model", model_name)
+            else:
+                enriched = sorted(
+                    [n for n in graph.get("nodes", []) if n.get("details") and n.get("kind") not in ("module", "dir")],
+                    key=lambda n: n.get("degree", 0), reverse=True
+                )[:10]
+                components = "; ".join(f"{n['name']} ({n.get('details', '')[:90]})" for n in enriched)
+                prompt = ("Resume en 1 sola frase corta en espanol el proposito general de un proyecto de software "
+                          f"cuyos componentes principales son: {components}")
+                summary = _llm_ask(connected_host, model_name, prompt, timeout=60)
+                if summary:
+                    graph["metadata"]["ai_summary"] = _clean_answer(summary)
+                graph["metadata"]["ai_model"] = model_name
+
+    elif engine == "ast_cloud":
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+        if gemini_key:
+            try:
+                top_names = [n['name'] for n in graph.get("nodes", [])[:10]]
+                g_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+                req = urllib.request.Request(g_url, data=json.dumps({
+                    "contents": [{"parts": [{"text": f"Resume en 1 frase la arquitectura de: {top_names}"}]}]
+                }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    res = json.loads(resp.read().decode('utf-8'))
+                    text = res.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                    if text: graph["metadata"]["ai_summary"] = text.strip()
+            except Exception as e:
+                graph["metadata"]["ai_note"] = f"Gemini API Error ({e})"
+
+    return graph

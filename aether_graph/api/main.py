@@ -1,7 +1,10 @@
 import json
+import re
+import ast
+import subprocess
 from pathlib import Path
 from fastapi import FastAPI, Query, Body
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
 
@@ -22,6 +25,21 @@ def _index_dir(project_path: Path) -> Path:
     d = INDEX_STORE / slug
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+def _project_config_path(project_path: Path) -> Path:
+    return _index_dir(project_path) / "config.json"
+
+def _load_project_config(project_path: Path) -> dict:
+    try:
+        return json.loads(_project_config_path(project_path).read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+def _save_project_config(project_path: Path, cfg: dict) -> dict:
+    merged = _load_project_config(project_path)
+    merged.update(cfg)
+    _project_config_path(project_path).write_text(json.dumps(merged, indent=2), encoding="utf-8")
+    return merged
 
 def _is_indexed(project_path: Path) -> bool:
     return (_index_dir(project_path) / "index.json").exists()
@@ -69,6 +87,7 @@ def list_projects():
     projects = _load_registered_projects()
     for p in projects:
         p["status"] = "🟢 Indexado" if p["indexed"] else "🔴 No Indexado"
+        p["respect_git"] = bool(_load_project_config(Path(p["path"])).get("respect_git", True))
     return JSONResponse(projects)
 
 @app.post("/api/projects/register")
@@ -113,140 +132,84 @@ def register_project(payload: dict = Body(...)):
 
 import os, urllib.request
 
-def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None):
-    if engine == "ast_pure" or not root_dir:
-        return graph
+from .enrich import (
+    _EXT_LANG, _llm_ask, _FEWSHOT_SYM, _role_hint_and_fix, _node_neighbors,
+    _detect_changed_files, _maybe_compact, _clean_answer, _extract_symbol_source, _enrich_with_ai,
+)
+@app.post("/api/projects/config")
+def set_project_config(payload: dict = Body(...)):
+    project_path = payload.get("path")
+    if not project_path:
+        return JSONResponse({"ok": False, "error": "Falta la ruta del proyecto"}, status_code=400)
+    root = Path(project_path).resolve()
+    update = {}
+    if "respect_git" in payload:
+        update["respect_git"] = bool(payload["respect_git"])
+    if not update:
+        return JSONResponse({"ok": False, "error": "Nada que configurar"}, status_code=400)
+    cfg = _save_project_config(root, update)
+    return JSONResponse({"ok": True, "path": str(root), "config": cfg})
 
-    # Filter code file & class nodes for individual code snippet analysis
-    top_code_nodes = [
-        n for n in graph.get("nodes", [])
-        if n.get("kind") in ("file", "class", "function", "method") and n.get("id", "").startswith("file:")
-    ]
-    top_code_nodes = sorted(top_code_nodes, key=lambda n: n.get("degree", 0), reverse=True)[:6]
-
-    if engine == "ast_local_llm":
-        ollama_hosts = [
-            os.environ.get("OLLAMA_HOST"),
-            "http://172.17.0.1:11434",
-            "http://host.docker.internal:11434",
-            "http://localhost:11434"
-        ]
-        connected_host = None
-        model_name = "llama3.2:latest"
-
-        for host in ollama_hosts:
-            if not host: continue
-            try:
-                req_m = urllib.request.Request(f"{host}/api/tags")
-                with urllib.request.urlopen(req_m, timeout=4) as r:
-                    m_data = json.loads(r.read().decode('utf-8'))
-                    models = [m["name"] for m in m_data.get("models", [])]
-                    fast_models = [m for m in models if "3b" in m or "3.2" in m or "coder" in m or "llama" in m]
-                    if fast_models:
-                        model_name = fast_models[0]
-                    elif models:
-                        model_name = models[0]
-                connected_host = host
-                break
-            except Exception:
-                pass
-
-        if connected_host:
-            print(f"[AI Enrich] Connecting to Ollama at {connected_host} using model '{model_name}'...")
-            # Pre-warm model load (60s timeout to allow initial cold load)
-            try:
-                req_warm = urllib.request.Request(f"{connected_host}/api/generate", data=json.dumps({
-                    "model": model_name, "prompt": "hola", "stream": False
-                }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-                with urllib.request.urlopen(req_warm, timeout=60) as r:
-                    pass
-            except Exception:
-                pass
-
-            # 1. Overall architecture summary
-            try:
-                top_names = [n['name'] for n in graph.get("nodes", [])[:10]]
-                url = f"{connected_host}/api/generate"
-                prompt = f"Resume en 1 sola frase corta en espanol el proposito general de un proyecto con estos componentes: {top_names}"
-                req = urllib.request.Request(url, data=json.dumps({
-                    "model": model_name, "prompt": prompt, "stream": False
-                }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-                with urllib.request.urlopen(req, timeout=45) as resp:
-                    res = json.loads(resp.read().decode('utf-8'))
-                    if res.get("response"):
-                        graph["metadata"]["ai_summary"] = res.get("response").strip()
-                        graph["metadata"]["ai_model"] = model_name
-            except Exception as e:
-                print(f"[AI Enrich] Architecture summary failed: {e}")
-
-            # 2. Add descriptions for folder & module nodes
-            for n in graph.get("nodes", []):
-                if n.get("kind") in ("module", "dir") and not n.get("details"):
-                    n["details"] = f"Carpeta de módulos: {n.get('name')}"
-
-            # 3. Individual file code snippet summaries for ALL code nodes
-            all_code_nodes = [n for n in graph.get("nodes", []) if n.get("kind") not in ("module", "dir")]
-            for n in all_code_nodes:
-                nid = n.get("id", "")
-                if nid.startswith("file:"):
-                    rel_path = nid.replace("file:", "")
-                    file_path = root_dir / rel_path
-                    if file_path.is_file():
-                        try:
-                            code_snippet = file_path.read_text(encoding="utf-8", errors="ignore")[:700]
-                            prompt = f"En 1 sola frase corta en espanol, explica la funcion principal de este archivo Python:\n{code_snippet}"
-                            req = urllib.request.Request(f"{connected_host}/api/generate", data=json.dumps({
-                                "model": model_name, "prompt": prompt, "stream": False
-                            }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-                            with urllib.request.urlopen(req, timeout=45) as resp:
-                                res = json.loads(resp.read().decode('utf-8'))
-                                ans = res.get("response", "").strip()
-                                if ans:
-                                    n["details"] = f"{ans} ({rel_path})"
-                        except Exception as e:
-                            print(f"[AI Enrich] File summary failed for {rel_path}: {e}")
-                elif nid.startswith("symbol:"):
-                    parts = nid.split(":")
-                    if len(parts) >= 3:
-                        rel_path = parts[1]
-                        sym_name = parts[2]
-                        n["details"] = f"{n.get('kind', 'Símbolo').capitalize()} '{sym_name}' definido en {rel_path}" 
-
-    elif engine == "ast_cloud":
-        gemini_key = os.environ.get("GEMINI_API_KEY")
-        if gemini_key:
-            try:
-                top_names = [n['name'] for n in graph.get("nodes", [])[:10]]
-                g_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
-                req = urllib.request.Request(g_url, data=json.dumps({
-                    "contents": [{"parts": [{"text": f"Resume en 1 frase la arquitectura de: {top_names}"}]}]
-                }).encode('utf-8'), headers={'Content-Type': 'application/json'})
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    res = json.loads(resp.read().decode('utf-8'))
-                    text = res.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                    if text: graph["metadata"]["ai_summary"] = text.strip()
-            except Exception as e:
-                graph["metadata"]["ai_note"] = f"Gemini API Error ({e})"
-
-    return graph
-
+@app.get("/api/projects/config")
+def get_project_config(path: str = "."):
+    root = Path(path).resolve()
+    return JSONResponse({"path": str(root), "config": _load_project_config(root)})
 
 @app.post("/api/reindex")
 def reindex_project(payload: dict = Body(...)):
     project_path = payload.get("path")
     engine = payload.get("engine", "ast_local_llm")
+    force_full = bool(payload.get("full"))
+    model_override = payload.get("model") or None
     if not project_path:
         return JSONResponse({"ok": False, "error": "Falta la ruta del proyecto"}, status_code=400)
     root = Path(project_path).resolve()
     if not root.exists():
         return JSONResponse({"ok": False, "error": f"La ruta '{project_path}' no existe"}, status_code=404)
 
-    graph = parser.scan_directory(root)
-    graph["metadata"] = {"indexed_with": engine, "status": "ok", "path": str(root)}
-    graph = _enrich_with_ai(graph, engine, root)
+    project_cfg = _load_project_config(root)
+    respect_git = bool(project_cfg.get("respect_git", True))
+
+    graph = parser.scan_directory(root, respect_git=respect_git)
+    graph["metadata"] = {"indexed_with": engine, "status": "ok", "path": str(root), "respect_git": respect_git}
+
+    prev = None
     dot_dir = _index_dir(root)
+    cached = dot_dir / "index.json"
+    if cached.exists():
+        try:
+            prev = json.loads(cached.read_text(encoding="utf-8"))
+        except Exception:
+            prev = None
+
+    changed = None
+    if not force_full and engine == "ast_local_llm" and prev is not None and prev.get("metadata", {}).get("indexed_with") == engine:
+        changed = _detect_changed_files(root)
+
+    if changed is not None:
+        graph = _enrich_with_ai(graph, engine, root, prev=prev, changed=changed, model_override=model_override)
+    else:
+        graph = _enrich_with_ai(graph, engine, root, model_override=model_override)
+
+    enriched_files = sum(
+        1 for n in graph.get("nodes", [])
+        if n.get("id", "").startswith("file:")
+        and n.get("details", "") and n.get("details", "") != n["id"].replace("file:", "")
+    )
+    graph["metadata"]["reindex_mode"] = "incremental" if changed is not None else "full"
+    if changed is not None:
+        graph["metadata"]["changed_files"] = len(changed)
+    graph["metadata"]["enriched_files"] = enriched_files
+
     (dot_dir / "index.json").write_text(json.dumps(graph, indent=2))
-    return JSONResponse({"ok": True, "engine": engine, "nodes": len(graph["nodes"]), "links": len(graph["links"]), "metadata": graph["metadata"]})
+    return JSONResponse({
+        "ok": True, "engine": engine,
+        "nodes": len(graph["nodes"]), "links": len(graph["links"]),
+        "mode": graph["metadata"]["reindex_mode"],
+        "changed_files": len(changed) if changed is not None else None,
+        "enriched_files": enriched_files,
+        "metadata": graph["metadata"]
+    })
 
 def generate_semantic_graph(data: dict) -> dict:
     nodes = []
@@ -256,6 +219,13 @@ def generate_semantic_graph(data: dict) -> dict:
     meta = data.get("metadata", {})
     proj_name = Path(meta.get("path", "proyecto")).name
     ai_sum = meta.get("ai_summary") or f"Módulo principal del sistema {proj_name}"
+
+    def community_of(rel_path: str) -> str:
+        parts = rel_path.split("/")
+        if "/" in rel_path:
+            dir_parts = parts[:-1]
+            return "/".join(dir_parts[:2]) if dir_parts else "raiz"
+        return "raiz"
 
     # 1. Root Global Architecture Concept Node
     arch_id = "concept:global_arch"
@@ -269,40 +239,61 @@ def generate_semantic_graph(data: dict) -> dict:
     })
     node_ids.add(arch_id)
 
-    # 2. Add Code File / Class / Module Nodes & Connect to Global Architecture
+    # 2. Group real nodes into subsystem communities (no per-node mirrors)
+    communities = {}
+    real_nodes = []
     for n in data.get("nodes", []):
         kind = n.get("kind", "")
-        if kind in ("file", "class", "module"):
-            nodes.append(n)
-            node_ids.add(n["id"])
+        if kind not in ("file", "class", "module"):
+            continue
+        nid = n.get("id", "")
+        if nid.startswith("file:"):
+            key = community_of(nid.replace("file:", ""))
+        elif nid.startswith("symbol:"):
+            key = community_of(nid.split(":")[1] if len(nid.split(":")) > 1 else "raiz")
+        elif nid.startswith("dir:"):
+            key = nid.replace("dir:", "") or "raiz"
+            if key == "root":
+                key = "raiz"
+        else:
+            key = "raiz"
+        communities.setdefault(key, []).append(n)
+        real_nodes.append(n)
+
+    for key, members in communities.items():
+        c_id = f"community:{key}"
+        top_names = sorted(members, key=lambda m: m.get("degree", 0), reverse=True)[:4]
+        top_txt = ", ".join(m["name"] for m in top_names)
+        nodes.append({
+            "id": c_id,
+            "name": f"Subsistema: {key}",
+            "kind": "community",
+            "val": 12,
+            "color": "#10b981",
+            "details": f"{len(members)} elementos · nodos clave: {top_txt}"
+        })
+        node_ids.add(c_id)
+        links.append({
+            "source": arch_id, "target": c_id, "label": "agrupa",
+            "color": "rgba(236, 72, 153, 0.35)", "confidence": "EXTRACTED"
+        })
+        for m in members:
+            nodes.append(m)
+            node_ids.add(m["id"])
             links.append({
-                "source": arch_id,
-                "target": n["id"],
-                "label": "engloba",
-                "color": "rgba(236, 72, 153, 0.35)"
+                "source": c_id, "target": m["id"], "label": "pertenece",
+                "color": "rgba(16, 185, 129, 0.35)", "confidence": "EXTRACTED"
             })
 
-            details = n.get("details", "")
-            if details and not details.startswith("Carpeta"):
-                c_name = f"Concepto: {n['name']}"
-                c_id = f"concept:{n['id']}"
-                nodes.append({
-                    "id": c_id,
-                    "name": c_name,
-                    "kind": "semantic_concept",
-                    "val": 11,
-                    "color": "#a855f7",
-                    "details": f"Resumen Semántico: {details}"
-                })
-                node_ids.add(c_id)
-                links.append({
-                    "source": c_id,
-                    "target": n["id"],
-                    "label": "describe",
-                    "color": "rgba(168, 85, 247, 0.6)"
-                })
+    # 3. God nodes: most-connected real concepts (highlight for agents)
+    god_candidates = sorted(real_nodes, key=lambda m: m.get("degree", 0), reverse=True)[:6]
+    god_ids = {m["id"] for m in god_candidates if m.get("degree", 0) > 0}
+    for n in nodes:
+        if n.get("id") in god_ids:
+            n["god"] = True
+            n["val"] = round(n.get("val", 3) + 6, 2)
 
-    # 3. Include existing structural dependencies between files in the semantic graph
+    # 4. Include existing structural dependencies between real nodes
     for link in data.get("links", []):
         src = link.get("source")
         tgt = link.get("target")
@@ -311,7 +302,8 @@ def generate_semantic_graph(data: dict) -> dict:
                 "source": src,
                 "target": tgt,
                 "label": link.get("label", "conecta"),
-                "color": "rgba(56, 189, 248, 0.4)"
+                "color": "rgba(56, 189, 248, 0.4)",
+                "confidence": link.get("confidence", "EXTRACTED")
             })
 
     parser = ASTParser()
@@ -330,6 +322,70 @@ def get_history(path: str = ".", limit: int = 15):
     return JSONResponse({"timeline": ht.get_timeline(limit=limit)})
 
 
+@app.get("/api/diff")
+def get_diff(path: str = "."):
+    root = Path(path).resolve()
+    try:
+        res = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True, timeout=15
+        )
+        changed_files = [line.strip().split()[-1] for line in res.stdout.strip().splitlines() if line.strip()] if res.returncode == 0 else []
+    except Exception:
+        changed_files = []
+
+    data = None
+    dot_dir = _index_dir(root)
+    cached = dot_dir / "index.json"
+    if cached.exists():
+        try:
+            data = json.loads(cached.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    if not data:
+        data = parser.scan_directory(root, respect_git=bool(_load_project_config(root).get("respect_git", True)))
+
+    impacted = {}
+    for cf in changed_files:
+        f_id = f"file:{cf}"
+        for l in data.get("links", []):
+            s = l.get("source")
+            t = l.get("target")
+            if s == f_id and t not in impacted and not t.startswith("file:"):
+                impacted[t] = l.get("confidence", "EXTRACTED")
+            elif t == f_id and s not in impacted and not s.startswith("file:"):
+                impacted[s] = l.get("confidence", "EXTRACTED")
+
+    nodes_map = {n["id"]: n for n in data.get("nodes", [])}
+    impacted_nodes = [{"node": nodes_map.get(i, {"id": i}), "confidence": c} for i, c in impacted.items()]
+    return JSONResponse({
+        "path": str(root),
+        "changed_files": changed_files,
+        "impacted_nodes": impacted_nodes,
+        "impacted_count": len(impacted_nodes)
+    })
+
+
+@app.get("/api/ollama/models")
+def ollama_models():
+    hosts = [
+        os.environ.get("OLLAMA_HOST"),
+        "http://localhost:11434",
+        "http://172.17.0.1:11434",
+        "http://host.docker.internal:11434"
+    ]
+    for h in hosts:
+        if not h:
+            continue
+        try:
+            req = urllib.request.Request(f"{h}/api/tags")
+            with urllib.request.urlopen(req, timeout=4) as r:
+                m_data = json.loads(r.read().decode("utf-8"))
+                return JSONResponse({"host": h, "models": [m["name"] for m in m_data.get("models", [])]})
+        except Exception:
+            continue
+    return JSONResponse({"host": None, "models": []})
+
+
 @app.get("/api/graph")
 def get_graph(path: str = ".", view: str = "code"):
     if view == "agents":
@@ -344,7 +400,7 @@ def get_graph(path: str = ".", view: str = "code"):
         except Exception:
             pass
     if not data:
-        data = parser.scan_directory(root)
+        data = parser.scan_directory(root, respect_git=bool(_load_project_config(root).get("respect_git", True)))
         try:
             (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
         except OSError:
@@ -356,1194 +412,44 @@ def get_graph(path: str = ".", view: str = "code"):
     return JSONResponse(data)
 
 
+@app.get("/comparison")
+def model_comparison():
+    comparison_path = Path(__file__).resolve().parent.parent / "web" / "comparison.html"
+    return HTMLResponse(content=comparison_path.read_text(encoding="utf-8"))
+
+
+@app.get("/favicon.svg")
+def favicon():
+    svg_path = Path(__file__).resolve().parent.parent / "web" / "favicon.svg"
+    return Response(content=svg_path.read_text(encoding="utf-8"), media_type="image/svg+xml")
+
+
 @app.get("/")
 def index():
-    return HTMLResponse(content=r"""<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>AetherGraph — Engine & Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/force-graph@1" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1" defer></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    * { box-sizing: border-box; }
-    body { margin:0; padding:0; background:#0b0e17; color:#f8fafc; font-family:'Inter',ui-sans-serif,sans-serif; overflow:hidden; }
+    dashboard_html = Path(__file__).resolve().parent.parent / "web" / "dashboard.html"
+    return HTMLResponse(content=dashboard_html.read_text(encoding="utf-8"), headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
-    /* Thin dark scrollbar */
-    ::-webkit-scrollbar { width:4px; height:4px; }
-    ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:#2d3748; border-radius:4px; }
-    ::-webkit-scrollbar-thumb:hover { background:#38bdf8; }
 
-    header {
-      position:absolute; top:0; left:240px; right:260px; height:52px; z-index:50;
-      background:rgba(11,14,23,0.97); backdrop-filter:blur(16px);
-      border-bottom:1px solid #1e293b;
-      display:flex; align-items:center; justify-content:space-between; padding:0 14px; gap:6px;
-    }
+@app.get("/dashboard.css")
+def dashboard_css():
+    css_path = Path(__file__).resolve().parent.parent / "web" / "dashboard.css"
+    return HTMLResponse(content=css_path.read_text(encoding="utf-8"), media_type="text/css", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
-    aside.left-aside {
-      position:absolute; top:0; left:0; bottom:0; width:240px; z-index:60;
-      background:#0d1117; border-right:1px solid #1e293b;
-      display:flex; flex-direction:column; padding:14px;
-    }
-    aside.right-aside {
-      position:absolute; top:0; right:0; bottom:0; width:260px; z-index:60;
-      background:#0d1117; border-left:1px solid #1e293b;
-      display:flex; flex-direction:column; padding:14px;
-      overflow:hidden;
-    }
 
-    .brand { font-weight:700; font-size:14px; color:#38bdf8; display:flex; align-items:center; gap:7px; margin-bottom:14px; }
-    .section-label { font-size:9px; text-transform:uppercase; letter-spacing:1.4px; color:#475569; font-weight:700; margin-bottom:8px; }
+@app.get("/dashboard.js")
+def dashboard_js():
+    js_path = Path(__file__).resolve().parent.parent / "web" / "dashboard.js"
+    return HTMLResponse(content=js_path.read_text(encoding="utf-8"), media_type="application/javascript", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
-    /* Left: project list */
-    .project-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:3px; }
-    .project-item {
-      padding:7px 9px; border-radius:6px; font-size:11px; color:#94a3b8; cursor:pointer;
-      display:flex; justify-content:space-between; align-items:center;
-      transition:all 0.12s; border:1px solid transparent; background:#111827;
-    }
-    .project-item:hover { background:#1a2234; color:#e2e8f0; border-color:#2d3748; }
-    .project-item.active { background:rgba(56,189,248,0.1); border-color:#38bdf8; color:#38bdf8; font-weight:600; }
-    .proj-badge { font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; flex-shrink:0; }
-    .proj-badge.ok { color:#10b981; background:rgba(16,185,129,0.12); }
-    .proj-badge.pend { color:#f59e0b; background:rgba(245,158,11,0.12); }
 
-    /* Right: communities */
-    .comm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-    .comm-select-all { font-size:10px; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:5px; }
-    .community-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1px; padding-right:2px; }
-    .community-item {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:4px 4px; border-radius:5px; transition:background 0.1s; cursor:pointer;
-    }
-    .community-item:hover { background:#111827; }
-    .comm-left { display:flex; align-items:center; gap:6px; flex:1; min-width:0; }
-    .comm-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-    .comm-name { font-size:11px; color:#cbd5e1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .comm-badge { font-size:9px; font-weight:700; color:#64748b; background:#1f2937; padding:1px 6px; border-radius:8px; flex-shrink:0; margin-left:4px; }
-
-    /* Custom checkbox */
-    .chk-wrap { display:flex; align-items:center; flex-shrink:0; }
-    .chk-wrap input { display:none; }
-    .chk-box {
-      width:13px; height:13px; border-radius:3px; border:1px solid #4b5563;
-      background:#1f2937; display:flex; align-items:center; justify-content:center;
-      transition:all 0.12s; flex-shrink:0; cursor:pointer;
-    }
-    .chk-wrap input:checked + .chk-box { background:#0284c7; border-color:#38bdf8; }
-    .chk-box svg { width:8px; height:8px; stroke:#fff; stroke-width:3; fill:none; display:none; }
-    .chk-wrap input:checked + .chk-box svg { display:block; }
-
-    /* Header buttons */
-    .mode-btn {
-      background:#1a2234; border:1px solid #2d3748; color:#94a3b8;
-      padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px; font-weight:600;
-      transition:all 0.12s; white-space:nowrap;
-    }
-    .mode-btn:hover { border-color:#475569; color:#e2e8f0; }
-    .mode-btn.active { border-color:#38bdf8; color:#38bdf8; background:rgba(56,189,248,0.12); }
-    .sep { width:1px; height:16px; background:#1e293b; flex-shrink:0; }
-
-    .btn-action {
-      padding:5px 10px; border-radius:5px; border:1px solid #2d3748;
-      background:#1a2234; color:#e2e8f0; font-weight:600; font-size:11px;
-      cursor:pointer; transition:all 0.12s; display:flex; align-items:center; gap:5px; white-space:nowrap;
-    }
-    .btn-action:hover { border-color:#38bdf8; color:#38bdf8; }
-    .btn-primary { background:#0369a1; border-color:#0284c7; color:#fff; }
-    .btn-primary:hover { background:#0284c7; border-color:#38bdf8; }
-    .search-input {
-      background:#1a2234; border:1px solid #2d3748; color:#f8fafc;
-      padding:5px 9px; border-radius:5px; font-size:11px; outline:none; width:130px;
-    }
-    .search-input:focus { border-color:#38bdf8; }
-    .svg-ico { width:13px; height:13px; fill:currentColor; flex-shrink:0; }
-
-    /* Dropdowns */
-    .dd-wrap { position:relative; }
-    .dd-panel {
-      position:absolute; top:calc(100% + 6px); left:0; z-index:200;
-      background:#111827; border:1px solid #2d3748; border-radius:8px; padding:12px;
-      width:240px; box-shadow:0 12px 30px rgba(0,0,0,0.6); display:none;
-    }
-    .dd-wrap.open .dd-panel { display:block; }
-    .filter-section { display:flex; flex-direction:column; gap:5px; }
-    .filter-row { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#cbd5e1; padding:2px 0; }
-
-    /* Floating actions */
-    .float-actions { position:absolute; top:60px; right:270px; z-index:70; display:flex; gap:7px; }
-
-    /* Modals */
-    .modal-bg {
-      position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
-      z-index:300; display:none; align-items:center; justify-content:center;
-    }
-    .modal-bg.show { display:flex; }
-    .modal-box {
-      background:#111827; border:1px solid #374151; border-radius:12px;
-      width:460px; max-width:92vw; padding:22px; box-shadow:0 24px 50px rgba(0,0,0,0.7);
-    }
-    .modal-hdr { font-weight:700; font-size:14px; color:#f8fafc; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
-    .modal-close { background:none; border:none; color:#64748b; cursor:pointer; font-size:16px; line-height:1; }
-    .modal-close:hover { color:#f8fafc; }
-    .card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
-    .reg-card {
-      background:#1a2234; border:1px solid #2d3748; border-radius:8px; padding:12px 8px;
-      cursor:pointer; text-align:center; font-size:11px; color:#94a3b8; transition:all 0.14s;
-    }
-    .reg-card:hover { border-color:#475569; color:#e2e8f0; }
-    .reg-card.sel { border-color:#38bdf8; background:rgba(56,189,248,0.12); color:#38bdf8; font-weight:700; }
-    .reg-card .icon { font-size:18px; margin-bottom:5px; }
-    .text-inp {
-      background:#1a2234; border:1px solid #2d3748; color:#f8fafc;
-      padding:7px 10px; border-radius:6px; font-size:11px; outline:none; width:100%;
-    }
-    .text-inp:focus { border-color:#38bdf8; }
-
-    #graph-container { position:absolute; top:0; left:240px; right:260px; bottom:0; }
-
-    /* Collapsible sidebars */
-    header, aside.left-aside, aside.right-aside, #graph-container, .float-actions, #blast-panel {
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    aside.left-aside.collapsed { transform: translateX(-240px); }
-    aside.right-aside.collapsed { transform: translateX(260px); }
-    body.left-collapsed header { left: 0px; }
-    body.left-collapsed #graph-container { left: 0px; }
-    body.right-collapsed header { right: 0px; }
-    body.right-collapsed #graph-container { right: 0px; }
-    body.right-collapsed .float-actions { right: 14px; }
-    body.right-collapsed #blast-panel { right: 14px; }
-
-    /* Sidebar toggle buttons attached to edges (vertically centered) */
-    .sidebar-toggle {
-      position: absolute; top: 50%; transform: translateY(-50%); z-index: 65;
-      width: 22px; height: 38px; background: #111827; border: 1px solid #374151;
-      color: #38bdf8; font-size: 11px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.6); user-select: none;
-    }
-    .sidebar-toggle:hover { background: #1f2937; border-color: #38bdf8; color: #fff; }
-    .sidebar-toggle.left-toggle { left: 240px; border-top-right-radius: 6px; border-bottom-right-radius: 6px; border-left: none; }
-    body.left-collapsed .sidebar-toggle.left-toggle { left: 0px; }
-    .sidebar-toggle.right-toggle { right: 260px; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-right: none; }
-    body.right-collapsed .sidebar-toggle.right-toggle { right: 0px; }
-  </style>
-</head>
-<body>
-
-  <!-- ===== SIDEBAR TOGGLE BUTTONS ===== -->
-  <button class="sidebar-toggle left-toggle" id="btn-toggle-left" onclick="toggleLeftSidebar()" title="Ocultar/Mostrar Proyectos">◀</button>
-  <button class="sidebar-toggle right-toggle" id="btn-toggle-right" onclick="toggleRightSidebar()" title="Ocultar/Mostrar Comunidades">▶</button>
-
-  <!-- ===== LEFT SIDEBAR ===== -->
-  <aside class="left-aside">
-    <div class="brand">
-      <svg class="svg-ico" style="width:16px;height:16px;" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l10-5v10l-10 5V11zM2 17l10 5 10-5"/></svg>
-      AetherGraph
-    </div>
-    <div class="section-label">PROYECTOS REGISTRADOS</div>
-    <div class="project-list" id="project-list">
-      <div style="color:#475569;font-size:11px;">Cargando...</div>
-    </div>
-  </aside>
-
-  <!-- ===== RIGHT SIDEBAR: COMMUNITIES ===== -->
-  <aside class="right-aside">
-    <div class="comm-header">
-      <div class="section-label" style="margin:0;">COMMUNITIES</div>
-      <label class="comm-select-all">
-        <span>Todo</span>
-        <span class="chk-wrap">
-          <input type="checkbox" id="sel-all-comm" checked onchange="toggleAllComm(this.checked)">
-          <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-        </span>
-      </label>
-    </div>
-    <div class="community-list" id="community-list">
-      <div style="color:#475569;font-size:11px;">Cargando...</div>
-    </div>
-  </aside>
-
-  <!-- ===== HEADER ===== -->
-  <header>
-    <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;min-width:0;">
-      <!-- View tabs -->
-      <button class="mode-btn active" id="btn-code" onclick="setView('code')">Code AST</button>
-      <button class="mode-btn" id="btn-semantic" onclick="setView('semantic')">Semántico IA</button>
-      <button class="mode-btn" id="btn-agents" onclick="setView('agents')">Harness Topology</button>
-      <!-- History dropdown -->
-      <div class="dd-wrap" id="dd-hist">
-        <button class="mode-btn" id="btn-hist" onclick="toggleDD('dd-hist');loadHistoryUI()">🕒 Historial IA ▾</button>
-        <div class="dd-panel" style="width:320px;max-height:360px;overflow-y:auto;">
-          <div class="section-label" style="display:flex;justify-content:space-between;align-items:center;">
-            <span>Línea de Tiempo de IA</span>
-            <span style="font-size:9px;color:#64748b;">SQLite Local</span>
-          </div>
-          <div id="hist-list" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
-            <div style="font-size:11px;color:#64748b;">Cargando historial...</div>
-          </div>
-        </div>
-      </div>
-      <div class="sep"></div>
-      <!-- Dimension tabs -->
-      <button class="mode-btn active" id="btn-2d" onclick="setDim('2d')">2D</button>
-      <button class="mode-btn" id="btn-3d" onclick="setDim('3d')">3D</button>
-      <button class="mode-btn" id="btn-rotate" style="display:none;" onclick="toggleRotate()">⟳ Rotar 3D</button>
-      <div class="sep"></div>
-
-      <!-- Node Filters dropdown -->
-      <div class="dd-wrap" id="dd-filter">
-        <button class="btn-action" onclick="toggleDD('dd-filter')">
-          <svg class="svg-ico" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
-          Filtros ▾
-        </button>
-        <div class="dd-panel">
-          <div class="section-label">Tipo de Nodo</div>
-          <div class="filter-section">
-            <div class="filter-row">
-              <span>Archivos</span>
-              <label class="chk-wrap"><input type="checkbox" id="f-file" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
-            </div>
-            <div class="filter-row">
-              <span>Clases</span>
-              <label class="chk-wrap"><input type="checkbox" id="f-class" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
-            </div>
-            <div class="filter-row">
-              <span>Funciones / Métodos</span>
-              <label class="chk-wrap"><input type="checkbox" id="f-func" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
-            </div>
-            <div class="filter-row">
-              <span>Agentes</span>
-              <label class="chk-wrap"><input type="checkbox" id="f-agent" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
-            </div>
-            <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
-            <div class="filter-row">
-              <span>Min conexiones: <strong id="deg-val" style="color:#38bdf8;">0</strong></span>
-            </div>
-            <input type="range" id="f-deg" min="0" max="20" value="0" style="width:100%;"
-              oninput="document.getElementById('deg-val').textContent=this.value;applyFilter();">
-            <div class="filter-row" style="margin-top:4px;">
-              <span>Ocultar aislados</span>
-              <label class="chk-wrap"><input type="checkbox" id="f-isolated" onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
-            </div>
-            <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
-            <div class="section-label">Físicas del Grafo</div>
-            <div class="filter-row">
-              <span>Repulsión: <strong id="rep-val" style="color:#38bdf8;">-300</strong></span>
-            </div>
-            <input type="range" id="f-repulsion" min="-600" max="-50" value="-300" step="25" style="width:100%;"
-              oninput="document.getElementById('rep-val').textContent=this.value;updatePhysics();">
-            <div class="filter-row" style="margin-top:4px;">
-              <span>Distancia Enlaces: <strong id="dist-val" style="color:#38bdf8;">80</strong></span>
-            </div>
-            <input type="range" id="f-distance" min="30" max="180" value="80" step="5" style="width:100%;"
-              oninput="document.getElementById('dist-val').textContent=this.value;updatePhysics();">
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings dropdown -->
-      <div class="dd-wrap" id="dd-settings">
-        <button class="btn-action" onclick="toggleDD('dd-settings')">
-          <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-          Paleta & Motor ▾
-        </button>
-        <div class="dd-panel">
-          <div class="filter-section">
-            <label class="section-label">Paleta de Color</label>
-            <select id="palette-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changePalette()">
-              <option value="obsidian" selected>Obsidian Dark</option>
-              <option value="cyberpunk">Neon Cyberpunk</option>
-              <option value="dracula">Dracula Synthwave</option>
-              <option value="solarized">Solarized Dark</option>
-              <option value="nordic">Nordic Aurora</option>
-              <option value="vaporwave">Vaporwave Sunset</option>
-              <option value="mono">Monochrome Slate</option>
-              <option value="matrix">Emerald Matrix</option>
-              <option value="community">Por Comunidad (Carpetas)</option>
-            </select>
-            <label class="section-label" style="margin-top:8px;">Motor IA</label>
-            <select id="engine-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;">
-              <option value="ast_local_llm" selected>AST + Local (Ollama Qwen2.5)</option>
-              <option value="ast_cloud">AST + Cloud API (Gemini/Claude)</option>
-              <option value="ast_pure">Solo AST (cero tokens)</option>
-            </select>
-            <hr style="border:none;border-top:1px solid #1e293b;margin:8px 0;">
-            <label class="section-label">Estilo de Enlaces</label>
-            <select id="link-style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateLinkStyles()">
-              <option value="solid" selected>Línea Sólida (Recta)</option>
-              <option value="dashed">Línea Punteada / Segmentada (3D)</option>
-              <option value="curved">Línea Curva</option>
-            </select>
-            <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
-              <div class="filter-row">
-                <span>Animación de Partículas</span>
-                <label class="chk-wrap"><input type="checkbox" id="chk-particles" checked onchange="updateLinkStyles()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
-              </div>
-              <div class="filter-row">
-                <span>Flechas Direccionales</span>
-                <label class="chk-wrap"><input type="checkbox" id="chk-arrows" checked onchange="updateLinkStyles()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
-              </div>
-            </div>
-            <button class="btn-action" style="margin-top:10px;justify-content:center;width:100%;" onclick="openTutorial()">
-              📖 Tutorial Conexión IA
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <input type="text" class="search-input" id="search-box" placeholder="Buscar nodo…" oninput="applyFilter()">
-    </div>
-    <div id="stats" style="font-size:11px;color:#475569;white-space:nowrap;padding-left:8px;">—</div>
-  </header>
-
-  <!-- Floating quick actions -->
-  <div class="float-actions">
-    <div style="font-size:10px;font-weight:700;color:#10b981;background:rgba(16,185,129,0.12);padding:4px 8px;border-radius:6px;border:1px solid rgba(16,185,129,0.25);display:flex;align-items:center;gap:5px;">
-      <span style="width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></span> MCP Activo
-    </div>
-    <button class="btn-action" onclick="exportGraphData()" title="Descargar datos del grafo en JSON">
-      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-      Exportar
-    </button>
-    <button class="btn-action btn-primary" onclick="openRegister()">
-      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      Registrar
-    </button>
-    <button class="btn-action" id="reindex-btn" onclick="doReindex()">
-      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-      Reindexar
-    </button>
-  </div>
-
-  <!-- ===== GRAPH CANVAS ===== -->
-  <div id="graph-container"></div>
-
-  <!-- ===== FLOATING BLAST RADIUS PANEL ===== -->
-  <div id="blast-panel" style="position:absolute;bottom:16px;right:276px;z-index:90;background:#111827;border:1px solid #374151;border-radius:10px;padding:12px 14px;width:280px;box-shadow:0 16px 36px rgba(0,0,0,0.6);display:none;">
-    <div style="font-weight:700;font-size:12px;color:#38bdf8;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <span style="display:flex;align-items:center;gap:5px;">Radio de Impacto</span>
-      <button onclick="closeBlastPanel()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;">✕</button>
-    </div>
-    <div id="blast-content" style="font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:6px;"></div>
-  </div>
-
-  <!-- ===== MODAL: Register ===== -->
-  <div class="modal-bg" id="modal-reg">
-    <div class="modal-box">
-      <div class="modal-hdr">
-        Registrar Proyecto
-        <button class="modal-close" onclick="closeRegister()">✕</button>
-      </div>
-      <div style="font-size:11px;color:#64748b;margin-bottom:10px;">Selecciona el modo de registro:</div>
-      <div class="card-grid">
-        <div class="reg-card sel" id="mc-single" onclick="selMode('single_folder')">
-          <div class="icon">📦</div><div>Carpeta Única</div>
-        </div>
-        <div class="reg-card" id="mc-master" onclick="selMode('master_folder')">
-          <div class="icon">📂</div><div>Carpeta Maestra</div>
-        </div>
-        <div class="reg-card" id="mc-agent" onclick="selMode('agent_discovered')">
-          <div class="icon">🤖</div><div>Por Agente</div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:#64748b;margin-bottom:5px;">Ruta del proyecto:</div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input class="text-inp" id="reg-path" placeholder="/home/…/mi-proyecto" style="flex:1;">
-        <button class="btn-action" style="white-space:nowrap;" onclick="document.getElementById('dir-picker').click()">
-          📂 Seleccionar...
-        </button>
-        <input type="file" id="dir-picker" webkitdirectory directory multiple style="display:none;" onchange="onFolderPicked(event)">
-      </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
-        <button class="btn-action" onclick="closeRegister()">Cancelar</button>
-        <button class="btn-action btn-primary" onclick="submitRegister()">Registrar e Indexar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== MODAL: Tutorial ===== -->
-  <div class="modal-bg" id="modal-tutorial">
-    <div class="modal-box" style="width:520px;">
-      <div class="modal-hdr">
-        Tutorial — Conexión IA (Local vs Cloud)
-        <button class="modal-close" onclick="closeTutorial()">✕</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;color:#cbd5e1;">
-        <div style="background:#0d1117;border:1px solid #1e293b;border-left:3px solid #38bdf8;border-radius:6px;padding:10px;">
-          <div style="font-weight:700;color:#38bdf8;margin-bottom:6px;">IA Local — $0 / Privacidad total</div>
-          <div>1. Instala Ollama: <code style="background:#1a2234;padding:2px 5px;border-radius:3px;">curl -fsSL https://ollama.com/install.sh | sh</code></div>
-          <div style="margin-top:4px;">2. Descarga el modelo: <code style="background:#1a2234;padding:2px 5px;border-radius:3px;">ollama run qwen2.5-coder</code></div>
-          <div style="margin-top:4px;">3. AetherGraph se conecta automáticamente a <code style="color:#10b981;">http://localhost:11434</code></div>
-        </div>
-        <div style="background:#0d1117;border:1px solid #1e293b;border-left:3px solid #f59e0b;border-radius:6px;padding:10px;">
-          <div style="font-weight:700;color:#f59e0b;margin-bottom:6px;">IA Cloud — Gemini / Claude / OpenAI</div>
-          <div>Declara la variable de entorno antes de iniciar AetherGraph:</div>
-          <div style="background:#1a2234;padding:6px 8px;border-radius:4px;font-family:monospace;margin-top:4px;">export GEMINI_API_KEY="AIzaSy..."</div>
-          <div style="margin-top:4px;">O añade las llaves en el archivo <code style="background:#1a2234;padding:2px 5px;border-radius:3px;">.env</code> (ver <strong>.env.example</strong>)</div>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
-        <button class="btn-action btn-primary" onclick="closeTutorial()">Entendido</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ── State ─────────────────────────────────────────────────────────────────
-    let activePath    = null;   // null until first project loaded
-    let activeView    = 'code';
-    let activeDim     = '2d';
-    let isRotating    = false;
-    let rotateRaf     = null;
-    let rotateAngle   = 0;
-    let activePalette = 'obsidian';
-    let showParticles = true;
-    let showArrows    = true;
-    let linkStyle     = 'solid'; // solid | dashed | curved
-    let regMode       = 'single_folder';
-    let graphInst     = null;
-    let fullData      = { nodes: [], links: [] };
-
-    const PALETTES = {
-      obsidian  : { file:'#38bdf8', class:'#f59e0b', func:'#a78bfa', agent:'#a855f7', asset:'#10b981', link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' },
-      cyberpunk : { file:'#00f0ff', class:'#ffe600', func:'#ff007f', agent:'#9b00ff', asset:'#00ff7f', link:'rgba(0,240,255,0.25)',   linkW:1.4, particle:'rgba(0,240,255,0.9)' },
-      dracula   : { file:'#ff79c6', class:'#bd93f9', func:'#8be9fd', agent:'#ffb86c', asset:'#50fa7b', link:'rgba(189,147,249,0.30)', linkW:1.4, particle:'rgba(255,121,198,0.9)' },
-      solarized : { file:'#268bd2', class:'#b58900', func:'#d33682', agent:'#6c71c4', asset:'#2aa198', link:'rgba(38,139,210,0.30)',  linkW:1.4, particle:'rgba(42,161,152,0.9)' },
-      nordic    : { file:'#88c0d0', class:'#ebcb8b', func:'#b48ead', agent:'#d08770', asset:'#a3be8c', link:'rgba(136,192,208,0.30)', linkW:1.4, particle:'rgba(235,203,139,0.9)' },
-      vaporwave : { file:'#ff71ce', class:'#fffb96', func:'#b967ff', agent:'#fe75fe', asset:'#05ffa1', link:'rgba(255,113,206,0.30)', linkW:1.4, particle:'rgba(5,255,161,0.9)' },
-      mono      : { file:'#e2e8f0', class:'#cbd5e1', func:'#94a3b8', agent:'#64748b', asset:'#f8fafc', link:'rgba(226,232,240,0.18)', linkW:0.9, particle:'rgba(226,232,240,0.7)' },
-      matrix    : { file:'#22c55e', class:'#4ade80', func:'#16a34a', agent:'#15803d', asset:'#86efac', link:'rgba(34,197,94,0.25)',   linkW:1.4, particle:'rgba(34,197,94,0.9)' },
-      community : { link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' }
-    };
-    // 12 distinct community colors (fixed — not affected by palette)
-    const COMM_COLORS = ['#38bdf8','#f59e0b','#ef4444','#10b981','#a78bfa','#ec4899','#06b6d4','#84cc16','#eab308','#6366f1','#f97316','#14b8a6'];
-    // Map: communityKey -> color (built when graph loads)
-    let commColorMap = {};
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    function getCommKey(n) {
-      const raw = (n.details && n.kind === 'file') ? n.details : (n.details || n.name || 'general');
-      const sep = raw.includes('/') ? '/' : '\\\\';
-      const parts = raw.split(sep).filter(Boolean);
-      if (parts.length > 1) return parts[parts.length - 2];
-      const leaf = parts[0] || 'general';
-      const dotIdx = leaf.indexOf('.');
-      return dotIdx > 0 ? leaf.substring(0, dotIdx) : leaf;
-    }
-
-    function nodeColor(n) {
-      if (activePalette === 'community') {
-        const commKey = getCommKey(n);
-        return commColorMap[commKey] || '#38bdf8';
-      }
-      const p = PALETTES[activePalette] || PALETTES.obsidian;
-      const k = n.kind || '';
-      if (k.includes('orchestrator')) return '#a855f7';
-      if (k.includes('agent'))        return '#7c3aed';
-      if (k.includes('hermes'))       return '#06b6d4';
-      if (k === 'file' || k === 'module' || k === 'scene') return p.file;
-      if (k === 'class' || k === 'interface' || k === 'csharp' || k === 'struct') return p.class;
-      if (k === 'function' || k === 'method') return p.func;
-      if (k === 'asset' || k === 'ui' || k === 'enum') return p.asset;
-      return p.file;
-    }
-
-    function destroyGraph() {
-      stop3DRotation();
-      if (graphInst) {
-        try { graphInst._destructor && graphInst._destructor(); } catch(e){}
-        graphInst = null;
-      }
-      document.getElementById('graph-container').innerHTML = '';
-    }
-
-    // ── Dropdown ──────────────────────────────────────────────────────────────
-    function toggleDD(id) {
-      const el = document.getElementById(id);
-      const was = el.classList.contains('open');
-      document.querySelectorAll('.dd-wrap').forEach(d => d.classList.remove('open'));
-      if (!was) el.classList.add('open');
-    }
-    document.addEventListener('click', e => {
-      if (!e.target.closest('.dd-wrap')) document.querySelectorAll('.dd-wrap').forEach(d => d.classList.remove('open'));
-    });
-
-    // ── Modals ────────────────────────────────────────────────────────────────
-    function openRegister() {
-      document.getElementById('reg-path').value = activePath || '';
-      document.getElementById('modal-reg').classList.add('show');
-    }
-    function closeRegister() { document.getElementById('modal-reg').classList.remove('show'); }
-
-    function selMode(m) {
-      regMode = m;
-      ['single_folder','master_folder','agent_discovered'].forEach(x => {
-        const id = x === 'single_folder' ? 'mc-single' : x === 'master_folder' ? 'mc-master' : 'mc-agent';
-        document.getElementById(id).classList.toggle('sel', x === m);
-      });
-    }
-
-    function submitRegister() {
-      const path = document.getElementById('reg-path').value.trim();
-      if (!path) return;
-      fetch('/api/projects/register', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ path, mode: regMode })
-      }).then(r => r.json()).then(res => {
-        if (res.ok) { closeRegister(); loadProjects(); selectProject(path); }
-        else alert('Error: ' + res.error);
-      });
-    }
-
-    function openTutorial()  { document.getElementById('modal-tutorial').classList.add('show'); }
-    function closeTutorial() { document.getElementById('modal-tutorial').classList.remove('show'); }
-
-    // ── Projects ──────────────────────────────────────────────────────────────
-    function loadProjects(thenLoadGraph) {
-      console.log("Fetching /api/projects...");
-      fetch('/api/projects').then(r => r.json()).then(projects => {
-        console.log("Projects received:", projects);
-        const el = document.getElementById('project-list');
-        if (!Array.isArray(projects) || !projects.length) {
-          el.innerHTML = `
-            <div style="padding:14px 10px;text-align:center;background:#111827;border:1px dashed #374151;border-radius:8px;margin-top:6px;">
-              <div style="font-size:22px;margin-bottom:6px;">📂</div>
-              <div style="font-size:12px;font-weight:700;color:#f8fafc;margin-bottom:4px;">Sin Proyectos Aún</div>
-              <div style="font-size:10px;color:#94a3b8;margin-bottom:12px;line-height:1.4;">Por favor, añade alguna carpeta de código para empezar.</div>
-              <button class="btn-action btn-primary" style="width:100%;justify-content:center;font-size:11px;padding:7px 10px;" onclick="openRegister()">
-                ➕ Registrar Proyecto
-              </button>
-            </div>
-          `;
-          return;
-        }
-        if (!activePath && projects.length) activePath = projects[0].path;
-        el.innerHTML = projects.map(p => {
-          const pPath = (p.path || '').replace(/"/g, '&quot;');
-          const pName = p.name || p.id || 'Sin nombre';
-          const isActive = activePath && (p.path === activePath || pPath === activePath);
-          return '<div class="project-item ' + (isActive ? 'active' : '') + '" onclick="selectProject(this.dataset.path)" data-path="' + pPath + '">' +
-            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">' + pName + '</span>' +
-            '<span class="proj-badge ' + (p.indexed ? 'ok' : 'pend') + '">' + (p.indexed ? 'OK' : 'PEND') + '</span>' +
-            '</div>';
-        }).join('');
-        if (thenLoadGraph) loadGraph();
-      }).catch(err => {
-        console.error("Projects fetch error:", err);
-        document.getElementById('project-list').innerHTML =
-          '<div style="color:#ef4444;font-size:11px;padding:4px;">Error: ' + (err.message || err) + '</div>';
-      });
-    }
-
-    function selectProject(path) {
-      activePath = path;
-      if (activeView === 'agents') setView('code'); // switch to code view when selecting a project
-      else { loadProjects(); loadGraph(); }
-    }
-
-    // ── View / Dim ────────────────────────────────────────────────────────────
-    function setView(v) {
-      activeView = v;
-      const bCode = document.getElementById('btn-code');
-      const bSem = document.getElementById('btn-semantic');
-      const bAg = document.getElementById('btn-agents');
-      if (bCode) bCode.classList.toggle('active', v === 'code');
-      if (bSem) bSem.classList.toggle('active', v === 'semantic');
-      if (bAg) bAg.classList.toggle('active', v === 'agents');
-      destroyGraph();
-      loadGraph();
-    }
-
-    function setDim(d) {
-      if (activeDim === d) return;
-      activeDim = d;
-      document.getElementById('btn-2d').classList.toggle('active', d === '2d');
-      document.getElementById('btn-3d').classList.toggle('active', d === '3d');
-      const rotBtn = document.getElementById('btn-rotate');
-      if (rotBtn) rotBtn.style.display = (d === '3d') ? 'inline-block' : 'none';
-      if (d === '2d' && isRotating) toggleRotate();
-      destroyGraph();
-      loadGraph();
-    }
-
-    function toggleRotate() {
-      isRotating = !isRotating;
-      const btn = document.getElementById('btn-rotate');
-      if (btn) btn.classList.toggle('active', isRotating);
-      if (isRotating) start3DRotation();
-      else stop3DRotation();
-    }
-
-    function start3DRotation() {
-      if (rotateRaf) cancelAnimationFrame(rotateRaf);
-      const tick = () => {
-        if (!isRotating || activeDim !== '3d' || !graphInst || !graphInst.cameraPosition) return;
-        const p = graphInst.cameraPosition();
-        const r = Math.max(Math.hypot(p.x || 0, p.z || 0) || 500, 150);
-        rotateAngle += 0.0035;
-        graphInst.cameraPosition({ x: r * Math.sin(rotateAngle), y: p.y || 100, z: r * Math.cos(rotateAngle) }, undefined, 0);
-        rotateRaf = requestAnimationFrame(tick);
-      };
-      rotateRaf = requestAnimationFrame(tick);
-    }
-
-    function stop3DRotation() {
-      if (rotateRaf) { cancelAnimationFrame(rotateRaf); rotateRaf = null; }
-    }
-
-    function changePalette() {
-      activePalette = document.getElementById('palette-sel').value;
-      if (graphInst) {
-        const p = PALETTES[activePalette];
-        graphInst.nodeColor(n => nodeColor(n)).linkColor(() => p.link);
-      }
-    }
-
-    function doReindex() {
-      const btn = document.getElementById('reindex-btn');
-      const engine = document.getElementById('engine-sel').value;
-      const estVal = document.getElementById('est-time-val') ? document.getElementById('est-time-val').textContent : '';
-      btn.innerHTML = 'Indexando (' + estVal + ')…';
-      fetch('/api/reindex', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ path: activePath, engine })
-      }).then(r => r.json()).then(() => {
-        btn.innerHTML = '<svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>Reindexar';
-        loadProjects(); loadGraph();
-      });
-    }
-
-    // ── Communities sidebar ───────────────────────────────────────────────────
-    function buildCommunities(data) {
-      // Build community groups by folder
-      const groups = {};
-      data.nodes.forEach(n => {
-        const key = getCommKey(n);
-        if (!groups[key]) groups[key] = 0;
-        groups[key]++;
-      });
-
-      const sorted = Object.entries(groups).sort((a,b) => b[1] - a[1]);
-
-      // Build stable color map: community key -> fixed color (not affected by palette)
-      commColorMap = {};
-      sorted.forEach(([name], idx) => {
-        commColorMap[name] = COMM_COLORS[idx % COMM_COLORS.length];
-      });
-
-      const el = document.getElementById('community-list');
-      el.innerHTML = sorted.map(([name, count]) => {
-        const color = commColorMap[name];
-        return `
-          <div class="community-item" onclick="toggleComm('${name}')">
-            <div class="comm-left">
-              <label class="chk-wrap" onclick="event.stopPropagation()">
-                <input type="checkbox" class="comm-chk" data-comm="${name}" checked onchange="applyFilter()">
-                <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-              </label>
-              <span class="comm-dot" style="background:${color};"></span>
-              <span class="comm-name" title="${name}">${name}</span>
-            </div>
-            <span class="comm-badge">${count}</span>
-          </div>`;
-      }).join('');
-    }
-
-    function toggleComm(name) {
-      const chk = document.querySelector(`.comm-chk[data-comm="${name}"]`);
-      if (chk) { chk.checked = !chk.checked; applyFilter(); }
-    }
-
-    function toggleAllComm(checked) {
-      document.querySelectorAll('.comm-chk').forEach(c => c.checked = checked);
-      applyFilter();
-    }
-
-    // ── Filter ────────────────────────────────────────────────────────────────
-    function applyFilter() {
-      const q        = (document.getElementById('search-box').value || '').toLowerCase();
-      const showFile = document.getElementById('f-file')?.checked ?? true;
-      const showCls  = document.getElementById('f-class')?.checked ?? true;
-      const showFn   = document.getElementById('f-func')?.checked ?? true;
-      const showAgt  = document.getElementById('f-agent')?.checked ?? true;
-      const minDeg   = parseInt(document.getElementById('f-deg')?.value || 0);
-      const hideIso  = document.getElementById('f-isolated')?.checked ?? false;
-
-      const activeComms = new Set(
-        Array.from(document.querySelectorAll('.comm-chk:checked')).map(c => c.dataset.comm)
-      );
-
-      const filteredNodes = fullData.nodes.filter(n => {
-        const k = n.kind || '';
-        if ((k === 'file' || k === 'module' || k === 'scene') && !showFile) return false;
-        if ((k === 'class' || k === 'interface' || k === 'csharp' || k === 'struct') && !showCls) return false;
-        if ((k === 'function' || k === 'method') && !showFn) return false;
-        if ((k.includes('agent') || k.includes('orchestrator') || k.includes('hermes') || k === 'asset' || k === 'ui') && !showAgt) return false;
-        if ((n.degree || 0) < minDeg)  return false;
-        if (hideIso && (n.degree || 0) === 0) return false;
-
-        // Community filter — match by folder name or name prefix
-        if (activeComms.size > 0) {
-          const key = getCommKey(n);
-          if (!activeComms.has(key)) return false;
-        }
-
-        if (q && !n.name.toLowerCase().includes(q) && !(n.details||'').toLowerCase().includes(q)) return false;
-        return true;
-      });
-
-      const ids = new Set(filteredNodes.map(n => n.id));
-      const filteredLinks = fullData.links.filter(l => {
-        const s = typeof l.source === 'object' ? l.source.id : l.source;
-        const t = typeof l.target === 'object' ? l.target.id : l.target;
-        return ids.has(s) && ids.has(t);
-      });
-
-      if (graphInst) graphInst.graphData({ nodes: filteredNodes, links: filteredLinks });
-
-      const statsEl = document.getElementById('stats');
-      if (statsEl && fullData && fullData.nodes) {
-        if (filteredNodes.length === fullData.nodes.length && filteredLinks.length === fullData.links.length) {
-          statsEl.textContent = `${fullData.nodes.length} nodos · ${fullData.links.length} conectores`;
-        } else {
-          statsEl.textContent = `${filteredNodes.length} / ${fullData.nodes.length} nodos · ${filteredLinks.length} / ${fullData.links.length} conectores`;
-        }
-      }
-    }
-
-    // ── Graph render ──────────────────────────────────────────────────────────
-    function showGraphSpinner(msg) {
-      document.getElementById('graph-container').innerHTML =
-        '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;">' +
-        '<div style="width:36px;height:36px;border:3px solid #1e293b;border-top-color:#38bdf8;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
-        '<div style="color:#475569;font-size:12px;">' + msg + '</div>' +
-        '</div>' +
-        '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
-    }
-
-    
-    // ── Blast Radius & Interactive Node Inspector ───────────────────────────
-    let selectedNode = null;
-
-    function onNodeClick(node) {
-      selectedNode = node;
-      if (!node) return closeBlastPanel();
-
-      // Find direct neighbors
-      const neighbors = new Set();
-      const connectedLinks = [];
-      fullData.links.forEach(l => {
-        const s = typeof l.source === 'object' ? l.source.id : l.source;
-        const t = typeof l.target === 'object' ? l.target.id : l.target;
-        if (s === node.id) { neighbors.add(t); connectedLinks.push(l); }
-        if (t === node.id) { neighbors.add(s); connectedLinks.push(l); }
-      });
-
-      const neighborNodes = fullData.nodes.filter(n => neighbors.has(n.id));
-
-      const panel = document.getElementById('blast-panel');
-      const body = document.getElementById('blast-content');
-      panel.style.display = 'block';
-
-      body.innerHTML =
-        '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + node.name + '</span></div>' +
-        '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + (node.kind || 'nodo') + '</span></div>' +
-        (node.details ? (function(){
-          const raw = node.details;
-          descExpanded = false;
-          if (raw.length > 130) {
-            const shortText = raw.substring(0, 130) + '...';
-            return '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;">' +
-              '<strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong>' +
-              '<span id="desc-short" style="color:#f8fafc;font-size:11px;line-height:1.4;">' + shortText + '</span>' +
-              '<span id="desc-full" style="color:#f8fafc;font-size:11px;line-height:1.4;display:none;">' + raw + '</span>' +
-              '<div><button id="btn-toggle-desc" onclick="toggleNodeDesc()" style="background:none;border:none;color:#38bdf8;cursor:pointer;font-size:10px;padding:2px 0 0 0;font-weight:600;">Ver más ▼</button></div>' +
-              '</div>';
-          } else {
-            return '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;"><strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong><span style="color:#f8fafc;font-size:11px;line-height:1.4;">' + raw + '</span></div>';
-          }
-        })() : '') +
-        '<div style="display:flex;gap:12px;margin-top:2px;">' +
-          '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
-          '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
-        '</div>' +
-        '<button class="btn-action btn-primary" style="margin-top:4px;justify-content:center;" data-node-id="' + node.id.replace(/"/g, '&quot;') + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
-        '<hr style="border:none;border-top:1px solid #1e293b;margin:4px 0;">' +
-        '<div style="font-weight:700;color:#64748b;font-size:10px;">VECINOS DIRECTOS (BLAST RADIUS):</div>' +
-        '<div style="max-height:110px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">' +
-        (neighborNodes.length ? neighborNodes.slice(0, 15).map(n =>
-          '<div style="display:flex;justify-content:space-between;background:#1a2234;padding:3px 6px;border-radius:4px;cursor:pointer;" data-node-id="' + n.id.replace(/"/g, '&quot;') + '" onclick="focusNode(this.dataset.nodeId)">' +
-            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">' + n.name + '</span>' +
-            '<span style="color:#64748b;font-size:9px;">' + (n.kind || '') + '</span>' +
-          '</div>'
-        ).join('') : '<div style="color:#64748b;">Sin conexiones directas</div>') +
-        '</div>';
-
-      // Highlight neighbors by dimming others
-      if (graphInst && activeDim === '2d') {
-        graphInst.nodeColor(n => {
-          if (n.id === node.id) return '#ff007f';
-          if (neighbors.has(n.id)) return nodeColor(n);
-          return 'rgba(255,255,255,0.08)';
-        });
-      }
-    }
-
-    function closeBlastPanel() {
-      selectedNode = null;
-      document.getElementById('blast-panel').style.display = 'none';
-      if (graphInst) {
-        graphInst.nodeColor(n => nodeColor(n));
-      }
-    }
-
-    function focusNode(nodeId) {
-      const node = fullData.nodes.find(n => n.id === nodeId);
-      if (node && graphInst) {
-        if (activeDim === '2d') {
-          graphInst.centerAt(node.x, node.y, 400);
-          graphInst.zoom(3, 400);
-        } else {
-          const dist = 120;
-          const ratio = 1 + dist / Math.hypot(node.x, node.y, node.z);
-          graphInst.cameraPosition(
-            { x: node.x * ratio, y: node.y * ratio, z: node.z * ratio },
-            node,
-            1200
-          );
-        }
-        onNodeClick(node);
-      }
-    }
-
-    function updatePhysics() {
-      const rep = parseInt(document.getElementById('f-repulsion').value || -300);
-      const dist = parseInt(document.getElementById('f-distance').value || 80);
-      if (graphInst) {
-        if (activeDim === '2d') {
-          graphInst.d3Force('charge', d3.forceManyBody().strength(rep));
-          graphInst.d3Force('link', d3.forceLink().distance(dist).strength(0.4));
-        } else {
-          graphInst.d3Force('charge').strength(rep);
-          graphInst.d3Force('link').distance(dist);
-        }
-        graphInst.numDimensions && graphInst.numDimensions(activeDim === '2d' ? 2 : 3);
-      }
-    }
-
-    function exportGraphData() {
-      if (!fullData || !fullData.nodes.length) return alert('No hay datos de grafo para exportar');
-      const jsonStr = JSON.stringify(fullData, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `aether-graph-${activeView}-${Date.now()}.json`;
-      a.click();
-    }
-
-
-    function updateLinkStyles() {
-      const p = PALETTES[activePalette] || PALETTES.obsidian;
-      const particlesEl = document.getElementById('chk-particles');
-      const arrowsEl = document.getElementById('chk-arrows');
-      const styleEl = document.getElementById('link-style-sel');
-
-      showParticles = particlesEl ? particlesEl.checked : true;
-      showArrows    = arrowsEl ? arrowsEl.checked : true;
-      linkStyle     = styleEl ? styleEl.value : 'solid';
-
-      if (graphInst) {
-        graphInst
-          .linkDirectionalParticles(showParticles ? 2 : 0)
-          .linkDirectionalArrowLength(showArrows ? 5 : 0)
-          .linkCurvature(linkStyle === 'curved' ? 0.2 : 0.0)
-          .linkLineDash(linkStyle === 'dashed' ? [4, 4] : null);
-      }
-    }
-
-
-    function updateEstTime() {
-      const valEl = document.getElementById('est-time-val');
-      if (!valEl) return;
-      const engine = document.getElementById('engine-sel') ? document.getElementById('engine-sel').value : 'ast_local_llm';
-      if (engine === 'ast_pure') {
-        valEl.textContent = '< 1 segundo';
-        return;
-      }
-      const nodeCount = (fullData && fullData.nodes) ? fullData.nodes.length : 20;
-      if (engine === 'ast_cloud') {
-        const sec = Math.ceil(nodeCount * 0.15);
-        valEl.textContent = sec >= 60 ? `~${Math.ceil(sec/60)} min` : `~${sec} seg`;
-        return;
-      }
-      if (engine === 'ast_local_llm') {
-        const codeNodes = (fullData && fullData.nodes) ? fullData.nodes.filter(n => n.kind !== 'module' && n.kind !== 'dir').length : nodeCount;
-        const totalSec = Math.ceil(codeNodes * 0.7);
-        if (totalSec < 60) {
-          valEl.textContent = `~${totalSec} seg`;
-        } else {
-          const mins = Math.ceil(totalSec / 60);
-          valEl.textContent = `~${mins} min`;
-        }
-      }
-    }
-
-
-    let descExpanded = false;
-
-    function toggleNodeDesc() {
-      descExpanded = !descExpanded;
-      const fullEl = document.getElementById('desc-full');
-      const shortEl = document.getElementById('desc-short');
-      const btn = document.getElementById('btn-toggle-desc');
-      if (fullEl && shortEl && btn) {
-        fullEl.style.display = descExpanded ? 'inline' : 'none';
-        shortEl.style.display = descExpanded ? 'none' : 'inline';
-        btn.textContent = descExpanded ? 'Ver menos' : 'Ver más';
-      }
-    }
-
-function loadGraph() {
-      if (!activePath && activeView === 'code') {
-        document.getElementById('stats').textContent = 'Selecciona un proyecto';
-        document.getElementById('graph-container').innerHTML =
-          '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda</div>';
-        return;
-      }
-      const url = activeView === 'agents'
-        ? '/api/graph?view=agents'
-        : activeView === 'semantic'
-        ? '/api/graph?view=semantic&path=' + encodeURIComponent(activePath)
-        : '/api/graph?path=' + encodeURIComponent(activePath);
-
-      showGraphSpinner(activeView === 'agents' ? 'Cargando topologia de agentes...' : 'Escaneando proyecto...');
-      document.getElementById('stats').textContent = 'Cargando...';
-
-      fetch(url).then(r => r.json()).then(data => {
-        if (!data.nodes || data.nodes.length === 0) {
-          document.getElementById('graph-container').innerHTML =
-            '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Sin nodos. Haz clic en Reindexar para escanear el proyecto.</div>';
-          document.getElementById('stats').textContent = '0 nodos';
-          buildCommunities(data); updateEstTime();
-          return;
-        }
-        fullData = data;
-        const p = PALETTES[activePalette];
-        document.getElementById('stats').textContent =
-          `${data.nodes.length} nodos · ${data.links.length} conectores`;
-
-        buildCommunities(data); updateEstTime();
-
-        const container = document.getElementById('graph-container');
-
-        const nodeVal = n => {
-          const k = n.kind || '';
-          if (k.includes('orchestrator')) return activeDim === '2d' ? 20 : 24;
-          if (k.includes('agent') || k.includes('hermes')) return activeDim === '2d' ? 12 : 14;
-          if (k === 'class' || k === 'interface') return activeDim === '2d' ? 8 : 9;
-          if (k === 'file') return activeDim === '2d' ? 6 : 7;
-          return activeDim === '2d' ? 3 : 4;
-        };
-        const tooltip = n => {
-          const hasDesc = n.details && n.details.length > 0;
-          const detailsHtml = hasDesc ? `<br/><span style="color:#38bdf8;font-size:11px;line-height:1.3;display:block;margin-top:3px;">${n.details}</span>` : '';
-          return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:320px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);">` +
-            `<strong>${n.name}</strong> <span style="color:#64748b;font-size:10px;">(${n.kind || ''})</span>` +
-            detailsHtml +
-            `<div style="margin-top:5px;font-size:10px;"><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#94a3b8;">Conexiones: ${n.degree || 0}</span></div>` +
-            `</div>`;
-        };
-
-        try {
-          if (activeDim === '2d') {
-            graphInst = ForceGraph()(container)
-            .backgroundColor('#0b0e17')
-            .graphData(data)
-            .nodeId('id')
-            .nodeVal(nodeVal)
-            .nodeColor(n => nodeColor(n))
-            .nodeLabel(tooltip).onNodeClick(onNodeClick)
-            .linkColor(() => p.link)
-            .linkWidth(p.linkW)
-            .linkDirectionalParticles(2)
-            .linkDirectionalParticleWidth(2.0)
-            .linkDirectionalParticleSpeed(0.006)
-            .linkDirectionalArrowLength(4)
-            .linkDirectionalArrowRelPos(0.95)
-            .linkDirectionalParticles(() => (showParticles ? 2 : 0))
-            .linkDirectionalParticleWidth(2.5)
-            .linkDirectionalParticleSpeed(0.006)
-            .linkDirectionalParticleColor(() => p.particle)
-            .linkDirectionalArrowLength(() => (showArrows ? 5 : 0))
-            .linkDirectionalArrowRelPos(0.95)
-            .linkCurvature(() => (linkStyle === 'curved' ? 0.2 : 0.0))
-            .linkLineDash(() => (linkStyle === 'dashed' ? [4, 4] : null))
-            .d3AlphaDecay(0.012)
-            .d3VelocityDecay(0.22)
-            .d3Force('charge', d3.forceManyBody().strength(-300))
-            .d3Force('link',   d3.forceLink().distance(80).strength(0.4))
-            .d3Force('collide', d3.forceCollide().radius(22));
-        } else {
-          // Assign initial 3D positions so nodes spread in X, Y, Z sphere
-          data.nodes.forEach(n => {
-            if (n.x === undefined) n.x = (Math.random() - 0.5) * 600;
-            if (n.y === undefined) n.y = (Math.random() - 0.5) * 600;
-            if (n.z === undefined) n.z = (Math.random() - 0.5) * 600;
-          });
-          graphInst = ForceGraph3D()(container)
-            .backgroundColor('#0b0e17')
-            .graphData(data)
-            .nodeId('id')
-            .nodeVal(nodeVal)
-            .nodeColor(n => nodeColor(n))
-            .nodeLabel(tooltip).onNodeClick(onNodeClick)
-            .linkColor(() => p.link)
-            .linkWidth(p.linkW)
-            .linkDirectionalParticles(() => (showParticles ? 2 : (linkStyle === 'dashed' ? 3 : 0)))
-            .linkDirectionalParticleWidth(() => (linkStyle === 'dashed' ? 1.8 : 2.5))
-            .linkDirectionalParticleSpeed(0.006)
-            .linkDirectionalArrowLength(() => (showArrows ? 5 : 0))
-            .linkDirectionalArrowRelPos(0.95)
-            .linkCurvature(() => (linkStyle === 'curved' ? 0.25 : (linkStyle === 'dashed' ? 0.15 : 0.0)))
-            .nodeRelSize(5);
-
-          // Use 3D internal force engine (prevents 2D planar flattening)
-          graphInst.d3Force('charge').strength(-250);
-          graphInst.d3Force('link').distance(75);
-        }
-
-        applyFilter();
-        } catch(err) {
-          console.error("Graph render error:", err);
-          document.getElementById('graph-container').innerHTML =
-            '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;padding:20px;text-align:center;">' +
-            '<strong>Error al renderizar el grafo</strong><br/><span style="color:#94a3b8;font-size:11px;margin-top:6px;">' + err.message + '</span></div>';
-        }
-      }).catch(err => {
-        console.error("Fetch error:", err);
-        document.getElementById('graph-container').innerHTML =
-          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;">Error al conectar con la API</div>';
-      });
-    }
-
-        async function loadHistoryUI() {
-      const container = document.getElementById('hist-list');
-      if (!container) return;
-      try {
-        const res = await fetch('/api/history?path=' + encodeURIComponent(activePath));
-        const data = await res.json();
-        const timeline = data.timeline || [];
-        if (timeline.length === 0) {
-          container.innerHTML = '<div style="font-size:11px;color:#64748b;">Sin acciones registradas aún.</div>';
-          return;
-        }
-        container.innerHTML = timeline.map(ev => {
-          const dateStr = new Date(ev.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-          return `
-            <div style="background:#1a2234;border:1px solid #2d3748;border-radius:6px;padding:6px 8px;">
-              <div style="display:flex;justify-content:space-between;font-size:10px;color:#38bdf8;font-weight:700;">
-                <span>${ev.action_type.toUpperCase()}</span>
-                <span style="color:#64748b;">${dateStr}</span>
-              </div>
-              <div style="font-size:11px;color:#e2e8f0;margin-top:3px;">${ev.summary}</div>
-            </div>
-          `;
-        }).join('');
-      } catch (e) {
-        container.innerHTML = '<div style="font-size:11px;color:#ef4444;">Error al cargar historial.</div>';
-      }
-    }
-
-        function focusHistoryEvent(sum) {
-      if (!fullData || !fullData.nodes) return;
-      const lowerSum = sum.lower ? sum.lower() : sum.toLowerCase();
-      const match = fullData.nodes.find(n => lowerSum.includes(n.name.toLowerCase()));
-      if (match) {
-        selectNode(match);
-      }
-    }
-
-
-    async function onFolderPicked(e) {
-      if (!e.target.files || e.target.files.length === 0) return;
-      const file = e.target.files[0];
-      let fullPath = '';
-      const rootFolder = file.webkitRelativePath ? file.webkitRelativePath.split('/')[0] : '';
-
-      // 1. If browser exposes absolute path (Electron, Native webviews)
-      if (file.path) {
-        const sep = file.path.includes('\\') ? '\\' : '/';
-        const parts = file.path.split(sep);
-        if (rootFolder && parts.includes(rootFolder)) {
-          const rootIdx = parts.lastIndexOf(rootFolder);
-          fullPath = parts.slice(0, rootIdx + 1).join(sep);
-        } else {
-          parts.pop();
-          fullPath = parts.join(sep);
-        }
-      } else if (rootFolder) {
-        // 2. Cross-platform dynamic parent directory calculation (No hardcoded paths)
-        let currentInput = (document.getElementById('reg-path').value || activePath || '').trim();
-        const sep = currentInput.includes('\\') ? '\\' : '/';
-        currentInput = currentInput.replace(/[/\\]+$/, '');
-        
-        if (currentInput) {
-          const lastIndex = currentInput.lastIndexOf(sep);
-          if (lastIndex > 0) {
-            const parentDir = currentInput.substring(0, lastIndex);
-            fullPath = parentDir + sep + rootFolder;
-          } else {
-            fullPath = currentInput + sep + rootFolder;
-          }
-        } else {
-          fullPath = rootFolder;
-        }
-      }
-
-      if (fullPath) {
-        document.getElementById('reg-path').value = fullPath;
-      }
-    }
-
-
-    function toggleLeftSidebar() {
-      const isCollapsed = document.body.classList.toggle('left-collapsed');
-      document.querySelector('aside.left-aside').classList.toggle('collapsed', isCollapsed);
-      document.getElementById('btn-toggle-left').textContent = isCollapsed ? '▶' : '◀';
-      if (graphInst && typeof graphInst.width === 'function') {
-        setTimeout(() => graphInst.width(document.getElementById('graph-container').clientWidth), 260);
-      }
-    }
-
-    function toggleRightSidebar() {
-      const isCollapsed = document.body.classList.toggle('right-collapsed');
-      document.querySelector('aside.right-aside').classList.toggle('collapsed', isCollapsed);
-      document.getElementById('btn-toggle-right').textContent = isCollapsed ? '◀' : '▶';
-      if (graphInst && typeof graphInst.width === 'function') {
-        setTimeout(() => graphInst.width(document.getElementById('graph-container').clientWidth), 260);
-      }
-    }
-
-
-// ── Boot ──────────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-      loadProjects(true);
-    });
-    // Instant fallback if DOMContentLoaded already fired
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
-      loadProjects(true);
-    }
-  </script>
-</body>
-</html>
-""", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+@app.get("/js/{file}")
+def js_module(file: str):
+    if not file.endswith(".js") or "/" in file or "\\" in file or ".." in file:
+        return JSONResponse({"error": "invalid path"}, status_code=404)
+    js_path = Path(__file__).resolve().parent.parent / "web" / "js" / file
+    if not js_path.is_file():
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return HTMLResponse(content=js_path.read_text(encoding="utf-8"), media_type="application/javascript", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
 
 

@@ -26,3 +26,6 @@ dev = [
 
 [project.scripts]
 aether-graph = "aether_graph.cli:main"
+
+[tool.setuptools.package-data]
+aether_graph = ["web/*.html", "web/*.css", "web/*.js", "web/js/*.js"]

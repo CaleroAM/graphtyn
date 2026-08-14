@@ -97,6 +97,16 @@ def main():
     serve_p.add_argument("--port", type=int, default=9210, help="Puerto")
     serve_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
+    # hook
+    hook_p = subparsers.add_parser("hook", help="Instala/desinstala el hook post-commit de reindexado incremental")
+    hook_p.add_argument("action", choices=["install", "uninstall"], help="install o uninstall")
+    hook_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
+    # gitignore
+    git_p = subparsers.add_parser("gitignore", help="Configura si el grafo respeta .gitignore (on/off) por proyecto")
+    git_p.add_argument("value", choices=["on", "off"], help="on = solo archivos versionados · off = incluir todo")
+    git_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
     args = parser.parse_args()
     root = Path(args.path if hasattr(args, 'path') else ".").resolve()
 
@@ -113,7 +123,11 @@ def main():
         try:
             with urllib.request.urlopen(req) as resp:
                 res = json.loads(resp.read().decode())
-                print(f"✓ Reindexado completado ({args.engine}): {res.get('nodes')} nodos, {res.get('links')} conectores.")
+                mode = res.get("mode", "full")
+                extra = ""
+                if mode == "incremental":
+                    extra = f" · {res.get('changed_files', 0)} archivos cambiados · {res.get('enriched_files', 0)} archivos con contexto"
+                print(f"✓ Reindexado ({args.engine}, modo {mode}){extra}: {res.get('nodes')} nodos, {res.get('links')} conectores.")
         except Exception:
             ast_p = ASTParser()
             graph = ast_p.scan_directory(root)
@@ -222,6 +236,33 @@ def main():
         else:
             from .api.main import app
             uvicorn.run(app, host=args.host, port=args.port)
+
+    elif args.command == "gitignore":
+        from .api.main import _save_project_config, _load_project_config
+        cfg = _save_project_config(root, {"respect_git": args.value == "on"})
+        state = "ON (solo archivos versionados)" if cfg["respect_git"] else "OFF (incluye ignorados por .gitignore)"
+        print(f"✓ .gitignore por proyecto: {state} para {root}")
+        print("  Reindexa para aplicar: aether-graph reindex --path .")
+
+    elif args.command == "hook":
+        hook_path = root / ".git" / "hooks" / "post-commit"
+        if args.action == "install":
+            hook_path.parent.mkdir(parents=True, exist_ok=True)
+            hook_script = (
+                "#!/bin/sh\n"
+                "# AetherGraph: reindexado incremental automatico post-commit (AST + IA local)\n"
+                f"( nohup aether-graph reindex --path '{root}' --engine ast_local_llm > /dev/null 2>&1 & ) || true\n"
+            )
+            hook_path.write_text(hook_script, encoding="utf-8")
+            hook_path.chmod(0o755)
+            print(f"✓ Hook post-commit instalado en {hook_path}")
+            print("  Cada commit lanzará un reindexado incremental en background (solo nodos cambiados).")
+        else:
+            if hook_path.exists() and "AetherGraph" in hook_path.read_text(encoding="utf-8"):
+                hook_path.unlink()
+                print(f"✓ Hook post-commit de AetherGraph eliminado")
+            else:
+                print("✗ No hay hook de AetherGraph instalado en este repositorio.")
 
     else:
         parser.print_help()
