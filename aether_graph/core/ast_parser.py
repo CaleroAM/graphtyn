@@ -1,7 +1,10 @@
 import ast
 import re
+import posixpath
 from pathlib import Path
 from typing import Dict, Any, List, Set, Optional
+
+_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
 class ASTParser:
     """
@@ -40,10 +43,16 @@ class ASTParser:
         return {"file": rel_path, "symbols": symbols, "calls": list(set(calls)), "imports": list(set(imports))}
 
     def scan_directory(self, root_dir: Path, respect_git: bool = True) -> Dict[str, Any]:
+        root_dir = Path(root_dir)
         nodes: List[Dict[str, Any]] = []
         links: List[Dict[str, Any]] = []
         node_ids: Set[str] = set()
         symbol_name_map: Dict[str, str] = {}
+        symbol_name_ids: Dict[str, Set[str]] = {}
+
+        def _register_symbol(name: str, sym_id: str) -> None:
+            symbol_name_map[name] = sym_id
+            symbol_name_ids.setdefault(name, set()).add(sym_id)
 
         ignored_parts = {
             "vendor", "venv", ".venv", "node_modules", "__pycache__", "Library",
@@ -65,11 +74,16 @@ class ASTParser:
         csharp_files: List[tuple] = []
         python_files: List[tuple] = []
         php_files: List[tuple] = []
+        terraform_files: List[tuple] = []
+        doc_files: List[tuple] = []
         other_code_files: List[tuple] = []
 
         valid_exts = (
             ".py", ".cs", ".php", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".h", ".hpp",
-            ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json", ".md"
+            ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".tf", ".tfvars", ".cls", ".trigger",
+            ".md", ".mdx", ".rst", ".txt", ".pdf", ".docx", ".xlsx", ".xlsm",
+            ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp",
+            ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json"
         )
 
         # Pass 1: Build folder hierarchy backbone & file/asset nodes
@@ -105,7 +119,7 @@ class ASTParser:
                 node_ids.add(p_id)
 
             if f_id not in node_ids:
-                kind = "asset" if ext in (".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml") else "file"
+                kind = "asset" if ext in (".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml") else ("image" if ext in _IMAGE_EXTS else "file")
                 nodes.append({
                     "id": f_id, "name": path.name, "kind": kind,
                     "val": 5, "color": "#38bdf8", "details": rel_file
@@ -119,7 +133,11 @@ class ASTParser:
                 python_files.append((path, rel_file, f_id))
             elif ext == ".php":
                 php_files.append((path, rel_file, f_id))
-            elif ext in (".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".kt", ".kts", ".swift", ".dart", ".sh", ".bash", ".sql", ".vue", ".svelte"):
+            elif ext in (".tf", ".tfvars"):
+                terraform_files.append((path, rel_file, f_id))
+            elif ext in (".md", ".mdx", ".rst", ".txt"):
+                doc_files.append((path, rel_file, f_id))
+            elif ext in (".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".kt", ".kts", ".swift", ".dart", ".sh", ".bash", ".sql", ".vue", ".svelte", ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".cls", ".trigger"):
                 other_code_files.append((path, rel_file, f_id, ext))
 
         file_contents: Dict[str, str] = {}
@@ -145,7 +163,7 @@ class ASTParser:
                             "val": 6, "color": "#f59e0b", "details": full_name
                         })
                         node_ids.add(sym_id)
-                        symbol_name_map[cname] = sym_id
+                        _register_symbol(cname, sym_id)
                         links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
 
                 for m in re.finditer(r"(public|private|protected|static|\s)*function\s+([A-Za-z0-9_]+)\s*\(", content):
@@ -158,7 +176,7 @@ class ASTParser:
                                 "val": 3, "color": "#a78bfa", "details": f"Función/Método en {rel_file}"
                             })
                             node_ids.add(sym_id)
-                            symbol_name_map[mname] = sym_id
+                            _register_symbol(mname, sym_id)
                             links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
             except Exception:
                 pass
@@ -186,7 +204,7 @@ class ASTParser:
                             "details": full_name
                         })
                         node_ids.add(sym_id)
-                        symbol_name_map[cname] = sym_id
+                        _register_symbol(cname, sym_id)
                         links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
 
                     if bases:
@@ -205,13 +223,70 @@ class ASTParser:
                                 "val": 3, "color": "#a78bfa", "details": f"Método en {rel_file}"
                             })
                             node_ids.add(sym_id)
-                            symbol_name_map[mname] = sym_id
+                            _register_symbol(mname, sym_id)
                             links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
+            except Exception:
+                pass
+
+        # Pass 2C: Extract Terraform / HCL resources
+        for path, rel_file, f_id in terraform_files:
+            try:
+                content = path.read_text(encoding="utf-8", errors="ignore")
+                file_contents[rel_file] = content
+                for m in re.finditer(r'(resource|data|module|variable|output)\s+"([^"]+)"(?:\s+"([^"]+)")?', content):
+                    kind = m.group(1)
+                    label = m.group(3) or m.group(2)
+                    sym_id = f"symbol:{rel_file}:{kind}:{label}"
+                    if sym_id not in node_ids:
+                        nodes.append({
+                            "id": sym_id, "name": label, "kind": "resource",
+                            "val": 4, "color": "#34d399", "details": f"{kind} en {rel_file}"
+                        })
+                        node_ids.add(sym_id)
+                        _register_symbol(label, sym_id)
+                        links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
+            except Exception:
+                pass
+
+        # Pass 2D: Extract document references (markdown links / wikilinks)
+        for path, rel_file, f_id in doc_files:
+            try:
+                content = path.read_text(encoding="utf-8", errors="ignore")
+                file_contents[rel_file] = content
+                base = str(Path(rel_file).parent)
+                seen_targets: Set[str] = set()
+                for target in re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", content):
+                    t = target.split("#")[0]
+                    if not t or t.startswith(("http://", "https://", "mailto:")):
+                        continue
+                    norm = posixpath.normpath(str(Path(base) / t) if base != "." else t)
+                    if norm.startswith("..") or norm in (".", ""):
+                        continue
+                    tid = f"file:{norm}"
+                    if tid in node_ids and tid != f_id and tid not in seen_targets:
+                        seen_targets.add(tid)
+                        links.append({"source": f_id, "target": tid, "label": "referencia", "color": "rgba(16, 185, 129, 0.3)", "confidence": "EXTRACTED"})
+                for wl in re.findall(r"\[\[([^\]|]+)", content):
+                    wl = wl.strip()
+                    if not wl:
+                        continue
+                    candidates = [
+                        nid for nid in node_ids
+                        if nid.startswith("file:") and Path(nid[5:]).name.split(".")[0] == wl
+                    ]
+                    for tid in candidates[:1]:
+                        if tid != f_id and tid not in seen_targets:
+                            seen_targets.add(tid)
+                            links.append({"source": f_id, "target": tid, "label": "referencia", "color": "rgba(16, 185, 129, 0.3)", "confidence": "EXTRACTED"})
             except Exception:
                 pass
 
         # Pass 3: Extract Python AST symbols & calls
         for path, rel_file, f_id in python_files:
+            try:
+                file_contents[rel_file] = path.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                pass
             res = self.parse_python_file(path, root_dir)
             for sym in res.get("symbols", []):
                 sym_id = f"symbol:{rel_file}:{sym['name']}"
@@ -223,7 +298,7 @@ class ASTParser:
                         "details": f"{sym['kind'].capitalize()} en {rel_file}:{sym['line']}"
                     })
                     node_ids.add(sym_id)
-                    symbol_name_map[sym["name"]] = sym_id
+                    _register_symbol(sym["name"], sym_id)
                 links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
 
         # Pass 3B: Extract JS/TS/Java/Go/Rust symbols
@@ -231,8 +306,10 @@ class ASTParser:
             try:
                 content = path.read_text(encoding="utf-8", errors="ignore")
                 file_contents[rel_file] = content
-                for m in re.finditer(r"(class|interface|struct|type|function|export function|fn|def|func|fun|enum|protocol|extension)\s+([A-Za-z0-9_]+)", content):
+                for m in re.finditer(r"(export function|case class|local function|defmodule|defmacro|class|interface|struct|type|function|fn|def|defp|func|fun|enum|protocol|extension|trait|object|macro|module|void)\s+([A-Za-z0-9_]+)", content):
                     kind = m.group(1).replace("export ", "")
+                    if kind == "void":
+                        kind = "function"
                     cname = m.group(2)
                     if cname not in ("if", "for", "while", "switch", "return"):
                         sym_id = f"symbol:{rel_file}:{cname}"
@@ -243,7 +320,7 @@ class ASTParser:
                                 "details": f"{kind} en {rel_file}"
                             })
                             node_ids.add(sym_id)
-                            symbol_name_map[cname] = sym_id
+                            _register_symbol(cname, sym_id)
                             links.append({"source": f_id, "target": sym_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
             except Exception:
                 pass
@@ -274,7 +351,12 @@ class ASTParser:
                     continue
                 if cname in content and not sym_id.startswith(f"symbol:{rel_file}:"):
                     if re.search(r"\b" + re.escape(cname) + r"\b", content):
-                        links.append({"source": f_id, "target": sym_id, "label": "usa", "color": "rgba(56, 189, 248, 0.25)"})
+                        ambiguous = len(symbol_name_ids.get(cname, {sym_id})) > 1
+                        links.append({
+                            "source": f_id, "target": sym_id, "label": "usa",
+                            "color": "rgba(56, 189, 248, 0.25)",
+                            "confidence": "AMBIGUOUS" if ambiguous else "INFERRED",
+                        })
 
         for l in links:
             if "confidence" not in l:

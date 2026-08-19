@@ -7,7 +7,7 @@
 
 **El motor de mapa topológico de código, registro de sesiones local y servidor MCP estándar para Agentes de IA (Google Antigravity, Claude Code, Codex, Cursor y Windsurf).**
 
-AetherGraph convierte cualquier repositorio de código en un **grafo de conocimiento determinista de 2 pasadas**: analiza la estructura de archivos, módulos, clases, métodos y llamadas con **0 tokens de consumo** en 0.05 segundos y enriquece semánticamente los nodos principales mediante **IA Local (Ollama Qwen2.5)** o **Cloud APIs (Gemini/Claude)**.
+AetherGraph convierte cualquier repositorio de código en un **grafo de conocimiento determinista de 2 pasadas**: analiza la estructura de archivos, módulos, clases, métodos y llamadas con **0 tokens de consumo** en menos de 0.5 segundos (medido) y enriquece semánticamente los nodos principales mediante **IA Local (Ollama Qwen2.5)** o **Cloud APIs (Gemini/Claude)**.
 
 ---
 
@@ -21,7 +21,7 @@ Cuando un agente de IA explora un proyecto grande sin un mapa de código, recurr
 ### 🌟 La Solución de AetherGraph
 AetherGraph actúa como un **GPS de código en tiempo real**:
 * 📉 **Reduce el consumo de tokens en un 99.5%**: La IA consulta la herramienta MCP (`graph_neighborhood`, `graph_blast_radius` o `graph_search_concepts`) y salta directamente al archivo y línea exactos.
-* ⚡ **Análisis sintáctico determinista de 15+ lenguajes** a costo **$0 USD y <0.05 segundos**.
+* ⚡ **Análisis sintáctico determinista de 23 lenguajes** a costo **$0 USD y <0.5 segundos**.
 * 🕒 **Línea de Tiempo y Memoria de Sesiones Local (100% Gratis / SQLite)**: Registra el historial de acciones y decisiones de la IA en `.aether-graph/history.db` sin pagar servicios externos ni consumir tokens.
 * 🎯 **Radio de Impacto en vivo y pre-Commit**: Permite evaluar exactamente qué clases y métodos se verán afectados antes de hacer `git push` (`aether-graph diff`).
 * 📝 **Generador de ARCHITECTURE.md**: Exporta un mapa de arquitectura conciso (~150 tokens) que cualquier Agente de IA puede leer al iniciar (`aether-graph export-md`).
@@ -37,7 +37,7 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 
 ---
 
-## 🛠️ Lenguajes Soportados Nativamente (15+ Lenguajes a $0 Tokens)
+## 🛠️ Lenguajes Soportados Nativamente (23 Lenguajes a $0 Tokens)
 
 AetherGraph incluye un motor sintáctico determinista que soporta nativamente el parsing de clases, funciones, módulos, herencia y llamadas en los siguientes lenguajes:
 
@@ -59,6 +59,40 @@ AetherGraph incluye un motor sintáctico determinista que soporta nativamente el
 | 🗄️ **SQL / Database** | `.sql` | Schemas, Tables, Stored Procedures, Views |
 | ⚡ **Vue.js / Svelte** | `.vue`, `.svelte` | Single File Components, Script Blocks, Exported Properties |
 | 🎮 **Unity Engine Assets** | `.unity`, `.prefab`, `.asset`, `.shader`, `.uxml` | Prefabs, Scenes, ScriptableObjects, Shaders, UI Toolkit layouts |
+| 🔴 **Scala** | `.scala` | Classes, Objects, Traits, Case Classes, Defs |
+| 🌙 **Lua** | `.lua` | Functions, Local Functions, Requires |
+| 🟣 **Julia** | `.jl` | Functions, Structs, Modules |
+| ⚡ **Zig** | `.zig` | Functions (`fn`), Constants, Structs |
+| 💧 **Elixir** | `.ex`, `.exs` | Modules (`defmodule`), Functions (`def`/`defp`), Macros |
+| 🏗️ **Terraform / HCL** | `.tf`, `.tfvars` | Resources, Data Sources, Modules, Variables, Outputs |
+| ☁️ **Salesforce Apex** | `.cls`, `.trigger` | Classes, Interfaces, Methods, Triggers |
+
+### 📄 Documentos Multi-Modal (Docs · PDF · Office)
+
+Además del código, AetherGraph indexa documentos en el mismo grafo:
+
+| Formato | Extensiones | Qué extrae |
+|---|---|---|
+| **Docs** | `.md`, `.mdx`, `.rst`, `.txt` | Nodos de documento + aristas `referencia` entre docs (enlaces Markdown `[texto](ruta)` y `[[wikilinks]]`) — determinista, $0 |
+| **PDF** | `.pdf` | Texto completo (Pasada 1, $0 local) → resumen semántico por LLM en la Pasada 2 |
+| **Word** | `.docx` | Párrafos → resumen semántico |
+| **Excel** | `.xlsx`, `.xlsm` | Hojas y filas → resumen semántico |
+| **Imágenes** | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp` | Descripción semántica por modelo de visión local (Ollama) |
+
+Las librerías de documentos son **opcionales** (el MCP stdio sigue siendo 100% stdlib):
+
+```bash
+pip install "aether-graph[multimodal]"   # pypdf + python-docx + openpyxl
+```
+
+**Modelos de visión local** (RTX 3050 4GB):
+
+```bash
+ollama pull qwen3-vl:2b        # calidad (recomendado, ~15-40s/imagen)
+ollama pull minicpm-v4.6:1b    # velocidad (~2-3s/imagen, 900MB VRAM)
+```
+
+Configuración: `AETHER_VISION_MODEL` (default `qwen3-vl:2b`) y `AETHER_IMAGE_LIMIT` (0=ilimitado). Sin el extra instalado, los documentos igual entran al grafo como nodos (sin extracción de texto). Video/audio están en el roadmap (transcripción local con Whisper en CPU).
 
 ---
 
@@ -185,13 +219,36 @@ Mismo nodo (`mcp_server.py`), mismo prompt real de AetherGraph (config #9), mism
 
 ## 🤖 Integración con Agentes de IA (MCP Protocol)
 
-AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) que expone tanto herramientas de grafo AST como de línea de tiempo de sesiones:
-- `graph_neighborhood`
-- `graph_blast_radius`
-- `graph_search_concepts`
-- `graph_history_search`
-- `graph_history_timeline`
-- `graph_history_get`
+AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) que expone **7 herramientas** a los agentes de IA, organizadas en tres grupos: **mapa de código**, **memoria de sesiones** e **integración**.
+
+### 🧭 Herramientas de Mapa de Código (0 Tokens)
+
+| Herramienta | Qué hace | Parámetros |
+|---|---|---|
+| `graph_neighborhood` | Devuelve el mapa del proyecto: nodos (archivos, clases, funciones), conectores con confianza `EXTRACTED`/`INFERRED` y descripciones semánticas por nodo. Con `symbol` devuelve solo el subgrafo alrededor de ese símbolo (payload compacto para el agente). | `path`, `symbol`, `depth` (todos opcionales) |
+| `graph_blast_radius` | Calcula el radio de impacto de modificar un símbolo o archivo: recorre el grafo y devuelve los nodos afectados por salto (hop) con la confianza de cada arista. | `symbol` (obligatorio), `depth` (default 2) |
+| `graph_search_concepts` | Busca conceptos semánticos o palabras clave en las descripciones explicativas de nodos (archivos/clases/funciones) y en los nombres de símbolos. | `query` (obligatorio) |
+
+### 🕒 Herramientas de Memoria de Sesiones (SQLite Local, Gratis)
+
+| Herramienta | Qué hace | Parámetros |
+|---|---|---|
+| `graph_history_search` | Busca en el historial de sesiones y acciones pasadas del agente para recordar eventos o decisiones. | `query` (obligatorio) |
+| `graph_history_timeline` | Devuelve la secuencia cronológica completa de acciones de una sesión previa para recuperar contexto. | `session_id` (opcional) |
+| `graph_history_get` | Recupera la observación detallada de una acción pasada específica por su ID. | `id` (obligatorio, entero) |
+
+### 🔌 Herramientas de Integración
+
+| Herramienta | Qué hace | Parámetros |
+|---|---|---|
+| `graph_register_project` | Registra autónomamente una ruta de proyecto en AetherGraph para que aparezca en el dashboard (`:9210`). | `path` (obligatorio), `name` (opcional) |
+
+### 💬 Ejemplos de Prompt para el Agente
+
+- **Mapa completo**: "Usa `graph_neighborhood` para mostrarme la arquitectura del proyecto."
+- **Impacto pre-cambio**: "Antes de modificar `TurnManager`, usa `graph_blast_radius` con depth 2 para saber qué se vería afectado."
+- **Búsqueda semántica**: "Busca con `graph_search_concepts` dónde se maneja el sistema de autenticación."
+- **Memoria de sesiones**: "Consulta `graph_history_timeline` para recordar qué decidimos en la sesión anterior sobre el esquema de la base de datos."
 
 ### 1. Google Antigravity (AGY)
 Agrega lo siguiente en tu archivo de configuración de MCP (`mcp_config.json`):
@@ -229,27 +286,78 @@ Agrega en tu configuración `AGENTS.md` o archivo `.cursor/mcp.json`:
 }
 ```
 
+### 4. OpenCode
+Agrega en tu configuración global `~/.config/opencode/opencode.json` (o en el `opencode.json` de la raíz del proyecto):
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "aether-graph": {
+      "type": "local",
+      "command": ["aether-graph", "mcp", "--path", "/ruta/a/tu/proyecto"],
+      "enabled": true
+    }
+  }
+}
+```
+
+Las herramientas quedan disponibles como `aether-graph_graph_neighborhood`, `aether-graph_graph_blast_radius`, etc. El argumento `--path` fija el proyecto del grafo; si lo omites, el servidor usa el directorio de trabajo actual.
+
+### 5. Entornos Aislados (Contenedores / VMs)
+El MCP por `stdio` es **100% stdlib de Python** (no requiere `fastapi`/`uvicorn` ni instalación vía pip). Para ejecutarlo dentro de un contenedor Docker o una VM sin paquete instalado, basta con montar o compartir el código fuente y definir `PYTHONPATH`:
+
+```bash
+export PYTHONPATH="/ruta/compartida/aether-graph${PYTHONPATH:+:$PYTHONPATH}"
+export AETHER_DAEMON_URL="http://IP_DEL_HOST:9210"   # opcional: daemon del dashboard para graph_register_project
+python3 -m aether_graph.cli mcp --path /ruta/al/proyecto
+```
+
+- `AETHER_DAEMON_URL`: dentro de un contenedor, `127.0.0.1:9210` no apunta al daemon del dashboard (que vive en el host). Apunta esta variable a la IP del host (ej. la IP gateway de la VM) para que `graph_register_project` registre proyectos en el dashboard.
+- Las herramientas de grafo e historial funcionan standalone (leen el índice cacheado o escanean el código) sin depender del daemon.
+
+#### Ejemplo real: OpenClaw en una VM (wrapper `mcp_openclaw.sh`)
+El repositorio incluye [`mcp_openclaw.sh`](mcp_openclaw.sh), un wrapper usado para conectar AetherGraph con un agente **OpenClaw** que corre dentro de una VM: el contenedor `openclaw-agent` monta por bind el `Documentos` del host en `/home/node/proyectos`, así que el script exporta el `PYTHONPATH` con la ruta del contenedor, apunta `AETHER_DAEMON_URL` a la IP gateway de la VM (`192.168.122.1`) y arranca el MCP con la ruta del proyecto en el contenedor. Se registra en el `openclaw.json` del agente:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "aether-graph": {
+        "command": "bash",
+        "args": ["/ruta/en/el/contenedor/aether-graph/mcp_openclaw.sh"]
+      }
+    }
+  }
+}
+```
+
+Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo de tu entorno, no parte del paquete PyPI).
+
 ---
 
 ## 🏆 Comparativa de Mercado
 
-*Verificado contra la versión actual de Graphify (Graphify-Labs, v8) y LSIF/Sourcegraph (ago 2026).*
+*Verificado contra la versión actual de Graphify (Graphify-Labs, v8) y LSIF/Sourcegraph (ago 2026). Fuentes: README v8 de `Graphify-Labs/graphify` (GitHub), graphify.com y benchmarks publicados (BENCHMARKS.md, LOCOMO, LongMemEval-S).*
 
 | Característica | 📦 Graphify (v8) | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
 |---|---|---|---|
-| **Parsing Estático Multi-Lenguaje** | **Sí** (tree-sitter, ~40 lenguajes, local, $0) | Sí (LSIF, preciso vía language servers) | Sí (AST nativo 15+ lenguajes a $0) |
-| **Descripción semántica por nodo de CÓDIGO (rol en lenguaje natural)** | ❌ No: el código se mapea determinista sin LLM; el pase semántico es solo para docs/PDFs/media | ❌ No | ✅ **Sí: cada archivo/clase/función tiene descripción de rol generada por LLM local o cloud** |
-| **Etiquetas de confianza en aristas** | ✅ EXTRACTED/INFERRED por arista | Parcial | ✅ **EXTRACTED (contiene/hereda) / INFERRED (usa cross-file), visible en el inspector** |
+| **Parsing Estático Multi-Lenguaje** | **Sí** (tree-sitter, 37+ gramáticas + Apex/Terraform/OCaml/Lisp, local, $0) | Sí (LSIF, preciso vía language servers) | Sí (AST nativo 23 lenguajes a $0) |
+| **Descripción semántica por nodo de CÓDIGO (rol en lenguaje natural)** | ❌ No: "code is parsed with tree-sitter AST: deterministic, no LLM"; el pase semántico es solo para docs/PDFs/media | ❌ No | ✅ **Sí: cada archivo/clase/función tiene descripción de rol generada por LLM local o cloud** |
+| **Etiquetas de confianza en aristas** | ✅ EXTRACTED / INFERRED / AMBIGUOUS por arista | Parcial | ✅ **EXTRACTED (contiene/hereda) / INFERRED (usa cross-file) / AMBIGUOUS (nombre repetido en varios símbolos)** |
 | **Consumo de Tokens (grafo de código)** | 0 (tree-sitter local) | 0 (dump LSP) | **0 en Pasada 1** + Enriquecimiento Opcional (local = 0) |
-| **Reindexado incremental** | ✅ `--update` + hook post-commit (AST) | ❌ Dump completo típicamente | ✅ **git-status + solo nodos cambiados (medido: 5-8s vs 5 min)** |
+| **Reindexado incremental** | ✅ `--update` + hook post-commit (AST) | ❌ Dump completo típicamente | ✅ **git-status (solo versionados) + solo nodos cambiados (medido: 2.6s vs 96s full)** |
 | **Compactación de densidad (≤140 chars/nodo)** | N/A (no describe código con LLM) | N/A | ✅ `AETHER_COMPACT=1` (local a +5% de la densidad premium) |
-| **Memoria de historial de acciones del agente** | ❌ (query log opcional; no timeline de acciones) | ❌ | ✅ **SQLite local (`graph_history_*`) gratuito** |
+| **Memoria de historial de acciones del agente** | ❌ (query log opcional; no timeline de acciones) | ❌ | ✅ **SQLite local (`graph_history_*`) gratuito + `tokens_avoided` por consulta** |
 | **Visualizador** | graph.html estático interactivo (comunidades, click) | No | Dashboard WebGL 2D/3D en vivo (`:9210`) |
-| **Impacto de cambios** | ✅ PR impact / triage (PRs) | Parcial en CLI | ✅ `aether-graph diff` (git, pre-commit) + inspector |
-| **MCP** | ✅ stdio + HTTP compartido (query/get_node/neighbors/path/prs) | No nativo | ✅ stdio (grafo + historial) |
+| **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `aether-graph diff` (git, pre-commit) + inspector |
+| **MCP** | ✅ stdio + HTTP compartido con API key (7 tools: query_graph/get_node/get_neighbors/shortest_path/list_prs/get_pr_impact/triage_prs) | No nativo | ✅ stdio (7 tools: grafo + historial + registro), 100% stdlib (corre en contenedores sin instalación) |
+| **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ docs, PDFs, imágenes, video/audio, SQL, configs | Parcial | ✅ docs (MD/RST/TXT con aristas de referencia), PDF, DOCX, XLSX + **imágenes por visión local ($0)** — video/audio en roadmap |
+| **Benchmarks publicados** | ✅ LOCOMO recall@10 0.497 · LongMemEval-S 76% QA (metodología reproducible) | Parcial | ✅ [BENCHMARKS.md](BENCHMARKS.md) (tiempos reales de reindex, modelos locales, payloads MCP) |
+| **Ecosistema / Plataformas** | ✅ 20+ asistentes con instalador oficial (incluye OpenCode y OpenClaw), 108k estrellas | Empresa | ✅ MCP estándar (Antigravity, Claude Code, Codex/Cursor/Windsurf, OpenCode, OpenClaw) |
 | **Soporte Offline** | ✅ código 100% local; docs requieren API | Depende del servidor | ✅ 100% offline con Ollama local |
 
-**Lectura honesta:** Graphify es más maduro en cobertura de lenguajes (~40), confianza de aristas, ecosistema (20+ asistentes) y PRs. AetherGraph se diferencia en **contexto semántico en lenguaje natural sobre el código** (archivos/clases/funciones con rol, no solo aristas), **historial de sesiones del agente**, **compactación de densidad** y **reindexado incremental medido**. Las tres herramientas comparten la base determinista de $0 tokens; AetherGraph añade la capa semántica que Graphify aplica solo a documentos.
+**Lectura honesta:** Graphify es más maduro en cobertura de lenguajes (37+), ecosistema (20+ asistentes, 108k estrellas), flujo de PRs (impact/triage/conflictos), multi-modalidad y benchmarks de calidad de respuestas. AetherGraph gana en **contexto semántico en lenguaje natural sobre el código** (archivos/clases/funciones con rol — Graphify explícitamente no usa LLM sobre código), **historial de sesiones del agente con métricas de ahorro**, **compactación de densidad**, **portabilidad extrema del MCP** (stdlib puro, sin instalación) y **reindexado incremental medido**. Las tres herramientas comparten la base determinista de $0 tokens; AetherGraph añade la capa semántica que Graphify aplica solo a documentos.
 
 ---
 

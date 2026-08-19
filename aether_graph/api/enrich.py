@@ -12,9 +12,47 @@ _EXT_LANG = {
     ".c": "C", ".cpp": "C++", ".h": "C/C++", ".hpp": "C++", ".kt": "Kotlin", ".kts": "Kotlin",
     ".swift": "Swift", ".dart": "Dart", ".sh": "Shell", ".bash": "Bash", ".sql": "SQL",
     ".vue": "Vue", ".svelte": "Svelte", ".md": "Markdown", ".json": "JSON",
+    ".scala": "Scala", ".lua": "Lua", ".jl": "Julia", ".zig": "Zig", ".ex": "Elixir", ".exs": "Elixir",
+    ".tf": "Terraform", ".tfvars": "Terraform", ".cls": "Apex", ".trigger": "Apex",
+    ".rst": "reStructuredText", ".txt": "texto plano",
+    ".pdf": "documento PDF", ".docx": "documento Word", ".xlsx": "hoja de cálculo Excel",
     ".unity": "Unity asset", ".prefab": "Unity prefab", ".asset": "Unity asset",
     ".asmdef": "Unity assembly definition", ".shader": "Shader", ".uxml": "Unity UI Toolkit",
 }
+
+_DOC_EXTS = (".pdf", ".docx", ".xlsx", ".xlsm")
+
+_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
+
+def _vision_ask(host: str, model: str, image_path: Path, timeout: int = 240) -> str:
+    try:
+        import base64
+        b64 = base64.b64encode(image_path.read_bytes()).decode()
+    except Exception:
+        return ""
+    prompt = ("Describe en UNA frase corta y densa en espanol: QUE muestra esta imagen "
+              "y PARA QUE sirve como artefacto tecnico en un proyecto de software. "
+              "Responde SOLO con la frase, sin etiquetas.")
+    num_predict = 3000 if "vl" in model else 120
+    try:
+        req = urllib.request.Request(f"{host}/api/chat", data=json.dumps({
+            "model": model,
+            "messages": [{"role": "user", "content": prompt, "images": [b64]}],
+            "stream": False, "think": False,
+            "options": {"temperature": 0.2, "num_predict": num_predict}
+        }).encode('utf-8'), headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            res = json.loads(resp.read().decode('utf-8'))
+            msg = res.get("message", {}) or {}
+            content = (msg.get("content") or "").strip()
+            if content.startswith("<think>"):
+                content = ""
+            if not content:
+                return ""
+            return content
+    except Exception as e:
+        print(f"[AI Enrich] Vision request failed: {e}")
+        return ""
 
 def _llm_ask(host: str, model: str, prompt: str, timeout: int = 45, temperature: float = 0.3) -> str:
     try:
@@ -85,7 +123,10 @@ def _detect_changed_files(root: Path):
         changed = set()
         for entry in res.stdout.split("\0"):
             if len(entry) > 3:
-                changed.add(entry[3:].strip())
+                path = entry[3:].strip()
+                if path.startswith(".aether-graph/"):
+                    continue
+                changed.add(path)
         return changed
     except Exception:
         return None
@@ -225,11 +266,12 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                             print(f"[AI Enrich] OLLAMA_MODEL='{forced_model}' no está en Ollama; usando '{models[0]}'. Disponibles: {models}")
                             model_name = models[0]
                     else:
-                        fast_models = [m for m in models if "3b" in m or "3.2" in m or "coder" in m or "llama" in m]
-                        if fast_models:
-                            model_name = fast_models[0]
-                        elif models:
-                            model_name = models[0]
+                        small = [m for m in models if "3b" in m.lower() or "3.2" in m.lower()]
+                        if small:
+                            model_name = small[0]
+                        else:
+                            fast_models = [m for m in models if "coder" in m.lower() or "llama" in m.lower()]
+                            model_name = fast_models[0] if fast_models else (models[0] if models else model_name)
                 connected_host = host
                 break
             except Exception:
@@ -265,6 +307,8 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
             )
             if file_limit > 0 and changed is None:
                 file_nodes = file_nodes[:file_limit]
+            image_limit = int(os.environ.get("AETHER_IMAGE_LIMIT", "0"))
+            image_count = 0
             for n in file_nodes:
                 nid = n.get("id", "")
                 rel_path = nid.replace("file:", "")
@@ -275,8 +319,26 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                 if not file_path.is_file():
                     continue
                 lang = _EXT_LANG.get(file_path.suffix.lower(), "código")
+                if file_path.suffix.lower() in _IMAGE_EXTS:
+                    image_count += 1
+                    if image_limit > 0 and image_count > image_limit:
+                        n["details"] = f"Imagen en {rel_path}"
+                        continue
+                    vision_model = os.environ.get("AETHER_VISION_MODEL", "qwen3-vl:2b")
+                    ans = _vision_ask(connected_host, vision_model, file_path)
+                    if ans:
+                        n["details"] = f"{_clean_answer(ans)} ({rel_path})"
+                    else:
+                        n["details"] = f"Imagen en {rel_path}"
+                    continue
                 try:
-                    full_text = file_path.read_text(encoding="utf-8", errors="ignore")
+                    if file_path.suffix.lower() in _DOC_EXTS:
+                        from ..core.docreader import extract_document_text
+                        full_text = extract_document_text(file_path)
+                        if not full_text:
+                            continue
+                    else:
+                        full_text = file_path.read_text(encoding="utf-8", errors="ignore")
                     if len(full_text) > 1600:
                         code_snippet = full_text[:1300] + "\n... [recorte] ...\n" + full_text[-300:]
                     else:

@@ -44,6 +44,16 @@ def _save_project_config(project_path: Path, cfg: dict) -> dict:
 def _is_indexed(project_path: Path) -> bool:
     return (_index_dir(project_path) / "index.json").exists()
 
+_NOISE_DIRS = {"node_modules", "dist", "build", "__pycache__", ".git", ".venv", "venv", "obj", "bin", ".idea", ".vs"}
+_PROJECT_MARKERS = {".git", "package.json", "pyproject.toml", "requirements.txt", "app.py", "index.js", "go.mod", "Cargo.toml", "pom.xml", ".aether-graph"}
+
+def _has_project_marker(d: Path) -> bool:
+    try:
+        names = {c.name for c in d.iterdir()}
+    except Exception:
+        return False
+    return bool(names & _PROJECT_MARKERS)
+
 def _load_registered_projects() -> list[dict]:
     projects = []
     cwd = Path.cwd()
@@ -65,6 +75,21 @@ def _load_registered_projects() -> list[dict]:
                     "mode": "master_folder",
                     "indexed": _is_indexed(d)
                 })
+                try:
+                    for sub in sorted(d.iterdir()):
+                        if len(projects) > 300:
+                            break
+                        if (sub.is_dir() and not sub.name.startswith(".")
+                                and sub.name not in _NOISE_DIRS and _has_project_marker(sub)):
+                            projects.append({
+                                "id": sub.name,
+                                "name": f"{d.name}/{sub.name}",
+                                "path": str(sub),
+                                "mode": "subfolder",
+                                "indexed": _is_indexed(sub)
+                            })
+                except Exception:
+                    pass
     if REGISTRATION_FILE.exists():
         try:
             custom = json.loads(REGISTRATION_FILE.read_text(encoding="utf-8"))
