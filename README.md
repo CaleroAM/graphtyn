@@ -78,11 +78,13 @@ Además del código, AetherGraph indexa documentos en el mismo grafo:
 | **Word** | `.docx` | Párrafos → resumen semántico |
 | **Excel** | `.xlsx`, `.xlsm` | Hojas y filas → resumen semántico |
 | **Imágenes** | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp` | Descripción semántica por modelo de visión local (Ollama) |
+| **Audio / Video** | `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.opus`, `.mp4`, `.mov`, `.mkv`, `.webm`, `.avi` | Transcripción local (Whisper, CPU $0) → resumen semántico por LLM |
 
 Las librerías de documentos son **opcionales** (el MCP stdio sigue siendo 100% stdlib):
 
 ```bash
 pip install "aether-graph[multimodal]"   # pypdf + python-docx + openpyxl
+pip install "aether-graph[media]"        # faster-whisper (transcripción local)
 ```
 
 **Modelos de visión local** (RTX 3050 4GB):
@@ -92,7 +94,7 @@ ollama pull qwen3-vl:2b        # calidad (recomendado, ~15-40s/imagen)
 ollama pull minicpm-v4.6:1b    # velocidad (~2-3s/imagen, 900MB VRAM)
 ```
 
-Configuración: `AETHER_VISION_MODEL` (default `qwen3-vl:2b`) y `AETHER_IMAGE_LIMIT` (0=ilimitado). Sin el extra instalado, los documentos igual entran al grafo como nodos (sin extracción de texto). Video/audio están en el roadmap (transcripción local con Whisper en CPU).
+Configuración: `AETHER_VISION_MODEL` (default `qwen3-vl:2b`), `AETHER_IMAGE_LIMIT` (0=ilimitado), `AETHER_WHISPER_MODEL` (default `small`), `AETHER_MEDIA_LIMIT` (0=ilimitado). Sin los extras instalados, los documentos igual entran al grafo como nodos (sin extracción de texto).
 
 ---
 
@@ -352,7 +354,7 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 | **Visualizador** | graph.html estático interactivo (comunidades, click) | No | Dashboard WebGL 2D/3D en vivo (`:9210`) |
 | **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `aether-graph diff` (git, pre-commit) + inspector |
 | **MCP** | ✅ stdio + HTTP compartido con API key (7 tools: query_graph/get_node/get_neighbors/shortest_path/list_prs/get_pr_impact/triage_prs) | No nativo | ✅ stdio (7 tools: grafo + historial + registro), 100% stdlib (corre en contenedores sin instalación) |
-| **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ docs, PDFs, imágenes, video/audio, SQL, configs | Parcial | ✅ docs (MD/RST/TXT con aristas de referencia), PDF, DOCX, XLSX + **imágenes por visión local ($0)** — video/audio en roadmap |
+| **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ docs, PDFs, imágenes, video/audio, SQL, configs | Parcial | ✅ docs (MD/RST/TXT con aristas de referencia), PDF, DOCX, XLSX, **imágenes por visión local** y **audio/video por transcripción local** — todo $0 |
 | **Benchmarks publicados** | ✅ LOCOMO recall@10 0.497 · LongMemEval-S 76% QA (metodología reproducible) | Parcial | ✅ [BENCHMARKS.md](BENCHMARKS.md) (tiempos reales de reindex, modelos locales, payloads MCP) |
 | **Ecosistema / Plataformas** | ✅ 20+ asistentes con instalador oficial (incluye OpenCode y OpenClaw), 108k estrellas | Empresa | ✅ MCP estándar (Antigravity, Claude Code, Codex/Cursor/Windsurf, OpenCode, OpenClaw) |
 | **Soporte Offline** | ✅ código 100% local; docs requieren API | Depende del servidor | ✅ 100% offline con Ollama local |

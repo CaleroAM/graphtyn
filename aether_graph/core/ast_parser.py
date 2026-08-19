@@ -6,6 +6,8 @@ from typing import Dict, Any, List, Set, Optional
 
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
+_MEDIA_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg")
+
 class ASTParser:
     """
     Deterministic zero-token standalone multi-language AST code symbol parser for AetherGraph.
@@ -83,6 +85,7 @@ class ASTParser:
             ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".tf", ".tfvars", ".cls", ".trigger",
             ".md", ".mdx", ".rst", ".txt", ".pdf", ".docx", ".xlsx", ".xlsm",
             ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp",
+            ".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg",
             ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json"
         )
 
@@ -119,7 +122,7 @@ class ASTParser:
                 node_ids.add(p_id)
 
             if f_id not in node_ids:
-                kind = "asset" if ext in (".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml") else ("image" if ext in _IMAGE_EXTS else "file")
+                kind = "asset" if ext in (".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml") else ("image" if ext in _IMAGE_EXTS else ("media" if ext in _MEDIA_EXTS else "file"))
                 nodes.append({
                     "id": f_id, "name": path.name, "kind": kind,
                     "val": 5, "color": "#38bdf8", "details": rel_file

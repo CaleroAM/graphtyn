@@ -24,6 +24,8 @@ _DOC_EXTS = (".pdf", ".docx", ".xlsx", ".xlsm")
 
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
+_MEDIA_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg")
+
 def _vision_ask(host: str, model: str, image_path: Path, timeout: int = 240) -> str:
     try:
         import base64
@@ -309,6 +311,8 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                 file_nodes = file_nodes[:file_limit]
             image_limit = int(os.environ.get("AETHER_IMAGE_LIMIT", "0"))
             image_count = 0
+            media_limit = int(os.environ.get("AETHER_MEDIA_LIMIT", "0"))
+            media_count = 0
             for n in file_nodes:
                 nid = n.get("id", "")
                 rel_path = nid.replace("file:", "")
@@ -330,6 +334,23 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                         n["details"] = f"{_clean_answer(ans)} ({rel_path})"
                     else:
                         n["details"] = f"Imagen en {rel_path}"
+                    continue
+                if file_path.suffix.lower() in _MEDIA_EXTS:
+                    media_count += 1
+                    if media_limit > 0 and media_count > media_limit:
+                        n["details"] = f"Audio/Video en {rel_path}"
+                        continue
+                    from ..core.docreader import transcribe_media
+                    whisper_model = os.environ.get("AETHER_WHISPER_MODEL", "small")
+                    transcript = transcribe_media(file_path, model_size=whisper_model)
+                    if transcript:
+                        ans = _llm_ask(connected_host, model_name,
+                                       f"En UNA sola frase corta y densa en espanol: QUE trata este audio/video y PARA QUE sirve como unidad del sistema. "
+                                       f"Responde SOLO con la frase.\n\nTranscripcion:\n{transcript[:1600]}",
+                                       temperature=0.2)
+                        n["details"] = f"{_clean_answer(ans) if ans else transcript[:200]} ({rel_path})"
+                    else:
+                        n["details"] = f"Audio/Video en {rel_path}"
                     continue
                 try:
                     if file_path.suffix.lower() in _DOC_EXTS:

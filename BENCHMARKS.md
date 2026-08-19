@@ -97,3 +97,24 @@ OLLAMA_MODEL=qwen2.5-coder:3b time aether-graph reindex --path /ruta/proyecto --
 # 4. Payloads MCP
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"graph_neighborhood","arguments":{"symbol":"NombreSimbolo","depth":2}}}' | aether-graph mcp --path /ruta/proyecto
 ```
+
+## 📄 5. Multi-Modal (Docs · PDF · Office · Imágenes · Audio)
+
+Medido sobre un proyecto sintético real (README.md + manual.docx + tenants.xlsx + dummy.pdf + 3 imágenes reales + audio real), enriquecimiento local `qwen2.5-coder:3b` + `qwen3-vl:2b` + `whisper-small` (CPU), todo $0 tokens:
+
+| Tarea | Tiempo | Resultado |
+|---|---|---|
+| Reindex completo multi-modal (8 nodos: docs + PDF + DOCX + XLSX + 3 imágenes) | 200.9 s | 7/8 enriquecidos; descripciones correctas (pipeline ETL del DOCX, tenants del XLSX, tiburón/vaca de las fotos) |
+| Descripción de imagen (qwen3-vl:2b, caliente) | 14-40 s/imagen | Identifica sujeto + rol técnico |
+| Descripción de imagen (minicpm-v4.6:1b, caliente) | 2-3 s/imagen (imágenes pequeñas) | Correcto en diagramas; flojo en especies de fotos |
+| Transcripción de audio real (whisper-small, CPU 16 hilos) | 4.5 s por ~3 s de audio | "Puedo registrarme temprano." — exacto |
+| Reindex media (audio → transcripción → resumen LLM) | 16.5 s total | Nodo con resumen semántico correcto |
+
+### Comparativa de modelos de visión (RTX 3050 4GB)
+
+| Modelo | VRAM | Tiempo/imagen | Notas |
+|---|---|---|---|
+| `qwen3-vl:2b` | 2.3 GB (40% GPU) | 14-40 s | Mejor comprensión real (vaca, tiburón, diagramas); emite thinking tokens |
+| `minicpm-v4.6:1b` | 900 MB (95% GPU) | 2-3 s | Directo, sin thinking; flojo en especies de fotos |
+
+**Nota NixOS:** el daemon requiere `LD_LIBRARY_PATH` con `zlib` y `gcc-lib` del nix store para cargar `av`/`faster-whisper`.

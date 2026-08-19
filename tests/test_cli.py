@@ -121,3 +121,18 @@ def test_export_md_writes_architecture(git_repo, tmp_path):
     assert out.exists()
     content = out.read_text(encoding="utf-8")
     assert "helper" in content
+
+
+def test_init_creates_and_updates_gitignore(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    res = _run_cli(["init", "--path", str(tmp_path)], tmp_path, home)
+    assert res.returncode == 0
+    gi = tmp_path / ".gitignore"
+    assert gi.exists()
+    assert ".aether-graph/" in gi.read_text(encoding="utf-8")
+
+    res2 = _run_cli(["init", "--path", str(tmp_path)], tmp_path, home)
+    assert res2.returncode == 0
+    lines = gi.read_text(encoding="utf-8").splitlines()
+    assert lines.count(".aether-graph/") == 1

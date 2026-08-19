@@ -8,6 +8,33 @@ from pathlib import Path
 
 DOC_EXTS = (".pdf", ".docx", ".xlsx", ".xlsm")
 
+MEDIA_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg")
+
+
+def transcribe_media(path: Path, model_size: str = "small", max_chars: int = 6000) -> str:
+    """Transcribe audio/video localmente con faster-whisper (CPU, $0).
+
+    Import opcional: si faster-whisper no está instalado, devuelve "" sin romper
+    el flujo stdlib.
+    """
+    try:
+        from faster_whisper import WhisperModel
+    except Exception:
+        return ""
+    try:
+        model = WhisperModel(model_size, device="cpu", compute_type="int8")
+        segments, _ = model.transcribe(str(path), vad_filter=True)
+        out = []
+        total = 0
+        for seg in segments:
+            out.append(seg.text.strip())
+            total += len(seg.text)
+            if total >= max_chars:
+                break
+        return " ".join(t for t in out if t)[:max_chars]
+    except Exception:
+        return ""
+
 
 def extract_document_text(path: Path, max_chars: int = 60000) -> str:
     suffix = path.suffix.lower()

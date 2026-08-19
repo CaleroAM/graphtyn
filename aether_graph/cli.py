@@ -116,6 +116,18 @@ def main():
         config = {"version": "0.1.0", "name": root.name}
         (dot_dir / "aether.json").write_text(json.dumps(config, indent=2))
         print(f"✓ Inicializado .aether-graph/ en {root}")
+        gi = root / ".gitignore"
+        try:
+            if gi.exists():
+                content = gi.read_text(encoding="utf-8")
+                if ".aether-graph/" not in content.splitlines():
+                    gi.write_text(content + ("" if content.endswith("\n") else "\n") + ".aether-graph/\n", encoding="utf-8")
+                    print("✓ .aether-graph/ agregado a .gitignore")
+            else:
+                gi.write_text(".aether-graph/\n", encoding="utf-8")
+                print("✓ .gitignore creado con .aether-graph/")
+        except Exception:
+            pass
 
     elif args.command == "reindex":
         data = json.dumps({"path": str(root), "engine": args.engine}).encode("utf-8")

@@ -72,3 +72,25 @@ def test_image_nodes_get_image_kind(tmp_path):
     kinds = {n["id"]: n["kind"] for n in g["nodes"] if n["id"].startswith("file:")}
     assert kinds.get("file:diagram.png") == "image"
     assert kinds.get("file:foto.jpg") == "image"
+
+
+def test_media_nodes_get_media_kind(tmp_path):
+    (tmp_path / "demo.mp4").write_bytes(b"\x00\x00\x00\x18ftypmp42falso")
+    (tmp_path / "grabacion.mp3").write_bytes(b"ID3falso")
+    g = ASTParser().scan_directory(tmp_path, respect_git=False)
+    kinds = {n["id"]: n["kind"] for n in g["nodes"] if n["id"].startswith("file:")}
+    assert kinds.get("file:demo.mp4") == "media"
+    assert kinds.get("file:grabacion.mp3") == "media"
+
+
+def test_transcribe_missing_lib_returns_empty(monkeypatch, tmp_path):
+    import sys
+    import types
+
+    fake = types.ModuleType("faster_whisper")
+    fake.WhisperModel = lambda *a, **k: (_ for _ in ()).throw(ImportError("no disponible"))
+    monkeypatch.setitem(sys.modules, "faster_whisper", fake)
+    p = tmp_path / "audio.mp3"
+    p.write_bytes(b"basura")
+    from aether_graph.core.docreader import transcribe_media
+    assert transcribe_media(p) == ""

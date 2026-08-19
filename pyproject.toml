@@ -28,6 +28,9 @@ multimodal = [
     "python-docx>=1.1.0",
     "openpyxl>=3.1.0"
 ]
+media = [
+    "faster-whisper>=1.0.0"
+]
 
 [project.scripts]
 aether-graph = "aether_graph.cli:main"
