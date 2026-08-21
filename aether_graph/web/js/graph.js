@@ -1,7 +1,7 @@
 import { state, PALETTES, COMM_COLORS, getCommKey, safePaint } from './state.js';
-import { nodeColor, nodeVal, squareNodePainter } from './painters.js';
+import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
-import { apply2DStyle, apply3DStyle } from './styles.js';
+import { apply2DStyle, apply3DStyle, paintNodePointerArea } from './styles.js';
 
 export function destroyGraph() {
       stop3DRotation();
@@ -9,6 +9,7 @@ export function destroyGraph() {
       if (state.pulse3dRaf) { cancelAnimationFrame(state.pulse3dRaf); state.pulse3dRaf = null; }
       state.pulseSim = null;
       if (state.holoBgRo) { state.holoBgRo.disconnect(); state.holoBgRo = null; }
+      uninstallReliableNodeDrag();
       if (state.graphInst) {
         try { state.graphInst._destructor && state.graphInst._destructor(); } catch(e){}
         state.graphInst = null;
@@ -70,9 +71,17 @@ export function toggleAllComm(checked) {
       applyFilter();
     }
 
+export function escapeHtml(text) {
+      if (text === null || text === undefined) return '';
+      const div = document.createElement('div');
+      div.textContent = String(text);
+      return div.innerHTML;
+    }
+
 export function applyFilter() {
-      const q        = (document.getElementById('search-box').value || '').toLowerCase();
+      const q        = (document.getElementById('search-box')?.value || '').toLowerCase();
       const showFile = document.getElementById('f-file')?.checked ?? true;
+      const showMedia = document.getElementById('f-media')?.checked ?? true;
       const showCls  = document.getElementById('f-class')?.checked ?? true;
       const showFn   = document.getElementById('f-func')?.checked ?? true;
       const showAgt  = document.getElementById('f-agent')?.checked ?? true;
@@ -85,10 +94,13 @@ export function applyFilter() {
 
       const filteredNodes = state.fullData.nodes.filter(n => {
         const k = n.kind || '';
-        if ((k === 'file' || k === 'module' || k === 'scene') && !showFile) return false;
+        const isDocMedia = isDocOrMedia(n);
+
+        if (isDocMedia && !showMedia) return false;
+        if ((k === 'file' || k === 'module' || k === 'scene' || k === 'asset' || k === 'ui' || k === 'enum') && !isDocMedia && !showFile) return false;
         if ((k === 'class' || k === 'interface' || k === 'csharp' || k === 'struct') && !showCls) return false;
         if ((k === 'function' || k === 'method') && !showFn) return false;
-        if ((k.includes('agent') || k.includes('orchestrator') || k.includes('hermes') || k === 'asset' || k === 'ui') && !showAgt) return false;
+        if ((k.includes('agent') || k.includes('orchestrator') || k.includes('hermes')) && !showAgt) return false;
         if ((n.degree || 0) < minDeg)  return false;
         if (hideIso && (n.degree || 0) === 0) return false;
 
@@ -125,20 +137,23 @@ export function applyFilter() {
     }
 
 export function onNodeClick(node) {
-      state.selectedNode = node;
       if (!node) return closeBlastPanel();
+      state.selectedNode = node;
 
       // Find direct neighbors
       const neighbors = new Set();
       const connectedLinks = [];
-      state.fullData.links.forEach(l => {
+      const allLinks = (state.fullData && state.fullData.links) || [];
+      const allNodes = (state.fullData && state.fullData.nodes) || [];
+      allLinks.forEach(l => {
         const s = typeof l.source === 'object' ? l.source.id : l.source;
         const t = typeof l.target === 'object' ? l.target.id : l.target;
         if (s === node.id) { neighbors.add(t); connectedLinks.push(l); }
         if (t === node.id) { neighbors.add(s); connectedLinks.push(l); }
       });
+      state.selectedNeighbors = neighbors;
 
-      const neighborNodes = state.fullData.nodes.filter(n => neighbors.has(n.id));
+      const neighborNodes = allNodes.filter(n => neighbors.has(n.id));
 
       // Link info (label + confidence) per neighbor
       const linkInfo = {};
@@ -153,77 +168,215 @@ export function onNodeClick(node) {
 
       const panel = document.getElementById('blast-panel');
       const body = document.getElementById('blast-content');
-      panel.style.display = 'block';
+      if (panel) panel.style.display = 'block';
+      if (!body) return;
+
+      const safeName = escapeHtml(node.name || node.id || 'Sin nombre');
+      const safeKind = escapeHtml(node.kind || 'nodo');
+      const safeId = escapeHtml(node.id || '');
+
+      const descText = node.details || (node.id ? node.id.replace(/^(file|symbol):/, '') : 'Sin detalles disponibles');
+      const descBlock = (function(){
+        state.descExpanded = false;
+        const raw = escapeHtml(descText);
+        if (raw.length > 130) {
+          const shortText = raw.substring(0, 130) + '...';
+          return '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;">' +
+            '<strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong>' +
+            '<span id="desc-short" style="color:#f8fafc;font-size:11px;line-height:1.4;overflow-wrap:anywhere;">' + shortText + '</span>' +
+            '<span id="desc-full" style="color:#f8fafc;font-size:11px;line-height:1.4;display:none;overflow-wrap:anywhere;">' + raw + '</span>' +
+            '<div><button id="btn-toggle-desc" onclick="toggleNodeDesc()" style="background:none;border:none;color:#38bdf8;cursor:pointer;font-size:10px;padding:2px 0 0 0;font-weight:600;">Ver más ▼</button></div>' +
+            '</div>';
+        } else {
+          return '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;"><strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong><span style="color:#f8fafc;font-size:11px;line-height:1.4;">' + raw + '</span></div>';
+        }
+      })();
 
       body.innerHTML =
-        '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + node.name + '</span></div>' +
-        '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + (node.kind || 'nodo') + '</span></div>' +
-        (node.details ? (function(){
-          const raw = node.details;
-          state.descExpanded = false;
-          if (raw.length > 130) {
-            const shortText = raw.substring(0, 130) + '...';
-            return '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;">' +
-              '<strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong>' +
-              '<span id="desc-short" style="color:#f8fafc;font-size:11px;line-height:1.4;">' + shortText + '</span>' +
-              '<span id="desc-full" style="color:#f8fafc;font-size:11px;line-height:1.4;display:none;">' + raw + '</span>' +
-              '<div><button id="btn-toggle-desc" onclick="toggleNodeDesc()" style="background:none;border:none;color:#38bdf8;cursor:pointer;font-size:10px;padding:2px 0 0 0;font-weight:600;">Ver más ▼</button></div>' +
-              '</div>';
-          } else {
-            return '<div style="margin:5px 0;padding:6px 8px;background:#1e293b;border-radius:6px;border:1px solid #334155;"><strong style="color:#38bdf8;font-size:10px;display:block;margin-bottom:2px;">Descripción / Detalle:</strong><span style="color:#f8fafc;font-size:11px;line-height:1.4;">' + raw + '</span></div>';
-          }
-        })() : '') +
+        '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + safeName + '</span></div>' +
+        '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + safeKind + '</span></div>' +
+        descBlock +
         '<div style="display:flex;gap:12px;margin-top:2px;">' +
           '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
         '</div>' +
-        '<button class="btn-action btn-primary" style="margin-top:4px;justify-content:center;" data-node-id="' + node.id.replace(/"/g, '&quot;') + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
+        '<button class="btn-action btn-primary" style="margin-top:4px;justify-content:center;" data-node-id="' + safeId + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
         '<hr style="border:none;border-top:1px solid #1e293b;margin:4px 0;">' +
         '<div style="font-weight:700;color:#64748b;font-size:10px;">VECINOS DIRECTOS (BLAST RADIUS):</div>' +
         '<div style="max-height:110px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">' +
         (neighborNodes.length ? neighborNodes.slice(0, 15).map(n =>
-          '<div style="display:flex;justify-content:space-between;background:#1a2234;padding:3px 6px;border-radius:4px;cursor:pointer;" data-node-id="' + n.id.replace(/"/g, '&quot;') + '" onclick="focusNode(this.dataset.nodeId)">' +
-            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;">' + n.name + '</span>' +
-            '<span style="color:#64748b;font-size:9px;">' + (n.kind || '') + (linkInfo[n.id] ? ' · ' + linkInfo[n.id].join(', ') : '') + '</span>' +
+          '<div style="display:grid;grid-template-columns:minmax(0,1fr);gap:2px;background:#1a2234;padding:5px 6px;border-radius:4px;cursor:pointer;min-width:0;" data-node-id="' + escapeHtml(n.id) + '" onclick="focusNode(this.dataset.nodeId)">' +
+            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">' + escapeHtml(n.name) + '</span>' +
+            '<span style="color:#64748b;font-size:9px;line-height:1.3;min-width:0;overflow-wrap:anywhere;word-break:break-word;">' + escapeHtml(n.kind || '') + (linkInfo[n.id] ? ' · ' + escapeHtml(linkInfo[n.id].join(', ')) : '') + '</span>' +
           '</div>'
         ).join('') : '<div style="color:#64748b;">Sin conexiones directas</div>') +
         '</div>';
 
-      // Highlight neighbors by dimming others
-      if (state.graphInst && state.activeDim === '2d') {
+      // Highlight neighbors by dimming others in standard 2D and 3D
+      if (state.graphInst) {
         state.graphInst.nodeColor(n => {
           if (n.id === node.id) return '#ff007f';
           if (neighbors.has(n.id)) return nodeColor(n);
-          return 'rgba(255,255,255,0.08)';
+          return 'rgba(255,255,255,0.22)';
         });
       }
     }
 
+export function nearestNodeAtPointer(event, fallbackNode = null) {
+      if (!event || !state.graphInst || state.activeDim !== '2d' ||
+          typeof state.graphInst.graph2ScreenCoords !== 'function') return fallbackNode;
+      const container = document.getElementById('graph-container');
+      if (!container) return fallbackNode;
+      const rect = container.getBoundingClientRect();
+      const px = event.clientX - rect.left;
+      const py = event.clientY - rect.top;
+      if (!Number.isFinite(px) || !Number.isFinite(py)) return fallbackNode;
+
+      const nodes = state.graphInst.graphData().nodes || [];
+      let nearest = null;
+      let nearestDistance = Infinity;
+      for (const candidate of nodes) {
+        if (!Number.isFinite(candidate.x) || !Number.isFinite(candidate.y)) continue;
+        const point = state.graphInst.graph2ScreenCoords(candidate.x, candidate.y);
+        if (!point) continue;
+        const distance = Math.hypot(point.x - px, point.y - py);
+        if (distance < nearestDistance) {
+          nearest = candidate;
+          nearestDistance = distance;
+        }
+      }
+
+      // This also recovers clicks that ForceGraph classified as background.
+      // A small screen-space limit avoids opening distant nodes on empty space.
+      return nearest && nearestDistance <= 16 ? nearest : fallbackNode;
+    }
+
+export function handleGraphNodeClick(node, event) {
+      onNodeClick(nearestNodeAtPointer(event, node));
+    }
+
+export function handleGraphBackgroundClick(event) {
+      const nearest = nearestNodeAtPointer(event);
+      if (nearest) onNodeClick(nearest);
+      else closeBlastPanel();
+    }
+
+export function uninstallReliableNodeDrag() {
+      const container = document.getElementById('graph-container');
+      const handlers = container && container._aetherDragHandlers;
+      if (!handlers) return;
+      container.removeEventListener('pointerdown', handlers.down, true);
+      container.removeEventListener('pointermove', handlers.move, true);
+      container.removeEventListener('pointerup', handlers.up, true);
+      container.removeEventListener('pointercancel', handlers.cancel, true);
+      container.removeEventListener('click', handlers.click, true);
+      delete container._aetherDragHandlers;
+    }
+
+export function installReliableNodeDrag() {
+      const container = document.getElementById('graph-container');
+      if (!container || state.activeDim !== '2d') return;
+      uninstallReliableNodeDrag();
+
+      let drag = null;
+      let suppressClickUntil = 0;
+      const finish = (event, cancelled) => {
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const node = drag.node;
+        const moved = drag.moved;
+        node.fx = undefined;
+        node.fy = undefined;
+        try { container.releasePointerCapture(event.pointerId); } catch (_) {}
+        drag = null;
+        suppressClickUntil = performance.now() + 350;
+        if (!cancelled && !moved) onNodeClick(node);
+      };
+      const handlers = {
+        down(event) {
+          if (event.button !== 0 || !state.graphInst || state.activeDim !== '2d') return;
+          const node = nearestNodeAtPointer(event);
+          if (!node) return; // Preserve normal canvas pan/zoom on empty space.
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          drag = { node, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
+          node.fx = node.x;
+          node.fy = node.y;
+          try { container.setPointerCapture(event.pointerId); } catch (_) {}
+        },
+        move(event) {
+          if (!drag || event.pointerId !== drag.pointerId || !state.graphInst) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 3) drag.moved = true;
+          const rect = container.getBoundingClientRect();
+          const point = state.graphInst.screen2GraphCoords(event.clientX - rect.left, event.clientY - rect.top);
+          if (!point) return;
+          drag.node.fx = point.x;
+          drag.node.fy = point.y;
+          drag.node.x = point.x;
+          drag.node.y = point.y;
+          if (typeof state.graphInst.d3ReheatSimulation === 'function') state.graphInst.d3ReheatSimulation();
+        },
+        up(event) { finish(event, false); },
+        cancel(event) { finish(event, true); },
+        click(event) {
+          if (performance.now() < suppressClickUntil) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }
+      };
+      container._aetherDragHandlers = handlers;
+      container.addEventListener('pointerdown', handlers.down, true);
+      container.addEventListener('pointermove', handlers.move, true);
+      container.addEventListener('pointerup', handlers.up, true);
+      container.addEventListener('pointercancel', handlers.cancel, true);
+      container.addEventListener('click', handlers.click, true);
+    }
+
 export function closeBlastPanel() {
       state.selectedNode = null;
-      document.getElementById('blast-panel').style.display = 'none';
+      state.selectedNeighbors = null;
+      const panel = document.getElementById('blast-panel');
+      if (panel) panel.style.display = 'none';
       if (state.graphInst) {
         state.graphInst.nodeColor(n => nodeColor(n));
       }
     }
 
 export function focusNode(nodeId) {
-      const node = state.fullData.nodes.find(n => n.id === nodeId);
-      if (node && state.graphInst) {
-        if (state.activeDim === '2d') {
-          state.graphInst.centerAt(node.x, node.y, 400);
-          state.graphInst.zoom(3, 400);
-        } else {
-          const dist = 120;
-          const ratio = 1 + dist / Math.hypot(node.x, node.y, node.z);
-          state.graphInst.cameraPosition(
-            { x: node.x * ratio, y: node.y * ratio, z: node.z * ratio },
-            node,
-            1200
-          );
-        }
-        onNodeClick(node);
+      if (!nodeId) return;
+      let activeNodes = (state.graphInst && typeof state.graphInst.graphData === 'function')
+        ? (state.graphInst.graphData().nodes || [])
+        : [];
+      let node = activeNodes.find(n => n.id === nodeId);
+      if (!node) {
+        node = (state.fullData && state.fullData.nodes) ? state.fullData.nodes.find(n => n.id === nodeId) : null;
       }
+      if (!node) return;
+
+      if (state.graphInst) {
+        if (state.activeDim === '2d') {
+          if (Number.isFinite(node.x) && Number.isFinite(node.y)) {
+            state.graphInst.centerAt(node.x, node.y, 400);
+            state.graphInst.zoom(2.5, 400);
+          }
+        } else {
+          if (Number.isFinite(node.x) && Number.isFinite(node.y) && Number.isFinite(node.z)) {
+            const dist = 120;
+            const h = Math.hypot(node.x, node.y, node.z) || 1;
+            const ratio = 1 + dist / h;
+            state.graphInst.cameraPosition(
+              { x: node.x * ratio, y: node.y * ratio, z: node.z * ratio },
+              node,
+              1000
+            );
+          }
+        }
+      }
+      onNodeClick(node);
     }
 
 export function toggleNodeDesc() {
@@ -317,9 +470,12 @@ export function loadGraph() {
 
         const tooltip = n => {
           const hasDesc = n.details && n.details.length > 0;
-          const detailsHtml = hasDesc ? `<br/><span style="color:#38bdf8;font-size:11px;line-height:1.3;display:block;margin-top:3px;">${n.details}</span>` : '';
-          return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:320px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);">` +
-            `<strong>${n.name}</strong> <span style="color:#64748b;font-size:10px;">(${n.kind || ''})</span>` +
+          const safeName = escapeHtml(n.name || '');
+          const safeKind = escapeHtml(n.kind || '');
+          const safeDetails = hasDesc ? escapeHtml(n.details) : '';
+          const detailsHtml = hasDesc ? `<br/><span style="color:#38bdf8;font-size:11px;line-height:1.3;display:block;margin-top:3px;">${safeDetails}</span>` : '';
+          return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:320px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);pointer-events:none;user-select:none;">` +
+            `<strong>${safeName}</strong> <span style="color:#64748b;font-size:10px;">(${safeKind})</span>` +
             detailsHtml +
             `<div style="margin-top:5px;font-size:10px;"><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#94a3b8;">Conexiones: ${n.degree || 0}</span></div>` +
             `</div>`;
@@ -329,18 +485,25 @@ export function loadGraph() {
           if (state.activeDim === '2d') {
             state.graphInst = ForceGraph()(container)
             .backgroundColor('#0b0e17')
-            .graphData(data)
             .nodeId('id')
             .nodeVal(nodeVal)
-            .nodeColor(n => nodeColor(n))
-            .nodeLabel(tooltip).onNodeClick(onNodeClick)
+            .nodeRelSize(5)
+            .nodeCanvasObjectMode(() => 'after')
+            .linkCanvasObjectMode(() => 'replace')
+            .nodePointerAreaPaint(paintNodePointerArea)
+            .autoPauseRedraw(false)
+            .enableNodeDrag(true)
+            .onNodeDragEnd(node => {
+              node.fx = undefined;
+              node.fy = undefined;
+            })
+            .linkHoverPrecision(0)
+            .linkPointerAreaPaint(() => {})
+            .nodeLabel(tooltip)
+            .onNodeClick(handleGraphNodeClick)
+            .onBackgroundClick(handleGraphBackgroundClick)
             .linkColor(l => (l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : p.link))
             .linkWidth(l => (l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW))
-            .linkDirectionalParticles(2)
-            .linkDirectionalParticleWidth(2.0)
-            .linkDirectionalParticleSpeed(0.006)
-            .linkDirectionalArrowLength(4)
-            .linkDirectionalArrowRelPos(0.95)
             .linkDirectionalParticles(() => (state.showParticles ? 2 : 0))
             .linkDirectionalParticleWidth(2.5)
             .linkDirectionalParticleSpeed(0.006)
@@ -353,9 +516,11 @@ export function loadGraph() {
             .d3VelocityDecay(0.22)
             .d3Force('charge', d3.forceManyBody().strength(-300))
             .d3Force('link',   d3.forceLink().distance(80).strength(0.4))
-            .d3Force('collide', d3.forceCollide().radius(22));
+            .d3Force('collide', d3.forceCollide().radius(22))
+            .graphData(data);
 
             apply2DStyle();
+            installReliableNodeDrag();
         } else {
           // Assign initial 3D positions so nodes spread in X, Y, Z sphere
           data.nodes.forEach(n => {
@@ -365,11 +530,19 @@ export function loadGraph() {
           });
           state.graphInst = ForceGraph3D()(container)
             .backgroundColor('#0b0e17')
-            .graphData(data)
             .nodeId('id')
             .nodeVal(nodeVal)
-            .nodeColor(n => nodeColor(n))
-            .nodeLabel(tooltip).onNodeClick(onNodeClick)
+            .nodeRelSize(8)
+            .nodeColor(n => {
+              if (state.selectedNode) {
+                if (n.id === state.selectedNode.id) return '#ff007f';
+                if (state.selectedNeighbors && state.selectedNeighbors.has(n.id)) return nodeColor(n);
+                return 'rgba(255,255,255,0.22)';
+              }
+              return nodeColor(n);
+            })
+            .linkHoverPrecision(0)
+            .nodeLabel(tooltip).onNodeClick(handleGraphNodeClick).onBackgroundClick(handleGraphBackgroundClick)
             .linkColor(l => (l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : p.link))
             .linkWidth(l => (l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW))
             .linkDirectionalParticles(() => (state.showParticles ? 2 : (state.linkStyle === 'dashed' ? 3 : 0)))
@@ -378,7 +551,7 @@ export function loadGraph() {
             .linkDirectionalArrowLength(() => (state.showArrows ? 5 : 0))
             .linkDirectionalArrowRelPos(0.95)
             .linkCurvature(() => (state.linkStyle === 'curved' ? 0.25 : (state.linkStyle === 'dashed' ? 0.15 : 0.0)))
-            .nodeRelSize(5);
+            .graphData(data);
 
           // Use 3D internal force engine (prevents 2D planar flattening)
           state.graphInst.d3Force('charge').strength(-250);
@@ -403,27 +576,19 @@ export function loadGraph() {
 
 export function refreshStyleInPlace() {
       if (!state.graphInst) return;
+      if (state.activeDim === '2d') {
+        apply2DStyle();
+        return;
+      }
       if (state.graphStyle === 'standard') {
-        if (state.activeDim === '2d') {
-          if (state.nodeShape === 'squares') {
-            state.graphInst.nodeCanvasObject(safePaint(squareNodePainter, 'cuadrados'));
-          } else {
-            state.graphInst.nodeCanvasObject(null);
-          }
+        if (state.nodeShape === 'squares') {
+          apply3DStyle();
         } else {
-          if (state.nodeShape === 'squares') {
-            apply3DStyle();
-          } else {
-            state.graphInst.nodeColor(n => nodeColor(n));
-          }
+          state.graphInst.nodeColor(n => nodeColor(n));
         }
         return;
       }
-      if (state.activeDim === '2d') {
-        apply2DStyle();
-      } else {
-        apply3DStyle();
-      }
+      apply3DStyle();
     }
 
 export function changeGraphStyle() {
@@ -516,4 +681,3 @@ export function updateEstTime() {
         }
       }
     }
-

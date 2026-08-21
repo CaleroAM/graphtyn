@@ -122,7 +122,7 @@ class ASTParser:
                 node_ids.add(p_id)
 
             if f_id not in node_ids:
-                kind = "asset" if ext in (".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml") else ("image" if ext in _IMAGE_EXTS else ("media" if ext in _MEDIA_EXTS else "file"))
+                kind = "asset" if ext in (".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml") else ("image" if ext in _IMAGE_EXTS else ("media" if ext in _MEDIA_EXTS else ("doc" if ext in (".pdf", ".docx", ".xlsx", ".xlsm") else "file")))
                 nodes.append({
                     "id": f_id, "name": path.name, "kind": kind,
                     "val": 5, "color": "#38bdf8", "details": rel_file

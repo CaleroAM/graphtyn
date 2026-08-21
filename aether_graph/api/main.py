@@ -186,6 +186,7 @@ def reindex_project(payload: dict = Body(...)):
     engine = payload.get("engine", "ast_local_llm")
     force_full = bool(payload.get("full"))
     model_override = payload.get("model") or None
+    vision_model_override = payload.get("vision_model") or None
     if not project_path:
         return JSONResponse({"ok": False, "error": "Falta la ruta del proyecto"}, status_code=400)
     root = Path(project_path).resolve()
@@ -208,13 +209,13 @@ def reindex_project(payload: dict = Body(...)):
             prev = None
 
     changed = None
-    if not force_full and engine == "ast_local_llm" and prev is not None and prev.get("metadata", {}).get("indexed_with") == engine:
+    if not force_full and engine == "ast_local_llm" and prev is not None:
         changed = _detect_changed_files(root)
 
-    if changed is not None:
-        graph = _enrich_with_ai(graph, engine, root, prev=prev, changed=changed, model_override=model_override)
+    if prev is not None and not force_full:
+        graph = _enrich_with_ai(graph, engine, root, prev=prev, changed=changed, model_override=model_override, vision_model_override=vision_model_override)
     else:
-        graph = _enrich_with_ai(graph, engine, root, model_override=model_override)
+        graph = _enrich_with_ai(graph, engine, root, model_override=model_override, vision_model_override=vision_model_override)
 
     enriched_files = sum(
         1 for n in graph.get("nodes", [])
@@ -395,9 +396,12 @@ def ollama_models():
     hosts = [
         os.environ.get("OLLAMA_HOST"),
         "http://localhost:11434",
+        "http://127.0.0.1:11434",
         "http://172.17.0.1:11434",
         "http://host.docker.internal:11434"
     ]
+    _VISION_KEYWORDS = ("vl", "vision", "minicpm-v", "llava", "bakllava", "moondream")
+    _EMBED_KEYWORDS = ("embed", "nomic-embed", "mxbai-embed")
     for h in hosts:
         if not h:
             continue
@@ -405,10 +409,26 @@ def ollama_models():
             req = urllib.request.Request(f"{h}/api/tags")
             with urllib.request.urlopen(req, timeout=4) as r:
                 m_data = json.loads(r.read().decode("utf-8"))
-                return JSONResponse({"host": h, "models": [m["name"] for m in m_data.get("models", [])]})
+                all_models = [m["name"] for m in m_data.get("models", [])]
+                code_models = []
+                vision_models = []
+                for m in all_models:
+                    ml = m.lower()
+                    if any(k in ml for k in _EMBED_KEYWORDS):
+                        continue  # skip embedding-only models
+                    if any(k in ml for k in _VISION_KEYWORDS):
+                        vision_models.append(m)
+                    else:
+                        code_models.append(m)
+                return JSONResponse({
+                    "host": h,
+                    "models": all_models,
+                    "code_models": code_models,
+                    "vision_models": vision_models
+                })
         except Exception:
             continue
-    return JSONResponse({"host": None, "models": []})
+    return JSONResponse({"host": None, "models": [], "code_models": [], "vision_models": []})
 
 
 @app.get("/api/graph")
@@ -430,6 +450,19 @@ def get_graph(path: str = ".", view: str = "code"):
             (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
         except OSError:
             pass
+
+    _IMG_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"}
+    _MED_EXTS = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg"}
+    _DOC_EXTS = {".pdf", ".docx", ".xlsx", ".xlsm"}
+    for n in (data or {}).get("nodes", []):
+        name = n.get("name", "").lower()
+        suffix = Path(name).suffix.lower()
+        if suffix in _IMG_EXTS:
+            n["kind"] = "image"
+        elif suffix in _MED_EXTS:
+            n["kind"] = "media"
+        elif suffix in _DOC_EXTS:
+            n["kind"] = "doc"
 
     if view == "semantic":
         return JSONResponse(generate_semantic_graph(data))

@@ -165,3 +165,10 @@
     body.left-collapsed .sidebar-toggle.left-toggle { left: 0px; }
     .sidebar-toggle.right-toggle { right: 260px; border-top-left-radius: 6px; border-bottom-left-radius: 6px; border-right: none; }
     body.right-collapsed .sidebar-toggle.right-toggle { right: 0px; }
+
+    /* ForceGraph floating tooltips must NEVER hijack pointer events or block clicks */
+    .float-tooltip-kap, .graph-tooltip, .scene-tooltip {
+      pointer-events: none !important;
+      z-index: 1000 !important;
+      user-select: none !important;
+    }

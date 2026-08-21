@@ -26,16 +26,26 @@ _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
 _MEDIA_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg")
 
-def _vision_ask(host: str, model: str, image_path: Path, timeout: int = 240) -> str:
+def _vision_ask(host: str, model: str, image_path: Path, timeout: int = 60) -> str:
     try:
         import base64
-        b64 = base64.b64encode(image_path.read_bytes()).decode()
+        try:
+            from PIL import Image
+            import io
+            im = Image.open(image_path)
+            im.thumbnail((512, 512))
+            buf = io.BytesIO()
+            im.convert("RGB").save(buf, format="JPEG", quality=80)
+            b64 = base64.b64encode(buf.getvalue()).decode()
+        except Exception:
+            b64 = base64.b64encode(image_path.read_bytes()).decode()
     except Exception:
         return ""
     prompt = ("Describe en UNA frase corta y densa en espanol: QUE muestra esta imagen "
               "y PARA QUE sirve como artefacto tecnico en un proyecto de software. "
-              "Responde SOLO con la frase, sin etiquetas.")
-    num_predict = 3000 if "vl" in model else 120
+              "Responde SOLO con la frase, sin etiquetas, sin prefijos, sin 'Esta imagen'.")
+    # VL models need more tokens because they may use internal reasoning before answering
+    num_predict = 500 if "vl" in model.lower() else 150
     try:
         req = urllib.request.Request(f"{host}/api/chat", data=json.dumps({
             "model": model,
@@ -47,24 +57,32 @@ def _vision_ask(host: str, model: str, image_path: Path, timeout: int = 240) -> 
             res = json.loads(resp.read().decode('utf-8'))
             msg = res.get("message", {}) or {}
             content = (msg.get("content") or "").strip()
-            if content.startswith("<think>"):
-                content = ""
+            # Strip <think>...</think> blocks (qwen3-vl reasoning)
+            content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
             if not content:
                 return ""
+            # Trim to first sentence if too long
+            if len(content) > 180:
+                idx = content.find(". ")
+                if idx > 30:
+                    content = content[:idx + 1]
+                else:
+                    content = content[:180]
             return content
     except Exception as e:
-        print(f"[AI Enrich] Vision request failed: {e}")
-        return ""
-
+        print(f"[AI Enrich] Vision request failed for {image_path.name} with '{model}': {e}")
 def _llm_ask(host: str, model: str, prompt: str, timeout: int = 45, temperature: float = 0.3) -> str:
     try:
         req = urllib.request.Request(f"{host}/api/generate", data=json.dumps({
             "model": model, "prompt": prompt, "stream": False,
-            "options": {"temperature": temperature}
+            "options": {"temperature": temperature, "num_predict": 200}
         }).encode('utf-8'), headers={'Content-Type': 'application/json'})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             res = json.loads(resp.read().decode('utf-8'))
-            return res.get("response", "").strip()
+            answer = res.get("response", "").strip()
+            # Strip <think>...</think> blocks
+            answer = re.sub(r"<think>.*?</think>", "", answer, flags=re.DOTALL).strip()
+            return answer
     except Exception as e:
         print(f"[AI Enrich] LLM request failed: {e}")
         return ""
@@ -154,6 +172,13 @@ def _maybe_compact(host: str, model: str, ans: str) -> str:
 def _clean_answer(text: str) -> str:
     text = re.sub(r"\s+", " ", text.strip())
     text = re.sub(r"^[\"'\u201c\u201d]+|[\"'\u201c\u201d]+$", "", text).strip()
+    # Strip markdown bolding / headers
+    text = re.sub(r"^\s*#+\s*", "", text)
+    text = re.sub(r"^\s*[-*]\s*", "", text)
+    text = re.sub(
+        r"^(?:esta|este|la|el)?\s*(?:la\s+)?(?:imagen|captura|textura|diagrama|grafico|gráfico)\s+"
+        r"(?:muestra|representa|es|contiene|presenta|describe)\s*",
+        "", text, flags=re.I)
     text = re.sub(
         r"^(?:esta|este|la|el)?\s*(?:la\s+)?(?:funcion|función|clase|metodo|método|archivo|modulo|módulo)\s+"
         r"(?:`[^`]+`|'[^']+'|\S+)\s*(?:en\s+\S+)?\s*[:\-]?\s*",
@@ -163,6 +188,7 @@ def _clean_answer(text: str) -> str:
         r"(?:archivo|funcion|función|clase|metodo|método|modulo|módulo)\s+"
         r"(?:python|c#|php|javascript|typescript|java|go|rust|ruby|markdown|json|shell|bash|sql|shader|unity|swift|dart|kotlin|svelte|vue)\s*",
         "", text, flags=re.I)
+    text = re.sub(r"^(?:en resumen|en conclusion|en definitiva)[,:\s]+", "", text, flags=re.I)
     text = text[:1].upper() + text[1:] if text else text
     return text.strip()
 
@@ -232,8 +258,42 @@ def _extract_symbol_source(root_dir: Path, rel_path: str, sym_name: str, kind: s
             break
     return "\n".join(lines[start:end + 1])[:2000]
 
-def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict = None, changed: set = None, model_override: str = None):
-    if engine == "ast_pure" or not root_dir:
+def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict = None, changed: set = None, model_override: str = None, vision_model_override: str = None):
+    if not root_dir:
+        return graph
+    if "metadata" not in graph:
+        graph["metadata"] = {}
+
+    prev_files = {n.get("id"): n.get("details", "") for n in (prev or {}).get("nodes", []) if n.get("id", "").startswith("file:")}
+    prev_syms = {n.get("id"): n.get("details", "") for n in (prev or {}).get("nodes", []) if n.get("id", "").startswith("symbol:")}
+    prev_meta = (prev or {}).get("metadata", {}) or {}
+
+    # 1. Fallback & preserve previous cached details for all nodes (images, docs, files, symbols, modules)
+    for n in graph.get("nodes", []):
+        nid = n.get("id", "")
+        if n.get("kind") in ("module", "dir") and not n.get("details"):
+            n["details"] = f"Carpeta de módulos: {n.get('name')}"
+        elif nid.startswith("file:") and nid in prev_files and prev_files[nid]:
+            rel_path = nid.replace("file:", "")
+            prev_desc = prev_files[nid]
+            is_enriched = bool(
+                prev_desc and
+                prev_desc != rel_path and
+                not prev_desc.startswith("Imagen en ") and
+                not prev_desc.startswith("Audio/Video en ")
+            )
+            if is_enriched and (changed is None or rel_path not in changed):
+                n["details"] = prev_desc
+        elif nid.startswith("symbol:") and nid in prev_syms and prev_syms[nid]:
+            parts = nid.split(":")
+            if len(parts) >= 2:
+                rel_path = parts[1]
+                prev_desc = prev_syms[nid]
+                is_sym_enriched = bool(prev_desc and not prev_desc.startswith("Función/Método en "))
+                if (changed is not None and rel_path not in changed and prev_desc) or (changed is None and is_sym_enriched):
+                    n["details"] = prev_desc
+
+    if engine == "ast_pure":
         return graph
 
     # Filter code file & class nodes for individual code snippet analysis
@@ -246,11 +306,13 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
     if engine == "ast_local_llm":
         ollama_hosts = [
             os.environ.get("OLLAMA_HOST"),
+            "http://localhost:11434",
+            "http://127.0.0.1:11434",
             "http://172.17.0.1:11434",
-            "http://host.docker.internal:11434",
-            "http://localhost:11434"
+            "http://host.docker.internal:11434"
         ]
         connected_host = None
+        available_models = []
         forced_model = model_override or os.environ.get("OLLAMA_MODEL")
         model_name = forced_model or "llama3.2:latest"
 
@@ -261,6 +323,7 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                 with urllib.request.urlopen(req_m, timeout=4) as r:
                     m_data = json.loads(r.read().decode('utf-8'))
                     models = [m["name"] for m in m_data.get("models", [])]
+                    available_models = models
                     if forced_model:
                         if any(m == forced_model or m.split(":")[0] == forced_model.split(":")[0] for m in models):
                             model_name = forced_model
@@ -291,15 +354,6 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
             except Exception:
                 pass
 
-            # 1. Fallback details for folder & module nodes
-            for n in graph.get("nodes", []):
-                if n.get("kind") in ("module", "dir") and not n.get("details"):
-                    n["details"] = f"Carpeta de módulos: {n.get('name')}"
-
-            prev_files = {n.get("id"): n.get("details", "") for n in (prev or {}).get("nodes", []) if n.get("id", "").startswith("file:")}
-            prev_syms = {n.get("id"): n.get("details", "") for n in (prev or {}).get("nodes", []) if n.get("id", "").startswith("symbol:")}
-            prev_meta = (prev or {}).get("metadata", {}) or {}
-
             # 2. Semantic summaries for every code file (language-aware; incremental reuses unchanged)
             all_code_nodes = [n for n in graph.get("nodes", []) if n.get("kind") not in ("module", "dir")]
             file_limit = int(os.environ.get("AETHER_FILE_LIMIT", "0"))
@@ -316,8 +370,15 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
             for n in file_nodes:
                 nid = n.get("id", "")
                 rel_path = nid.replace("file:", "")
-                if changed is not None and rel_path not in changed and prev_files.get(nid):
-                    n["details"] = prev_files[nid]
+                prev_desc = prev_files.get(nid, "")
+                is_enriched = bool(
+                    prev_desc and
+                    prev_desc != rel_path and
+                    not prev_desc.startswith("Imagen en ") and
+                    not prev_desc.startswith("Audio/Video en ")
+                )
+                if is_enriched and (changed is None or rel_path not in changed):
+                    n["details"] = prev_desc
                     continue
                 file_path = root_dir / rel_path
                 if not file_path.is_file():
@@ -328,8 +389,31 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                     if image_limit > 0 and image_count > image_limit:
                         n["details"] = f"Imagen en {rel_path}"
                         continue
-                    vision_model = os.environ.get("AETHER_VISION_MODEL", "qwen3-vl:2b")
+                    # Vision model selection: user override > env var > auto-detect
+                    vision_model = vision_model_override or os.environ.get("AETHER_VISION_MODEL")
+                    vision_fallback = None
+                    if not vision_model:
+                        # Auto-detect best available vision model
+                        _VISION_PRIORITY = ("minicpm-v4.6:1b", "qwen3-vl:2b", "qwen2.5-vl", "llava", "bakllava", "moondream", "llama3.2-vision")
+                        for vm in _VISION_PRIORITY:
+                            if any(vm in m.lower() for m in available_models):
+                                vision_model = next(m for m in available_models if vm in m.lower())
+                                break
+                        if not vision_model:
+                            vision_model = "minicpm-v4.6:1b" if "minicpm-v4.6:1b" in available_models else "qwen3-vl:2b"
+                    else:
+                        # Build fallback: pick next available vision model different from primary
+                        _VISION_PRIORITY = ("minicpm-v4.6:1b", "qwen3-vl:2b", "qwen2.5-vl", "llava", "bakllava", "moondream")
+                        for vm in _VISION_PRIORITY:
+                            if any(vm in m.lower() for m in available_models):
+                                candidate = next(m for m in available_models if vm in m.lower())
+                                if candidate != vision_model:
+                                    vision_fallback = candidate
+                                    break
                     ans = _vision_ask(connected_host, vision_model, file_path)
+                    if not ans and vision_fallback:
+                        print(f"[AI Enrich] Vision primary '{vision_model}' failed for {rel_path}, trying fallback '{vision_fallback}'...")
+                        ans = _vision_ask(connected_host, vision_fallback, file_path)
                     if ans:
                         n["details"] = f"{_clean_answer(ans)} ({rel_path})"
                     else:
@@ -378,12 +462,14 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                     n["details"] = f"{_maybe_compact(connected_host, model_name, _clean_answer(ans))} ({rel_path})"
 
             # 3. Semantic descriptions for symbol nodes (functions/classes/methods)
-            symbol_limit = int(os.environ.get("AETHER_SYMBOL_LIMIT", "60"))
+            symbol_limit = int(os.environ.get("AETHER_SYMBOL_LIMIT", "0"))
             symbol_nodes = sorted(
                 [n for n in all_code_nodes if n.get("id", "").startswith("symbol:")],
                 key=lambda n: n.get("degree", 0), reverse=True
             )
-            for n in symbol_nodes[:symbol_limit]:
+            if symbol_limit > 0:
+                symbol_nodes = symbol_nodes[:symbol_limit]
+            for n in symbol_nodes:
                 parts = n.get("id", "").split(":")
                 if len(parts) < 3:
                     continue
@@ -392,11 +478,28 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                 if sym_name.startswith("__"):
                     continue
                 nid = n.get("id", "")
-                if changed is not None and rel_path not in changed and prev_syms.get(nid):
-                    n["details"] = prev_syms[nid]
+                prev_desc = prev_syms.get(nid, "")
+                is_sym_enriched = bool(
+                    prev_desc and
+                    " " in prev_desc and
+                    not prev_desc.startswith("Función/Método en ") and
+                    not prev_desc.startswith("Método en ") and
+                    not prev_desc.startswith("Clase en ") and
+                    not prev_desc.startswith("Función en ") and
+                    not prev_desc.startswith("Enum en ") and
+                    not prev_desc.startswith("Struct en ") and
+                    not prev_desc.startswith("Símbolo en ") and
+                    prev_desc != f"{rel_path}:{sym_name}" and
+                    prev_desc != sym_name and
+                    not prev_desc.startswith(rel_path) and
+                    not (prev_desc.count(".") >= 2 and " " not in prev_desc)
+                )
+                if is_sym_enriched and (changed is None or rel_path not in changed):
+                    n["details"] = prev_desc
                     continue
                 sym_kind = n.get("kind", "símbolo")
-                snippet = _extract_symbol_source(root_dir, rel_path, sym_name, kind=sym_kind)
+                actual_sym_name = sym_name.split(".")[-1]
+                snippet = _extract_symbol_source(root_dir, rel_path, actual_sym_name, kind=sym_kind)
                 if not snippet:
                     continue
                 fctx = ""
@@ -409,15 +512,15 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                 neigh_txt = ", ".join(neigh) if neigh else "ningun vecino conocido"
                 prompt = (f"Eres un ingeniero senior. {_FEWSHOT_SYM}"
                           f"AHORA analiza el codigo REAL de abajo y describe SOLO ese codigo (no el ejemplo). "
-                          f"El {sym_kind} '{sym_name}' esta definido en {rel_path}.\n"
+                          f"El {sym_kind} '{actual_sym_name}' esta definido en {rel_path}.\n"
                           f"Contexto del archivo (primeras lineas):\n{fctx or 'sin contexto disponible'}\n"
                           f"En el grafo del proyecto se relaciona con: {neigh_txt}.\n"
                           f"Codigo del {sym_kind}:\n{snippet}\n\n"
                           f"En UNA sola frase corta y densa en espanol: QUE hace y PARA QUE sirve dentro del sistema. "
-                          f"Responde SOLO con la frase, sin 'La funcion', 'El metodo' ni repetir el nombre '{sym_name}' ni la ruta.")
+                          f"Responde SOLO con la frase, sin 'La funcion', 'El metodo', 'La clase' ni repetir el nombre '{actual_sym_name}' ni la ruta.")
                 ans = _llm_ask(connected_host, model_name, prompt, temperature=0.2)
                 if ans:
-                    n["details"] = f"{_maybe_compact(connected_host, model_name, _clean_answer(ans))} ({rel_path}:{sym_name})"
+                    n["details"] = f"{_maybe_compact(connected_host, model_name, _clean_answer(ans))} ({rel_path}:{actual_sym_name})"
 
             # 4. Global architecture summary grounded in real enriched context
             if changed is not None and not changed and prev_meta.get("ai_summary"):

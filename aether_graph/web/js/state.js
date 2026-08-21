@@ -28,6 +28,7 @@ export const state = {
   organic3dOn: true,
   commColorMap: {},
   selectedNode: null,
+  selectedNeighbors: null,
   descExpanded: false,
 };
 
@@ -45,11 +46,23 @@ export const state = {
     export const COMM_COLORS = ['#38bdf8','#f59e0b','#ef4444','#10b981','#a78bfa','#ec4899','#06b6d4','#84cc16','#eab308','#6366f1','#f97316','#14b8a6'];;
 
 export function getCommKey(n) {
-      const raw = (n.details && n.kind === 'file') ? n.details : (n.details || n.name || 'general');
-      const sep = raw.includes('/') ? '/' : '\\\\';
-      const parts = raw.split(sep).filter(Boolean);
-      if (parts.length > 1) return parts[parts.length - 2];
-      const leaf = parts[0] || 'general';
+      if (!n) return 'general';
+      let path = n.path || '';
+      if (!path && n.id) {
+        const parts = n.id.split(':');
+        if (parts.length >= 2) {
+          path = parts[1];
+        } else {
+          path = n.id;
+        }
+      }
+      if (!path) path = n.name || 'general';
+      const sep = path.includes('/') ? '/' : '\\\\';
+      const segments = path.split(sep).filter(Boolean);
+      if (segments.length > 1) {
+        return segments[segments.length - 2];
+      }
+      const leaf = segments[0] || 'general';
       const dotIdx = leaf.indexOf('.');
       return dotIdx > 0 ? leaf.substring(0, dotIdx) : leaf;
     }

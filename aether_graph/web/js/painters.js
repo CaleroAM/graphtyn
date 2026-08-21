@@ -1,7 +1,23 @@
 import { state, PALETTES, getCommKey, hexRgb, mixColor } from './state.js';
 
+export function isDocOrMedia(n) {
+      if (!n) return false;
+      const k = (n.kind || '').toLowerCase();
+      if (k === 'image' || k === 'media' || k === 'doc') return true;
+      const name = (n.name || '').toLowerCase();
+      const id = (n.id || '').toLowerCase();
+      const raw = name || id;
+      return raw.endsWith('.png') || raw.endsWith('.jpg') || raw.endsWith('.jpeg') || raw.endsWith('.webp') ||
+             raw.endsWith('.gif') || raw.endsWith('.bmp') || raw.endsWith('.svg') ||
+             raw.endsWith('.mp3') || raw.endsWith('.wav') || raw.endsWith('.m4a') || raw.endsWith('.ogg') ||
+             raw.endsWith('.mp4') || raw.endsWith('.mov') || raw.endsWith('.webm') ||
+             raw.endsWith('.pdf') || raw.endsWith('.docx') || raw.endsWith('.xlsx') || raw.endsWith('.xlsm') ||
+             raw.endsWith('.md') || raw.endsWith('.txt');
+    }
+
 export function nodeColor(n) {
       if (n.god) return '#f472b6';
+      if (isDocOrMedia(n)) return '#ffffff';
       if (state.activePalette === 'community') {
         const commKey = getCommKey(n);
         return state.commColorMap[commKey] || '#38bdf8';
@@ -22,48 +38,83 @@ export function nodeColor(n) {
 
 export function nodeVal(n) {
       const k = n.kind || '';
-      if (n.god) return state.activeDim === '2d' ? 14 : 16;
-      if (k === 'community' || k === 'semantic_concept') return state.activeDim === '2d' ? 10 : 11;
-      if (k.includes('orchestrator')) return state.activeDim === '2d' ? 20 : 24;
-      if (k.includes('agent') || k.includes('hermes')) return state.activeDim === '2d' ? 12 : 14;
-      if (k === 'class' || k === 'interface') return state.activeDim === '2d' ? 8 : 9;
-      if (k === 'file') return state.activeDim === '2d' ? 6 : 7;
-      return state.activeDim === '2d' ? 3 : 4;
+      if (n.god) return state.activeDim === '2d' ? 16 : 18;
+      if (k === 'community' || k === 'semantic_concept') return state.activeDim === '2d' ? 12 : 14;
+      if (k.includes('orchestrator')) return state.activeDim === '2d' ? 22 : 26;
+      if (k.includes('agent') || k.includes('hermes')) return state.activeDim === '2d' ? 14 : 16;
+      if (k === 'class' || k === 'interface' || k === 'struct') return state.activeDim === '2d' ? 10 : 12;
+      if (k === 'file' || k === 'module') return state.activeDim === '2d' ? 8 : 10;
+      if (isDocOrMedia(n)) return state.activeDim === '2d' ? 9 : 11;
+      return state.activeDim === '2d' ? 7 : 9;
     }
 
 export function squareNodePainter(node, ctx) {
-      const nx = node.x || 0, ny = node.y || 0;
-      const base = Math.max(1.6, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 2.4);
-      const size = base * 0.95;
+      const isSelected = state.selectedNode && state.selectedNode.id === node.id;
+      const isNeighbor = state.selectedNeighbors && state.selectedNeighbors.has(node.id);
+      const hasSelection = !!state.selectedNode;
+
       ctx.save();
+      if (hasSelection && !isSelected && !isNeighbor) {
+        ctx.globalAlpha = 0.2;
+      }
+      const nx = node.x || 0, ny = node.y || 0;
+      const base = Math.max(3.0, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 2.8);
+      const size = base * 0.95 * (isSelected ? 1.4 : 1.0);
       ctx.translate(nx, ny);
       ctx.rotate(0.5 + (nx * 0.002));
-      ctx.fillStyle = nodeColor(node);
+      ctx.fillStyle = isSelected ? '#ff007f' : nodeColor(node);
       ctx.fillRect(-size / 2, -size / 2, size, size);
-      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = isSelected ? '#ffffff' : (isDocOrMedia(node) ? '#ffffff' : 'rgba(255,255,255,0.28)');
+      ctx.lineWidth = isSelected ? 2.0 : 0.8;
       ctx.strokeRect(-size / 2, -size / 2, size, size);
       ctx.restore();
     }
 
 export function neuralNodePainter(node, ctx) {
+      const isSelected = state.selectedNode && state.selectedNode.id === node.id;
+      const isNeighbor = state.selectedNeighbors && state.selectedNeighbors.has(node.id);
+      const hasSelection = !!state.selectedNode;
+
+      ctx.save();
+      if (hasSelection && !isSelected && !isNeighbor) {
+        ctx.globalAlpha = 0.2;
+      }
+
       const nx = node.x || 0, ny = node.y || 0;
-      const base = Math.max(1.5, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 2.4);
+      const base = Math.max(3.0, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 2.8);
       const simE = state.pulseSim ? (state.pulseSim.energy.get(node.id) || 0) : 0;
-      const glow = Math.min(1, (node.god ? 0.9 : 0.18 + Math.min(0.6, (node.degree || 0) / 25)) + simE * 0.6);
+      const glow = Math.min(1, (isSelected ? 1.0 : (node.god ? 0.9 : 0.18 + Math.min(0.6, (node.degree || 0) / 25))) + simE * 0.6);
       const breathe = 0.5 + 0.5 * Math.sin(state.neuralPhase + nx * 0.008 + (node.degree || 0) * 0.4);
-      const a = glow * (0.55 + 0.45 * breathe);
-      const halo = base * (2.6 + 1.4 * breathe);
+      const a = isSelected ? 1.0 : (glow * (0.55 + 0.45 * breathe));
+      const halo = base * (isSelected ? 3.5 : (2.4 + 1.2 * breathe));
+      const isWhite = isDocOrMedia(node);
+
       const g = ctx.createRadialGradient(nx, ny, 0, nx, ny, halo);
-      g.addColorStop(0, `rgba(255,190,225,${Math.min(0.9, a)})`);
-      g.addColorStop(0.4, `rgba(255,90,175,${Math.min(0.6, a * 0.6)})`);
-      g.addColorStop(1, 'rgba(255,90,175,0)');
+      if (isSelected) {
+        g.addColorStop(0, `rgba(255,0,128,1)`);
+        g.addColorStop(0.5, `rgba(255,0,128,0.6)`);
+        g.addColorStop(1, 'rgba(255,0,128,0)');
+      } else if (isWhite) {
+        g.addColorStop(0, `rgba(255,255,255,${Math.min(0.95, a)})`);
+        g.addColorStop(0.4, `rgba(220,235,255,${Math.min(0.7, a * 0.7)})`);
+        g.addColorStop(1, 'rgba(200,225,255,0)');
+      } else {
+        g.addColorStop(0, `rgba(255,190,225,${Math.min(0.9, a)})`);
+        g.addColorStop(0.4, `rgba(255,90,175,${Math.min(0.6, a * 0.6)})`);
+        g.addColorStop(1, 'rgba(255,90,175,0)');
+      }
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(nx, ny, halo, 0, Math.PI * 2); ctx.fill();
-      const bc = hexRgb(state.nodeColorHex || nodeColor(node));
-      const coreC = node.god
-        ? [255, 220, 240]
-        : [Math.round(bc[0] + (255 - bc[0]) * glow * 0.55), Math.round(bc[1] + (255 - bc[1]) * glow * 0.55), Math.round(bc[2] + (255 - bc[2]) * glow * 0.55)];
+
+      const bc = hexRgb(isSelected ? '#ff007f' : (isWhite ? '#ffffff' : (state.nodeColorHex || nodeColor(node))));
+      const coreC = isSelected
+        ? [255, 255, 255]
+        : (node.god
+          ? [255, 220, 240]
+          : (isWhite
+            ? [255, 255, 255]
+            : [Math.round(bc[0] + (255 - bc[0]) * glow * 0.55), Math.round(bc[1] + (255 - bc[1]) * glow * 0.55), Math.round(bc[2] + (255 - bc[2]) * glow * 0.55)]));
+
       ctx.fillStyle = `rgb(${coreC[0]},${coreC[1]},${coreC[2]})`;
       if (state.nodeShape === 'squares') {
         ctx.save();
@@ -73,12 +124,31 @@ export function neuralNodePainter(node, ctx) {
         ctx.fillRect(-s / 2, -s / 2, s, s);
         ctx.restore();
       } else {
-        ctx.beginPath(); ctx.arc(nx, ny, base * 0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(nx, ny, isSelected ? base * 0.85 : base * 0.65, 0, Math.PI * 2); ctx.fill();
       }
+
+      if (isSelected) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.arc(nx, ny, halo * 0.8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
     }
 
 export function neuralLinkPainter(link, ctx) {
       const s = link.source || {}, t = link.target || {};
+      const sid = typeof s === 'object' ? s.id : s;
+      const tid = typeof t === 'object' ? t.id : t;
+      const hasSelection = !!state.selectedNode;
+      const isConnected = hasSelection && (state.selectedNode.id === sid || state.selectedNode.id === tid);
+
+      ctx.save();
+      if (hasSelection && !isConnected) {
+        ctx.globalAlpha = 0.08;
+      }
       const sx = s.x || 0, sy = s.y || 0, tx = t.x || 0, ty = t.y || 0;
       const dx = tx - sx, dy = ty - sy;
       const dist = Math.hypot(dx, dy) || 1;
@@ -102,7 +172,7 @@ export function neuralLinkPainter(link, ctx) {
       grad.addColorStop(0, `rgba(${lc[0]},${lc[1]},${lc[2]},${(0.12 * tw).toFixed(3)})`);
       grad.addColorStop(0.5, `rgba(${Math.min(255, lc[0] + 50)},${Math.min(255, lc[1] + 50)},${Math.min(255, lc[2] + 50)},${(0.38 * tw).toFixed(3)})`);
       grad.addColorStop(1, `rgba(${lc[0]},${lc[1]},${lc[2]},${(0.30 * tw).toFixed(3)})`);
-      ctx.strokeStyle = grad; ctx.lineWidth = w; ctx.lineCap = 'round';
+      ctx.strokeStyle = grad; ctx.lineWidth = isConnected ? w * 1.6 : w; ctx.lineCap = 'round';
       if (dashed) {
         ctx.setLineDash([4, 4]);
         ctx.lineDashOffset = -state.neuralPhase * 3;
@@ -147,22 +217,34 @@ export function neuralLinkPainter(link, ctx) {
           }
         }
       }
+      ctx.restore();
     }
 
 export function holoNodePainter(node, ctx) {
+      const isSelected = state.selectedNode && state.selectedNode.id === node.id;
+      const isNeighbor = state.selectedNeighbors && state.selectedNeighbors.has(node.id);
+      const hasSelection = !!state.selectedNode;
+
+      ctx.save();
+      if (hasSelection && !isSelected && !isNeighbor) {
+        ctx.globalAlpha = 0.35;
+      }
+
       const nx = node.x || 0, ny = node.y || 0;
-      const base = Math.max(1.4, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 2.2);
+      const base = Math.max(3.0, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 2.8);
       const idle = 0.5 + 0.5 * Math.sin(state.neuralPhase * 0.9 + nx * 0.01 + (node.degree || 0) * 0.3);
       const simE = state.pulseSim ? (state.pulseSim.energy.get(node.id) || 0) : 0;
-      const glow = Math.min(1, (node.god ? 0.85 : 0.12 + Math.min(0.5, (node.degree || 0) / 25)) + simE * 0.6);
-      const r = base * (0.8 + 0.3 * idle) * (node.god ? 1.35 : 1);
-      const col = node.god ? [190, 240, 255] : [70, 210, 255];
+      const glow = Math.min(1, (isSelected ? 1.0 : (node.god ? 0.85 : 0.12 + Math.min(0.5, (node.degree || 0) / 25))) + simE * 0.6);
+      const r = base * (0.8 + 0.3 * idle) * (node.god || isSelected ? 1.35 : 1);
+      const isWhite = isDocOrMedia(node);
+
+      const col = isSelected ? [255, 0, 128] : (isWhite ? [255, 255, 255] : (node.god ? [190, 240, 255] : [70, 210, 255]));
       const c = [
-        col[0] + (255 - col[0]) * glow,
-        col[1] + (255 - col[1]) * glow,
-        col[2] + (255 - col[2]) * glow
+        Math.min(255, col[0] + (255 - col[0]) * glow),
+        Math.min(255, col[1] + (255 - col[1]) * glow),
+        Math.min(255, col[2] + (255 - col[2]) * glow)
       ];
-      const haloR = r * 3.2;
+      const haloR = r * (isSelected ? 3.8 : 3.2);
       const halo = ctx.createRadialGradient(nx, ny, 0, nx, ny, haloR);
       halo.addColorStop(0, `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${0.5 + glow * 0.3})`);
       halo.addColorStop(1, `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},0)`);
@@ -184,12 +266,12 @@ export function holoNodePainter(node, ctx) {
         ctx.fill();
       }
       ctx.restore();
-      if (node.god) {
+      if (node.god || isSelected) {
         ctx.save();
         ctx.translate(nx, ny);
         ctx.rotate(-ang * 0.6);
-        ctx.strokeStyle = `rgba(190,240,255,${0.35 + glow * 0.4})`;
-        ctx.lineWidth = Math.max(0.4, 0.7);
+        ctx.strokeStyle = isSelected ? '#ffffff' : `rgba(190,240,255,${0.35 + glow * 0.4})`;
+        ctx.lineWidth = isSelected ? 1.5 : Math.max(0.4, 0.7);
         ctx.setLineDash([5, 3]);
         ctx.beginPath();
         ctx.ellipse(0, 0, r * 3.2, r * 3.2 * 0.82, 0, 0, Math.PI * 2);
@@ -197,17 +279,27 @@ export function holoNodePainter(node, ctx) {
         ctx.setLineDash([]);
         ctx.restore();
       }
+      ctx.restore();
     }
 
 export function holoLinkPainter(link, ctx) {
       const s = link.source || {}, t = link.target || {};
+      const sid = typeof s === 'object' ? s.id : s;
+      const tid = typeof t === 'object' ? t.id : t;
+      const hasSelection = !!state.selectedNode;
+      const isConnected = hasSelection && (state.selectedNode.id === sid || state.selectedNode.id === tid);
+
+      ctx.save();
+      if (hasSelection && !isConnected) {
+        ctx.globalAlpha = 0.08;
+      }
       const sx = s.x || 0, sy = s.y || 0, tx = t.x || 0, ty = t.y || 0;
       if (link._dash === undefined) link._dash = Math.random() < 0.18;
       const act = 0.25 + 0.75 * Math.abs(Math.sin(state.neuralPhase * 0.6 + (link.index !== undefined ? link.index : 0) * 0.7));
       const w = (0.5 + Math.min(1.8, ((s.degree || 0) + (t.degree || 0)) / 30)) * (1 + 0.6 * act);
-      const col = [30 + act * 200, 150 + act * 95, 220 + act * 35];
-      ctx.strokeStyle = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${0.25 + 0.4 * act})`;
-      ctx.lineWidth = Math.max(0.3, w);
+      const col = isConnected ? [255, 100, 200] : [30 + act * 200, 150 + act * 95, 220 + act * 35];
+      ctx.strokeStyle = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${isConnected ? 0.9 : 0.25 + 0.4 * act})`;
+      ctx.lineWidth = isConnected ? Math.max(1.2, w * 1.6) : Math.max(0.3, w);
       if (link._dash) {
         ctx.setLineDash([4, 3]);
         ctx.lineDashOffset = -state.neuralPhase * 4;
@@ -216,5 +308,5 @@ export function holoLinkPainter(link, ctx) {
       }
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tx, ty); ctx.stroke();
       ctx.setLineDash([]);
+      ctx.restore();
     }
-

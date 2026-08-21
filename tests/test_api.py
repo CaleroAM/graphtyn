@@ -27,6 +27,7 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     assert html.status_code == 200
     assert "AetherGraph" in html.text
     assert "/dashboard.css" in html.text and "/dashboard.js" in html.text
+    assert 'id="blast-content"' in html.text and "overflow-wrap:anywhere" in html.text
     css = client.get("/dashboard.css")
     assert css.status_code == 200
     assert "graph-container" in css.text
@@ -41,6 +42,15 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     assert "export const PALETTES" in state_js
     assert "export const COMM_COLORS" in state_js
     assert "import { state }" in client.get("/dashboard.js").text
+    styles_js = client.get("/js/styles.js").text
+    assert "paintNodePointerArea" in styles_js
+    assert "Math.max(7 / gs, base * 1.15)" in styles_js
+    graph_js = client.get("/js/graph.js").text
+    assert "nearestNodeAtPointer" in graph_js
+    assert ".onNodeClick(handleGraphNodeClick)" in graph_js
+    assert "installReliableNodeDrag" in graph_js
+    assert "screen2GraphCoords" in graph_js
+    assert "grid-template-columns:minmax(0,1fr)" in graph_js
     assert client.get("/favicon.svg").status_code == 200
     comp = client.get("/comparison")
     assert comp.status_code == 200

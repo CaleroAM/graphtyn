@@ -89,12 +89,16 @@ export function doReindex(full) {
       const btn = document.getElementById('reindex-btn');
       const engineSel = document.getElementById('engine-sel');
       const engineVal = engineSel ? engineSel.value : 'ast_local_llm';
-      const isLocal = engineVal.startsWith('local:');
-      const engine = isLocal ? 'ast_local_llm' : engineVal;
+      const engine = engineVal;
+      const codeModelSel = document.getElementById('code-model-sel');
+      const visionModelSel = document.getElementById('vision-model-sel');
+      const codeModel = codeModelSel ? codeModelSel.value : '';
+      const visionModel = visionModelSel ? visionModelSel.value : '';
       const estVal = document.getElementById('est-time-val') ? document.getElementById('est-time-val').textContent : '';
       btn.innerHTML = 'Indexando (' + estVal + ')…';
       const body = { path: state.activePath, engine, full: !!full };
-      if (isLocal) body.model = engineVal.replace('local:', '');
+      if (codeModel) body.model = codeModel;
+      if (visionModel) body.vision_model = visionModel;
       fetch('/api/reindex', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(body)
@@ -117,16 +121,46 @@ export function toggleGitignore(checked) {
 
 export function loadOllamaModels() {
       fetch('/api/ollama/models').then(r => r.json()).then(d => {
-        const sel = document.getElementById('engine-sel');
-        if (!sel || !d.models || !d.models.length) return;
-        const current = sel.value;
-        let html = '';
-        d.models.forEach(m => { html += '<option value="local:' + m + '">Ollama · ' + m + '</option>'; });
-        html += '<option value="ast_cloud">AST + Cloud API (Gemini/Claude)</option>';
-        html += '<option value="ast_pure">Solo AST (cero tokens)</option>';
-        sel.innerHTML = html;
-        sel.value = (current === 'ast_local_llm' || !sel.value) ? 'local:' + d.models[0] : current;
+        if (!d.code_models && !d.vision_models) return;
+        // Populate code model selector
+        const codeSel = document.getElementById('code-model-sel');
+        if (codeSel && d.code_models) {
+          let html = '<option value="">Auto-detectar</option>';
+          d.code_models.forEach(m => { html += '<option value="' + m + '">'+m+'</option>'; });
+          codeSel.innerHTML = html;
+          // Auto-select qwen2.5-coder:3b if available
+          const preferred = d.code_models.find(m => m.includes('qwen2.5-coder:3b'));
+          if (preferred) codeSel.value = preferred;
+        }
+        // Populate vision model selector
+        const visSel = document.getElementById('vision-model-sel');
+        if (visSel && d.vision_models) {
+          let html = '<option value="">Auto-detectar</option>';
+          d.vision_models.forEach(m => { html += '<option value="' + m + '">'+m+'</option>'; });
+          // Also allow code models as vision fallback option
+          if (d.code_models) {
+            d.code_models.forEach(m => { html += '<option value="' + m + '">' + m + ' (texto)</option>'; });
+          }
+          visSel.innerHTML = html;
+          // Auto-select qwen3-vl if available, else minicpm
+          const preferredVis = d.vision_models.find(m => m.includes('qwen3-vl')) || d.vision_models.find(m => m.includes('minicpm'));
+          if (preferredVis) visSel.value = preferredVis;
+        }
+        // Update est-time hint
+        updateModelEstimate();
       }).catch(() => {});
+    }
+
+export function updateModelEstimate() {
+      const codeSel = document.getElementById('code-model-sel');
+      const visSel = document.getElementById('vision-model-sel');
+      const estEl = document.getElementById('est-time-val');
+      if (!estEl) return;
+      const codeM = codeSel ? codeSel.value : '';
+      const visM = visSel ? visSel.value : '';
+      const is3b = codeM.includes('3b') || codeM.includes('3.2') || !codeM;
+      const isFastVis = visM.includes('minicpm') || !visM;
+      estEl.textContent = (is3b ? '⚡ Código: ~1-2s (GPU)' : '🐢 Código: ~10-20s (CPU)') + ' · ' + (isFastVis ? '⚡ Visión: ~2-3s' : '🐢 Visión: ~15-40s');
     }
 
 export async function onFolderPicked(e) {

@@ -83,8 +83,12 @@
           <div class="section-label">Tipo de Nodo</div>
           <div class="filter-section">
             <div class="filter-row">
-              <span>Archivos</span>
+              <span>Archivos de Código</span>
               <label class="chk-wrap"><input type="checkbox" id="f-file" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+            </div>
+            <div class="filter-row">
+              <span>Docs & Multimedia (.pdf, .png, .mp3)</span>
+              <label class="chk-wrap"><input type="checkbox" id="f-media" checked onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
             </div>
             <div class="filter-row">
               <span>Clases</span>
@@ -144,12 +148,23 @@
               <option value="matrix">Emerald Matrix</option>
               <option value="community">Por Comunidad (Carpetas)</option>
             </select>
-            <label class="section-label" style="margin-top:8px;">Motor IA</label>
+            <label class="section-label" style="margin-top:8px;">Motor IA (Código / Docs)</label>
             <select id="engine-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;">
-              <option value="ast_local_llm" selected>AST + Local (Ollama Qwen2.5)</option>
+              <option value="ast_local_llm" selected>AST + Local (Ollama)</option>
               <option value="ast_cloud">AST + Cloud API (Gemini/Claude)</option>
               <option value="ast_pure">Solo AST (cero tokens)</option>
             </select>
+            <label class="section-label" style="margin-top:6px;">Modelo Código (primario)</label>
+            <select id="code-model-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateModelEstimate()">
+              <option value="">Auto-detectar</option>
+            </select>
+            <label class="section-label" style="margin-top:6px;">Modelo Visión (imágenes)</label>
+            <select id="vision-model-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateModelEstimate()">
+              <option value="">Auto-detectar</option>
+            </select>
+            <div id="est-time" style="font-size:10px;color:#64748b;margin-top:4px;">
+              <span id="est-time-val"></span>
+            </div>
             <hr style="border:none;border-top:1px solid #1e293b;margin:8px 0;">
             <label class="section-label">Estilo de Enlaces</label>
             <select id="link-style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateLinkStyles()">
@@ -244,12 +259,12 @@
   <div id="graph-container"></div>
 
   <!-- ===== FLOATING BLAST RADIUS PANEL ===== -->
-  <div id="blast-panel" style="position:absolute;bottom:16px;right:276px;z-index:90;background:#111827;border:1px solid #374151;border-radius:10px;padding:12px 14px;width:280px;box-shadow:0 16px 36px rgba(0,0,0,0.6);display:none;">
+  <div id="blast-panel" style="position:absolute;bottom:16px;right:276px;z-index:90;background:#111827;border:1px solid #374151;border-radius:10px;padding:12px 14px;width:280px;box-sizing:border-box;box-shadow:0 16px 36px rgba(0,0,0,0.6);display:none;overflow:hidden;">
     <div style="font-weight:700;font-size:12px;color:#38bdf8;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <span style="display:flex;align-items:center;gap:5px;">Radio de Impacto</span>
       <button onclick="closeBlastPanel()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;">✕</button>
     </div>
-    <div id="blast-content" style="font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:6px;"></div>
+    <div id="blast-content" style="font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:6px;min-width:0;overflow-wrap:anywhere;"></div>
   </div>
 
   <!-- ===== MODAL: Register ===== -->

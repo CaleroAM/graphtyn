@@ -1,5 +1,5 @@
 import { state, hexRgb, mixColor, showStyleErr, safePaint } from './state.js';
-import { nodeColor, nodeVal, squareNodePainter, neuralNodePainter, neuralLinkPainter, holoNodePainter, holoLinkPainter } from './painters.js';
+import { nodeColor, nodeVal, isDocOrMedia, squareNodePainter, neuralNodePainter, neuralLinkPainter, holoNodePainter, holoLinkPainter } from './painters.js';
 import { buildPulseSim } from './sim.js';
 
 export function holoBgEnsure() {
@@ -56,17 +56,52 @@ export function holoBgDraw() {
       ctx.fillRect(0, 0, w, h);
     }
 
+export function applyHitArea(inst) {
+      if (!inst) return;
+      // Re-apply nodePointerAreaPaint: this sets shadowGraph.nodeCanvasObject
+      // to paint solid __indexColor circles (overriding the visual painter
+      // that nodeCanvasObject() propagated to shadowGraph).
+      if (typeof inst.nodePointerAreaPaint === 'function') {
+        inst.nodePointerAreaPaint(paintNodePointerArea);
+      }
+      // Re-apply linkPointerAreaPaint: this sets shadowGraph.linkCanvasObject
+      // to an empty function so links NEVER occlude node hit areas.
+      // Without this, linkCanvasObject(neuralLinkPainter) propagates to
+      // shadowGraph and paints wide glowing lines that block node detection.
+      if (typeof inst.linkPointerAreaPaint === 'function') {
+        inst.linkPointerAreaPaint(() => {});
+      }
+    }
+
+export function paintNodePointerArea(node, color, ctx, globalScale) {
+      const base = Math.max(3.5, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 3.0);
+      const gs = Math.max(0.08, globalScale || 1);
+      // Keep a usable target at low zoom without creating large, overlapping
+      // invisible circles. Overlaps make the last painted node steal clicks
+      // from nearby nodes in ForceGraph's colour-picking canvas.
+      const r = Math.max(7 / gs, base * 1.15);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(Number.isFinite(node.x) ? node.x : 0, Number.isFinite(node.y) ? node.y : 0, r, 0, 2 * Math.PI, false);
+      ctx.fill();
+    }
+
 export function apply2DStyle() {
       if (state.neuralTimer) { clearInterval(state.neuralTimer); state.neuralTimer = null; }
       if (!state.graphInst) return;
       if (state.graphStyle === 'standard') {
         state.graphInst.backgroundColor('#0b0e17');
         if (state.nodeShape === 'squares') {
-          state.graphInst.nodeCanvasObject(safePaint(squareNodePainter, 'cuadrados'));
+          state.graphInst
+            .nodeCanvasObjectMode(() => 'replace')
+            .nodeCanvasObject(safePaint(squareNodePainter, 'cuadrados'));
         } else {
-          state.graphInst.nodeCanvasObject(null);
+          state.graphInst
+            .nodeCanvasObjectMode(() => 'replace')
+            .nodeCanvasObject(null);
         }
         state.graphInst.linkCanvasObject(null);
+        applyHitArea(state.graphInst);
         return;
       }
       if (state.graphStyle === 'holo') {
@@ -78,7 +113,12 @@ export function apply2DStyle() {
       const paintLink = state.graphStyle === 'holo' ? holoLinkPainter : neuralLinkPainter;
       const safeNode = safePaint(paintNode, 'nodo');
       const safeLink = safePaint(paintLink, 'enlace');
-      state.graphInst.nodeCanvasObject(safeNode).linkCanvasObject(safeLink);
+      state.graphInst
+        .nodeCanvasObjectMode(() => 'after')
+        .nodeCanvasObject(safeNode)
+        .linkCanvasObjectMode(() => 'replace')
+        .linkCanvasObject(safeLink);
+      applyHitArea(state.graphInst);
       state.graphInst._stylePaintNode = safeNode;
       state.graphInst._stylePaintLink = safeLink;
       state.graphInst.linkDirectionalParticles(state.showParticles ? 2 : 0)
@@ -88,10 +128,6 @@ export function apply2DStyle() {
       state.neuralTimer = setInterval(() => {
         state.neuralPhase += 0.5;
         if (state.pulseSim && state.graphStyle === 'neural') state.pulseSim.update(90, performance.now());
-        if (state.graphInst && state.graphStyle !== 'standard') {
-          if (state.graphInst._stylePaintNode) state.graphInst.nodeCanvasObject(state.graphInst._stylePaintNode);
-          if (state.graphInst._stylePaintLink) state.graphInst.linkCanvasObject(state.graphInst._stylePaintLink);
-        }
       }, 90);
     }
 
@@ -126,9 +162,9 @@ export function apply3DStyle() {
 
       if (state.organic3dOn && overlay && typeof state.graphInst.graph2ScreenCoords === 'function') {
         // ── MODO ORGÁNICO: el estilo 2D Neuronal dibujado sobre el grafo 3D ──
-        // Base 3D apenas visible (solo soporta cámara y física)
+        // Base 3D con esfera de interacción amplia para raycasting confiable
         state.graphInst.nodeThreeObject(null)
-          .nodeRelSize(0.6)
+          .nodeRelSize(8)
           .linkColor(() => 'rgb(20,22,40)')
           .linkOpacity ? state.graphInst.linkOpacity(() => 0.04) : null;
         state.graphInst.linkDirectionalParticles(0);
@@ -241,20 +277,32 @@ export function apply3DStyle() {
             const energy = state.pulseSim ? (state.pulseSim.energy.get(n.id) || 0) : 0;
             const breathe = 0.5 + 0.5 * Math.sin(state.neuralPhase * 1.3 + (n.degree || 0) * 0.4);
             const glow = Math.min(1, (n.god ? 0.85 : 0.15 + Math.min(0.5, (n.degree || 0) / 25)) + energy * 0.65);
-            const base = (n.god ? 7 : 4.5) * (0.8 + 0.3 * breathe) * (1 + energy * 0.6);
-            const halo = base * (2.6 + 1.2 * breathe);
+            const isSelected = state.selectedNode && state.selectedNode.id === n.id;
+            const isWhite = isDocOrMedia(n);
+            const base = (n.god ? 7 : (isWhite ? 5.5 : 4.5)) * (0.8 + 0.3 * breathe) * (1 + energy * 0.6);
+            const halo = base * (isSelected ? 3.5 : (2.6 + 1.2 * breathe));
             const g = octx.createRadialGradient(sc.x, sc.y, 0, sc.x, sc.y, halo);
-            g.addColorStop(0, `rgba(255,190,225,${Math.min(0.85, glow * 0.75).toFixed(3)})`);
-            g.addColorStop(0.4, `rgba(${pc[0]},${pc[1]},${pc[2]},${Math.min(0.5, glow * 0.5).toFixed(3)})`);
-            g.addColorStop(1, `rgba(${pc[0]},${pc[1]},${pc[2]},0)`);
+            if (isSelected) {
+              g.addColorStop(0, 'rgba(255,0,128,0.95)');
+              g.addColorStop(0.5, 'rgba(255,0,128,0.5)');
+              g.addColorStop(1, 'rgba(255,0,128,0)');
+            } else if (isWhite) {
+              g.addColorStop(0, `rgba(255,255,255,${Math.min(0.95, glow * 0.9).toFixed(3)})`);
+              g.addColorStop(0.4, `rgba(220,235,255,${Math.min(0.7, glow * 0.6).toFixed(3)})`);
+              g.addColorStop(1, 'rgba(200,225,255,0)');
+            } else {
+              g.addColorStop(0, `rgba(255,190,225,${Math.min(0.85, glow * 0.75).toFixed(3)})`);
+              g.addColorStop(0.4, `rgba(${pc[0]},${pc[1]},${pc[2]},${Math.min(0.5, glow * 0.5).toFixed(3)})`);
+              g.addColorStop(1, `rgba(${pc[0]},${pc[1]},${pc[2]},0)`);
+            }
             octx.fillStyle = g;
             octx.beginPath(); octx.arc(sc.x, sc.y, halo, 0, Math.PI * 2); octx.fill();
-            const bc = hexRgb(state.nodeColorHex || nodeColor(n));
-            const cc = [
+            const bc = hexRgb(isSelected ? '#ff007f' : (isWhite ? '#ffffff' : (state.nodeColorHex || nodeColor(n))));
+            const cc = isSelected ? [255, 255, 255] : (isWhite ? [255, 255, 255] : [
               Math.round(bc[0] + (255 - bc[0]) * glow * 0.6),
               Math.round(bc[1] + (255 - bc[1]) * glow * 0.6),
               Math.round(bc[2] + (255 - bc[2]) * glow * 0.6)
-            ];
+            ]);
             octx.fillStyle = `rgb(${cc[0]},${cc[1]},${cc[2]})`;
             if (state.nodeShape === 'squares') {
               octx.save();
@@ -412,6 +460,5 @@ export function apply3DStyle() {
         }
       }, 100);
     }
-
 
 
