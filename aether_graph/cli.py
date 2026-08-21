@@ -93,6 +93,7 @@ def main():
     # serve
     serve_p = subparsers.add_parser("serve", help="Inicia el demonio HTTP local")
     serve_p.add_argument("--reload", action="store_true", help="Habilitar recarga automática en vivo")
+    serve_p.add_argument("--watch", action="store_true", help="Reindexa automáticamente proyectos al cambiar archivos")
     serve_p.add_argument("--host", default="0.0.0.0", help="Host")
     serve_p.add_argument("--port", type=int, default=9210, help="Puerto")
     serve_p.add_argument("--path", default=".", help="Ruta del proyecto")
@@ -241,8 +242,12 @@ def main():
         run_mcp_server(root)
 
     elif args.command == "serve":
+        import os
         import uvicorn
-        print(f"🚀 Servidor AetherGraph escuchando en http://{args.host}:{args.port} (Hot-Reloading={args.reload})")
+        if args.watch:
+            os.environ["AETHER_WATCH"] = "1"
+            os.environ["AETHER_WATCH_PATH"] = str(root)
+        print(f"🚀 Servidor AetherGraph escuchando en http://{args.host}:{args.port} (Hot-Reloading={args.reload}, Watch={args.watch})")
         if args.reload:
             uvicorn.run("aether_graph.api.main:app", host=args.host, port=args.port, reload=True)
         else:

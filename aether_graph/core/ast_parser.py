@@ -11,6 +11,15 @@ _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
 _MEDIA_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg")
 
+VALID_EXTS = (
+    ".py", ".cs", ".php", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".h", ".hpp",
+    ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".tf", ".tfvars", ".cls", ".trigger",
+    ".md", ".mdx", ".rst", ".txt", ".pdf", ".docx", ".xlsx", ".xlsm",
+    ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp",
+    ".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg",
+    ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json",
+)
+
 class ASTParser:
     """
     Deterministic zero-token standalone multi-language AST code symbol parser for AetherGraph.
@@ -136,15 +145,6 @@ class ASTParser:
         doc_files: List[tuple] = []
         other_code_files: List[tuple] = []
 
-        valid_exts = (
-            ".py", ".cs", ".php", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".h", ".hpp",
-            ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".tf", ".tfvars", ".cls", ".trigger",
-            ".md", ".mdx", ".rst", ".txt", ".pdf", ".docx", ".xlsx", ".xlsm",
-            ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp",
-            ".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg",
-            ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json"
-        )
-
         # Pass 1: Build folder hierarchy backbone & file/asset nodes
         for path in root_dir.rglob("*"):
             if not path.is_file():
@@ -153,7 +153,7 @@ class ASTParser:
                 continue
 
             ext = path.suffix.lower()
-            if ext not in valid_exts:
+            if ext not in VALID_EXTS:
                 continue
 
             rel_file = str(path.relative_to(root_dir))

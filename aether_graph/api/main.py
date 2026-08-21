@@ -1,15 +1,30 @@
 import json
+import os
 import re
 import ast
 import subprocess
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Query, Body
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
+from ..core.watcher import WatchManager
 
-app = FastAPI(title="AetherGraph API", version="0.4.0")
 parser = ASTParser()
+watch_manager = WatchManager()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    if _watch_enabled():
+        root = Path(os.environ.get("AETHER_WATCH_PATH", str(DEFAULT_MASTER_DIR))).resolve()
+        watch_manager.ensure(root, _index_dir(root))
+    yield
+    watch_manager.stop_all()
+
+
+app = FastAPI(title="AetherGraph API", version="0.4.0", lifespan=lifespan)
 
 # Central writable index store — user home ~/.aether-graph/
 INDEX_STORE = Path.home() / ".aether-graph"
@@ -25,6 +40,11 @@ def _index_dir(project_path: Path) -> Path:
     d = INDEX_STORE / slug
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def _watch_enabled() -> bool:
+    return os.environ.get("AETHER_WATCH", "0").lower() in ("1", "true", "yes", "on")
+
 
 def _project_config_path(project_path: Path) -> Path:
     return _index_dir(project_path) / "config.json"
@@ -512,6 +532,8 @@ def get_graph(path: str = ".", view: str = "code"):
         return JSONResponse(parser.get_agent_topology_graph())
     root = Path(path).resolve()
     dot_dir = _index_dir(root)
+    if _watch_enabled():
+        watch_manager.ensure(root, dot_dir)
     cached = dot_dir / "index.json"
     data = None
     if cached.exists():
@@ -547,6 +569,11 @@ def get_graph(path: str = ".", view: str = "code"):
         return JSONResponse(generate_semantic_graph(data))
 
     return JSONResponse(data)
+
+
+@app.get("/api/watch/status")
+def watch_status():
+    return JSONResponse({"enabled": _watch_enabled(), "projects": watch_manager.statuses()})
 
 
 @app.get("/comparison")

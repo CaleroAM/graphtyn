@@ -85,6 +85,23 @@ export function selectProject(path) {
       else { loadProjects(); loadGraph(); }
     }
 
+export function initWatchPolling() {
+      if (state.watchTimer) clearInterval(state.watchTimer);
+      const poll = () => fetch('/api/watch/status').then(r => r.json()).then(data => {
+        if (!data.enabled || !Array.isArray(data.projects)) return;
+        data.projects.forEach(project => {
+          const previous = state.watchVersions[project.path];
+          state.watchVersions[project.path] = project.version || 0;
+          if (previous !== undefined && project.version > previous && project.path === state.activePath) {
+            loadProjects();
+            loadGraph();
+          }
+        });
+      }).catch(() => {});
+      poll();
+      state.watchTimer = setInterval(poll, 1500);
+    }
+
 export function doReindex(full) {
       const btn = document.getElementById('reindex-btn');
       const engineSel = document.getElementById('engine-sel');

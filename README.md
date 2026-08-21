@@ -32,6 +32,7 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
    - **Grafo Semántico de IA e Historial**: Integra precalentamiento con Ollama (`llama3.2`, `qwen2.5`) para generar descripciones de código y el grafo de Arquitectura Global interconectado.
    - **Vista Semántica rediseñada**: comunidades por subsistema (`Subsistema: src/GameEngine.Core`) + **god nodes** destacados (los conceptos más conectados), con aristas etiquetadas `EXTRACTED`/`INFERRED`. Incluye imágenes, documentos y audio/video enriquecidos, y crea un máximo acotado de relaciones `similitud semántica` a partir de sus descripciones locales cacheadas (sin volver a invocar al modelo al abrir la vista).
    - **Respetar `.gitignore` por proyecto**: toggle en el panel de settings (o `aether-graph gitignore on|off`) — con `on` solo los archivos versionados entran al grafo (menos ruido, menos llamadas LLM); `off` incluye todo lo escaneable.
+   - **Actualización automática (`--watch`)**: detecta archivos creados, modificados y eliminados, actualiza el índice estructural local y refresca el proyecto activo en el dashboard sin pulsar “Reindexar”.
    - **Estilos de grafo y forma de nodos (Paleta & Motor)**: selector de estilo — **Estándar** y **Neuronal** (tejido orgánico). **Neuronal en 3D** tiene dos modos: **Dibujo orgánico 2D en 3D** (default: halos respirando, enlaces con botones sinápticos y cometas — el estilo del 2D proyectado sobre el grafo 3D, respetando el **Estilo de Enlaces** sólido/punteado/curvo) y modo luces (vista Estándar + cometas, parpadeo de vértices y destello de nodos al recibir). En 2D también respeta el Estilo de Enlaces. Colores configurables: **Color de Nodos**, **Color de Ráfaga** y **Color de Vértices**. Selector de forma de nodos: **Círculos · Esferas** o **Cuadrados · Cubos**.
    - **Laboratorio de Comparación de Modelos**: Disponible en [`/comparison`](http://localhost:9210/comparison), compara el contexto generado por modelos locales y modelos de paga con el mismo nodo y prompt.
 
@@ -131,6 +132,9 @@ aether-graph mcp
 # Iniciar el Dashboard WebGL interactivo en el puerto 9210
 aether-graph serve
 
+# Mantener el grafo actualizado mientras editas el proyecto
+aether-graph serve --watch --path /ruta/al/proyecto
+
 # Consultar la línea de tiempo del historial de acciones de la IA (SQLite Local)
 aether-graph timeline
 
@@ -142,6 +146,13 @@ aether-graph export-md
 
 # Consultar conceptos o símbolos en el grafo
 aether-graph query "sistema de autenticación"
+```
+
+### Actualización automática
+
+`aether-graph serve --watch` observa el proyecto indicado por `--path` y cualquier otro proyecto que abras en el dashboard. El watcher es local y portátil: compara un manifiesto SHA-256, detecta altas, modificaciones y bajas, reutiliza los fragmentos tree-sitter cacheados de archivos sin cambios y escribe `index.json` de forma atómica. No llama a Ollama ni consume tokens; conserva el enriquecimiento semántico previo de los nodos que no cambiaron.
+
+El intervalo predeterminado es un segundo y puede configurarse con `AETHER_WATCH_INTERVAL`. El estado se expone en `/api/watch/status`; el dashboard lo consulta y recarga automáticamente el grafo activo cuando cambia su versión. En lenguajes que aún usan los extractores integrados se vuelve a ejecutar el parser estructural al ensamblar el grafo, por lo que esta primera versión no pretende ser incremental a nivel de fragmento para los 23 lenguajes.
 
 # Explicar la responsabilidad y conexiones de un módulo o clase
 aether-graph explain "TurnManager"
@@ -353,7 +364,7 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 | **Descripción semántica persistente por nodo de CÓDIGO** | No en el pipeline normal: el código usa tree-sitter; el pase con modelo se reserva para docs/PDFs/media | No como propiedad equivalente del índice SCIP | ✅ **Sí: cada archivo/clase/función puede recibir una descripción de rol mediante LLM local o cloud** |
 | **Etiquetas de confianza en aristas** | ✅ EXTRACTED / INFERRED / AMBIGUOUS por arista | Parcial | ✅ **EXTRACTED (contiene/hereda) / INFERRED (usa cross-file) / AMBIGUOUS (nombre repetido en varios símbolos)** |
 | **Consumo de Tokens (grafo de código)** | 0 (tree-sitter local) | 0 (dump LSP) | **0 en Pasada 1** + Enriquecimiento Opcional (local = 0) |
-| **Reindexado incremental / automático** | ✅ actualización, modo `--watch` y hook que regenera tras commits | ✅ auto-indexación o indexación SCIP en CI; depende del indexador/lenguaje | ✅ **git-status + enriquecimiento solo de nodos cambiados; hook post-commit opcional** |
+| **Reindexado incremental / automático** | ✅ actualización, modo `--watch` y hook que regenera tras commits | ✅ auto-indexación o indexación SCIP en CI; depende del indexador/lenguaje | ✅ **`--watch` + manifiesto SHA-256 + caché tree-sitter por archivo; git-status y hook post-commit opcional** |
 | **Compactación de densidad (≤140 chars/nodo)** | N/A (no describe código con LLM) | N/A | ✅ `AETHER_COMPACT=1` (local a +5% de la densidad premium) |
 | **Memoria de historial de acciones del agente** | ❌ (query log opcional; no timeline de acciones) | ❌ | ✅ **SQLite local (`graph_history_*`) gratuito + `tokens_avoided` por consulta** |
 | **Visualizador** | `graph.html` interactivo (comunidades, filtros, nodos) | Navegación web de código, referencias y dependencias; no es un dashboard de grafo equivalente | Dashboard WebGL 2D/3D en vivo (`:9210`) |
@@ -368,9 +379,9 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 
 ### Brechas antes de afirmar superioridad
 
-1. Adoptar un parser incremental robusto (tree-sitter o LSP/SCIP) para sustituir extractores regex en los lenguajes que no usan AST real.
+1. Extender el parsing incremental por fragmento más allá de C#/JavaScript/TypeScript y sustituir progresivamente los extractores regex restantes por tree-sitter o LSP/SCIP.
 2. Publicar un benchmark reproducible de precisión de nodos/aristas y calidad de respuestas contra Graphify y un baseline sin grafo.
-3. Añadir MCP HTTP autenticado para equipos, modo watch y actualización incremental del grafo estructural por archivo.
+3. Añadir MCP HTTP autenticado para equipos y coordinación segura de índices compartidos.
 4. Incorporar análisis de PRs/conflictos, relaciones multimodales explicadas por evidencia y defensas contra prompt injection en documentos.
 5. Validar con repositorios externos grandes; las cifras de ahorro de tokens deben reportar metodología, corpus, promedio y dispersión.
 

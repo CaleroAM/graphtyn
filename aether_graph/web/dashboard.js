@@ -5,7 +5,7 @@ import {
   onFolderPicked, selectProject, toggleAllComm, toggleComm, toggleDD, toggleGitignore,
   toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, loadHistoryUI, toggleNodeDesc,
   openRegister, closeRegister, selMode, submitRegister, openTutorial, closeTutorial,
-  loadProjects, updateModelEstimate
+  loadProjects, updateModelEstimate, initWatchPolling
 } from './js/__handlers.js';
 import { state } from './js/state.js';
 
@@ -71,6 +71,7 @@ import { state } from './js/state.js';
       if (booted) return;
       booted = true;
       loadProjects(true);
+      initWatchPolling();
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', boot);

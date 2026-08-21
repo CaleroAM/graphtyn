@@ -30,6 +30,8 @@ export const state = {
   selectedNode: null,
   selectedNeighbors: null,
   descExpanded: false,
+  watchVersions: {},
+  watchTimer: null,
 };
 
     export const PALETTES = {
@@ -102,4 +104,3 @@ export function safePaint(fn, label) {
         }
       };
     }
-
