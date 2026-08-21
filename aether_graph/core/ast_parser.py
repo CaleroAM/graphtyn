@@ -1,8 +1,11 @@
 import ast
+import hashlib
+import json
 import re
 import posixpath
 from pathlib import Path
 from typing import Dict, Any, List, Set, Optional
+from .tree_sitter_backend import PARSER_VERSION, parse_file as parse_tree_sitter_file
 
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
@@ -44,17 +47,70 @@ class ASTParser:
 
         return {"file": rel_path, "symbols": symbols, "calls": list(set(calls)), "imports": list(set(imports))}
 
-    def scan_directory(self, root_dir: Path, respect_git: bool = True) -> Dict[str, Any]:
+    def scan_directory(self, root_dir: Path, respect_git: bool = True, cache_path: Optional[Path] = None) -> Dict[str, Any]:
         root_dir = Path(root_dir)
         nodes: List[Dict[str, Any]] = []
         links: List[Dict[str, Any]] = []
         node_ids: Set[str] = set()
         symbol_name_map: Dict[str, str] = {}
         symbol_name_ids: Dict[str, Set[str]] = {}
+        pending_inheritance: List[tuple] = []
+        tree_calls: Dict[str, List[Dict[str, Any]]] = {}
+        tree_parsed_files: Set[str] = set()
+
+        structural_cache = {"version": PARSER_VERSION, "files": {}}
+        if cache_path and Path(cache_path).exists():
+            try:
+                loaded = json.loads(Path(cache_path).read_text(encoding="utf-8"))
+                if loaded.get("version") == PARSER_VERSION:
+                    structural_cache = loaded
+            except (OSError, ValueError, TypeError):
+                pass
+
+        def _tree_facts(path: Path, rel_file: str) -> Optional[Dict[str, Any]]:
+            if path.suffix.lower() not in (".cs", ".js", ".jsx", ".ts", ".tsx"):
+                return None
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            cached = structural_cache.get("files", {}).get(rel_file, {})
+            if cached.get("sha256") == digest and cached.get("result", {}).get("parser") == "tree-sitter":
+                return cached["result"]
+            result = parse_tree_sitter_file(path, rel_file)
+            if result is not None:
+                structural_cache.setdefault("files", {})[rel_file] = {"sha256": digest, "result": result}
+            return result
 
         def _register_symbol(name: str, sym_id: str) -> None:
             symbol_name_map[name] = sym_id
             symbol_name_ids.setdefault(name, set()).add(sym_id)
+
+        def _add_tree_symbols(result: Dict[str, Any], f_id: str, namespace: str = "") -> None:
+            rel_file = result["file"]
+            tree_parsed_files.add(rel_file)
+            tree_calls[rel_file] = result.get("calls", [])
+            for sym in result.get("symbols", []):
+                name = sym["name"]
+                kind = sym["kind"]
+                qualified = f"{namespace}.{name}" if namespace and kind in ("class", "interface", "struct", "enum") else name
+                sym_id = f"symbol:{rel_file}:{qualified}"
+                if sym_id in node_ids:
+                    continue
+                nodes.append({
+                    "id": sym_id, "name": name, "kind": kind,
+                    "val": 6 if kind in ("class", "interface") else (3 if kind in ("method", "function") else 4),
+                    "color": "#f59e0b" if kind in ("class", "interface", "struct") else "#a78bfa",
+                    "details": f"{kind.capitalize()} en {rel_file}:{sym['line']}",
+                    "file": rel_file, "line": sym["line"], "end_line": sym.get("end_line", sym["line"]),
+                    "evidence": sym.get("evidence", ""), "parser": "tree-sitter",
+                })
+                node_ids.add(sym_id)
+                _register_symbol(name, sym_id)
+                links.append({
+                    "source": f_id, "target": sym_id, "label": "contiene",
+                    "color": "rgba(148, 163, 184, 0.2)", "confidence": "EXTRACTED",
+                    "file": rel_file, "line": sym["line"], "evidence": sym.get("evidence", ""),
+                })
+                for base in sym.get("bases", []):
+                    pending_inheritance.append((sym_id, base, rel_file, sym["line"], sym.get("evidence", "")))
 
         ignored_parts = {
             "vendor", "venv", ".venv", "node_modules", "__pycache__", "Library",
@@ -192,6 +248,11 @@ class ASTParser:
                 ns_match = re.search(r"namespace\s+([A-Za-z0-9_.]+)", content)
                 ns = ns_match.group(1) if ns_match else ""
 
+                tree_result = _tree_facts(path, rel_file)
+                if tree_result is not None:
+                    _add_tree_symbols(tree_result, f_id, ns)
+                    continue
+
                 for m in re.finditer(r"(public|private|protected|internal)?\s*(abstract|sealed|partial)?\s*(class|interface|enum|struct)\s+([A-Za-z0-9_]+)(\s*:\s*([A-Za-z0-9_,\s]+))?", content):
                     kind = m.group(3)
                     cname = m.group(4)
@@ -309,6 +370,10 @@ class ASTParser:
             try:
                 content = path.read_text(encoding="utf-8", errors="ignore")
                 file_contents[rel_file] = content
+                tree_result = _tree_facts(path, rel_file)
+                if tree_result is not None:
+                    _add_tree_symbols(tree_result, f_id)
+                    continue
                 for m in re.finditer(r"(export function|case class|local function|defmodule|defmacro|class|interface|struct|type|function|fn|def|defp|func|fun|enum|protocol|extension|trait|object|macro|module|void)\s+([A-Za-z0-9_]+)", content):
                     kind = m.group(1).replace("export ", "")
                     if kind == "void":
@@ -328,7 +393,33 @@ class ASTParser:
             except Exception:
                 pass
 
-        # Pass 4: Cross-symbol call / reference resolution
+        # Pass 4: Resolve precise tree-sitter inheritance and call evidence.
+        for source_id, base_name, rel_file, line, evidence in pending_inheritance:
+            target_id = symbol_name_map.get(base_name)
+            if target_id and target_id != source_id:
+                links.append({
+                    "source": source_id, "target": target_id, "label": "hereda",
+                    "color": "rgba(245, 158, 11, 0.4)", "confidence": "EXTRACTED",
+                    "file": rel_file, "line": line, "evidence": evidence,
+                })
+
+        for rel_file, calls in tree_calls.items():
+            f_id = f"file:{rel_file}"
+            seen_call_targets = set()
+            for call in calls:
+                targets = symbol_name_ids.get(call["name"], set())
+                for target_id in targets:
+                    if target_id.startswith(f"symbol:{rel_file}:") or target_id in seen_call_targets:
+                        continue
+                    seen_call_targets.add(target_id)
+                    links.append({
+                        "source": f_id, "target": target_id, "label": "llama",
+                        "color": "rgba(56, 189, 248, 0.35)",
+                        "confidence": "AMBIGUOUS" if len(targets) > 1 else "EXTRACTED",
+                        "file": rel_file, "line": call["line"], "evidence": call.get("evidence", ""),
+                    })
+
+        # Pass 5: Cross-symbol fallback resolution for legacy parsers.
         keyword_noise = {
             "for", "foreach", "if", "else", "in", "is", "as", "and", "or", "not", "new", "var",
             "int", "string", "bool", "void", "set", "get", "add", "remove", "this", "base",
@@ -348,6 +439,8 @@ class ASTParser:
                 if l.get("source") not in removed_ids and l.get("target") not in removed_ids
             ]
         for rel_file, content in file_contents.items():
+            if rel_file in tree_parsed_files:
+                continue
             f_id = f"file:{rel_file}"
             for cname, sym_id in symbol_name_map.items():
                 if len(cname) < 4 or cname.lower() in keyword_noise:
@@ -365,7 +458,26 @@ class ASTParser:
             if "confidence" not in l:
                 l["confidence"] = "INFERRED" if l.get("label") == "usa" else "EXTRACTED"
 
-        return self._enrich_graph_with_degree({"nodes": nodes, "links": links})
+        if cache_path:
+            try:
+                active = set(file_contents) | {str(p.relative_to(root_dir)) for p, _, _ in csharp_files}
+                structural_cache["files"] = {
+                    key: value for key, value in structural_cache.get("files", {}).items() if key in active
+                }
+                Path(cache_path).parent.mkdir(parents=True, exist_ok=True)
+                Path(cache_path).write_text(json.dumps(structural_cache, separators=(",", ":")), encoding="utf-8")
+            except OSError:
+                pass
+
+        return self._enrich_graph_with_degree({
+            "nodes": nodes,
+            "links": links,
+            "metadata": {
+                "structural_parser": "tree-sitter+fallback" if tree_parsed_files else "builtin-fallback",
+                "tree_sitter_files": len(tree_parsed_files),
+                "structural_cache": bool(cache_path),
+            },
+        })
 
     def _enrich_graph_with_degree(self, graph: Dict[str, Any]) -> Dict[str, Any]:
         in_degree: Dict[str, int] = {}

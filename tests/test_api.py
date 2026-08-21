@@ -51,6 +51,7 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     assert "installReliableNodeDrag" in graph_js
     assert "screen2GraphCoords" in graph_js
     assert "grid-template-columns:minmax(0,1fr)" in graph_js
+    assert "EVIDENCIA " in graph_js
     assert client.get("/favicon.svg").status_code == 200
     comp = client.get("/comparison")
     assert comp.status_code == 200
@@ -130,6 +131,22 @@ def test_reindex_incremental_reuses_context(tmp_path, monkeypatch):
     # ast_local_llm sin ollama conectado hará fallback interno; la respuesta no debe explotar
     assert r3.status_code == 200
     assert r3.json()["ok"] is True
+
+
+def test_semantic_graph_includes_and_relates_enriched_media():
+    nodes = [
+        {"id": "file:docs/mapa.png", "name": "mapa.png", "kind": "image", "degree": 1,
+         "details": "Mapa turístico de museos y rutas culturales de Puebla (docs/mapa.png)"},
+        {"id": "file:docs/ruta.pdf", "name": "ruta.pdf", "kind": "doc", "degree": 1,
+         "details": "Guía turística con mapa de museos y rutas culturales de Puebla (docs/ruta.pdf)"},
+        {"id": "dir:docs", "name": "docs", "kind": "module", "degree": 2, "details": "Carpeta docs"},
+    ]
+    graph = api_main.generate_semantic_graph({"nodes": nodes, "links": [], "metadata": {"path": "/tmp/demo"}})
+    ids = {node["id"] for node in graph["nodes"]}
+    assert "file:docs/mapa.png" in ids
+    assert "file:docs/ruta.pdf" in ids
+    inferred = [link for link in graph["links"] if link.get("confidence") == "INFERRED"]
+    assert any("similitud semántica" in link["label"] for link in inferred)
 
 
 def test_diff_endpoint_git_repo(tmp_path, monkeypatch):

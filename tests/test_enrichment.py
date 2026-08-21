@@ -146,6 +146,15 @@ def test_scan_directory_respects_git_tracked(tmp_path):
     assert "file:ignored.py" in ids_all
 
 
+def test_ast_pure_refresh_preserves_previous_semantic_metadata(tmp_path):
+    graph = {"nodes": [], "links": [], "metadata": {"structural_parser": "tree-sitter+fallback"}}
+    previous = {"nodes": [], "metadata": {"ai_summary": "Resumen conservado", "ai_model": "modelo-local"}}
+    refreshed = api_main._enrich_with_ai(graph, "ast_pure", tmp_path, prev=previous)
+    assert refreshed["metadata"]["ai_summary"] == "Resumen conservado"
+    assert refreshed["metadata"]["ai_model"] == "modelo-local"
+    assert refreshed["metadata"]["structural_parser"] == "tree-sitter+fallback"
+
+
 def test_project_config_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / ".aether-store")
     assert api_main._load_project_config(tmp_path) == {}

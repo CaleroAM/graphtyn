@@ -196,11 +196,13 @@ def reindex_project(payload: dict = Body(...)):
     project_cfg = _load_project_config(root)
     respect_git = bool(project_cfg.get("respect_git", True))
 
-    graph = parser.scan_directory(root, respect_git=respect_git)
-    graph["metadata"] = {"indexed_with": engine, "status": "ok", "path": str(root), "respect_git": respect_git}
+    dot_dir = _index_dir(root)
+    graph = parser.scan_directory(root, respect_git=respect_git, cache_path=dot_dir / "structural_cache.json")
+    graph.setdefault("metadata", {}).update({
+        "indexed_with": engine, "status": "ok", "path": str(root), "respect_git": respect_git
+    })
 
     prev = None
-    dot_dir = _index_dir(root)
     cached = dot_dir / "index.json"
     if cached.exists():
         try:
@@ -268,9 +270,11 @@ def generate_semantic_graph(data: dict) -> dict:
     # 2. Group real nodes into subsystem communities (no per-node mirrors)
     communities = {}
     real_nodes = []
+    semantic_content = []
+    content_kinds = {"image", "media", "doc"}
     for n in data.get("nodes", []):
         kind = n.get("kind", "")
-        if kind not in ("file", "class", "module"):
+        if kind not in {"file", "class", "module", *content_kinds}:
             continue
         nid = n.get("id", "")
         if nid.startswith("file:"):
@@ -285,6 +289,8 @@ def generate_semantic_graph(data: dict) -> dict:
             key = "raiz"
         communities.setdefault(key, []).append(n)
         real_nodes.append(n)
+        if kind in content_kinds:
+            semantic_content.append(n)
 
     for key, members in communities.items():
         c_id = f"community:{key}"
@@ -311,7 +317,72 @@ def generate_semantic_graph(data: dict) -> dict:
                 "color": "rgba(16, 185, 129, 0.35)", "confidence": "EXTRACTED"
             })
 
-    # 3. God nodes: most-connected real concepts (highlight for agents)
+    # 3. Infer bounded semantic relationships between enriched documents/media.
+    # Descriptions are generated during reindexing; this view only compares the
+    # cached text and therefore does not invoke the local model again.
+    stopwords = {
+        "para", "como", "este", "esta", "estos", "estas", "desde", "hasta", "entre", "sobre",
+        "archivo", "imagen", "documento", "audio", "video", "muestra", "define", "contiene",
+        "sirve", "serve", "utiliza", "permite", "proyecto", "proyectos", "software", "sistema",
+        "artefacto", "tecnico", "técnico", "tecnica", "técnica", "mediante", "basado", "basada",
+        "unitycommercedemo", "assets", "project", "resources", "file", "docs", "media"
+    }
+
+    def semantic_tokens(node: dict) -> set[str]:
+        name = Path(node.get("name", "")).stem
+        details = node.get("details", "") or ""
+        # Enriched descriptions append the path in parentheses. Paths group by
+        # location, not meaning, so exclude that suffix from similarity.
+        details = re.sub(r"\s*\([^()]+[/\\][^()]+\)\s*$", "", details)
+        text = re.sub(r"([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])", r"\1 \2", f"{name} {details}").lower()
+        return {
+            token for token in re.findall(r"[a-záéíóúüñ0-9]+", text)
+            if len(token) >= 4 and token not in stopwords and not token.isdigit()
+        }
+
+    token_sets = [semantic_tokens(n) for n in semantic_content]
+    token_index = {}
+    for idx, tokens in enumerate(token_sets):
+        for token in tokens:
+            token_index.setdefault(token, []).append(idx)
+
+    shared_counts = {}
+    for indexes in token_index.values():
+        # Very frequent words are poor semantic signals and create quadratic
+        # edge explosions in repositories containing thousands of textures.
+        if len(indexes) > 50:
+            continue
+        for pos, left in enumerate(indexes):
+            for right in indexes[pos + 1:]:
+                shared_counts[(left, right)] = shared_counts.get((left, right), 0) + 1
+
+    candidates_by_node = {i: [] for i in range(len(semantic_content))}
+    for (left, right), common in shared_counts.items():
+        if common < 2:
+            continue
+        denom = (len(token_sets[left]) * len(token_sets[right])) ** 0.5 or 1
+        score = common / denom
+        if score < 0.28:
+            continue
+        candidates_by_node[left].append((score, right))
+        candidates_by_node[right].append((score, left))
+
+    selected_pairs = set()
+    for left, candidates in candidates_by_node.items():
+        for score, right in sorted(candidates, reverse=True)[:2]:
+            pair = (min(left, right), max(left, right))
+            if pair in selected_pairs:
+                continue
+            selected_pairs.add(pair)
+            links.append({
+                "source": semantic_content[pair[0]]["id"],
+                "target": semantic_content[pair[1]]["id"],
+                "label": f"similitud semántica · {round(score * 100)}%",
+                "color": "rgba(236, 72, 153, 0.4)",
+                "confidence": "INFERRED"
+            })
+
+    # 4. God nodes: most-connected real concepts (highlight for agents)
     god_candidates = sorted(real_nodes, key=lambda m: m.get("degree", 0), reverse=True)[:6]
     god_ids = {m["id"] for m in god_candidates if m.get("degree", 0) > 0}
     for n in nodes:
@@ -319,7 +390,7 @@ def generate_semantic_graph(data: dict) -> dict:
             n["god"] = True
             n["val"] = round(n.get("val", 3) + 6, 2)
 
-    # 4. Include existing structural dependencies between real nodes
+    # 5. Include existing structural dependencies between real nodes
     for link in data.get("links", []):
         src = link.get("source")
         tgt = link.get("target")
@@ -368,7 +439,11 @@ def get_diff(path: str = "."):
         except Exception:
             pass
     if not data:
-        data = parser.scan_directory(root, respect_git=bool(_load_project_config(root).get("respect_git", True)))
+        data = parser.scan_directory(
+            root,
+            respect_git=bool(_load_project_config(root).get("respect_git", True)),
+            cache_path=dot_dir / "structural_cache.json",
+        )
 
     impacted = {}
     for cf in changed_files:
@@ -445,7 +520,11 @@ def get_graph(path: str = ".", view: str = "code"):
         except Exception:
             pass
     if not data:
-        data = parser.scan_directory(root, respect_git=bool(_load_project_config(root).get("respect_git", True)))
+        data = parser.scan_directory(
+            root,
+            respect_git=bool(_load_project_config(root).get("respect_git", True)),
+            cache_path=dot_dir / "structural_cache.json",
+        )
         try:
             (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
         except OSError:
@@ -508,6 +587,3 @@ def js_module(file: str):
     if not js_path.is_file():
         return JSONResponse({"error": "not found"}, status_code=404)
     return HTMLResponse(content=js_path.read_text(encoding="utf-8"), media_type="application/javascript", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
-
-
-

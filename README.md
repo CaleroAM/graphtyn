@@ -30,7 +30,7 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
    - **Paneles Colapsables (`◀` / `▶`)**: Botones flotantes centrados para expandir el lienzo 2D/3D a pantalla completa.
    - **Auto-descubrimiento Multiplataforma**: Cero rutas estáticas (*hardcoded*); descubre automáticamente los proyectos del desarrollador.
    - **Grafo Semántico de IA e Historial**: Integra precalentamiento con Ollama (`llama3.2`, `qwen2.5`) para generar descripciones de código y el grafo de Arquitectura Global interconectado.
-   - **Vista Semántica rediseñada**: comunidades por subsistema (`Subsistema: src/GameEngine.Core`) + **god nodes** destacados (los conceptos más conectados), con aristas etiquetadas `EXTRACTED`/`INFERRED`.
+   - **Vista Semántica rediseñada**: comunidades por subsistema (`Subsistema: src/GameEngine.Core`) + **god nodes** destacados (los conceptos más conectados), con aristas etiquetadas `EXTRACTED`/`INFERRED`. Incluye imágenes, documentos y audio/video enriquecidos, y crea un máximo acotado de relaciones `similitud semántica` a partir de sus descripciones locales cacheadas (sin volver a invocar al modelo al abrir la vista).
    - **Respetar `.gitignore` por proyecto**: toggle en el panel de settings (o `aether-graph gitignore on|off`) — con `on` solo los archivos versionados entran al grafo (menos ruido, menos llamadas LLM); `off` incluye todo lo escaneable.
    - **Estilos de grafo y forma de nodos (Paleta & Motor)**: selector de estilo — **Estándar** y **Neuronal** (tejido orgánico). **Neuronal en 3D** tiene dos modos: **Dibujo orgánico 2D en 3D** (default: halos respirando, enlaces con botones sinápticos y cometas — el estilo del 2D proyectado sobre el grafo 3D, respetando el **Estilo de Enlaces** sólido/punteado/curvo) y modo luces (vista Estándar + cometas, parpadeo de vértices y destello de nodos al recibir). En 2D también respeta el Estilo de Enlaces. Colores configurables: **Color de Nodos**, **Color de Ráfaga** y **Color de Vértices**. Selector de forma de nodos: **Círculos · Esferas** o **Cuadrados · Cubos**.
    - **Laboratorio de Comparación de Modelos**: Disponible en [`/comparison`](http://localhost:9210/comparison), compara el contexto generado por modelos locales y modelos de paga con el mismo nodo y prompt.
@@ -40,6 +40,8 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 ## 🛠️ Lenguajes Soportados Nativamente (23 Lenguajes a $0 Tokens)
 
 AetherGraph incluye un motor sintáctico determinista que soporta nativamente el parsing de clases, funciones, módulos, herencia y llamadas en los siguientes lenguajes:
+
+Para C#, JavaScript, TypeScript y TSX puede utilizar el backend opcional **tree-sitter**. Este produce nodos con `file`, `line`, `end_line`, `evidence` y `parser: tree-sitter`, además de aristas `contiene`, `hereda` y `llama` con evidencia verificable. Si el extra no está instalado, se conserva automáticamente el extractor integrado. En reindexaciones desde la API, los resultados estructurales tree-sitter se guardan por SHA-256 en `~/.aether-graph/<proyecto>/structural_cache.json`; los archivos sin cambios reutilizan ese fragmento.
 
 | Lenguaje / Framework | Extensiones | Elementos Extraídos |
 |---|---|---|
@@ -80,11 +82,14 @@ Además del código, AetherGraph indexa documentos en el mismo grafo:
 | **Imágenes** | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp` | Descripción semántica por modelo de visión local (Ollama) |
 | **Audio / Video** | `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.opus`, `.mp4`, `.mov`, `.mkv`, `.webm`, `.avi` | Transcripción local (Whisper, CPU $0) → resumen semántico por LLM |
 
+En **Semántico IA**, los nodos `image`, `doc` y `media` se mantienen dentro de su comunidad y se conectan con hasta dos contenidos afines. Las aristas se calculan sobre las descripciones ya enriquecidas, se etiquetan `similitud semántica · N%` y llevan confianza `INFERRED`. Es una heurística local, explicable y acotada; no pretende sustituir todavía a embeddings ni a extracción relacional mediante un LLM.
+
 Las librerías de documentos son **opcionales** (el MCP stdio sigue siendo 100% stdlib):
 
 ```bash
 pip install "aether-graph[multimodal]"   # pypdf + python-docx + openpyxl
 pip install "aether-graph[media]"        # faster-whisper (transcripción local)
+pip install "aether-graph[treesitter]"   # parser preciso C#, JavaScript y TypeScript/TSX
 ```
 
 **Modelos de visión local** (RTX 3050 4GB):
@@ -340,26 +345,34 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 
 ## 🏆 Comparativa de Mercado
 
-*Verificado contra la versión actual de Graphify (Graphify-Labs, v8) y LSIF/Sourcegraph (ago 2026). Fuentes: README v8 de `Graphify-Labs/graphify` (GitHub), graphify.com y benchmarks publicados (BENCHMARKS.md, LOCOMO, LongMemEval-S).*
+*Revisión de capacidades: agosto de 2026. Fuentes primarias: [README de Graphify v8](https://github.com/Graphify-Labs/graphify/blob/v8/README.md), [pipeline de Graphify](https://github.com/Graphify-Labs/graphify/blob/v8/docs/how-it-works.md), [navegación precisa de Sourcegraph](https://sourcegraph.com/docs/code-navigation/precise-code-navigation) y [MCP de Sourcegraph](https://sourcegraph.com/docs/api/mcp). Esta tabla compara enfoques; no constituye un benchmark de superioridad.*
 
 | Característica | 📦 Graphify (v8) | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
 |---|---|---|---|
-| **Parsing Estático Multi-Lenguaje** | **Sí** (tree-sitter, 37+ gramáticas + Apex/Terraform/OCaml/Lisp, local, $0) | Sí (LSIF, preciso vía language servers) | Sí (AST nativo 23 lenguajes a $0) |
-| **Descripción semántica por nodo de CÓDIGO (rol en lenguaje natural)** | ❌ No: "code is parsed with tree-sitter AST: deterministic, no LLM"; el pase semántico es solo para docs/PDFs/media | ❌ No | ✅ **Sí: cada archivo/clase/función tiene descripción de rol generada por LLM local o cloud** |
+| **Parsing Estático Multi-Lenguaje** | **Sí** (36 gramáticas tree-sitter más extractores especializados, local, $0) | Sí (índices SCIP por lenguaje, con precisión de compilador cuando están configurados) | Sí (AST/regex nativo para 23 lenguajes a $0) |
+| **Descripción semántica persistente por nodo de CÓDIGO** | No en el pipeline normal: el código usa tree-sitter; el pase con modelo se reserva para docs/PDFs/media | No como propiedad equivalente del índice SCIP | ✅ **Sí: cada archivo/clase/función puede recibir una descripción de rol mediante LLM local o cloud** |
 | **Etiquetas de confianza en aristas** | ✅ EXTRACTED / INFERRED / AMBIGUOUS por arista | Parcial | ✅ **EXTRACTED (contiene/hereda) / INFERRED (usa cross-file) / AMBIGUOUS (nombre repetido en varios símbolos)** |
 | **Consumo de Tokens (grafo de código)** | 0 (tree-sitter local) | 0 (dump LSP) | **0 en Pasada 1** + Enriquecimiento Opcional (local = 0) |
-| **Reindexado incremental** | ✅ `--update` + hook post-commit (AST) | ❌ Dump completo típicamente | ✅ **git-status (solo versionados) + solo nodos cambiados (medido: 2.6s vs 96s full)** |
+| **Reindexado incremental / automático** | ✅ actualización, modo `--watch` y hook que regenera tras commits | ✅ auto-indexación o indexación SCIP en CI; depende del indexador/lenguaje | ✅ **git-status + enriquecimiento solo de nodos cambiados; hook post-commit opcional** |
 | **Compactación de densidad (≤140 chars/nodo)** | N/A (no describe código con LLM) | N/A | ✅ `AETHER_COMPACT=1` (local a +5% de la densidad premium) |
 | **Memoria de historial de acciones del agente** | ❌ (query log opcional; no timeline de acciones) | ❌ | ✅ **SQLite local (`graph_history_*`) gratuito + `tokens_avoided` por consulta** |
-| **Visualizador** | graph.html estático interactivo (comunidades, click) | No | Dashboard WebGL 2D/3D en vivo (`:9210`) |
+| **Visualizador** | `graph.html` interactivo (comunidades, filtros, nodos) | Navegación web de código, referencias y dependencias; no es un dashboard de grafo equivalente | Dashboard WebGL 2D/3D en vivo (`:9210`) |
 | **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `aether-graph diff` (git, pre-commit) + inspector |
-| **MCP** | ✅ stdio + HTTP compartido con API key (7 tools: query_graph/get_node/get_neighbors/shortest_path/list_prs/get_pr_impact/triage_prs) | No nativo | ✅ stdio (7 tools: grafo + historial + registro), 100% stdlib (corre en contenedores sin instalación) |
-| **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ docs, PDFs, imágenes, video/audio, SQL, configs | Parcial | ✅ docs (MD/RST/TXT con aristas de referencia), PDF, DOCX, XLSX, **imágenes por visión local** y **audio/video por transcripción local** — todo $0 |
-| **Benchmarks publicados** | ✅ LOCOMO recall@10 0.497 · LongMemEval-S 76% QA (metodología reproducible) | Parcial | ✅ [BENCHMARKS.md](BENCHMARKS.md) (tiempos reales de reindex, modelos locales, payloads MCP) |
-| **Ecosistema / Plataformas** | ✅ 20+ asistentes con instalador oficial (incluye OpenCode y OpenClaw), 108k estrellas | Empresa | ✅ MCP estándar (Antigravity, Claude Code, Codex/Cursor/Windsurf, OpenCode, OpenClaw) |
-| **Soporte Offline** | ✅ código 100% local; docs requieren API | Depende del servidor | ✅ 100% offline con Ollama local |
+| **MCP** | ✅ stdio + HTTP compartido con API key (7 tools) | ✅ MCP en Sourcegraph Enterprise (search, navegación, historial y Deep Search) | ✅ stdio (7 tools: grafo + historial + registro), 100% stdlib |
+| **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ pase semántico sobre docs, PDFs, imágenes y transcripciones mediante el modelo del asistente/backend configurado | No es su objetivo principal | ✅ docs, PDF, DOCX, XLSX, visión local y transcripción local; **relaciones de similitud cacheadas y offline** |
+| **Benchmarks publicados** | ✅ benchmarks de recuperación/memoria publicados por el proyecto | Benchmarks y documentación empresarial | ⚠️ [BENCHMARKS.md](BENCHMARKS.md) mide rendimiento y payloads; falta benchmark comparativo de calidad de respuestas |
+| **Ecosistema / Plataformas** | ✅ instalador para 20+ asistentes | ✅ plataforma empresarial e integraciones de código | ✅ MCP estándar para Antigravity, Claude Code, Codex, Cursor, Windsurf, OpenCode y OpenClaw |
+| **Soporte Offline** | ✅ código local; el pase semántico multimodal necesita un backend/modelo configurado | Depende del despliegue e índices | ✅ 100% offline con Ollama y Whisper locales |
 
-**Lectura honesta:** Graphify es más maduro en cobertura de lenguajes (37+), ecosistema (20+ asistentes, 108k estrellas), flujo de PRs (impact/triage/conflictos), multi-modalidad y benchmarks de calidad de respuestas. AetherGraph gana en **contexto semántico en lenguaje natural sobre el código** (archivos/clases/funciones con rol — Graphify explícitamente no usa LLM sobre código), **historial de sesiones del agente con métricas de ahorro**, **compactación de densidad**, **portabilidad extrema del MCP** (stdlib puro, sin instalación) y **reindexado incremental medido**. Las tres herramientas comparten la base determinista de $0 tokens; AetherGraph añade la capa semántica que Graphify aplica solo a documentos.
+**Lectura honesta:** Graphify es más maduro en cobertura y precisión del parser, integraciones, flujo de PRs, servidor MCP compartido, extracción relacional multimodal y benchmarks de calidad. Sourcegraph domina la navegación precisa y cross-repository cuando existen índices SCIP, además de ofrecer MCP empresarial. AetherGraph se diferencia por **describir también el rol del código con modelos locales**, mantener **historial local del agente**, ofrecer un **dashboard WebGL 2D/3D**, ejecutar visión/transcripción y similitud multimodal **completamente offline**, y conservar un MCP stdio muy portátil. La tesis competitiva actual es “alternativa local-first, visual y semántica”, no “reemplazo universal”.
+
+### Brechas antes de afirmar superioridad
+
+1. Adoptar un parser incremental robusto (tree-sitter o LSP/SCIP) para sustituir extractores regex en los lenguajes que no usan AST real.
+2. Publicar un benchmark reproducible de precisión de nodos/aristas y calidad de respuestas contra Graphify y un baseline sin grafo.
+3. Añadir MCP HTTP autenticado para equipos, modo watch y actualización incremental del grafo estructural por archivo.
+4. Incorporar análisis de PRs/conflictos, relaciones multimodales explicadas por evidencia y defensas contra prompt injection en documentos.
+5. Validar con repositorios externos grandes; las cifras de ahorro de tokens deben reportar metodología, corpus, promedio y dispersión.
 
 ---
 

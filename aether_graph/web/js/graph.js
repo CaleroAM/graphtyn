@@ -174,6 +174,16 @@ export function onNodeClick(node) {
       const safeName = escapeHtml(node.name || node.id || 'Sin nombre');
       const safeKind = escapeHtml(node.kind || 'nodo');
       const safeId = escapeHtml(node.id || '');
+      const sourceBlock = node.file
+        ? '<div><strong>Origen:</strong> <span style="color:#94a3b8;overflow-wrap:anywhere;">' +
+          escapeHtml(node.file) + (node.line ? ':' + node.line : '') + '</span></div>'
+        : '';
+      const evidenceBlock = node.evidence
+        ? '<div style="margin:4px 0;padding:5px 7px;background:#0b1220;border-left:2px solid #10b981;border-radius:4px;overflow-wrap:anywhere;">' +
+          '<strong style="color:#10b981;font-size:9px;display:block;margin-bottom:2px;">EVIDENCIA ' +
+          escapeHtml((node.parser || 'estructural').toUpperCase()) + '</strong>' +
+          '<code style="color:#cbd5e1;font-size:9px;white-space:pre-wrap;">' + escapeHtml(node.evidence) + '</code></div>'
+        : '';
 
       const descText = node.details || (node.id ? node.id.replace(/^(file|symbol):/, '') : 'Sin detalles disponibles');
       const descBlock = (function(){
@@ -195,6 +205,8 @@ export function onNodeClick(node) {
       body.innerHTML =
         '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + safeName + '</span></div>' +
         '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + safeKind + '</span></div>' +
+        sourceBlock +
+        evidenceBlock +
         descBlock +
         '<div style="display:flex;gap:12px;margin-top:2px;">' +
           '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
