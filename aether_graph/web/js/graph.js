@@ -417,6 +417,7 @@ export function loadChangesView() {
         const files = d.changed_files || [];
         const risk = d.risk || {level:'low', score:0, direct:0, transitive:0};
         const conflicts = d.conflicts || [];
+        const changedSymbols = d.changed_symbols || [];
         document.getElementById('stats').textContent = files.length + ' cambiados · ' + impacted.length + ' impactados';
         container.innerHTML =
           '<div style="height:100%;overflow-y:auto;padding:20px 26px;max-width:880px;">' +
@@ -426,6 +427,8 @@ export function loadChangesView() {
           '<div style="font-weight:700;color:#38bdf8;font-size:14px;margin-bottom:10px;">Cambios sin commitear (git status)</div>' +
           (files.length ? files.slice(0, 40).map(f => '<div style="color:#cbd5e1;font-size:12px;padding:3px 0;border-bottom:1px solid #1e293b;font-family:monospace;">' + f + '</div>').join('')
             : '<div style="color:#64748b;font-size:12px;">Sin archivos modificados.</div>') +
+          '<div style="font-weight:700;color:#22d3ee;font-size:14px;margin:18px 0 10px;">Símbolos realmente modificados</div>' +
+          (changedSymbols.length ? changedSymbols.slice(0, 60).map(s => '<div style="color:#cbd5e1;font-size:12px;padding:4px 0;border-bottom:1px solid #1e293b;"><strong>' + s.name + '</strong> · ' + s.kind + ' · línea ' + s.line + ' <span class="proj-badge ok">' + (s.change_types || []).join(' · ') + '</span></div>').join('') : '<div style="color:#64748b;font-size:12px;">Los cambios no intersectan símbolos conocidos.</div>') +
           '<div style="font-weight:700;color:#a78bfa;font-size:14px;margin:18px 0 10px;">Radio de impacto (nodos conectados a los cambios)</div>' +
           (impacted.length ? impacted.slice(0, 60).map(i =>
             '<div class="project-item" style="margin-bottom:4px;" data-node-id="' + String(i.node.id || '').replace(/"/g, '&quot;') + '" onclick="openFromChanges(this.dataset.nodeId)">' +

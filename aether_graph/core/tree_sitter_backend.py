@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v2"
+PARSER_VERSION = "treesitter-v3"
 
 
 def _language_for_extension(ext: str):
@@ -72,6 +72,15 @@ def _call_name(source: bytes, node) -> str:
     return names[-1] if names else ""
 
 
+def _ancestor_name(source: bytes, node, types: set[str]) -> str:
+    ancestor = node.parent
+    while ancestor is not None:
+        if ancestor.type in types:
+            return _name(source, ancestor)
+        ancestor = ancestor.parent
+    return ""
+
+
 def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     """Return structural facts or ``None`` when tree-sitter is unavailable."""
     ext = file_path.suffix.lower()
@@ -88,6 +97,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     symbols: list[dict[str, Any]] = []
     calls: list[dict[str, Any]] = []
     imports: list[dict[str, Any]] = []
+    namespace = ""
 
     symbol_types = {
         "class_declaration": "class",
@@ -111,10 +121,13 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "trait_item": "interface",
         "type_declaration": "type",
     }
-    call_types = {"invocation_expression", "call_expression", "new_expression", "object_creation_expression"}
-    import_types = {"using_directive", "import_statement", "import_declaration", "package_clause", "use_declaration"}
+    call_types = {"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression"}
+    import_types = {"using_directive", "import_statement", "import_from_statement", "import_declaration", "package_clause", "use_declaration"}
+    type_declarations = {"class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item"}
+    callable_declarations = {"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item"}
 
     def visit(node) -> None:
+        nonlocal namespace
         # Keep every ancestor Node alive while visiting descendants. Some
         # grammar/binding combinations expose child nodes backed by their
         # parent wrapper; retaining the recursive frame avoids invalid native
@@ -131,7 +144,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                 symbols.append({
                     "name": name, "kind": "function", "file": rel_path,
                     "line": line, "end_line": end_line, "evidence": evidence,
-                    "bases": [], "parser": "tree-sitter",
+                    "bases": [], "parser": "tree-sitter", "container": _ancestor_name(source, node, type_declarations),
                 })
         elif node.type in symbol_types:
             name = _name(source, node)
@@ -154,6 +167,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                 if base_node is not None:
                     import re
                     bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", _text(source, base_node))
+                parameters = node.child_by_field_name("parameters")
+                parameter_count = parameters.named_child_count if parameters is not None else None
                 symbols.append({
                     "name": name,
                     "kind": kind,
@@ -163,18 +178,58 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     "evidence": evidence,
                     "bases": bases,
                     "parser": "tree-sitter",
+                    "container": _ancestor_name(source, node, type_declarations),
+                    "parameter_count": parameter_count,
+                    "signature": evidence,
                 })
         elif node.type in call_types:
             name = _call_name(source, node)
             if name:
-                calls.append({"name": name, "line": line, "evidence": evidence})
+                target = node.child_by_field_name("function")
+                raw_target = _text(source, target) if target is not None else ""
+                receiver = raw_target.rsplit(".", 1)[0].split(".")[-1] if "." in raw_target else ""
+                args = node.child_by_field_name("arguments")
+                calls.append({
+                    "name": name, "line": line, "evidence": evidence,
+                    "receiver": receiver,
+                    "argument_count": args.named_child_count if args is not None else None,
+                    "caller": _ancestor_name(source, node, callable_declarations),
+                    "container": _ancestor_name(source, node, type_declarations),
+                })
         elif node.type in import_types:
             imports.append({"text": evidence, "line": line})
+        elif node.type in {"namespace_declaration", "file_scoped_namespace_declaration"}:
+            name_node = node.child_by_field_name("name")
+            if name_node is not None:
+                namespace = _text(source, name_node)
 
         for child in node.named_children:
             visit(child)
 
     visit(tree.root_node)
+
+    source_text = source.decode("utf-8", errors="replace")
+    source_lines = source_text.splitlines()
+    import re
+    for call in calls:
+        receiver = call.get("receiver", "")
+        receiver_type = ""
+        if receiver == "this":
+            receiver_type = call.get("container", "")
+        elif receiver and receiver[:1].isupper():
+            receiver_type = receiver
+        elif receiver:
+            prefix = "\n".join(source_lines[:call["line"]])
+            patterns = [
+                rf"\bvar\s+{re.escape(receiver)}\s*=\s*new\s+([A-Za-z_][A-Za-z0-9_]*)",
+                rf"\b([A-Z][A-Za-z0-9_.<>]*)\s+{re.escape(receiver)}\b",
+            ]
+            matches = []
+            for pattern in patterns:
+                matches.extend(re.findall(pattern, prefix))
+            if matches:
+                receiver_type = re.sub(r"[.<].*", "", matches[-1].split(".")[-1])
+        call["receiver_type"] = receiver_type
 
     return {
         "file": rel_path,
@@ -183,4 +238,5 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "symbols": symbols,
         "calls": calls,
         "imports": imports,
+        "namespace": namespace,
     }

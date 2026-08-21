@@ -8,12 +8,16 @@ El ground truth versionado en `benchmarks/unity_commerce_demo.json` comprueba si
 
 | Métrica | Resultado |
 |---|---:|
-| Archivos/nodos/aristas indexados | 166 / 1,347 / 2,252 |
+| Archivos/nodos/aristas indexados | 166 / 1,359 / 3,259 |
 | Imágenes detectadas | 125 |
-| Primera pasada | 0.7223 s |
-| Segunda pasada con caché | 0.5809 s (1.24×) |
+| Primera pasada | 1.1102 s |
+| Segunda pasada con caché | 0.5612 s (1.98×) |
 | Recall del ground truth | 7/7 (100%) |
 | Aristas colgantes/duplicadas | 0 / 0 |
+| Llamadas resueltas | 1,751 (1,726 símbolo → símbolo) |
+| Llamadas ambiguas | 346 (19.76%) |
+
+Antes del resolvedor contextual, el índice servido contenía 780 llamadas y 484 ambiguas (62.1%). La nueva pasada encuentra más del doble de llamadas y reduce la tasa ambigua a 19.76%. La comparación es de cobertura estructural sobre el mismo proyecto, no demuestra todavía precisión semántica de cada destino; eso requiere ampliar el ground truth con aristas positivas y negativas.
 
 Resultado completo y reproducible: `benchmarks/unity_commerce_demo_result.json`.
 

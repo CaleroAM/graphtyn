@@ -30,7 +30,7 @@ def test_benchmark_ground_truth(tmp_path):
     truth = tmp_path / "truth.json"
     truth.write_text(json.dumps({"expected_symbols": [
         {"file": "service.py", "name": "Service", "kind": "class"},
-        {"file": "service.py", "name": "run", "kind": "function"},
+        {"file": "service.py", "name": "run", "kind": "method"},
     ]}), encoding="utf-8")
     result = run_benchmark(tmp_path, truth, tmp_path / "cache.json")
     assert result["ground_truth"]["symbol_recall"] == 1
@@ -48,6 +48,20 @@ def test_pr_impact_reports_risk_and_changed_file(tmp_path):
     assert report["changed_files"] == ["service.py"]
     assert report["risk"]["score"] > 0
     assert "conflict_detection" in report
+
+
+def test_symbol_level_diff_impacts_callers_not_every_symbol(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / "a.py").write_text("def helper():\n    return 1\n", encoding="utf-8")
+    (tmp_path / "b.py").write_text("from a import helper\ndef run():\n    return helper()\n", encoding="utf-8")
+    subprocess.run(["git", "add", "a.py", "b.py"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-qm", "init"], cwd=tmp_path, check=True)
+    (tmp_path / "a.py").write_text("def helper():\n    return 2\n", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path, respect_git=True)
+    report = analyze_impact(tmp_path, graph)
+    assert {symbol["name"] for symbol in report["changed_symbols"]} == {"helper"}
+    impacted_names = {item["node"].get("name") for item in report["impacted_nodes"]}
+    assert "run" in impacted_names
 
 
 def test_http_mcp_requires_token_and_serves_tools(monkeypatch):

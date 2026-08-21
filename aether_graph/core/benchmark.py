@@ -23,8 +23,14 @@ def run_benchmark(root: Path, ground_truth_path: Path | None = None, cache_path:
     links = graph.get("links", [])
     node_ids = {n.get("id") for n in nodes}
     dangling = [l for l in links if l.get("source") not in node_ids or l.get("target") not in node_ids]
-    unique_edges = {(l.get("source"), l.get("target"), l.get("label")) for l in links}
+    unique_edges = {
+        (l.get("source"), l.get("target"), l.get("label"), l.get("file") if l.get("label") == "llama" else None,
+         l.get("line") if l.get("label") == "llama" else None)
+        for l in links
+    }
     duplicates = len(links) - len(unique_edges)
+    calls = [link for link in links if link.get("label") == "llama"]
+    ambiguous_calls = sum(link.get("confidence") == "AMBIGUOUS" for link in calls)
     kinds: dict[str, int] = {}
     parsers: dict[str, int] = {}
     for node in nodes:
@@ -48,6 +54,10 @@ def run_benchmark(root: Path, ground_truth_path: Path | None = None, cache_path:
             "dangling_edges": len(dangling),
             "duplicate_edges": duplicates,
             "structural_validity": round(1 - (len(dangling) / max(1, len(links))), 4),
+            "call_edges": len(calls),
+            "ambiguous_calls": ambiguous_calls,
+            "ambiguous_call_rate": round(ambiguous_calls / max(1, len(calls)), 4),
+            "symbol_to_symbol_calls": sum(str(link.get("source", "")).startswith("symbol:") for link in calls),
         },
     }
     if ground_truth_path:
@@ -88,6 +98,7 @@ def benchmark_markdown(result: dict[str, Any]) -> str:
         f"- Nodos/aristas: **{result['nodes']} / {result['links']}**",
         f"- Validez estructural: **{quality['structural_validity'] * 100:.2f}%**",
         f"- Aristas colgantes/duplicadas: **{quality['dangling_edges']} / {quality['duplicate_edges']}**",
+        f"- Llamadas ambiguas: **{quality['ambiguous_calls']}/{quality['call_edges']} ({quality['ambiguous_call_rate'] * 100:.2f}%)**",
     ]
     if truth:
         lines.append(f"- Recall de símbolos etiquetados: **{truth['symbol_recall'] * 100:.2f}%** ({truth['found_symbols']}/{truth['expected_symbols']})")

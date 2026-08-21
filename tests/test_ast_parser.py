@@ -80,6 +80,69 @@ def test_tree_sitter_typescript_extracts_arrow_functions(tmp_path):
     assert ("helper", "function") in symbols
 
 
+def test_csharp_cross_file_resolution_prefers_container_and_interface(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    (tmp_path / "First.cs").write_text(
+        "namespace Demo; public interface IService {} public class First : IService { "
+        "public void Ping() {} public void Run() { Ping(); } }", encoding="utf-8"
+    )
+    (tmp_path / "Second.cs").write_text(
+        "namespace Other; public class Second { public void Ping() {} }", encoding="utf-8"
+    )
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False, cache_path=tmp_path / "cache.json")
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    calls = [link for link in graph["links"] if link.get("label") == "llama"]
+    run_call = next(link for link in calls if nodes.get(link["source"], {}).get("name") == "Run")
+    assert nodes[run_call["target"]]["container"] == "First"
+    assert run_call["confidence"] == "EXTRACTED"
+    implementation = next(link for link in graph["links"] if link.get("label") == "implementa")
+    assert nodes[implementation["target"]]["name"] == "IService"
+
+
+def test_unity_asmdef_assigns_nearest_assembly(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    core = tmp_path / "Core"
+    core.mkdir()
+    (core / "Core.asmdef").write_text('{"name":"Game.Core","rootNamespace":"Game.Core"}', encoding="utf-8")
+    (core / "Service.cs").write_text("namespace Game.Core; public class Service {}", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    service = next(node for node in graph["nodes"] if node.get("name") == "Service")
+    file_node = next(node for node in graph["nodes"] if node.get("id") == "file:Core/Service.cs")
+    assert service["assembly"] == "Game.Core"
+    assert file_node["assembly"] == "Game.Core"
+
+
+def test_scan_uses_tree_sitter_for_python_java_go_and_rust(tmp_path):
+    for module in ("tree_sitter_python", "tree_sitter_java", "tree_sitter_go", "tree_sitter_rust"):
+        pytest.importorskip(module)
+    (tmp_path / "a.py").write_text("def python_fn():\n    pass\n", encoding="utf-8")
+    (tmp_path / "A.java").write_text("class A { void javaFn() {} }", encoding="utf-8")
+    (tmp_path / "a.go").write_text("package demo\nfunc GoFn() {}\n", encoding="utf-8")
+    (tmp_path / "a.rs").write_text("fn rust_fn() {}\n", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    expected = {"python_fn", "javaFn", "GoFn", "rust_fn"}
+    parsed = {node["name"] for node in graph["nodes"] if node.get("parser") == "tree-sitter"}
+    assert expected <= parsed
+
+
+def test_csharp_receiver_type_disambiguates_same_method_name(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    (tmp_path / "First.cs").write_text(
+        "class First { void Ping() {} void Run() { Second other = new Second(); other.Ping(); } }",
+        encoding="utf-8",
+    )
+    (tmp_path / "Second.cs").write_text("class Second { public void Ping() {} }", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    run_call = next(
+        link for link in graph["links"]
+        if link.get("label") == "llama" and nodes.get(link["source"], {}).get("name") == "Run"
+        and "other.Ping" in link.get("evidence", "")
+    )
+    assert nodes[run_call["target"]]["container"] == "Second"
+    assert run_call["resolution"]["receiver_type"] == "Second"
+
+
 def test_structural_cache_reuses_unchanged_tree_sitter_result(tmp_path, monkeypatch):
     source = tmp_path / "Service.cs"
     source.write_text("public class Service {}", encoding="utf-8")

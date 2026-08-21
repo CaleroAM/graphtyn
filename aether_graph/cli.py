@@ -205,6 +205,9 @@ def main():
             print("✓ No hay archivos modificados en git status.")
         else:
             print(f"🔍 {len(report['changed_files'])} archivos · riesgo {report['risk']['level'].upper()} ({report['risk']['score']}/100)")
+            print(f"🎯 {len(report['changed_symbols'])} símbolos realmente modificados")
+            for symbol in report["changed_symbols"][:10]:
+                print(f"  Δ {symbol['name']} ({symbol['kind']}) · {symbol['file']}:{symbol['line']} · {','.join(symbol['change_types'])}")
             print(f"💥 {len(report['impacted_nodes'])} nodos afectados (directos: {report['risk']['direct']}, transitivos: {report['risk']['transitive']})")
             for item in report["impacted_nodes"][:15]:
                 node = item["node"]

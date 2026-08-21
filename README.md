@@ -42,7 +42,7 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 
 AetherGraph incluye un motor sintáctico determinista que soporta nativamente el parsing de clases, funciones, módulos, herencia y llamadas en los siguientes lenguajes:
 
-Para C#, JavaScript, TypeScript/TSX, Python, Java, Go y Rust puede utilizar el backend opcional **tree-sitter**. Este produce nodos con `file`, `line`, `end_line`, `evidence` y `parser: tree-sitter`, además de aristas `contiene`, `hereda` y `llama` con evidencia verificable. Si una gramática no está instalada, se conserva automáticamente el extractor integrado. En reindexaciones desde la API, los resultados estructurales tree-sitter se guardan por SHA-256 en `~/.aether-graph/<proyecto>/structural_cache.json`; los archivos sin cambios reutilizan ese fragmento.
+Para C#, JavaScript, TypeScript/TSX, Python, Java, Go y Rust puede utilizar el backend opcional **tree-sitter**. Este produce nodos con `file`, `line`, `end_line`, firma, contenedor, namespace y `parser: tree-sitter`, además de aristas `contiene`, `hereda`, `implementa` y `llama` con evidencia verificable. El resolvedor cross-file pondera receptor/tipo inferido, clase contenedora, aridad, imports, namespace y ensamblado; conserva `AMBIGUOUS` cuando los mejores candidatos empatan. En Unity reconoce el `.asmdef` ancestro más cercano y sus referencias. Es una resolución contextual determinista, no equivale aún a la información de tipos completa de Roslyn/LSP. Si una gramática no está instalada, se conserva automáticamente el extractor integrado. Los fragmentos se cachean por SHA-256 en `structural_cache.json`.
 
 | Lenguaje / Framework | Extensiones | Elementos Extraídos |
 |---|---|---|
@@ -175,6 +175,10 @@ curl -X POST http://127.0.0.1:9210/mcp \
 ```
 
 El endpoint usa comparación de token resistente a timing y expone vecindario, radio de impacto, búsqueda semántica y análisis de PR. Para exponerlo fuera de localhost todavía se recomienda colocarlo detrás de TLS y un proxy con límites de solicitudes.
+
+### Impacto por símbolo
+
+`diff` y `pr-impact` leen hunks de `git diff --unified=0`, cruzan los rangos modificados con `line/end_line` y usan como semillas los métodos, clases o funciones tocados. Los cambios se clasifican como `logic`, `signature`, `configuration`, `documentation` o `asset`. Para relaciones `llama`/`usa`, el impacto se propaga hacia los consumidores; ya no expande automáticamente todos los símbolos de cada archivo modificado. La vista **Cambios** muestra estos símbolos y permite indicar una rama base.
 
 # Explicar la responsabilidad y conexiones de un módulo o clase
 aether-graph explain "TurnManager"
@@ -384,13 +388,13 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 |---|---|---|---|
 | **Parsing Estático Multi-Lenguaje** | **Sí** (36 gramáticas tree-sitter más extractores especializados, local, $0) | Sí (índices SCIP por lenguaje, con precisión de compilador cuando están configurados) | Sí (tree-sitter para 7 lenguajes + extractores integrados para el resto, local, $0) |
 | **Descripción semántica persistente por nodo de CÓDIGO** | No en el pipeline normal: el código usa tree-sitter; el pase con modelo se reserva para docs/PDFs/media | No como propiedad equivalente del índice SCIP | ✅ **Sí: cada archivo/clase/función puede recibir una descripción de rol mediante LLM local o cloud** |
-| **Etiquetas de confianza en aristas** | ✅ EXTRACTED / INFERRED / AMBIGUOUS por arista | Parcial | ✅ **EXTRACTED (contiene/hereda) / INFERRED (usa cross-file) / AMBIGUOUS (nombre repetido en varios símbolos)** |
+| **Etiquetas de confianza en aristas** | ✅ EXTRACTED / INFERRED / AMBIGUOUS por arista | Parcial | ✅ **EXTRACTED/INFERRED/AMBIGUOUS con evidencia y puntuación de resolución contextual** |
 | **Consumo de Tokens (grafo de código)** | 0 (tree-sitter local) | 0 (dump LSP) | **0 en Pasada 1** + Enriquecimiento Opcional (local = 0) |
 | **Reindexado incremental / automático** | ✅ actualización, modo `--watch` y hook que regenera tras commits | ✅ auto-indexación o indexación SCIP en CI; depende del indexador/lenguaje | ✅ **`--watch` + manifiesto SHA-256 + caché tree-sitter por archivo; git-status y hook post-commit opcional** |
 | **Compactación de densidad (≤140 chars/nodo)** | N/A (no describe código con LLM) | N/A | ✅ `AETHER_COMPACT=1` (local a +5% de la densidad premium) |
 | **Memoria de historial de acciones del agente** | ❌ (query log opcional; no timeline de acciones) | ❌ | ✅ **SQLite local (`graph_history_*`) gratuito + `tokens_avoided` por consulta** |
 | **Visualizador** | `graph.html` interactivo (comunidades, filtros, nodos) | Navegación web de código, referencias y dependencias; no es un dashboard de grafo equivalente | Dashboard WebGL 2D/3D en vivo (`:9210`) |
-| **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `diff` + `pr-impact`: riesgo directo/transitivo y simulación no destructiva de conflictos Git |
+| **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `diff` + `pr-impact`: hunks → símbolos, riesgo directo/transitivo y simulación no destructiva de conflictos Git |
 | **MCP** | ✅ stdio + HTTP compartido con API key (7 tools) | ✅ MCP en Sourcegraph Enterprise (search, navegación, historial y Deep Search) | ✅ stdio + HTTP opcional protegido con Bearer; transporte local por defecto |
 | **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ pase semántico sobre docs, PDFs, imágenes y transcripciones mediante el modelo del asistente/backend configurado | No es su objetivo principal | ✅ docs, PDF, DOCX, XLSX, visión local y transcripción local; **relaciones de similitud cacheadas y offline** |
 | **Benchmarks publicados** | ✅ benchmarks de recuperación/memoria publicados por el proyecto | Benchmarks y documentación empresarial | ⚠️ [BENCHMARKS.md](BENCHMARKS.md) mide rendimiento y payloads; falta benchmark comparativo de calidad de respuestas |

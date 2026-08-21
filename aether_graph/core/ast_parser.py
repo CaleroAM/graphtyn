@@ -65,6 +65,8 @@ class ASTParser:
         symbol_name_ids: Dict[str, Set[str]] = {}
         pending_inheritance: List[tuple] = []
         tree_calls: Dict[str, List[Dict[str, Any]]] = {}
+        tree_imports: Dict[str, List[Dict[str, Any]]] = {}
+        file_namespaces: Dict[str, str] = {}
         tree_parsed_files: Set[str] = set()
 
         structural_cache = {"version": PARSER_VERSION, "files": {}}
@@ -77,7 +79,7 @@ class ASTParser:
                 pass
 
         def _tree_facts(path: Path, rel_file: str) -> Optional[Dict[str, Any]]:
-            if path.suffix.lower() not in (".cs", ".js", ".jsx", ".ts", ".tsx"):
+            if path.suffix.lower() not in (".cs", ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".go", ".rs"):
                 return None
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             cached = structural_cache.get("files", {}).get(rel_file, {})
@@ -96,11 +98,17 @@ class ASTParser:
             rel_file = result["file"]
             tree_parsed_files.add(rel_file)
             tree_calls[rel_file] = result.get("calls", [])
+            tree_imports[rel_file] = result.get("imports", [])
+            namespace = result.get("namespace") or namespace or file_namespaces.get(rel_file, "")
+            file_namespaces[rel_file] = namespace
             for sym in result.get("symbols", []):
                 name = sym["name"]
                 kind = sym["kind"]
                 qualified = f"{namespace}.{name}" if namespace and kind in ("class", "interface", "struct", "enum") else name
                 sym_id = f"symbol:{rel_file}:{qualified}"
+                if sym_id in node_ids and kind in ("method", "function"):
+                    arity = sym.get("parameter_count")
+                    sym_id = f"{sym_id}/{arity if arity is not None else sym['line']}"
                 if sym_id in node_ids:
                     continue
                 nodes.append({
@@ -110,6 +118,9 @@ class ASTParser:
                     "details": f"{kind.capitalize()} en {rel_file}:{sym['line']}",
                     "file": rel_file, "line": sym["line"], "end_line": sym.get("end_line", sym["line"]),
                     "evidence": sym.get("evidence", ""), "parser": "tree-sitter",
+                    "namespace": namespace, "container": sym.get("container", ""),
+                    "parameter_count": sym.get("parameter_count"), "signature": sym.get("signature", ""),
+                    "assembly": next((node.get("assembly") for node in nodes if node.get("id") == f_id), None),
                 })
                 node_ids.add(sym_id)
                 _register_symbol(name, sym_id)
@@ -200,6 +211,58 @@ class ASTParser:
                 other_code_files.append((path, rel_file, f_id, ext))
 
         file_contents: Dict[str, str] = {}
+
+        # Unity assembly boundaries (.asmdef). A C# file belongs to the
+        # nearest ancestor definition; files without one use Assembly-CSharp.
+        asmdefs: Dict[str, Dict[str, Any]] = {}
+        for asm_path in root_dir.rglob("*.asmdef"):
+            rel_asm = str(asm_path.relative_to(root_dir))
+            if tracked_files is not None and rel_asm not in tracked_files:
+                continue
+            try:
+                cfg = json.loads(asm_path.read_text(encoding="utf-8"))
+                name = cfg.get("name") or asm_path.stem
+                asmdefs[str(asm_path.parent.resolve())] = {
+                    "name": name, "file": rel_asm, "references": cfg.get("references", []),
+                    "root_namespace": cfg.get("rootNamespace", ""),
+                    "guid": "",
+                }
+                meta_path = asm_path.with_suffix(asm_path.suffix + ".meta")
+                if meta_path.exists():
+                    guid_match = re.search(r"^guid:\s*(\S+)", meta_path.read_text(encoding="utf-8", errors="ignore"), re.MULTILINE)
+                    if guid_match:
+                        asmdefs[str(asm_path.parent.resolve())]["guid"] = guid_match.group(1)
+            except (OSError, ValueError, TypeError):
+                continue
+
+        node_by_id = {node["id"]: node for node in nodes}
+        for path, rel_file, f_id in csharp_files:
+            current = path.parent.resolve()
+            assembly = None
+            while current == root_dir.resolve() or root_dir.resolve() in current.parents:
+                if str(current) in asmdefs:
+                    assembly = asmdefs[str(current)]
+                    break
+                if current == root_dir.resolve():
+                    break
+                current = current.parent
+            assembly_name = assembly["name"] if assembly else "Assembly-CSharp"
+            if f_id in node_by_id:
+                node_by_id[f_id]["assembly"] = assembly_name
+            file_namespaces.setdefault(rel_file, assembly.get("root_namespace", "") if assembly else "")
+        asm_name_to_file = {item["name"]: f"file:{item['file']}" for item in asmdefs.values()}
+        asm_guid_to_file = {item["guid"]: f"file:{item['file']}" for item in asmdefs.values() if item["guid"]}
+        for item in asmdefs.values():
+            source = f"file:{item['file']}"
+            for reference in item["references"]:
+                ref_text = str(reference)
+                target = asm_guid_to_file.get(ref_text.removeprefix("GUID:")) if ref_text.startswith("GUID:") else asm_name_to_file.get(ref_text)
+                if target and target != source:
+                    links.append({
+                        "source": source, "target": target, "label": "referencia ensamblado",
+                        "confidence": "EXTRACTED", "evidence": str(reference),
+                        "color": "rgba(16, 185, 129, 0.35)",
+                    })
 
         # Pass 2A: Extract PHP symbols
         for path, rel_file, f_id in php_files:
@@ -351,6 +414,10 @@ class ASTParser:
                 file_contents[rel_file] = path.read_text(encoding="utf-8", errors="ignore")
             except Exception:
                 pass
+            tree_result = _tree_facts(path, rel_file)
+            if tree_result is not None:
+                _add_tree_symbols(tree_result, f_id)
+                continue
             res = self.parse_python_file(path, root_dir)
             for sym in res.get("symbols", []):
                 sym_id = f"symbol:{rel_file}:{sym['name']}"
@@ -394,29 +461,101 @@ class ASTParser:
                 pass
 
         # Pass 4: Resolve precise tree-sitter inheritance and call evidence.
+        node_by_id = {node["id"]: node for node in nodes}
+
+        def _imports_for(rel_file: str) -> tuple[Set[str], Dict[str, str]]:
+            namespaces: Set[str] = set()
+            aliases: Dict[str, str] = {}
+            for item in tree_imports.get(rel_file, []):
+                text = item.get("text", "")
+                match = re.search(r"\busing\s+(?:(\w+)\s*=\s*)?([A-Za-z_][A-Za-z0-9_.]*)", text)
+                if match:
+                    if match.group(1):
+                        aliases[match.group(1)] = match.group(2)
+                    else:
+                        namespaces.add(match.group(2))
+            return namespaces, aliases
+
+        def _rank_candidate(target_id: str, rel_file: str, container: str = "", receiver: str = "", arity: Any = None) -> int:
+            target = node_by_id.get(target_id, {})
+            score = 0
+            if target.get("file") == rel_file:
+                score += 4
+            if container and target.get("container") == container:
+                score += 5
+            if receiver and receiver in {target.get("container"), target.get("name")}:
+                score += 12
+            if arity is not None and target.get("parameter_count") == arity:
+                score += 3
+            source_assembly = node_by_id.get(f"file:{rel_file}", {}).get("assembly")
+            if source_assembly and source_assembly == target.get("assembly"):
+                score += 2
+            imported, aliases = _imports_for(rel_file)
+            namespace = target.get("namespace", "")
+            if namespace and (namespace in imported or any(namespace.startswith(item + ".") for item in imported)):
+                score += 3
+            if receiver and aliases.get(receiver, "").endswith("." + target.get("container", "")):
+                score += 12
+            return score
+
         for source_id, base_name, rel_file, line, evidence in pending_inheritance:
-            target_id = symbol_name_map.get(base_name)
-            if target_id and target_id != source_id:
+            candidates = symbol_name_ids.get(base_name, set())
+            if not candidates:
+                continue
+            ranked = sorted((( _rank_candidate(target, rel_file), target) for target in candidates if target != source_id), reverse=True)
+            if not ranked:
+                continue
+            best_score = ranked[0][0]
+            best = [target for score, target in ranked if score == best_score]
+            for target_id in best:
+                target_node = node_by_id.get(target_id, {})
                 links.append({
-                    "source": source_id, "target": target_id, "label": "hereda",
-                    "color": "rgba(245, 158, 11, 0.4)", "confidence": "EXTRACTED",
+                    "source": source_id, "target": target_id,
+                    "label": "implementa" if target_node.get("kind") == "interface" else "hereda",
+                    "color": "rgba(245, 158, 11, 0.4)",
+                    "confidence": "AMBIGUOUS" if len(best) > 1 else ("EXTRACTED" if best_score >= 2 else "INFERRED"),
                     "file": rel_file, "line": line, "evidence": evidence,
+                    "resolution": {"strategy": "namespace-assembly", "score": best_score, "candidates": len(candidates)},
                 })
 
         for rel_file, calls in tree_calls.items():
             f_id = f"file:{rel_file}"
-            seen_call_targets = set()
+            seen_calls = set()
             for call in calls:
                 targets = symbol_name_ids.get(call["name"], set())
-                for target_id in targets:
-                    if target_id.startswith(f"symbol:{rel_file}:") or target_id in seen_call_targets:
+                if not targets:
+                    continue
+                caller_ids = [
+                    target for target in symbol_name_ids.get(call.get("caller", ""), set())
+                    if node_by_id.get(target, {}).get("file") == rel_file
+                    and (not call.get("container") or node_by_id.get(target, {}).get("container") == call.get("container"))
+                ]
+                source_id = caller_ids[0] if len(caller_ids) == 1 else f_id
+                ranked = sorted((
+                    (_rank_candidate(target, rel_file, call.get("container", ""), call.get("receiver_type") or call.get("receiver", ""), call.get("argument_count")), target)
+                    for target in targets if target != source_id
+                ), reverse=True)
+                if not ranked:
+                    continue
+                best_score = ranked[0][0]
+                best = [target for score, target in ranked if score == best_score]
+                for target_id in best:
+                    call_key = (source_id, target_id, call["line"])
+                    if call_key in seen_calls:
                         continue
-                    seen_call_targets.add(target_id)
+                    seen_calls.add(call_key)
+                    exact = best_score >= 6
                     links.append({
-                        "source": f_id, "target": target_id, "label": "llama",
+                        "source": source_id, "target": target_id, "label": "llama",
                         "color": "rgba(56, 189, 248, 0.35)",
-                        "confidence": "AMBIGUOUS" if len(targets) > 1 else "EXTRACTED",
+                        "confidence": "AMBIGUOUS" if len(best) > 1 else ("EXTRACTED" if exact else "INFERRED"),
                         "file": rel_file, "line": call["line"], "evidence": call.get("evidence", ""),
+                        "resolution": {
+                            "strategy": "receiver-container-arity-namespace-assembly",
+                            "score": best_score, "candidates": len(targets),
+                            "receiver": call.get("receiver", ""), "receiver_type": call.get("receiver_type", ""),
+                            "caller": call.get("caller", ""),
+                        },
                     })
 
         # Pass 5: Cross-symbol fallback resolution for legacy parsers.
