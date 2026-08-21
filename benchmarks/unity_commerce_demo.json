@@ -1,0 +1,12 @@
+{
+  "name": "UnityCommerceDemo structural smoke ground truth",
+  "expected_symbols": [
+    {"file": "UnityCommerceDemo/Assets/_Project/Gameplay/BoardCameraRig.cs", "name": "BoardCameraRig", "kind": "class"},
+    {"file": "UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs", "name": "GameManager", "kind": "class"},
+    {"file": "UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/TokenSelectionManager.cs", "name": "TokenSelectionManager", "kind": "class"},
+    {"file": "UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/TokenSelectionManager.cs", "name": "GetPlayerSelection", "kind": "method"},
+    {"file": "UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/Services/AuctionService.cs", "name": "AuctionService", "kind": "class"},
+    {"file": "UnityCommerceDemo/Assets/_Project/Scripts/Core/State/IState.cs", "name": "IState", "kind": "interface"},
+    {"file": "UnityCommerceDemo/Assets/_Project/Scripts/Core/Services/IPlayerNameRegistry.cs", "name": "IPlayerNameRegistry", "kind": "interface"}
+  ]
+}

@@ -136,3 +136,32 @@ def test_init_creates_and_updates_gitignore(tmp_path):
     assert res2.returncode == 0
     lines = gi.read_text(encoding="utf-8").splitlines()
     assert lines.count(".aether-graph/") == 1
+
+
+def test_benchmark_cli_writes_reproducible_json(git_repo, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    truth = tmp_path / "truth.json"
+    truth.write_text(json.dumps({"expected_symbols": [
+        {"file": "a.py", "name": "helper", "kind": "function"}
+    ]}), encoding="utf-8")
+    output = tmp_path / "result.json"
+    result = _run_cli([
+        "benchmark", "--path", str(git_repo), "--ground-truth", str(truth),
+        "--cache", str(tmp_path / "cache.json"), "--output", str(output),
+    ], git_repo, home)
+    assert result.returncode == 0
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert data["ground_truth"]["symbol_recall"] == 1
+    assert data["warm_cache_seconds"] >= 0
+
+
+def test_pr_impact_cli_json(git_repo, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    (git_repo / "a.py").write_text("def helper():\n    return 2\n", encoding="utf-8")
+    result = _run_cli(["pr-impact", "--path", str(git_repo), "--json"], git_repo, home)
+    assert result.returncode == 0
+    data = json.loads(result.stdout)
+    assert data["changed_files"] == ["a.py"]
+    assert data["risk"]["score"] > 0

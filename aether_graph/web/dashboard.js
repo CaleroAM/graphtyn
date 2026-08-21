@@ -1,7 +1,7 @@
 import {
   setView, setDim, toggleRotate, toggleVertexBlink, updateLinkStyles,
   focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette,
-  changeStyleColors, closeBlastPanel, doReindex, exportGraphData, exportGraphPNG,
+  changeStyleColors, closeBlastPanel, doReindex, exportGraphData, exportGraphPNG, setPRBase,
   onFolderPicked, selectProject, toggleAllComm, toggleComm, toggleDD, toggleGitignore,
   toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, loadHistoryUI, toggleNodeDesc,
   openRegister, closeRegister, selMode, submitRegister, openTutorial, closeTutorial,
@@ -87,4 +87,4 @@ function openFromChanges(nodeId) {
   setTimeout(() => focusNode(nodeId), 500);
 }
 
-Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, closeBlastPanel, closeRegister, closeTutorial, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate});
+Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, closeBlastPanel, closeRegister, closeTutorial, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate});

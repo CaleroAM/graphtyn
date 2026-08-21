@@ -2,6 +2,28 @@
 
 Mediciones reales, reproducibles en el hardware de referencia. Cada tabla indica fecha, proyecto y comando exacto de reproducción.
 
+## UnityCommerceDemo — corpus real (21 ago 2026)
+
+El ground truth versionado en `benchmarks/unity_commerce_demo.json` comprueba siete símbolos de C# seleccionados manualmente, incluyendo `AuctionService`, `TokenSelectionManager.GetPlayerSelection`, interfaces y componentes Unity. Es un **smoke ground truth**, no una medición estadística completa de precisión.
+
+| Métrica | Resultado |
+|---|---:|
+| Archivos/nodos/aristas indexados | 166 / 1,347 / 2,252 |
+| Imágenes detectadas | 125 |
+| Primera pasada | 0.7223 s |
+| Segunda pasada con caché | 0.5809 s (1.24×) |
+| Recall del ground truth | 7/7 (100%) |
+| Aristas colgantes/duplicadas | 0 / 0 |
+
+Resultado completo y reproducible: `benchmarks/unity_commerce_demo_result.json`.
+
+```bash
+aether-graph benchmark \
+  --path /ruta/UnityCommerceDemo \
+  --ground-truth benchmarks/unity_commerce_demo.json \
+  --output benchmarks/unity_commerce_demo_result.json
+```
+
 ## ⚙️ Hardware de Referencia
 
 | Componente | Detalle |

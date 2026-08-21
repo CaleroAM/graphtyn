@@ -42,7 +42,7 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 
 AetherGraph incluye un motor sintáctico determinista que soporta nativamente el parsing de clases, funciones, módulos, herencia y llamadas en los siguientes lenguajes:
 
-Para C#, JavaScript, TypeScript y TSX puede utilizar el backend opcional **tree-sitter**. Este produce nodos con `file`, `line`, `end_line`, `evidence` y `parser: tree-sitter`, además de aristas `contiene`, `hereda` y `llama` con evidencia verificable. Si el extra no está instalado, se conserva automáticamente el extractor integrado. En reindexaciones desde la API, los resultados estructurales tree-sitter se guardan por SHA-256 en `~/.aether-graph/<proyecto>/structural_cache.json`; los archivos sin cambios reutilizan ese fragmento.
+Para C#, JavaScript, TypeScript/TSX, Python, Java, Go y Rust puede utilizar el backend opcional **tree-sitter**. Este produce nodos con `file`, `line`, `end_line`, `evidence` y `parser: tree-sitter`, además de aristas `contiene`, `hereda` y `llama` con evidencia verificable. Si una gramática no está instalada, se conserva automáticamente el extractor integrado. En reindexaciones desde la API, los resultados estructurales tree-sitter se guardan por SHA-256 en `~/.aether-graph/<proyecto>/structural_cache.json`; los archivos sin cambios reutilizan ese fragmento.
 
 | Lenguaje / Framework | Extensiones | Elementos Extraídos |
 |---|---|---|
@@ -84,6 +84,8 @@ Además del código, AetherGraph indexa documentos en el mismo grafo:
 | **Audio / Video** | `.mp3`, `.wav`, `.m4a`, `.ogg`, `.flac`, `.opus`, `.mp4`, `.mov`, `.mkv`, `.webm`, `.avi` | Transcripción local (Whisper, CPU $0) → resumen semántico por LLM |
 
 En **Semántico IA**, los nodos `image`, `doc` y `media` se mantienen dentro de su comunidad y se conectan con hasta dos contenidos afines. Las aristas se calculan sobre las descripciones ya enriquecidas, se etiquetan `similitud semántica · N%` y llevan confianza `INFERRED`. Es una heurística local, explicable y acotada; no pretende sustituir todavía a embeddings ni a extracción relacional mediante un LLM.
+
+Cada relación multimodal inferida incluye evidencia auditable: método utilizado, términos compartidos y fragmentos de las dos descripciones cacheadas. Así, una conexión puede inspeccionarse y rechazarse sin confiar ciegamente en una puntuación opaca.
 
 Las librerías de documentos son **opcionales** (el MCP stdio sigue siendo 100% stdlib):
 
@@ -135,6 +137,12 @@ aether-graph serve
 # Mantener el grafo actualizado mientras editas el proyecto
 aether-graph serve --watch --path /ruta/al/proyecto
 
+# Benchmark reproducible con ground truth
+aether-graph benchmark --path /ruta/proyecto --ground-truth benchmarks/ground_truth.json --output resultado.json
+
+# Riesgo e impacto de una rama/PR; simula conflictos sin modificar el repositorio
+aether-graph pr-impact --path /ruta/proyecto --base main
+
 # Consultar la línea de tiempo del historial de acciones de la IA (SQLite Local)
 aether-graph timeline
 
@@ -153,6 +161,20 @@ aether-graph query "sistema de autenticación"
 `aether-graph serve --watch` observa el proyecto indicado por `--path` y cualquier otro proyecto que abras en el dashboard. El watcher es local y portátil: compara un manifiesto SHA-256, detecta altas, modificaciones y bajas, reutiliza los fragmentos tree-sitter cacheados de archivos sin cambios y escribe `index.json` de forma atómica. No llama a Ollama ni consume tokens; conserva el enriquecimiento semántico previo de los nodos que no cambiaron.
 
 El intervalo predeterminado es un segundo y puede configurarse con `AETHER_WATCH_INTERVAL`. El estado se expone en `/api/watch/status`; el dashboard lo consulta y recarga automáticamente el grafo activo cuando cambia su versión. En lenguajes que aún usan los extractores integrados se vuelve a ejecutar el parser estructural al ensamblar el grafo, por lo que esta primera versión no pretende ser incremental a nivel de fragmento para los 23 lenguajes.
+
+### MCP HTTP autenticado
+
+El transporte HTTP se sirve en `POST /mcp` y permanece deshabilitado si no existe un token. Para equipos, inicia el servidor con una variable secreta y envía `Authorization: Bearer <token>`:
+
+```bash
+AETHER_MCP_TOKEN='un-secreto-largo-y-aleatorio' aether-graph serve --path /ruta/proyecto
+curl -X POST http://127.0.0.1:9210/mcp \
+  -H 'Authorization: Bearer un-secreto-largo-y-aleatorio' \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+El endpoint usa comparación de token resistente a timing y expone vecindario, radio de impacto, búsqueda semántica y análisis de PR. Para exponerlo fuera de localhost todavía se recomienda colocarlo detrás de TLS y un proxy con límites de solicitudes.
 
 # Explicar la responsabilidad y conexiones de un módulo o clase
 aether-graph explain "TurnManager"
@@ -360,7 +382,7 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 
 | Característica | 📦 Graphify (v8) | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
 |---|---|---|---|
-| **Parsing Estático Multi-Lenguaje** | **Sí** (36 gramáticas tree-sitter más extractores especializados, local, $0) | Sí (índices SCIP por lenguaje, con precisión de compilador cuando están configurados) | Sí (AST/regex nativo para 23 lenguajes a $0) |
+| **Parsing Estático Multi-Lenguaje** | **Sí** (36 gramáticas tree-sitter más extractores especializados, local, $0) | Sí (índices SCIP por lenguaje, con precisión de compilador cuando están configurados) | Sí (tree-sitter para 7 lenguajes + extractores integrados para el resto, local, $0) |
 | **Descripción semántica persistente por nodo de CÓDIGO** | No en el pipeline normal: el código usa tree-sitter; el pase con modelo se reserva para docs/PDFs/media | No como propiedad equivalente del índice SCIP | ✅ **Sí: cada archivo/clase/función puede recibir una descripción de rol mediante LLM local o cloud** |
 | **Etiquetas de confianza en aristas** | ✅ EXTRACTED / INFERRED / AMBIGUOUS por arista | Parcial | ✅ **EXTRACTED (contiene/hereda) / INFERRED (usa cross-file) / AMBIGUOUS (nombre repetido en varios símbolos)** |
 | **Consumo de Tokens (grafo de código)** | 0 (tree-sitter local) | 0 (dump LSP) | **0 en Pasada 1** + Enriquecimiento Opcional (local = 0) |
@@ -368,8 +390,8 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 | **Compactación de densidad (≤140 chars/nodo)** | N/A (no describe código con LLM) | N/A | ✅ `AETHER_COMPACT=1` (local a +5% de la densidad premium) |
 | **Memoria de historial de acciones del agente** | ❌ (query log opcional; no timeline de acciones) | ❌ | ✅ **SQLite local (`graph_history_*`) gratuito + `tokens_avoided` por consulta** |
 | **Visualizador** | `graph.html` interactivo (comunidades, filtros, nodos) | Navegación web de código, referencias y dependencias; no es un dashboard de grafo equivalente | Dashboard WebGL 2D/3D en vivo (`:9210`) |
-| **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `aether-graph diff` (git, pre-commit) + inspector |
-| **MCP** | ✅ stdio + HTTP compartido con API key (7 tools) | ✅ MCP en Sourcegraph Enterprise (search, navegación, historial y Deep Search) | ✅ stdio (7 tools: grafo + historial + registro), 100% stdlib |
+| **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `diff` + `pr-impact`: riesgo directo/transitivo y simulación no destructiva de conflictos Git |
+| **MCP** | ✅ stdio + HTTP compartido con API key (7 tools) | ✅ MCP en Sourcegraph Enterprise (search, navegación, historial y Deep Search) | ✅ stdio + HTTP opcional protegido con Bearer; transporte local por defecto |
 | **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ pase semántico sobre docs, PDFs, imágenes y transcripciones mediante el modelo del asistente/backend configurado | No es su objetivo principal | ✅ docs, PDF, DOCX, XLSX, visión local y transcripción local; **relaciones de similitud cacheadas y offline** |
 | **Benchmarks publicados** | ✅ benchmarks de recuperación/memoria publicados por el proyecto | Benchmarks y documentación empresarial | ⚠️ [BENCHMARKS.md](BENCHMARKS.md) mide rendimiento y payloads; falta benchmark comparativo de calidad de respuestas |
 | **Ecosistema / Plataformas** | ✅ instalador para 20+ asistentes | ✅ plataforma empresarial e integraciones de código | ✅ MCP estándar para Antigravity, Claude Code, Codex, Cursor, Windsurf, OpenCode y OpenClaw |
@@ -379,10 +401,10 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 
 ### Brechas antes de afirmar superioridad
 
-1. Extender el parsing incremental por fragmento más allá de C#/JavaScript/TypeScript y sustituir progresivamente los extractores regex restantes por tree-sitter o LSP/SCIP.
-2. Publicar un benchmark reproducible de precisión de nodos/aristas y calidad de respuestas contra Graphify y un baseline sin grafo.
-3. Añadir MCP HTTP autenticado para equipos y coordinación segura de índices compartidos.
-4. Incorporar análisis de PRs/conflictos, relaciones multimodales explicadas por evidencia y defensas contra prompt injection en documentos.
+1. Extender el parsing incremental por fragmento a los lenguajes que todavía usan extractores integrados y evaluar LSP/SCIP para resolución cross-file de compilador.
+2. Ampliar el smoke ground truth de UnityCommerceDemo a un corpus etiquetado estadísticamente útil y comparar calidad de respuestas contra Graphify y un baseline sin grafo.
+3. Añadir TLS, rotación de credenciales, rate limiting y coordinación segura de índices para equipos al MCP HTTP.
+4. Incorporar triage entre múltiples PRs y defensas contra prompt injection en documentos.
 5. Validar con repositorios externos grandes; las cifras de ahorro de tokens deben reportar metodología, corpus, promedio y dispersión.
 
 ---

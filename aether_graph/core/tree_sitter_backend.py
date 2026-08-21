@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v1"
+PARSER_VERSION = "treesitter-v2"
 
 
 def _language_for_extension(ext: str):
@@ -27,6 +27,17 @@ def _language_for_extension(ext: str):
         import tree_sitter_typescript as grammar
         raw = grammar.language_tsx() if ext == ".tsx" else grammar.language_typescript()
         return Language(raw)
+    grammar_modules = {
+        ".py": "tree_sitter_python",
+        ".java": "tree_sitter_java",
+        ".go": "tree_sitter_go",
+        ".rs": "tree_sitter_rust",
+    }
+    module = grammar_modules.get(ext)
+    if module:
+        import importlib
+        grammar = importlib.import_module(module)
+        return Language(grammar.language())
     return None
 
 
@@ -90,9 +101,18 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "constructor_declaration": "method",
         "interface_declaration": "interface",
         "type_alias_declaration": "type",
+        "class_definition": "class",
+        "function_definition": "function",
+        "constructor_declaration": "method",
+        "record_declaration": "class",
+        "function_item": "function",
+        "struct_item": "struct",
+        "enum_item": "enum",
+        "trait_item": "interface",
+        "type_declaration": "type",
     }
-    call_types = {"invocation_expression", "call_expression", "new_expression"}
-    import_types = {"using_directive", "import_statement"}
+    call_types = {"invocation_expression", "call_expression", "new_expression", "object_creation_expression"}
+    import_types = {"using_directive", "import_statement", "import_declaration", "package_clause", "use_declaration"}
 
     def visit(node) -> None:
         # Keep every ancestor Node alive while visiting descendants. Some
@@ -119,6 +139,14 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                 name_node = node.child_by_field_name("name")
                 name = _text(source, name_node) if name_node else "constructor"
             if name:
+                kind = symbol_types[node.type]
+                if node.type == "function_definition":
+                    ancestor = node.parent
+                    while ancestor is not None:
+                        if ancestor.type == "class_definition":
+                            kind = "method"
+                            break
+                        ancestor = ancestor.parent
                 bases = []
                 base_node = node.child_by_field_name("bases")
                 if base_node is None:
@@ -128,7 +156,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", _text(source, base_node))
                 symbols.append({
                     "name": name,
-                    "kind": symbol_types[node.type],
+                    "kind": kind,
                     "file": rel_path,
                     "line": line,
                     "end_line": end_line,

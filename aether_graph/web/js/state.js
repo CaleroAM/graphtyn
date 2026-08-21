@@ -32,6 +32,7 @@ export const state = {
   descExpanded: false,
   watchVersions: {},
   watchTimer: null,
+  prBase: '',
 };
 
     export const PALETTES = {

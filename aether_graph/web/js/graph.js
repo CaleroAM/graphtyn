@@ -410,13 +410,19 @@ export function loadChangesView() {
         return;
       }
       showGraphSpinner('Calculando cambios e impacto...');
-      fetch('/api/diff?path=' + encodeURIComponent(state.activePath)).then(r => r.json()).then(d => {
+      const baseParam = state.prBase ? '&base=' + encodeURIComponent(state.prBase) : '';
+      fetch('/api/diff?path=' + encodeURIComponent(state.activePath) + baseParam).then(r => r.json()).then(d => {
         const container = document.getElementById('graph-container');
         const impacted = d.impacted_nodes || [];
         const files = d.changed_files || [];
+        const risk = d.risk || {level:'low', score:0, direct:0, transitive:0};
+        const conflicts = d.conflicts || [];
         document.getElementById('stats').textContent = files.length + ' cambiados · ' + impacted.length + ' impactados';
         container.innerHTML =
           '<div style="height:100%;overflow-y:auto;padding:20px 26px;max-width:880px;">' +
+          '<div style="display:flex;gap:8px;margin-bottom:12px;"><input id="pr-base-input" value="' + String(state.prBase || '').replace(/"/g, '&quot;') + '" placeholder="Rama base (ej. main)" style="flex:1;background:#111827;border:1px solid #374151;color:#e2e8f0;padding:7px;border-radius:6px;"><button class="btn-action" onclick="setPRBase(document.getElementById(\'pr-base-input\').value)">Analizar PR</button></div>' +
+          '<div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;"><span class="proj-badge ' + (risk.level === 'high' ? 'pend' : 'ok') + '">RIESGO ' + String(risk.level).toUpperCase() + ' · ' + risk.score + '/100</span>' +
+          '<span style="font-size:11px;color:#94a3b8;">' + risk.direct + ' directos · ' + risk.transitive + ' transitivos</span></div>' +
           '<div style="font-weight:700;color:#38bdf8;font-size:14px;margin-bottom:10px;">Cambios sin commitear (git status)</div>' +
           (files.length ? files.slice(0, 40).map(f => '<div style="color:#cbd5e1;font-size:12px;padding:3px 0;border-bottom:1px solid #1e293b;font-family:monospace;">' + f + '</div>').join('')
             : '<div style="color:#64748b;font-size:12px;">Sin archivos modificados.</div>') +
@@ -427,11 +433,18 @@ export function loadChangesView() {
               '<span class="proj-badge ' + (i.confidence === 'INFERRED' ? 'pend' : 'ok') + '">' + i.confidence + '</span>' +
             '</div>').join('')
             : '<div style="color:#64748b;font-size:12px;">Sin impacto conocido.</div>') +
+          '<div style="font-weight:700;color:#f59e0b;font-size:14px;margin:18px 0 10px;">Conflictos Git potenciales</div>' +
+          (conflicts.length ? conflicts.map(f => '<div style="font:12px monospace;color:#fca5a5;padding:3px 0;">' + f + '</div>').join('') : '<div style="color:#64748b;font-size:12px;">Ninguno detectado. ' + (d.conflict_detection || '') + '</div>') +
           '</div>';
       }).catch(err => {
         document.getElementById('graph-container').innerHTML =
           '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;">Error al calcular cambios: ' + (err.message || err) + '</div>';
       });
+    }
+
+export function setPRBase(base) {
+      state.prBase = String(base || '').trim();
+      loadChangesView();
     }
 
 export function loadGraph() {

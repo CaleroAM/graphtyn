@@ -3,13 +3,16 @@ import os
 import re
 import ast
 import subprocess
+import hmac
 from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI, Query, Body
+from fastapi import FastAPI, Query, Body, Header
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
 from ..core.watcher import WatchManager
+from ..core.impact import analyze_impact
+from ..mcp_server import blast_radius, get_workspace_graph, neighborhood_subgraph, _prune_node
 
 parser = ASTParser()
 watch_manager = WatchManager()
@@ -234,7 +237,7 @@ def reindex_project(payload: dict = Body(...)):
     if not force_full and engine == "ast_local_llm" and prev is not None:
         changed = _detect_changed_files(root)
 
-    if prev is not None and not force_full:
+    if prev is not None and (not force_full or engine == "ast_pure"):
         graph = _enrich_with_ai(graph, engine, root, prev=prev, changed=changed, model_override=model_override, vision_model_override=vision_model_override)
     else:
         graph = _enrich_with_ai(graph, engine, root, model_override=model_override, vision_model_override=vision_model_override)
@@ -394,12 +397,22 @@ def generate_semantic_graph(data: dict) -> dict:
             if pair in selected_pairs:
                 continue
             selected_pairs.add(pair)
+            left_node = semantic_content[pair[0]]
+            right_node = semantic_content[pair[1]]
+            shared_terms = sorted(token_sets[pair[0]] & token_sets[pair[1]])[:10]
             links.append({
-                "source": semantic_content[pair[0]]["id"],
-                "target": semantic_content[pair[1]]["id"],
+                "source": left_node["id"],
+                "target": right_node["id"],
                 "label": f"similitud semántica · {round(score * 100)}%",
                 "color": "rgba(236, 72, 153, 0.4)",
-                "confidence": "INFERRED"
+                "confidence": "INFERRED",
+                "evidence": {
+                    "method": "cached-description-token-overlap",
+                    "shared_terms": shared_terms,
+                    "source_excerpt": (left_node.get("details") or "")[:240],
+                    "target_excerpt": (right_node.get("details") or "")[:240],
+                },
+                "explanation": f"Comparten términos descriptivos: {', '.join(shared_terms)}",
             })
 
     # 4. God nodes: most-connected real concepts (highlight for agents)
@@ -440,16 +453,8 @@ def get_history(path: str = ".", limit: int = 15):
 
 
 @app.get("/api/diff")
-def get_diff(path: str = "."):
+def get_diff(path: str = ".", base: str | None = None):
     root = Path(path).resolve()
-    try:
-        res = subprocess.run(
-            ["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True, timeout=15
-        )
-        changed_files = [line.strip().split()[-1] for line in res.stdout.strip().splitlines() if line.strip()] if res.returncode == 0 else []
-    except Exception:
-        changed_files = []
-
     data = None
     dot_dir = _index_dir(root)
     cached = dot_dir / "index.json"
@@ -465,25 +470,9 @@ def get_diff(path: str = "."):
             cache_path=dot_dir / "structural_cache.json",
         )
 
-    impacted = {}
-    for cf in changed_files:
-        f_id = f"file:{cf}"
-        for l in data.get("links", []):
-            s = l.get("source")
-            t = l.get("target")
-            if s == f_id and t not in impacted and not t.startswith("file:"):
-                impacted[t] = l.get("confidence", "EXTRACTED")
-            elif t == f_id and s not in impacted and not s.startswith("file:"):
-                impacted[s] = l.get("confidence", "EXTRACTED")
-
-    nodes_map = {n["id"]: n for n in data.get("nodes", [])}
-    impacted_nodes = [{"node": nodes_map.get(i, {"id": i}), "confidence": c} for i, c in impacted.items()]
-    return JSONResponse({
-        "path": str(root),
-        "changed_files": changed_files,
-        "impacted_nodes": impacted_nodes,
-        "impacted_count": len(impacted_nodes)
-    })
+    report = analyze_impact(root, data, base=base)
+    report["path"] = str(root)
+    return JSONResponse(report)
 
 
 @app.get("/api/ollama/models")
@@ -574,6 +563,55 @@ def get_graph(path: str = ".", view: str = "code"):
 @app.get("/api/watch/status")
 def watch_status():
     return JSONResponse({"enabled": _watch_enabled(), "projects": watch_manager.statuses()})
+
+
+_HTTP_MCP_TOOLS = [
+    {"name": "graph_neighborhood", "description": "Subgrafo alrededor de un símbolo.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "symbol": {"type": "string"}, "depth": {"type": "integer"}}}},
+    {"name": "graph_blast_radius", "description": "Radio de impacto de un símbolo.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "symbol": {"type": "string"}, "depth": {"type": "integer"}}, "required": ["symbol"]}},
+    {"name": "graph_search_concepts", "description": "Busca nombres y descripciones semánticas.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "query": {"type": "string"}}, "required": ["query"]}},
+    {"name": "graph_pr_impact", "description": "Analiza riesgo e impacto Git/PR.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "base": {"type": "string"}}}},
+]
+
+
+@app.post("/mcp")
+def mcp_http(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    """Authenticated JSON-RPC MCP transport for trusted team clients."""
+    token = os.environ.get("AETHER_MCP_TOKEN", "")
+    supplied = authorization.removeprefix("Bearer ") if authorization else ""
+    if not token:
+        return JSONResponse({"error": "MCP HTTP deshabilitado: configura AETHER_MCP_TOKEN"}, status_code=503)
+    if not hmac.compare_digest(token, supplied):
+        return JSONResponse({"error": "No autorizado"}, status_code=401, headers={"WWW-Authenticate": "Bearer"})
+    req_id = payload.get("id")
+    method = payload.get("method")
+    if method == "initialize":
+        result = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "aether-graph-http", "version": "0.4.0"}}
+    elif method == "tools/list":
+        result = {"tools": _HTTP_MCP_TOOLS}
+    elif method == "tools/call":
+        params = payload.get("params", {})
+        name = params.get("name")
+        args = params.get("arguments", {})
+        root = Path(args.get("path") or os.environ.get("AETHER_MCP_PATH", str(DEFAULT_MASTER_DIR))).resolve()
+        if not root.is_dir():
+            return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Ruta de proyecto inválida"}})
+        graph = get_workspace_graph(root, parser)
+        if name == "graph_neighborhood":
+            symbol = str(args.get("symbol", "")).strip()
+            data = neighborhood_subgraph(graph, symbol, int(args.get("depth", 1))) if symbol else {"nodes": [_prune_node(n) for n in graph.get("nodes", [])], "links": graph.get("links", [])}
+        elif name == "graph_blast_radius":
+            data = blast_radius(graph, str(args.get("symbol", "")), int(args.get("depth", 2)))
+        elif name == "graph_search_concepts":
+            query = str(args.get("query", "")).lower()
+            data = {"query": query, "matches": [_prune_node(n) for n in graph.get("nodes", []) if query in n.get("name", "").lower() or query in n.get("details", "").lower()]}
+        elif name == "graph_pr_impact":
+            data = analyze_impact(root, graph, args.get("base"))
+        else:
+            return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": "Tool desconocida"}})
+        result = {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}]}
+    else:
+        return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": "Método desconocido"}})
+    return JSONResponse({"jsonrpc": "2.0", "id": req_id, "result": result})
 
 
 @app.get("/comparison")

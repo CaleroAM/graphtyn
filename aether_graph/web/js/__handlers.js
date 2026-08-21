@@ -6,4 +6,4 @@ export { setView, setDim, changePalette, updateLinkStyles,
          exportGraphData, exportGraphPNG } from './controls.js';
 export { focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape,
          changeStyleColors, closeBlastPanel, toggleAllComm, toggleComm, toggleNodeDesc,
-         toggleVertexBlink, toggleOrganic3d, toggleRotate } from './graph.js';
+         toggleVertexBlink, toggleOrganic3d, toggleRotate, setPRBase } from './graph.js';

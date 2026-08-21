@@ -35,7 +35,11 @@ treesitter = [
     "tree-sitter>=0.25,<0.26",
     "tree-sitter-c-sharp>=0.23.1,<0.24",
     "tree-sitter-javascript>=0.23.1,<0.26",
-    "tree-sitter-typescript>=0.23.2,<0.24"
+    "tree-sitter-typescript>=0.23.2,<0.24",
+    "tree-sitter-python>=0.23.6,<0.24",
+    "tree-sitter-java>=0.23.5,<0.24",
+    "tree-sitter-go>=0.23.4,<0.24",
+    "tree-sitter-rust>=0.23.2,<0.24"
 ]
 
 [project.scripts]

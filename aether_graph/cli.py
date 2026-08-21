@@ -7,6 +7,8 @@ from pathlib import Path
 
 from .core.ast_parser import ASTParser
 from .core.history import HistoryTracker
+from .core.benchmark import benchmark_markdown, run_benchmark
+from .core.impact import analyze_impact
 from .mcp_server import run_mcp_server
 
 def bfs_path(graph: dict, start_sym: str, end_sym: str):
@@ -76,6 +78,17 @@ def main():
     diff_p = subparsers.add_parser("diff", help="Calcula el radio de impacto de los cambios de git (git diff)")
     diff_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
+    pr_p = subparsers.add_parser("pr-impact", help="Analiza riesgo, impacto y conflictos potenciales de una rama o PR")
+    pr_p.add_argument("--base", default=None, help="Rama base, por ejemplo main")
+    pr_p.add_argument("--path", default=".", help="Ruta del proyecto")
+    pr_p.add_argument("--json", action="store_true", help="Salida JSON")
+
+    bench_p = subparsers.add_parser("benchmark", help="Mide rendimiento, validez y recall contra un ground truth")
+    bench_p.add_argument("--path", default=".", help="Ruta del proyecto")
+    bench_p.add_argument("--ground-truth", default=None, help="Archivo JSON con símbolos esperados")
+    bench_p.add_argument("--output", default=None, help="Guarda el resultado JSON")
+    bench_p.add_argument("--cache", default=None, help="Ruta opcional del caché estructural")
+
     # export-md
     export_p = subparsers.add_parser("export-md", help="Exporta un mapa de arquitectura conciso en Markdown para Agentes de IA")
     export_p.add_argument("--output", default="ARCHITECTURE.md", help="Archivo de salida")
@@ -94,6 +107,7 @@ def main():
     serve_p = subparsers.add_parser("serve", help="Inicia el demonio HTTP local")
     serve_p.add_argument("--reload", action="store_true", help="Habilitar recarga automática en vivo")
     serve_p.add_argument("--watch", action="store_true", help="Reindexa automáticamente proyectos al cambiar archivos")
+    serve_p.add_argument("--mcp-token", default=None, help="Activa MCP HTTP con este token Bearer (preferible: AETHER_MCP_TOKEN)")
     serve_p.add_argument("--host", default="0.0.0.0", help="Host")
     serve_p.add_argument("--port", type=int, default=9210, help="Puerto")
     serve_p.add_argument("--path", default=".", help="Ruta del proyecto")
@@ -174,37 +188,36 @@ def main():
         else:
             print(f"No se encontró el símbolo '{args.symbol}'.")
 
-    elif args.command == "diff":
-        ast_p = ASTParser()
-        graph = ast_p.scan_directory(root)
+    elif args.command in ("diff", "pr-impact"):
+        graph = ASTParser().scan_directory(root)
         ht = HistoryTracker(root)
-        ht.log_event("cli", "diff", f"Análisis de radio de impacto git diff en {root.name}", {"path": str(root)})
+        base = args.base if args.command == "pr-impact" else None
+        report = analyze_impact(root, graph, base=base)
         try:
-            res = subprocess.run(["git", "status", "--porcelain"], cwd=root, capture_output=True, text=True)
-            changed_files = [line.strip().split()[-1] for line in res.stdout.strip().splitlines() if line.strip()]
+            ht.log_event("cli", "pr_impact", f"Análisis de impacto Git en {root.name}", {"path": str(root), "base": base, "risk": report["risk"]})
         except Exception:
-            changed_files = []
-
-        if not changed_files:
+            # Analysis must remain read-only and usable on mounted repositories;
+            # history persistence is best effort.
+            pass
+        if getattr(args, "json", False):
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+        elif not report["changed_files"]:
             print("✓ No hay archivos modificados en git status.")
         else:
-            print(f"🔍 Evaluando radio de impacto de {len(changed_files)} archivos modificados:")
-            impacted = set()
-            for cf in changed_files:
-                f_id = f"file:{cf}"
-                for l in graph.get("links", []):
-                    src = l["source"] if isinstance(l["source"], str) else l["source"]["id"]
-                    tgt = l["target"] if isinstance(l["target"], str) else l["target"]["id"]
-                    if src == f_id:
-                        impacted.add(tgt)
-                    elif tgt == f_id:
-                        impacted.add(src)
+            print(f"🔍 {len(report['changed_files'])} archivos · riesgo {report['risk']['level'].upper()} ({report['risk']['score']}/100)")
+            print(f"💥 {len(report['impacted_nodes'])} nodos afectados (directos: {report['risk']['direct']}, transitivos: {report['risk']['transitive']})")
+            for item in report["impacted_nodes"][:15]:
+                node = item["node"]
+                print(f"  • {node.get('name', node.get('id'))} · salto {item['hop']} · {item['confidence']}")
+            print(f"⚠ Conflictos potenciales: {len(report['conflicts'])} · {report['conflict_detection']}")
 
-            nodes_map = {n["id"]: n for n in graph.get("nodes", [])}
-            print(f"💥 Radio de Impacto: {len(impacted)} símbolos o módulos potencialmente afectados:")
-            for imp_id in list(impacted)[:15]:
-                n = nodes_map.get(imp_id, {})
-                print(f"  • {n.get('name', imp_id)} ({n.get('kind', 'nodo')}) — {n.get('details', '')}")
+    elif args.command == "benchmark":
+        truth = Path(args.ground_truth).resolve() if args.ground_truth else None
+        cache = Path(args.cache).resolve() if args.cache else Path.home() / ".aether-graph" / root.name / "benchmark_structural_cache.json"
+        result = run_benchmark(root, truth, cache)
+        if args.output:
+            Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(benchmark_markdown(result), end="")
 
     elif args.command == "export-md":
         ast_p = ASTParser()
@@ -247,6 +260,9 @@ def main():
         if args.watch:
             os.environ["AETHER_WATCH"] = "1"
             os.environ["AETHER_WATCH_PATH"] = str(root)
+        if args.mcp_token:
+            os.environ["AETHER_MCP_TOKEN"] = args.mcp_token
+        os.environ["AETHER_MCP_PATH"] = str(root)
         print(f"🚀 Servidor AetherGraph escuchando en http://{args.host}:{args.port} (Hot-Reloading={args.reload}, Watch={args.watch})")
         if args.reload:
             uvicorn.run("aether_graph.api.main:app", host=args.host, port=args.port, reload=True)
