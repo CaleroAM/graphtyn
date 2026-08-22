@@ -1,0 +1,8 @@
+[
+  {"task_id":"selection-impact","status":"ERROR","duration_seconds":15.4059,"quality_score":0.8,"adjusted_quality_score":0.8,"factual_errors":0,"usage":{"input_tokens":47446,"output_tokens":4285,"thinking_tokens":3139,"total_tokens":51731},"terminal_error":"Antigravity resolved graph source path without repository prefix"},
+  {"task_id":"auction-service","status":"ERROR","duration_seconds":14.9156,"quality_score":1.0,"adjusted_quality_score":1.0,"factual_errors":0,"usage":{"input_tokens":41788,"output_tokens":4235,"thinking_tokens":3168,"total_tokens":46023},"terminal_error":"Antigravity resolved graph source path without repository prefix"},
+  {"task_id":"interfaces","status":"SUCCESS","duration_seconds":23.1103,"quality_score":1.0,"adjusted_quality_score":1.0,"factual_errors":0,"usage":{"input_tokens":44074,"output_tokens":3521,"thinking_tokens":2625,"total_tokens":47595}},
+  {"task_id":"game-start-flow","status":"SUCCESS","duration_seconds":15.5976,"quality_score":1.0,"adjusted_quality_score":1.0,"factual_errors":0,"usage":{"input_tokens":46162,"output_tokens":3870,"thinking_tokens":2677,"total_tokens":50032}},
+  {"task_id":"snapshot-roundtrip","status":"SUCCESS","duration_seconds":15.3337,"quality_score":0.9167,"adjusted_quality_score":0.9167,"factual_errors":0,"usage":{"input_tokens":65581,"output_tokens":5241,"thinking_tokens":3526,"total_tokens":70822}},
+  {"task_id":"cross-file-calls","status":"SUCCESS","duration_seconds":13.6464,"quality_score":0.8333,"adjusted_quality_score":0.8333,"factual_errors":0,"usage":{"input_tokens":34975,"output_tokens":4630,"thinking_tokens":2871,"total_tokens":39605}}
+]

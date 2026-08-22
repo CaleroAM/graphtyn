@@ -8,6 +8,7 @@ from aether_graph.core.benchmark import run_benchmark
 from aether_graph.core.impact import analyze_impact
 from aether_graph.core.ast_parser import ASTParser
 from aether_graph.core.tree_sitter_backend import parse_file
+from aether_graph.core.external_benchmark import score_graphify
 
 
 @pytest.mark.parametrize("module,filename,source,expected", [
@@ -35,6 +36,18 @@ def test_benchmark_ground_truth(tmp_path):
     result = run_benchmark(tmp_path, truth, tmp_path / "cache.json")
     assert result["ground_truth"]["symbol_recall"] == 1
     assert result["quality"]["dangling_edges"] == 0
+
+
+def test_benchmark_scores_positive_and_forbidden_edges(tmp_path):
+    (tmp_path / "a.py").write_text("def helper():\n    return 1\ndef run():\n    return helper()\n", encoding="utf-8")
+    truth = tmp_path / "truth.json"
+    truth.write_text(json.dumps({
+        "expected_edges": [{"target": "symbol:a.py:helper", "label": "llama"}],
+        "forbidden_edges": [{"target": "symbol:a.py:missing", "label": "llama"}],
+    }), encoding="utf-8")
+    result = run_benchmark(tmp_path, truth, tmp_path / "cache.json")
+    assert result["ground_truth"]["edges"]["precision"] == 1
+    assert result["ground_truth"]["edges"]["recall"] == 1
 
 
 def test_pr_impact_reports_risk_and_changed_file(tmp_path):
@@ -87,3 +100,21 @@ def test_semantic_media_edges_include_auditable_evidence():
     inferred = [link for link in graph["links"] if link.get("confidence") == "INFERRED"]
     assert inferred and inferred[0]["evidence"]["shared_terms"]
     assert inferred[0]["explanation"]
+
+
+def test_graphify_adapter_scores_same_edge_truth(tmp_path):
+    graph = tmp_path / "graph.json"
+    truth = tmp_path / "truth.json"
+    graph.write_text(json.dumps({
+        "nodes": [
+            {"id": "a_run", "label": ".run()", "source_file": "a.py"},
+            {"id": "b_help", "label": ".help()", "source_file": "b.py"},
+        ],
+        "edges": [{"source": "a_run", "target": "b_help", "relation": "calls", "source_location": "L4"}],
+    }))
+    truth.write_text(json.dumps({
+        "expected_edges": [{"source": "symbol:a.py:run", "target": "symbol:b.py:help", "line": 4}],
+        "forbidden_edges": [{"source": "symbol:b.py:help", "target": "symbol:a.py:run", "line": 4}],
+    }))
+    result = score_graphify(graph, truth)
+    assert result["ground_truth"]["f1"] == 1

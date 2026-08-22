@@ -77,7 +77,18 @@ def test_mcp_context_bundle_combines_queries(workspace):
     result = json.loads(resp[0]["result"]["content"][0]["text"])
     assert result["symbols"] == ["helper", "a.py"]
     assert len(result["contexts"]) == 2
+    assert result["nodes"] and result["links"]
     assert result["estimated_tokens"] > 0
+
+
+def test_qualified_selector_disambiguates_same_named_methods(tmp_path):
+    (tmp_path / "a.py").write_text("class A:\n    def run(self): pass\nclass B:\n    def run(self): pass\n")
+    from aether_graph.core.ast_parser import ASTParser
+    from aether_graph.mcp_server import neighborhood_subgraph
+    graph = ASTParser().scan_directory(tmp_path)
+    result = neighborhood_subgraph(graph, "A.run", 0)
+    assert len(result["matched"]) == 1
+    assert result["matched"][0]["container"] == "A"
 
 
 def test_mcp_graph_blast_radius(workspace):

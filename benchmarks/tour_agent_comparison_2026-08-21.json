@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "treatment": {
+    "runs": 6,
+    "successful_runs": 3,
+    "mean_duration_seconds": 42.74,
+    "duration_ci95": [
+      24.9726,
+      60.508
+    ],
+    "mean_total_tokens": 103054,
+    "total_tokens_ci95": [
+      79528.6065,
+      126579.0601
+    ],
+    "mean_input_tokens": 96961,
+    "mean_output_tokens": 6093,
+    "mean_quality_score": 0.925,
+    "quality_ci95": [
+      0.8526,
+      0.9974
+    ]
+  },
+  "baseline": {
+    "runs": 6,
+    "successful_runs": 1,
+    "mean_duration_seconds": 38.526,
+    "duration_ci95": [
+      24.1288,
+      52.9233
+    ],
+    "mean_total_tokens": 93551,
+    "total_tokens_ci95": [
+      67659.9925,
+      119442.0075
+    ],
+    "mean_input_tokens": 88193,
+    "mean_output_tokens": 5358,
+    "mean_quality_score": 0.9167,
+    "quality_ci95": [
+      0.7833,
+      1.05
+    ]
+  },
+  "reduction": {
+    "total_tokens": -0.1016,
+    "input_tokens": -0.0994,
+    "duration": -0.1094
+  },
+  "paired": {
+    "pairs": 6,
+    "quality_wins": 1,
+    "quality_losses": 1,
+    "quality_ties": 4,
+    "two_sided_sign_test_p": 1.0,
+    "mean_token_delta": 9503,
+    "mean_quality_delta": 0.0083
+  },
+  "warning": "Los intervalos usan aproximación normal 95%. Use tareas pareadas, ground truth auditable y al menos 5 repeticiones por variante."
+}

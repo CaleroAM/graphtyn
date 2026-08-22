@@ -2,11 +2,11 @@
   "schema_version": 1,
   "project": "UnityCommerceDemo",
   "path": "/home/developer/Documentos/docker/PROYECTOS/UnityCommerceDemo",
-  "elapsed_seconds": 1.1102,
-  "warm_cache_seconds": 0.5612,
-  "warm_cache_speedup": 1.98,
+  "elapsed_seconds": 1.4276,
+  "warm_cache_seconds": 0.593,
+  "warm_cache_speedup": 2.41,
   "nodes": 1359,
-  "links": 3259,
+  "links": 2596,
   "node_kinds": {
     "module": 103,
     "file": 166,
@@ -25,16 +25,28 @@
     "dangling_edges": 0,
     "duplicate_edges": 0,
     "structural_validity": 1.0,
-    "call_edges": 1751,
-    "ambiguous_calls": 346,
-    "ambiguous_call_rate": 0.1976,
-    "symbol_to_symbol_calls": 1726
+    "call_edges": 1088,
+    "ambiguous_calls": 0,
+    "ambiguous_call_rate": 0.0,
+    "symbol_to_symbol_calls": 1077
   },
   "ground_truth": {
     "name": "UnityCommerceDemo structural smoke ground truth",
     "expected_symbols": 7,
     "found_symbols": 7,
     "symbol_recall": 1.0,
-    "missing_symbols": []
+    "missing_symbols": [],
+    "edges": {
+      "expected": 25,
+      "forbidden": 10,
+      "true_positives": 25,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "missing": [],
+      "forbidden_found": []
+    }
   }
 }

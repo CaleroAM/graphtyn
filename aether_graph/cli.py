@@ -9,8 +9,10 @@ from .core.ast_parser import ASTParser
 from .core.history import HistoryTracker
 from .core.benchmark import benchmark_markdown, run_benchmark
 from .core.agent_benchmark import compare_agent_runs
+from .core.agent_eval import grade_runs
+from .core.external_benchmark import score_graphify
 from .core.impact import analyze_impact
-from .mcp_server import run_mcp_server
+from .mcp_server import context_bundle, run_mcp_server
 
 def bfs_path(graph: dict, start_sym: str, end_sym: str):
     nodes = {n['id']: n for n in graph.get('nodes', [])}
@@ -64,6 +66,12 @@ def main():
     query_p.add_argument("query_text", help="Término, símbolo o concepto a consultar")
     query_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
+    context_p = subparsers.add_parser("context", help="Contexto compacto agrupado para agentes en una sola ronda")
+    context_p.add_argument("symbols", nargs="+", help="Hasta 10 símbolos o archivos")
+    context_p.add_argument("--depth", type=int, default=1, help="Saltos por símbolo")
+    context_p.add_argument("--limit", type=int, default=12, help="Máximo de nodos/impactos por símbolo")
+    context_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
     # path
     path_p = subparsers.add_parser("path", help="Encuentra la ruta de conexión entre dos símbolos")
     path_p.add_argument("start_symbol", help="Símbolo inicial")
@@ -94,6 +102,16 @@ def main():
     agent_bench_p.add_argument("--treatment", required=True, help="JSON o lista JSON de corridas con AetherGraph")
     agent_bench_p.add_argument("--baseline", required=True, help="JSON o lista JSON de corridas sin AetherGraph")
     agent_bench_p.add_argument("--output", default=None, help="Guarda el resultado JSON")
+
+    grade_p = subparsers.add_parser("agent-grade", help="Puntúa respuestas contra hechos atómicos auditables")
+    grade_p.add_argument("--runs", required=True, help="JSON de respuestas con task_id")
+    grade_p.add_argument("--tasks", required=True, help="JSON de tareas y key facts")
+    grade_p.add_argument("--output", default=None, help="Guarda las corridas puntuadas")
+
+    external_p = subparsers.add_parser("benchmark-graphify", help="Puntúa un graph.json de Graphify con el mismo ground truth")
+    external_p.add_argument("--graph", required=True, help="graphify-out/graph.json")
+    external_p.add_argument("--ground-truth", required=True, help="Ground truth AetherGraph")
+    external_p.add_argument("--output", default=None, help="Guarda resultado JSON")
 
     # export-md
     export_p = subparsers.add_parser("export-md", help="Exporta un mapa de arquitectura conciso en Markdown para Agentes de IA")
@@ -173,6 +191,13 @@ def main():
         matches = [n for n in graph["nodes"] if q in n["name"].lower() or q in n.get("details", "").lower()]
         print(json.dumps({"query": args.query_text, "matches": matches}, indent=2))
 
+    elif args.command == "context":
+        # CLI context is also the recovery path when an agent daemon has a
+        # stale MCP catalog/index, so build from current sources here.
+        graph = ASTParser().scan_directory(root, respect_git=True)
+        result = context_bundle(graph, args.symbols[:10], args.depth, args.limit)
+        print(json.dumps(result, ensure_ascii=False))
+
     elif args.command == "path":
         ast_p = ASTParser()
         graph = ast_p.scan_directory(root)
@@ -230,6 +255,18 @@ def main():
 
     elif args.command == "agent-benchmark":
         result = compare_agent_runs(Path(args.treatment), Path(args.baseline))
+        if args.output:
+            Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+
+    elif args.command == "agent-grade":
+        result = grade_runs(Path(args.runs), Path(args.tasks))
+        if args.output:
+            Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+
+    elif args.command == "benchmark-graphify":
+        result = score_graphify(Path(args.graph), Path(args.ground_truth))
         if args.output:
             Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(result, ensure_ascii=False, indent=2))

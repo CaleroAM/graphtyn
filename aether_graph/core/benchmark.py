@@ -85,6 +85,30 @@ def run_benchmark(root: Path, ground_truth_path: Path | None = None, cache_path:
                 {"file": f, "name": n, "kind": k} for f, n, k in sorted(expected - found)
             ],
         }
+        def edge_matches(link: dict, item: dict) -> bool:
+            return all(
+                item.get(key) is None or link.get(key) == item[key]
+                for key in ("source", "target", "label", "file", "line")
+            )
+
+        expected_edges = truth.get("expected_edges", [])
+        forbidden_edges = truth.get("forbidden_edges", [])
+        if expected_edges or forbidden_edges:
+            found_positive = [item for item in expected_edges if any(edge_matches(link, item) for link in links)]
+            false_positive = [item for item in forbidden_edges if any(edge_matches(link, item) for link in links)]
+            tp = len(found_positive)
+            fn = len(expected_edges) - tp
+            fp = len(false_positive)
+            precision = tp / max(1, tp + fp)
+            recall = tp / max(1, tp + fn)
+            result["ground_truth"]["edges"] = {
+                "expected": len(expected_edges), "forbidden": len(forbidden_edges),
+                "true_positives": tp, "false_positives": fp, "false_negatives": fn,
+                "precision": round(precision, 4), "recall": round(recall, 4),
+                "f1": round(2 * precision * recall / max(1e-12, precision + recall), 4),
+                "missing": [item for item in expected_edges if item not in found_positive],
+                "forbidden_found": false_positive,
+            }
     return result
 
 

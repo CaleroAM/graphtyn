@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v3"
+PARSER_VERSION = "treesitter-v4"
 
 
 def _language_for_extension(ext: str):
@@ -68,6 +68,14 @@ def _call_name(source: bytes, node) -> str:
     raw = _text(source, target) if target is not None else ""
     # foo.Bar<T> / obj.method / method -> final callable identifier.
     import re
+    # For ``new List<Artwork>()`` the callable is List, not the final generic
+    # argument Artwork. Treating the latter as a constructor created false
+    # project edges and large ambiguous candidate sets.
+    if target is not None and target.type in ("generic_name", "generic_type"):
+        named = target.child_by_field_name("name")
+        if named is None and target.named_child_count:
+            named = target.named_children[0]
+        raw = _text(source, named) if named is not None else raw.split("<", 1)[0]
     names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", raw)
     return names[-1] if names else ""
 
@@ -169,6 +177,13 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", _text(source, base_node))
                 parameters = node.child_by_field_name("parameters")
                 parameter_count = parameters.named_child_count if parameters is not None else None
+                required_parameter_count = None
+                if parameters is not None:
+                    required_parameter_count = sum(
+                        child.type not in ("optional_parameter", "default_parameter")
+                        and "=" not in _text(source, child)
+                        for child in parameters.named_children
+                    )
                 symbols.append({
                     "name": name,
                     "kind": kind,
@@ -180,6 +195,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     "parser": "tree-sitter",
                     "container": _ancestor_name(source, node, type_declarations),
                     "parameter_count": parameter_count,
+                    "required_parameter_count": required_parameter_count,
+                    "is_constructor": node.type == "constructor_declaration",
                     "signature": evidence,
                 })
         elif node.type in call_types:
@@ -195,6 +212,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     "argument_count": args.named_child_count if args is not None else None,
                     "caller": _ancestor_name(source, node, callable_declarations),
                     "container": _ancestor_name(source, node, type_declarations),
+                    "call_kind": node.type,
                 })
         elif node.type in import_types:
             imports.append({"text": evidence, "line": line})
@@ -216,8 +234,6 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         receiver_type = ""
         if receiver == "this":
             receiver_type = call.get("container", "")
-        elif receiver and receiver[:1].isupper():
-            receiver_type = receiver
         elif receiver:
             prefix = "\n".join(source_lines[:call["line"]])
             patterns = [
@@ -229,6 +245,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                 matches.extend(re.findall(pattern, prefix))
             if matches:
                 receiver_type = re.sub(r"[.<].*", "", matches[-1].split(".")[-1])
+            elif receiver[:1].isupper():
+                receiver_type = receiver
         call["receiver_type"] = receiver_type
 
     return {

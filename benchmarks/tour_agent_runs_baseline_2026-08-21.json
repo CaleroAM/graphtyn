@@ -1,0 +1,8 @@
+[
+  {"task_id":"selection-impact","status":"ERROR","duration_seconds":46.1102,"quality_score":1.0,"facts":{"covered":5,"partial":0,"total":5},"usage":{"input_tokens":76487,"output_tokens":3892,"thinking_tokens":2612,"total_tokens":80379},"terminal_error":"stream interrupted"},
+  {"task_id":"auction-service","status":"ERROR","duration_seconds":38.6215,"quality_score":1.0,"facts":{"covered":6,"partial":0,"total":6},"usage":{"input_tokens":104329,"output_tokens":5377,"thinking_tokens":3772,"total_tokens":109706},"terminal_error":"Antigravity permission schema"},
+  {"task_id":"interfaces","status":"ERROR","duration_seconds":39.6774,"quality_score":1.0,"facts":{"covered":5,"partial":0,"total":5},"usage":{"input_tokens":124145,"output_tokens":5979,"thinking_tokens":3545,"total_tokens":130124},"terminal_error":"stream interrupted"},
+  {"task_id":"game-start-flow","status":"SUCCESS","duration_seconds":66.2236,"quality_score":1.0,"facts":{"covered":6,"partial":0,"total":6},"usage":{"input_tokens":113441,"output_tokens":7220,"thinking_tokens":4853,"total_tokens":120661}},
+  {"task_id":"snapshot-roundtrip","status":"ERROR","duration_seconds":12.3392,"quality_score":0.9167,"facts":{"covered":5,"partial":1,"total":6},"usage":{"input_tokens":40965,"output_tokens":3352,"thinking_tokens":2285,"total_tokens":44317},"terminal_error":"stream interrupted"},
+  {"task_id":"cross-file-calls","status":"ERROR","duration_seconds":28.1845,"quality_score":0.5833,"facts":{"covered":3,"partial":1,"total":6},"usage":{"input_tokens":69789,"output_tokens":6330,"thinking_tokens":4420,"total_tokens":76119},"terminal_error":"Antigravity Pattern schema"}
+]

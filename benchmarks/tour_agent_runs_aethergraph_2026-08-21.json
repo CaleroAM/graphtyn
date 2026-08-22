@@ -1,0 +1,8 @@
+[
+  {"task_id":"selection-impact","status":"SUCCESS","duration_seconds":65.0091,"quality_score":0.8,"facts":{"covered":4,"partial":0,"total":5},"usage":{"input_tokens":95503,"output_tokens":5354,"thinking_tokens":3535,"total_tokens":100857}},
+  {"task_id":"auction-service","status":"SUCCESS","duration_seconds":14.3269,"quality_score":1.0,"facts":{"covered":6,"partial":0,"total":6},"usage":{"input_tokens":46418,"output_tokens":3205,"thinking_tokens":2302,"total_tokens":49623}},
+  {"task_id":"interfaces","status":"SUCCESS","duration_seconds":23.0364,"quality_score":1.0,"facts":{"covered":5,"partial":0,"total":5},"usage":{"input_tokens":119488,"output_tokens":4547,"thinking_tokens":2977,"total_tokens":124035}},
+  {"task_id":"game-start-flow","status":"ERROR","duration_seconds":37.1626,"quality_score":1.0,"facts":{"covered":6,"partial":0,"total":6},"usage":{"input_tokens":89828,"output_tokens":5968,"thinking_tokens":4341,"total_tokens":95796},"terminal_error":"Antigravity manage_tools schema"},
+  {"task_id":"snapshot-roundtrip","status":"ERROR","duration_seconds":47.2967,"quality_score":0.9167,"facts":{"covered":5,"partial":1,"total":6},"usage":{"input_tokens":108348,"output_tokens":8899,"thinking_tokens":4788,"total_tokens":117247},"terminal_error":"stream interrupted"},
+  {"task_id":"cross-file-calls","status":"ERROR","duration_seconds":69.6101,"quality_score":0.8333,"facts":{"covered":5,"partial":0,"total":6},"usage":{"input_tokens":122179,"output_tokens":8586,"thinking_tokens":4821,"total_tokens":130765},"terminal_error":"context canceled"}
+]

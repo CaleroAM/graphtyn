@@ -17,6 +17,17 @@ El ground truth versionado en `benchmarks/unity_commerce_demo.json` comprueba si
 | Llamadas resueltas | 1,751 (1,726 símbolo → símbolo) |
 | Llamadas ambiguas | 346 (19.76%) |
 
+### Resolución contextual v4 y ground truth de aristas
+
+El corpus etiquetado se amplió con **25 llamadas positivas y 10 aristas negativas** verificadas en fuente. La v4 distingue creación de genéricos (`new List<Artwork>()`) de constructores del tipo interno, separa clases/constructores, considera aridad requerida/opcional, descarta llamadas BCL con receptor tipado y prefiere sobrecargas que no omiten parámetros opcionales.
+
+| Sistema sobre el mismo UnityCommerceDemo | Precisión | Recall | F1 | Ambiguas |
+|---|---:|---:|---:|---:|
+| AetherGraph v4 | **100%** (25 TP, 0 FP) | **100%** | **1.000** | **0/1,088 (0%)** |
+| Graphify 0.9.48, AST code-only | 100% (20 TP, 0 FP) | 80% | 0.889 | no expone métrica equivalente en este export |
+
+Graphify omitió cinco aristas etiquetadas: una llamada estática a `ApplyToGameManager`, un constructor `GameSetupState` y tres constructores cross-file (`Artwork`, `GameState`, `TurnManager`). Esta muestra es pequeña y está centrada en C#/Unity; no permite extrapolar precisión universal. Resultado Graphify reproducible con `aether-graph benchmark-graphify --graph ... --ground-truth ...` en `benchmarks/tour_graphify_structural_2026-08-21.json`.
+
 Antes del resolvedor contextual, el índice servido contenía 780 llamadas y 484 ambiguas (62.1%). La nueva pasada encuentra más del doble de llamadas y reduce la tasa ambigua a 19.76%. La comparación es de cobertura estructural sobre el mismo proyecto, no demuestra todavía precisión semántica de cada destino; eso requiere ampliar el ground truth con aristas positivas y negativas.
 
 Resultado completo y reproducible: `benchmarks/unity_commerce_demo_result.json`.
@@ -119,6 +130,26 @@ Misma tarea de cuatro preguntas arquitectónicas, mismo agente, modo `plan` y es
 | Prompt compacto de una ronda | 175,989 | 64.44 s | 2 | **47.27%** |
 
 Las tres ejecuciones generaron un informe, pero Antigravity terminó con `status=ERROR` por validaciones de sus herramientas. En la tercera corrida su catálogo no descubrió todavía `graph_context_bundle`; por tanto, el 47.27% demuestra el beneficio del flujo compacto/de menos rondas, **no** una validación end-to-end de la nueva tool. El payload compacto aislado redujo 20.4% para la vecindad de `AuctionService` y 23.5% para el impacto de `GetPlayerSelection`.
+
+### Benchmark competitivo pareado n=6: AetherGraph vs Graphify vs lectura directa
+
+Se replicó el diseño de código de Graphify: mismo agente Antigravity, modelo/configuración, esfuerzo `high`, seis preguntas, herramientas base equivalentes, un único contexto de grafo por tarea, hasta dos lecturas y hechos atómicos puntuados como `(cubierto + 0.5×parcial) / total`. Añadimos penalización por contradicciones verificables. Las corridas se hicieron secuencialmente; la tanda concurrente inicial se conserva solo como diagnóstico.
+
+| Sistema | Cobertura | Ajustada por errores | Tokens/tarea (IC95) | Tiempo/tarea | Éxito terminal |
+|---|---:|---:|---:|---:|---:|
+| **AetherGraph CLI context** | **92.50%** | **92.50%** (0 errores) | **50,968** (42,495–59,441) | **16.34 s** | 4/6 |
+| Graphify 0.9.48 + `query --budget 2000` | 92.50% | 89.17% (1 error) | 58,040 (49,347–66,732) | 17.96 s | 5/6 |
+| Búsqueda/lectura directa | 91.67% | 91.67% (0 errores etiquetados) | 93,551 (67,660–119,442) | 38.53 s | 1/6 |
+
+Resultados pareados:
+
+- AetherGraph vs lectura directa: **45.52% menos tokens**, IC95 del delta −74,251 a −10,915, `dz=-1.076`, permutación exacta `p=0.0625`; tiempo −57.60%.
+- AetherGraph vs Graphify: **12.18% menos tokens**, IC95 −13,910 a −233, `dz=-0.828`, permutación exacta `p=0.0625`; tiempo −9.03%.
+- La cobertura sin penalización empata. AetherGraph gana una tarea al penalizar el falso positivo de Graphify que clasificó `PlayerNameService` como implementación de `IPlayerNameRegistry`; la prueba de signo de calidad no es significativa (`p=1.0`).
+
+Con `n=6`, la prueba exacta no puede cruzar cómodamente 0.05: los resultados son prometedores y de efecto grande, pero **todavía no estadísticamente concluyentes**. Los JSON de corridas, comparaciones, tareas y hechos están en `benchmarks/tour_agent_*_2026-08-21.json` y `benchmarks/unity_commerce_demo_agent_tasks.json`.
+
+En compresión aislada, el `graphify benchmark` oficial sobre UnityCommerceDemo informó 133,133 tokens de corpus, 14,250 por consulta y **9.3×**. El bundle unificado de AetherGraph sobre las seis preguntas etiquetadas mide 123,956 tokens de corpus, 3,840 por consulta y **32.28× (96.90%)**. Son suites de consulta distintas; la tabla end-to-end anterior es la comparación más justa.
 
 ### Comparación correcta con Graphify
 

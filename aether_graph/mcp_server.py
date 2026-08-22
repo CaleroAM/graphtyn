@@ -75,14 +75,28 @@ def context_bundle(graph: dict, symbols: list[str], depth: int = 1, max_nodes: i
     """Serve several focused questions in one model round-trip."""
     unique = list(dict.fromkeys(s.strip() for s in symbols if s and s.strip()))[:10]
     contexts = []
+    nodes_by_id: dict[str, dict] = {}
+    links_by_key: dict[tuple, dict] = {}
     for symbol in unique:
         neighborhood = compact_result(neighborhood_subgraph(graph, symbol, depth), max_nodes)
-        impact = compact_result(blast_radius(graph, symbol, depth), max_nodes)
-        contexts.append({"symbol": symbol, "neighborhood": neighborhood, "blast_radius": impact})
+        for node in neighborhood.get("nodes", []):
+            nodes_by_id[node.get("id", "")] = node
+        for node in neighborhood.get("matched", []):
+            nodes_by_id[node.get("id", "")] = node
+        for link in neighborhood.get("links", []):
+            key = (link.get("source"), link.get("target"), link.get("label"), link.get("line"))
+            links_by_key[key] = link
+        contexts.append({
+            "symbol": symbol,
+            "matched_ids": [node.get("id") for node in neighborhood.get("matched", [])],
+            **({"truncated": True} if neighborhood.get("nodes_truncated") or neighborhood.get("links_truncated") else {}),
+        })
     result = {
         "symbols": unique,
         "contexts": contexts,
-        "guidance": "Use esta evidencia antes de abrir archivos; solicite una consulta individual solo si hubo truncamiento.",
+        "nodes": list(nodes_by_id.values()),
+        "links": list(links_by_key.values()),
+        "guidance": "Aristas implementa/hereda/llama son evidencia direccional. No convierta nodos del mismo subsistema en consumidores sin una arista entrante llama/usa.",
     }
     result["estimated_tokens"] = len(json.dumps(result, ensure_ascii=False)) // 4
     return result
@@ -114,7 +128,14 @@ def neighborhood_subgraph(graph: dict, symbol: str, depth: int = 1) -> dict:
     nodes = graph.get("nodes", [])
     links = graph.get("links", [])
     nodes_map = {n["id"]: n for n in nodes}
-    matches = [n for n in nodes if symbol.lower() in n.get("name", "").lower()]
+    selector = symbol.strip()
+    if "." in selector and "/" not in selector and not selector.lower().endswith((".cs", ".py", ".js", ".ts")):
+        container, name = selector.rsplit(".", 1)
+        matches = [n for n in nodes if n.get("name", "").lower() == name.lower()
+                   and n.get("container", "").lower() == container.lower()]
+    else:
+        exact = [n for n in nodes if n.get("name", "").lower() == selector.lower()]
+        matches = exact or [n for n in nodes if selector.lower() in n.get("name", "").lower()]
 
     adj: Dict[str, list] = {}
     for l in links:
@@ -148,7 +169,14 @@ def blast_radius(graph: dict, symbol: str, depth: int = 2) -> dict:
     nodes = graph.get("nodes", [])
     links = graph.get("links", [])
     nodes_map = {n["id"]: n for n in nodes}
-    matches = [n for n in nodes if symbol.lower() in n.get("name", "").lower()]
+    selector = symbol.strip()
+    if "." in selector and "/" not in selector and not selector.lower().endswith((".cs", ".py", ".js", ".ts")):
+        container, name = selector.rsplit(".", 1)
+        matches = [n for n in nodes if n.get("name", "").lower() == name.lower()
+                   and n.get("container", "").lower() == container.lower()]
+    else:
+        exact = [n for n in nodes if n.get("name", "").lower() == selector.lower()]
+        matches = exact or [n for n in nodes if selector.lower() in n.get("name", "").lower()]
 
     adj: Dict[str, list] = {}
     edge_map = {}

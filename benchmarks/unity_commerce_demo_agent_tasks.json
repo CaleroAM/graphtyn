@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "name": "UnityCommerceDemo code-intelligence key facts",
+  "grading": "coverage=(covered+0.5*partial)/total",
+  "tasks": [
+    {
+      "id": "selection-impact",
+      "prompt": "Explica GetPlayerSelection: comportamiento, contenedor, ruta y radio de impacto directo actual.",
+      "symbols": ["GetPlayerSelection", "TokenSelectionManager"],
+      "key_facts": [
+        {"id":"container","patterns":["TokenSelectionManager"]},
+        {"id":"lookup","patterns":["TryGetValue|diccionario", "playerID|ID del jugador"]},
+        {"id":"nullable","patterns":["null|no existe|no encuentra"]},
+        {"id":"path","patterns":["TokenSelectionManager\\.cs"]},
+        {"id":"no-callers","patterns":["0 consumidores|ninguna llamada|no existen (llamadas|consumidores|referencias)"]}
+      ]
+    },
+    {
+      "id": "auction-service",
+      "prompt": "Describe AuctionService: flujo, estado, eventos, dependencias, interfaces y consumidores actuales.",
+      "symbols": ["AuctionService", "StartAuction", "PlaceBid", "CloseAuction"],
+      "key_facts": [
+        {"id":"start","patterns":["StartAuction", "IsAuctionActive.*true"]},
+        {"id":"bid","patterns":["PlaceBid", "OnBidPlaced"]},
+        {"id":"close","patterns":["CloseAuction", "OnAuctionCompleted"]},
+        {"id":"dependencies","patterns":["System", "UnityEngine|Debug\\.Log"]},
+        {"id":"no-interface","patterns":["no implementa|ninguna interfaz"]},
+        {"id":"no-consumers","patterns":["0 consumidores|ningún consumidor|no.*instancia|no.*referencia"]}
+      ]
+    },
+    {
+      "id": "interfaces",
+      "prompt": "Enumera interfaces propias e implementaciones en Assets gameplay/core y src/GameEngine.Core.",
+      "symbols": ["IState", "IPlayerNameRegistry", "IRNGService", "ISnapshotManager"],
+      "key_facts": [
+        {"id":"state","patterns":["IState", "GameSetupState", "GameplayState"]},
+        {"id":"names","patterns":["IPlayerNameRegistry", "LocalPlayerNameRegistry"]},
+        {"id":"rng-unity","patterns":["IRNGService", "SimpleRNGService"]},
+        {"id":"rng-core","patterns":["IRNGService", "DeterministicRNGService"]},
+        {"id":"snapshot","patterns":["ISnapshotManager", "SnapshotManager"]}
+      ],
+      "forbidden_facts": [
+        {"id":"player-name-service-implements-registry","patterns":["PlayerNameService", "implementa|implementación"]}
+      ]
+    },
+    {
+      "id": "game-start-flow",
+      "prompt": "Traza el flujo StartRealGame de GameManager hacia configuración, estado, RNG, TurnManager y UI.",
+      "symbols": ["StartRealGame", "GameState", "TurnManager", "SimpleRNGService"],
+      "key_facts": [
+        {"id":"config","patterns":["RegionConfig", "BoardFactory\\.CreatePueblaBoard"]},
+        {"id":"state","patterns":["new GameState|GameState", "\\.Start\\(|Start\\(\\)"]},
+        {"id":"rng","patterns":["SimpleRNGService", "RngSeed"]},
+        {"id":"turn","patterns":["TurnManager", "AuctionEngine|auctionEngine"]},
+        {"id":"phase","patterns":["WaitingForRoll|SetPhase"]},
+        {"id":"ui","patterns":["ShowTurnTransition|hud"]}
+      ]
+    },
+    {
+      "id": "snapshot-roundtrip",
+      "prompt": "Explica SnapshotManager: contrato, serialización/deserialización y objetos de dominio reconstruidos.",
+      "symbols": ["SnapshotManager", "ISnapshotManager", "ToDomain", "ToSnapshot"],
+      "key_facts": [
+        {"id":"contract","patterns":["SnapshotManager", "ISnapshotManager"]},
+        {"id":"directions","patterns":["ToDomain", "ToSnapshot"]},
+        {"id":"players","patterns":["PlayerState"]},
+        {"id":"board","patterns":["BoardTile"]},
+        {"id":"config","patterns":["RegionConfig"]},
+        {"id":"state","patterns":["GameState"]}
+      ]
+    },
+    {
+      "id": "cross-file-calls",
+      "prompt": "Da evidencia de llamadas cross-file desde GameManager durante tirada y llegada a casilla.",
+      "symbols": ["OnDiceStopped", "OnPieceArrived", "RespondToArtworkOffer", "RespondToCurator"],
+      "key_facts": [
+        {"id":"roll","patterns":["OnDiceStopped", "TurnManager.*RollDice|RollDice.*TurnManager"]},
+        {"id":"move","patterns":["PlayerPiece.*Move|activePiece\\.Move"]},
+        {"id":"tile","patterns":["GetTileAtPosition"]},
+        {"id":"artwork","patterns":["GetArtworkById", "RespondToArtworkOffer"]},
+        {"id":"curator","patterns":["RespondToCurator"]},
+        {"id":"finish","patterns":["FinishTurnProcess"]}
+      ]
+    }
+  ]
+}

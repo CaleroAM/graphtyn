@@ -1,0 +1,48 @@
+{
+  "adapter": "graphify-v8-json",
+  "nodes": 1974,
+  "edges": 3597,
+  "ground_truth": {
+    "expected": 25,
+    "forbidden": 10,
+    "true_positives": 20,
+    "false_positives": 0,
+    "false_negatives": 5,
+    "precision": 1.0,
+    "recall": 0.8,
+    "f1": 0.8889,
+    "missing": [
+      {
+        "source": "symbol:UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:Start",
+        "target": "symbol:UnityCommerceDemo/Assets/_Project/Scripts/Core/Config/GameSessionConfig.cs:ApplyToGameManager",
+        "label": "llama",
+        "line": 200
+      },
+      {
+        "source": "symbol:UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:Start",
+        "target": "symbol:UnityCommerceDemo/Assets/_Project/Scripts/Core/State/GameSetupState.cs:GameSetupState",
+        "label": "llama",
+        "line": 206
+      },
+      {
+        "source": "symbol:UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:StartRealGame",
+        "target": "symbol:src/GameEngine.Core/Domain/Entities/Artwork.cs:Artwork/4",
+        "label": "llama",
+        "line": 416
+      },
+      {
+        "source": "symbol:UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:StartRealGame",
+        "target": "symbol:src/GameEngine.Core/Domain/Entities/GameState.cs:GameState",
+        "label": "llama",
+        "line": 420
+      },
+      {
+        "source": "symbol:UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:StartRealGame",
+        "target": "symbol:src/GameEngine.Core/Domain/Services/TurnManager.cs:TurnManager",
+        "label": "llama",
+        "line": 430
+      }
+    ],
+    "forbidden_found": []
+  }
+}

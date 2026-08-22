@@ -120,6 +120,8 @@ class ASTParser:
                     "evidence": sym.get("evidence", ""), "parser": "tree-sitter",
                     "namespace": namespace, "container": sym.get("container", ""),
                     "parameter_count": sym.get("parameter_count"), "signature": sym.get("signature", ""),
+                    "required_parameter_count": sym.get("required_parameter_count"),
+                    "is_constructor": sym.get("is_constructor", False),
                     "assembly": next((node.get("assembly") for node in nodes if node.get("id") == f_id), None),
                 })
                 node_ids.add(sym_id)
@@ -485,8 +487,17 @@ class ASTParser:
                 score += 5
             if receiver and receiver in {target.get("container"), target.get("name")}:
                 score += 12
-            if arity is not None and target.get("parameter_count") == arity:
-                score += 3
+            if arity is not None:
+                required = target.get("required_parameter_count")
+                maximum = target.get("parameter_count")
+                if maximum == arity:
+                    score += 5
+                elif required is not None and maximum is not None and required <= arity <= maximum:
+                    score += 3
+                    if required == arity:
+                        # C# overload resolution generally prefers the viable
+                        # overload that does not need omitted optional values.
+                        score += 2
             source_assembly = node_by_id.get(f"file:{rel_file}", {}).get("assembly")
             if source_assembly and source_assembly == target.get("assembly"):
                 score += 2
@@ -525,6 +536,20 @@ class ASTParser:
                 targets = symbol_name_ids.get(call["name"], set())
                 if not targets:
                     continue
+                is_creation = call.get("call_kind") in ("new_expression", "object_creation_expression")
+                if is_creation:
+                    targets = {target for target in targets if node_by_id.get(target, {}).get("is_constructor")}
+                else:
+                    targets = {target for target in targets if node_by_id.get(target, {}).get("kind") in ("method", "function")}
+                if not targets:
+                    continue
+                receiver_type = call.get("receiver_type") or call.get("receiver", "")
+                known_containers = {node_by_id.get(target, {}).get("container") for target in targets}
+                # A typed receiver that matches none of the project candidates
+                # is normally a framework/BCL call (e.g. enum.ToString), not a
+                # call to an unrelated same-named method in this repository.
+                if receiver_type and receiver_type not in known_containers and call.get("receiver"):
+                    continue
                 caller_ids = [
                     target for target in symbol_name_ids.get(call.get("caller", ""), set())
                     if node_by_id.get(target, {}).get("file") == rel_file
@@ -532,7 +557,7 @@ class ASTParser:
                 ]
                 source_id = caller_ids[0] if len(caller_ids) == 1 else f_id
                 ranked = sorted((
-                    (_rank_candidate(target, rel_file, call.get("container", ""), call.get("receiver_type") or call.get("receiver", ""), call.get("argument_count")), target)
+                    (_rank_candidate(target, rel_file, call.get("container", ""), receiver_type, call.get("argument_count")), target)
                     for target in targets if target != source_id
                 ), reverse=True)
                 if not ranked:

@@ -101,6 +101,17 @@ def test_query_returns_matching_symbols(git_repo, tmp_path):
     assert len(data["matches"]) >= 1
 
 
+def test_context_returns_grouped_compact_evidence(git_repo, tmp_path):
+    home = tmp_path / "home-context"
+    home.mkdir()
+    res = _run_cli(["context", "helper", "a.py", "--path", str(git_repo), "--limit", "5"], git_repo, home)
+    assert res.returncode == 0
+    data = json.loads(res.stdout)
+    assert data["symbols"] == ["helper", "a.py"]
+    assert len(data["contexts"]) == 2
+    assert data["estimated_tokens"] > 0
+
+
 def test_path_finds_bfs_route(tmp_path):
     home = tmp_path / "home"
     home.mkdir()
@@ -169,6 +180,36 @@ def test_agent_benchmark_compares_token_reduction(git_repo, tmp_path):
         "--baseline", str(baseline)], git_repo, home)
     assert result.returncode == 0
     assert json.loads(result.stdout)["reduction"]["total_tokens"] == 0.5
+
+
+def test_agent_benchmark_reports_paired_quality(git_repo, tmp_path):
+    home = tmp_path / "home2"
+    home.mkdir()
+    treatment = tmp_path / "treatment-paired.json"
+    baseline = tmp_path / "baseline-paired.json"
+    treatment.write_text(json.dumps([{"task_id": "q1", "quality_score": 1, "duration_seconds": 1, "usage": {"total_tokens": 50}}]))
+    baseline.write_text(json.dumps([{"task_id": "q1", "quality_score": 0, "duration_seconds": 2, "usage": {"total_tokens": 100}}]))
+    result = _run_cli(["agent-benchmark", "--treatment", str(treatment), "--baseline", str(baseline)], git_repo, home)
+    data = json.loads(result.stdout)
+    assert data["paired"]["quality_wins"] == 1
+    assert data["paired"]["mean_token_delta"] == -50
+    assert data["paired"]["token_permutation_p"] == 1.0
+
+
+def test_agent_grade_scores_atomic_facts(git_repo, tmp_path):
+    home = tmp_path / "home-grade"
+    home.mkdir()
+    runs = tmp_path / "runs.json"
+    tasks = tmp_path / "tasks.json"
+    runs.write_text(json.dumps([{"task_id": "q", "response": "Alpha and Beta"}]))
+    tasks.write_text(json.dumps({"tasks": [{"id": "q", "key_facts": [
+        {"id": "both", "patterns": ["Alpha", "Beta"]},
+        {"id": "partial", "patterns": ["Alpha", "Gamma"]}
+    ], "forbidden_facts": [{"id": "wrong", "patterns": ["Alpha", "Beta"]}]}]}))
+    result = _run_cli(["agent-grade", "--runs", str(runs), "--tasks", str(tasks)], git_repo, home)
+    data = json.loads(result.stdout)
+    assert data[0]["quality_score"] == 0.75
+    assert data[0]["adjusted_quality_score"] == 0.25
 
 
 def test_pr_impact_cli_json(git_repo, tmp_path):
