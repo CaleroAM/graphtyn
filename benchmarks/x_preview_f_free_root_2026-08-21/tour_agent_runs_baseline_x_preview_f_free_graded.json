@@ -1,0 +1,324 @@
+[
+  {
+    "task_id": "selection-impact",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 47.8992,
+    "usage": {
+      "input_tokens": 261,
+      "output_tokens": 501,
+      "thinking_tokens": 100,
+      "total_tokens": 9118
+    },
+    "tool_calls": 5,
+    "answer": "## `GetPlayerSelection` en UnityCommerceDemo\n\n**Archivo / ruta:** `UnityCommerceDemo/UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/TokenSelectionManager.cs:67-71`\n\n**Contenedor:** clase `TokenSelectionManager` (C# puro, no MonoBehaviour — `TokenSelectionManager.cs:11`). Lee del diccionario `_playerSelections` (`Dictionary<int, PlayerSelection>`, línea 24).\n\n**Comportamiento** (líneas 67-71):\n```csharp\npublic PlayerSelection GetPlayerSelection(int playerID)\n{\n    _playerSelections.TryGetValue(playerID, out var selection);\n    return selection;\n}\n```\n- Búsqueda segura con `TryGetValue`: si el jugador no tiene selección, devuelve `null` sin lanzar excepción.\n- El estado solo lo llena `SelectTokenForPlayer` (línea 60) y lo vacía `ResetSelections` (línea 76).\n- Devuelve una referencia a la clase `PlayerSelection` (líneas 5-9): propiedades `BaseTokenID` (string) y `BorderColor` (Color).\n\n**Radio de impacto directo actual:** cero llamadores. Verifiqué todo el repo excluyendo artefactos generados (`graphify-out`, `Library`, JSON de caché) y `rg -n \"GetPlayerSelection\"` solo encuentra la definición en `TokenSelectionManager.cs:67`. Ningún script invoca este método hoy; cambiar su firma o eliminarlo no rompería código existente.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 4,
+    "partial": 0,
+    "total": 5,
+    "quality_score": 0.8,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.8,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "container",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "lookup",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "nullable",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "path",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "no-callers",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "auction-service",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 101.4687,
+    "usage": {
+      "input_tokens": 4106,
+      "output_tokens": 234,
+      "thinking_tokens": 88,
+      "total_tokens": 15180
+    },
+    "tool_calls": 10,
+    "answer": "No existe una clase llamada `AuctionService` en el repo; el componente de subastas es `AuctionEngine`. Voy a leerlo y sus referencias para describirlo con precisión.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 1,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 0.1667,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.1667,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "start",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "bid",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "close",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "dependencies",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "no-interface",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "no-consumers",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "interfaces",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 187.6693,
+    "usage": {
+      "input_tokens": 260,
+      "output_tokens": 1114,
+      "thinking_tokens": 141,
+      "total_tokens": 28907
+    },
+    "tool_calls": 19,
+    "answer": "Investigación completada sin modificar archivos. Nota previa: el `Assets/` raíz del repo está **vacío** (`ls` confirma 0 entradas); el proyecto Unity real está anidado en `UnityCommerceDemo/UnityCommerceDemo/Assets`. Ahí, las carpetas gameplay/core corresponden a `_Project/Gameplay`, `_Project/Scripts/Core`, `_Project/Scripts/Gameplay`.\n\n## Interfaces propias (4 en total)\n\n| Interfaz | Declaración | Miembros clave |\n|---|---|---|\n| `IState` | `UnityCommerceDemo/Assets/_Project/Scripts/Core/State/IState.cs:4` | `Enter()`, `Execute()`, `Exit()` (líneas 6–8) |\n| `IPlayerNameRegistry` | `UnityCommerceDemo/Assets/_Project/Scripts/Core/Services/IPlayerNameRegistry.cs:11` | `IsNameTaken` (l.16), `RegisterName` (l.21), `UnregisterName` (l.26) |\n| `IRNGService` | `src/GameEngine.Core/Application/Interfaces/IRNGService.cs:7` | `int Next(int minInclusive, int maxExclusive)` (l.15) |\n| `ISnapshotManager` | `src/GameEngine.Core/Application/Interfaces/ISnapshotManager.cs:8` | `Serialize(GameState)` (l.13), `Deserialize(string)` (l.18) |\n\nVerificación exhaustiva: `rg \"\\binterface\\s+\\w+\"` sobre ambos árboles (excluyendo bin/obj/Library) no arrojó ninguna interfaz adicional.\n\n## Implementaciones\n\n**En Assets (_Project):**\n1. `LocalPlayerNameRegistry : IPlayerNameRegistry` — `Scripts/Core/Services/LocalPlayerNameRegistry.cs:15` (persistencia vía PlayerPrefs, l.17)\n2. `GameSetupState : IState` — `Scripts/Core/State/GameSetupState.cs:7`\n3. `GameplayState : IState` — `Scripts/Core/State/GameplayState.cs:7`\n4. `SimpleRNGService : IRNGService` — `Gameplay/SimpleRNGService.cs:6`; importa el contrato del engine con `using GameEngine.Core.Application.Interfaces;` (l.4)\n\n**En src/GameEngine.Core:**\n5. `DeterministicRNGService : IRNGService` — `Infrastructure/Random/DeterministicRNGService.cs:9`\n6. `SnapshotManager : ISnapshotManager` (clase `sealed`) — `Infrastructure/Persistence/SnapshotManager.cs:13`\n\n## Consumo verificado (cruce entre capas)\n- `StateMachine` guarda `private IState _currentState` y expone `ChangeState(IState)` — `Scripts/Core/State/StateMachine.cs:6,8,10`\n- `PlayerNameService` instancia la impl local como contrato: `new LocalPlayerNameRegistry(...)` tipado `IPlayerNameRegistry` — `Services/PlayerNameService.cs:34`\n- `TurnManager` inyecta `IRNGService` por constructor — `Domain/Services/TurnManager.cs:13,22`; `TransactionEngine` también lo recibe — `TransactionEngine.cs:73`\n- En Unity, `GameManager` crea `SimpleRNGService(GameState.RngSeed)` — `Gameplay/GameManager.cs:423`\n- `ISnapshotManager` no tiene consumidor en código de producción (solo su implementación y `SnapshotManagerTests.cs`)",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 5,
+    "partial": 0,
+    "total": 5,
+    "quality_score": 1.0,
+    "factual_errors": 1,
+    "adjusted_quality_score": 0.8,
+    "contradictions": [
+      "player-name-service-implements-registry"
+    ],
+    "facts": [
+      {
+        "id": "state",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "names",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "rng-unity",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "rng-core",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "snapshot",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "game-start-flow",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 223.0937,
+    "usage": {
+      "input_tokens": 208,
+      "output_tokens": 61,
+      "thinking_tokens": 0,
+      "total_tokens": 37453
+    },
+    "tool_calls": 22,
+    "answer": "# Flujo `StartRealGame` en UnityCommerceDemo\n\nTodo lo siguiente fue verificado leyendo los archivos fuente directamente (sin usar artefactos de AetherGraph/Graphify; los `graphify-out/` se ignoraron deliberadamente). No se modificó ningún archivo.\n\n## 0. Cómo se llega a `StartRealGame`\n\n- Definición: `UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:397` — `private void StartRealGame(List<PlayerState> sortedPlayers)`.\n- Puerta de entrada normal: `Start()` en GameManager.cs:176. Si `Core.Config.GameSessionConfig.IsConfigured` (línea 197), llama `ApplyToGameManager(this)` (línea 200) y `StartGame(...)` (línea 201); si no, entra por `GameSetupState` (línea 206).\n- `StartGame(int, string[])` (GameManager.cs:350): oculta menú y muestra HUD (352‑353) y registra el callback que invoca `StartRealGame(sortedPlayers)` dentro de `MatchSetupController.Instance.StartSetup(...)` (355‑357).\n- El orden de turnos (`sortedPlayers`) no lo decide GameManager: `MatchSetupController.cs` crea jugadores temporales con $1500 (líneas 41‑45), pide una tirada de dado por jugador vía HUD (58‑61, 83), ordena por suma descendente (línea 89) e invoca el callback con la lista ordenada (línea 102).\n- Configuración previa desde men",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 1,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.25,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.25,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "config",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "state",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "rng",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "turn",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "phase",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "ui",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "snapshot-roundtrip",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 161.8256,
+    "usage": {
+      "input_tokens": 1853,
+      "output_tokens": 203,
+      "thinking_tokens": 40,
+      "total_tokens": 25904
+    },
+    "tool_calls": 15,
+    "answer": "Localicé los archivos fuente clave (evitando los artefactos generados en `graphify-out/`). Ahora leo la implementación y el contrato:\nAhora leo los objetos de dominio que reconstruye `ToDomain()` (GameState, PlayerState, Artwork, BoardTile, Money, Position, RegionConfig):\nAhora leo el resto de objetos de dominio reconstruidos:\nVerifico el contrato con los tests y los puntos de uso de `ISnapshotManager`:\nFalta confirmar los puntos de uso y los enums serializados. Lo verifico:\n# `SnapshotManager` en UnityCommerceDemo\n\n## 1. Contrato\n\nLa abstracción es `ISnapshotManager` (`src/GameEngine.Core/Application/Interfaces/ISnapshotManager.cs`):\n\n- **Línea 13**: `string Serialize(GameState state)` — serializa el estado del juego a JSON.\n- **Línea 18**: `GameState Deserialize(string snapshot)` — restaura el estado desde JSON.\n\nLa implementación es `SnapshotManager : ISnapshotManager` (`src/GameEngine.Core/Infrastructure/Persistence/SnapshotManager.cs`):\n\n- **Línea 13**: clase `sealed`, basada en `System.Text.Json` (línea 1).\n- **Línea 15**: `CurrentSchemaVersion = 1` — versión de esquema embebida en cada snapshot.\n- **Líneas 16-20**: `JsonOptions` con `PropertyNamingPolicy = CamelCase` y `WriteIndented = false`. No hay `JsonStringEnumConverter`, por lo que los enums (`TileType`, `GameStatus`, `ExpositionDirection`) viajan como números.\n- Solo se instancia en los tests (`SnapshotManagerTests.cs:16`); no hay otro consumidor en `src/`.\n\n## 2. Serialización (`Serialize`, líneas 23-29)\n\n- Línea 25: rechaza `state == null` con `ArgumentNullException`.\n- Líneas 27-28: delega en `SnapshotDto.FromDomain(state, version)` y llama `JsonSerializer.Serialize(dto, JsonOptions)`.\n- El test `Serialize_IncludesSchemaVersion` confirma que el JSON contiene `\"schemaVersion\":1` (`SnapshotManagerTests.cs:61-66`).\n\n## 3. Deserialización (`Deserialize`, líneas 32-53)\n\nContrato de errores, todo verificado por tests:\n\n| Condición | Excepción | Evidencia impl. | Test |\n|---|---|---|---|\n| JSON nulo/vacío | `ArgumentException` (líneas 34-35) | — | `Deserialize_EmptyJson_ThrowsArgumentException` (líneas 52-58) |\n| JSON malformado | `InvalidOperationException` envuelto (líneas 42-45) | — | líneas 35-41 |\n| Payload nulo | `InvalidOperationException` (líneas 47-48) | — | — |\n| Versión incompatible | `InvalidOperationException` (líneas 49-50) | compara contra línea 15 | líneas 43-50 |\n\nSi pasa las validaciones, retorna `dto.ToDomain()` (línea 52).\n\n## 4. DTOs intermedios (mismo archivo)\n\n- `SnapshotDto` (líneas 56-71): record con `SchemaVersion`, `GameId`, config, jugadores, assets, tablero, turno, curador, dirección, semilla RNG, tiempo, límites y `GameStatus`.\n- `RegionConfigDto` (147-152), `PlayerDto` (154-163, con `SkinId = \"default\"` por defecto), `ArtworkDto` (165), `BoardTileDto` (167-172).\n\n## 5. Objetos de dominio reconstruidos (`ToDomain`, líneas 104-144)\n\n- **`RegionConfig`** (106-111): reconstruye `Money(Config.InitialMoney)` y `Money(Config.PassExitBonus)`.\n- **`Artwork`** (113-114): crea cada obra con `new Money(...)` y arma diccionario `artworkById`.\n- **`PlayerState`** (116-125): usa el ctor \"de persistencia\" (`PlayerState.cs:65-95`); resuelve las obras poseídas **por referencia** vía `artworkById[id]` (línea 122) — los `OwnedArtworks` se serializan solo como IDs (línea 87). Nota: un ID ausente lanzaría `KeyNotFoundException`.\n- **`BoardTile`** (127): con validaciones de coherencia tipo/obra/bono (`BoardTile.cs:68-105`).\n- **`GameState`** (129-143): usa el ctor con `Guid` explícito (`GameState.cs:137-193`), que revalida invariantes: ≥2 jugadores (línea 164), tablero de exactamente 32 casillas (`Position.TOTAL_TILES`, `GameState.cs:167`; `Position.cs:24`), assets no vacíos (170), sin IDs duplicados (171).\n\n## 6. Estado NO preservado en el round-trip (hecho verificable en código)\n\n- `PlayerState.TotalSpacesAdvanced`: existe (`PlayerState.cs:50`) pero `PlayerDto` no lo tiene; se reinicia a 0 (`SnapshotManager.cs:125`, valor por defecto del ctor en `PlayerState.cs:75`).\n- `GameState.CurrentPhase`: siempre queda `TurnPhase.WaitingForRoll` (`GameState.cs:191`); no está en `SnapshotDto`.\n- Auditoría de curador (`CurrentCuratorLoanedArtworks`, `CurrentCuratorLoanTotal`): vacía/0 tras restaurar (`GameState.cs:97,192`).\n- `BoardTile.Name/Section/PurchaseCost/RentCost` (`BoardTile.cs:32-35`): fuera de `BoardTileDto`.\n- Extras de `RegionConfig` (`AuctionTimeLimit`, `BuyTimeLimit`, `RollTimeLimit`, `CuratorMultiplier`, `StrictBankruptcy`, `RegionConfig.cs:47-51`): no serializados; toman defaults del ctor (`RegionConfig.cs:65-66`).\n\nLos tests de round-trip (`Round",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 5,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.9167,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.9167,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "contract",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "directions",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "players",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "board",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "config",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "state",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "cross-file-calls",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 151.6826,
+    "usage": {
+      "input_tokens": 523,
+      "output_tokens": 1588,
+      "thinking_tokens": 268,
+      "total_tokens": 20939
+    },
+    "tool_calls": 10,
+    "answer": "He localizado el archivo principal. Ahora verifico en qué archivos están definidos los tipos llamados por GameManager para confirmar que las llamadas son realmente cross-file.\nFaltan por localizar `TurnManager`, `GameState`, `TransactionEngine` y `EndTurn`. Los busco ahora:\nDefiniciones localizadas. Ahora obtengo las líneas exactas de los métodos restantes llamados por GameManager y verifico a qué `GameState` resuelve:\nInvestigación completada sin modificar archivos. Ruta del archivo analizado: `UnityCommerceDemo/UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs` (695 líneas).\n\n## A. Cross-file durante la TIRADA\n\n**`RollDiceForCurrentPlayer()` — GameManager.cs:380**\n| Línea en GameManager | Llamada | Definición externa |\n|---|---|---|\n| 387 | `DiceRollController.Instance.RollDice(DiceCount, ...)` | `DiceRollController.cs:25` (`Assets/_Project/Gameplay/`) |\n\n**Callback → `OnDiceStoppedFromController()` (:549) → `OnDiceStopped()` (:556)**\n| Línea | Llamada | Definición externa |\n|---|---|---|\n| 558, 581 | `GameState.GetCurrentPlayer()` | `src/GameEngine.Core/Domain/Entities/GameState.cs:198` |\n| 559-560 | `TurnLogController.Instance.AddLogEntry(...)` | `UI/Components/TurnLogController.cs:27` |\n| 563 | `simpleRng.ForceNextResult(diceResult)` | `Gameplay/SimpleRNGService.cs:17` |\n| 565 | `_turnManager.RollDice(GameState)` | `src/GameEngine.Core/Domain/Services/TurnManager.cs:33` |\n| 569-570 | `BoardCameraRig.GetOrCreate()` + `camRig.FollowPiece(...)` | `Gameplay/BoardCameraRig.cs:59` y `:92` |\n| 572 | `activePiece.Move(diceResult, targetPosition, callback)` | `Gameplay/PlayerPiece.cs:29` |\n| 574 | `camRig.StopFollowAndReturn()` | `BoardCameraRig.cs:126` |\n\n## B. Cross-file en LLEGADA A CASILLA (`OnPieceArrived()` — GameManager.cs:579)\n\n| Línea | Llamada | Definición externa |\n|---|---|---|\n| 583 | `GameState.GetTileAtPosition(targetPosition)` | `Entities/GameState.cs:223` |\n| 587 | `boardBuilder.HighlightTile(targetPosition)` | `Presentation/BoardBuilder.cs:527` |\n| 593 | `GameState.GetArtworkById(...)` | `Entities/GameState.cs:231` |\n| 600 | `hud.ShowPropertyDecision(...)` | `UI/Components/GameHUDController.cs:264` |\n| 607, 613 | `_turnManager.RespondToArtworkOffer(GameState, ...)` | `TurnManager.cs:134` |\n| 621 | `hud.ShowCuratorDecision(...)` | `GameHUDController.cs:320` |\n| 624, 630 | `_turnManager.RespondToCurator(GameState, dir)` | `TurnManager.cs:157` |\n\n**Cierre de turno (`FinishTurnProcess` :644 / `FinishTurnVisuals` :666)**, invocado desde `OnPieceArrived`:\n- :649 → `_turnManager.EndTurn(GameState)` — `TurnManager.cs:167`\n- :658 → `hud.ShowBankruptcy(msg, ...)` — `GameHUDController.cs:335`\n- :678 → `endGameMenu.Show(...)` — `UI/Components/EndGameController.cs:77`\n- :684 → `GameState.SetPhase(TurnPhase.WaitingForRoll)` — `Entities/GameState.cs:307`\n- :691 → `playerPieces[nextIndex].AnimateTurnStart()` — `PlayerPiece.cs:125`\n\n## Nota verificada (no supuesta)\nEl `GameState` usado por GameManager resuelve a `GameEngine.Core.Domain.Entities.GameState` (namespace confirmado en `GameState.cs:7`), no a un tipo local: el directorio `Assets/_Project/Scripts/Core/State/` solo contiene `StateMachine.cs`, `IState.cs`, `GameSetupState.cs` y `GameplayState.cs`. Es decir, las llamadas a `_turnManager.*` y `GameState.*` cruzan además la frontera Unity (`Assets/`) → librería de dominio (`src/GameEngine.Core`).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "roll",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "move",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "tile",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "artwork",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "curator",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "finish",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]

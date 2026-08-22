@@ -1,0 +1,98 @@
+[
+  {
+    "task_id": "selection-impact",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 53.9944,
+    "usage": {
+      "input_tokens": 1680,
+      "output_tokens": 550,
+      "thinking_tokens": 161,
+      "total_tokens": 6551
+    },
+    "tool_calls": 3,
+    "answer": "**GetPlayerSelection** según el grafo de AetherGraph:\n\n**Comportamiento**\n- Firma extraída por tree-sitter: `public PlayerSelection GetPlayerSelection(int playerID)` — evidencia en la línea 67.\n- Método público que devuelve un `PlayerSelection` y recibe 1 parámetro obligatorio (`playerID`, tipo `int`). Cuerpo abarca líneas 67–71 (5 líneas).\n- Sin namespace (`namespace: \"\"`), ensamblado `Assembly-CSharp`.\n- Nota: el grafo solo registra firma y estructura, no semántica interna del cuerpo, por lo que no puedo afirmar más allá del contrato visible.\n\n**Contenedor**\n- Clase contenedora: **`TokenSelectionManager`** (arista `contiene` → símbolo, confianza `EXTRACTED`, línea 67).\n\n**Ruta**\n- `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/TokenSelectionManager.cs:67`\n\n**Radio de impacto directo (depth 1)**\n- Grados: `in_degree: 1`, `out_degree: 0`, `degree: 1`.\n- Impactado (hop 1): únicamente su archivo contenedor `TokenSelectionManager.cs`, vía arista `contiene` (`EXTRACTED`).\n- **No hay llamadores ni dependencias indexadas** en el grafo para este símbolo: modificarlo afectaría solo a su archivo según el grafo actual.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  },
+  {
+    "task_id": "auction-service",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 88.5245,
+    "usage": {
+      "input_tokens": 658,
+      "output_tokens": 1055,
+      "thinking_tokens": 183,
+      "total_tokens": 15656
+    },
+    "tool_calls": 7,
+    "answer": "# AuctionService según AetherGraph\n\n## Identidad\n- **Símbolo:** clase `Gameplay.Services.AuctionService` en `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/Services/AuctionService.cs:9-36` (`public class AuctionService`), ensamblado `Assembly-CSharp`, parser tree-sitter.\n- Vive en el módulo carpeta `Gameplay/Services` junto a `RentService.cs` y `TurnTimerService.cs` (aristas `contiene`, EXTRACTED).\n\n## Flujo (API pública extraída)\nTres métodos públicos, sin más miembros indexados:\n1. `StartAuction(string artworkId, int startingPrice)` — línea 17-21\n2. `PlaceBid(string bidderName, int bidAmount)` — línea 23-28\n3. `CloseAuction(string winnerName, int finalPrice)` — línea 30-35\n\nEl orden inicio→puja→cierre es lo único deducible de las firmas; **no hay aristas internas** entre los tres métodos en el grafo.\n\n## Estado\nEl grafo **no contiene nodos de campos/propiedades ni aristas de mutación de estado** para esta clase. No hay evidencia para describir estado interno; solo se conocen los parámetros de entrada de cada método.\n\n## Eventos\nBúsquedas semánticas `\"evento de subasta puja bid\"` y `\"subasta\"` devolvieron **0 coincidencias**. El grafo no registra eventos emitidos ni suscritos por AuctionService.\n\n## Dependencias\n- `out_degree = 0` en la clase y en sus tres métodos: **ninguna arista `llama` saliente** → cero dependencias extraídas hacia otros símbolos.\n\n## Consumidores actuales\n- `blast_radius` (depth 3) solo retorna aristas `contiene` (clase→archivo→carpeta). `in_degree` del símbolo = 1, que es la arista de contención del propio archivo: **no existe ningún consumidor con arista entrante `llama`/`usa`**.\n- El context bundle encontró métodos **homónimos pero desconectados**: `StartAuction(Artwork, PlayerState, List<PlayerState>, Action<List<AuctionBid>>, Sprite)` en `AuctionUIController.cs:55-182` y `GameHUDController.cs:292-305`. La lógica real de subastas fluye por ahí (`GameHUDController.StartAuction:298` → `AuctionUIController.StartAuction` → `UpdateAuctionUI`; usa `Money`), pero **ninguna arista conecta esa cadena con `Gameplay.Services.AuctionService`**. El propio planner advierte: no convertir nodos homónimos en consumidores sin arista entrante.\n\n## Conclusión con evidencia\nAuctionService aparece como una clase **aislada**: interfaz de 3 métodos, sin dependencias salientes, sin consumidores entrantes y sin eventos registrados en el grafo. La funcionalidad de subastas activa hoy vive en `AuctionUIController`/`GameHUDController`, sin vínculo extraído hacia este servicio (posible código muerto o integración pendiente, según lo que muestra el grafo).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  },
+  {
+    "task_id": "interfaces",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 93.5445,
+    "usage": {
+      "input_tokens": 3686,
+      "output_tokens": 926,
+      "thinking_tokens": 111,
+      "total_tokens": 22899
+    },
+    "tool_calls": 6,
+    "answer": "Evidencia obtenida exclusivamente del grafo AetherGraph (nodos `kind: interface`, firmas y aristas `implementa` con confianza `EXTRACTED`). Nota: el grafo no contiene una ruta literal \"Assets/gameplay/core\"; las zonas reales son `UnityCommerceDemo/Assets/_Project/Gameplay` y `.../_Project/Scripts/Core`.\n\n## Interfaces propias\n\n| Interfaz | Ubicación (evidencia del grafo) |\n|---|---|\n| `IRNGService` | `src/GameEngine.Core/Application/Interfaces/IRNGService.cs:7` — `public interface IRNGService`; métodos `Next(int,int)` (:15) y `SelectRandom<T>(IEnumerable<T>)` (:24) |\n| `ISnapshotManager` | `src/GameEngine.Core/Application/Interfaces/ISnapshotManager.cs:8` — métodos `Serialize(GameState)` (:13) y `Deserialize(string)` (:18) |\n| `IPlayerNameRegistry` | `UnityCommerceDemo/Assets/_Project/Scripts/Core/Services/IPlayerNameRegistry.cs:11` — ns `Core.Services` |\n| `IState` | `UnityCommerceDemo/Assets/_Project/Scripts/Core/State/IState.cs:4` — ns `Core.State` |\n\n## Implementaciones (aristas `implementa` → EXTRACTED)\n\n**En src/GameEngine.Core**\n- `DeterministicRNGService : IRNGService` — `src/GameEngine.Core/Infrastructure/Random/DeterministicRNGService.cs:9`\n- `SnapshotManager : ISnapshotManager` — `src/GameEngine.Core/Infrastructure/Persistence/SnapshotManager.cs:13`\n\n**En Assets (_Project/Gameplay y _Project/Scripts/Core)**\n- `SimpleRNGService : IRNGService` — `_Project/Gameplay/SimpleRNGService.cs:6`; consumida por `GameManager.StartRealGame` (arista `llama`, GameManager.cs:423)\n- `LocalPlayerNameRegistry : IPlayerNameRegistry` — `_Project/Scripts/Core/Services/LocalPlayerNameRegistry.cs:15`\n- `GameSetupState : IState` — `_Project/Scripts/Core/State/GameSetupState.cs:7`\n- `GameplayState : IState` — `_Project/Scripts/Core/State/GameplayState.cs:7`\n\n**En tests (fuera de las zonas pedidas, para completitud de `IRNGService`)**\n- `TestRng : IRNGService` — GameManagerConfigurationTests.cs:81 · `FakeRng : IRNGService` — TransactionEngineTests.cs:199 · `FixedRng : IRNGService` — TurnManagerTests.cs:295",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  },
+  {
+    "task_id": "game-start-flow",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 66.2223,
+    "usage": {
+      "input_tokens": 2206,
+      "output_tokens": 1026,
+      "thinking_tokens": 169,
+      "total_tokens": 22729
+    },
+    "tool_calls": 3,
+    "answer": "## Flujo `StartRealGame` (evidencia del grafo, aristas `llama` con confianza EXTRACTED vía tree-sitter)\n\n**Origen:** `StartRealGame(List<PlayerState> sortedPlayers)` — `GameManager.cs:397-440` (`UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs`). Es invocado por `StartGame(int playerCount)` en la línea 356, que a su vez es llamado por `GameManager.Start()` (línea 201).\n\n**1. Configuración** (`GameEngine.Core.Domain.Configuration`)\n- L399 → `RegionConfig` (ctor, `RegionConfig.cs:56`)\n- L411 → `BoardFactory.CreatePueblaBoard()` (`BoardFactory.cs:18`)\n- L400, 401, 416, 418 → `Money(decimal)` (`ValueObjects/Money.cs:21`)\n- L416, 418 → `Artwork(Guid, string, Money, Money)` (`Entities/Artwork.cs:46`)\n\n**2. Estado** (`Domain.Entities.GameState : AggregateRoot`, `GameState.cs:12-311`)\n- L420 → ctor `GameState(...)` (`GameState.cs:102`)\n- L421 → `GameState.Start()` (`GameState.cs:269`)\n- L434 → `SetPhase(TurnPhase)` (`GameState.cs:307`)\n\n**3. RNG**\n- L423 → `SimpleRNGService(int seed)` (`SimpleRNGService.cs:12`; clase `SimpleRNGService : IRNGService`, línea 6)\n\n**4. TurnManager** (`Domain.Services.TurnManager`, sealed, `TurnManager.cs:11-201`)\n- L430 → ctor `TurnManager(...)` (`TurnManager.cs:21`)\n- L432 → `AssignPlayerIndices()` (`GameManager.cs:463`, método propio)\n\n**5. UI / máquina de estados de Unity**\n- L436 → `new GameplayState()` (`Core/State/GameplayState.cs:12`) + `StateMachine.ChangeState(IState)` (`Core/State/StateMachine.cs:10`)\n- L438 → `GetCurrentPlayer()` (`GameState.cs:198`) + `GameHUDController.ShowTurnTransition(string)` (`UI/Components/GameHUDController.cs:242`)\n- L439 → `TriggerSpawnDropsAfterDelay()` (`GameManager.cs:442`, corutina)\n\n**Nota sin suposiciones:** el grafo registra que `SimpleRNGService` (L423) y `TurnManager` (L430) se construyen secuencialmente dentro de `StartRealGame`, pero **no existe arista** `TurnManager → IRNGService` ni etiqueta de paso de argumentos; el grafo no confirma si el RNG se inyecta al TurnManager.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  },
+  {
+    "task_id": "snapshot-roundtrip",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 88.5836,
+    "usage": {
+      "input_tokens": 3197,
+      "output_tokens": 1389,
+      "thinking_tokens": 313,
+      "total_tokens": 22371
+    },
+    "tool_calls": 7,
+    "answer": "## SnapshotManager según el grafo AetherGraph (evidencia: aristas `EXTRACTED`)\n\n### 1. Contrato\n- Interfaz `ISnapshotManager` en `src/GameEngine.Core/Application/Interfaces/ISnapshotManager.cs:8` (líneas 8–19). El grafo muestra su método `GameState Deserialize(string snapshot);` en `ISnapshotManager.cs:18`; la clase tiene 2 miembros y uno es `Serialize`.\n- Implementación: arista **`SnapshotManager` → implementa → `ISnapshotManager`** (`EXTRACTED`, `SnapshotManager.cs:13`). Clase sellada: `public sealed class SnapshotManager : ISnapshotManager` (`Infrastructure/Persistence/SnapshotManager.cs:13–54`).\n\n### 2. Serialización / Deserialización\n- **`Serialize(GameState state)` → `string`** (`SnapshotManager.cs:23–29`). Arista **`Serialize → llama → SnapshotDto.FromDomain`** (`EXTRACTED`, línea 27): convierte dominio → DTO antes de emitir la cadena.\n- **`SnapshotDto.FromDomain(GameState state, int schemaVersion)`** (`SnapshotManager.cs:73–102`): mapea el agregado al record interno `internal sealed record SnapshotDto(` (líneas 56–145). El parámetro `schemaVersion` evidencia un payload versionado.\n- **`Deserialize(string snapshot)` → `GameState`** (`SnapshotManager.cs:32–53`): valida versión de esquema — evidencia: el test `Deserialize_IncompatibleSchema_ThrowsDescriptiveException` llama a `Deserialize` (`SnapshotManagerTests.cs:48`, arista `EXTRACTED`).\n- Formato plano: el grafo devuelve tipo `string` pero **no registra aristas hacia ningún serializador JSON**, por lo que el formato concreto no es afirmable desde el grafo.\n\n### 3. Objetos de dominio reconstruidos (vía `SnapshotDto.ToDomain()`, líneas 104–144)\nAristas `ToDomain → llama →` (todas `EXTRACTED`):\n| Línea | Constructor invocado |\n|---|---|\n| 106 | `RegionConfig` (`Domain/Configuration/RegionConfig.cs:56`) |\n| 107, 108, 113, 119 | `Money(decimal amount)` (value object) |\n| 113 | `Artwork(Guid id, string name, Money bankValue, Money rent, Guid? ownerId)` |\n| 116 | `PlayerState(...)` (`PlayerState.cs:65`) |\n| 120 | `Position(int value)` (value object) |\n| 127 | `BoardTile(Guid id, int position, TileType, artworkId, movementBonus, name, section, purchaseCost, rentCost)` |\n| 129 | `GameState(...)` (segundo ctor, `GameState.cs:137–193`) |\n\nDTOs espejo (mismo archivo): `RegionConfigDto` (:147), `PlayerDto` (:154), `ArtworkDto(Guid Id, string Name, decimal BankValue, decimal Rent, Guid? OwnerId)` (:165), `BoardTileDto` (:167).\n\n### 4. Verificación del roundtrip (tests que llaman a `Deserialize`)\n`Roundtrip_PreservesCoreState` (:26), `Roundtrip_PreservesCuratorAndDirection` (:74), `Roundtrip_PreservesStatusAndStartTime` (:86), `Roundtrip_PreservesTileTypesAndPositions` (:97) — todas con arista `EXTRACTED`.\n\n**Radio de impacto**: solo consumidores del grafo son los propios tests; ningún código de producción llama a `SnapshotManager` directamente (blast radius hop 1: interfaz + archivo propio; sin aristas entrantes `llama` desde producción).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  },
+  {
+    "task_id": "cross-file-calls",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 88.6866,
+    "usage": {
+      "input_tokens": 10073,
+      "output_tokens": 1427,
+      "thinking_tokens": 201,
+      "total_tokens": 31285
+    },
+    "tool_calls": 5,
+    "answer": "Sin coincidencias por concepto. Consulto el vecindario directo del símbolo:\nEl vecindario se truncó y necesito ver todas las aristas salientes de los métodos clave de la tirada/llegada. Consulto el bundle de contexto para esos símbolos:\nEvidencia del grafo AetherGraph (todas las aristas con confianza **EXTRACTED**, parser tree-sitter). Origen: clase `GameManager` en `UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:15`.\n\n## 1. Durante la tirada\n\n| Origen (GameManager.cs) | Arista | Destino cross-file |\n|---|---|---|\n| `RollDiceForCurrentPlayer` :387 | llama | `DiceRollController.RollDice` — Gameplay/DiceRollController.cs:25 |\n| `OnDiceStoppedFromController` :553 | llama | `OnDiceStopped` (mismo archivo, puente interno) |\n| `OnDiceStopped` :558, :567 | llama | `GameState.GetCurrentPlayer` — src/GameEngine.Core/Domain/Entities/GameState.cs:198 |\n| `OnDiceStopped` :565 | llama | `TurnManager.RollDice` — src/GameEngine.Core/Domain/Services/TurnManager.cs:33 |\n| `OnDiceStopped` :560 | llama | `TurnLogController.AddLogEntry` — UI/Components/TurnLogController.cs:27 |\n| `OnDiceStopped` :569 | llama | `BoardCameraRig.GetOrCreate` — Gameplay/BoardCameraRig.cs:59 |\n| `OnDiceStopped` :572 | llama | `PlayerPiece.Move` — Gameplay/PlayerPiece.cs:29 |\n\nFlujo de entrada: `ExecuteDefaultActionForPhase` :289 → `RollDiceForCurrentPlayer` (intra-archivo, GameManager.cs:380).\n\n## 2. Llegada a casilla\n\nEntrada: `OnDiceStopped` :575 → `OnPieceArrived` (GameManager.cs:579–642). Llamadas cross-file:\n\n| Línea | Destino cross-file |\n|---|---|\n| :581, :605 | `GameState.GetCurrentPlayer` (GameState.cs:198) |\n| :583 | `GameState.GetTileAtPosition` (GameState.cs:223) |\n| :587 | `BoardBuilder.HighlightTile` (Presentation/BoardBuilder.cs:527) |\n| :593 | `GameState.GetArtworkById` (GameState.cs:231) |\n| :600 | `MuseumVisuals.GetFor` (Scripts/UI/MuseumVisuals.cs:28) y `GameHUDController.ShowPropertyDecision` (GameHUDController.cs:264) |\n| :605 | `TurnLogController.AddLogEntry` (TurnLogController.cs:27) |\n| :607, :613 | `TurnManager.RespondToArtworkOffer` (TurnManager.cs:134) |\n| :621 | `GameHUDController.ShowCuratorDecision` (GameHUDController.cs:320) |\n| :624, :630 | `TurnManager.RespondToCurator` (TurnManager.cs:157) |\n\nCierre de turno posterior:\n- `OnPieceArrived` :608/:614/:625/:631/:636/:640 → `FinishTurnProcess` (interno)\n- `FinishTurnProcess` :649 → `TurnManager.EndTurn` (TurnManager.cs:167); :656 → `AddLogEntry`; :658 → `GameHUDController.ShowBankruptcy`\n- `FinishTurnVisuals` :684 → `GameState.SetPhase` (GameState.cs:307); :686 → `GetCurrentPlayer`; :688 → `ShowTurnTransition`; :678 → `EndGameController.Show`\n\nNota del propio grafo: \"Aristas implementa/hereda/llama son evidencia direccional\". No hay aristas INFERRED ni AMBIGUOUS involucradas en estos flujos; ninguna llamada fue suposición mía.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  }
+]

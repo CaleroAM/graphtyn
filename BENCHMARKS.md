@@ -184,6 +184,21 @@ Graphify publica dos métricas distintas que no deben mezclarse:
 
 Fuentes oficiales: [Graphify BENCHMARKS v8](https://github.com/Graphify-Labs/graphify/blob/v8/BENCHMARKS.md) y [benchmark Karpathy](https://github.com/Graphify-Labs/graphify/blob/v8/worked/karpathy-repos/review.md).
 
+### OpenCode `x-preview-f-free`: MCP compacto `evidence-v1`
+
+Prueba end-to-end sobre la raíz completa de UnityCommerceDemo, con seis tareas pareadas, MCPs aislados y el mismo modelo. `evidence-v1` declara cada ruta una vez, usa aliases para nodos, codifica relaciones como tuplas y ajusta el presupuesto al número de símbolos. Los ceros de `coverage` son evidencia negativa cuando `complete=true`, evitando búsquedas redundantes.
+
+| Variante | Calidad | Tokens/tarea | Tiempo/tarea | Llamadas | Errores |
+|---|---:|---:|---:|---:|---:|
+| AetherGraph anterior | 77.78% | 20,248 | 79.93 s | 31 | 0 |
+| **AetherGraph `evidence-v1`** | **75.00%** | **10,970** | 89.30 s | 38 | 0 |
+| Graphify 0.9.48 | 63.61% | 12,251 | 75.20 s | 65 | 1* |
+| Lectura directa sin grafo | 68.89% | 22,917 | 145.61 s | 81 | 1* |
+
+`evidence-v1` redujo **45.82%** los tokens frente al AetherGraph anterior y **52.13%** frente a lectura directa. La diferencia de calidad contra la versión anterior fue −2.78 puntos en `n=6`, sin significancia concluyente. Una optimización posterior de cobertura negativa redujo el peor caso `AuctionService` de 181.14 s/9 llamadas/9,023 tokens a **47.44 s/2 llamadas/4,393 tokens**, y elevó su cobertura de 25.00% a 58.33%.
+
+\* El patrón automático de contradicción sobre `PlayerNameService` puede producir un falso positivo cuando la respuesta dice que referencia o instancia la implementación, no que implemente la interfaz. Se conservan tanto calidad bruta como ajustada para auditoría. Artefactos: `benchmarks/x_preview_f_free_root_2026-08-21/`, `benchmarks/x_preview_f_free_compact_2026-08-21/` y `benchmarks/x_preview_f_free_latency_2026-08-21/`.
+
 ## 🔁 Reproducción
 
 ```bash

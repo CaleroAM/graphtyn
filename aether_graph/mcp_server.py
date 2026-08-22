@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Dict, Any
@@ -38,6 +39,115 @@ def _compact_node(node: dict) -> dict:
 def _compact_link(link: dict) -> dict:
     keep = ("source", "target", "label", "confidence", "file", "line", "explanation")
     return {key: link[key] for key in keep if link.get(key) not in (None, "", [])}
+
+
+def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = None) -> dict:
+    """Encode graph evidence once, then reference it with short aliases."""
+    raw_nodes: list[dict] = []
+    for key in ("matched", "matches", "nodes"):
+        raw_nodes.extend(result.get(key, []))
+    raw_nodes.extend(item.get("node", {}) for item in result.get("impacted", []))
+    unique: dict[str, dict] = {}
+    for node in raw_nodes:
+        node_id = str(node.get("id") or "")
+        if node_id and node_id not in unique:
+            unique[node_id] = node
+    selected = list(unique.values())[:max_nodes]
+    aliases = {node["id"]: f"N{index}" for index, node in enumerate(selected, 1)}
+    files: dict[str, str] = {}
+
+    def file_alias(path: str) -> str:
+        if path not in files:
+            files[path] = f"F{len(files) + 1}"
+        return files[path]
+
+    entities: dict[str, dict] = {}
+    for node in selected:
+        item = {"name": node.get("name"), "kind": node.get("kind")}
+        path = str(node.get("file") or "")
+        if not path and str(node.get("id", "")).startswith("file:"):
+            path = str(node["id"])[5:]
+        if path:
+            item["at"] = file_alias(path) + (f":{node['line']}" if node.get("line") else "")
+        for key in ("signature", "container", "namespace"):
+            if node.get(key):
+                item[key] = node[key]
+        details = str(node.get("details") or "").strip()
+        if details and details != path:
+            item["detail"] = details[:160]
+        entities[aliases[node["id"]]] = item
+
+    link_limit = max_links if max_links is not None else max_nodes * 2
+    relations = []
+    relation_counts: dict[str, int] = {}
+    for link in result.get("links", []):
+        label = str(link.get("label") or "conecta").lower()
+        relation_counts[label] = relation_counts.get(label, 0) + 1
+    for link in result.get("links", []):
+        source, target = aliases.get(link.get("source")), aliases.get(link.get("target"))
+        if not source or not target:
+            continue
+        confidence = str(link.get("confidence") or "EXTRACTED")
+        relation = [source, link.get("label", "conecta"), target,
+                    "E" if confidence == "EXTRACTED" else "I" if confidence == "INFERRED" else "A"]
+        if link.get("line"):
+            relation.append(link["line"])
+        relations.append(relation)
+        if len(relations) >= link_limit:
+            break
+
+    matched_ids = {node.get("id") for node in result.get("matched", []) if node.get("id")}
+    incoming_calls = outgoing_calls = implementations = inheritance = 0
+    for link in result.get("links", []):
+        label = str(link.get("label") or "").lower()
+        if label in ("llama", "usa"):
+            incoming_calls += int(link.get("target") in matched_ids)
+            outgoing_calls += int(link.get("source") in matched_ids)
+        if label == "implementa" and (link.get("source") in matched_ids or link.get("target") in matched_ids):
+            implementations += 1
+        if label == "hereda" and (link.get("source") in matched_ids or link.get("target") in matched_ids):
+            inheritance += 1
+
+    impacted = []
+    for item in result.get("impacted", []):
+        alias = aliases.get(item.get("node", {}).get("id"))
+        if alias:
+            impacted.append([alias, item.get("hop"), item.get("label"), item.get("via")])
+
+    output = {key: value for key, value in result.items()
+              if key not in ("matched", "matches", "nodes", "links", "impacted", "estimated_tokens")}
+    if "contexts" in output:
+        output["contexts"] = [
+            {**{key: value for key, value in context.items() if key != "matched_ids"},
+             "matches": [aliases[node_id] for node_id in context.get("matched_ids", []) if node_id in aliases]}
+            for context in output["contexts"]
+        ]
+    output.update({
+        "format": "evidence-v1",
+        "files": {alias: path for path, alias in files.items()},
+        "entities": entities,
+        "relations": relations,
+        "legend": "relation=[source,label,target,E|I|A,line?]; E=extraída,I=inferida,A=ambigua",
+        "complete": len(unique) <= len(selected) and len(result.get("links", [])) <= len(relations),
+    })
+    if matched_ids:
+        output["coverage"] = {
+            "incoming_calls_or_uses": incoming_calls,
+            "outgoing_calls_or_uses": outgoing_calls,
+            "implementations": implementations,
+            "inheritance": inheritance,
+            "relations_by_label": relation_counts,
+            "zero_is_evidence_when_complete": True,
+        }
+    if impacted:
+        output["impact"] = impacted
+    omitted_nodes = max(0, len(unique) - len(selected))
+    omitted_links = max(0, len(result.get("links", [])) - len(relations))
+    if omitted_nodes or omitted_links:
+        output["omitted"] = {"nodes": omitted_nodes, "links": omitted_links}
+        output["next"] = "Solicita response_mode=full sólo si falta evidencia necesaria."
+    output["estimated_tokens"] = len(json.dumps(output, ensure_ascii=False, separators=(",", ":"))) // 4
+    return output
 
 
 def compact_result(result: dict, max_nodes: int = 40) -> dict:
@@ -280,27 +390,28 @@ def run_mcp_server(workspace: Path):
                     "tools": [
                         {
                             "name": "graph_context_bundle",
-                            "description": "Consulta en una sola llamada la vecindad y el radio de impacto de hasta 10 símbolos. Preferida para preguntas múltiples porque evita rondas y tokens acumulativos del agente.",
+                            "description": "Obtén evidencia compacta para hasta 10 símbolos en una llamada. Responde directamente si complete=true; expande sólo si falta un hecho.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
                                     "symbols": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
                                     "depth": {"type": "integer", "description": "Default 1"},
-                                    "limit": {"type": "integer", "description": "Máximo por símbolo; default 20"}
+                                    "limit": {"type": "integer", "description": "Presupuesto global de nodos; default 12"},
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"], "description": "compact usa aliases evidence-v1 (default)"}
                                 },
                                 "required": ["symbols"]
                             }
                         },
                         {
                             "name": "graph_neighborhood",
-                            "description": "Obtiene el mapa de código determinista y explicaciones semánticas del proyecto sin consumir tokens. Con 'symbol' devuelve solo el subgrafo alrededor de ese símbolo o archivo (más compacto).",
+                            "description": "Obtén evidencia estructural de un símbolo. Si complete=true, los ceros de coverage son evidencia negativa suficiente: no busques sinónimos ni amplíes para reconfirmarlos.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
                                     "path": {"type": "string", "description": "Ruta del proyecto"},
                                     "symbol": {"type": "string", "description": "Opcional: nombre de símbolo o archivo para devolver solo su vecindario"},
                                     "depth": {"type": "integer", "description": "Saltos alrededor del símbolo (default 1)"},
-                                    "limit": {"type": "integer", "description": "Máximo de nodos; default 40"},
+                                    "limit": {"type": "integer", "description": "Máximo de nodos; default 24"},
                                     "response_mode": {"type": "string", "enum": ["compact", "full"], "description": "compact (default) reduce tokens; full conserva todos los campos"}
                                 },
                                 "required": []
@@ -308,13 +419,13 @@ def run_mcp_server(workspace: Path):
                         },
                         {
                             "name": "graph_blast_radius",
-                            "description": "Calcula el radio de impacto de modificar un símbolo o archivo: recorre el grafo por aristas con su confianza (EXTRACTED/INFERRED) y devuelve los nodos afectados por salto (hop).",
+                            "description": "Calcula impacto con evidencia E/I/A. Si complete=true, coverage=0 confirma ausencia de relaciones; no hagas búsquedas adicionales para reconfirmar.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
                                     "symbol": {"type": "string", "description": "Nombre de la función o clase"},
                                     "depth": {"type": "integer", "description": "Profundidad máxima de recorrido (default 2)"},
-                                    "limit": {"type": "integer", "description": "Máximo de impactos; default 40"},
+                                    "limit": {"type": "integer", "description": "Máximo de impactos; default 24"},
                                     "response_mode": {"type": "string", "enum": ["compact", "full"]}
                                 },
                                 "required": ["symbol"]
@@ -322,10 +433,14 @@ def run_mcp_server(workspace: Path):
                         },
                         {
                             "name": "graph_search_concepts",
-                            "description": "Busca conceptos semánticos o palabras clave en las descripciones explicativas del código.",
+                            "description": "Busca conceptos y devuelve coincidencias compactas limitadas. Usa graph_neighborhood para ampliar una coincidencia.",
                             "inputSchema": {
                                 "type": "object",
-                                "properties": {"query": {"type": "string", "description": "Término o concepto semántico a buscar"}},
+                                "properties": {
+                                    "query": {"type": "string", "description": "Término o concepto semántico a buscar"},
+                                    "limit": {"type": "integer", "description": "Máximo de resultados; default 12"},
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"]}
+                                },
                                 "required": ["query"]
                             }
                         },
@@ -378,10 +493,15 @@ def run_mcp_server(workspace: Path):
 
             if name == "graph_context_bundle":
                 graph = get_workspace_graph(workspace, parser)
-                result = context_bundle(graph, args.get("symbols") or [], int(args.get("depth", 1)), int(args.get("limit") or 12))
+                symbols = args.get("symbols") or []
+                requested_limit = args.get("limit")
+                adaptive_limit = int(requested_limit) if requested_limit else min(36, max(12, len(symbols) * 6))
+                result = context_bundle(graph, symbols, int(args.get("depth", 1)), adaptive_limit)
+                if args.get("response_mode", "compact") != "full":
+                    result = evidence_result(result, max_nodes=adaptive_limit)
                 history.log_event("mcp", "context_bundle", f"Contexto agrupado para {len(result['symbols'])} símbolos", {"symbols": result["symbols"], "estimated_tokens": result["estimated_tokens"]})
                 return {"jsonrpc": "2.0", "id": req_id,
-                        "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}]}}
+                        "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
             elif name == "graph_neighborhood":
                 symbol = (args.get("symbol") or "").strip()
                 depth = int(args.get("depth", 1))
@@ -407,11 +527,11 @@ def run_mcp_server(workspace: Path):
                         sub_links = graph.get("links", [])
                     result = {"nodes": pruned_nodes, "links": sub_links, "limit": limit or None}
                 if response_mode != "full":
-                    result = compact_result(result, max_nodes=limit or 40)
+                    result = evidence_result(result, max_nodes=limit or 24)
                 history.log_event("mcp", "neighborhood", f"Escaneo de mapa de código para {workspace.name}", {"nodes": len(result.get("nodes", [])), "tokens_avoided": _tokens_avoided(workspace, result, json.dumps(result))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
-                    "result": {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+                    "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}
                 }
             elif name == "graph_blast_radius":
                 symbol = args.get("symbol", "")
@@ -421,25 +541,37 @@ def run_mcp_server(workspace: Path):
                 result["matched"] = [_prune_node(n) for n in result["matched"]]
                 for imp in result["impacted"]:
                     imp["node"] = _prune_node(imp["node"])
+                impacted_count = len(result["impacted"])
                 if args.get("response_mode", "compact") != "full":
-                    result = compact_result(result, max_nodes=int(args.get("limit") or 40))
-                history.log_event("mcp", "blast_radius", f"Evaluación de radio de impacto para {symbol}", {"symbol": symbol, "depth": depth, "impacted": len(result["impacted"]), "tokens_avoided": _tokens_avoided(workspace, result, json.dumps(result))})
+                    result = evidence_result(result, max_nodes=int(args.get("limit") or 24))
+                history.log_event("mcp", "blast_radius", f"Evaluación de radio de impacto para {symbol}", {"symbol": symbol, "depth": depth, "impacted": impacted_count, "tokens_avoided": _tokens_avoided(workspace, result, json.dumps(result))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
-                    "result": {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+                    "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}
                 }
             elif name == "graph_search_concepts":
-                query = args.get("query", "").lower()
+                query = args.get("query", "").lower().strip()
                 graph = get_workspace_graph(workspace, parser)
-                matches = [
-                    _prune_node(n) for n in graph.get("nodes", [])
-                    if query in n.get("name", "").lower() or query in n.get("details", "").lower()
-                ]
+                terms = list(dict.fromkeys(term for term in re.findall(r"[\w.]+", query) if len(term) >= 3))[:12]
+                ranked = []
+                for node in graph.get("nodes", []):
+                    name_text = str(node.get("name") or "").lower()
+                    details_text = str(node.get("details") or "").lower()
+                    searchable = f"{name_text} {details_text}"
+                    matched_terms = sum(term in searchable for term in terms)
+                    if query in searchable or matched_terms:
+                        exact_name = any(term == name_text for term in terms)
+                        score = (100 if query and query in searchable else 0) + matched_terms * 10 + (30 if exact_name else 0) + min(10, int(node.get("degree") or 0))
+                        ranked.append((score, node))
+                ranked.sort(key=lambda item: (-item[0], str(item[1].get("name") or ""), str(item[1].get("id") or "")))
+                matches = [_prune_node(node) for _, node in ranked]
                 result_search = {"query": query, "matches": matches}
+                if args.get("response_mode", "compact") != "full":
+                    result_search = evidence_result(result_search, max_nodes=int(args.get("limit") or 12), max_links=0)
                 history.log_event("mcp", "search_concepts", f"Búsqueda semántica de concepto: {query}", {"query": query, "count": len(matches), "tokens_avoided": _tokens_avoided(workspace, result_search, json.dumps(result_search))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
-                    "result": {"content": [{"type": "text", "text": json.dumps(result_search, indent=2)}]}
+                    "result": {"content": [{"type": "text", "text": json.dumps(result_search, ensure_ascii=False, separators=(",", ":"))}]}
                 }
             elif name == "graph_history_search":
 

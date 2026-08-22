@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "treatment": {
+    "runs": 6,
+    "successful_runs": 6,
+    "mean_duration_seconds": 89.299,
+    "duration_ci95": [
+      49.3905,
+      129.2067
+    ],
+    "mean_total_tokens": 10970,
+    "total_tokens_ci95": [
+      8242.1161,
+      13698.8839
+    ],
+    "mean_input_tokens": 3070,
+    "mean_output_tokens": 877,
+    "mean_quality_score": 0.75,
+    "quality_ci95": [
+      0.5376,
+      0.9624
+    ],
+    "mean_adjusted_quality_score": 0.75,
+    "factual_errors": 0
+  },
+  "baseline": {
+    "runs": 6,
+    "successful_runs": 6,
+    "mean_duration_seconds": 79.926,
+    "duration_ci95": [
+      67.1667,
+      92.6853
+    ],
+    "mean_total_tokens": 20248,
+    "total_tokens_ci95": [
+      13571.0632,
+      26925.9368
+    ],
+    "mean_input_tokens": 3583,
+    "mean_output_tokens": 1062,
+    "mean_quality_score": 0.7778,
+    "quality_ci95": [
+      0.5726,
+      0.9829
+    ],
+    "mean_adjusted_quality_score": 0.7778,
+    "factual_errors": 0
+  },
+  "reduction": {
+    "total_tokens": 0.4582,
+    "input_tokens": 0.1432,
+    "duration": -0.1173
+  },
+  "paired": {
+    "pairs": 6,
+    "quality_wins": 1,
+    "quality_losses": 2,
+    "quality_ties": 3,
+    "two_sided_sign_test_p": 1.0,
+    "mean_token_delta": -9278,
+    "token_delta_ci95": [
+      -14291.75,
+      -4264.25
+    ],
+    "token_effect_size_dz": -1.4807,
+    "token_permutation_p": 0.03125,
+    "mean_quality_delta": -0.0278
+  },
+  "warning": "Los intervalos usan aproximación normal 95%. Use tareas pareadas, ground truth auditable y al menos 5 repeticiones por variante."
+}

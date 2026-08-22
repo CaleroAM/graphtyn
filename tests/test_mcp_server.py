@@ -57,11 +57,20 @@ def test_mcp_graph_neighborhood(workspace):
     r = next(x for x in resp if x.get("id") == 3)
     text = r["result"]["content"][0]["text"]
     graph = json.loads(text)
-    ids = {n["id"] for n in graph["nodes"]}
-    assert "file:a.py" in ids and "file:b.py" in ids
-    assert any(l.get("confidence") in ("EXTRACTED", "INFERRED") for l in graph["links"])
-    assert graph["response_mode"] == "compact"
+    assert {Path(path).name for path in graph["files"].values()} >= {"a.py", "b.py"}
+    assert graph["relations"]
+    assert graph["format"] == "evidence-v1"
     assert graph["estimated_tokens"] > 0
+
+
+def test_mcp_compact_coverage_reports_zero_as_negative_evidence(workspace):
+    _, resp = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 32, "method": "tools/call",
+        "params": {"name": "graph_neighborhood", "arguments": {"symbol": "helper", "depth": 0}}}])
+    result = json.loads(resp[0]["result"]["content"][0]["text"])
+    assert result["complete"] is True
+    assert result["coverage"]["incoming_calls_or_uses"] == 0
+    assert result["coverage"]["outgoing_calls_or_uses"] == 0
+    assert result["coverage"]["zero_is_evidence_when_complete"] is True
 
 
 def test_mcp_full_response_is_opt_in(workspace):
@@ -77,10 +86,10 @@ def test_mcp_context_bundle_combines_queries(workspace):
     result = json.loads(resp[0]["result"]["content"][0]["text"])
     assert result["symbols"] == ["helper", "a.py"]
     assert len(result["contexts"]) == 2
-    assert result["nodes"] and result["links"]
+    assert result["entities"] and result["relations"]
     assert result["estimated_tokens"] > 0
     assert result["planner"] == "relevance-v1"
-    assert len(result["nodes"]) <= result["budget"]["max_nodes"]
+    assert len(result["entities"]) <= result["budget"]["max_nodes"]
 
 
 def test_context_bundle_enforces_one_global_budget(tmp_path):
@@ -116,10 +125,10 @@ def test_mcp_graph_blast_radius(workspace):
     ])
     r = next(x for x in resp if x.get("id") == 4)
     result = json.loads(r["result"]["content"][0]["text"])
-    assert len(result["matched"]) >= 1
-    impacted = result["impacted"]
-    assert any(i["hop"] == 1 for i in impacted)
-    assert all("confidence" in i for i in impacted)
+    assert result["entities"]
+    impacted = result["impact"]
+    assert any(i[1] == 1 for i in impacted)
+    assert result["format"] == "evidence-v1"
 
 
 def test_mcp_graph_search_concepts(workspace):
@@ -129,7 +138,40 @@ def test_mcp_graph_search_concepts(workspace):
     ])
     r = next(x for x in resp if x.get("id") == 5)
     result = json.loads(r["result"]["content"][0]["text"])
-    assert len(result["matches"]) >= 1
+    assert len(result["entities"]) >= 1
+
+
+def test_mcp_search_concepts_matches_individual_query_terms(workspace):
+    _, resp = _mcp_call(workspace, [
+        {"jsonrpc": "2.0", "id": 51, "method": "tools/call",
+         "params": {"name": "graph_search_concepts",
+                    "arguments": {"query": "missing phrase helper", "limit": 3}}},
+    ])
+    result = json.loads(resp[0]["result"]["content"][0]["text"])
+    assert any(entity["name"] == "helper" for entity in result["entities"].values())
+    assert len(result["entities"]) <= 3
+
+
+def test_evidence_format_deduplicates_paths_and_reduces_payload():
+    from aether_graph.mcp_server import evidence_result
+    path = "Assets/Very/Long/Repeated/Path/GameManager.cs"
+    nodes = [
+        {"id": f"symbol:{path}:M{i}", "name": f"M{i}", "kind": "method", "file": path,
+         "line": i + 1, "signature": f"public void M{i}()"}
+        for i in range(8)
+    ]
+    links = [
+        {"source": nodes[i]["id"], "target": nodes[i + 1]["id"], "label": "llama",
+         "confidence": "EXTRACTED", "file": path, "line": i + 1}
+        for i in range(7)
+    ]
+    raw = {"nodes": nodes, "links": links}
+    compact = evidence_result(raw)
+    compact_text = json.dumps(compact, ensure_ascii=False, separators=(",", ":"))
+    raw_text = json.dumps(raw, ensure_ascii=False)
+    assert len(compact_text) < len(raw_text) * 0.6
+    assert list(compact["files"].values()) == [path]
+    assert len(compact["relations"]) == 7
 
 
 def test_mcp_history_flow(workspace):

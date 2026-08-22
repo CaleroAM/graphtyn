@@ -1,0 +1,324 @@
+[
+  {
+    "task_id": "selection-impact",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 45.3065,
+    "usage": {
+      "input_tokens": 281,
+      "output_tokens": 436,
+      "thinking_tokens": 92,
+      "total_tokens": 6057
+    },
+    "tool_calls": 4,
+    "answer": "**GetPlayerSelection** según el grafo (Graphify, proyecto UnityCommerceDemo):\n\n- **Nodo:** `.GetPlayerSelection()` (tipo `code`, ID `...tokenselectionmanager_getplayerselection`)\n- **Contenedor:** clase/archivo `TokenSelectionManager.cs` — evidencia de arista entrante `<-- TokenSelectionManager [method]`; el nodo contenedor tiene grado 4\n- **Ruta:** `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/TokenSelectionManager.cs:L67`\n- **Comportamiento (evidencia de aristas):** retorna el tipo `PlayerSelection` — arista `.GetPlayerSelection() --references [EXTRACTED context=return_type]--> PlayerSelection` en L67. `PlayerSelection` a su vez referencia un campo `Color` (`PlayerSelection --references [field]--> Color`, L8)\n- **Radio de impacto directo actual:** grado **2** — 1 arista entrante (declaración como método) y 1 saliente (tipo de retorno). **Sin llamadores registrados en el grafo**: ningún otro nodo apunta hacia él.\n\nNota: el grafo no captura el cuerpo del método ni su comunidad (campo vacío); solo estructura declarativa y referencias extraídas.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 2,
+    "partial": 0,
+    "total": 5,
+    "quality_score": 0.4,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.4,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "container",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "lookup",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "nullable",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "path",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "no-callers",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "auction-service",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 76.5931,
+    "usage": {
+      "input_tokens": 1884,
+      "output_tokens": 1038,
+      "thinking_tokens": 151,
+      "total_tokens": 13569
+    },
+    "tool_calls": 12,
+    "answer": "# AuctionService según el grafo (Graphify)\n\n**Identidad**: nodo `unitycommercedemo_assets_project_scripts_gameplay_services_auctionservice` — `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/Services/AuctionService.cs` L9, tipo `code`, **grado 4**.\n\n## Flujo (métodos extraídos)\nSolo 3 métodos declarados, sin aristas de llamada entre ellos ni hacia otros nodos:\n- `.StartAuction()` — L17 (**grado 1**: solo su arista `method`; verificado por ID completo)\n- `.PlaceBid()` — L23\n- `.CloseAuction()` — L30\n\nNo hay ninguna arista que encadene Start→Bid→Close en el grafo; el flujo interno no es observable.\n\n## Estado\n**Ninguno registrado.** El nodo no tiene aristas `references context=field` ni tipos propios (a diferencia de `PlayerState`, que sí tiene campos Money/List/Position extraídos).\n\n## Eventos\n**Ninguno.** No existen aristas de eventos (tipo C# `event`) asociadas a AuctionService. Lo más cercano en el dominio: `Action` referenciado como parámetro del `.StartAuction()` de `AuctionUIController.cs` L55 (no del servicio).\n\n## Dependencias\n**Ninguna saliente.** Sus únicas 4 aristas son: 3× `--method-->` (sus propios métodos) y 1× `<--contains--` desde su archivo. No referencia entidades, value objects ni servicios.\n\n## Interfaces\nNo existe ningún nodo tipo `IAuctionService` ni aristas `implements/inherits` en las búsquedas realizadas (BFS depth=3 con filtro de contexto incluido).\n\n## Consumidores actuales\n**Cero en el grafo.** Ninguna arista entrante de tipo `call` apunta a StartAuction/PlaceBid/CloseAuction del servicio. La lógica real de subastas vive en dos componentes **no conectados** a él:\n- `AuctionUIController` (`UI/Components/AuctionUIController.cs` L9): `Initialize` L30, `StartAuction` L55 (params: `Artwork`, `PlayerState`, `List<AuctionBid>`, `Sprite`), `UpdateAuctionUI` L184 → llama `EndAuction` L236 (L195), `SubmitSimultaneousBid` L210, `PassSimultaneousBid` L226, `UpdateTimer` L249, `ForceAllPass` L260. Es referenciado por `GameHUDController.cs` L19.\n- `AuctionEngine` (`src/GameEngine.Core/Domain/Services/AuctionEngine.cs` L10): `ResolveAuction` L17, `ProcessAuctionResult` L46, `ValidateBids` L69; usado por `TurnManager.cs` L16 y `AuctionEngineTests.cs` L14.\n\n**Conclusión con evidencia**: el grafo muestra a AuctionService como un nodo huérfano (grado 4, solo autoreferencias). Documentación relacionada: \"5) Módulo 3: Eventos Especiales --contains--> A. Subasta\" (`docs/modularizacion-sistema-juego.md` L81–85).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 1,
+    "partial": 3,
+    "total": 6,
+    "quality_score": 0.4167,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.4167,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "start",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "bid",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "close",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "dependencies",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "no-interface",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "no-consumers",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "interfaces",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 82.0353,
+    "usage": {
+      "input_tokens": 244,
+      "output_tokens": 1027,
+      "thinking_tokens": 118,
+      "total_tokens": 17389
+    },
+    "tool_calls": 14,
+    "answer": "Evidencia obtenida exclusivamente del grafo Graphify (`graphify-out/graph.json`, 2294 nodos / 3880 aristas). Aristas verificadas con `get_neighbors` (tipo `implements` [EXTRACTED]).\n\n## Interfaces propias y sus implementaciones\n\n### 1. `IState` — Assets/_Project/Scripts/Core/State/IState.cs:L4\nMétodos: `.Enter()` L6, `.Execute()` L7, `.Exit()` L8\n| Relación | Nodo | Evidencia |\n|---|---|---|\n| implements | **GameSetupState** | GameSetupState.cs:L7 |\n| implements | **GameplayState** | GameplayState.cs:L7 |\n| references | StateMachine | StateMachine.cs:L8, `.ChangeState()` L10 |\n\n### 2. `IPlayerNameRegistry` — Assets/_Project/Scripts/Core/Services/IPlayerNameRegistry.cs:L11\nMétodos: `.IsNameTaken()` L16, `.RegisterName()` L21, `.UnregisterName()` L26\n| Relación | Nodo | Evidencia |\n|---|---|---|\n| implements | **LocalPlayerNameRegistry** | LocalPlayerNameRegistry.cs:L15 |\n| references | PlayerNameService | PlayerNameService.cs:L34 |\n\n### 3. `IRNGService` — src/GameEngine.Core/Application/Interfaces/IRNGService.cs:L7\nMétodos: `.Next()` L15, `.SelectRandom()` L24\n| Relación | Nodo | Evidencia |\n|---|---|---|\n| implements | **DeterministicRNGService** | src/GameEngine.Core/Infrastructure/Random/DeterministicRNGService.cs:L9 |\n| implements | **SimpleRNGService** | UnityCommerceDemo/Assets/_Project/Gameplay/SimpleRNGService.cs:L6 |\n| implements (tests) | TestRng / FakeRng / FixedRng | GameManagerConfigurationTests.cs:L81 / TransactionEngineTests.cs:L199 / TurnManagerTests.cs:L295 |\n| references | TurnManager, TransactionEngine | TurnManager.cs:L13; TransactionEngine.cs `.ProcessRestorationPenalty()` L70 |\n\n### 4. `ISnapshotManager` — src/GameEngine.Core/Application/Interfaces/ISnapshotManager.cs:L8\nMétodos: `.Serialize()` L13, `.Deserialize()` L18\n| Relación | Nodo | Evidencia |\n|---|---|---|\n| implements | **SnapshotManager** | src/GameEngine.Core/Infrastructure/Persistence/SnapshotManager.cs:L13 |\n\n**Notas del grafo:** el nodo de namespace `GameEngine.Core.Application.Interfaces` solo contiene `IRNGService.cs` e `ISnapshotManager.cs`; ninguna otra interfaz aparece conectada en esas zonas. `SimpleRNGService` vive en Assets pero implementa la interfaz definida en GameEngine.Core.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 5,
+    "partial": 0,
+    "total": 5,
+    "quality_score": 1.0,
+    "factual_errors": 1,
+    "adjusted_quality_score": 0.8,
+    "contradictions": [
+      "player-name-service-implements-registry"
+    ],
+    "facts": [
+      {
+        "id": "state",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "names",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "rng-unity",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "rng-core",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "snapshot",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "game-start-flow",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 147.4673,
+    "usage": {
+      "input_tokens": 511,
+      "output_tokens": 1641,
+      "thinking_tokens": 242,
+      "total_tokens": 19098
+    },
+    "tool_calls": 19,
+    "answer": "## Flujo `StartRealGame` según el grafo (2294 nodos, UnityCommerceDemo/graphify-out)\n\n### 1. Entrada al flujo\n- `.StartRealGame()` — definida en `UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:397`, grado 12.\n- La invoca `.StartGame()` (`calls` EXTRACTED, `GameManager.cs:356`).\n- `.StartGame()` a su vez recibe llamadas de: GameManager `.Start()` (EXTRACTED, `GameManager.cs:201`) y `GameSetupState.Enter()` (**INFERRED**, `GameSetupState.cs:26`). Antes hace `Hide()`/`Show()` (**INFERRED**, L352–353).\n\n### 2. Configuración\n- `.StartRealGame()` --calls **[EXTRACTED]**--> `.CreatePueblaBoard()` en `GameManager.cs:411`.\n- Ese método pertenece a `BoardFactory` (`src/GameEngine.Core/Domain/Configuration/BoardFactory.cs:18`) y referencia `IReadOnlyList`/`BoardTile`. También es consumido por `BoardBuilder.BuildBoard()` (`BoardBuilder.cs:236`) y por los tests de configuración.\n\n### 3. Estado\n- `.SetPhase()` --calls **[EXTRACTED]** desde `GameManager.cs:434` → método de `GameState` (`GameState.cs:307`).\n- `.GetCurrentPlayer()` --calls **[EXTRACTED]** desde `GameManager.cs:438` → `GameState.cs:198`.\n- Camino más corto verificado: `.StartRealGame() --calls--> .GetCurrentPlayer() <--method-- GameState` (única conexión dirigida a `GameState`; no existe path dirigido directo StartRealGame→GameState).\n- `GameManager` referencia `GameState` como campo en `GameManager.cs:52`, y `PlayerState` aparece referenciado en la firma (L397).\n- Advertencia: la arista `.StartRealGame() --calls--> .Start()` en `L421` es **ambigua en el grafo**: existen dos nodos `.Start()` (`GameState.cs:269` y `GameManager.cs:176`) y la arista no desambigua el destino.\n\n### 4. RNG\n- **El grafo no evidencia ninguna llamada directa de `StartRealGame` hacia RNG.** No hay arista hacia `IRNGService` ni implementaciones.\n- Conexión estructural aguas abajo: `TurnManager` referencia `IRNGService` (`TurnManager.cs:13`); `IRNGService` expone `.Next()` (L15) y `.SelectRandom()` (L24); implementaciones registradas: `SimpleRNGService` (`SimpleRNGService.cs:6`), `DeterministicRNGService` (`DeterministicRNGService.cs:9`), y los fakes `TestRng`/`FakeRng`/`FixedRng` en tests.\n\n### 5. TurnManager\n- Sin llamadas directas desde `StartRealGame` según el grafo. Vínculo: `GameManager` referencia `TurnManager` como campo en `GameManager.cs:53` (EXTRACTED).\n- `TurnManager` (`TurnManager.cs:11`) depende de `IRNGService`, `TransactionEngine`, `CuratorManager`, `AuctionEngine` (L13–16); métodos: `.RollDice()` (L33), `.ExecuteTile()` (L60), `.EndTurn()` (L167), `.EvaluateGameEnd()` (L185).\n\n### 6. Estado máquina + UI\n- `.ChangeState()` --calls **[EXTRACTED]** desde `GameManager.cs:436` → `StateMachine.ChangeState` (`StateMachine.cs:10`), que llama `IState.Enter()` (**INFERRED**, L14). `GameManager` referencia `StateMachine` en L19.\n- `.ShowTurnTransition()` --calls **[INFERRED]** desde `GameManager.cs:438` → `GameHUDController.ShowTurnTransition` (`GameHUDController.cs:242`), que llama `.DelayedCallback()` (EXTRACTED, L250).\n- `.AssignPlayerIndices()` (EXTRACTED, L432) y `.TriggerSpawnDropsAfterDelay()` (EXTRACTED, L439): métodos internos de GameManager.\n\n**Resumen del trazo con evidencia:** `StartGame(L356) → StartRealGame(L397) → CreatePueblaBoard/BoardFactory(L411) → .Start?(L421, ambiguo) → AssignPlayerIndices(L432) → GameState.SetPhase(L434) → StateMachine.ChangeState(L436) → GameState.GetCurrentPlayer + ShowTurnTransition/GameHUDController(L438, inferred) → TriggerSpawnDropsAfterDelay(L439)`. RNG y TurnManager quedan fuera de las llamadas directas: se acoplan después vía los campos `turnManager`(L53)/`IRNGService` de `TurnManager`.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 4,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.75,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.75,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "config",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "state",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "rng",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "turn",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "phase",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "ui",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "snapshot-roundtrip",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 40.7349,
+    "usage": {
+      "input_tokens": 302,
+      "output_tokens": 757,
+      "thinking_tokens": 103,
+      "total_tokens": 8074
+    },
+    "tool_calls": 5,
+    "answer": "## SnapshotManager (según el grafo de Graphify)\n\n**Contrato**\n- `SnapshotManager --implements--> ISnapshotManager` en `src/GameEngine.Core/Infrastructure/Persistence/SnapshotManager.cs:L13`.\n- `ISnapshotManager` (`src/GameEngine.Core/Application/Interfaces/ISnapshotManager.cs`) define dos métodos:\n  - `.Serialize()` con `parameter_type = GameState` (L13).\n  - `.Deserialize()` con `return_type = GameState` (L18).\n\n**Serialización**\n- `SnapshotManager` tiene campos `int` (L15) y `JsonSerializerOptions` (L16) → serializa JSON con opciones configuradas.\n- Flujo extraído: `.Serialize() --calls--> .FromDomain()` (L27); `.FromDomain(GameState)` retorna `SnapshotDto` (L73).\n- `SnapshotDto` (definido en el mismo archivo, L56) referencia: `Guid` (L58), `RegionConfigDto` (L59), `List<PlayerDto>` (L60), `List<ArtworkDto>` (L61), `List<BoardTileDto>` (L62), `ExpositionDirection` (L66), `DateTime` (L68), `GameStatus` (L71).\n\n**Deserialización**\n- `.Deserialize()` tiene `return_type = GameState` (L32) y `--calls [INFERRED]--> .ToDomain()` (L52).\n- `.ToDomain()` retorna `GameState` (L104): convierte los DTOs de vuelta a entidades de dominio.\n\n**Objetos de dominio reconstruidos**\n- `GameState` (`src/GameEngine.Core/Domain/Entities/GameState.cs:L12`), que a su vez referencia `ExpositionDirection` (L57) y `GameStatus` (L87) — mismos enums usados por `SnapshotDto`, lo que confirma el mapeo 1:1 DTO↔dominio.\n- Sub-DTOs con claves: `PlayerDto` (`Guid` L155, `List` L159), `ArtworkDto` (`Guid` L165), `BoardTileDto` (`Guid` L168, campo `TileType` L170).\n\n**Cobertura**: existe `SnapshotManagerTests.cs` (nodo con grado 9), indicando pruebas dedicadas del componente.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 4,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.75,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.75,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "contract",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "directions",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "players",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "board",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "config",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "state",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "cross-file-calls",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 59.0469,
+    "usage": {
+      "input_tokens": 451,
+      "output_tokens": 479,
+      "thinking_tokens": 6,
+      "total_tokens": 9320
+    },
+    "tool_calls": 11,
+    "answer": "## Evidencia del grafo: llamadas cross-file desde GameManager\n\n**Durante la tirada** (flujo: `.RollDiceForCurrentPlayer()` → `.OnDiceStoppedFromController()` L549 → `.OnDiceStopped()` L556):\n\n| Origen (GameManager.cs) | Llamada | Destino (archivo distinto) |\n|---|---|---|\n| `.OnDiceStopped()` L565 | `calls` [INFERRED] | `.RollDice()` — `Gameplay/Dice3D.cs` L24 |\n| `.OnDiceStopped()` L572 | `calls` [INFERRED] | `.Move()` — `Gameplay/PlayerPiece.cs` L29 |\n\n**Llegada a casilla** (`.OnDiceStopped()` → `.OnPieceArrived()` L579):\n\n| Origen (GameManager.cs) | Llamada | Destino (archivo distinto) |\n|---|---|---|\n| `.OnPieceArrived()` L581 | `calls` [EXTRACTED] | `.GetCurrentPlayer()` — `src/GameEngine.Core/Domain/Entities/GameState.cs` L198 |\n| `.OnPieceArrived()` L583 | `calls` [EXTRACTED] | `.GetTileAtPosition()` — `GameState.cs` L223 |\n| `.OnPieceArrived()` L593 | `calls` [EXTRACTED] | `.GetArtworkById()` — `GameState.cs` L231 |\n| `.OnPieceArrived()` L600 | `calls` [EXTRACTED] | `.GetFor()` — `Scripts/UI/MuseumVisuals.cs` L28 |\n\nNotas del grafo:\n- Las aristas salientes (`-->`) parten de los métodos de GameManager hacia símbolos en otros archivos; las 4 llamadas a `GameState` cruzan además entre ensamblados (Unity ↔ GameEngine.Core).\n- `.RollDice()` y `.Move()` están marcadas **INFERRED** por el extractor; el resto son **EXTRACTED**.\n- Internamente GameManager también encadena: `OnPieceArrived` → `.FinishTurnProcess()` L608 (mismo archivo).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 2,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.5,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.5,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "roll",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "move",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "tile",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "artwork",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "curator",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "finish",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]

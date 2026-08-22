@@ -1,0 +1,322 @@
+[
+  {
+    "task_id": "selection-impact",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 40.3113,
+    "usage": {
+      "input_tokens": 855,
+      "output_tokens": 550,
+      "thinking_tokens": 149,
+      "total_tokens": 5714
+    },
+    "tool_calls": 2,
+    "answer": "## GetPlayerSelection — evidencia del grafo\n\n**Comportamiento** (según firma extraída, E):\n```csharp\npublic PlayerSelection GetPlayerSelection(int playerID)\n```\nConsulta la selección (`PlayerSelection`) asociada a un `playerID`. El grafo no registra aristas salientes ni entrantes de tipo `llama`/`usa`, por lo que **no puedo afirmar nada más sobre su lógica interna** sin leer código (que excluiste).\n\n**Contenedor**: clase `TokenSelectionManager` (declarada en línea 11), dentro del módulo `Gameplay`.\n\n**Ruta**: `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/TokenSelectionManager.cs:67`\n\n**Radio de impacto directo actual** (depth=2, `complete=true`): **cero consumidores externos**. No existe ninguna arista entrante hacia `GetPlayerSelection`; las únicas relaciones registradas son de contención estructural (`contiene`):\n- `TokenSelectionManager.cs` → contiene → `GetPlayerSelection`\n- `Gameplay` (módulo) → contiene → el archivo\n- Nodos co-localizados (hermanos en el mismo archivo, no consumidores): `PlayerSelection`, `TokenSelectionManager`, `SelectTokenForPlayer`, `ResetSelections`\n\nNota: `SelectTokenForPlayer` (F1:26) es candidata natural como productora del dato, pero el grafo no tiene arista que la conecte con este getter, así que no lo afirmo.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 3,
+    "partial": 1,
+    "total": 5,
+    "quality_score": 0.7,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.7,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "container",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "lookup",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "nullable",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "path",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "no-callers",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "auction-service",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 181.1376,
+    "usage": {
+      "input_tokens": 4089,
+      "output_tokens": 483,
+      "thinking_tokens": 227,
+      "total_tokens": 9023
+    },
+    "tool_calls": 9,
+    "answer": "# AuctionService según AetherGraph (evidencia-v1)\n\n## Identidad\n- **Clase** `public class AuctionService`, namespace `Gameplay.Services`, assembly `Assembly-CSharp`\n- Archivo: `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/Services/AuctionService.cs:9` (rango 9–36, parser tree-sitter)\n- Miembros indexados (3 métodos públicos):\n  - `StartAuction(string artworkId, int startingPrice)` — línea 17–21\n  - `PlaceBid(string bidderName, int bidAmount)` — línea 23–28\n  - `CloseAuction(string winnerName, int finalPrice)` — línea 30–35\n\n## Flujo\n- El grafo solo contiene aristas de contención (`contiene`, E); **no hay aristas de llamada internas** entre los métodos (out_degree=0 en los tres).\n- Ciclo de vida implícito por firmas: `StartAuction(artworkId, startingPrice)` → `PlaceBid(bidderName, bidAmount)` → `CloseAuction(winnerName, finalPrice)` *(inferencia de nombres/firmas, no hay arista que la respalde)*.\n\n## Estado\n- **Sin evidencia**: el grafo no indexa campos ni propiedades dentro de la clase (solo clase + 3 métodos). No puedo afirmar qué estado interno guarda.\n\n## Eventos\n- **Sin evidencia**: ninguna búsqueda (\"evento fin de subasta\", `AuctionClosed`) devolvió nodos o aristas ligados a `AuctionService`. No constan eventos publicados/suscritos.\n\n## Dependencias\n- **Ninguna registrada**: `out_degree=0` para la clase y sus métodos; el radio de impacto (depth 3) solo devuelve relaciones de contención (archivo/carpeta).\n\n## Interfaces\n- Búsqueda de `IAuctionService` / contrato: resultado",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 0,
+    "partial": 3,
+    "total": 6,
+    "quality_score": 0.25,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.25,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "start",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "bid",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "close",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "dependencies",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "no-interface",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "no-consumers",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "interfaces",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 107.3503,
+    "usage": {
+      "input_tokens": 406,
+      "output_tokens": 753,
+      "thinking_tokens": 123,
+      "total_tokens": 15490
+    },
+    "tool_calls": 12,
+    "answer": "Evidencia obtenida exclusivamente del grafo AetherGraph (formato evidence-v1):\n\n## Assets (`UnityCommerceDemo/Assets/_Project/Scripts`)\n| Interfaz | Ubicación | Implementación | Evidencia |\n|---|---|---|---|\n| `IState` | `Scripts/Core/State/IState.cs:4` (`namespace Core.State`) | `GameplayState : IState` | `GameplayState.cs:7`; arista `implementa` [E]; métodos `Enter/Execute/Exit` en IState.cs:6-8 |\n| `IPlayerNameRegistry` | `Scripts/Core/Services/IPlayerNameRegistry.cs:11` (`Core.Services`) | `LocalPlayerNameRegistry : IPlayerNameRegistry` | `LocalPlayerNameRegistry.cs:15`; arista `implementa` [E] |\n\n## src/GameEngine.Core\n| Interfaz | Ubicación | Implementación | Evidencia |\n|---|---|---|---|\n| `IRNGService` | `Application/Interfaces/IRNGService.cs:7` | `DeterministicRNGService : IRNGService` | `Infrastructure/Random/DeterministicRNGService.cs:9`; arista `implementa` [E]; métodos `Next` (:15), `SelectRandom<T>` (:24) |\n| `ISnapshotManager` | `Application/Interfaces/ISnapshotManager.cs:8` | `SnapshotManager` | `Infrastructure/Persistence/SnapshotManager.cs`: `Serialize` (:23), `Deserialize` (:32). Nota: el grafo muestra coincidencia de firmas y tests (`SnapshotManagerTests`); no recuperé una arista `implementa` explícita aquí |\n\nNotas del grafo: la carpeta `Application/Interfaces` contiene exactamente esos 2 archivos (aristas `contiene` [E], complete=true). En Gameplay/Core de Assets, clases como `AudioManager : MonoBehaviour` (AudioManager.cs:10) y `BoardCameraRig` no implementan interfaces según el grafo. No encontré más implementadores de `IState` ni interfaces adicionales en esas rutas.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 3,
+    "partial": 2,
+    "total": 5,
+    "quality_score": 0.8,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.8,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "state",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "names",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "rng-unity",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "rng-core",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "snapshot",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "game-start-flow",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 72.0433,
+    "usage": {
+      "input_tokens": 3805,
+      "output_tokens": 1080,
+      "thinking_tokens": 235,
+      "total_tokens": 10560
+    },
+    "tool_calls": 4,
+    "answer": "## Flujo `StartRealGame` según el grafo (todas las aristas `E` = extraída)\n\n**Entrada:** `GameManager.cs` llama `StartRealGame(List<PlayerState> sortedPlayers)` en la línea 356 (`UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs:397`, método privado).\n\n**Llamadas salientes de `StartRealGame` (evidencia directa con línea):**\n\n| Área | Destino | Evidencia |\n|---|---|---|\n| Configuración | `RegionConfig()` ctor | GameManager.cs:399 → RegionConfig.cs:56 |\n| Configuración | `Money()` ctor (×4) | GameManager.cs:400, 401, 416, 418 → Money.cs:21 |\n| Configuración | `BoardFactory.CreatePueblaBoard()` | GameManager.cs:411 → BoardFactory.cs:18 |\n| Entidades | `Artwork()` ctor (×2) | GameManager.cs:416, 418 → Artwork.cs:46 |\n| Estado | `GameState()` ctor | GameManager.cs:420 → GameState.cs:102 |\n| Estado | `GameState.Start()` | GameManager.cs:421 → GameState.cs:269 |\n| RNG | `SimpleRNGService(int seed)` ctor | GameManager.cs:423 → SimpleRNGService.cs:12 |\n| TurnManager | `TurnManager()` ctor | GameManager.cs:430 → TurnManager.cs:21 |\n| Estado | `AssignPlayerIndices()` (propio) | GameManager.cs:432 → :463 |\n| Estado | `GameState.SetPhase(TurnPhase)` | GameManager.cs:434 → GameState.cs:307 |\n| Estado | `StateMachine.ChangeState(IState)` + `new GameplayState()` | GameManager.cs:436 → StateMachine.cs:10 / GameplayState.cs:12 |\n| UI | `GameHUDController.ShowTurnTransition(string)` | GameManager.cs:438 → GameHUDController.cs:242 |\n| Estado | `GameState.GetCurrentPlayer()` | GameManager.cs:438 → GameState.cs:198 |\n| Post-inicio | `TriggerSpawnDropsAfterDelay()` (corrutina propia) | GameManager.cs:439 → :442 |\n\n**Orden reconstruido del grafo:** config (`RegionConfig`, `Money`, board) → estado (`GameState` + `Start`) → RNG (`SimpleRNGService`) → `TurnManager` → índices/fase → transición de estado (`ChangeState(GameplayState)`) → UI (`ShowTurnTransition(GetCurrentPlayer())`).\n\n**Blast radius:** el impacto se limita al propio archivo `GameManager.cs` (contiene) más los 14 símbolos llamados arriba; sin consumidores externos entrantes además de la llamada interna en línea 356. Nota honesta: el método exacto que contiene la línea 356 no aparece como nodo en el grafo (hueco entre `ExecuteDefaultActionForPhase`:277 y `StartRealGame`:397); el arista registrada es del archivo, no de un método nombrado — no lo infiero.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 4,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.8333,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.8333,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "config",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "state",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "rng",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "turn",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "phase",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "ui",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "snapshot-roundtrip",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 71.1561,
+    "usage": {
+      "input_tokens": 6352,
+      "output_tokens": 1275,
+      "thinking_tokens": 265,
+      "total_tokens": 13332
+    },
+    "tool_calls": 4,
+    "answer": "## SnapshotManager según el grafo\n\n**Contrato** (`ISnapshotManager`, src/GameEngine.Core/Application/Interfaces/ISnapshotManager.cs:8)\n- `string Serialize(GameState state);` (línea 13)\n- `GameState Deserialize(string snapshot);` (línea 18)\n- Arista extraída: `SnapshotManager implementa ISnapshotManager` [E] (SnapshotManager.cs:13).\n\n**Implementación** (`public sealed class SnapshotManager : ISnapshotManager`, SnapshotManager.cs:13–54)\n- `Serialize(GameState state)` (líneas 23–29): arista extraída `Serialize llama SnapshotDto.FromDomain(state, CurrentSchemaVersion)` [E, línea 27] → convierte el agregado de dominio al DTO con versión de esquema.\n- `Deserialize(string snapshot)` (líneas 32–53): firma devuelve `GameState`. El test `Deserialize_IncompatibleSchema_ThrowsDescriptiveException` (SnapshotManagerTests.cs:43) evidencia que valida la versión de esquema y lanza excepción descriptiva ante esquema incompatible.\n- El grafo **no** muestra qué librería JSON usa ni el cuerpo exacto de validación — no lo asumo.\n\n**DTOs de persistencia** (todos `internal sealed record` en SnapshotManager.cs)\n| DTO | Línea |\n|---|---|\n| `SnapshotDto` | 56–145 |\n| `RegionConfigDto` | 147–152 |\n| `PlayerDto` | 154–163 |\n| `ArtworkDto(Guid Id, string Name, decimal BankValue, decimal Rent, Guid? OwnerId)` | 165 |\n| `BoardTileDto` | 167–172 |\n\nMapeo bidireccional: `SnapshotDto.FromDomain(GameState, int schemaVersion)` (73–102) y `ToDomain()` (104–144).\n\n**Objetos de dominio reconstruidos por `ToDomain()`** — aristas `llama` [E] desde SnapshotManager.cs:106–129:\n- `new RegionConfig(...)` (RegionConfig.cs:56, línea 106)\n- `new Money(decimal)` ×5 (Money.cs:21, líneas 107, 108, 113, 119)\n- `new Artwork(id, name, bankValue, rent, ownerId)` (Artwork.cs:59, línea 113)\n- `new PlayerState(...)` (PlayerState.cs:65, línea 116)\n- `new Position(int)` (Position.cs:36, línea 120)\n- `new BoardTile(id, position, tileType, artworkId, movementBonus, ...)` (BoardTile.cs:48, línea 127)\n\nEs decir: reconstruye value objects (`Money`, `Position`), entidades (`Artwork`, `BoardTile`, `PlayerState`) y configuración (`RegionConfig`), componiéndolos en un `GameState : AggregateRoot` (GameState.cs:12) [A, herencia].\n\n**Verificación round-trip** (SnapshotManagerTests.cs): `Roundtrip_PreservesCoreState` (:21), `Roundtrip_PreservesCuratorAndDirection` (:68), `Roundtrip_PreservesStatusAndStartTime` (:80) — confirman que serializar→deserializar preserva estado núcleo, curador/dirección y estado/fecha de inicio.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 5,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.9167,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.9167,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "contract",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "directions",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "players",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "board",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "config",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "state",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "cross-file-calls",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 63.7932,
+    "usage": {
+      "input_tokens": 2913,
+      "output_tokens": 1122,
+      "thinking_tokens": 117,
+      "total_tokens": 11704
+    },
+    "tool_calls": 7,
+    "answer": "Las respuestas en modo `full` se truncaron; reintento en modo `compact` para obtener las aristas cross-file de esos dos métodos.\nEvidencia extraída del grafo (todas las aristas marcadas `E` = extraída; `F1` = `UnityCommerceDemo/Assets/_Project/Gameplay/GameManager.cs`).\n\n## Durante tirada — `OnDiceStopped` (F1:556)\n\nEntrada cross-file hacia GameManager:\n- `GameManager.OnDiceStoppedFromController` (F1:549) **llama** → `OnDiceStopped` en línea 553 (mismo archivo).\n\nLlamadas salientes de `OnDiceStopped` hacia otros archivos:\n\n| Línea | Destino | Archivo |\n|---|---|---|\n| 558, 567 | `GameState.GetCurrentPlayer()` | `src/GameEngine.Core/Domain/Entities/GameState.cs:198` |\n| 560 | `TurnLogController.AddLogEntry()` | `_Project/UI/Components/TurnLogController.cs:27` |\n| 565 | `TurnManager.RollDice()` | `src/GameEngine.Core/Domain/Services/TurnManager.cs:33` |\n| 569 | `BoardCameraRig.GetOrCreate()` | `_Project/Gameplay/BoardCameraRig.cs:59` |\n| 572 | `PlayerPiece.Move(steps, finalPosition, onComplete)` | `_Project/Gameplay/PlayerPiece.cs:29` |\n| 575 | `OnPieceArrived` (mismo archivo, F1:579) | transición tirada→llegada |\n\n## Llegada a casilla — `OnPieceArrived` (F1:579)\n\nLlamadas salientes cross-file:\n\n| Línea | Destino | Archivo |\n|---|---|---|\n| 581, 605 | `GameState.GetCurrentPlayer()` | `GameState.cs:198` |\n| 583 | `GameState.GetTileAtPosition()` | `GameState.cs:223` |\n| 587 | `BoardBuilder.HighlightTile(index, duration)` | `_Project/Presentation/BoardBuilder.cs:527` |\n| 593 | `GameState.GetArtworkById()` | `GameState.cs:231` |\n| 600 | `GameHUDController.ShowPropertyDecision(...)` | `_Project/UI/Components/GameHUDController.cs:264` |\n| 600 | `MuseumVisuals.GetFor(propertyName)` | `_Project/Scripts/UI/MuseumVisuals.cs:28` |\n| 605 | `TurnLogController.AddLogEntry()` | `TurnLogController.cs:27` |\n| 607, 613 | `TurnManager.RespondToArtworkOffer(...)` | `TurnManager.cs:134` |\n| 621 | `GameHUDController.ShowCuratorDecision(...)` | `GameHUDController.cs:320` |\n| 624, 630 | `TurnManager.RespondToCurator(...)` | `TurnManager.cs:157` |\n\nFlujo interno (mismo archivo): `OnPieceArrived` → `StopActiveTurnTimer` (F1:244, líneas 602/623) y → `FinishTurnProcess` (F1:644, líneas 608/614/625/631/636).\n\nNota: el vecindario de `OnDiceStopped` devolvió `complete=true`; el de `OnPieceArrived` omitió solo 2 enlaces internos, por lo que la evidencia cross-file listada está completa según el grafo.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "roll",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "move",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "tile",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "artwork",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "curator",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "finish",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]
