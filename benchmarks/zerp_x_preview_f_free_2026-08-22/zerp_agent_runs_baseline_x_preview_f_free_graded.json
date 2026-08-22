@@ -1,0 +1,222 @@
+[
+  {
+    "task_id": "web-bootstrap-stack",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "ERROR",
+    "duration_seconds": 147.9937,
+    "usage": {
+      "input_tokens": 588,
+      "output_tokens": 178,
+      "thinking_tokens": 66,
+      "total_tokens": 28288
+    },
+    "tool_calls": 22,
+    "answer": "",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 0,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 0.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "blade-assets",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "inertia-root",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "page-resolution",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "react-mount",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "loader",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "csrf",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "create-sales-proposal",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 288.0433,
+    "usage": {
+      "input_tokens": 411,
+      "output_tokens": 64,
+      "thinking_tokens": 0,
+      "total_tokens": 28891
+    },
+    "tool_calls": 38,
+    "answer": "# Trazado: creación de propuesta comercial (React → Laravel → BD) en `/tmp/aether-benchmark-zerp`\n\n## 1. Punto de entrada y página de creación\n- El botón \"Crear\" navega vía `router.visit(route('sales-proposals.create'))` — `resources/js/pages/SalesProposals/Index.tsx:359` (también :478 y :658).\n- La ruta `create` es parte del resource — `routes/web.php:175`.\n- `SalesProposalController::create()` verifica permiso `create-sales-proposals` (`app/Http/Controllers/SalesProposalController.php:108`) y renderiza la página Inertia con clientes y almacenes activos filtrados por `creatorId()` (:109-115). Helper `creatorId()` definido en `app/Helpers/Helper.php:70-78`.\n\n## 2. Formulario React (`resources/js/pages/SalesProposals/Create.tsx`)\n- Estado del formulario con `useForm` de Inertia: `invoice_date`, `due_date`, `customer_id`, `warehouse_id`, `payment_terms`, `notes`, `items[]` con `product_id`, `quantity`, `unit_price`, `discount_percentage`, `tax_percentage`, etc. — líneas 31-48.\n- **Selección de almacén**: el `<Select>` de almacén dispara `handleWarehouseChange` (línea 157), que guarda `warehouse_id` (:51) y hace `fetch(route('sales-proposals.warehouse.products') + '?warehouse_id=...')` (:55), guardando los productos en `availableProducts` (:57); además resetea los items (:67-76).\n- **Productos por almacén (backend)**: `getWarehouseProducts()` exige `create-sales-proposals` o `edit-sales-proposals` (`SalesProposalController.php:363`), devuelve JSON vacío si no hay `warehouse_id` (:366-368), y filtra `ProductServiceItem` activos del creador con stock > 0 en ese almacén via `whereHas('warehouseStocks')` (:369-379); mapea id, nombre, sku, precio, unidad, stock e impuestos (:380-399).\n- **Selección de producto**: la tabla `InvoiceItemsTable` usa `ProductSelector` (`resources/js/pages/Sales/components/InvoiceItemsTable.tsx:140-144`); al elegir producto, `handleProductSelect` fija `unit_price = product.sale_price`, calcula `tax_percentage` sumando los rates y adjunta el array `taxes` ({tax_name, tax_rate}) (:71-103). El selector muestra productos con su precio (`ProductSelector.tsx:30-40`). La cantidad se limita al stock (`max={maxQty}`, `InvoiceItemsTable.tsx:150-163`).\n- **Payload**: `handleSubmit` hace `post(route('sales-proposals.store'))` con el objeto `data` completo (`Create.tsx:79-82`) — envío multipart estándar de Inertia sin campos extra.\n\n## 3. Rutas\n- Grupo con middleware `['auth', 'verified', 'PlanModuleCheck']` — `routes/web.php:38`.\n- `Route::resource('sales-proposals', ...)` genera POST `/sales-proposals` → `store()` — `routes/web.php:175`.\n- Ruta AJAX GET `sales-proposals/warehouse/products` → `getWarehouseProducts` — `routes/web.php:181`.\n\n## 4. Autorización y validación\n- `StoreSalesProposalRequest::authorize()` exige `create-sales-proposals` — `app/Http/Requests/StoreSalesProposalRequest.php:9-12`.\n- Reglas (:16-32): fechas requeridas con `after_or_equal`, `customer_id`/`warehouse_id` `exists`, `items` array min",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 3,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.6667,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.6667,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "react-form",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "warehouse-products",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "route-controller",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "request-auth",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "persistence",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "event-redirect",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "proposal-to-invoice",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 211.8975,
+    "usage": {
+      "input_tokens": 386,
+      "output_tokens": 1227,
+      "thinking_tokens": 29,
+      "total_tokens": 25642
+    },
+    "tool_calls": 26,
+    "answer": "# Auditoría: conversión Propuesta aceptada → Factura (`/tmp/aether-benchmark-zerp`)\n\n## 1. Ruta y permisos\n- **Ruta POST**: `sales-proposals/{salesProposal}/convert-to-invoice` → `SalesProposalController@convertToInvoice`, nombrada `sales-proposals.convert-to-invoice` — `routes/web.php:180`.\n- **Permiso backend**: `Auth::user()->can('convert-sales-proposals') && $salesProposal->created_by == creatorId()` — `app/Http/Controllers/SalesProposalController.php:246`. Si falla → `back()->with('error', 'Permission denied')` (:308).\n- **Permiso sembrado**: `'convert-sales-proposals'` definido en `database/seeders/PermissionRoleSeeder.php:270` y asignado al rol **company** en :317 (no al superadmin, que solo lista otros módulos en :278-291).\n\n## 2. Condiciones UI\n- **Vista detalle** (`resources/js/pages/SalesProposals/View.tsx:148`): botón visible solo si `auth.user?.permissions?.includes('convert-sales-proposals') && proposal.status === 'accepted' && !proposal.converted_to_invoice`; hace `router.post(route('sales-proposals.convert-to-invoice', proposal.id))` con `router.reload()` al éxito (:154-157).\n- **Listado** (`Index.tsx:286`): misma triple condición; abre diálogo de confirmación `openConvertDialog(item.id)` (:289) que confirma en `confirmConvert()` con `router.post(...)` (:141-146). Si ya está convertida, muestra icono \"View Invoice\" hacia `sales-invoices.show` usando `item.invoice_id` (:276-284).\n\n## 3. Precondiciones backend\nEn `SalesProposalController.php::convertToInvoice`:\n1. `status !== 'accepted'` → error \"Only accepted proposals can be converted to invoice.\" (:247-249).\n2. `converted_to_invoice === true` → error \"Proposal already converted to invoice.\" (:251-253).\n\n## 4. Copia de cabecera / items / impuestos\n- **Cabecera → nueva `SalesInvoice`** (:255-271): `customer_id`, `warehouse_id` (con fallback `?? 1` si es null, :257), `invoice_date = now()`, `due_date`, `subtotal`, `tax_amount`, `discount_amount`, `total_amount`, `balance_amount = total_amount`, `paid_amount = 0`, `payment_terms`, `notes`, `status = 'draft'`, `creator_id = Auth::id()`, `created_by = creatorId()`.\n- **Items** (:273-281): por cada item de propuesta crea `SalesInvoiceItem` copiando `product_id`, `quantity`, `unit_price`, `discount_percentage`, `tax_percentage`.\n- **Impuestos** (:283-289): por cada `$proposalItem->taxes` crea `SalesInvoiceItemTax` con `item_id` del nuevo item, `tax_name` y `tax_rate`.\n\n## 5. Estados y enlace entre entidades\n- La factura nace en estado `draft` (:268), válido según el enum de la tabla: `['draft','posted','partial','paid','overdue']` — `database/migrations/2025_09_26_102340_create_sales_invoices_table.php:29`.\n- El estado de la propuesta **no cambia** (queda `accepted`); se marca `$salesProposal->update(['converted_to_invoice' => true, 'invoice_id' => $invoice->id])` (:292-295). Columnas en migración: `converted_to_invoice` boolean default false y `invoice_id` nullable con FK a `sales_invoices` ON DELETE SET NULL — `create_sales_proposals_table.php:25-26,34`.\n- Relación inversa: `SalesProposal::invoice()` belongsTo `SalesInvoice` vía `invoice_id` — `app/Models/SalesProposal.php:62-65`; cast booleano en :37.\n- Efectos colaterales del flag: bloquea edición (`edit()` :177-179, `update()` :198-200) y borrado (`destroy()` :228-230) de la propuesta convertida.\n\n## 6. Evento final\n- Tras persistir todo se despacha `ConvertSalesProposal::dispatch($salesProposal, $invoice)` dentro de try/catch (:297-301) y devuelve \"Proposal converted to invoice successfully.\" (:303).\n- El evento recibe ambos modelos como propiedades públicas — `app/Events/ConvertSalesProposal.php:13-16`.\n- En este repositorio **no hay listener registrado** para `ConvertSalesProposal` (solo apariciones: import :6 y dispatch :298 del controlador, y la clase del evento); es un punto de extensión para packages.\n\n## Observaciones (hechas contra el código)\n- No hay transacción DB explícita ni verificación de stock; un fallo tras crear la factura dejaría datos parciales (todo el bloque está solo en try/catch genérico, :254-306).\n- Fallback silencioso `warehouse_id ?? 1` (:257) puede asociar el almacén equivocado.\n- No existen tests de feature para esta conversión (búsqueda en `tests/` sin resultados para convert/Convert).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 5,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.9167,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.9167,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "ui-conditions",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "route",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "guards",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "invoice-header",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "items-taxes",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "link-event",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "purchase-return-lifecycle",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 405.2048,
+    "usage": {
+      "input_tokens": 1910,
+      "output_tokens": 1843,
+      "thinking_tokens": 33,
+      "total_tokens": 55754
+    },
+    "tool_calls": 41,
+    "answer": "Ahora los eventos y sus oyentes en Laravel:\nConfirmado: los eventos no tienen listeners registrados. Verifico providers, permisos y modelo:\n# Ciclo de una devolución de compra (`purchase-returns`) en `/tmp/aether-benchmark-zerp`\n\n## 1. Visibilidad y permisos en la UI (React/Inertia)\n\n**Menú lateral**: la entrada \"Purchase Returns\" solo se muestra con el permiso `manage-purchase-return-invoices`, anidada bajo \"Purchase\" (`manage-purchase-invoices`): `resources/js/utils/menus/company-menu.ts:57-71`.\n\n**Permisos al frontend**: llegan vía props compartidas de Inertia como `auth.user.permissions` (array de nombres Spatie): `app/Http/Middleware/HandleInertiaRequests.php:63,106-112`.\n\n**Lista** (`resources/js/pages/PurchaseReturns/Index.tsx`):\n- Columna \"Actions\": visible si el usuario tiene alguno de `view-purchase-return-invoices`, `delete-purchase-return-invoices`, `approve-purchase-returns-invoices` (línea 183).\n- Botón **Aprobar** (icono CheckCircle): requiere `status === 'draft'` **y** `approve-purchase-returns-invoices`; hace `router.post(route('purchase-returns.approve', id))` (lista: 189-207; grid: 496-505).\n- Botón **Completar** (icono Check): requiere `status === 'approved'` **y** `complete-purchase-returns-invoices`; hace `router.post(route('purchase-returns.complete', id))` (lista: 210-226; grid: 506-515).\n- Filtro de estado ofrece solo draft/approved/completed (377-387); badges por estado en 87-95.\n\n**Vista detalle** (`resources/js/pages/PurchaseReturns/View.tsx`):\n- Botón \"Approve Return\" solo si `status === 'draft'` + permiso approve; usa `router.post(...)` con `onSuccess: () => router.reload()` (114-126). No existe botón de completar en esta página.\n\n## 2. Rutas (Laravel)\n\nTodas dentro del grupo `['auth', 'verified', 'PlanModuleCheck']`: `routes/web.php:38`.\n- `POST purchase-returns/{return}/approve` → `SalesReturnController` equivalente: `PurchaseReturnController::approve` (`routes/web.php:81`)\n- `POST purchase-returns/{return}/complete` → `PurchaseReturnController::complete` (`routes/web.php:82`)\n- Binding de modelo: `{return}` → `App\\Models\\PurchaseReturn`.\n- `PlanModuleCheck` se invoca sin parámetro de módulo para estas rutas; valida vigencia del plan del rol company o del creador de sub-usuarios (`app/Http/Middleware/PlanModuleCheck.php:30-47`). Plan vencido → redirect a `plans.index` con error (35-37).\n\n## 3. Estados válidos\n\nDefinidos como ENUM en BD: `['draft', 'approved', 'completed', 'cancelled']`, default `draft` (`database/migrations/2025_09_26_102329_create_purchase_returns_table.php:25`).\n\n| Transición | Guardia backend | Evidencia |\n|---|---|---|\n| creación → `draft` | siempre `draft` en store | `PurchaseReturnController.php:155` |\n| `draft` → `approved` | `$return->status !== 'draft'` rechaza | `:192-194` |\n| `approved` → `completed` | `$return->status !== 'approved'` rechaza | `:214-216` |\n| `draft` → borrado | único estado eliminable | `:232-234` |\n\n`cancelled` existe en el enum pero no hay ruta que lo produzca; solo se usa para excluir cantidades al calcular disponibilidad en `create()` (`:119-126`).\n\n## 4. Eventos\n\n- **Approve**: `ApprovePurchaseReturn::dispatch($return)`, dentro de try/catch (`PurchaseReturnController.php:197-200`).\n- **Complete**: `CompletePurchaseReturn::dispatch($return)`, sin try/catch (`:218`).\n- Ambas son clases-DTO planas con `Dispatchable` (`app/Events/ApprovePurchaseReturn.php:9-16`, `app/Events/CompletePurchaseReturn.php:8-15`).\n\n**Hallazgo clave**: en todo el repositorio no existe ningún listener registrado para estos eventos (búsqueda global: solo aparecen su definición, el import del controlador y el dispatch; no hay directorio `app/Listeners` ni registro en providers ni event discovery en `bootstrap/app.php`). Hoy los eventos no producen efecto alguno. Coherente con esto:\n- El flash de éxito dice *\"Debit note has been created automatically\"* (`:204`), pero no hay código que cree `DebitNote` (solo la relación vacía `PurchaseReturn::debitNote()`, `app/Models/PurchaseReturn.php:61-64`).\n- Tampoco se descuenta/aumenta stock ni se genera documento contable en complete.\n\n## 5. Actualizaciones\n\nÚnicamente el cambio de estado: `$return->update(['status' => 'approved'])` (`:202`) y `$return->update(['status' => 'completed'])` (`:220`). Sin transacción pese a importar el facade `DB` (`:19`, sin uso). Tras ambas operaciones se redirige a `purchase-returns.index` con flash `success` (`:204`, `:222`).\n\n## 6. Manejo de errores\n\n**Backend** (`PurchaseReturnController.php`):\n- Sin permiso `approve-purchase-returns-invoices` / `complete-purchase-returns-invoices`: redirect al index con error \"Permission denied\" (`:206-208`, `:224-226`).\n- Estado inválido: redirect back con mensajes específicos \"Only draft returns can be approved.\" (`:193-194`) / \"Only approved returns can be completed.\" (`:215-216`).\n- Excepción al despachar en approve: back con `$th->getMessage()` (`:198-200`). En **complete no hay try/catch** (`:218`): una excepción en dispatch propagaría un error 500.\n- Acceso por propietario: `checkReturnAccess` bloquea a no-propietarios y a vendors sobre drafts ajenos (`:23-37`); `index()` oculta drafts a usuarios tipo vendor (`:45-49`) y lanza `denyAccess()` (AuthorizationException) si no tiene permisos manage (`:50-52`, helper en `app/Helpers/Helper.php:57-66`), que `HandleInertiaRequests::onException` convierte en redirect con flash para web (`HandleInertiaRequests.php:94-101`).\n\n**Frontend**:\n- Los flashes `success/error/warning` se comparten (`HandleInertiaRequests.php:78-82`) y se muestran como toasts Sonner mediante `useFlashMessages` (`resources/js/hooks/useFlashMessages.ts:14-24`), invocado en `resources/js/layouts/authenticated-layout.tsx:46`.\n- Eliminación usa `ConfirmationDialog` + `useDeleteHandler` con callback `onError` (`resources/js/hooks/useDeleteHandler.ts:43-52`; diálogo en `Index.tsx:573-581`).\n\n**Hallazgos adicionales (código roto/muerto)**:\n1. `View.tsx:25` referencia la ruta `purchase-returns.print`, que **no existe** en `routes/web.php` (76-82), y el permiso `print-purchase-returns` (`View.tsx:104`) tampoco está definido en `PermissionRoleSeeder.php:228-236` → botón PDF inalcanzable.\n2. El rol `company` recibe `edit-purchase-return-invoices` (`PermissionRoleSeeder.php:314`), pero ese permiso nunca se crea (no está en el array de permisos, líneas 229-236) y como el seeder lo resuelve con `Permission::whereIn('name', ...)` (`:348`), se ignora silenciosamente.\n3. Los eventos de ciclo de vida carecen de listeners: aprobar/completar solo mutan la columna `status`.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "approve-ui",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "complete-ui",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "routes",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "approve-backend",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "complete-backend",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "guards-errors",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]

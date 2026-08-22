@@ -1,0 +1,23 @@
+{
+  "repository": "https://github.com/zerp-pk/zerp",
+  "revision": "7e12392a3882682018cd86071d4d51ac7f142076",
+  "feature": "treesitter-v9-laravel",
+  "structural_validation": {
+    "tree_sitter_files": 572,
+    "laravel_routes": 249,
+    "route_dispatch_edges": 233,
+    "inertia_route_edges": 369,
+    "form_request_edges": 31,
+    "model_creation_edges": 98,
+    "event_dispatch_edges": 41,
+    "focused_tests": "35 passed"
+  },
+  "agent_validation": {
+    "model": "opencode/x-preview-f-free",
+    "purchase_return_lifecycle": {"quality_before": 0.0833, "quality_after": 0.8333, "tokens": 7968, "calls": 1, "seconds": 119.9463},
+    "create_sales_proposal": {"status": "provider/model emitted no final answer after a valid MCP call"},
+    "proposal_to_invoice": {"status": "provider/model emitted only a heading after nine calls"},
+    "aggregate_quality": null,
+    "aggregate_note": "No aggregate is reported because two of three post-fix model answers were not evaluable. Structural evidence and the one valid paired task are retained."
+  }
+}

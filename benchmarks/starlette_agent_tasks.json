@@ -1,0 +1,66 @@
+{
+  "repository": "https://github.com/encode/starlette",
+  "revision": "398e5a3430eb1ddd33e1d48d766efe41426e231f",
+  "tasks": [
+    {
+      "id": "asgi-middleware-flow",
+      "prompt": "Explica cómo una llamada ASGI entra en Starlette, cuándo se construye la pila de middleware y cuál es el orden exacto entre manejo de errores, límite del cuerpo, middleware del usuario, excepciones y router. Indica archivos y símbolos.",
+      "key_facts": [
+        {"id": "entrypoint", "patterns": ["applications\\.py", "Starlette", "__call__"]},
+        {"id": "lazy-stack", "patterns": ["middleware_stack is None", "build_middleware_stack"]},
+        {"id": "outer-error", "patterns": ["ServerErrorMiddleware", "outer|extern|primero"]},
+        {"id": "body-limit", "patterns": ["RequestBodyLimitMiddleware", "max_body_size"]},
+        {"id": "user-middleware", "patterns": ["user_middleware", "middleware"]},
+        {"id": "inner-exception-router", "patterns": ["ExceptionMiddleware", "router"]}
+      ],
+      "forbidden_facts": [
+        {"id": "router-outermost", "patterns": ["router.{0,80}(más externo|outermost)"]}
+      ]
+    },
+    {
+      "id": "router-dispatch-flow",
+      "prompt": "Traza el algoritmo de Router.app para una petición HTTP: coincidencia completa y parcial, redirección de slash y fallback final. Explica además cómo se trata lifespan.",
+      "key_facts": [
+        {"id": "router-app", "patterns": ["routing\\.py", "Router\\.app|Router.*app"]},
+        {"id": "full-match", "patterns": ["Match\\.FULL", "route\\.handle|handle"]},
+        {"id": "partial-match", "patterns": ["Match\\.PARTIAL", "405|partial"]},
+        {"id": "slash-redirect", "patterns": ["redirect_slashes", "RedirectResponse"]},
+        {"id": "fallback", "patterns": ["self\\.default|default", "not_found|404"]},
+        {"id": "lifespan", "patterns": ["lifespan", "startup\\.complete|shutdown\\.complete"]}
+      ],
+      "forbidden_facts": [
+        {"id": "partial-before-full", "patterns": ["PARTIAL.{0,100}(antes|before).{0,100}FULL"]}
+      ]
+    },
+    {
+      "id": "signed-session-flow",
+      "prompt": "Audita el ciclo completo de SessionMiddleware: lectura, verificación, estado ante firma inválida, seguimiento de acceso/modificación, escritura y borrado de cookie. Incluye las primitivas concretas y atributos de seguridad.",
+      "key_facts": [
+        {"id": "signer", "patterns": ["TimestampSigner", "secret_key"]},
+        {"id": "decode", "patterns": ["unsign", "b64decode", "json\\.loads"]},
+        {"id": "invalid", "patterns": ["BadSignature", "Session\\(\\)"]},
+        {"id": "tracking", "patterns": ["accessed", "modified", "mark_modified"]},
+        {"id": "persist", "patterns": ["b64encode", "sign", "Set-Cookie"]},
+        {"id": "delete-security", "patterns": ["1970|expires", "httponly", "samesite"]}
+      ],
+      "forbidden_facts": [
+        {"id": "encrypted-session", "patterns": ["(cifra|encrypt).{0,40}(contenido|session|cookie)"]}
+      ]
+    },
+    {
+      "id": "cors-decision-flow",
+      "prompt": "Explica las decisiones de CORSMiddleware para peticiones sin Origin, preflight OPTIONS y respuestas simples; detalla validación de origen, método, headers y red privada, así como el resultado de un preflight rechazado.",
+      "key_facts": [
+        {"id": "no-origin", "patterns": ["origin is None", "self\\.app|app"]},
+        {"id": "preflight", "patterns": ["OPTIONS", "access-control-request-method", "preflight_response"]},
+        {"id": "simple", "patterns": ["simple_response", "request_headers"]},
+        {"id": "origin-validation", "patterns": ["is_allowed_origin", "allow_origin_regex|fullmatch"]},
+        {"id": "method-headers", "patterns": ["requested_method", "allow_methods", "requested_headers", "allow_headers"]},
+        {"id": "private-failure", "patterns": ["allow_private_network", "private-network", "status_code=400|400"]}
+      ],
+      "forbidden_facts": [
+        {"id": "always-block-no-origin", "patterns": ["sin Origin.{0,80}(rechaza|bloquea|400)"]}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "task_id": "delete-event-flow",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 51.7251,
+    "usage": {
+      "input_tokens": 2332,
+      "output_tokens": 1343,
+      "thinking_tokens": 223,
+      "total_tokens": 7290
+    },
+    "tool_calls": 1,
+    "answer": "Traza completa según el grafo (`do_not_expand=true`, cobertura `complete=true`):\n\n## Flujo de eliminación de un Contributor\n\n**1. Endpoint** — `Delete` en `src/Clean.Architecture.Web/Contributors/Delete.cs`\n- Clase `N6`: `public class Delete : Endpoint<DeleteContributorRequest, Results<NoContent, NotFound, ProblemHttpResult>>` (Delete.cs:8)\n- `Configure` (N1, :17): registra la ruta con `Delete(DeleteContributorRequest.Route)` (:19) y documenta respuestas 204/404/400.\n- `ExecuteAsync` (N4, :44): crea el comando `new DeleteContributorCommand(ContributorId.From(req.ContributorId))` (:47) y llama a `_mediator.Send(cmd, ct)` (:48); mapea con `result.ToDeleteResult()` (:50).\n- Constructor N7: `Delete(IMediator mediator)` (:15).\n\n**2. Caso de uso (CQRS handler)** — `src/Clean.Architecture.UseCases/Contributors/Delete/DeleteContributorHandler.cs`\n- `DeleteContributorHandler` (N10): `ICommandHandler<DeleteContributorCommand, Result>`; su `Handle` delega en `_deleteContributorService.DeleteContributor(request.ContributorId)` (:11).\n\n**3. Servicio de dominio** — `src/Clean.Architecture.Core/Services/DeleteContributorService.cs`\n- `DeleteContributorService` (N5): implementa `IDeleteContributorService`.\n- `DeleteContributor(ContributorId)` (:18):\n  - `GetByIdAsync(contributorId)` (:21); si es null → `Result.NotFound()` (:22)\n  - `_repository.DeleteAsync(aggregateToDelete)` (:24)\n  - `new ContributorDeletedEvent(contributorId)` (:25)\n  - `_mediator.Publish(domainEvent)` (:26)\n\n**4. Evento de dominio** — `src/Clean.Architecture.Core/ContributorAggregate/Events/ContributorDeletedEvent.cs`\n- `ContributorDeletedEvent` (N8): `sealed class ... : DomainEventBase` (:8), propiedad `ContributorId` (:10).\n\n**5. Efecto secundario** — `src/Clean.Architecture.Core/ContributorAggregate/Handlers/ContributorDeletedHandler.cs`\n- `ContributorDeletedHandler` (N3): `INotificationHandler<ContributorDeletedEvent>` (:6); recibe `ILogger<>` e `IEmailSender`.\n- `Handle` (N2, :9): log del evento y llamada a `emailSender.SendEmailAsync(\"to@test.com\", \"from@test.com\", \"Contributor Deleted\", ...)` (:13) — **el borrado dispara un envío de correo**.\n\n## Interfaces vs implementaciones (según firmas extraídas)\n| Interfaz | Implementación |\n|---|---|\n| `Endpoint<DeleteContributorRequest, Results<NoContent, NotFound, ProblemHttpResult>>` | `Delete` (Web) |\n| `ICommandHandler<DeleteContributorCommand, Result>` | `DeleteContributorHandler` (UseCases) |\n| `IDeleteContributorService` | `DeleteContributorService` (Core) |\n| `DomainEventBase` | `ContributorDeletedEvent` |\n| `INotificationHandler<ContributorDeletedEvent>` | `ContributorDeletedHandler` |\n\nNota de evidencia: el grafo solo extrajo explícitamente 1 relación de herencia (`hereda` N3→N8) y 0 aristas de implementación (`coverage.implementations=0`); las relaciones interfaz↔implementación anteriores provienen de las firmas de clase citadas, no de aristas dedicadas. No se registraron llamantes entrantes al endpoint (`incoming_calls_or_uses=0`).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  },
+  {
+    "task_id": "infrastructure-bindings",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 49.3445,
+    "usage": {
+      "input_tokens": 5214,
+      "output_tokens": 1073,
+      "thinking_tokens": 179,
+      "total_tokens": 9858
+    },
+    "tool_calls": 2,
+    "answer": "## Auditoría de `AddInfrastructureServices` (evidencia del grafo)\n\n**Método auditado:** `AddInfrastructureServices(IServiceCollection, ConfigurationManager, ILogger)` en `src/Clean.Architecture.Infrastructure/InfrastructureServiceExtensions.cs:10` (namespace `Clean.Architecture.Infrastructure`). Llamado desde `AddServiceConfigs` (`src/Clean.Architecture.Web/Configurations/ServiceConfigs.cs:11`).\n\n### Bindings exactos (todos Scoped)\n\n| Servicio registrado | Implementación | Evidencia |\n|---|---|---|\n| `EventDispatchInterceptor` (concreto) | — | op `call` línea 27 |\n| `IDomainEventDispatcher` | `MediatorDomainEventDispatcher` | op `call` línea 28 |\n| `AppDbContext` | `AddDbContext<AppDbContext>` | op `call` línea 30 |\n| `IRepository<>` (abierto) | `EfRepository<>` | op `call` línea 48 |\n| `IReadRepository<>` (abierto) | `EfRepository<>` | op `call` línea 48 |\n| `IListContributorsQueryService` | `ListContributorsQueryService` | op `call` línea 48 |\n| `IDeleteContributorService` | `DeleteContributorService` | op `call` línea 48 |\n\nLas líneas 27–30 y 45 completan la cadena de eventos: el interceptor se registra (L27), se resuelve dentro del lambda de `AddDbContext` y se adjunta vía `options.AddInterceptors(eventDispatchInterceptor)` (L45).\n\n### Selección de base de datos (evidencia L22, L35–42)\n- Cadena de resolución: `config.GetConnectionString(\"cleanarchitecture\") ?? ((isWindows || forceSqlServer) ? config.GetConnectionString(\"DefaultConnection\") : null) ?? config.GetConnectionString(\"SqliteConnection\")` (L22).\n- Condición `if` (L35): si `\"cleanarchitecture\"` existe, o `(isWindows || forceSqlServer)` y existe `\"DefaultConnection\"` → `options.UseSqlServer(connectionString)` (L38).\n- En caso contrario → `options.UseSqlite(connectionString)` (L42).\n\nNo aparece PostgreSQL ni otro proveedor en este método según el grafo.\n\n### Notas del grafo (sin suposición)\n- El proyecto `sample/` tiene su propio `InfrastructureServiceExtensions` con estructura distinta (`AddDbContextWithSqlite`, `RegisterDevelopmentOnlyDependencies`, `RegisterTestingOnlyDependencies`, `RegisterProductionOnlyDependencies` en `sample/src/NimblePros.SampleToDo.Infrastructure/InfrastructureServiceExtensions.cs:41–83`) — no confundir con el principal.\n- En pruebas, `CustomWebApplicationFactory.ConfigureWebHost` (`tests/Clean.Architecture.FunctionalTests/CustomWebApplicationFactory.cs:127`) **reemplaza** el registro de `AppDbContext` usando `UseSqlServer(_dbContainer.GetConnectionString())`.\n- La implementación registrada de consultas usa SQL crudo paginado: `FromSqlRaw(...).OrderBy/Skip/Take` + `CountAsync` en `ListContributorsQueryService.ListAsync` (`src/Clean.Architecture.Infrastructure/Data/Queries/ListContributorsQueryService.cs:17–27`).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  }
+]

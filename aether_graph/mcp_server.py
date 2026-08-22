@@ -1,10 +1,12 @@
 import json
+import hashlib
 import re
 import sys
 from pathlib import Path
 from typing import Dict, Any
 
 from .core.ast_parser import ASTParser
+from .core.change_analyst import analyze_change, query_intent
 from .core.history import HistoryTracker
 from .core.storage import project_store_dir
 
@@ -24,15 +26,48 @@ def _prune_node(n: dict) -> dict:
     return {k: v for k, v in n.items() if k not in ("color", "val")}
 
 
-def _compact_node(node: dict) -> dict:
+_HIGH_VALUE_OPERATIONS = {
+    "addscoped", "addsingleton", "addtransient", "publish", "send", "addasync",
+    "deleteasync", "updateasync", "savechanges", "savechangesasync", "usesqlserver",
+    "usesqlite", "addinterceptors", "skip", "take", "countasync", "asnotracking",
+    "registerdomainevent", "return",
+}
+
+
+def _select_operations(node: dict, terms: list[str] | None = None, limit: int = 12) -> list[dict]:
+    terms = [str(term).lower() for term in (terms or []) if term]
+    ranked = []
+    seen = set()
+    for index, op in enumerate(node.get("operations") or []):
+        name = str(op.get("name") or "")
+        text = str(op.get("text") or "")
+        key = (op.get("kind"), name.lower(), int(op.get("line") or 0), text)
+        if key in seen:
+            continue
+        seen.add(key)
+        searchable = f"{name} {text}".lower()
+        term_hits = sum(term in searchable for term in terms)
+        high_value = name.lower() in _HIGH_VALUE_OPERATIONS or op.get("kind") in ("assign", "return", "control")
+        score = term_hits * 100 + int(high_value) * 30 - index * 0.01
+        ranked.append((score, index, op))
+    ranked.sort(key=lambda item: (-item[0], item[1]))
+    selected = [item[2] for item in ranked[:limit]]
+    selected.sort(key=lambda op: (int(op.get("line") or 0), str(op.get("kind") or ""), str(op.get("name") or "")))
+    return selected
+
+
+def _compact_node(node: dict, terms: list[str] | None = None) -> dict:
     """Keep the evidence an agent needs without shipping dashboard/index internals."""
     keep = ("id", "name", "kind", "file", "line", "end_line", "signature",
-            "container", "namespace", "parser", "degree")
+            "container", "namespace", "parser", "degree", "member_type", "owner_signature")
     compact = {key: node[key] for key in keep if node.get(key) not in (None, "", [])}
     details = str(node.get("details") or "").strip()
     redundant = details == str(node.get("file") or "") or details.startswith(("Class en ", "Method en ", "Function en ", "Carpeta: "))
     if details and not redundant:
         compact["details"] = details[:240]
+    operations = _select_operations(node, terms)
+    if operations:
+        compact["operations"] = operations
     return compact
 
 
@@ -61,6 +96,7 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
             files[path] = f"F{len(files) + 1}"
         return files[path]
 
+    evidence_terms = result.get("intent_terms") or re.findall(r"[\w.]+", str(result.get("query") or result.get("symbol") or "").lower())
     entities: dict[str, dict] = {}
     for node in selected:
         item = {"name": node.get("name"), "kind": node.get("kind")}
@@ -69,12 +105,18 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
             path = str(node["id"])[5:]
         if path:
             item["at"] = file_alias(path) + (f":{node['line']}" if node.get("line") else "")
-        for key in ("signature", "container", "namespace"):
+        for key in ("signature", "container", "namespace", "member_type", "owner_signature"):
             if node.get(key):
                 item[key] = node[key]
         details = str(node.get("details") or "").strip()
         if details and details != path:
             item["detail"] = details[:160]
+        operations = _select_operations(node, evidence_terms, int(result.get("operation_limit") or 10))
+        if operations:
+            item["ops"] = [
+                [op.get("kind"), op.get("name"), op.get("line"), str(op.get("text") or "")[:300]]
+                for op in operations
+            ]
         entities[aliases[node["id"]]] = item
 
     link_limit = max_links if max_links is not None else max_nodes * 2
@@ -122,6 +164,11 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
              "matches": [aliases[node_id] for node_id in context.get("matched_ids", []) if node_id in aliases]}
             for context in output["contexts"]
         ]
+    if "plan" in output:
+        plan = dict(output["plan"])
+        for key in ("target_ids", "contracts", "state"):
+            plan[key] = [aliases.get(node_id, node_id) for node_id in plan.get(key, [])]
+        output["plan"] = plan
     output.update({
         "format": "evidence-v1",
         "files": {alias: path for path, alias in files.items()},
@@ -189,7 +236,7 @@ def context_bundle(graph: dict, symbols: list[str], depth: int = 1, max_nodes: i
     scores: dict[str, float] = {}
     all_links: dict[tuple, dict] = {}
     matched_ids: set[str] = set()
-    label_score = {"implementa": 900, "hereda": 850, "llama": 750, "usa": 650, "importa": 600, "contiene": 120}
+    label_score = {"implementa": 900, "hereda": 850, "llama": 750, "usa": 650, "importa": 600, "declara": 500, "contiene": 120}
     for symbol in unique:
         neighborhood = neighborhood_subgraph(graph, symbol, depth)
         local_matches = {node.get("id") for node in neighborhood.get("matched", []) if node.get("id")}
@@ -360,13 +407,14 @@ def blast_radius(graph: dict, symbol: str, depth: int = 2) -> dict:
         "impacted": impacted,
     }
 
-def run_mcp_server(workspace: Path):
+def run_mcp_server(workspace: Path, tool_profile: str = "full"):
     """
     Stdio Model Context Protocol (MCP) Server for AetherGraph.
     Provides tools for AI agents: graph_neighborhood, graph_blast_radius, graph_search_concepts, graph_register_project.
     """
     parser = ASTParser()
     history = HistoryTracker(workspace)
+    intent_contexts: dict[str, dict] = {}
 
     def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
         method = req.get("method")
@@ -383,11 +431,38 @@ def run_mcp_server(workspace: Path):
                 }
             }
         elif method == "tools/list":
-            return {
+            response = {
                 "jsonrpc": "2.0",
                 "id": req_id,
                 "result": {
                     "tools": [
+                        {
+                            "name": "graph_query_intent",
+                            "description": "Ruta principal de una sola llamada para flow/bindings/persistence/tests/impact. Devuelve ops filtradas, complete_for y do_not_expand; responde inmediatamente cuando do_not_expand=true.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "request": {"type": "string", "description": "Pregunta o tarea completa"},
+                                    "intent": {"type": "string", "enum": ["auto", "flow", "bindings", "persistence", "tests", "impact"]},
+                                    "limit": {"type": "integer", "description": "Máximo de entidades; default 10"},
+                                    "extends_context_id": {"type": "string", "description": "Contexto previo para devolver sólo evidencia nueva"}
+                                },
+                                "required": ["request"]
+                            }
+                        },
+                        {
+                            "name": "graph_analyze_change",
+                            "description": "Primera opción para flujos, bindings, persistencia e impacto. Devuelve targets, contratos, estado y operaciones internas compactas (ops). Responde con esa evidencia; expande sólo si falta un hecho y cita aliases.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "request": {"type": "string", "description": "Issue, requisito o cambio solicitado"},
+                                    "limit": {"type": "integer", "description": "Máximo de entidades; default 18"},
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"]}
+                                },
+                                "required": ["request"]
+                            }
+                        },
                         {
                             "name": "graph_context_bundle",
                             "description": "Obtén evidencia compacta para hasta 10 símbolos en una llamada. Responde directamente si complete=true; expande sólo si falta un hecho.",
@@ -433,7 +508,7 @@ def run_mcp_server(workspace: Path):
                         },
                         {
                             "name": "graph_search_concepts",
-                            "description": "Busca conceptos y devuelve coincidencias compactas limitadas. Usa graph_neighborhood para ampliar una coincidencia.",
+                            "description": "Busca nombres, descripciones y operaciones internas (AddScoped, Publish, Skip/Take, etc.). Devuelve coincidencias compactas; usa graph_analyze_change para agrupar un flujo.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
@@ -486,12 +561,55 @@ def run_mcp_server(workspace: Path):
                     ]
                 }
             }
+            if tool_profile == "intent":
+                response["result"]["tools"] = [
+                    tool for tool in response["result"]["tools"]
+                    if tool["name"] == "graph_query_intent"
+                ]
+            return response
         elif method == "tools/call":
             params = req.get("params", {})
             name = params.get("name")
             args = params.get("arguments", {})
 
-            if name == "graph_context_bundle":
+            if name == "graph_query_intent":
+                graph = get_workspace_graph(workspace, parser)
+                request = str(args.get("request") or "").strip()
+                limit = max(4, min(24, int(args.get("limit") or 10)))
+                raw = query_intent(graph, request, str(args.get("intent") or "auto"), limit)
+                result = evidence_result(raw, max_nodes=limit)
+                context_id = hashlib.sha256(json.dumps(result, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:12]
+                previous_id = str(args.get("extends_context_id") or "")
+                previous = intent_contexts.get(previous_id)
+                if previous:
+                    old_entities = previous.get("entities", {})
+                    old_relations = {json.dumps(item, ensure_ascii=False) for item in previous.get("relations", [])}
+                    result = {
+                        "format": "evidence-delta-v1", "extends": previous_id, "context_id": context_id,
+                        "files": result.get("files", {}),
+                        "entities": {key: value for key, value in result.get("entities", {}).items() if old_entities.get(key) != value},
+                        "relations": [item for item in result.get("relations", []) if json.dumps(item, ensure_ascii=False) not in old_relations],
+                        "complete_for": result.get("complete_for", []), "missing": result.get("missing", []),
+                        "do_not_expand": result.get("do_not_expand", False), "guidance": result.get("guidance"),
+                    }
+                    result["estimated_tokens"] = len(json.dumps(result, ensure_ascii=False, separators=(",", ":"))) // 4
+                else:
+                    result["context_id"] = context_id
+                intent_contexts[context_id] = evidence_result(raw, max_nodes=limit)
+                history.log_event("mcp", "query_intent", f"Consulta {raw['intent']} de una ronda", {"request": request[:240], "context_id": context_id, "estimated_tokens": result["estimated_tokens"]})
+                return {"jsonrpc": "2.0", "id": req_id,
+                        "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
+            elif name == "graph_analyze_change":
+                graph = get_workspace_graph(workspace, parser)
+                request = str(args.get("request") or "").strip()
+                limit = max(6, min(40, int(args.get("limit") or 18)))
+                result = analyze_change(graph, request, limit)
+                if args.get("response_mode", "compact") != "full":
+                    result = evidence_result(result, max_nodes=limit)
+                history.log_event("mcp", "analyze_change", "Análisis de cambio con evidencia", {"request": request[:240], "confidence": result.get("plan", {}).get("confidence")})
+                return {"jsonrpc": "2.0", "id": req_id,
+                        "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
+            elif name == "graph_context_bundle":
                 graph = get_workspace_graph(workspace, parser)
                 symbols = args.get("symbols") or []
                 requested_limit = args.get("limit")
@@ -557,7 +675,10 @@ def run_mcp_server(workspace: Path):
                 for node in graph.get("nodes", []):
                     name_text = str(node.get("name") or "").lower()
                     details_text = str(node.get("details") or "").lower()
-                    searchable = f"{name_text} {details_text}"
+                    operations_text = " ".join(
+                        f"{op.get('name', '')} {op.get('text', '')}" for op in node.get("operations", [])
+                    ).lower()
+                    searchable = f"{name_text} {details_text} {operations_text}"
                     matched_terms = sum(term in searchable for term in terms)
                     if query in searchable or matched_terms:
                         exact_name = any(term == name_text for term in terms)

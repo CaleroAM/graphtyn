@@ -1,0 +1,222 @@
+[
+  {
+    "task_id": "web-bootstrap-stack",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 186.8844,
+    "usage": {
+      "input_tokens": 1441,
+      "output_tokens": 176,
+      "thinking_tokens": 93,
+      "total_tokens": 15982
+    },
+    "tool_calls": 30,
+    "answer": "# Arranque web según el grafo (3184 nodos / 8412 aristas)\n\n## 1. Bootstrap backend\n- `bootstrap/app.php` existe como nodo (comunidad `Illuminate\\Support\\Facades\\Auth`), igual que `bootstrap/providers.php` — este último **sin aristas extraídas**, así que el grafo no prueba qué providers registra.\n- `routes/web.php` es un hub (grado 30): importa `Inertia\\Inertia` en `routes/web.php",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 0,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 0.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "blade-assets",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "inertia-root",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "page-resolution",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "react-mount",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "loader",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "csrf",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "create-sales-proposal",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 230.1292,
+    "usage": {
+      "input_tokens": 3808,
+      "output_tokens": 1527,
+      "thinking_tokens": 176,
+      "total_tokens": 40199
+    },
+    "tool_calls": 38,
+    "answer": "# Trazado: creación de propuesta comercial (React → Laravel → persistencia)\n\nTodo lo siguiente proviene del grafo (`graphify-out/graph.json`, 3184 nodos / 8412 aristas). Marco explícitamente lo que el grafo **no** registra para no suponer.\n\n## 1. Formulario React\n- Página: nodo `SalesPropsals/Create.tsx` (`resources/js/pages/SalesPropsals/Create.tsx:L1`), que contiene `Create()` en **L26** y `CreateProps` en **L20**.\n- Composición (aristas `imports`, todas EXTRACTED con línea):\n  - `AuthenticatedLayout()` (L5), `InvoiceItemsTable()` de `Sales/components/InvoiceItemsTable.tsx` (L6), `useTaxCalculator()` de `Sales/components/TaxCalculator.tsx` (L7) — tabla de ítems y cálculo de impuestos reutilizados del módulo de ventas.\n  - Selección: `SelectTrigger/SelectContent/SelectItem` (L15) y `DatePicker()` (L16); tipos `SalesInvoiceItem` desde `Sales/types.ts` (L4); formato `formatCurrency()` (L8).\n- ⚠️ El grafo **no contiene** aristas `call` salientes de este `Create()` (p. ej., `router.post` o nombre de ruta). Solo hay llamadas extraídas para el `Create()` de `Purchase/Create.tsx`. Por tanto, el payload exacto no es verificable en el grafo.\n\n## 2. Ruta y autorización\n- Registro: arista `web.php --imports--> SalesProposalController` en `routes/web.php:L33`. El grafo no guarda el literal de la URL/nombre de ruta.\n- Controlador: `SalesProposalController` (`app/Http/Controllers/SalesProposalController.php:L28`, comunidad `SalesProposal`, degree 19), hereda de `Controller`.\n- FormRequest: `StoreSalesProposalRequest` (`app/Http/Requests/StoreSalesProposalRequest.php:L7`) hereda de `Illuminate\\Foundation\\Http\\FormRequest`; métodos `.authorize()` (**L9**), `.rules()` (**L14**), `.messages()` (**L35**). Aristas: `SalesProposalController.php --imports--> StoreSalesProposalRequest` (L20) y `.store() --references--> StoreSalesProposalRequest` (**L122**) — es la type-hint de la acción store.\n- Control de acceso adicional: `.checkProposalAccess()` (L30) referencia al modelo `SalesProposal`.\n\n## 3. Acción `store()` y totales\nAristas `calls` desde `.store()` (método en **L122**, todas EXTRACTED):\n- `--> .calculateTotals()` en **L124** (método definido en **L312**; también usado por `.update()` en L202). Sin llamadas salientes extraídas.\n- `--> .createProposalItems()` en **L141** (definido en **L337**; también llamado por `.update()` en L217).\n- `--> CreateSalesProposal` en **L144** (evento).\n- `--> creatorId()` en **L138** (INFERRED), helper en `app/Helpers/Helper.php:L71`.\n\n## 4. Evento\n- `CreateSalesProposal` (`app/Events/CreateSalesProposal.php:L9`): su `.__construct()` en **L13** recibe `SalesProposal` e `Illuminate\\Http\\Request` (aristas `references`); mezcla `Illuminate\\Foundation\\Events\\Dispatchable` (**L11**). Es invocado solo desde `.store()`.\n- Familia de eventos del dominio referenciando al modelo: `AcceptSalesProposal`, `ConvertSalesProposal`, `DestroySalesProposal`, `RejectSalesProposal`, `SentSalesProposal`, `UpdateSalesProposal`.\n\n## 5. Persistencia: cabecera e ítems\n- Modelo `SalesProposal` (`app/Models/SalesProposal.php:L9`, degree 44): relaciones extraídas — `.items()` (**L42**, hacia `HasMany`), `.customer()` (**L47**), `.warehouse()` (**L52**, `BelongsTo` a Warehouse), `.customerDetails()` (L57), `.invoice()` (L62); utilidades `.generateProposalNumber()` (**L91**), `.getDisplayStatusAttribute()` (L72), `.isOverdue()` (L67).\n- Ítems: `SalesProposalItem` (`app/Models/SalesProposalItem.php:L9`): `.proposal()` (**L33**, BelongsTo), `.product()` (**L38**), `.taxes()` (**L43**), `.calculateAmounts()` (**L48**), `.boot()` (**L57**).\n\n## 6. Selección almacén/productos\n- `.create()` (**L106**) llama a `User` (L109, vía `creatorId()`) y `Warehouse` (L110) — datos para renderizar el formulario.\n- `.getWarehouseProducts()` (**L361**): recibe `Illuminate\\Http\\Request` y llama a `creatorId()` (L371, INFERRED) — endpoint de productos por almacén.\n- `Warehouse` (`app/Models/Warehouse.php:L8`): importado por `SalesProposalController.php:L19`; llamado también por `.edit()` (L183).\n\n## 7. Redirección\n⚠️ Evidencia negativa honesta: las aristas de `.store()` terminan en el evento (L144); el grafo **no registra ninguna arista de redirección** ni destino (`sales-proposals.index` u otro) para esta acción. Cualquier afirmación sobre el redirect sería una suposición.\n\n**Cadena verificada:** `Create.tsx` (form) → `web.php:L33` → `StoreSalesProposalRequest` (authorize/rules) → `.store():122` → `.calculateTotals():124` → `creatorId():138` → `.createProposalItems():141` → evento `CreateSalesProposal:144` → modelos `SalesProposal`/`SalesProposalItem`.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 0,
+    "partial": 4,
+    "total": 6,
+    "quality_score": 0.3333,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.3333,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "react-form",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "warehouse-products",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "route-controller",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "request-auth",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "persistence",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "event-redirect",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  },
+  {
+    "task_id": "proposal-to-invoice",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 207.2457,
+    "usage": {
+      "input_tokens": 2071,
+      "output_tokens": 1457,
+      "thinking_tokens": 256,
+      "total_tokens": 33800
+    },
+    "tool_calls": 22,
+    "answer": "# Auditoría: Propuesta aceptada → Factura (solo evidencia del grafo)\n\n## 1. Punto de entrada backend\nNodo `.convertToInvoice()` — `app/Http/Controllers/SalesProposalController.php:244` (comunidad *SalesProposal*). Aristas salientes registradas:\n- `calls → creatorId()` (INFERRED, `:246`)\n- `calls → .update()` (`:292`) — resolución ambigua en el grafo (apunta al nodo del propio controller `update():196`; probable `$proposal->update(...)`, **no verificable solo con el grafo**)\n- `calls → ConvertSalesProposal` (`:298`) — el evento final\n- `references → SalesProposal` (`:244`)\n\n## 2. Evento final\n`ConvertSalesProposal` — `app/Events/ConvertSalesProposal.php:9`: mezcla `Dispatchable` (`:11`) y su `__construct()` (`:13`) recibe **ambas entidades tipadas**: aristas `references → SalesProposal` y `references → SalesInvoice`. Despachado desde `convertToInvoice()` en `:298`.\n\n## 3. Enlace entre entidades\n- `SalesProposal::invoice()` → **BelongsTo** (`app/Models/SalesProposal.php:62`): la propuesta queda ligada a la factura.\n- Ítems: `SalesProposal::items()` HasMany (`:42`), `SalesInvoice::items()` HasMany (`app/Models/SalesInvoice.php:44`), `SalesProposalItem::proposal()` BelongsTo (`:33`).\n\n## 4. Estados\nAmbos modelos comparten `getDisplayStatusAttribute()` (`SalesProposal:72`, `SalesInvoice:79`, que llama a `isOverdue()`), `isOverdue()` (`:67`/`:74`) y numeración automática (`generateProposalNumber():91` / `generateInvoiceNumber():98`, ambas llaman `creatorId()`). El flujo previo está modelado con acciones+eventos: `.sent():420`, `.accept():438` (despacha `AcceptSalesProposal` en `:444` y llama `.update():446`), `.reject():455`.\n\n## 5. UI\nPágina de detalle: `resources/js/pages/SalesProposals/View.tsx` — componentes `View()` (`:57`), `ViewProps` (`:51`); importa `Button`, `formatCurrency`, `formatDate`, `TooltipContent`, `AuthenticatedLayout`. El listado (`Index.tsx:81`) usa `usePageButtons()` (que consulta `adminPackages()`/`findPackageModule()`).\n\n## 6. Hallazgos / huecos del grafo (sin suponer)\n- **Condición UI exacta** (p. ej. \"botón visible solo si status=accepted\"): **no está capturada** en ningún nodo/arista de `View.tsx`.\n- **Ruta HTTP**: `web.php` solo registra `imports → SalesProposalController` (`routes/web.php:33`); las definiciones individuales de ruta no están indexadas.\n- **Permisos**: no existe ninguna arista permiso↔`convertToInvoice`. Además, `checkProposalAccess()` (`:30`) solo es invocada por `show()` (`:155`) y `edit()` (`:173`) — **no** por la conversión, posible brecha de control de acceso digna de revisión manual.\n- **Copia de cabecera/items/impuestos campo a campo**: el grafo no extrae asignaciones internas; solo confirma la existencia de modelos de impuestos (`SalesInvoiceItemTax`, `app/Models/SalesInvoiceItemTax.php:8`) y helpers adyacentes `calculateTotals():312` y `createProposalItems():337`, sin aristas desde `convertToInvoice()` hacia ellos.\n\n**Cadena completa evidenciada:** `View.tsx` (UI) → `SalesProposalController::convertToInvoice():244` → `creatorId():246` → `update():292` → evento `ConvertSalesProposal:298` → enlace `SalesProposal.invoice()` (BelongsTo, `:62`).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 0,
+    "partial": 4,
+    "total": 6,
+    "quality_score": 0.3333,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.3333,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "ui-conditions",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "route",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "guards",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "invoice-header",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "items-taxes",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "link-event",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "purchase-return-lifecycle",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 202.4298,
+    "usage": {
+      "input_tokens": 1040,
+      "output_tokens": 1779,
+      "thinking_tokens": 303,
+      "total_tokens": 39858
+    },
+    "tool_calls": 31,
+    "answer": "## Ciclo de devolución de compra (según el grafo Graphify)\n\n### 1. Frontend React (`resources/js/pages/PurchaseReturns/`)\n- **Páginas**: `Index.tsx` → `Index()` (L60), `View.tsx` → `View()` (L19), `Create.tsx` → `Create()` (L52).\n- **Visibilidad UI**: `View.tsx` importa `Button` (button.tsx:L42), `AuthenticatedLayout()`, `formatCurrency()`, `formatDate()` y `getStatusBadgeClasses()` (imports en View.tsx:L5–L11). `View()` llama a `getStatusBadgeClasses()` en View.tsx:L49 → renderizado del estado como badge.\n- **Tipos**: `types.ts` define `PurchaseReturn` (L1), `PurchaseReturnItem` (L21), `User` (L37), `VendorDetails` (L44), `Warehouse` (L70), `ProductServiceItem` (L75). `ViewProps` está en View.tsx:L13.\n- ⚠️ *Gap*: el grafo **no contiene edges** de handlers tipo `router.post(.../approve)` desde las páginas React — la extracción no capturó esas llamadas HTTP.\n\n### 2. Rutas Laravel\n- Única evidencia: `web.php --imports--> PurchaseReturnController at=routes/web.php:L31`. El grafo no extrae definiciones `Route::post` individuales ni middleware `can:`.\n\n### 3. Controlador (`app/Http/Controllers/PurchaseReturnController.php`)\n- `.checkReturnAccess()` **L23** — verificación de acceso por registro (usada por `.show()` en L174).\n- `.index()` L38 → llama `User` (L90), `Warehouse` (L91), `perPage()` (L87); en falta de permisos invoca **`denyAccess()`** (Helper.php:L64) en L51.\n- **`.approve()` L189**: parámetro tipado `PurchaseReturn`; **despacha `ApprovePurchaseReturn` en L197**.\n- **`.complete()` L211**: parámetro `PurchaseReturn`; **despacha `CompletePurchaseReturn` en L218**.\n- Soporte: `.store()` L141 valida con `StorePurchaseReturnRequest` (con `.authorize()` L9, `.rules()` L14, `.messages()` L32), llama `.calculateReturnTotals()` L246 y `.createReturnItems()` L277; `.destroy()` L229 despacha `DestroyPurchaseReturn` L235.\n\n### 4. Eventos (`app/Events/`)\n- `ApprovePurchaseReturn.php` L9 y `CompletePurchaseReturn.php` L8: usan el trait `Illuminate\\Foundation\\Events\\Dispatchable` (L11/L10) y reciben `PurchaseReturn` en su constructor (L13/L12).\n- ⚠️ *Gap crítico*: el grafo **no registra ninguna clase Listener** conectada a estos eventos ni aristas hacia `Zerp\\ProductService\\Models\\WarehouseStock` (ese modelo solo se conecta con `Transfers/types.ts:L52`). La actualización de stock post-evento **no es trazable** con este grafo.\n\n### 5. Modelo y persistencia (`app/Models/PurchaseReturn.php`)\n- Relaciones: `items()` HasMany L36, `vendor()` L41, `warehouse()` L46, `vendorDetails()` L51, `originalInvoice()` BelongsTo L56, `debitNote()` HasMany L61.\n- `boot()` L66 y `generateReturnNumber()` L77 (usa `creatorId()`, Helper.php:L71).\n\n### 6. Errores / feedback\n- Backend: `denyAccess()` (Helper.php:L64), validación FormRequest, y `errorResponse()` disponible vía `ApiResponseTrait` (app/Traits/ApiResponseTrait.php:L22).\n- Frontend: hook `FlashMessages` (resources/js/hooks/useFlashMessages.ts:L5) y `ConfirmationDialog` para confirmaciones destructivas.\n\n### 7. Estados válidos\n⚠️ El grafo **no contiene literales** `pending/approved/completed` ni una máquina de estados. Evidencia indirecta: `getStatusBadgeClasses()` (PurchaseReturns/utils.ts) para pintar el estado y los endpoints `approve`/`complete` como únicos puntos de transición.\n\n**Resumen trazable**: React (`View.tsx`) → rutas (web.php:L31) → `PurchaseReturnController.approve()/.complete()` (L189/L211) → dispatch de eventos `ApprovePurchaseReturn`/`CompletePurchaseReturn` (L197/L218) → fin de cadena registrada en el grafo. Todo lo demás (handlers JS exactos, listeners, mutación de stock, enum de estados) no está representado y no puedo afirmarlo sin leer archivos.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 1,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.25,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.25,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "approve-ui",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "complete-ui",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "routes",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "approve-backend",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "complete-backend",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "guards-errors",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  }
+]

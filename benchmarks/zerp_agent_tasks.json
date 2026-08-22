@@ -1,0 +1,58 @@
+{
+  "repository": "https://github.com/zerp-pk/zerp",
+  "revision": "7e12392a3882682018cd86071d4d51ac7f142076",
+  "tasks": [
+    {
+      "id": "web-bootstrap-stack",
+      "prompt": "Explica el arranque web completo desde la plantilla HTML/Blade hasta React/Inertia: assets CSS/TSX, resolución de páginas, montaje, providers, loader y estrategia de recuperación CSRF 419. Cita archivos y símbolos.",
+      "key_facts": [
+        {"id": "blade-assets", "patterns": ["app\\.blade\\.php", "@viteReactRefresh", "resources/css/app\\.css", "resources/js/app\\.tsx"]},
+        {"id": "inertia-root", "patterns": ["@inertiaHead", "@inertia"]},
+        {"id": "page-resolution", "patterns": ["createInertiaApp", "import\\.meta\\.glob", "findPackageModule"]},
+        {"id": "react-mount", "patterns": ["createRoot", "ThemeProvider", "Suspense", "Toaster"]},
+        {"id": "loader", "patterns": ["app-loader", "DOMContentLoaded", "loader\\.remove|remove\\(\\)"]},
+        {"id": "csrf", "patterns": ["refreshToken", "X-CSRF-TOKEN", "419", "originalFetch"]}
+      ],
+      "forbidden_facts": [{"id": "server-rendered-react", "patterns": ["React.{0,60}(renderizado|rendered).{0,40}(servidor|server-side)"]}]
+    },
+    {
+      "id": "create-sales-proposal",
+      "prompt": "Traza la creación de una propuesta comercial desde el formulario React hasta Laravel y persistencia: selección de almacén/productos, payload, ruta, autorización/validación, totales, cabecera, items, evento y redirección.",
+      "key_facts": [
+        {"id": "react-form", "patterns": ["SalesProposals/Create\\.tsx", "useForm", "sales-proposals\\.store"]},
+        {"id": "warehouse-products", "patterns": ["warehouse\\.products", "fetch", "setAvailableProducts"]},
+        {"id": "route-controller", "patterns": ["Route::resource", "SalesProposalController", "store"]},
+        {"id": "request-auth", "patterns": ["StoreSalesProposalRequest", "create-sales-proposals"]},
+        {"id": "persistence", "patterns": ["calculateTotals", "SalesProposal", "save", "createProposalItems"]},
+        {"id": "event-redirect", "patterns": ["CreateSalesProposal::dispatch", "sales-proposals\\.index", "success"]}
+      ],
+      "forbidden_facts": [{"id": "frontend-persists", "patterns": ["(React|frontend).{0,80}(guarda|persiste).{0,50}(directamente|directly).{0,50}(base de datos|database)"]}]
+    },
+    {
+      "id": "proposal-to-invoice",
+      "prompt": "Audita la conversión de una propuesta aceptada a factura: condiciones UI, ruta, permisos y precondiciones backend, copia de cabecera/items/impuestos, estados, enlace entre entidades y evento final.",
+      "key_facts": [
+        {"id": "ui-conditions", "patterns": ["convert-sales-proposals", "accepted", "converted_to_invoice", "router\\.post"]},
+        {"id": "route", "patterns": ["convert-to-invoice", "convertToInvoice"]},
+        {"id": "guards", "patterns": ["created_by", "status !== 'accepted'|status.*accepted", "already converted|converted_to_invoice"]},
+        {"id": "invoice-header", "patterns": ["new SalesInvoice", "balance_amount", "paid_amount", "status.*draft"]},
+        {"id": "items-taxes", "patterns": ["SalesInvoiceItem", "SalesInvoiceItemTax", "proposalItem->taxes|taxes"]},
+        {"id": "link-event", "patterns": ["invoice_id", "converted_to_invoice", "ConvertSalesProposal::dispatch"]}
+      ],
+      "forbidden_facts": [{"id": "transaction-claim", "patterns": ["DB::transaction|transacción atómica"]}]
+    },
+    {
+      "id": "purchase-return-lifecycle",
+      "prompt": "Traza el ciclo de una devolución de compra desde las acciones React de aprobar y completar hasta Laravel. Detalla visibilidad/permisos UI, rutas, estados válidos, eventos, actualizaciones y manejo de errores.",
+      "key_facts": [
+        {"id": "approve-ui", "patterns": ["approve-purchase-returns-invoices", "status === 'draft'|status.*draft", "purchase-returns\\.approve"]},
+        {"id": "complete-ui", "patterns": ["complete-purchase-returns-invoices", "status === 'approved'|status.*approved", "purchase-returns\\.complete"]},
+        {"id": "routes", "patterns": ["PurchaseReturnController", "approve", "complete"]},
+        {"id": "approve-backend", "patterns": ["ApprovePurchaseReturn::dispatch", "status.*approved"]},
+        {"id": "complete-backend", "patterns": ["CompletePurchaseReturn::dispatch", "status.*completed"]},
+        {"id": "guards-errors", "patterns": ["draft", "approved", "Permission denied|error"]}
+      ],
+      "forbidden_facts": [{"id": "complete-draft", "patterns": ["complet.{0,50}(directamente|directly).{0,50}draft"]}]
+    }
+  ]
+}

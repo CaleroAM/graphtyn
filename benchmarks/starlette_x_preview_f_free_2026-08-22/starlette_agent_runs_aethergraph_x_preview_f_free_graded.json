@@ -1,0 +1,222 @@
+[
+  {
+    "task_id": "asgi-middleware-flow",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 56.0803,
+    "usage": {
+      "input_tokens": 3440,
+      "output_tokens": 222,
+      "thinking_tokens": 46,
+      "total_tokens": 3708
+    },
+    "tool_calls": 1,
+    "answer": "## Evidencia devuelta por AetherGraph (context_id 08fb8bf1ae03)\n\nEl grafo retornó 10 entidades con sus operaciones. Advertencia de honestidad: **esta consulta no devolvió los símbolos `Starlette.__call__` ni `build_middleware_stack`**, así que no puedo afirmar con evidencia del grafo el momento exacto de construcción de la pila ni el punto de entrada; lo que sigue está anclado únicamente a",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 0,
+    "partial": 3,
+    "total": 6,
+    "quality_score": 0.25,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.25,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "entrypoint",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "lazy-stack",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "outer-error",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "body-limit",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "user-middleware",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "inner-exception-router",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "router-dispatch-flow",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 50.5068,
+    "usage": {
+      "input_tokens": 4531,
+      "output_tokens": 1127,
+      "thinking_tokens": 271,
+      "total_tokens": 9321
+    },
+    "tool_calls": 1,
+    "answer": "## Trazado de `Router.app` (evidencia del grafo)\n\nNúcleo del algoritmo: entidad **N2** — método `app`, contenedor `Router`, en `starlette/routing.py:672`.\n\n```python\nasync def app(self, scope, receive, send):\n    assert scope[\"type\"] in (\"http\", \"websocket\", \"lifespan\")   # F2:672\n    if \"router\" not in scope:\n        scope[\"router\"] = self                                   # auto-registro\n```\n\n### 1. Coincidencia completa (`Match.FULL`) — F2:684–690\nBucle sobre `self.routes`: `match, child_scope = route.matches(scope)`.\nSi `match == Match.FULL`: `scope.update(child_scope)` → `await route.handle(scope, receive, send)` → `return` (primer match completo gana).\n\n### 2. Coincidencia parcial (`Match.PARTIAL`) — F2:691, 696–700\nSolo se retiene la **primera** parcial: `elif match == Match.PARTIAL and partial is None: partial = route; partial_scope = child_scope`. Si tras el bucle `partial is not None`: `scope.update(partial_scope)` → `await partial.handle(...)`. El propio grafo cita el comentario: se usa para **\"405 Method Not Allowed\"** (endpoint existe pero el método no es preferido).\n\n### 3. Redirección de slash — F2:712–716\nSegundo bucle con un `redirect_scope` alternativo: si algún `route.matches(redirect_scope)` devuelve algo distinto de `Match.NONE`, se construye `redirect_url = URL(scope=redirect_scope)` y se responde con `RedirectResponse(url=str(redirect_url))`. (El constructor de `Router` muestra `redirect_slashes: bool = True`, que habilita esta rama.)\n\n### 4. Fallback final\n⚠️ Los ops extraídos terminan en F2:714 (redirect). El grafo solo evidencia que el constructor acepta `default: ASGIApp | None = None`, pero **no captura la llamada al fallback posterior** — no lo afirmo como hecho verificado.\n\n### Lifespan — F2:678–679\nSe trata **antes** de cualquier matching de rutas y con retorno inmediato:\n```python\nif scope[\"type\"] == \"lifespan\":\n    await self.lifespan(scope, receive, send)   # F2:679\n    return\n```\nEs decir, lifespan no pasa por coincidencia completa/parcial/redirect; se delega directo a `self.lifespan`.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 4,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.8333,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.8333,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "router-app",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "full-match",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "partial-match",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "slash-redirect",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "fallback",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "lifespan",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  },
+  {
+    "task_id": "signed-session-flow",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 68.0371,
+    "usage": {
+      "input_tokens": 4990,
+      "output_tokens": 948,
+      "thinking_tokens": 324,
+      "total_tokens": 9654
+    },
+    "tool_calls": 1,
+    "answer": "## Auditoría vía AetherGraph — resultado negativo con evidencia\n\n**Consulta:** `intent=flow`, `planner=intent-v1`, contexto `c575bb3ae3e1`, `do_not_expand=true` → el grafo ordenó responder ya desde las ops, sin más llamadas.\n\n**Evidencia concreta devuelta (ninguna corresponde a SessionMiddleware):**\n\n| Nodo | Entidad | Ubicación |\n|------|---------|-----------|\n| N10 | `AuthenticationMiddleware.__call__` | `starlette/middleware/authentication.py:29` |\n| N7 | `CORSMiddleware.__call__` | `starlette/middleware/cors.py:78` |\n| N1 | `send_with_compression` (GZip) | `starlette/middleware/gzip.py:105` |\n| N5 | `ExceptionMiddleware.__call__` | `starlette/middleware/exceptions.py:47` |\n| N2 | `Router.app` | `starlette/routing.py:672` |\n\n**Cobertura del ciclo solicitado según el propio grafo:**\n- `relations: []` y `coverage` con todas las métricas en 0 (`incoming/outgoing_calls_or_uses: 0`, `relations_by_label: {}`) — el grafo declara explícitamente `zero_is_evidence_when_complete: true`.\n- Lectura de cookie: **sin evidencia**. Verificación/firma: **sin evidencia**. Estado ante firma inválida: **sin evidencia**. `accessed`/`modified`: **sin evidencia**. Escritura `Set-Cookie`: **sin evidencia**. Borrado de cookie: solo aparece `TestClient.delete` (N9, `starlette/testclient.py:633`), que es un helper HTTP de testing, no borrado de sesión.\n- Lo único tangencialmente relacionado es N10: captura `AuthenticationError` del backend y devuelve respuesta de error (`authentication.py:29-48`), pero pertenece a otro componente.\n\n**Conclusión:** el índice actual de AetherGraph **no contiene** `SessionMiddleware` ni su archivo asociado; por tanto, no puedo documentar sus primitivas criptográficas (firma/serialización) ni atributos de seguridad de la cookie sin incurrir en suposiciones, que excluiste expresamente. Para completar la auditoría hace falta reindexar/incluir ese módulo en el grafo y relanzar la consulta.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 0,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.1667,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.1667,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "signer",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "decode",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "invalid",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "tracking",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "persist",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "delete-security",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "cors-decision-flow",
+    "variant": "AetherGraph",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 51.7681,
+    "usage": {
+      "input_tokens": 4783,
+      "output_tokens": 1257,
+      "thinking_tokens": 334,
+      "total_tokens": 9766
+    },
+    "tool_calls": 1,
+    "answer": "Respuesta basada exclusivamente en el grafo AetherGraph (contexto `1a590cc2bad3`, intent=flow). La evidencia relevante está en `CORSMiddleware` (`starlette/middleware/cors.py`):\n\n**1. Petición sin Origin**\n`__call__` lee el scope: `headers = Headers(scope=scope)` y `origin = headers.get(\"origin\")` (cors.py:84-85). Si `origin is None`, delega directamente: `await self.app(scope, receive, send); return` (cors.py:87) — la petición pasa intacta, sin cabeceras CORS añadidas. Igual ocurre con scopes que no son `http` (cors.py:79-80).\n\n**2. Preflight OPTIONS**\nSi `method == \"OPTIONS\"` y `\"access-control-request-method\" in headers`, construye y envía `self.preflight_response(request_headers=headers)` y retorna **sin invocar la app** (cors.py:91). Es decir, el preflight se responde íntegramente en el middleware.\n\n**3. Respuestas simples**\nEn cualquier otro caso llama a `simple_response(scope, receive, send, request_headers=headers)` (cors.py:96). El método `send` interno (cors.py:156) intercepta solo mensajes `\"http.response.start\"`; los demás los reenvía sin tocarlos (cors.py:157-158). Para `http.response.start`: crea `MutableHeaders(scope=message)`, aplica `headers.update(self.simple_headers)` (cors.py:162) y consulta `origin = request_headers[\"Origin\"]` (cors.py:164) antes de decidir qué exponer.\n\n**4. Validación configurada (constructor, evidencia del grafo)**\nParámetros visibles en `owner_signature`: `allow_origins: Sequence[str] = ()`, `allow_methods: Sequence[str] = (\"GET\",)`, `allow_headers: Sequence[str] = ()`, `allow_credentials: bool = False`, `allow_origin_regex: str | None = None`, `allow_private_network: bool = False`, además de `expose_headers`.\n\n**5. Límite de la evidencia (sin suposiciones)**\nEl subgrafo devuelto contiene las ops de `__call__` y `send`, pero **no incluye el cuerpo de `preflight_response` ni de la validación de origen/métodos/headers/red privada**, y `relations` viene vacío. Por tanto, no puedo citar líneas concretas sobre: coincidencia contra `allow_origins`/`allow_origin_regex`, verificación de `Access-Control-Request-Headers`, el header `Access-Control-Request-Private-Network`, ni el código/cabeceras exactos de un preflight rechazado. Lo único afirmable con evidencia es que un preflight rechazado sería la respuesta generada por `self.preflight_response(...)` en cors.py:91 (el middleware responde él mismo, sin llegar a la app).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 3,
+    "partial": 3,
+    "total": 6,
+    "quality_score": 0.75,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.75,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "no-origin",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "preflight",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "simple",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "origin-validation",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "method-headers",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "private-failure",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  }
+]

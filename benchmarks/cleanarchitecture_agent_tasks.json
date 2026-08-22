@@ -1,0 +1,66 @@
+{
+  "repository": "https://github.com/ardalis/CleanArchitecture",
+  "revision": "v11.1.1 / 859b115072337b3b7074007f8231d19f24966f1a",
+  "tasks": [
+    {
+      "id": "create-contributor-flow",
+      "prompt": "Explica el flujo completo para crear un Contributor desde el endpoint HTTP hasta persistencia, incluyendo validación, comando, handler y cambios de estado opcionales.",
+      "key_facts": [
+        {"id": "endpoint", "patterns": ["Contributors/Create\\.cs", "ExecuteAsync"]},
+        {"id": "command", "patterns": ["CreateContributorCommand", "mediator\\.Send|_mediator\\.Send"]},
+        {"id": "handler", "patterns": ["CreateContributorHandler", "Handle"]},
+        {"id": "persistence", "patterns": ["IRepository<Contributor>", "AddAsync"]},
+        {"id": "phone", "patterns": ["PhoneNumber", "UpdatePhoneNumber"]},
+        {"id": "validation", "patterns": ["CreateContributorValidator", "MinimumLength|MaximumLength"]}
+      ],
+      "forbidden_facts": [
+        {"id": "direct-db-endpoint", "patterns": ["endpoint.{0,80}(directamente|directly).{0,80}(AppDbContext|base de datos)"]}
+      ]
+    },
+    {
+      "id": "delete-event-flow",
+      "prompt": "Traza qué ocurre al eliminar un Contributor, desde el endpoint y caso de uso hasta el evento de dominio y su efecto secundario. Indica interfaces, implementaciones y archivos.",
+      "key_facts": [
+        {"id": "endpoint-command", "patterns": ["Contributors/Delete\\.cs", "DeleteContributorCommand"]},
+        {"id": "handler-service", "patterns": ["DeleteContributorHandler", "IDeleteContributorService"]},
+        {"id": "service-delete", "patterns": ["DeleteContributorService", "DeleteAsync"]},
+        {"id": "event-publish", "patterns": ["ContributorDeletedEvent", "Publish"]},
+        {"id": "event-handler", "patterns": ["ContributorDeletedHandler", "INotificationHandler"]},
+        {"id": "email", "patterns": ["IEmailSender", "SendEmailAsync"]}
+      ],
+      "forbidden_facts": [
+        {"id": "aggregate-registers-delete", "patterns": ["Contributor.{0,100}RegisterDomainEvent.{0,100}ContributorDeletedEvent"]}
+      ]
+    },
+    {
+      "id": "infrastructure-bindings",
+      "prompt": "Audita las dependencias registradas por AddInfrastructureServices: repositorios, consultas, servicio de borrado, eventos y selección de base de datos. Señala los bindings exactos.",
+      "key_facts": [
+        {"id": "repository-bindings", "patterns": ["IRepository", "IReadRepository", "EfRepository"]},
+        {"id": "query-binding", "patterns": ["IListContributorsQueryService", "ListContributorsQueryService"]},
+        {"id": "delete-binding", "patterns": ["IDeleteContributorService", "DeleteContributorService"]},
+        {"id": "dispatcher", "patterns": ["IDomainEventDispatcher", "MediatorDomainEventDispatcher"]},
+        {"id": "interceptor", "patterns": ["EventDispatchInterceptor", "AddInterceptors"]},
+        {"id": "database-choice", "patterns": ["UseSqlServer", "UseSqlite"]}
+      ],
+      "forbidden_facts": [
+        {"id": "fake-query-production", "patterns": ["AddScoped.{0,100}IListContributorsQueryService.{0,100}FakeListContributorsQueryService"]}
+      ]
+    },
+    {
+      "id": "list-query-flow",
+      "prompt": "Explica cómo se obtiene la lista paginada de Contributors y compara la implementación real con la fake: abstracción, handler, consulta, paginación y diferencias de datos.",
+      "key_facts": [
+        {"id": "handler", "patterns": ["ListContributorsHandler", "IListContributorsQueryService"]},
+        {"id": "pagination-default", "patterns": ["DEFAULT_PAGE_SIZE", "Page|page", "PerPage|perPage"]},
+        {"id": "real-query", "patterns": ["ListContributorsQueryService", "FromSqlRaw"]},
+        {"id": "real-pagination", "patterns": ["Skip", "Take", "AsNoTracking"]},
+        {"id": "real-count", "patterns": ["CountAsync", "totalPages"]},
+        {"id": "fake-query", "patterns": ["FakeListContributorsQueryService", "25", "Task.FromResult"]}
+      ],
+      "forbidden_facts": [
+        {"id": "fake-uses-db", "patterns": ["FakeListContributorsQueryService.{0,180}(AppDbContext|FromSqlRaw)"]}
+      ]
+    }
+  ]
+}

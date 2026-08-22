@@ -199,6 +199,49 @@ Prueba end-to-end sobre la raíz completa de UnityCommerceDemo, con seis tareas 
 
 \* El patrón automático de contradicción sobre `PlayerNameService` puede producir un falso positivo cuando la respuesta dice que referencia o instancia la implementación, no que implemente la interfaz. Se conservan tanto calidad bruta como ajustada para auditoría. Artefactos: `benchmarks/x_preview_f_free_root_2026-08-21/`, `benchmarks/x_preview_f_free_compact_2026-08-21/` y `benchmarks/x_preview_f_free_latency_2026-08-21/`.
 
+### Validación externa: `ardalis/CleanArchitecture` v11.1.1
+
+Prueba sobre la revisión fija `859b115072337b3b7074007f8231d19f24966f1a`, distinta del proyecto usado durante el desarrollo. Se evaluaron cuatro tareas y 24 hechos sobre creación, borrado/eventos, bindings de infraestructura y consultas paginadas. Las tres variantes usaron OpenCode con `opencode/x-preview-f-free`; las herramientas de escritura estuvieron deshabilitadas. Las celdas que terminaron `ERROR` recibieron un único reintento y se conservó la última corrida. El modelo gratuito mostró alta variación temporal: un intento de AetherGraph agotó 600 s y su reintento terminó en 120.39 s.
+
+| Variante | Calidad ajustada | Tokens/tarea | Tiempo/tarea | Llamadas/tarea | Éxito | Errores factuales |
+|---|---:|---:|---:|---:|---:|---:|
+| AetherGraph `evidence-v1` + miembros v6 | 31.25% | 31,623 | 191.66 s | **13.25** | 4/4 | 0 |
+| Graphify 0.9.48 | 54.17% | **19,553** | **167.85 s** | 24.00 | 4/4 | 0 |
+| Lectura directa sin grafo | **100.00%** | 24,808 | 182.70 s | 23.75 | 4/4 | 0 |
+
+En esta suite AetherGraph hizo 44.21% menos llamadas que la lectura directa, pero consumió 27.47% más tokens y perdió 68.75 puntos de calidad. Graphify consumió 21.18% menos tokens que el baseline, pero perdió 45.83 puntos. El resultado contradice el benchmark de UnityCommerceDemo y delimita la ventaja actual: el grafo funciona bien para topología y radio de impacto, pero no basta para preguntas cuyo ground truth vive en cuerpos de método (`AddScoped`, `Publish`, `Skip/Take`, `CountAsync`, validadores y constantes).
+
+La siguiente mejora debe ser una representación compacta y determinista de operaciones internas —accesos a miembros, asignaciones, retornos, creación de objetos, argumentos relevantes y llamadas externas sin target local— servida por intención (`flow`, `bindings`, `persistence`, `tests`). Añadir más prosa de Qwen no resolvería por sí solo esta ausencia de evidencia. Artefactos completos, tareas y resumen: `benchmarks/cleanarchitecture_x_preview_f_free_2026-08-21/` y `benchmarks/cleanarchitecture_agent_tasks.json`.
+
+#### Repetición con operaciones internas v7
+
+Se implementó la mejora indicada por la primera corrida: los métodos ahora conservan operaciones compactas y ubicadas (`call`, `new`, `assign`, `declare`, `return`, `control`), incluidas llamadas a frameworks sin nodo local. El MCP selecciona hasta diez por entidad según la intención y prioriza acciones como `AddScoped`, `Publish`, `DeleteAsync`, `Skip`, `Take`, `CountAsync` y `AddInterceptors`. Se repitieron las cuatro tareas con el mismo repositorio, revisión, modelo y política; solo una celda `ERROR` recibió un reintento.
+
+| Variante | Calidad ajustada | Tokens/tarea | Tiempo/tarea | Llamadas/tarea | Éxito |
+|---|---:|---:|---:|---:|---:|
+| AetherGraph v6 (miembros, sin operaciones) | 31.25% | 31,623 | 191.66 s | 13.25 | 4/4 |
+| **AetherGraph v7 (`ops`)** | **75.00%** | **22,372** | **146.43 s** | **8.75** | 4/4 |
+| Graphify 0.9.48 | 54.17% | 19,553 | 167.85 s | 24.00 | 4/4 |
+| Lectura directa sin grafo | 100.00% | 24,808 | 182.70 s | 23.75 | 4/4 |
+
+V7 elevó la calidad **+43.75 puntos**, redujo tokens **29.25%**, tiempo **23.62%** y llamadas **33.96%** frente a v6. Frente a Graphify obtuvo +20.83 puntos de calidad, 12.76% menos tiempo y 63.54% menos llamadas, aunque usó 14.42% más tokens. Frente a lectura directa redujo tokens 9.82%, tiempo 19.85% y llamadas 63.16%, con una brecha de calidad de 25 puntos.
+
+Tres tareas alcanzaron 100%. `infrastructure-bindings` puntuó 0% porque `x-preview-f-free` terminó una respuesta después de la primera sección pese a devolver estado `SUCCESS`; se conservó sin reintento para evitar selección favorable. El paquete sí contenía los bindings y ambas selecciones de base de datos. Por tanto, el 75% mezcla calidad del índice con estabilidad de generación del proveedor. Artefactos: `benchmarks/cleanarchitecture_x_preview_f_free_v7_2026-08-21/`.
+
+#### Perfil MCP de intención única v8
+
+El trace de v7 mostró que OpenCode seguía llamando herramientas antiguas antes y después del nuevo planificador. Se añadió `graph_query_intent`, contexto diferencial mediante `context_id`, señales `complete_for`/`do_not_expand`, expansión bilingüe de conceptos y un perfil MCP predeterminado que expone solamente esta tool. El catálogo completo permanece disponible con `--tool-profile full`.
+
+Se repitieron las dos tareas críticas de la suite externa, con 12 hechos totales:
+
+| Variante (mismas 2 tareas) | Calidad | Tokens/tarea | Tiempo/tarea | Llamadas/tarea |
+|---|---:|---:|---:|---:|
+| **AetherGraph v8 · perfil `intent`** | **100.00%** | **8,574** | **50.53 s** | **1.50** |
+| Graphify 0.9.48 | 54.17% | 15,663 | 156.32 s | 23.00 |
+| Lectura directa | **100.00%** | 23,218 | 149.24 s | 20.00 |
+
+V8 mantuvo la calidad del baseline con **63.07% menos tokens**, 66.14% menos tiempo y 92.50% menos llamadas. Frente a Graphify obtuvo +45.83 puntos, 45.26% menos tokens y 93.48% menos llamadas. Frente al intento con `graph_query_intent` pero catálogo completo, redujo tokens 67.09% y llamadas 82.35%, demostrando que el costo dominante era la estrategia multiherramienta, no el payload individual. Resultados por tarea: borrado/eventos 100%, 7,290 tokens y una llamada; bindings 100%, 9,858 tokens y dos llamadas. Artefactos: `benchmarks/cleanarchitecture_x_preview_f_free_intent_v2_2026-08-22/`.
+
 ## 🔁 Reproducción
 
 ```bash
@@ -235,3 +278,37 @@ Medido sobre un proyecto sintético real (README.md + manual.docx + tenants.xlsx
 | `minicpm-v4.6:1b` | 900 MB (95% GPU) | 2-3 s | Directo, sin thinking; flojo en especies de fotos |
 
 **Nota NixOS:** el daemon requiere `LD_LIBRARY_PATH` con `zlib` y `gcc-lib` del nix store para cargar `av`/`faster-whisper`.
+## Validación externa Python/ASGI: Starlette (2026-08-22)
+
+Se repitió el protocolo competitivo en un segundo repositorio y ecosistema: `encode/starlette`, revisión fija `398e5a3430eb1ddd33e1d48d766efe41426e231f`. Se usaron cuatro tareas auditables (pila ASGI, dispatch del router, sesiones firmadas y CORS), seis hechos atómicos por tarea y `opencode/x-preview-f-free`. OpenCode solo pudo leer el repositorio; los tratamientos MCP tuvieron deshabilitadas lectura, grep, glob y shell.
+
+| Variante | Calidad (24 hechos) | Tokens/tarea | Segundos/tarea | Llamadas/tarea |
+|---|---:|---:|---:|---:|
+| **AetherGraph intent v2** | **95.84%** | **10,183** | **81.65** | **1.75** |
+| OpenCode directo | 93.75% | 21,741 | 153.00 | 9.50 |
+| Graphify 0.9.48 | 62.50% | 21,880 | 228.98 | 26.75 |
+
+AetherGraph redujo 53.16% de tokens y 81.58% de llamadas frente a lectura directa, con +2.09 puntos de calidad. Frente a Graphify redujo 53.46% de tokens y 93.46% de llamadas, con +33.34 puntos de calidad. Los tres resultados finales completaron 4/4 tareas y no activaron afirmaciones prohibidas.
+
+La primera corrida de AetherGraph obtuvo 50% y expuso dos defectos que el benchmark C# no detectaba: un nodo sintáctico Python vacío causaba `IndexError`, y los componentes nombrados exactamente podían quedar desplazados por métodos genéricos con muchas operaciones. Se corrigieron ambos, se agregaron regresiones automatizadas y se repitió AetherGraph. Los artefactos iniciales y finales se conservan; los fallos transitorios de finalización/SQLite de OpenCode se reintentaron por tarea, sin repetir resultados exitosos de Graphify.
+
+Artefactos: `benchmarks/starlette_agent_tasks.json`, `benchmarks/starlette_x_preview_f_free_2026-08-22/` y `benchmarks/starlette_x_preview_f_free_intent_v2_2026-08-22/summary.json`.
+## Diagnóstico corporativo Laravel/React: ZERP (2026-08-22)
+
+Repositorio `zerp-pk/zerp`, revisión `7e12392a3882682018cd86071d4d51ac7f142076`: Laravel 12, PHP, Blade/HTML, CSS/Tailwind, JavaScript, React 18, TypeScript e Inertia. Se evaluaron bootstrap web y tres flujos ERP con 24 hechos por variante.
+
+| Variante | Calidad bruta | Tokens/tarea | Segundos/tarea | Llamadas/tarea | Completadas |
+|---|---:|---:|---:|---:|---:|
+| AetherGraph | 8.33% | 6,004 | 222.41 | 1.75 | 3/4 |
+| Graphify | 22.92% | 32,460 | 206.67 | 30.25 | 4/4 |
+| OpenCode directo | 64.59% | 34,644 | 263.28 | 31.75 | 3/4 |
+
+Este resultado **no demuestra ahorro útil de AetherGraph**: el contexto fue barato porque faltó evidencia. Excluyendo la tarea bootstrap que falló en AetherGraph y baseline, las tres tareas empresariales puntuaron 11.11%, 30.55% y 86.11%, respectivamente. El diagnóstico originó `treesitter-v9-laravel`: Tree-sitter PHP y resolución de rutas→controladores→FormRequests→modelos/eventos, además de enlaces Inertia entre nombres de ruta y llamadas TSX. Estas cifras se conservan como baseline previo al arreglo y requieren una nueva corrida para medir el resultado posterior.
+
+Artefactos: `benchmarks/zerp_agent_tasks.json` y `benchmarks/zerp_x_preview_f_free_2026-08-22/`.
+
+### Resultado posterior: `treesitter-v9-laravel`
+
+La implementación posterior indexó 572 archivos con Tree-sitter y extrajo relaciones Laravel/Inertia deterministas: rutas resource y explícitas, dispatch a controller, FormRequests, creación de modelos, dispatch de eventos y llamadas `route(...)` desde TS/TSX. En ZERP produjo 249 rutas, 233 dispatches a controller, 369 invocaciones Inertia, 31 enlaces de validación, 98 creaciones de modelo y 41 eventos despachados.
+
+La tarea evaluable `purchase-return-lifecycle` subió de **8.33% a 83.33%**, usando 7,968 tokens y una llamada MCP. Las otras dos corridas posteriores no son puntuables: `x-preview-f-free` cerró una sin respuesta final y devolvió sólo un encabezado en otra. No se publica un promedio post-fix sesgado; se conservan artefactos crudos en `benchmarks/zerp_x_preview_f_free_laravel_v9_2026-08-22/`.

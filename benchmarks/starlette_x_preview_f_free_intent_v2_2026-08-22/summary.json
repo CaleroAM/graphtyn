@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/encode/starlette",
+  "revision": "398e5a3430eb1ddd33e1d48d766efe41426e231f",
+  "technology": "Python / ASGI",
+  "model": "opencode/x-preview-f-free",
+  "protocol": {
+    "tasks": 4,
+    "key_facts_per_task": 6,
+    "total_facts_per_variant": 24,
+    "variants": ["AetherGraph", "Graphify", "Baseline"],
+    "direct_file_access_for_mcp_variants": false,
+    "direct_file_access_for_baseline": true
+  },
+  "indexes": {
+    "aethergraph": {"nodes": 1641, "links": 4578, "engine": "ast_pure"},
+    "graphify": {"nodes": 2350, "links": 6351, "communities": 219, "llm_indexing": false}
+  },
+  "results": {
+    "aethergraph": {"quality": 0.95835, "tokens_per_task": 10183.25, "seconds_per_task": 81.652725, "calls_per_task": 1.75, "success": "4/4", "factual_errors": 0},
+    "graphify": {"quality": 0.625, "tokens_per_task": 21880, "seconds_per_task": 228.984075, "calls_per_task": 26.75, "success": "4/4", "factual_errors": 0},
+    "baseline": {"quality": 0.9375, "tokens_per_task": 21740.75, "seconds_per_task": 152.997075, "calls_per_task": 9.5, "success": "4/4", "factual_errors": 0}
+  },
+  "aethergraph_relative_to_baseline": {"quality_points": 2.085, "tokens": -0.5316, "seconds": -0.4663, "calls": -0.8158},
+  "aethergraph_relative_to_graphify": {"quality_points": 33.335, "tokens": -0.5346, "seconds": -0.6434, "calls": -0.9346},
+  "reliability_notes": {
+    "aethergraph_initial_quality_before_python_retrieval_fix": 0.5,
+    "parser_regression_found": "An empty Python syntax node raised IndexError while extracting evidence.",
+    "retrieval_regression_found": "Exact component names could be displaced by generic high-operation nodes.",
+    "provider_retries": "OpenCode occasionally returned no final text and once contended on its local SQLite WAL; only failed tasks were rerun. First-iteration artifacts remain in the initial benchmark directory; a successful retry replaces the failed task entry in the final run file."
+  }
+}

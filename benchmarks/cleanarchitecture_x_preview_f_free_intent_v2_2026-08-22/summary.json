@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/ardalis/CleanArchitecture",
+  "revision": "v11.1.1 / 859b115072337b3b7074007f8231d19f24966f1a",
+  "model": "opencode/x-preview-f-free",
+  "feature": "intent-v1 with MCP intent-only tool profile and tree-sitter-v8",
+  "tasks": ["delete-event-flow", "infrastructure-bindings"],
+  "facts": 12,
+  "result": {"quality": 1.0, "tokens_per_task": 8574, "seconds_per_task": 50.53, "calls_per_task": 1.5, "success": "2/2", "factual_errors": 0},
+  "tasks_result": {
+    "delete-event-flow": {"quality": 1.0, "tokens": 7290, "seconds": 51.7251, "calls": 1},
+    "infrastructure-bindings": {"quality": 1.0, "tokens": 9858, "seconds": 49.3445, "calls": 2}
+  },
+  "relative_to_direct_reading_same_tasks": {"quality_points": 0.0, "tokens": -0.6307, "seconds": -0.6614, "calls": -0.925},
+  "relative_to_graphify_same_tasks": {"quality_points": 0.4583, "tokens": -0.4526, "calls": -0.9348},
+  "relative_to_full_mcp_catalog_intent": {"quality_points": 0.0834, "tokens": -0.6709, "seconds": -0.6029, "calls": -0.8235}
+}

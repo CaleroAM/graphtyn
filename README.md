@@ -44,12 +44,12 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 
 AetherGraph incluye un motor sintáctico determinista que soporta nativamente el parsing de clases, funciones, módulos, herencia y llamadas en los siguientes lenguajes:
 
-Para C#, JavaScript, TypeScript/TSX, Python, Java, Go y Rust puede utilizar el backend opcional **tree-sitter**. Este produce nodos con `file`, `line`, `end_line`, firma, contenedor, namespace y `parser: tree-sitter`, además de aristas `contiene`, `hereda`, `implementa` y `llama` con evidencia verificable. El resolvedor cross-file pondera receptor/tipo inferido, clase contenedora, aridad, imports, namespace y ensamblado; conserva `AMBIGUOUS` cuando los mejores candidatos empatan. En Unity reconoce el `.asmdef` ancestro más cercano y sus referencias. Es una resolución contextual determinista, no equivale aún a la información de tipos completa de Roslyn/LSP. Si una gramática no está instalada, se conserva automáticamente el extractor integrado. Los fragmentos se cachean por SHA-256 en `structural_cache.json`.
+Para C#, JavaScript, TypeScript/TSX, Python, Java, Go y Rust puede utilizar el backend opcional **tree-sitter**. Este produce nodos con `file`, `line`, `end_line`, firma, contenedor, namespace y `parser: tree-sitter`, además de aristas `contiene`, `declara`, `hereda`, `implementa` y `llama` con evidencia verificable. En C# también indexa **campos, propiedades y eventos** como entidades tipadas, permitiendo razonar sobre estado y contratos sin enviar el archivo completo. El resolvedor cross-file pondera receptor/tipo inferido, clase contenedora, aridad, imports, namespace y ensamblado; conserva `AMBIGUOUS` cuando los mejores candidatos empatan. En Unity reconoce el `.asmdef` ancestro más cercano y sus referencias. Es una resolución contextual determinista, no equivale aún a la información de tipos completa de Roslyn/LSP. Si una gramática no está instalada, se conserva automáticamente el extractor integrado. Los fragmentos se cachean por SHA-256 en `structural_cache.json`.
 
 | Lenguaje / Framework | Extensiones | Elementos Extraídos |
 |---|---|---|
 | 🐍 **Python** | `.py` | Módulos, Clases, Funciones, Métodos, AST Python, Llamadas |
-| 🐘 **PHP / Laravel** | `.php` | Namespaces, Clases, Traits, Interfaces, Métodos, Extends/Implements |
+| 🐘 **PHP / Laravel** | `.php` | Tree-sitter: namespaces, clases, traits, métodos, llamadas y operaciones; rutas→controllers→FormRequests→modelos/eventos e invocaciones Inertia/TSX |
 | 🟨 **JavaScript / TypeScript** | `.js`, `.ts`, `.jsx`, `.tsx` | Classes, Interfaces, Types, Export Functions, Arrow Functions |
 | 🔷 **C# / .NET** | `.cs` | Namespaces, Structs, Classes, Interfaces, Enums, Inheritance |
 | ☕ **Java** | `.java` | Packages, Classes, Interfaces, Enums, Public Methods |
@@ -153,6 +153,9 @@ aether-graph timeline
 
 # Evaluar el radio de impacto de cambios sin confirmar (git status / git diff)
 aether-graph diff
+
+# Convertir un requisito en targets, estado, contratos, pruebas y riesgos verificables
+aether-graph analyze-change "Cambiar la subasta y notificar cada nueva oferta" --path /ruta/proyecto
 
 # Generar un archivo ARCHITECTURE.md compacto (~150 tokens) para Agentes de IA
 aether-graph export-md
@@ -268,12 +271,14 @@ Mismo nodo (`mcp_server.py`), mismo prompt real de AetherGraph (config #9), mism
 
 ## 🤖 Integración con Agentes de IA (MCP Protocol)
 
-AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) que expone **8 herramientas** a los agentes de IA, organizadas en tres grupos: **mapa de código**, **memoria de sesiones** e **integración**.
+AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`). El perfil predeterminado `intent` expone **una sola herramienta** para minimizar catálogo, rondas y contexto acumulado; `--tool-profile full` conserva las **10 herramientas** para compatibilidad y diagnóstico.
 
 ### 🧭 Herramientas de Mapa de Código (0 Tokens)
 
 | Herramienta | Qué hace | Parámetros |
 |---|---|---|
+| `graph_query_intent` | Ruta predeterminada de una sola llamada. Clasifica `flow`, `bindings`, `persistence`, `tests` o `impact`, filtra operaciones y devuelve `complete_for`, `do_not_expand` y un `context_id` diferencial. | `request`, `intent`, `limit`, `extends_context_id` |
+| `graph_analyze_change` | Convierte un issue o requisito en un plan verificable con targets, archivos, contratos, estado, pruebas y riesgos. Puede alimentar a Qwen/API; la IA debe citar aliases y no inventar aristas. | `request`, `limit`, `response_mode` |
 | `graph_neighborhood` | Devuelve el subgrafo con evidencia. Por defecto usa respuesta compacta, máximo 40 nodos y descripciones de 240 caracteres; `response_mode=full` es opt-in. | `path`, `symbol`, `depth`, `limit`, `response_mode` |
 | `graph_blast_radius` | Calcula impacto por salto. La salida compacta limita el contexto a 40 impactos y avisa si hubo truncamiento. | `symbol`, `depth`, `limit`, `response_mode` |
 | `graph_context_bundle` | Agrupa vecindad e impacto de hasta 10 símbolos en una sola llamada, reduciendo rondas y reenvío acumulativo de contexto. | `symbols`, `depth`, `limit` |
@@ -282,7 +287,19 @@ AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) 
 
 La indexación híbrida conserva responsabilidades separadas: **Tree-sitter** extrae símbolos y aristas verificables; **Qwen 2.5 Coder 3B** enriquece descripciones, conceptos y señales semánticas locales. Qwen sigue siendo útil para significado y ranking, pero no sustituye evidencia estructural ni convierte una inferencia en una llamada demostrada.
 
-El resolvedor estructural v5 sigue receptores encadenados mediante los tipos declarados de campos y propiedades. Por ejemplo, `GameManager.Instance.hud.ShowTurnOrderRoll(...)` se resuelve como `GameHUDController.ShowTurnOrderRoll`; el grafo conserva la cadena, el tipo inferido, archivo y línea como evidencia auditable. Las ambigüedades de llamadas de código se reportan separadas de referencias textuales en documentación.
+El **Analista de Cambios** aplica primero un ranking determinista sobre el índice y entrega un paquete `evidence-v1` acotado. Puede responderse directamente o pasarse a Qwen/API para redactar una estrategia más rica. En ese segundo caso, el modelo recibe targets, métodos, estado, contratos, pruebas, riesgos y operaciones internas ya filtrados; cada afirmación debe citar aliases `N*` y los hechos ausentes no deben inventarse. La reindexación estructural no consume tokens y el uso del modelo ocurre solamente al solicitar razonamiento semántico.
+
+El parser v8 representa cuerpos de método sin enviar el código completo. Cada método puede incluir `ops`: tuplas compactas con tipo, nombre, línea y evidencia para llamadas locales o externas, creación de objetos, asignaciones, declaraciones, retornos y controles. El ranking conserva primero las operaciones relacionadas con la consulta y acciones de alto valor como `AddScoped`, `Publish`, `SaveChanges`, `Skip`, `Take` o `CountAsync`; también preserva la firma de la clase propietaria para contratos inyectados en constructores primarios.
+
+```bash
+# Recomendado para agentes: una sola tool y menor costo acumulado
+aether-graph mcp --path /ruta/proyecto
+
+# Catálogo histórico completo para diagnóstico o clientes existentes
+aether-graph mcp --path /ruta/proyecto --tool-profile full
+```
+
+El resolvedor estructural v6 sigue receptores encadenados mediante los tipos declarados de campos y propiedades. Por ejemplo, `GameManager.Instance.hud.ShowTurnOrderRoll(...)` se resuelve como `GameHUDController.ShowTurnOrderRoll`; el grafo conserva la cadena, el tipo inferido, archivo y línea como evidencia auditable. Las ambigüedades de llamadas de código se reportan separadas de referencias textuales en documentación.
 | `graph_search_concepts` | Busca conceptos semánticos o palabras clave en las descripciones explicativas de nodos (archivos/clases/funciones) y en los nombres de símbolos. | `query` (obligatorio) |
 
 ### 🕒 Herramientas de Memoria de Sesiones (SQLite Local, Gratis)

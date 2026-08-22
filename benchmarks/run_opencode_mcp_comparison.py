@@ -47,15 +47,25 @@ def run_task(project: Path, model: str, variant: str, command: list[str] | None,
     env = os.environ.copy()
     env["OPENCODE_CONFIG_CONTENT"] = config(command, variant.lower(), project)
     started = time.monotonic()
-    process = subprocess.run(
-        ["opencode", "run", "--model", model, "--format", "json", prompt],
-        cwd=project, env=env, text=True, capture_output=True, timeout=600,
-    )
+    timed_out = False
+    try:
+        process = subprocess.run(
+            ["opencode", "run", "--model", model, "--format", "json", prompt],
+            cwd=project, env=env, text=True, capture_output=True, timeout=600,
+        )
+        stdout = process.stdout
+        stderr = process.stderr
+        returncode = process.returncode
+    except subprocess.TimeoutExpired as exc:
+        timed_out = True
+        stdout = exc.stdout.decode(errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+        stderr = exc.stderr.decode(errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+        returncode = 124
     answer: list[str] = []
     tool_calls = 0
     last_tokens = {"input": 0, "output": 0, "reasoning": 0, "total": 0}
     errors: list[str] = []
-    for line in process.stdout.splitlines():
+    for line in stdout.splitlines():
         try:
             event = json.loads(line)
         except json.JSONDecodeError:
@@ -80,12 +90,15 @@ def run_task(project: Path, model: str, variant: str, command: list[str] | None,
         "task_id": task["id"],
         "variant": variant,
         "model": model,
-        "status": "SUCCESS" if process.returncode == 0 and answer else "ERROR",
+        "status": "SUCCESS" if returncode == 0 and answer else "ERROR",
         "duration_seconds": round(time.monotonic() - started, 4),
         "usage": usage,
         "tool_calls": tool_calls,
         "answer": "\n".join(answer),
-        "terminal_error": "\n".join(errors or ([process.stderr.strip()] if process.stderr.strip() else [])),
+        "terminal_error": "\n".join(
+            (["timeout after 600 seconds"] if timed_out else [])
+            + errors + ([stderr.strip()] if stderr.strip() else [])
+        ),
     }
 
 
@@ -99,6 +112,7 @@ def main() -> None:
     parser.add_argument("--graphify", type=Path, required=True)
     parser.add_argument("--variant", choices=("Graphify", "AetherGraph", "Baseline"), action="append")
     parser.add_argument("--task", action="append", help="Ejecuta sólo estos task_id y conserva los demás resultados")
+    parser.add_argument("--output-prefix", default="tour", help="Prefijo estable para los artefactos JSON")
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     tasks = json.loads(args.tasks.read_text(encoding="utf-8"))["tasks"]
@@ -114,7 +128,7 @@ def main() -> None:
     for variant, command in variants.items():
         if variant not in selected:
             continue
-        output = args.output_dir / f"tour_agent_runs_{variant.lower()}_x_preview_f_free.json"
+        output = args.output_dir / f"{args.output_prefix}_agent_runs_{variant.lower()}_x_preview_f_free.json"
         runs: list[dict] = json.loads(output.read_text(encoding="utf-8")) if output.exists() and args.task else []
         by_task = {run["task_id"]: run for run in runs}
         for index, task in enumerate(tasks, 1):

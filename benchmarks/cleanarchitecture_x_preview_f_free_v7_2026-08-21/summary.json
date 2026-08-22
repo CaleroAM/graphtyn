@@ -1,0 +1,42 @@
+{
+  "repository": "https://github.com/ardalis/CleanArchitecture",
+  "revision": "v11.1.1 / 859b115072337b3b7074007f8231d19f24966f1a",
+  "model": "opencode/x-preview-f-free",
+  "feature": "tree-sitter-v7 compact method operations",
+  "tasks": 4,
+  "facts": 24,
+  "policy": "one run per cell; one retry only for ERROR cells; SUCCESS cells are never cherry-picked",
+  "result": {
+    "success": "4/4",
+    "quality": 0.75,
+    "tokens_per_task": 22372,
+    "seconds_per_task": 146.43,
+    "calls_per_task": 8.75,
+    "factual_errors": 0
+  },
+  "relative_to_v6": {
+    "quality_points": 0.4375,
+    "tokens": -0.2925,
+    "seconds": -0.2362,
+    "calls": -0.3396
+  },
+  "relative_to_graphify": {
+    "quality_points": 0.2083,
+    "tokens": 0.1442,
+    "seconds": -0.1276,
+    "calls": -0.6354
+  },
+  "relative_to_baseline": {
+    "quality_points": -0.25,
+    "tokens": -0.0982,
+    "seconds": -0.1985,
+    "calls": -0.6316
+  },
+  "task_quality": {
+    "create-contributor-flow": 1.0,
+    "delete-event-flow": 1.0,
+    "infrastructure-bindings": 0.0,
+    "list-query-flow": 1.0
+  },
+  "limitation": "The infrastructure response stopped after its first section despite process SUCCESS; it was retained by policy and scored zero."
+}

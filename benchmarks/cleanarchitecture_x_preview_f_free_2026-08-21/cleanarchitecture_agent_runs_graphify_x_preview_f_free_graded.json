@@ -1,0 +1,222 @@
+[
+  {
+    "task_id": "create-contributor-flow",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 170.6497,
+    "usage": {
+      "input_tokens": 4440,
+      "output_tokens": 1439,
+      "thinking_tokens": 291,
+      "total_tokens": 18970
+    },
+    "tool_calls": 19,
+    "answer": "El grafo corresponde al proyecto `NimblePros.SampleToDo`. Ahora profundizo en el endpoint HTTP de creación y su cadena de llamadas:\nEl grafo contiene dos proyectos paralelos (`src/Clean.Architecture.*` y `sample/src/NimblePros.SampleToDo.*`). Sigo el del `sample` y verifico la cadena completa endpoint→comando→handler→persistencia:\nYa tengo el endpoint y el handler. Faltan: el vínculo endpoint→comando (MediatR), la validación y la persistencia concreta:\nCasi completo. Verifico el eslabón MediatR (endpoint→handler) y la operación concreta de persistencia (`AddAsync`):\nEl grafo no tiene arista explícita `ExecuteAsync → Handle` para este proyecto (el path encontrado fue de MinimalClean). Últimas verificaciones: métodos del repositorio, cambios de estado del agregado y wiring en `Program`:\n## Flujo completo: POST → Contributor persistido (proyecto `NimblePros.SampleToDo`, según grafo)\n\n### 1. Endpoint HTTP\n- Nodo `Create : Endpoint<CreateContributorRequest, CreateContributorResponse>` — `sample/src/NimblePros.SampleToDo.Web/Contributors/Create.cs:L14`.\n- Aristas evidenciadas: `[inherits]→ Endpoint`, `[references]→ IMediator` (L20), métodos `.Configure()` (L22, configuración de ruta) y `.ExecuteAsync()` (L50).\n- Tipos de retorno en su firma: `Created`, `ValidationProblem`, `ProblemHttpResult`, `Results` (aristas `[references]`, L14/L50).\n\n### 2. Validación\n- **A nivel endpoint**: los retornos `ValidationProblem` / `ProblemHttpResult` indican respuesta de error de validación (evidencia: aristas anteriores).\n- **A nivel dominio**: `ContributorName.Validate() → Validation` (`sample/.../Core/ContributorAggregate/ContributorName.cs:L9`); `CreateContributorCommand [references]→ ContributorName` (`CreateContributorCommand.cs:L9`).\n- ⚠️ El grafo **no contiene** un validador FluentValidation específico para este comando (el nodo `Validator` existe pero sin `src` asociada).\n\n### 3. Comando\n- `CreateContributorCommand [implements]→ ICommand` — `sample/.../UseCases/Contributors/Commands/Create/CreateContributorCommand.cs:L9`.\n\n### 4. Handler\n- `CreateContributorHandler [implements]→ ICommandHandler` (L5), `[references]→ IRepository` (L8), `[references]→ Contributor` y `Result` (L5), método `.Handle()` (L10).\n- Cubierto por test unitario: `CreateContributorHandlerHandle [references]→ CreateContributorHandler` + llamada `.CreateContributor()` (`tests/.../CreateContributorHandlerHandle.cs:L17`).\n\n### 5. Cambios de estado (agregado)\n- `Contributor [inherits]→ EntityBase`, `[implements]→ IAggregateRoot`, campos `ContributorId`/`ContributorName` (`Core/ContributorAggregate/Contributor.cs:L5-L7`); método mutador `.UpdateName()` (L14). Creación verificada por `ContributorConstructor.CreateContributor()` en tests.\n- ⚠️ Para *create* no hay evento de dominio en el grafo; solo existe `ContributorDeletedEvent` + `ContributorDeletedHandler : INotificationHandler` para delete.\n\n### 6. Persistencia\n- `EfRepository [implements]→ IRepository, IReadRepository`, `[inherits]→ RepositoryBase`, campo `AppDbContext` (`sample/.../Infrastructure/Data/EfRepository.cs:L6`).\n- Wiring DI evidenciado por aristas `--calls-->`: `.AddInfrastructureServices()` → `.RegisterEFRepositories()` (`InfrastructureServiceExtensions.cs:L35→L86`) y `.RegisterDevelopmentOnlyDependencies()` → `.AddDbContextWithSqlite()` (L59→L41).\n- Mapeo EF: `AppDbContext [references]→ Contributor` (`Data/AppDbContext.cs:L14`) vía `ContributorConfiguration.Configure()` (L7).\n\n### Gaps explícitos (no asumidos)\nEl grafo **no tiene** aristas de llamada extraídas para: `ExecuteAsync → IMediator.Send` ni `Handle → repository.AddAsync` (el único path `ExecuteAsync↔Handle` hallado pertenece al proyecto paralelo MinimalClean/AddToCart). El despacho MediatR y el `AddAsync` se infieren por las referencias a `IMediator`/`ICommandHandler`/`IRepository`, no por aristas directas.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 3,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.5833,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.5833,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "endpoint",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "command",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "handler",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "persistence",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "phone",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "validation",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "delete-event-flow",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 127.1929,
+    "usage": {
+      "input_tokens": 312,
+      "output_tokens": 97,
+      "thinking_tokens": 35,
+      "total_tokens": 13948
+    },
+    "tool_calls": 17,
+    "answer": "# Trazado de «Eliminar Contributor» (según el grafo Graphify)\n\nEl repo contiene **dos árboles paralelos** con el mismo flujo (`sample/src/NimblePros.SampleToDo.*` y `src/Clean.Architecture.*`). Trazo el de `sample/`, que es donde vive el endpoint consultado.\n\n## 1. Endpoint (Web)\n- Nodo `Delete` → `sample/src/NimblePros.SampleToDo.Web/Contributors/Delete.cs:7`\n  - `Delete --inherits--> Endpoint` (Minimal API, clase que hereda de `Endpoint`)\n  - `Delete --references[field]--> IMediator` en `Delete.cs:13`\n  - `Delete --method--> .ExecuteAsync()` en `Delete.cs:43`, con parámetro `DeleteContributorRequest`, retorno `Task<Results<NoContent, NotFound, ProblemHttpResult>>`\n- DTO de petición: `DeleteContributorRequest` → `sample/src/NimblePros.SampleToDo.Web/Contributors/Delete.DeleteContributorRequest.cs:3`, con `.BuildRoute()` en la línea 6\n\n## 2. Comando y caso de uso\n- `DeleteContributorCommand` → `sample/src/NimblePros.SampleToDo.UseCases/Contributors/Commands/Delete/DeleteContributorCommand.cs:5`\n  - `--implements--> ICommand`, referencia `ContributorId`, retorno `Result`\n- Handler del caso de uso: `DeleteContributorHandler` → `sample/src/NimblePros.SampleToDo.UseCases/Contributors/Commands/Delete/DeleteContributorHandler.cs:5`\n  - `--implements--> ICommandHandler` (L5)\n  - `--references--> IDeleteContributorService` (L7)\n  - método `.Handle()` en L14\n\n## 3. Interfaz e implementación del servicio de dominio\n- **Interfaz**: `IDeleteContributorService` → `sample/src/NimblePros.SampleToDo.Core/Interfaces/IDeleteContributorService.cs:5`; método `.DeleteContributor(ContributorId): Task<Result>` (",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 2,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.4167,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.4167,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "endpoint-command",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "handler-service",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "service-delete",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "event-publish",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "event-handler",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "email",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "infrastructure-bindings",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 185.4401,
+    "usage": {
+      "input_tokens": 1027,
+      "output_tokens": 1217,
+      "thinking_tokens": 285,
+      "total_tokens": 17377
+    },
+    "tool_calls": 29,
+    "answer": "## Auditoría vía grafo (`graphify-out/graph.json`, 2.704 nodos)\n\nExisten 3 variantes de `AddInfrastructureServices`; audito la de `sample/src/NimblePros.SampleToDo.Infrastructure/InfrastructureServiceExtensions.cs` (nodo con grado 8). Las otras dos (`src/Clean.Architecture.Infrastructure` L10, `MinimalClean/...` L10) no tienen aristas `[calls]` extraídas hacia sub-registros.\n\n### 1. Estructura de registro — bindings exactos `[calls]`\n| Origen | Destino | Evidencia |\n|---|---|---|\n| `.AddInfrastructureServices()` | `.RegisterDevelopmentOnlyDependencies()` | L24 |\n| `.AddInfrastructureServices()` | `.RegisterTestingOnlyDependencies()` | L28 |\n| `.AddInfrastructureServices()` | `.RegisterProductionOnlyDependencies()` | L32 |\n| `.AddInfrastructureServices()` | `.RegisterEFRepositories()` | L35 |\n\nReferencias directas del nodo raíz: `IConfiguration`, `ILogger`, `IServiceCollection` (todas en L16).\n\n### 2. Selección de base de datos\n- `.AddDbContextWithSqlite()` (definida en L41) es llamada por **ambos** entornos: `RegisterDevelopmentOnlyDependencies` (L59) y `RegisterProductionOnlyDependencies` (L78) → SQLite en dev **y** prod según el grafo.\n- Contexto: `AppDbContext : DbContext` (AppDbContext.cs L6) con DbSets `ToDoItem` (L12), `Project` (L13), `Contributor` (L14).\n\n### 3. Repositorios\n- `.RegisterEFRepositories()` (L86) solo muestra arista `[references] --> IServiceCollection`; **el grafo no extrajo los AddScoped individuales**.\n- Pareja tipo disponible: `EfRepository` (EfRepository.cs L6) `[implements] --> IRepository` y `IReadRepository`, `[inherits] --> RepositoryBase`.\n\n### 4. Consultas\n- `ListContributorsQueryService` (Data/Queries/ListContributorsQueryService.cs L7) `[implements] --> IListContributorsQueryService` (UseCases L7), usa `AppDbContext` (campo L10), método `.ListAsync()` (L17) → `PagedResult<ContributorDto>`.\n- Sin arista de registro DI hacia este servicio en el grafo.\n\n### 5. Servicio de borrado\n- `DeleteContributorService` está en **Core**, no en Infrastructure (Core/Services/DeleteContributorService.cs L8): `[implements] --> IDeleteContributorService`, inyecta `IRepository` (L10), `IMediator` (L11), `ILogger` (L12); método `.DeleteContributor(ContributorId)` (L23). Ninguna arista de registro lo conecta a `AddInfrastructureServices`.\n\n### 6. Eventos\n- `EventDispatchInterceptor` (EventDispatchInterceptor.cs L7) `[inherits] --> SaveChangesInterceptor`, `[references] --> IDomainEventDispatcher` (L9), override `.SavedChangesAsync()` (L12).\n- `IDomainEventDispatcher` tiene **grado 1**: solo el interceptor la referencia; el grafo no contiene implementación concreta conectada.\n\n### Hallazgo\nEl grafo documenta con precisión la cadena de llamadas de registro y las parejas interfaz/implementación, pero **no contiene aristas de binding DI** (`AddScoped`/`AddTransient`) — afirmar qué servicio concreto queda ligado a qué interfaz sería una suposición fuera del grafo.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 3,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.6667,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.6667,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "repository-bindings",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "query-binding",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "delete-binding",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "dispatcher",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "interceptor",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "database-choice",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "list-query-flow",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 188.1361,
+    "usage": {
+      "input_tokens": 3473,
+      "output_tokens": 1549,
+      "thinking_tokens": 302,
+      "total_tokens": 27916
+    },
+    "tool_calls": 31,
+    "answer": "# Lista paginada de Contributors: evidencia del grafo\n\nEl grafo (2.704 nodos) muestra **dos árboles espejo** con la misma arquitectura: `src/Clean.Architecture.*` y `sample/src/NimblePros.SampleToDo.*`. Presento la del `sample` (donde conviven real + fake con registro DI visible) y señalo equivalencias.\n\n## 1. Abstracción\n- `IListContributorsQueryService` — `UseCases/Contributors/Queries/List/IListContributorsQueryService.cs:7`, método `.ListAsync()` (:9). Arista `--method-->` única.\n- Sus **3 implementadores/referencias** según las aristas `implements`/`references` entrantes:\n  - `FakeListContributorsQueryService --implements-->` (Infrastructure/Data/Queries/FakeListContributorsQueryService.cs:8)\n  - `ListContributorsQueryService --implements-->` (real, mismo directorio :7)\n  - `ListContributorsHandler --references-->` (:5)\n- Idéntico en el árbol `src/`: fake implementa en :7, real en :7, handler referencia en :5.\n\n## 2. Handler\n- `ListContributorsHandler` — `UseCases/.../List/ListContributorsHandler.cs:3`, `--implements--> IQueryHandler` con genéricos `ListContributorsQuery, Result<PagedResult<ContributorDto>>`.\n- `.Handle()` (:12) → `ValueTask`, recibe `CancellationToken` y hace `--calls [INFERRED]--> .ListAsync()` (:16).\n\n## 3. Consulta\n- `ListContributorsQuery` — implementa `IQuery` **e `ICacheable`** (solo en sample), método `.GetCacheKey()` (:8); retorno `Result<PagedResult<ContributorDto>>`. En el árbol `src/` el grafo solo registra la arista `IQuery`.\n- Flujo HTTP: endpoint `List : Endpoint<...>` (Web/Contributors/List.cs:7, genéricos `ListContributorsRequest`, `ContributorListResponse`, `ListContributorsMapper`, campo `IMediator` :9) → `.Configure()` (:11, `calls .Get()`) → `.HandleAsync()` (:48).\n\n## 4. Paginación\n- `PagedResult` (`UseCases/PagedResult.cs:3`) es referenciado por la interfaz y por **ambas** implementaciones (`fake.ListAsync` :10 y `real.ListAsync` :17); hereda/referencia `IReadOnlyList` (:4).\n- Capa Web: `ContributorListResponse : PagedResult` (List.ContributorListResponse.cs:4); `ListContributorsMapper.FromEntity(PagedResult → ContributorListResponse)` (:111–114); cabeceras via `.AddLinkHeader()` llamada desde `.HandleAsync()` (:58); request validada por `ListContributorsValidator : Validator` (:97).\n\n## 5. Diferencias real vs fake (solo lo que el grafo demuestra)\n\n| Aspecto | Real `ListContributorsQueryService` | Fake `FakeListContributorsQueryService` |\n|---|---|---|\n| Interfaz | `implements IListContributorsQueryService` :7 | misma :8 |\n| Fuente de datos | `--references [field]--> AppDbContext` :10 | **ninguna arista hacia AppDbContext** |\n| Firma `.ListAsync()` | :17, genéricos `PagedResult<ContributorDto>` | :10, mismos genéricos |\n| Comunidad | `NimblePros.SampleToDo.UseCases.Contributors.Queries.List` | misma comunidad |\n\n- **DI**: `InfrastructureServiceExtensions` (sample, :14) define `.AddInfrastructureServices()` (:16) que llama `.RegisterTestingOnlyDependencies()` (:28→:66), `.RegisterDevelopmentOnlyDependencies()` y `.RegisterProductionOnlyDependencies()`. ⚠️ Límite del grafo: **no existe arista explícita** que vincule `FakeListContributorsQueryService` con `RegisterTestingOnlyDependencies`; esa conexión no es demostrable aquí.\n- Test funcional `ContributorList.ReturnsTwoContributors()` (`[Fact]`, FunctionalTests/Contributors/ContributorList.cs:16) espera 2 contributors.\n- El grafo **no captura cuerpos de métodos**: no hay evidencia de `Skip/Take` ni de cómo cada uno pagina internamente; eso queda fuera de lo verificable.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 1,
+    "partial": 4,
+    "total": 6,
+    "quality_score": 0.5,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.5,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "handler",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "pagination-default",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "real-query",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "real-pagination",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "real-count",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "fake-query",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  }
+]

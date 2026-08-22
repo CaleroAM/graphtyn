@@ -12,6 +12,7 @@ from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
 from ..core.watcher import WatchManager
 from ..core.impact import analyze_impact
+from ..core.change_analyst import analyze_change, query_intent
 from ..core.index_quality import index_quality
 from ..core.storage import project_store_dir
 from ..core.graph_scope import filter_graph_scope
@@ -649,6 +650,8 @@ def watch_status():
 
 
 _HTTP_MCP_TOOLS = [
+    {"name": "graph_query_intent", "description": "Consulta de una ronda optimizada para flow/bindings/persistence/tests/impact.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "request": {"type": "string"}, "intent": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["request"]}},
+    {"name": "graph_analyze_change", "description": "Plan verificable de cambio: targets, contratos, estado, pruebas y riesgos.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "request": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["request"]}},
     {"name": "graph_context_bundle", "description": "Vecindad e impacto de varios símbolos en una llamada compacta.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "symbols": {"type": "array", "items": {"type": "string"}, "maxItems": 10}, "depth": {"type": "integer"}, "limit": {"type": "integer"}}, "required": ["symbols"]}},
     {"name": "graph_neighborhood", "description": "Subgrafo alrededor de un símbolo.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "symbol": {"type": "string"}, "depth": {"type": "integer"}}}},
     {"name": "graph_blast_radius", "description": "Radio de impacto de un símbolo.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "symbol": {"type": "string"}, "depth": {"type": "integer"}}, "required": ["symbol"]}},
@@ -680,7 +683,11 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
         if not root.is_dir():
             return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Ruta de proyecto inválida"}})
         graph = get_workspace_graph(root, parser)
-        if name == "graph_context_bundle":
+        if name == "graph_query_intent":
+            data = query_intent(graph, str(args.get("request") or ""), str(args.get("intent") or "auto"), max(4, min(24, int(args.get("limit") or 10))))
+        elif name == "graph_analyze_change":
+            data = analyze_change(graph, str(args.get("request") or ""), max(6, min(40, int(args.get("limit") or 18))))
+        elif name == "graph_context_bundle":
             data = context_bundle(graph, args.get("symbols") or [], int(args.get("depth", 1)), int(args.get("limit") or 20))
         elif name == "graph_neighborhood":
             symbol = str(args.get("symbol", "")).strip()

@@ -26,6 +26,146 @@ def test_extended_tree_sitter_languages(tmp_path, module, filename, source, expe
     assert result and expected <= {symbol["name"] for symbol in result["symbols"]}
 
 
+def test_csharp_members_are_typed_graph_entities(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    source = tmp_path / "AuctionService.cs"
+    source.write_text("""
+public class AuctionService {
+    private int _currentBid;
+    public string Winner { get; private set; }
+    public event System.Action<int> BidChanged;
+}
+""", encoding="utf-8")
+    parsed = parse_file(source, source.name)
+    by_name = {member["name"]: member for member in parsed["members"]}
+    assert by_name["_currentBid"]["kind"] == "field"
+    assert by_name["Winner"]["kind"] == "property"
+    assert by_name["BidChanged"]["kind"] == "event"
+    graph = ASTParser().scan_directory(tmp_path)
+    graph_members = {node["name"]: node for node in graph["nodes"] if node.get("kind") in {"field", "property", "event"}}
+    assert graph_members["_currentBid"]["member_type"] == "int"
+    assert graph_members["BidChanged"]["container"] == "AuctionService"
+    assert any(link["label"] == "declara" and link["target"] == graph_members["Winner"]["id"] for link in graph["links"])
+
+
+def test_change_analyst_returns_grounded_targets_state_and_contracts(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    (tmp_path / "AuctionService.cs").write_text("""
+public class AuctionService {
+    private int _currentBid;
+    public int CurrentBid { get; private set; }
+    public event System.Action<int> BidChanged;
+    public void PlaceBid(int amount) { CurrentBid = amount; BidChanged?.Invoke(amount); }
+}
+""", encoding="utf-8")
+    from aether_graph.core.change_analyst import analyze_change
+    graph = ASTParser().scan_directory(tmp_path)
+    result = analyze_change(graph, "Cambiar AuctionService CurrentBid y el evento BidChanged")
+    assert result["plan"]["confidence"] == "high"
+    assert result["plan"]["target_ids"]
+    assert result["plan"]["state"]
+    assert result["plan"]["contracts"]
+    place_bid = next(node for node in result["nodes"] if node.get("name") == "PlaceBid")
+    assert {op["kind"] for op in place_bid["operations"]} >= {"assign", "call"}
+    assert result["plan"]["risks"]
+
+
+def test_csharp_method_operations_preserve_external_calls_and_returns(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    (tmp_path / "Bindings.cs").write_text("""
+public static class Bindings {
+  public static object Register(IServiceCollection services) {
+    services.AddScoped<IRepository, EfRepository>()
+            .AddScoped<IQuery, SqlQuery>();
+    return services;
+  }
+}
+""", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path)
+    register = next(node for node in graph["nodes"] if node.get("name") == "Register")
+    operation_text = " ".join(op["text"] for op in register["operations"])
+    assert "AddScoped<IRepository, EfRepository>" in operation_text
+    assert "AddScoped<IQuery, SqlQuery>" in operation_text
+    assert any(op["kind"] == "return" and op["line"] == 6 for op in register["operations"])
+
+
+def test_query_intent_filters_bindings_into_one_shot_package(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    (tmp_path / "Bindings.cs").write_text("""
+public static class Bindings {
+  public static void AddInfrastructureServices(IServiceCollection services) {
+    services.AddScoped<IRepository, EfRepository>();
+    services.AddScoped<IQuery, SqlQuery>();
+  }
+}
+""", encoding="utf-8")
+    from aether_graph.core.change_analyst import query_intent
+    result = query_intent(ASTParser().scan_directory(tmp_path), "Audita bindings AddScoped", "auto", 6)
+    assert result["intent"] == "bindings"
+    assert result["complete_for"] == ["bindings"]
+    assert result["do_not_expand"] is True
+    text = json.dumps(result["nodes"])
+    assert "IRepository" in text and "IQuery" in text
+    assert len(result["nodes"]) <= 6
+
+
+def test_query_intent_keeps_exact_python_component_without_flow_markers(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    (tmp_path / "sessions.py").write_text("""
+class SessionMiddleware:
+    async def __call__(self, scope, receive, send):
+        data = self.signer.unsign(scope["cookie"])
+        await self.app(scope, receive, send)
+""", encoding="utf-8")
+    from aether_graph.core.change_analyst import query_intent
+    result = query_intent(
+        ASTParser().scan_directory(tmp_path),
+        "Audita el ciclo completo de SessionMiddleware y su firma",
+        "flow",
+        6,
+    )
+    assert any(node.get("container") == "SessionMiddleware" for node in result["nodes"])
+
+
+def test_tree_sitter_python_empty_file_does_not_crash(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    (tmp_path / "empty.py").write_text("", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path)
+    assert graph["metadata"]["structural_parser"]
+
+
+def test_laravel_routes_connect_tsx_controller_request_model_and_event(tmp_path):
+    pytest.importorskip("tree_sitter_php")
+    (tmp_path / "routes").mkdir()
+    (tmp_path / "app" / "Http" / "Controllers").mkdir(parents=True)
+    (tmp_path / "app" / "Http" / "Requests").mkdir(parents=True)
+    (tmp_path / "app" / "Models").mkdir(parents=True)
+    (tmp_path / "app" / "Events").mkdir(parents=True)
+    (tmp_path / "resources" / "js" / "pages").mkdir(parents=True)
+    (tmp_path / "routes" / "web.php").write_text("""<?php
+Route::post('proposals', [ProposalController::class, 'store'])->name('proposals.store');
+""", encoding="utf-8")
+    (tmp_path / "app" / "Http" / "Controllers" / "ProposalController.php").write_text("""<?php
+class ProposalController {
+ public function store(StoreProposalRequest $request) {
+  $proposal = new Proposal();
+  $proposal->save();
+  ProposalCreated::dispatch($proposal);
+ }
+}
+""", encoding="utf-8")
+    (tmp_path / "app" / "Http" / "Requests" / "StoreProposalRequest.php").write_text("<?php class StoreProposalRequest {}", encoding="utf-8")
+    (tmp_path / "app" / "Models" / "Proposal.php").write_text("<?php class Proposal {}", encoding="utf-8")
+    (tmp_path / "app" / "Events" / "ProposalCreated.php").write_text("<?php class ProposalCreated {}", encoding="utf-8")
+    (tmp_path / "resources" / "js" / "pages" / "Create.tsx").write_text("router.post(route('proposals.store'));", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path)
+    labels = {link["label"] for link in graph["links"]}
+    assert {"despacha", "invoca ruta", "valida con", "crea", "despacha evento"} <= labels
+    store = next(node for node in graph["nodes"] if node.get("container") == "ProposalController" and node.get("name") == "store")
+    assert store["parser"] == "tree-sitter"
+    assert {op["kind"] for op in store["operations"]} >= {"new", "call"}
+
+
 def test_benchmark_ground_truth(tmp_path):
     (tmp_path / "service.py").write_text("class Service:\n    def run(self):\n        pass\n", encoding="utf-8")
     truth = tmp_path / "truth.json"
@@ -89,6 +229,7 @@ def test_http_mcp_requires_token_and_serves_tools(monkeypatch):
     assert allowed.status_code == 200
     assert "graph_pr_impact" in {tool["name"] for tool in body["result"]["tools"]}
     assert "graph_context_bundle" in {tool["name"] for tool in body["result"]["tools"]}
+    assert "graph_analyze_change" in {tool["name"] for tool in body["result"]["tools"]}
 
 
 def test_semantic_media_edges_include_auditable_evidence():

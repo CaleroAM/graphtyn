@@ -12,6 +12,7 @@ from .core.agent_benchmark import compare_agent_runs
 from .core.agent_eval import grade_runs
 from .core.external_benchmark import score_graphify
 from .core.impact import analyze_impact
+from .core.change_analyst import analyze_change, query_intent
 from .core.storage import project_store_dir
 from .mcp_server import context_bundle, run_mcp_server
 
@@ -73,6 +74,17 @@ def main():
     context_p.add_argument("--limit", type=int, default=12, help="Presupuesto global máximo de nodos")
     context_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
+    change_p = subparsers.add_parser("analyze-change", help="Planifica un cambio con evidencia estructural compacta")
+    change_p.add_argument("request", help="Issue, requisito o petición de cambio")
+    change_p.add_argument("--limit", type=int, default=18, help="Máximo de entidades de evidencia")
+    change_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
+    intent_p = subparsers.add_parser("query-intent", help="Contexto de una ronda optimizado por intención")
+    intent_p.add_argument("request", help="Pregunta o tarea completa")
+    intent_p.add_argument("--intent", default="auto", choices=["auto", "flow", "bindings", "persistence", "tests", "impact"])
+    intent_p.add_argument("--limit", type=int, default=10, help="Máximo de entidades")
+    intent_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
     # path
     path_p = subparsers.add_parser("path", help="Encuentra la ruta de conexión entre dos símbolos")
     path_p.add_argument("start_symbol", help="Símbolo inicial")
@@ -127,6 +139,7 @@ def main():
     # mcp
     mcp_p = subparsers.add_parser("mcp", help="Inicia el servidor Model Context Protocol (MCP) por stdio")
     mcp_p.add_argument("--path", default=".", help="Ruta del proyecto")
+    mcp_p.add_argument("--tool-profile", choices=["intent", "full"], default="intent", help="intent expone una sola tool y reduce tokens; full conserva catálogo legado")
 
     # serve
     serve_p = subparsers.add_parser("serve", help="Inicia el demonio HTTP local")
@@ -191,6 +204,16 @@ def main():
         q = args.query_text.lower()
         matches = [n for n in graph["nodes"] if q in n["name"].lower() or q in n.get("details", "").lower()]
         print(json.dumps({"query": args.query_text, "matches": matches}, indent=2))
+
+    elif args.command == "query-intent":
+        graph = ASTParser().scan_directory(root, respect_git=True)
+        result = query_intent(graph, args.request, args.intent, args.limit)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+
+    elif args.command == "analyze-change":
+        graph = ASTParser().scan_directory(root, respect_git=True)
+        result = analyze_change(graph, args.request, args.limit)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
 
     elif args.command == "context":
         # CLI context is also the recovery path when an agent daemon has a
@@ -305,7 +328,7 @@ def main():
 
 
     elif args.command == "mcp":
-        run_mcp_server(root)
+        run_mcp_server(root, args.tool_profile)
 
     elif args.command == "serve":
         import os

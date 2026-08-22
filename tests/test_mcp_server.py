@@ -44,9 +44,58 @@ def test_mcp_initialize_and_tools_list(workspace):
     tools = next(r for r in resp if r.get("id") == 2)
     names = {t["name"] for t in tools["result"]["tools"]}
     assert {"graph_neighborhood", "graph_blast_radius", "graph_search_concepts",
-            "graph_context_bundle",
+            "graph_context_bundle", "graph_analyze_change", "graph_query_intent",
             "graph_history_search", "graph_history_timeline", "graph_history_get",
             "graph_register_project"} <= names
+
+
+def test_mcp_intent_profile_exposes_only_one_tool(workspace):
+    runner = "from pathlib import Path\nfrom aether_graph.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'intent')\n"
+    res = subprocess.run(
+        [str(VENV_PY), "-c", runner % str(workspace)],
+        input=json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}) + "\n",
+        capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ),
+    )
+    response = json.loads(res.stdout.strip())
+    assert [tool["name"] for tool in response["result"]["tools"]] == ["graph_query_intent"]
+
+
+def test_mcp_change_analyst_is_compact_and_grounded(workspace):
+    _, resp = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 33, "method": "tools/call",
+        "params": {"name": "graph_analyze_change", "arguments": {"request": "Cambiar helper y sus consumidores"}}}])
+    result = json.loads(resp[0]["result"]["content"][0]["text"])
+    assert result["format"] == "evidence-v1"
+    assert result["plan"]["target_ids"]
+    assert all(target.startswith("N") for target in result["plan"]["target_ids"])
+    assert result["grounding"].startswith("deterministic-index")
+
+
+def test_mcp_query_intent_supports_one_shot_and_delta(workspace):
+    (workspace / "flow.py").write_text("def run():\n    return helper()\n", encoding="utf-8")
+    _, first_response = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 34, "method": "tools/call",
+        "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8}}}])
+    first = json.loads(first_response[0]["result"]["content"][0]["text"])
+    assert first["planner"] == "intent-v1"
+    assert first["do_not_expand"] is True
+    assert first["context_id"]
+    # Delta must be exercised in the same MCP process because contexts are
+    # intentionally session-local and never persisted to the repository.
+    requests = [
+        {"jsonrpc": "2.0", "id": 35, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8}}},
+    ]
+    _, seed_response = _mcp_call(workspace, requests)
+    seed = json.loads(seed_response[0]["result"]["content"][0]["text"])
+    # Use a direct server transcript with two calls so the second can extend
+    # the first; obtain the deterministic context id from an equivalent call.
+    _, responses = _mcp_call(workspace, [
+        {"jsonrpc": "2.0", "id": 36, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8}}},
+        {"jsonrpc": "2.0", "id": 37, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8, "extends_context_id": seed["context_id"]}}},
+    ])
+    delta = json.loads(responses[1]["result"]["content"][0]["text"])
+    assert delta["format"] == "evidence-delta-v1"
+    assert delta["entities"] == {}
+    assert delta["relations"] == []
+    assert delta["estimated_tokens"] < first["estimated_tokens"]
 
 
 def test_mcp_graph_neighborhood(workspace):
@@ -172,6 +221,21 @@ def test_evidence_format_deduplicates_paths_and_reduces_payload():
     assert len(compact_text) < len(raw_text) * 0.6
     assert list(compact["files"].values()) == [path]
     assert len(compact["relations"]) == 7
+
+
+def test_evidence_prioritizes_query_relevant_operations():
+    from aether_graph.mcp_server import evidence_result
+    node = {
+        "id": "symbol:a.cs:Register", "name": "Register", "kind": "method", "file": "a.cs", "line": 1,
+        "operations": [
+            {"kind": "call", "name": f"Noise{i}", "line": i + 2, "text": f"Noise{i}()"}
+            for i in range(15)
+        ] + [{"kind": "call", "name": "AddScoped", "line": 40, "text": "services.AddScoped<IRepo, EfRepo>()"}],
+    }
+    compact = evidence_result({"query": "bindings AddScoped", "matches": [node], "links": []}, max_nodes=1)
+    ops = compact["entities"]["N1"]["ops"]
+    assert any(op[1] == "AddScoped" for op in ops)
+    assert len(ops) == 10
 
 
 def test_mcp_history_flow(workspace):

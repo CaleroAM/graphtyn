@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v5"
+PARSER_VERSION = "treesitter-v9-laravel"
 
 
 def _language_for_extension(ext: str):
@@ -27,6 +27,9 @@ def _language_for_extension(ext: str):
         import tree_sitter_typescript as grammar
         raw = grammar.language_tsx() if ext == ".tsx" else grammar.language_typescript()
         return Language(raw)
+    if ext == ".php":
+        import tree_sitter_php as grammar
+        return Language(grammar.language_php())
     grammar_modules = {
         ".py": "tree_sitter_python",
         ".java": "tree_sitter_java",
@@ -106,6 +109,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     calls: list[dict[str, Any]] = []
     imports: list[dict[str, Any]] = []
     members: list[dict[str, Any]] = []
+    operations: list[dict[str, Any]] = []
     namespace = ""
 
     symbol_types = {
@@ -129,10 +133,11 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "enum_item": "enum",
         "trait_item": "interface",
         "type_declaration": "type",
+        "trait_declaration": "interface",
     }
-    call_types = {"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression"}
-    import_types = {"using_directive", "import_statement", "import_from_statement", "import_declaration", "package_clause", "use_declaration"}
-    type_declarations = {"class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item"}
+    call_types = {"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression", "function_call_expression", "member_call_expression", "scoped_call_expression"}
+    import_types = {"using_directive", "import_statement", "import_from_statement", "import_declaration", "package_clause", "use_declaration", "namespace_use_declaration"}
+    type_declarations = {"class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item", "trait_declaration"}
     callable_declarations = {"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item"}
 
     def visit(node) -> None:
@@ -143,19 +148,20 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         # handles on deeply nested real-world files.
         line = node.start_point.row + 1
         end_line = node.end_point.row + 1
-        evidence = _text(source, node).splitlines()[0].strip()[:240]
+        node_lines = _text(source, node).splitlines()
+        evidence = node_lines[0].strip()[:240] if node_lines else ""
 
-        if node.type in {"field_declaration", "property_declaration"}:
+        if node.type in {"field_declaration", "property_declaration", "event_declaration", "event_field_declaration"}:
             type_node = node.child_by_field_name("type")
             variable_declaration = None
-            if node.type == "field_declaration":
+            if node.type in {"field_declaration", "event_field_declaration"}:
                 variable_declaration = next((child for child in node.named_children if child.type == "variable_declaration"), None)
                 if type_node is None and variable_declaration is not None:
                     type_node = variable_declaration.child_by_field_name("type")
             type_name = _text(source, type_node) if type_node is not None else ""
             container = _ancestor_name(source, node, type_declarations)
             if container and type_name:
-                if node.type == "property_declaration":
+                if node.type in {"property_declaration", "event_declaration"}:
                     name_node = node.child_by_field_name("name")
                     names = [_text(source, name_node)] if name_node is not None else []
                 else:
@@ -167,7 +173,13 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                                 if name_node is not None:
                                     names.append(_text(source, name_node))
                 for member_name in names:
-                    members.append({"container": container, "name": member_name, "type": type_name, "line": line})
+                    kind = "event" if node.type.startswith("event_") else ("property" if node.type == "property_declaration" else "field")
+                    members.append({
+                        "container": container, "name": member_name, "kind": kind,
+                        "type": type_name, "file": rel_path, "line": line,
+                        "end_line": end_line, "signature": evidence,
+                        "evidence": evidence, "parser": "tree-sitter",
+                    })
         elif node.type == "variable_declarator":
             value = node.child_by_field_name("value")
             name_node = node.child_by_field_name("name")
@@ -208,6 +220,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                         and "=" not in _text(source, child)
                         for child in parameters.named_children
                     )
+                signature = " ".join(_text(source, node).split())
+                signature = signature.split("{", 1)[0].split("=>", 1)[0].strip()[:300]
                 symbols.append({
                     "name": name,
                     "kind": kind,
@@ -221,7 +235,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     "parameter_count": parameter_count,
                     "required_parameter_count": required_parameter_count,
                     "is_constructor": node.type == "constructor_declaration",
-                    "signature": evidence,
+                    "signature": signature or evidence,
                 })
         elif node.type in call_types:
             name = _call_name(source, node)
@@ -241,9 +255,46 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     "container": _ancestor_name(source, node, type_declarations),
                     "call_kind": node.type,
                 })
+                operation_text = " ".join(_text(source, node).split())[:300]
+                operations.append({
+                    "kind": "new" if node.type in ("new_expression", "object_creation_expression") else "call",
+                    "name": name, "line": line, "text": operation_text,
+                    "caller": _ancestor_name(source, node, callable_declarations),
+                    "container": _ancestor_name(source, node, type_declarations),
+                })
+        elif node.type in {"assignment_expression", "assignment", "augmented_assignment_expression"}:
+            left = node.child_by_field_name("left")
+            operations.append({
+                "kind": "assign", "name": _text(source, left)[:80] if left is not None else "",
+                "line": line, "text": " ".join(_text(source, node).split())[:300],
+                "caller": _ancestor_name(source, node, callable_declarations),
+                "container": _ancestor_name(source, node, type_declarations),
+            })
+        elif node.type == "return_statement":
+            operations.append({
+                "kind": "return", "name": "", "line": line, "text": " ".join(_text(source, node).split())[:300],
+                "caller": _ancestor_name(source, node, callable_declarations),
+                "container": _ancestor_name(source, node, type_declarations),
+            })
+        elif node.type in {"local_declaration_statement", "lexical_declaration"}:
+            operations.append({
+                "kind": "declare", "name": "", "line": line, "text": " ".join(_text(source, node).split())[:300],
+                "caller": _ancestor_name(source, node, callable_declarations),
+                "container": _ancestor_name(source, node, type_declarations),
+            })
+        elif node.type in {"if_statement", "for_statement", "while_statement", "switch_statement", "throw_statement"}:
+            header = " ".join(_text(source, node).split())
+            # Keep the condition/header, not the entire nested body.
+            header = header.split("{", 1)[0].strip()[:300]
+            operations.append({
+                "kind": "control", "name": node.type.removesuffix("_statement"),
+                "line": line, "text": header,
+                "caller": _ancestor_name(source, node, callable_declarations),
+                "container": _ancestor_name(source, node, type_declarations),
+            })
         elif node.type in import_types:
             imports.append({"text": evidence, "line": line})
-        elif node.type in {"namespace_declaration", "file_scoped_namespace_declaration"}:
+        elif node.type in {"namespace_declaration", "file_scoped_namespace_declaration", "namespace_definition"}:
             name_node = node.child_by_field_name("name")
             if name_node is not None:
                 namespace = _text(source, name_node)
@@ -284,5 +335,6 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "calls": calls,
         "imports": imports,
         "members": members,
+        "operations": operations,
         "namespace": namespace,
     }

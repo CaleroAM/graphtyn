@@ -80,7 +80,7 @@ class ASTParser:
                 pass
 
         def _tree_facts(path: Path, rel_file: str) -> Optional[Dict[str, Any]]:
-            if path.suffix.lower() not in (".cs", ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".go", ".rs"):
+            if path.suffix.lower() not in (".cs", ".php", ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".go", ".rs"):
                 return None
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             cached = structural_cache.get("files", {}).get(rel_file, {})
@@ -133,8 +133,85 @@ class ASTParser:
                     "color": "rgba(148, 163, 184, 0.2)", "confidence": "EXTRACTED",
                     "file": rel_file, "line": sym["line"], "evidence": sym.get("evidence", ""),
                 })
+                container = sym.get("container", "")
+                if container:
+                    owner = next((
+                        node["id"] for node in nodes
+                        if node.get("name") == container and node.get("file") == rel_file
+                        and node.get("kind") in ("class", "interface", "struct")
+                    ), None)
+                    if owner:
+                        links.append({
+                            "source": owner, "target": sym_id, "label": "declara",
+                            "color": "rgba(192, 132, 252, 0.3)", "confidence": "EXTRACTED",
+                            "file": rel_file, "line": sym["line"], "evidence": sym.get("evidence", ""),
+                        })
                 for base in sym.get("bases", []):
                     pending_inheritance.append((sym_id, base, rel_file, sym["line"], sym.get("evidence", "")))
+            for member in result.get("members", []):
+                name = member.get("name", "")
+                container = member.get("container", "")
+                kind = member.get("kind", "field")
+                if not name or not container:
+                    continue
+                sym_id = f"symbol:{rel_file}:{container}.{name}"
+                if sym_id in node_ids:
+                    continue
+                member_type = member.get("type", "")
+                nodes.append({
+                    "id": sym_id, "name": name, "kind": kind,
+                    "val": 2, "color": "#fb7185" if kind == "event" else "#c084fc",
+                    "details": f"{kind.capitalize()} {member_type} en {rel_file}:{member['line']}",
+                    "file": rel_file, "line": member["line"],
+                    "end_line": member.get("end_line", member["line"]),
+                    "evidence": member.get("evidence", ""), "parser": "tree-sitter",
+                    "namespace": namespace, "container": container,
+                    "member_type": member_type, "signature": member.get("signature", ""),
+                    "assembly": next((node.get("assembly") for node in nodes if node.get("id") == f_id), None),
+                })
+                node_ids.add(sym_id)
+                _register_symbol(name, sym_id)
+                container_ids = [
+                    node["id"] for node in nodes
+                    if node.get("name") == container and node.get("file") == rel_file
+                    and node.get("kind") in ("class", "interface", "struct")
+                ]
+                links.append({
+                    "source": container_ids[0] if container_ids else f_id,
+                    "target": sym_id, "label": "declara", "confidence": "EXTRACTED",
+                    "file": rel_file, "line": member["line"],
+                    "evidence": member.get("evidence", ""),
+                    "color": "rgba(192, 132, 252, 0.3)",
+                })
+            # Keep method-body evidence bounded and attached to its declaring
+            # callable. This preserves external/framework operations even when
+            # no local target node exists, without creating noisy fake edges.
+            seen_operations: Dict[str, Set[tuple]] = {}
+            for operation in result.get("operations", []):
+                caller = operation.get("caller", "")
+                container = operation.get("container", "")
+                line = int(operation.get("line") or 0)
+                candidates = [
+                    node for node in nodes
+                    if node.get("file") == rel_file and node.get("name") == caller
+                    and node.get("kind") in ("method", "function")
+                    and (not container or node.get("container") == container)
+                    and int(node.get("line") or 0) <= line <= int(node.get("end_line") or line)
+                ]
+                if not candidates:
+                    continue
+                owner = min(candidates, key=lambda node: int(node.get("end_line") or line) - int(node.get("line") or 0))
+                key = (operation.get("kind"), operation.get("name"), line, operation.get("text"))
+                bucket = seen_operations.setdefault(owner["id"], set())
+                if key in bucket or len(bucket) >= 64:
+                    continue
+                bucket.add(key)
+                owner.setdefault("operations", []).append({
+                    "kind": operation.get("kind", "operation"),
+                    "name": operation.get("name", ""),
+                    "line": line,
+                    "text": str(operation.get("text") or "")[:300],
+                })
 
         ignored_parts = {
             "vendor", "venv", ".venv", "node_modules", "__pycache__", "Library",
@@ -275,6 +352,11 @@ class ASTParser:
                 file_contents[rel_file] = content
                 ns_match = re.search(r"namespace\s+([A-Za-z0-9_\\]+);", content)
                 ns = ns_match.group(1) if ns_match else ""
+
+                tree_result = _tree_facts(path, rel_file)
+                if tree_result is not None:
+                    _add_tree_symbols(tree_result, f_id, ns)
+                    continue
 
                 for m in re.finditer(r"(class|interface|trait|enum)\s+([A-Za-z0-9_]+)(\s+extends\s+([A-Za-z0-9_\\]+))?", content):
                     kind = m.group(1)
@@ -621,6 +703,9 @@ class ASTParser:
                     })
 
         # Pass 5: Cross-symbol fallback resolution for legacy parsers.
+        from .laravel_resolver import add_laravel_relations
+        laravel_stats = add_laravel_relations(nodes, links, file_contents)
+
         keyword_noise = {
             "for", "foreach", "if", "else", "in", "is", "as", "and", "or", "not", "new", "var",
             "int", "string", "bool", "void", "set", "get", "add", "remove", "this", "base",
@@ -677,6 +762,7 @@ class ASTParser:
                 "structural_parser": "tree-sitter+fallback" if tree_parsed_files else "builtin-fallback",
                 "tree_sitter_files": len(tree_parsed_files),
                 "structural_cache": bool(cache_path),
+                "laravel_routes": laravel_stats["routes"],
             },
         })
 
