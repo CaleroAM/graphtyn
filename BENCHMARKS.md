@@ -18,6 +18,12 @@ Las relaciones `AMBIGUOUS` indican varios destinos estructuralmente compatibles,
 
 El índice activo medido contiene 67 aristas ambiguas de 1,689. El perfil `production` elimina cruces con pruebas/backups y deja 53 de 1,304; las 14 restantes no se borran porque requieren mejor resolución del receptor. El perfil `legacy` contiene 103 nodos y 114 enlaces sin ambigüedad interna. Estas cifras describen el índice activo y pueden cambiar tras reindexar.
 
+### Resolución estructural v5
+
+Una reindexación limpia sobre el índice completo añadió tipos de campos y propiedades, además de cadenas de receptores como `GameManager.Instance.hud`. El resultado pasó de **67 relaciones ambiguas a 3** sobre 901 nodos y 1,482 enlaces. Las llamadas de código ambiguas quedaron en **0**; las tres restantes son referencias textuales `usa` desde `architecture_review.md`, donde nombres como `Show`, `Hide` y una sobrecarga de `StartGame` no identifican un único símbolo.
+
+Ejemplo resuelto con evidencia: `GameManager.Instance.hud.ShowTurnOrderRoll(...)` se dirige únicamente a `GameHUDController.ShowTurnOrderRoll`, aun cuando existen tres métodos con ese nombre. La resolución registra `receiver_chain`, `receiver_type`, archivo y línea. La ejecución fría medida tardó 1.20 segundos y la ejecución desde caché 0.7 segundos en el hardware de prueba.
+
 Qwen 2.5 Coder 3B sigue siendo la capa local de enriquecimiento semántico y ranking. Tree-sitter conserva la autoridad sobre hechos estructurales verificables; el modelo no inventa aristas de llamadas.
 
 ## UnityCommerceDemo — corpus real (21 ago 2026)

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v4"
+PARSER_VERSION = "treesitter-v5"
 
 
 def _language_for_extension(ext: str):
@@ -105,6 +105,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     symbols: list[dict[str, Any]] = []
     calls: list[dict[str, Any]] = []
     imports: list[dict[str, Any]] = []
+    members: list[dict[str, Any]] = []
     namespace = ""
 
     symbol_types = {
@@ -144,7 +145,30 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         end_line = node.end_point.row + 1
         evidence = _text(source, node).splitlines()[0].strip()[:240]
 
-        if node.type == "variable_declarator":
+        if node.type in {"field_declaration", "property_declaration"}:
+            type_node = node.child_by_field_name("type")
+            variable_declaration = None
+            if node.type == "field_declaration":
+                variable_declaration = next((child for child in node.named_children if child.type == "variable_declaration"), None)
+                if type_node is None and variable_declaration is not None:
+                    type_node = variable_declaration.child_by_field_name("type")
+            type_name = _text(source, type_node) if type_node is not None else ""
+            container = _ancestor_name(source, node, type_declarations)
+            if container and type_name:
+                if node.type == "property_declaration":
+                    name_node = node.child_by_field_name("name")
+                    names = [_text(source, name_node)] if name_node is not None else []
+                else:
+                    names = []
+                    if variable_declaration is not None:
+                        for declaration in variable_declaration.named_children:
+                            if declaration.type == "variable_declarator":
+                                name_node = declaration.child_by_field_name("name")
+                                if name_node is not None:
+                                    names.append(_text(source, name_node))
+                for member_name in names:
+                    members.append({"container": container, "name": member_name, "type": type_name, "line": line})
+        elif node.type == "variable_declarator":
             value = node.child_by_field_name("value")
             name_node = node.child_by_field_name("name")
             if value is not None and value.type in ("arrow_function", "function_expression") and name_node is not None:
@@ -205,10 +229,13 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                 target = node.child_by_field_name("function")
                 raw_target = _text(source, target) if target is not None else ""
                 receiver = raw_target.rsplit(".", 1)[0].split(".")[-1] if "." in raw_target else ""
+                import re
+                chain = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", raw_target.rsplit(".", 1)[0]) if "." in raw_target else []
                 args = node.child_by_field_name("arguments")
                 calls.append({
                     "name": name, "line": line, "evidence": evidence,
                     "receiver": receiver,
+                    "receiver_chain": chain,
                     "argument_count": args.named_child_count if args is not None else None,
                     "caller": _ancestor_name(source, node, callable_declarations),
                     "container": _ancestor_name(source, node, type_declarations),
@@ -256,5 +283,6 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "symbols": symbols,
         "calls": calls,
         "imports": imports,
+        "members": members,
         "namespace": namespace,
     }

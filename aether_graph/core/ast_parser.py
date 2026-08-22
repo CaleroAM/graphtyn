@@ -66,6 +66,7 @@ class ASTParser:
         pending_inheritance: List[tuple] = []
         tree_calls: Dict[str, List[Dict[str, Any]]] = {}
         tree_imports: Dict[str, List[Dict[str, Any]]] = {}
+        tree_members: Dict[str, List[Dict[str, Any]]] = {}
         file_namespaces: Dict[str, str] = {}
         tree_parsed_files: Set[str] = set()
 
@@ -99,6 +100,7 @@ class ASTParser:
             tree_parsed_files.add(rel_file)
             tree_calls[rel_file] = result.get("calls", [])
             tree_imports[rel_file] = result.get("imports", [])
+            tree_members[rel_file] = result.get("members", [])
             namespace = result.get("namespace") or namespace or file_namespaces.get(rel_file, "")
             file_namespaces[rel_file] = namespace
             for sym in result.get("symbols", []):
@@ -465,6 +467,40 @@ class ASTParser:
         # Pass 4: Resolve precise tree-sitter inheritance and call evidence.
         node_by_id = {node["id"]: node for node in nodes}
 
+        def _simple_type(value: str) -> str:
+            value = re.sub(r"\b(?:ref|out|in|params)\s+", "", str(value or "")).strip()
+            value = re.sub(r"[?\[\]].*", "", value)
+            value = value.split("<", 1)[0]
+            return value.rsplit(".", 1)[-1]
+
+        member_types: Dict[tuple[str, str], str] = {}
+        for file_members in tree_members.values():
+            for member in file_members:
+                container = _simple_type(member.get("container", ""))
+                name = member.get("name", "")
+                member_type = _simple_type(member.get("type", ""))
+                if container and name and member_type:
+                    member_types[(container, name)] = member_type
+
+        def _chain_receiver_type(call: Dict[str, Any]) -> str:
+            chain = call.get("receiver_chain") or []
+            if not chain:
+                return call.get("receiver_type", "")
+            current = _simple_type(call.get("receiver_type", ""))
+            first = chain[0]
+            if first in ("this", "base"):
+                current = _simple_type(call.get("container", ""))
+            elif first[:1].isupper():
+                current = _simple_type(first)
+            elif not current:
+                return ""
+            for member_name in chain[1:]:
+                next_type = member_types.get((current, member_name))
+                if not next_type:
+                    return ""
+                current = next_type
+            return current
+
         def _imports_for(rel_file: str) -> tuple[Set[str], Dict[str, str]]:
             namespaces: Set[str] = set()
             aliases: Dict[str, str] = {}
@@ -543,7 +579,7 @@ class ASTParser:
                     targets = {target for target in targets if node_by_id.get(target, {}).get("kind") in ("method", "function")}
                 if not targets:
                     continue
-                receiver_type = call.get("receiver_type") or call.get("receiver", "")
+                receiver_type = _chain_receiver_type(call) or call.get("receiver_type") or call.get("receiver", "")
                 known_containers = {node_by_id.get(target, {}).get("container") for target in targets}
                 # A typed receiver that matches none of the project candidates
                 # is normally a framework/BCL call (e.g. enum.ToString), not a
@@ -578,7 +614,8 @@ class ASTParser:
                         "resolution": {
                             "strategy": "receiver-container-arity-namespace-assembly",
                             "score": best_score, "candidates": len(targets),
-                            "receiver": call.get("receiver", ""), "receiver_type": call.get("receiver_type", ""),
+                            "receiver": call.get("receiver", ""), "receiver_type": receiver_type,
+                            "receiver_chain": call.get("receiver_chain", []),
                             "caller": call.get("caller", ""),
                         },
                     })

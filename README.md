@@ -281,6 +281,8 @@ AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) 
 `limit` es un presupuesto global, no un límite repetido por cada símbolo. La respuesta incluye `planner`, `budget` y `omitted`, de modo que un agente puede detectar truncamiento y solicitar una expansión deliberada. El dashboard usa 12 nodos por defecto.
 
 La indexación híbrida conserva responsabilidades separadas: **Tree-sitter** extrae símbolos y aristas verificables; **Qwen 2.5 Coder 3B** enriquece descripciones, conceptos y señales semánticas locales. Qwen sigue siendo útil para significado y ranking, pero no sustituye evidencia estructural ni convierte una inferencia en una llamada demostrada.
+
+El resolvedor estructural v5 sigue receptores encadenados mediante los tipos declarados de campos y propiedades. Por ejemplo, `GameManager.Instance.hud.ShowTurnOrderRoll(...)` se resuelve como `GameHUDController.ShowTurnOrderRoll`; el grafo conserva la cadena, el tipo inferido, archivo y línea como evidencia auditable. Las ambigüedades de llamadas de código se reportan separadas de referencias textuales en documentación.
 | `graph_search_concepts` | Busca conceptos semánticos o palabras clave en las descripciones explicativas de nodos (archivos/clases/funciones) y en los nombres de símbolos. | `query` (obligatorio) |
 
 ### 🕒 Herramientas de Memoria de Sesiones (SQLite Local, Gratis)

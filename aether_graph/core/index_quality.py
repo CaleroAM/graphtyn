@@ -15,6 +15,7 @@ def index_quality(graph: dict) -> dict:
     structural_nodes = [n for n in nodes if n.get("kind") in {"class", "function", "method", "interface", "struct"}]
     evidenced = sum(bool(n.get("file") and n.get("line")) for n in structural_nodes)
     ambiguous = confidence["AMBIGUOUS"]
+    ambiguous_by_label = Counter(str(link.get("label") or "unknown") for link in links if str(link.get("confidence") or "").upper() == "AMBIGUOUS")
     unresolved = confidence["UNRESOLVED"]
     inferred = confidence["INFERRED"]
     total_links = len(links)
@@ -24,7 +25,11 @@ def index_quality(graph: dict) -> dict:
     if not nodes:
         warnings.append("El índice no contiene nodos.")
     if ambiguous:
-        warnings.append(f"Hay {ambiguous} relaciones ambiguas que requieren revisión.")
+        ambiguous_calls = ambiguous_by_label.get("llama", 0)
+        if ambiguous_calls:
+            warnings.append(f"Hay {ambiguous_calls} llamadas ambiguas y {ambiguous - ambiguous_calls} referencias ambiguas.")
+        else:
+            warnings.append(f"No hay llamadas de código ambiguas; quedan {ambiguous} referencias textuales ambiguas.")
     if unresolved:
         warnings.append(f"Hay {unresolved} relaciones no resueltas.")
     if metadata.get("structural_parser") == "builtin-fallback":
@@ -40,6 +45,8 @@ def index_quality(graph: dict) -> dict:
         "location_coverage": round(evidenced / max(1, len(structural_nodes)), 4),
         "confidence": dict(sorted(confidence.items())),
         "ambiguous_rate": round(ambiguous / max(1, total_links), 4),
+        "ambiguous_by_label": dict(sorted(ambiguous_by_label.items())),
+        "ambiguous_calls": ambiguous_by_label.get("llama", 0),
         "inferred_rate": round(inferred / max(1, total_links), 4),
         "parser": metadata.get("structural_parser", "unknown"),
         "tree_sitter_files": int(metadata.get("tree_sitter_files") or 0),

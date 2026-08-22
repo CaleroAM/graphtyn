@@ -16,6 +16,8 @@ def test_index_quality_reports_observable_metrics_without_claiming_accuracy():
     result = index_quality(graph)
     assert result["health_score"] == 50
     assert result["confidence"] == {"AMBIGUOUS": 1, "EXTRACTED": 1}
+    assert result["ambiguous_by_label"] == {"unknown": 1}
+    assert "referencias" in result["warnings"][0]
     assert result["location_coverage"] == 0.5
     assert result["isolated_nodes"] == 1
     assert "ground truth" in result["accuracy_note"]

@@ -143,6 +143,30 @@ def test_csharp_receiver_type_disambiguates_same_method_name(tmp_path):
     assert run_call["resolution"]["receiver_type"] == "Second"
 
 
+def test_csharp_nested_member_chain_resolves_receiver_type(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    (tmp_path / "UI.cs").write_text(
+        "class UI { public void Show() {} } class OtherUI { public void Show() {} }",
+        encoding="utf-8",
+    )
+    (tmp_path / "Manager.cs").write_text(
+        "class Manager { public static Manager Instance { get; set; } public UI hud; }",
+        encoding="utf-8",
+    )
+    (tmp_path / "Caller.cs").write_text(
+        "class Caller { void Run() { Manager.Instance.hud?.Show(); } }",
+        encoding="utf-8",
+    )
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    calls = [link for link in graph["links"] if link.get("label") == "llama"
+             and nodes.get(link["source"], {}).get("name") == "Run"]
+    assert len(calls) == 1
+    assert nodes[calls[0]["target"]]["container"] == "UI"
+    assert calls[0]["confidence"] == "EXTRACTED"
+    assert calls[0]["resolution"]["receiver_type"] == "UI"
+
+
 def test_structural_cache_reuses_unchanged_tree_sitter_result(tmp_path, monkeypatch):
     source = tmp_path / "Service.cs"
     source.write_text("public class Service {}", encoding="utf-8")
