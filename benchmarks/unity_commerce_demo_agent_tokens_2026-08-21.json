@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-21",
+  "project": "UnityCommerceDemo",
+  "agent": "Google Antigravity (agy)",
+  "mode": "plan",
+  "effort": "high",
+  "runs_per_variant": 1,
+  "variants": {
+    "baseline_without_graph": {
+      "duration_seconds": 126.8361,
+      "input_tokens": 312252,
+      "output_tokens": 21476,
+      "thinking_tokens": 10264,
+      "total_tokens": 333728,
+      "direct_files_reported": 28,
+      "status": "ERROR",
+      "terminal_error": "invalid tool argument schema: missing Pattern"
+    },
+    "aethergraph_focused": {
+      "duration_seconds": 106.9264,
+      "input_tokens": 214618,
+      "output_tokens": 15879,
+      "thinking_tokens": 6940,
+      "total_tokens": 230497,
+      "direct_files_reported": 2,
+      "status": "ERROR",
+      "terminal_error": "invalid tool argument schema: missing toolSummary/toolAction"
+    },
+    "compact_single_round_prompt": {
+      "duration_seconds": 64.4435,
+      "input_tokens": 163216,
+      "output_tokens": 12773,
+      "thinking_tokens": 7449,
+      "total_tokens": 175989,
+      "direct_files_reported": 2,
+      "status": "ERROR",
+      "terminal_error": "Antigravity catalog did not discover graph_context_bundle: Unknown tool"
+    }
+  },
+  "reductions_vs_baseline": {
+    "aethergraph_focused_total_tokens": 0.3093,
+    "compact_single_round_total_tokens": 0.4727,
+    "compact_single_round_duration": 0.4919,
+    "compact_single_round_direct_files": 0.9286
+  },
+  "payload_microbenchmark": {
+    "auction_service_neighborhood_reduction": 0.204,
+    "get_player_selection_blast_reduction": 0.235
+  },
+  "limitations": [
+    "Una sola corrida por variante; los resultados son orientativos, no estadísticamente significativos.",
+    "Las tres corridas generaron respuesta pero terminaron ERROR por integración de herramientas de Antigravity.",
+    "La variante compacta no ejecutó graph_context_bundle; su ahorro mide el flujo de una ronda/prompt compacto, no la herramienta agrupada funcionando de extremo a extremo.",
+    "La calidad debe puntuarse contra un ground truth de respuestas antes de comparar solamente tokens."
+  ]
+}

@@ -12,7 +12,7 @@ from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
 from ..core.watcher import WatchManager
 from ..core.impact import analyze_impact
-from ..mcp_server import blast_radius, get_workspace_graph, neighborhood_subgraph, _prune_node
+from ..mcp_server import blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node
 
 parser = ASTParser()
 watch_manager = WatchManager()
@@ -566,6 +566,7 @@ def watch_status():
 
 
 _HTTP_MCP_TOOLS = [
+    {"name": "graph_context_bundle", "description": "Vecindad e impacto de varios símbolos en una llamada compacta.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "symbols": {"type": "array", "items": {"type": "string"}, "maxItems": 10}, "depth": {"type": "integer"}, "limit": {"type": "integer"}}, "required": ["symbols"]}},
     {"name": "graph_neighborhood", "description": "Subgrafo alrededor de un símbolo.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "symbol": {"type": "string"}, "depth": {"type": "integer"}}}},
     {"name": "graph_blast_radius", "description": "Radio de impacto de un símbolo.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "symbol": {"type": "string"}, "depth": {"type": "integer"}}, "required": ["symbol"]}},
     {"name": "graph_search_concepts", "description": "Busca nombres y descripciones semánticas.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "query": {"type": "string"}}, "required": ["query"]}},
@@ -596,7 +597,9 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
         if not root.is_dir():
             return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Ruta de proyecto inválida"}})
         graph = get_workspace_graph(root, parser)
-        if name == "graph_neighborhood":
+        if name == "graph_context_bundle":
+            data = context_bundle(graph, args.get("symbols") or [], int(args.get("depth", 1)), int(args.get("limit") or 20))
+        elif name == "graph_neighborhood":
             symbol = str(args.get("symbol", "")).strip()
             data = neighborhood_subgraph(graph, symbol, int(args.get("depth", 1))) if symbol else {"nodes": [_prune_node(n) for n in graph.get("nodes", [])], "links": graph.get("links", [])}
         elif name == "graph_blast_radius":

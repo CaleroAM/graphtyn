@@ -156,6 +156,21 @@ def test_benchmark_cli_writes_reproducible_json(git_repo, tmp_path):
     assert data["warm_cache_seconds"] >= 0
 
 
+def test_agent_benchmark_compares_token_reduction(git_repo, tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    treatment = tmp_path / "treatment.json"
+    baseline = tmp_path / "baseline.json"
+    treatment.write_text(json.dumps({"status": "SUCCESS", "duration_seconds": 80,
+        "usage": {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120}}))
+    baseline.write_text(json.dumps({"status": "SUCCESS", "duration_seconds": 100,
+        "usage": {"input_tokens": 200, "output_tokens": 40, "total_tokens": 240}}))
+    result = _run_cli(["agent-benchmark", "--treatment", str(treatment),
+        "--baseline", str(baseline)], git_repo, home)
+    assert result.returncode == 0
+    assert json.loads(result.stdout)["reduction"]["total_tokens"] == 0.5
+
+
 def test_pr_impact_cli_json(git_repo, tmp_path):
     home = tmp_path / "home"
     home.mkdir()

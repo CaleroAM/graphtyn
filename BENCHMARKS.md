@@ -108,6 +108,27 @@ Sesión real de un agente (OpenClaw + Gemini 3.1 Pro) conectado al MCP de Aether
 
 **Lectura:** el costo dominante no es el análisis de AetherGraph (0 tokens), sino el mecanismo del agente de reenviar su contexto completo en cada llamada. AetherGraph reduce la fracción que toca el código: el mapa completo en 1 consulta (~16K tokens) reemplaza la lectura de 22 archivos (~150K+ tokens).
 
+### Antigravity sobre UnityCommerceDemo (21 ago 2026)
+
+Misma tarea de cuatro preguntas arquitectónicas, mismo agente, modo `plan` y esfuerzo `high`. Cada variante tiene por ahora **una sola corrida**, por lo que es una medición orientativa. Artefacto completo: `benchmarks/unity_commerce_demo_agent_tokens_2026-08-21.json`.
+
+| Variante | Tokens totales | Duración | Archivos leídos | Reducción vs. control |
+|---|---:|---:|---:|---:|
+| Control: búsqueda/lectura sin grafo | 333,728 | 126.84 s | 28 | — |
+| AetherGraph focalizado | 230,497 | 106.93 s | 2 | **30.93%** |
+| Prompt compacto de una ronda | 175,989 | 64.44 s | 2 | **47.27%** |
+
+Las tres ejecuciones generaron un informe, pero Antigravity terminó con `status=ERROR` por validaciones de sus herramientas. En la tercera corrida su catálogo no descubrió todavía `graph_context_bundle`; por tanto, el 47.27% demuestra el beneficio del flujo compacto/de menos rondas, **no** una validación end-to-end de la nueva tool. El payload compacto aislado redujo 20.4% para la vecindad de `AuctionService` y 23.5% para el impacto de `GetPlayerSelection`.
+
+### Comparación correcta con Graphify
+
+Graphify publica dos métricas distintas que no deben mezclarse:
+
+- En su corpus Karpathy mixto informa **71.5× menos contexto** (aprox. 98.6%): compara ~123,488 tokens del corpus completo contra ~1,726 tokens del subgrafo promedio. Para código solamente informa 8.8× (aprox. 88.6%). Es **compresión de contexto contra cargar todo el corpus**, no tokens totales de una sesión de agente.
+- En su benchmark end-to-end sobre ERPNext reporta alrededor de **140K tokens por consulta** y `1.3×` los tokens del baseline grep/read, a cambio de subir la cobertura de hechos de 70.8% a 82.0%. Es decir, ese experimento no afirma reducción total contra grep/read; afirma mayor exactitud con costo monetario similar y muchas menos fichas que empaquetar el repositorio completo.
+
+Fuentes oficiales: [Graphify BENCHMARKS v8](https://github.com/Graphify-Labs/graphify/blob/v8/BENCHMARKS.md) y [benchmark Karpathy](https://github.com/Graphify-Labs/graphify/blob/v8/worked/karpathy-repos/review.md).
+
 ## 🔁 Reproducción
 
 ```bash

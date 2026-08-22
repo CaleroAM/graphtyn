@@ -75,6 +75,7 @@ def test_http_mcp_requires_token_and_serves_tools(monkeypatch):
     body = json.loads(allowed.body)
     assert allowed.status_code == 200
     assert "graph_pr_impact" in {tool["name"] for tool in body["result"]["tools"]}
+    assert "graph_context_bundle" in {tool["name"] for tool in body["result"]["tools"]}
 
 
 def test_semantic_media_edges_include_auditable_evidence():

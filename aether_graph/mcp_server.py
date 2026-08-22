@@ -23,6 +23,70 @@ def get_workspace_graph(workspace: Path, parser: ASTParser) -> dict:
 def _prune_node(n: dict) -> dict:
     return {k: v for k, v in n.items() if k not in ("color", "val")}
 
+
+def _compact_node(node: dict) -> dict:
+    """Keep the evidence an agent needs without shipping dashboard/index internals."""
+    keep = ("id", "name", "kind", "file", "line", "end_line", "signature",
+            "container", "namespace", "parser", "degree")
+    compact = {key: node[key] for key in keep if node.get(key) not in (None, "", [])}
+    details = str(node.get("details") or "").strip()
+    if details:
+        compact["details"] = details[:240]
+    return compact
+
+
+def _compact_link(link: dict) -> dict:
+    keep = ("source", "target", "label", "confidence", "file", "line", "explanation")
+    return {key: link[key] for key in keep if link.get(key) not in (None, "", [])}
+
+
+def compact_result(result: dict, max_nodes: int = 40) -> dict:
+    """Bound MCP context while reporting truncation instead of silently losing evidence."""
+    output = {k: v for k, v in result.items() if k not in ("nodes", "matched", "links", "impacted")}
+    allowed_ids: set[str] = set()
+    for key in ("matched", "nodes"):
+        original = result.get(key, [])
+        selected = original[:max_nodes]
+        output[key] = [_compact_node(n) for n in selected]
+        allowed_ids.update(n.get("id", "") for n in selected)
+        if len(original) > len(selected):
+            output[f"{key}_truncated"] = len(original) - len(selected)
+    if "links" in result:
+        links = [l for l in result["links"] if not allowed_ids or
+                 (l.get("source") in allowed_ids and l.get("target") in allowed_ids)]
+        output["links"] = [_compact_link(link) for link in links[:max_nodes * 2]]
+        if len(links) > len(output["links"]):
+            output["links_truncated"] = len(links) - len(output["links"])
+    if "impacted" in result:
+        impacted = result["impacted"][:max_nodes]
+        output["impacted"] = [
+            {**{k: item[k] for k in ("hop", "via", "label", "confidence") if k in item},
+             "node": _compact_node(item.get("node", {}))}
+            for item in impacted
+        ]
+        if len(result["impacted"]) > len(impacted):
+            output["impacted_truncated"] = len(result["impacted"]) - len(impacted)
+    output["response_mode"] = "compact"
+    output["estimated_tokens"] = len(json.dumps(output, ensure_ascii=False)) // 4
+    return output
+
+
+def context_bundle(graph: dict, symbols: list[str], depth: int = 1, max_nodes: int = 20) -> dict:
+    """Serve several focused questions in one model round-trip."""
+    unique = list(dict.fromkeys(s.strip() for s in symbols if s and s.strip()))[:10]
+    contexts = []
+    for symbol in unique:
+        neighborhood = compact_result(neighborhood_subgraph(graph, symbol, depth), max_nodes)
+        impact = compact_result(blast_radius(graph, symbol, depth), max_nodes)
+        contexts.append({"symbol": symbol, "neighborhood": neighborhood, "blast_radius": impact})
+    result = {
+        "symbols": unique,
+        "contexts": contexts,
+        "guidance": "Use esta evidencia antes de abrir archivos; solicite una consulta individual solo si hubo truncamiento.",
+    }
+    result["estimated_tokens"] = len(json.dumps(result, ensure_ascii=False)) // 4
+    return result
+
 def _tokens_avoided(workspace: Path, result: dict, payload_text: str) -> int:
     try:
         files: set = set()
@@ -153,6 +217,19 @@ def run_mcp_server(workspace: Path):
                 "result": {
                     "tools": [
                         {
+                            "name": "graph_context_bundle",
+                            "description": "Consulta en una sola llamada la vecindad y el radio de impacto de hasta 10 símbolos. Preferida para preguntas múltiples porque evita rondas y tokens acumulativos del agente.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "symbols": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
+                                    "depth": {"type": "integer", "description": "Default 1"},
+                                    "limit": {"type": "integer", "description": "Máximo por símbolo; default 20"}
+                                },
+                                "required": ["symbols"]
+                            }
+                        },
+                        {
                             "name": "graph_neighborhood",
                             "description": "Obtiene el mapa de código determinista y explicaciones semánticas del proyecto sin consumir tokens. Con 'symbol' devuelve solo el subgrafo alrededor de ese símbolo o archivo (más compacto).",
                             "inputSchema": {
@@ -161,7 +238,8 @@ def run_mcp_server(workspace: Path):
                                     "path": {"type": "string", "description": "Ruta del proyecto"},
                                     "symbol": {"type": "string", "description": "Opcional: nombre de símbolo o archivo para devolver solo su vecindario"},
                                     "depth": {"type": "integer", "description": "Saltos alrededor del símbolo (default 1)"},
-                                    "limit": {"type": "integer", "description": "Opcional: máximo de nodos (por degree) cuando no se usa 'symbol'"}
+                                    "limit": {"type": "integer", "description": "Máximo de nodos; default 40"},
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"], "description": "compact (default) reduce tokens; full conserva todos los campos"}
                                 },
                                 "required": []
                             }
@@ -173,7 +251,9 @@ def run_mcp_server(workspace: Path):
                                 "type": "object",
                                 "properties": {
                                     "symbol": {"type": "string", "description": "Nombre de la función o clase"},
-                                    "depth": {"type": "integer", "description": "Profundidad máxima de recorrido (default 2)"}
+                                    "depth": {"type": "integer", "description": "Profundidad máxima de recorrido (default 2)"},
+                                    "limit": {"type": "integer", "description": "Máximo de impactos; default 40"},
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"]}
                                 },
                                 "required": ["symbol"]
                             }
@@ -234,10 +314,17 @@ def run_mcp_server(workspace: Path):
             name = params.get("name")
             args = params.get("arguments", {})
 
-            if name == "graph_neighborhood":
+            if name == "graph_context_bundle":
+                graph = get_workspace_graph(workspace, parser)
+                result = context_bundle(graph, args.get("symbols") or [], int(args.get("depth", 1)), int(args.get("limit") or 20))
+                history.log_event("mcp", "context_bundle", f"Contexto agrupado para {len(result['symbols'])} símbolos", {"symbols": result["symbols"], "estimated_tokens": result["estimated_tokens"]})
+                return {"jsonrpc": "2.0", "id": req_id,
+                        "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}]}}
+            elif name == "graph_neighborhood":
                 symbol = (args.get("symbol") or "").strip()
                 depth = int(args.get("depth", 1))
                 limit = int(args.get("limit") or 0)
+                response_mode = args.get("response_mode", "compact")
                 graph = get_workspace_graph(workspace, parser)
                 if symbol:
                     result = neighborhood_subgraph(graph, symbol, depth=depth)
@@ -257,6 +344,8 @@ def run_mcp_server(workspace: Path):
                     else:
                         sub_links = graph.get("links", [])
                     result = {"nodes": pruned_nodes, "links": sub_links, "limit": limit or None}
+                if response_mode != "full":
+                    result = compact_result(result, max_nodes=limit or 40)
                 history.log_event("mcp", "neighborhood", f"Escaneo de mapa de código para {workspace.name}", {"nodes": len(result.get("nodes", [])), "tokens_avoided": _tokens_avoided(workspace, result, json.dumps(result))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
@@ -270,6 +359,8 @@ def run_mcp_server(workspace: Path):
                 result["matched"] = [_prune_node(n) for n in result["matched"]]
                 for imp in result["impacted"]:
                     imp["node"] = _prune_node(imp["node"])
+                if args.get("response_mode", "compact") != "full":
+                    result = compact_result(result, max_nodes=int(args.get("limit") or 40))
                 history.log_event("mcp", "blast_radius", f"Evaluación de radio de impacto para {symbol}", {"symbol": symbol, "depth": depth, "impacted": len(result["impacted"]), "tokens_avoided": _tokens_avoided(workspace, result, json.dumps(result))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
@@ -339,4 +430,3 @@ def run_mcp_server(workspace: Path):
 
         except Exception as e:
             sys.stderr.write(f"[AetherGraph MCP Error] {e}\n")
-

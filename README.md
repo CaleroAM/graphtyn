@@ -140,6 +140,9 @@ aether-graph serve --watch --path /ruta/al/proyecto
 # Benchmark reproducible con ground truth
 aether-graph benchmark --path /ruta/proyecto --ground-truth benchmarks/ground_truth.json --output resultado.json
 
+# Comparar corridas JSON de un agente con y sin AetherGraph
+aether-graph agent-benchmark --treatment con-grafo.json --baseline sin-grafo.json --output comparacion.json
+
 # Riesgo e impacto de una rama/PR; simula conflictos sin modificar el repositorio
 aether-graph pr-impact --path /ruta/proyecto --base main
 
@@ -263,14 +266,15 @@ Mismo nodo (`mcp_server.py`), mismo prompt real de AetherGraph (config #9), mism
 
 ## 🤖 Integración con Agentes de IA (MCP Protocol)
 
-AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) que expone **7 herramientas** a los agentes de IA, organizadas en tres grupos: **mapa de código**, **memoria de sesiones** e **integración**.
+AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) que expone **8 herramientas** a los agentes de IA, organizadas en tres grupos: **mapa de código**, **memoria de sesiones** e **integración**.
 
 ### 🧭 Herramientas de Mapa de Código (0 Tokens)
 
 | Herramienta | Qué hace | Parámetros |
 |---|---|---|
-| `graph_neighborhood` | Devuelve el mapa del proyecto: nodos (archivos, clases, funciones), conectores con confianza `EXTRACTED`/`INFERRED` y descripciones semánticas por nodo. Con `symbol` devuelve solo el subgrafo alrededor de ese símbolo (payload compacto para el agente). | `path`, `symbol`, `depth` (todos opcionales) |
-| `graph_blast_radius` | Calcula el radio de impacto de modificar un símbolo o archivo: recorre el grafo y devuelve los nodos afectados por salto (hop) con la confianza de cada arista. | `symbol` (obligatorio), `depth` (default 2) |
+| `graph_neighborhood` | Devuelve el subgrafo con evidencia. Por defecto usa respuesta compacta, máximo 40 nodos y descripciones de 240 caracteres; `response_mode=full` es opt-in. | `path`, `symbol`, `depth`, `limit`, `response_mode` |
+| `graph_blast_radius` | Calcula impacto por salto. La salida compacta limita el contexto a 40 impactos y avisa si hubo truncamiento. | `symbol`, `depth`, `limit`, `response_mode` |
+| `graph_context_bundle` | Agrupa vecindad e impacto de hasta 10 símbolos en una sola llamada, reduciendo rondas y reenvío acumulativo de contexto. | `symbols`, `depth`, `limit` |
 | `graph_search_concepts` | Busca conceptos semánticos o palabras clave en las descripciones explicativas de nodos (archivos/clases/funciones) y en los nombres de símbolos. | `query` (obligatorio) |
 
 ### 🕒 Herramientas de Memoria de Sesiones (SQLite Local, Gratis)
@@ -397,7 +401,7 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 | **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `diff` + `pr-impact`: hunks → símbolos, riesgo directo/transitivo y simulación no destructiva de conflictos Git |
 | **MCP** | ✅ stdio + HTTP compartido con API key (7 tools) | ✅ MCP en Sourcegraph Enterprise (search, navegación, historial y Deep Search) | ✅ stdio + HTTP opcional protegido con Bearer; transporte local por defecto |
 | **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ pase semántico sobre docs, PDFs, imágenes y transcripciones mediante el modelo del asistente/backend configurado | No es su objetivo principal | ✅ docs, PDF, DOCX, XLSX, visión local y transcripción local; **relaciones de similitud cacheadas y offline** |
-| **Benchmarks publicados** | ✅ benchmarks de recuperación/memoria publicados por el proyecto | Benchmarks y documentación empresarial | ⚠️ [BENCHMARKS.md](BENCHMARKS.md) mide rendimiento y payloads; falta benchmark comparativo de calidad de respuestas |
+| **Benchmarks publicados** | ✅ recuperación/memoria y agente sobre ERPNext; distingue compresión de corpus de tokens end-to-end | Benchmarks y documentación empresarial | ⚠️ [BENCHMARKS.md](BENCHMARKS.md) registra Antigravity sobre UnityCommerceDemo: 30.93% menos tokens con grafo y 47.27% en flujo compacto; falta ampliar repeticiones y ground truth de respuestas |
 | **Ecosistema / Plataformas** | ✅ instalador para 20+ asistentes | ✅ plataforma empresarial e integraciones de código | ✅ MCP estándar para Antigravity, Claude Code, Codex, Cursor, Windsurf, OpenCode y OpenClaw |
 | **Soporte Offline** | ✅ código local; el pase semántico multimodal necesita un backend/modelo configurado | Depende del despliegue e índices | ✅ 100% offline con Ollama y Whisper locales |
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from .core.ast_parser import ASTParser
 from .core.history import HistoryTracker
 from .core.benchmark import benchmark_markdown, run_benchmark
+from .core.agent_benchmark import compare_agent_runs
 from .core.impact import analyze_impact
 from .mcp_server import run_mcp_server
 
@@ -88,6 +89,11 @@ def main():
     bench_p.add_argument("--ground-truth", default=None, help="Archivo JSON con símbolos esperados")
     bench_p.add_argument("--output", default=None, help="Guarda el resultado JSON")
     bench_p.add_argument("--cache", default=None, help="Ruta opcional del caché estructural")
+
+    agent_bench_p = subparsers.add_parser("agent-benchmark", help="Compara tokens y tiempo de corridas con/sin AetherGraph")
+    agent_bench_p.add_argument("--treatment", required=True, help="JSON o lista JSON de corridas con AetherGraph")
+    agent_bench_p.add_argument("--baseline", required=True, help="JSON o lista JSON de corridas sin AetherGraph")
+    agent_bench_p.add_argument("--output", default=None, help="Guarda el resultado JSON")
 
     # export-md
     export_p = subparsers.add_parser("export-md", help="Exporta un mapa de arquitectura conciso en Markdown para Agentes de IA")
@@ -221,6 +227,12 @@ def main():
         if args.output:
             Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         print(benchmark_markdown(result), end="")
+
+    elif args.command == "agent-benchmark":
+        result = compare_agent_runs(Path(args.treatment), Path(args.baseline))
+        if args.output:
+            Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps(result, ensure_ascii=False, indent=2))
 
     elif args.command == "export-md":
         ast_p = ASTParser()

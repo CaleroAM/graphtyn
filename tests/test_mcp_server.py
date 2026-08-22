@@ -44,6 +44,7 @@ def test_mcp_initialize_and_tools_list(workspace):
     tools = next(r for r in resp if r.get("id") == 2)
     names = {t["name"] for t in tools["result"]["tools"]}
     assert {"graph_neighborhood", "graph_blast_radius", "graph_search_concepts",
+            "graph_context_bundle",
             "graph_history_search", "graph_history_timeline", "graph_history_get",
             "graph_register_project"} <= names
 
@@ -59,6 +60,24 @@ def test_mcp_graph_neighborhood(workspace):
     ids = {n["id"] for n in graph["nodes"]}
     assert "file:a.py" in ids and "file:b.py" in ids
     assert any(l.get("confidence") in ("EXTRACTED", "INFERRED") for l in graph["links"])
+    assert graph["response_mode"] == "compact"
+    assert graph["estimated_tokens"] > 0
+
+
+def test_mcp_full_response_is_opt_in(workspace):
+    _, resp = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 30, "method": "tools/call",
+        "params": {"name": "graph_neighborhood", "arguments": {"response_mode": "full"}}}])
+    graph = json.loads(resp[0]["result"]["content"][0]["text"])
+    assert "response_mode" not in graph
+
+
+def test_mcp_context_bundle_combines_queries(workspace):
+    _, resp = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 31, "method": "tools/call",
+        "params": {"name": "graph_context_bundle", "arguments": {"symbols": ["helper", "a.py"]}}}])
+    result = json.loads(resp[0]["result"]["content"][0]["text"])
+    assert result["symbols"] == ["helper", "a.py"]
+    assert len(result["contexts"]) == 2
+    assert result["estimated_tokens"] > 0
 
 
 def test_mcp_graph_blast_radius(workspace):
