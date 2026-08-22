@@ -212,7 +212,8 @@ export function onNodeClick(node) {
           '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
         '</div>' +
-        '<button class="btn-action btn-primary" style="margin-top:4px;justify-content:center;" data-node-id="' + safeId + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
+        '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;"><button class="btn-action btn-primary" style="justify-content:center;" data-node-id="' + safeId + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
+        '<button class="btn-action" data-node-id="' + safeId + '" onclick="addNodeToContext(this.dataset.nodeId);openQualityPanel()">Añadir al contexto</button></div>' +
         '<hr style="border:none;border-top:1px solid #1e293b;margin:4px 0;">' +
         '<div style="font-weight:700;color:#64748b;font-size:10px;">VECINOS DIRECTOS (BLAST RADIUS):</div>' +
         '<div style="max-height:110px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">' +

@@ -245,6 +245,9 @@
     <button class="btn-action" onclick="exportGraphPNG()" title="Descargar imagen PNG del grafo actual">
       PNG
     </button>
+    <button class="btn-action" id="quality-btn" onclick="openQualityPanel()" title="Salud del índice y contexto compacto">
+      Calidad & Contexto <span id="context-count">0</span>
+    </button>
     <button class="btn-action btn-primary" onclick="openRegister()">
       <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
       Registrar
@@ -265,6 +268,17 @@
       <button onclick="closeBlastPanel()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;">✕</button>
     </div>
     <div id="blast-content" style="font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:6px;min-width:0;overflow-wrap:anywhere;"></div>
+  </div>
+
+  <!-- ===== MODAL: Register ===== -->
+  <div class="modal-bg" id="modal-quality" role="dialog" aria-modal="true" aria-labelledby="quality-title">
+    <div class="modal-box quality-modal">
+      <div class="modal-hdr"><span id="quality-title">Calidad del índice y contexto para agentes</span><button class="modal-close" onclick="closeQualityPanel()" aria-label="Cerrar">✕</button></div>
+      <section><div class="context-heading"><div class="section-label">SALUD AUDITABLE DEL ÍNDICE</div><select id="context-scope" class="quality-select" onchange="loadIndexQuality()"><option value="all">Todo el índice</option><option value="production">Producción</option><option value="tests">Pruebas</option><option value="legacy">Legacy / backups</option></select></div><div id="quality-summary" class="quality-summary">Calculando…</div></section>
+      <section class="context-section"><div class="context-heading"><div class="section-label">SÍMBOLOS SELECCIONADOS (MÁX. 10)</div><button class="btn-link" onclick="clearContextSelection()">Limpiar</button></div><div id="context-selection" class="context-selection"></div>
+        <div class="context-actions"><button class="btn-action btn-primary" onclick="generateContextBundle()">Generar contexto compacto</button><button class="btn-action" id="copy-context-btn" onclick="copyContextBundle()">Copiar JSON</button></div><div id="context-output"></div>
+      </section>
+    </div>
   </div>
 
   <!-- ===== MODAL: Register ===== -->

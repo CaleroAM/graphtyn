@@ -34,7 +34,7 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     js = client.get("/dashboard.js")
     assert js.status_code == 200
     assert "Object.assign(window" in js.text
-    for module in ["state", "painters", "sim", "styles", "graph", "controls", "ui"]:
+    for module in ["state", "painters", "sim", "styles", "graph", "controls", "ui", "quality"]:
         r = client.get(f"/js/{module}.js")
         assert r.status_code == 200, module
         assert "export " in r.text, module
@@ -52,6 +52,12 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     assert "screen2GraphCoords" in graph_js
     assert "grid-template-columns:minmax(0,1fr)" in graph_js
     assert "EVIDENCIA " in graph_js
+    assert 'id="modal-quality"' in html.text
+    assert "addNodeToContext" in graph_js
+    quality_js = client.get("/js/quality.js").text
+    assert "/api/index-quality" in quality_js
+    assert "/api/context-bundle" in quality_js
+    assert "accuracy_note" in quality_js
     assert client.get("/favicon.svg").status_code == 200
     comp = client.get("/comparison")
     assert comp.status_code == 200
@@ -108,6 +114,41 @@ def test_reindex_ast_pure_and_graph_views(tmp_path, monkeypatch):
     agents = client.get("/api/graph", params={"view": "agents"})
     assert agents.status_code == 200
     assert any(n.get("kind") == "orchestrator_agent" for n in agents.json()["nodes"])
+
+
+def test_quality_and_context_bundle_endpoints(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    proj = tmp_path / "quality-project"
+    proj.mkdir()
+    (proj / "a.py").write_text("def helper():\n    return 1\n", encoding="utf-8")
+    (proj / "b.py").write_text("from a import helper\n\ndef use():\n    return helper()\n", encoding="utf-8")
+    assert client.post("/api/reindex", json={"path": str(proj), "engine": "ast_pure"}).status_code == 200
+
+    quality = client.get("/api/index-quality", params={"path": str(proj)})
+    assert quality.status_code == 200
+    q = quality.json()
+    assert q["ok"] is True and 0 <= q["health_score"] <= 100
+    assert q["nodes"] > 0 and q["links"] > 0
+    assert "accuracy_note" in q and "score_basis" in q
+
+    context = client.post("/api/context-bundle", json={"path": str(proj), "symbols": ["helper", "helper"], "depth": 1, "limit": 10})
+    assert context.status_code == 200
+    c = context.json()
+    assert c["ok"] is True
+    assert c["symbols"] == ["helper"]
+    assert c["nodes"] and c["estimated_tokens"] > 0
+    assert c["raw_context_tokens"] >= 0 and isinstance(c["tokens_saved"], int)
+    assert c["reduction_rate"] <= 1
+    assert "estimación" in c["token_estimation"]
+
+
+def test_quality_and_context_bundle_validation(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    missing = tmp_path / "missing"
+    assert client.get("/api/index-quality", params={"path": str(missing)}).status_code == 404
+    assert client.post("/api/context-bundle", json={"path": str(tmp_path), "symbols": []}).status_code == 400
+    assert client.post("/api/context-bundle", json={"path": "", "symbols": ["x"]}).status_code == 400
+    assert client.post("/api/context-bundle", json={"path": str(tmp_path), "symbols": ["x"], "depth": "bad"}).status_code == 400
 
 
 def test_reindex_incremental_reuses_context(tmp_path, monkeypatch):

@@ -3,12 +3,13 @@ import json
 import time
 from pathlib import Path
 from typing import Dict, Any, List
+from .storage import project_store_dir
 
 class HistoryTracker:
     def __init__(self, workspace: Path):
         self.workspace = workspace
         local_db = workspace / ".aether-graph" / "history.db"
-        home_db_dir = Path.home() / ".aether-graph" / workspace.name
+        home_db_dir = project_store_dir(Path.home() / ".aether-graph", workspace, create=False)
         home_db = home_db_dir / "history.db"
 
         if local_db.exists():

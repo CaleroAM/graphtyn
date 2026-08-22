@@ -29,6 +29,8 @@ export const state = {
   commColorMap: {},
   selectedNode: null,
   selectedNeighbors: null,
+  contextSelection: [],
+  lastContextBundle: null,
   descExpanded: false,
   watchVersions: {},
   watchTimer: null,

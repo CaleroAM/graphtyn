@@ -5,11 +5,10 @@ from typing import Dict, Any
 
 from .core.ast_parser import ASTParser
 from .core.history import HistoryTracker
+from .core.storage import project_store_dir
 
 def _cached_index_dir(workspace: Path) -> Path:
-    d = Path.home() / ".aether-graph" / workspace.name
-    d.mkdir(parents=True, exist_ok=True)
-    return d
+    return project_store_dir(Path.home() / ".aether-graph", workspace)
 
 def get_workspace_graph(workspace: Path, parser: ASTParser) -> dict:
     try:
@@ -30,7 +29,8 @@ def _compact_node(node: dict) -> dict:
             "container", "namespace", "parser", "degree")
     compact = {key: node[key] for key in keep if node.get(key) not in (None, "", [])}
     details = str(node.get("details") or "").strip()
-    if details:
+    redundant = details == str(node.get("file") or "") or details.startswith(("Class en ", "Method en ", "Function en ", "Carpeta: "))
+    if details and not redundant:
         compact["details"] = details[:240]
     return compact
 
@@ -72,30 +72,64 @@ def compact_result(result: dict, max_nodes: int = 40) -> dict:
 
 
 def context_bundle(graph: dict, symbols: list[str], depth: int = 1, max_nodes: int = 20) -> dict:
-    """Serve several focused questions in one model round-trip."""
+    """Serve focused context under one global, relevance-ranked budget."""
     unique = list(dict.fromkeys(s.strip() for s in symbols if s and s.strip()))[:10]
     contexts = []
-    nodes_by_id: dict[str, dict] = {}
-    links_by_key: dict[tuple, dict] = {}
+    candidates: dict[str, dict] = {}
+    scores: dict[str, float] = {}
+    all_links: dict[tuple, dict] = {}
+    matched_ids: set[str] = set()
+    label_score = {"implementa": 900, "hereda": 850, "llama": 750, "usa": 650, "importa": 600, "contiene": 120}
     for symbol in unique:
-        neighborhood = compact_result(neighborhood_subgraph(graph, symbol, depth), max_nodes)
+        neighborhood = neighborhood_subgraph(graph, symbol, depth)
+        local_matches = {node.get("id") for node in neighborhood.get("matched", []) if node.get("id")}
+        matched_ids.update(local_matches)
         for node in neighborhood.get("nodes", []):
-            nodes_by_id[node.get("id", "")] = node
-        for node in neighborhood.get("matched", []):
-            nodes_by_id[node.get("id", "")] = node
+            nid = node.get("id", "")
+            if not nid:
+                continue
+            candidates[nid] = _compact_node(node)
+            scores[nid] = max(scores.get(nid, 0), 10 + min(50, int(node.get("degree") or 0)))
+            if nid in local_matches:
+                scores[nid] = 10_000
+            elif node.get("kind") in ("class", "interface", "struct"):
+                scores[nid] += 180
         for link in neighborhood.get("links", []):
             key = (link.get("source"), link.get("target"), link.get("label"), link.get("line"))
-            links_by_key[key] = link
+            all_links[key] = _compact_link(link)
+            base = label_score.get(str(link.get("label") or "").lower(), 300)
+            for nid in (link.get("source"), link.get("target")):
+                if nid in candidates:
+                    scores[nid] = max(scores.get(nid, 0), base + min(50, int(candidates[nid].get("degree") or 0)))
         contexts.append({
             "symbol": symbol,
-            "matched_ids": [node.get("id") for node in neighborhood.get("matched", [])],
-            **({"truncated": True} if neighborhood.get("nodes_truncated") or neighborhood.get("links_truncated") else {}),
+            "matched_ids": sorted(local_matches),
         })
+    budget = max(len(matched_ids), max(1, int(max_nodes)))
+    ranked_ids = sorted(candidates, key=lambda nid: (-scores.get(nid, 0), nid))
+    selected_ids = set(ranked_ids[:budget]) | matched_ids
+    selected_nodes = [candidates[nid] for nid in ranked_ids if nid in selected_ids]
+    selected_links = [link for link in all_links.values()
+                      if link.get("source") in selected_ids and link.get("target") in selected_ids]
+    link_budget = max(1, budget * 2)
+    selected_links.sort(key=lambda link: (-label_score.get(str(link.get("label") or "").lower(), 300),
+                                          str(link.get("source")), str(link.get("target"))))
+    omitted_nodes = max(0, len(candidates) - len(selected_nodes))
+    omitted_links = max(0, len(selected_links) - link_budget) + sum(
+        1 for link in all_links.values()
+        if link.get("source") not in selected_ids or link.get("target") not in selected_ids
+    )
+    selected_links = selected_links[:link_budget]
+    for context in contexts:
+        context["truncated"] = omitted_nodes > 0 or omitted_links > 0
     result = {
         "symbols": unique,
         "contexts": contexts,
-        "nodes": list(nodes_by_id.values()),
-        "links": list(links_by_key.values()),
+        "nodes": selected_nodes,
+        "links": selected_links,
+        "budget": {"max_nodes": budget, "max_links": link_budget},
+        "omitted": {"nodes": omitted_nodes, "links": omitted_links},
+        "planner": "relevance-v1",
         "guidance": "Aristas implementa/hereda/llama son evidencia direccional. No convierta nodos del mismo subsistema en consumidores sin una arista entrante llama/usa.",
     }
     result["estimated_tokens"] = len(json.dumps(result, ensure_ascii=False)) // 4
@@ -344,7 +378,7 @@ def run_mcp_server(workspace: Path):
 
             if name == "graph_context_bundle":
                 graph = get_workspace_graph(workspace, parser)
-                result = context_bundle(graph, args.get("symbols") or [], int(args.get("depth", 1)), int(args.get("limit") or 20))
+                result = context_bundle(graph, args.get("symbols") or [], int(args.get("depth", 1)), int(args.get("limit") or 12))
                 history.log_event("mcp", "context_bundle", f"Contexto agrupado para {len(result['symbols'])} símbolos", {"symbols": result["symbols"], "estimated_tokens": result["estimated_tokens"]})
                 return {"jsonrpc": "2.0", "id": req_id,
                         "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}]}}

@@ -12,6 +12,9 @@ from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
 from ..core.watcher import WatchManager
 from ..core.impact import analyze_impact
+from ..core.index_quality import index_quality
+from ..core.storage import project_store_dir
+from ..core.graph_scope import filter_graph_scope
 from ..mcp_server import blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node
 
 parser = ASTParser()
@@ -39,10 +42,7 @@ DEFAULT_MASTER_DIR = Path.cwd()
 
 def _index_dir(project_path: Path) -> Path:
     """Returns the writable index directory for a project."""
-    slug = project_path.name
-    d = INDEX_STORE / slug
-    d.mkdir(parents=True, exist_ok=True)
-    return d
+    return project_store_dir(INDEX_STORE, project_path)
 
 
 def _watch_enabled() -> bool:
@@ -558,6 +558,89 @@ def get_graph(path: str = ".", view: str = "code"):
         return JSONResponse(generate_semantic_graph(data))
 
     return JSONResponse(data)
+
+
+def _load_index_for_api(project_path: str) -> tuple[Path, dict]:
+    root = Path(project_path).resolve()
+    if not root.exists() or not root.is_dir():
+        raise ValueError("La ruta del proyecto no existe o no es una carpeta")
+    cached = _index_dir(root) / "index.json"
+    if cached.exists():
+        try:
+            graph = json.loads(cached.read_text(encoding="utf-8"))
+            indexed_path = str((graph.get("metadata") or {}).get("path") or "").strip()
+            if indexed_path:
+                indexed_root = Path(indexed_path).resolve()
+                try:
+                    indexed_root.relative_to(root)
+                    if indexed_root.is_dir():
+                        root = indexed_root
+                except ValueError:
+                    pass
+            return root, graph
+        except (OSError, json.JSONDecodeError):
+            pass
+    graph = parser.scan_directory(root, respect_git=bool(_load_project_config(root).get("respect_git", True)))
+    return root, graph
+
+
+def _safe_project_file_size(root: Path, relative: str) -> int:
+    try:
+        candidate = (root / relative).resolve()
+        candidate.relative_to(root)
+        return candidate.stat().st_size if candidate.is_file() else 0
+    except (OSError, ValueError):
+        return 0
+
+
+@app.get("/api/index-quality")
+def get_index_quality(path: str = Query(..., min_length=1), scope: str = "all"):
+    try:
+        _root, graph = _load_index_for_api(path)
+    except ValueError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+    scoped = filter_graph_scope(graph, scope)
+    return JSONResponse({"ok": True, "scope": scope, **index_quality(scoped)})
+
+
+@app.post("/api/context-bundle")
+def create_context_bundle(payload: dict = Body(...)):
+    project_path = str(payload.get("path") or "").strip()
+    symbols = payload.get("symbols")
+    if not project_path:
+        return JSONResponse({"ok": False, "error": "Falta la ruta del proyecto"}, status_code=400)
+    if not isinstance(symbols, list) or not symbols:
+        return JSONResponse({"ok": False, "error": "Selecciona al menos un símbolo"}, status_code=400)
+    clean_symbols = list(dict.fromkeys(str(s).strip() for s in symbols if str(s).strip()))[:10]
+    if not clean_symbols:
+        return JSONResponse({"ok": False, "error": "Selecciona al menos un símbolo válido"}, status_code=400)
+    try:
+        depth = min(3, max(0, int(payload.get("depth", 1))))
+        limit = min(100, max(1, int(payload.get("limit", 12))))
+    except (TypeError, ValueError):
+        return JSONResponse({"ok": False, "error": "depth y limit deben ser enteros"}, status_code=400)
+    try:
+        root, graph = _load_index_for_api(project_path)
+    except ValueError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+    scope = str(payload.get("scope") or "all")
+    graph = filter_graph_scope(graph, scope)
+    result = context_bundle(graph, clean_symbols, depth, limit)
+    result["scope"] = scope if scope in {"all", "production", "tests", "legacy"} else "all"
+    result["unmatched_symbols"] = [ctx["symbol"] for ctx in result.get("contexts", []) if not ctx.get("matched_ids")]
+    files = {n.get("file") for n in result.get("nodes", []) if n.get("file")}
+    files.update(str(n.get("id"))[5:] for n in result.get("nodes", []) if str(n.get("id", "")).startswith("file:"))
+    raw_chars = sum(_safe_project_file_size(root, str(rel)) for rel in files)
+    raw_tokens = raw_chars // 4
+    compact_tokens = int(result.get("estimated_tokens") or 0)
+    result.update({
+        "ok": True,
+        "raw_context_tokens": raw_tokens,
+        "tokens_saved": raw_tokens - compact_tokens,
+        "reduction_rate": round((raw_tokens - compact_tokens) / max(1, raw_tokens), 4),
+        "token_estimation": "caracteres UTF-8 / 4; estimación, no facturación del proveedor",
+    })
+    return JSONResponse(result)
 
 
 @app.get("/api/watch/status")

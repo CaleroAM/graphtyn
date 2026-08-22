@@ -2,6 +2,24 @@
 
 Mediciones reales, reproducibles en el hardware de referencia. Cada tabla indica fecha, proyecto y comando exacto de reproducción.
 
+## Context Planner — UnityCommerceDemo (21 ago 2026)
+
+Consulta real: `GameHUDController.cs`, `GameManager` y `PlayerNameServiceTests.GeneratedNames_RespectMaxLength`, profundidad 1.
+
+| Variante | Nodos | Enlaces | Tokens estimados | Reducción vs fuente |
+|---|---:|---:|---:|---:|
+| Unión anterior, límite por símbolo | 31 | 36 | 5,577 | 71.37% |
+| `relevance-v1`, presupuesto global 20 | 20 | 26 | 3,895 | 78.80% |
+| `relevance-v1`, presupuesto global 12 (predeterminado) | 12 | 10 | 2,003 | 88.96% |
+
+Los tokens se estiman como caracteres UTF-8/4 y no equivalen a facturación de un proveedor. El planificador informa `omitted.nodes`, `omitted.links` y `truncated`; no oculta el descarte. Para contextos pequeños puede existir expansión negativa y se reporta como tal.
+
+Las relaciones `AMBIGUOUS` indican varios destinos estructuralmente compatibles, no errores demostrados. En UnityCommerceDemo, parte surge de métodos homónimos (`Exit`, `ShowTurnOrderRoll`) y copias bajo `LegacyEditorBackup`. Reducir la cifra sin perder recall requiere inferencia de receptor, despacho por interfaz y perfiles de alcance; simplemente borrar candidatos maquillaría la métrica.
+
+El índice activo medido contiene 67 aristas ambiguas de 1,689. El perfil `production` elimina cruces con pruebas/backups y deja 53 de 1,304; las 14 restantes no se borran porque requieren mejor resolución del receptor. El perfil `legacy` contiene 103 nodos y 114 enlaces sin ambigüedad interna. Estas cifras describen el índice activo y pueden cambiar tras reindexar.
+
+Qwen 2.5 Coder 3B sigue siendo la capa local de enriquecimiento semántico y ranking. Tree-sitter conserva la autoridad sobre hechos estructurales verificables; el modelo no inventa aristas de llamadas.
+
 ## UnityCommerceDemo — corpus real (21 ago 2026)
 
 El ground truth versionado en `benchmarks/unity_commerce_demo.json` comprueba siete símbolos de C# seleccionados manualmente, incluyendo `AuctionService`, `TokenSelectionManager.GetPlayerSelection`, interfaces y componentes Unity. Es un **smoke ground truth**, no una medición estadística completa de precisión.

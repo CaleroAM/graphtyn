@@ -79,6 +79,8 @@ export function loadProjects(thenLoadGraph) {
 
 export function selectProject(path) {
       state.activePath = path;
+      state.contextSelection = [];
+      state.lastContextBundle = null;
       const gi = document.getElementById('chk-gitignore');
       if (gi) gi.checked = state.respectMap[path] !== false;
       if (state.activeView === 'agents' || state.activeView === 'changes') setView('code'); // switch to code view when selecting a project

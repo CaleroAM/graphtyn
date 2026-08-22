@@ -7,3 +7,6 @@ export { setView, setDim, changePalette, updateLinkStyles,
 export { focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape,
          changeStyleColors, closeBlastPanel, toggleAllComm, toggleComm, toggleNodeDesc,
          toggleVertexBlink, toggleOrganic3d, toggleRotate, setPRBase } from './graph.js';
+export { openQualityPanel, closeQualityPanel, loadIndexQuality, addNodeToContext,
+         removeNodeFromContext, clearContextSelection, generateContextBundle,
+         copyContextBundle } from './quality.js';

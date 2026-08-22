@@ -26,6 +26,8 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 * 🎯 **Radio de Impacto en vivo y pre-Commit**: Permite evaluar exactamente qué clases y métodos se verán afectados antes de hacer `git push` (`aether-graph diff`).
 * 📝 **Generador de ARCHITECTURE.md**: Exporta un mapa de arquitectura conciso (~150 tokens) que cualquier Agente de IA puede leer al iniciar (`aether-graph export-md`).
  * 🌐 **Dashboard Interactivo WebGL 2D/3D (`:9210`)**:
+   - **Calidad & Contexto**: reporta salud observable del índice (parser, cobertura de ubicación y confianza de aristas) sin confundirla con precisión contra ground truth. Permite agrupar hasta 10 símbolos, generar `context_bundle`, copiar su JSON y comparar tokens estimados contra los archivos fuente incluidos. El planificador `relevance-v1` aplica un presupuesto global (12 nodos por defecto), conserva los símbolos solicitados y prioriza llamadas, herencia e implementación sobre enlaces contenedores.
+   - **Perfiles de alcance**: separa el índice completo, producción, pruebas y copias legacy/backups para que duplicados históricos no contaminen una consulta productiva. La selección afecta tanto las métricas como el contexto generado.
    - **Selector Nativo del OS (`📂 Seleccionar...`)**: Abre el explorador de archivos nativo de tu sistema operativo (Windows, macOS, Linux).
    - **Paneles Colapsables (`◀` / `▶`)**: Botones flotantes centrados para expandir el lienzo 2D/3D a pantalla completa.
    - **Auto-descubrimiento Multiplataforma**: Cero rutas estáticas (*hardcoded*); descubre automáticamente los proyectos del desarrollador.
@@ -275,6 +277,10 @@ AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`) 
 | `graph_neighborhood` | Devuelve el subgrafo con evidencia. Por defecto usa respuesta compacta, máximo 40 nodos y descripciones de 240 caracteres; `response_mode=full` es opt-in. | `path`, `symbol`, `depth`, `limit`, `response_mode` |
 | `graph_blast_radius` | Calcula impacto por salto. La salida compacta limita el contexto a 40 impactos y avisa si hubo truncamiento. | `symbol`, `depth`, `limit`, `response_mode` |
 | `graph_context_bundle` | Agrupa vecindad e impacto de hasta 10 símbolos en una sola llamada, reduciendo rondas y reenvío acumulativo de contexto. | `symbols`, `depth`, `limit` |
+
+`limit` es un presupuesto global, no un límite repetido por cada símbolo. La respuesta incluye `planner`, `budget` y `omitted`, de modo que un agente puede detectar truncamiento y solicitar una expansión deliberada. El dashboard usa 12 nodos por defecto.
+
+La indexación híbrida conserva responsabilidades separadas: **Tree-sitter** extrae símbolos y aristas verificables; **Qwen 2.5 Coder 3B** enriquece descripciones, conceptos y señales semánticas locales. Qwen sigue siendo útil para significado y ranking, pero no sustituye evidencia estructural ni convierte una inferencia en una llamada demostrada.
 | `graph_search_concepts` | Busca conceptos semánticos o palabras clave en las descripciones explicativas de nodos (archivos/clases/funciones) y en los nombres de símbolos. | `query` (obligatorio) |
 
 ### 🕒 Herramientas de Memoria de Sesiones (SQLite Local, Gratis)

@@ -12,6 +12,7 @@ from .core.agent_benchmark import compare_agent_runs
 from .core.agent_eval import grade_runs
 from .core.external_benchmark import score_graphify
 from .core.impact import analyze_impact
+from .core.storage import project_store_dir
 from .mcp_server import context_bundle, run_mcp_server
 
 def bfs_path(graph: dict, start_sym: str, end_sym: str):
@@ -69,7 +70,7 @@ def main():
     context_p = subparsers.add_parser("context", help="Contexto compacto agrupado para agentes en una sola ronda")
     context_p.add_argument("symbols", nargs="+", help="Hasta 10 símbolos o archivos")
     context_p.add_argument("--depth", type=int, default=1, help="Saltos por símbolo")
-    context_p.add_argument("--limit", type=int, default=12, help="Máximo de nodos/impactos por símbolo")
+    context_p.add_argument("--limit", type=int, default=12, help="Presupuesto global máximo de nodos")
     context_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
     # path
@@ -247,7 +248,7 @@ def main():
 
     elif args.command == "benchmark":
         truth = Path(args.ground_truth).resolve() if args.ground_truth else None
-        cache = Path(args.cache).resolve() if args.cache else Path.home() / ".aether-graph" / root.name / "benchmark_structural_cache.json"
+        cache = Path(args.cache).resolve() if args.cache else project_store_dir(Path.home() / ".aether-graph", root) / "benchmark_structural_cache.json"
         result = run_benchmark(root, truth, cache)
         if args.output:
             Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")

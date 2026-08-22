@@ -172,3 +172,26 @@
       z-index: 1000 !important;
       user-select: none !important;
     }
+    .quality-modal { width:720px; max-height:88vh; overflow-y:auto; }
+    .quality-summary { margin-top:8px; }
+    .quality-score { display:flex;align-items:baseline;gap:8px;padding:10px;background:#0b1220;border:1px solid #1e3a5f;border-radius:8px; }
+    .quality-score strong { color:#10b981;font-size:25px; }
+    .quality-score span,.quality-grid span,.context-stats span { color:#64748b;font-size:9px;text-transform:uppercase; }
+    .quality-grid,.context-stats { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:7px; }
+    .quality-grid>div,.context-stats>div { display:flex;flex-direction:column;gap:3px;background:#1a2234;border:1px solid #2d3748;border-radius:6px;padding:8px;min-width:0; }
+    .quality-grid strong,.context-stats strong { color:#e2e8f0;overflow-wrap:anywhere; }
+    .quality-note { color:#64748b;font-size:10px;line-height:1.4;margin-top:7px; }
+    .quality-warning,.quality-error { padding:6px 8px;border-radius:5px;margin-top:6px;font-size:10px; }
+    .quality-warning { color:#fde68a;background:#422006;border:1px solid #854d0e; }
+    .quality-error { color:#fecaca;background:#450a0a;border:1px solid #991b1b; }
+    .context-section { margin-top:16px;border-top:1px solid #1e293b;padding-top:12px; }
+    .context-heading,.context-actions { display:flex;justify-content:space-between;align-items:center;gap:7px; }
+    .btn-link { background:none;border:0;color:#38bdf8;cursor:pointer;font-size:10px; }
+    .quality-select { background:#1a2234;border:1px solid #2d3748;color:#cbd5e1;border-radius:5px;padding:4px 6px;font-size:10px; }
+    .context-selection { display:flex;flex-wrap:wrap;gap:5px;margin:7px 0;min-height:26px; }
+    .context-chip { display:flex;align-items:center;gap:5px;max-width:100%;background:#0c4a6e;color:#bae6fd;border:1px solid #0369a1;border-radius:12px;padding:3px 7px;font-size:10px; }
+    .context-chip span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .context-chip button { border:0;background:none;color:#bae6fd;cursor:pointer;padding:0; }
+    .context-actions { justify-content:flex-start;margin:8px 0; }
+    #context-json { width:100%;height:180px;box-sizing:border-box;background:#0b1220;color:#cbd5e1;border:1px solid #334155;border-radius:6px;padding:8px;font:10px/1.4 monospace;resize:vertical;margin-top:7px; }
+    @media (max-width:760px) { .quality-grid,.context-stats { grid-template-columns:1fr 1fr; } .quality-modal { width:94vw;padding:14px; } }

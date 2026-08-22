@@ -79,6 +79,24 @@ def test_mcp_context_bundle_combines_queries(workspace):
     assert len(result["contexts"]) == 2
     assert result["nodes"] and result["links"]
     assert result["estimated_tokens"] > 0
+    assert result["planner"] == "relevance-v1"
+    assert len(result["nodes"]) <= result["budget"]["max_nodes"]
+
+
+def test_context_bundle_enforces_one_global_budget(tmp_path):
+    from aether_graph.mcp_server import context_bundle
+    graph = {"nodes": [], "links": []}
+    graph["nodes"].append({"id": "file:large.cs", "name": "large.cs", "kind": "file", "degree": 12})
+    for i in range(12):
+        nid = f"symbol:large.cs:M{i}"
+        graph["nodes"].append({"id": nid, "name": f"M{i}", "kind": "method", "file": "large.cs", "line": i + 1, "degree": 1})
+        graph["links"].append({"source": "file:large.cs", "target": nid, "label": "contiene", "confidence": "EXTRACTED"})
+    result = context_bundle(graph, ["large.cs", "M11"], depth=1, max_nodes=5)
+    ids = {node["id"] for node in result["nodes"]}
+    assert len(result["nodes"]) == 5
+    assert "file:large.cs" in ids and "symbol:large.cs:M11" in ids
+    assert result["omitted"]["nodes"] > 0
+    assert result["contexts"][0]["truncated"] is True
 
 
 def test_qualified_selector_disambiguates_same_named_methods(tmp_path):

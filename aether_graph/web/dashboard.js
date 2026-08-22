@@ -5,7 +5,9 @@ import {
   onFolderPicked, selectProject, toggleAllComm, toggleComm, toggleDD, toggleGitignore,
   toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, loadHistoryUI, toggleNodeDesc,
   openRegister, closeRegister, selMode, submitRegister, openTutorial, closeTutorial,
-  loadProjects, updateModelEstimate, initWatchPolling
+  loadProjects, updateModelEstimate, initWatchPolling, openQualityPanel, closeQualityPanel,
+  addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle,
+  copyContextBundle
 } from './js/__handlers.js';
 import { state } from './js/state.js';
 
@@ -18,6 +20,14 @@ import { state } from './js/state.js';
 
     document.addEventListener('click', e => {
       if (!e.target.closest('.dd-wrap')) document.querySelectorAll('.dd-wrap').forEach(d => d.classList.remove('open'));
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeQualityPanel();
+        closeRegister();
+        closeTutorial();
+        closeBlastPanel();
+      }
     });
 
     // ── Modals ────────────────────────────────────────────────────────────────
@@ -87,4 +97,4 @@ function openFromChanges(nodeId) {
   setTimeout(() => focusNode(nodeId), 500);
 }
 
-Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, closeBlastPanel, closeRegister, closeTutorial, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate});
+Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, closeBlastPanel, closeRegister, closeTutorial, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle});
