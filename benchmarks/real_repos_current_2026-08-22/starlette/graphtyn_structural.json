@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "project": "starlette",
+  "path": "/tmp/graphtyn-benchmark-starlette/starlette",
+  "elapsed_seconds": 0.538,
+  "warm_cache_seconds": 0.5005,
+  "warm_cache_speedup": 1.07,
+  "nodes": 638,
+  "links": 1194,
+  "node_kinds": {
+    "module": 5,
+    "file": 73,
+    "class": 111,
+    "method": 408,
+    "function": 41
+  },
+  "parsers": {
+    "tree-sitter": 560
+  },
+  "quality": {
+    "dangling_edges": 0,
+    "duplicate_edges": 0,
+    "structural_validity": 1.0,
+    "call_edges": 153,
+    "ambiguous_calls": 90,
+    "ambiguous_call_rate": 0.5882,
+    "symbol_to_symbol_calls": 139
+  }
+}

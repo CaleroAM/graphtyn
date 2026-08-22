@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-CLI = Path(__file__).resolve().parent.parent / ".venv" / "bin" / "aether-graph"
+CLI = Path(__file__).resolve().parent.parent / ".venv" / "bin" / "graphtyn"
 
 
 def _run_cli(args, cwd, home):
-    env = dict(os.environ, HOME=str(home))
+    env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"))
     return subprocess.run([str(CLI)] + args, cwd=str(cwd), env=env,
                           capture_output=True, text=True, timeout=90)
 
@@ -30,7 +30,7 @@ def test_hook_install_and_uninstall(git_repo, tmp_path):
     assert res.returncode == 0
     hook = git_repo / ".git" / "hooks" / "post-commit"
     assert hook.exists()
-    assert "AetherGraph" in hook.read_text(encoding="utf-8")
+    assert "Graphtyn" in hook.read_text(encoding="utf-8")
     assert os.access(hook, os.X_OK)
 
     res2 = _run_cli(["hook", "uninstall", "--path", str(git_repo)], git_repo, home)
@@ -52,16 +52,29 @@ def test_gitignore_on_off_writes_isolated_config(git_repo, tmp_path):
     assert off.returncode == 0
     assert "OFF" in off.stdout
 
-    configs = list((home / ".aether-graph").rglob("config.json"))
+    configs = list((home / ".graphtyn").rglob("config.json"))
     assert configs, "config.json no persistido"
     data = json.loads(configs[0].read_text(encoding="utf-8"))
     assert data["respect_git"] is False
 
 
+def test_report_command_writes_graphtyn_report(git_repo, tmp_path):
+    (git_repo / "README.md").write_text("# Demo\n\nDemo coordinates background jobs for a local operations team.\n", encoding="utf-8")
+    home = tmp_path / "home-report"
+    home.mkdir()
+    result = _run_cli(["report", "--path", str(git_repo)], git_repo, home)
+    assert result.returncode == 0, result.stderr
+    report = git_repo / "GRAPHTYN_REPORT.md"
+    assert report.is_file()
+    text = report.read_text(encoding="utf-8")
+    assert "Demo coordinates background jobs" in text
+    assert "## Report metrics" in text
+
+
 def test_reindex_ast_local_fallback_no_server(git_repo, tmp_path):
     home = tmp_path / "home"
     home.mkdir()
-    env = dict(os.environ, HOME=str(home), http_proxy="http://127.0.0.1:1", https_proxy="http://127.0.0.1:1", no_proxy="")
+    env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"), http_proxy="http://127.0.0.1:1", https_proxy="http://127.0.0.1:1", no_proxy="")
     res = subprocess.run([str(CLI), "reindex", "--engine", "ast_pure", "--path", str(git_repo)],
                          cwd=str(git_repo), env=env, capture_output=True, text=True, timeout=90)
     assert res.returncode == 0
@@ -75,7 +88,7 @@ def test_reindex_via_server_when_available(git_repo, tmp_path):
         s = socket.create_connection(("127.0.0.1", 9210), timeout=1)
         s.close()
     except OSError:
-        pytest.skip("servidor aether-graph no activo")
+        pytest.skip("servidor graphtyn no activo")
     home = tmp_path / "home"
     home.mkdir()
     res = _run_cli(["reindex", "--engine", "ast_pure", "--path", str(git_repo)], git_repo, home)
@@ -83,12 +96,12 @@ def test_reindex_via_server_when_available(git_repo, tmp_path):
     assert "modo full" in res.stdout
 
 
-def test_init_creates_aether_dir(git_repo, tmp_path):
+def test_init_creates_graphtyn_dir(git_repo, tmp_path):
     home = tmp_path / "home"
     home.mkdir()
     res = _run_cli(["init", "--path", str(git_repo)], git_repo, home)
     assert res.returncode == 0
-    assert (git_repo / ".aether-graph" / "aether.json").exists()
+    assert (git_repo / ".graphtyn" / "graphtyn.json").exists()
 
 
 def test_query_returns_matching_symbols(git_repo, tmp_path):
@@ -141,12 +154,12 @@ def test_init_creates_and_updates_gitignore(tmp_path):
     assert res.returncode == 0
     gi = tmp_path / ".gitignore"
     assert gi.exists()
-    assert ".aether-graph/" in gi.read_text(encoding="utf-8")
+    assert ".graphtyn/" in gi.read_text(encoding="utf-8")
 
     res2 = _run_cli(["init", "--path", str(tmp_path)], tmp_path, home)
     assert res2.returncode == 0
     lines = gi.read_text(encoding="utf-8").splitlines()
-    assert lines.count(".aether-graph/") == 1
+    assert lines.count(".graphtyn/") == 1
 
 
 def test_benchmark_cli_writes_reproducible_json(git_repo, tmp_path):
@@ -221,3 +234,30 @@ def test_pr_impact_cli_json(git_repo, tmp_path):
     data = json.loads(result.stdout)
     assert data["changed_files"] == ["a.py"]
     assert data["risk"]["score"] > 0
+
+
+def test_global_cli_add_list_and_query(git_repo, tmp_path):
+    home = tmp_path / "home-global"
+    home.mkdir()
+    registry = tmp_path / "registry.json"
+    add = _run_cli(["global", "add", "--as", "demo", "--path", str(git_repo),
+                    "--registry", str(registry)], git_repo, home)
+    assert add.returncode == 0, add.stderr
+    listing = _run_cli(["global", "list", "--registry", str(registry)], git_repo, home)
+    assert json.loads(listing.stdout)["projects"][0]["tag"] == "demo"
+    query = _run_cli(["global", "query", "helper", "--registry", str(registry)], git_repo, home)
+    assert json.loads(query.stdout)["nodes"]
+
+
+def test_memory_cli_and_ci_install(git_repo, tmp_path):
+    home = tmp_path / "home-memory"
+    home.mkdir()
+    saved = _run_cli(["memory", "save", "--question", "where", "--answer", "helper",
+                      "--nodes", "helper", "--files", "a.py", "--outcome", "useful",
+                      "--path", str(git_repo)], git_repo, home)
+    assert saved.returncode == 0, saved.stderr
+    reflected = _run_cli(["memory", "reflect", "--path", str(git_repo)], git_repo, home)
+    assert json.loads(reflected.stdout)["nodes"]["helper"]["label"] == "preferred"
+    installed = _run_cli(["ci-install", "github", "--path", str(git_repo)], git_repo, home)
+    assert installed.returncode == 0
+    assert (git_repo / ".github/workflows/graphtyn.yml").is_file()

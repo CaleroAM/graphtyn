@@ -1,0 +1,62 @@
+[
+  {
+    "task_id": "signed-session-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 80.4375,
+    "usage": {
+      "input_tokens": 6164,
+      "output_tokens": 1599,
+      "thinking_tokens": 392,
+      "total_tokens": 8155
+    },
+    "tool_calls": 1,
+    "answer": "# Auditoría del ciclo de `SessionMiddleware`\n\nFuente única: `middleware/sessions.py` (grafo `context_id=f74734e7f135`, `complete_for=[\"flow\"]`, todas las relaciones marcadas **E** = extraídas).\n\n## 1. Construcción (`__init__`, sessions.py:17)\n- Firma: `itsdangerous.TimestampSigner(str(secret_key))` asignado a `self.signer` (:29).\n- Defaults: `session_cookie=\"session\"`, `max_age=14*24*60*60` (14 días), `path=\"/\"`, `same_site=\"lax\"`, `https_only=False`, `domain=None`.\n- Atributos de seguridad: `self.security_flags = \"httponly; samesite=\" + same_site` (:33); se añade `\"; secure\"` solo si `https_only` (:34); se añade `\"; domain=…\"` si `domain is not None` (:36). **Nota:** `https_only=False` por defecto ⇒ sin flag `Secure` salvo configuración explícita.\n\n## 2. Lectura y verificación (`__call__`, sessions.py:39)\n- Si `self.session_cookie in connection.cookies`: `connection.cookies[self.session_cookie].encode(\"utf-8\")` (:48).\n- Verificación/expiración: `self.signer.unsign(data, max_age=self.max_age)` (:50).\n- Deserialización: `scope[\"session\"] = Session(json.loads(b64decode(data)))` (:51).\n- **Firma inválida**: `except BadSignature:` → `scope[\"session\"] = Session()` vacía (:53); no se lanza error al cliente.\n- El grafo no muestra la rama cuando la cookie está ausente (guard en :47 solo captura la rama positiva).\n\n## 3. Seguimiento acceso/modificación (clase `Session(dict[str, typing.Any])`)\n- `mark_accessed` (sessions.py:95): `self.accessed = True` (:96).\n- `mark_modified` (sessions.py:98): setea `accessed=True` **y** `modified=True` (:99-100).\n- Mutadores que marcan modificado: `__delitem__` (:106-107), `setdefault` (solo si `key not in self`, :118-120), `update` (:123-125).\n- El grafo no extrae llamadores de `mark_accessed` (p. ej. desde lecturas de ítems); solo consta su definición.\n\n## 4. Escritura / borrado (`send_wrapper`, sessions.py:58)\nEn `http.response.start`:\n- `headers.add_vary_header(\"Cookie\")` si `session.accessed` (:63).\n- **Persistencia** — si `session.modified and session`: `b64encode(json.dumps(session).encode(\"utf-8\"))` → `self.signer.sign(data)` (:66-67) → `Set-Cookie` con `{session_cookie}={data}; path={path}; {Max-Age}{security_flags}` (:68-74, `headers.append(\"Set-Cookie\", …)` :75).\n- **Borrado** — rama alternativa (:78-85): `Set-Cookie` con `data=\"null\"` y `expires=Thu, 01 Jan 1970 00:00:00 GMT` más mismos `path`+`security_flags` (:85). La condición exacta que dispara esta rama aparece truncada en la extracción.\n\n## Primitivas concretas (evidencia directa)\n| Uso | Evidencia |\n|---|---|\n| `itsdangerous.TimestampSigner` | :29, firma :67 |\n| `.unsign(data, max_age)` | :50 |\n| `json.dumps` / `json.loads` | :66, :51 |\n| `base64.b64encode` / `b64decode` | :66, :51 |\n| `BadSignature` (excepción) | :53 |\n\n## Ambigüedades / huecos (no asumidos)\n- Rama de cookie ausente en `__call__` y condición completa de la rama de borrado en `send_wrapper`: no visibles en las ops extraídas.\n- Consumidores entrantes de `SessionMiddleware`: cobertura entrante = 0 (evidencia negativa declarada por el grafo).",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "signer",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "decode",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "invalid",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "tracking",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "persist",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "delete-security",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]

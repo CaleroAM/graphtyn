@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from aether_graph.core.history import HistoryTracker
+from graphtyn.core.history import HistoryTracker
 
 def test_history_tracker_log_and_search():
     with tempfile.TemporaryDirectory() as tmpdir:

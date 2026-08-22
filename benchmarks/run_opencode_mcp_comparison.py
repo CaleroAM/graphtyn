@@ -7,13 +7,14 @@ import os
 import subprocess
 import time
 from pathlib import Path
+from graphtyn.core.benchmark import syntactically_complete_answer
 
 
 def config(command: list[str] | None, name: str, project: Path) -> str:
     mcp = {
         "unityMCP": {"enabled": False},
         "graphify": {"enabled": False},
-        "aether-graph": {"enabled": False},
+        "graphtyn": {"enabled": False},
     }
     if command is not None:
         mcp[name] = {"type": "local", "command": command, "enabled": True, "timeout": 15000}
@@ -36,7 +37,7 @@ def config(command: list[str] | None, name: str, project: Path) -> str:
 def run_task(project: Path, model: str, variant: str, command: list[str] | None, task: dict) -> dict:
     if command is None:
         prompt = (
-            f"Sin usar AetherGraph ni Graphify, investiga exclusivamente el repositorio {project} con las herramientas locales de OpenCode. "
+            f"Sin usar Graphtyn ni Graphify, investiga exclusivamente el repositorio {project} con las herramientas locales de OpenCode. "
             f"{task['prompt']} Responde en español con evidencia concreta de archivo y línea; evita suposiciones y no modifiques archivos."
         )
     else:
@@ -65,6 +66,7 @@ def run_task(project: Path, model: str, variant: str, command: list[str] | None,
     tool_calls = 0
     last_tokens = {"input": 0, "output": 0, "reasoning": 0, "total": 0}
     errors: list[str] = []
+    finish_reason = ""
     for line in stdout.splitlines():
         try:
             event = json.loads(line)
@@ -75,7 +77,9 @@ def run_task(project: Path, model: str, variant: str, command: list[str] | None,
         elif event.get("type") == "tool_use":
             tool_calls += 1
         elif event.get("type") == "step_finish":
-            tokens = event.get("part", {}).get("tokens", {})
+            part = event.get("part", {})
+            tokens = part.get("tokens", {})
+            finish_reason = str(part.get("reason") or part.get("finish_reason") or finish_reason)
             if int(tokens.get("total", 0)) >= int(last_tokens.get("total", 0)):
                 last_tokens = tokens
         elif event.get("type") == "error":
@@ -86,15 +90,21 @@ def run_task(project: Path, model: str, variant: str, command: list[str] | None,
         "thinking_tokens": int(last_tokens.get("reasoning", 0)),
         "total_tokens": int(last_tokens.get("total", 0)),
     }
+    final_answer = "\n".join(answer).strip()
+    answer_complete = syntactically_complete_answer(final_answer)
+    status = "SUCCESS" if returncode == 0 and final_answer and answer_complete else (
+        "INCOMPLETE" if returncode == 0 and final_answer else "ERROR"
+    )
     return {
         "task_id": task["id"],
         "variant": variant,
         "model": model,
-        "status": "SUCCESS" if returncode == 0 and answer else "ERROR",
+        "status": status,
         "duration_seconds": round(time.monotonic() - started, 4),
         "usage": usage,
         "tool_calls": tool_calls,
-        "answer": "\n".join(answer),
+        "answer": final_answer,
+        "completion_check": {"syntactically_complete": answer_complete, "finish_reason": finish_reason},
         "terminal_error": "\n".join(
             (["timeout after 600 seconds"] if timed_out else [])
             + errors + ([stderr.strip()] if stderr.strip() else [])
@@ -108,11 +118,12 @@ def main() -> None:
     parser.add_argument("--tasks", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--model", default="opencode/x-preview-f-free")
-    parser.add_argument("--aether", type=Path, required=True)
+    parser.add_argument("--graphtyn", type=Path, required=True)
     parser.add_argument("--graphify", type=Path, required=True)
-    parser.add_argument("--variant", choices=("Graphify", "AetherGraph", "Baseline"), action="append")
+    parser.add_argument("--variant", choices=("Graphify", "Graphtyn", "Baseline"), action="append")
     parser.add_argument("--task", action="append", help="Ejecuta sólo estos task_id y conserva los demás resultados")
     parser.add_argument("--output-prefix", default="tour", help="Prefijo estable para los artefactos JSON")
+    parser.add_argument("--retry-incomplete", action="store_true", help="Reintenta una respuesta sintácticamente incompleta y acumula su costo")
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     tasks = json.loads(args.tasks.read_text(encoding="utf-8"))["tasks"]
@@ -121,7 +132,7 @@ def main() -> None:
         tasks = [task for task in tasks if task["id"] in selected_tasks]
     variants = {
         "Graphify": [str(args.graphify), "--graph", str(args.project / "graphify-out/graph.json")],
-        "AetherGraph": [str(args.aether), "mcp", "--path", str(args.project)],
+        "Graphtyn": [str(args.graphtyn), "mcp", "--path", str(args.project)],
         "Baseline": None,
     }
     selected = set(args.variant or variants)
@@ -133,7 +144,24 @@ def main() -> None:
         by_task = {run["task_id"]: run for run in runs}
         for index, task in enumerate(tasks, 1):
             print(f"[{variant}] {index}/{len(tasks)} {task['id']}", flush=True)
-            by_task[task["id"]] = run_task(args.project, args.model, variant, command, task)
+            result = run_task(args.project, args.model, variant, command, task)
+            if args.retry_incomplete and result["status"] == "INCOMPLETE":
+                retry_task = {**task, "prompt": task["prompt"] + " Entrega una respuesta final autocontenida y completa; no narres pasos ni termines a mitad de una sección."}
+                retry = run_task(args.project, args.model, variant, command, retry_task)
+                first = result
+                chosen = retry if len(retry.get("answer", "")) > len(first.get("answer", "")) else first
+                result = {
+                    **chosen,
+                    "attempts": 2,
+                    "attempt_statuses": [first["status"], retry["status"]],
+                    "duration_seconds": round(first["duration_seconds"] + retry["duration_seconds"], 4),
+                    "tool_calls": first["tool_calls"] + retry["tool_calls"],
+                    "usage": {key: first["usage"].get(key, 0) + retry["usage"].get(key, 0) for key in first["usage"]},
+                    "terminal_error": "\n".join(filter(None, [first.get("terminal_error"), retry.get("terminal_error")])),
+                }
+            else:
+                result["attempts"] = 1
+            by_task[task["id"]] = result
             runs = list(by_task.values())
             output.write_text(json.dumps(runs, ensure_ascii=False, indent=2), encoding="utf-8")
 

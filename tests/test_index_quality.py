@@ -1,4 +1,4 @@
-from aether_graph.core.index_quality import index_quality
+from graphtyn.core.index_quality import index_quality
 
 
 def test_index_quality_reports_observable_metrics_without_claiming_accuracy():
@@ -27,3 +27,27 @@ def test_index_quality_empty_and_fallback_are_explicit():
     result = index_quality({"nodes": [], "links": [], "metadata": {"structural_parser": "builtin-fallback"}})
     assert result["health_score"] == 0
     assert len(result["warnings"]) == 2
+
+
+def test_index_quality_reports_framework_route_resolution():
+    graph = {
+        "nodes": [
+            {"id": "route:web:orders.store", "kind": "route"},
+            {"id": "symbol:OrdersController:store", "kind": "method"},
+            {"id": "file:Create.tsx", "kind": "file"},
+        ],
+        "links": [
+            {"source": "file:Create.tsx", "target": "route:web:orders.store", "label": "invoca ruta", "confidence": "EXTRACTED"},
+            {"source": "route:web:orders.store", "target": "symbol:OrdersController:store", "label": "despacha", "confidence": "EXTRACTED"},
+        ],
+    }
+    framework = index_quality(graph)["framework"]
+    assert framework == {
+        "routes": 1,
+        "resolved_routes": 1,
+        "unresolved_routes": 0,
+        "frontend_route_calls": 1,
+        "routes_with_frontend_callers": 1,
+        "relations": 2,
+        "ambiguous_relations": 0,
+    }

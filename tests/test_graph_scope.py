@@ -1,4 +1,4 @@
-from aether_graph.core.graph_scope import classify_path, filter_graph_scope
+from graphtyn.core.graph_scope import classify_path, filter_graph_scope
 
 def test_scope_classifies_production_tests_and_legacy():
     assert classify_path("Assets/Game.cs") == "production"

@@ -17,7 +17,7 @@
       "status": "ERROR",
       "terminal_error": "invalid tool argument schema: missing Pattern"
     },
-    "aethergraph_focused": {
+    "graphtyn_focused": {
       "duration_seconds": 106.9264,
       "input_tokens": 214618,
       "output_tokens": 15879,
@@ -39,7 +39,7 @@
     }
   },
   "reductions_vs_baseline": {
-    "aethergraph_focused_total_tokens": 0.3093,
+    "graphtyn_focused_total_tokens": 0.3093,
     "compact_single_round_total_tokens": 0.4727,
     "compact_single_round_duration": 0.4919,
     "compact_single_round_direct_files": 0.9286

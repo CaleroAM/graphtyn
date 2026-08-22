@@ -1,0 +1,112 @@
+[
+  {
+    "task_id": "delete-event-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 140.2851,
+    "usage": {
+      "input_tokens": 13861,
+      "output_tokens": 176,
+      "thinking_tokens": 70,
+      "total_tokens": 28763
+    },
+    "tool_calls": 10,
+    "answer": "## Trazado del flujo (evidencia del grafo Graphtyn)\n\nExisten **dos implementaciones paralelas** en el repo: `sample/` (NimblePros.SampleToDo) y `src/` (Clean.Architecture).\n\n**1. Endpoint HTTP** — clase `Delete` (`NimblePros.SampleToDo.Web.Contributors` / `Clean.Architecture.Web.Contributors`)\n- `Configure()` registra la ruta `Delete(DeleteContributorRequest.Route)` y respuesta 204 — `sample/.../Web/Contributors/Delete.cs:16`, `src/.../Web/Contributors/Delete.cs:17`\n- `ExecuteAsync` (arista E del grafo): `new DeleteContributorCommand(ContributorId.From(req.ContributorId))` → `_mediator.Send(cmd, ct)` → `result.ToDeleteResult()` — `sample/.../Delete.cs:43-49`, `src/.../Delete.cs:44-50`\n\n**2. Comando (MediatR)**\n- `record DeleteContributorCommand(ContributorId ContributorId) : ICommand<Result>` — `sample/src/.../UseCases/Contributors/Commands/Delete/DeleteContributorCommand.cs:5` y `src/Clean.Architecture.UseCases/Contributors/Delete/DeleteContributorCommand.cs:5`\n\n**3. Caso de uso**\n- `DeleteContributorHandler.Handle(...)` llama `_deleteContributorService.DeleteContributor(request.ContributorId)` — `sample/.../Commands/Delete/DeleteContributorHandler.cs:14-17`, `src/.../Delete/DeleteContributorHandler.cs:8-11`\n- **Interfaz**: `IDeleteContributorService` con método `Task<Result>` / `ValueTask<Result>` — `sample/src/.../Core/Interfaces/IDeleteContributorService.cs:5,9` y `src/Clean.Architecture.Core/Interfaces/IDeleteContributorService.cs:5,9`\n- **Implementación** (arista `implementa` E): `DeleteContributorService : IDeleteContributorService` — `sample/.../Core/Services/DeleteContributorService.cs:8`, `src/.../Core/Services/DeleteContributorService.cs:14`. Registro DI: `services.AddScoped<IDeleteContributorService, DeleteContributorService>()` en `CoreServiceExtensions.AddCoreServices` (`sample/.../Core/CoreServiceExtensions.cs:13`)\n\n**4. Servicio de dominio** — `DeleteContributorService.DeleteContributor` (ops extraídas):\n- `GetByIdAsync(contributorId)` → si null: `return Result.NotFound()` — sample :26-27, src :21-22\n- `await _repository.DeleteAsync(aggregateToDelete)` — sample :29, src :24\n- `var domainEvent = new ContributorDeletedEvent(contributorId)` + `await _mediator.Publish(domainEvent)` — sample :30-31, src :25-26\n- `return Result.Success()` — sample :32, src :28\n\n**5. Evento de dominio**\n- `sealed class ContributorDeletedEvent(ContributorId contributorId) : DomainEventBase` — `sample/.../Core/ContributorAggregate/Events/ContributorDeletedEvent.cs:7` y `src/.../Events/ContributorDeletedEvent.cs:8`\n\n**6. Efecto secundario** — `ContributorDeletedHandler : INotificationHandler<ContributorDeletedEvent>` (vinculación evidenciada en la firma, arista E):\n- **sample/** (`.../Handlers/ContributorDeletedHandler.cs:8, Handle :20-34`): log `\"Removing deleted contributor {id} from all projects...\"` → `ProjectsWithItemsByContributorIdSpec` + `_repository.ListAsync(projectSpec)` → por cada ítem con `item.ContributorId",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 5,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 0.8333,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.8333,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "endpoint-command",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "handler-service",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "service-delete",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "event-publish",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "event-handler",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "email",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "infrastructure-bindings",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 114.2368,
+    "usage": {
+      "input_tokens": 1044,
+      "output_tokens": 1341,
+      "thinking_tokens": 95,
+      "total_tokens": 23344
+    },
+    "tool_calls": 7,
+    "answer": "# Auditoría de `AddInfrastructureServices` (solo evidencia del grafo)\n\nEl grafo registra **tres** métodos `AddInfrastructureServices` (aliases F1–F3):\n\n## 1. Proyecto principal — `src/Clean.Architecture.Infrastructure/InfrastructureServiceExtensions.cs:10` (N1/F1)\n\n**Selección de base de datos** (líneas 19–45):\n- Línea 19–20: `isWindows = OperatingSystem.IsWindows()` y `forceSqlServer = Environment.GetEnvironmentVariable(\"USE_SQL_SERVER\") == \"true\"` [E]\n- Líneas 22–24: cadena de conexión con fallback: `\"cleanarchitecture\"` → (`\"DefaultConnection\"` si Windows/SQL Server forzado) → `\"SqliteConnection\"` [E]\n- Línea 35 (control `if`): si hay `\"cleanarchitecture\"`, o (`(isWindows || forceSqlServer)` y `\"DefaultConnection\"`) → **línea 38**: `options.UseSqlServer(connectionString)`; si no → **línea 42**: `options.UseSqlite(connectionString)` [E]\n\n**Eventos**:\n- Línea 27: `services.AddScoped<EventDispatchInterceptor>()` [E]\n- Línea 28: `services.AddScoped<IDomainEventDispatcher, MediatorDomainEventDispatcher>()` [E]\n- Línea 30 + 32: el interceptor se resuelve dentro de `AddDbContext<AppDbContext>` vía `provider.GetRequiredService<EventDispatchInterceptor>()`; línea 45: `options.AddInterceptors(eventDispatchInterceptor)` [E]\n\n**Repositorios y consultas** — línea 48, única cadena fluent (texto truncado por el grafo en `ListContri…`) [E]:\n- `AddScoped(typeof(IRepository<>), typeof(EfRepository<>))`\n- `AddScoped(typeof(IReadRepository<>), typeof(EfRepository<>))`\n- `AddScoped<IListContributorsQueryService, ListContributorsQueryService>`\n- La misma operación referencia `DeleteContributorService` (confianza A por truncamiento del texto de la ops).\n\n⚠️ El binding exacto `IDeleteContributorService → DeleteContributorService` **no está en Infrastructure**: el grafo lo registra en `sample/src/NimblePros.SampleToDo.Core/CoreServiceExtensions.cs:13` (`services.AddScoped<IDeleteContributorService, DeleteContributorService>()` [E], dentro de `AddCoreServices`). En `src/`, `DeleteContributorService : IDeleteContributorService` (F4:14 → F5:5, arista `implementa` [E]).\n\n## 2. MinimalClean — `MinimalClean/.../Infrastructure/InfrastructureServiceExtensions.cs:10` (N2/F2)\n- Línea 16: `connectionString = config.GetConnectionString(\"AppDb\")` + `Guard.Against.Null` (línea 17) — solo SQL Server [E]\n- Líneas 19–20: `EventDispatchInterceptor` e `IDomainEventDispatcher → MediatorDomainEventDispatcher`, ambos `AddScoped` [E]\n- Líneas 22–27: `AddDbContext<AppDbContext>` con `UseSqlServer` e interceptores [E]\n- Línea 30: `IRepository<>` → `EfRepository<>`, `IReadRepository<>` → `EfRepository<>`, más `IListProductsQueryService → ListProductsQueryService` (cadena truncada) [E]\n\n## 3. Sample — `sample/src/NimblePros.SampleToDo.Infrastructure/InfrastructureServiceExtensions.cs:16` (N10/F6)\nDespacho por entorno (aristas `llama` [E]): Development→`RegisterDevelopmentOnlyDependencies` (L24), Testing→`RegisterTestingOnlyDependencies` (L28), siempre→`RegisterProductionOnlyDependencies` (L32) + `RegisterEFRepositories` (L35).\n- **Repositorios** (`RegisterEFRepositories`, F2:86): L88 `AddScoped(typeof(IRepository<>), typeof(EfRepository<>))`, L89 `AddScoped(typeof(IReadRepository<>), typeof(EfRepository<>))` [E]\n- **BD** (`AddDbContextWithSqlite`, N11/F2:41): L43 interceptor, L44 `IDomainEventDispatcher → MediatorDomainEventDispatcher`, L45 conexión `\"SqliteConnection\"`, L46–49 `UseSqlite` + `AddMetronomeDbTracking` + interceptores. Tanto Development (L59) como Production (L78) usan SQLite [E]\n- **Consultas**: Dev/Prod registran `IListContributorsQueryService`, `IListIncompleteItemsQueryService`, `IListProjectsShallowQueryService` → implementaciones reales (L61–63 / L81–83) [E]; Testing registra los tres `Fake*` + `FakeEmailSender` (L70–73) [E]\n\n## Hallazgos clave\n1. Solo `src/` tiene selección dinámica SQL Server/SQLite; MinimalClean es SQL Server fijo y sample es SQLite fijo.\n2. `IDomainEventDispatcher → MediatorDomainEventDispatcher` se registra en las tres infraestructuras; el despache ocurre post-SaveChanges vía `SavedChangesAsync` en `EventDispatchInterceptor` (N3/N4/N5, aristas ambiguas A entre interceptores).\n3. El servicio de borrado se resuelve por constructor `IRepository<Contributor>` (F1:18) y su binding DI vive en **Core**, no en Infrastructure.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "repository-bindings",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "query-binding",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "delete-binding",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "dispatcher",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "interceptor",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "database-choice",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]

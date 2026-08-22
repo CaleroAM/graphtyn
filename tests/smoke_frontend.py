@@ -5,12 +5,13 @@ Ejecutar dentro de nix-shell con playwright disponible:
     nix-shell -p python311Packages.playwright --run \
       "python3 tests/smoke_frontend.py"
 
-Levanta una instancia aislada del servidor (HOME temporal, puerto 9211),
+Levanta una instancia aislada del servidor (GRAPHTYN_HOME temporal, puerto 9211),
 reindexa un proyecto temporal vía API y verifica en Chromium real:
  - carga de /dashboard, selector de proyecto, grafo renderizado (canvas)
  - cero errores de consola JS
  - cambio a vista semántica y estilo Neuronal sin romper
  - carga de /comparison
+ - panel de calidad, contexto, estado incremental, ambigüedades y reporte Git
 """
 
 import json
@@ -23,14 +24,19 @@ import tempfile
 import time
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
+try:
+    from playwright.sync_api import sync_playwright
+    PLAYWRIGHT_IMPORT_ERROR = ""
+except (ImportError, OSError) as exc:
+    sync_playwright = None
+    PLAYWRIGHT_IMPORT_ERROR = str(exc)
 
 PORT = 9211
 BASE = f"http://127.0.0.1:{PORT}"
 ROOT = Path(__file__).resolve().parent.parent
 CHROMIUM = os.environ.get(
-    "AETHER_CHROMIUM",
-    "/nix/store/wgzwbl56lsw3r504xjkbc1w2ifnhdwlr-playwright-browsers/chromium-1217/chrome-linux64/chrome")
+    "GRAPHTYN_CHROMIUM",
+    shutil.which("chromium") or shutil.which("chromium-browser") or "")
 
 
 def wait_server(url, timeout=20):
@@ -52,11 +58,14 @@ def api(method, path, **kw):
 
 
 def main():
-    if shutil.which("curl") is None or not (ROOT / ".venv" / "bin" / "aether-graph").exists():
+    if sync_playwright is None:
+        print(f"SKIP: Playwright no ejecutable ({PLAYWRIGHT_IMPORT_ERROR})")
+        return 0
+    if shutil.which("curl") is None or not (ROOT / ".venv" / "bin" / "graphtyn").exists():
         print("SKIP: dependencias ausentes")
         return 0
 
-    tmp = Path(tempfile.mkdtemp(prefix="aether-smoke-"))
+    tmp = Path(tempfile.mkdtemp(prefix="graphtyn-smoke-"))
     proj = tmp / "proj"
     proj.mkdir()
     (proj / "a.py").write_text("def helper():\n    return 42\n", encoding="utf-8")
@@ -64,9 +73,9 @@ def main():
     home = tmp / "home"
     home.mkdir()
 
-    env = dict(os.environ, HOME=str(home), OLLAMA_HOST="http://127.0.0.1:1")
+    env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"), OLLAMA_HOST="http://127.0.0.1:1")
     server = subprocess.Popen(
-        [str(ROOT / ".venv" / "bin" / "aether-graph"), "serve",
+        [str(ROOT / ".venv" / "bin" / "graphtyn"), "serve",
          "--host", "127.0.0.1", "--port", str(PORT), "--path", str(proj)],
         cwd=str(ROOT), env=env, stdout=subprocess.DEVNULL, stderr=open(str(tmp / "server.log"), "w"))
     failures = []
@@ -81,10 +90,17 @@ def main():
         assert body.get("ok") and body.get("nodes", 0) > 0, r.stdout
 
         with sync_playwright() as pw:
-            if not Path(CHROMIUM).exists():
-                print(f"SKIP: chromium no encontrado en {CHROMIUM}")
+            launch = {"args": ["--no-sandbox"]}
+            if CHROMIUM:
+                if not Path(CHROMIUM).exists():
+                    print(f"SKIP: chromium no encontrado en {CHROMIUM}")
+                    return 0
+                launch["executable_path"] = CHROMIUM
+            try:
+                browser = pw.chromium.launch(**launch)
+            except Exception as exc:
+                print(f"SKIP: Chromium no ejecutable ({exc})")
                 return 0
-            browser = pw.chromium.launch(executable_path=CHROMIUM, args=["--no-sandbox"])
             page = browser.new_page(viewport={"width": 1440, "height": 900})
             console_errors = []
             page.on("console", lambda m: console_errors.append(f"{m.type}:{m.text} @{m.location.get('url','')}") if m.type == "error" else None)
@@ -94,9 +110,11 @@ def main():
             page.goto(f"{BASE}/", timeout=30000)
             page.wait_for_selector("#stats", timeout=30000)
             page.wait_for_timeout(2500)
+            page.evaluate("path => selectProject(path)", str(proj))
+            page.wait_for_timeout(1500)
 
             title = page.title()
-            assert "Aether" in title, f"título inesperado: {title}"
+            assert "Graphtyn" in title, f"título inesperado: {title}"
 
             selectors = page.locator("#graph-container")
             assert selectors.count() == 1, "contenedor de grafo ausente"
@@ -107,6 +125,21 @@ def main():
             canvas = page.locator("#graph-container canvas")
             canvas.first.wait_for(state="visible", timeout=30000)
             assert canvas.count() >= 1, "canvas del grafo no renderizado"
+
+            page.evaluate("openQualityPanel()")
+            page.wait_for_selector("#modal-quality.show", timeout=5000)
+            page.wait_for_timeout(800)
+            assert "salud observable" in page.locator("#quality-summary").inner_text().lower()
+            assert page.locator("#index-update").inner_text().strip(), "estado incremental vacío"
+            assert page.locator("#ambiguity-queue").inner_text().strip(), "cola de ambigüedades vacía"
+            page.fill("#answer-validation-input", "helper está definido en a.py:1.")
+            page.evaluate("validateAgentAnswer()")
+            page.wait_for_timeout(500)
+            assert "trazabilidad" in page.locator("#answer-validation-output").inner_text().lower()
+            page.evaluate("generateChangeReport()")
+            page.wait_for_timeout(500)
+            assert "reporte generado" in page.locator("#answer-validation-output").inner_text().lower()
+            page.evaluate("closeQualityPanel()")
 
             page.evaluate("setView('semantic')")
             page.wait_for_timeout(1500)

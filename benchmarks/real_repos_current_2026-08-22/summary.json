@@ -1,0 +1,36 @@
+{
+  "date": "2026-08-22",
+  "model": "opencode/x-preview-f-free",
+  "graphify_version": "0.9.48",
+  "method": "paired agent runs; same model, prompt and auditable ground truth; read-only",
+  "repositories": [
+    {"name": "Starlette", "revision": "398e5a3", "technology": "Python/ASGI", "tasks": ["signed-session-flow", "router-dispatch-flow"]},
+    {"name": "UnityCommerceDemo", "revision": "c002fb1", "technology": "Unity/C#", "tasks": ["selection-impact", "auction-service"]}
+  ],
+  "all_four_runs": {
+    "Graphtyn": {"success": 4, "tokens": 40118, "mean_tokens": 10029.5, "mean_seconds": 62.5508, "tool_calls": 9, "mean_quality": 0.5458, "factual_errors": 0},
+    "Graphify": {"success": 4, "tokens": 63797, "mean_tokens": 15949.25, "mean_seconds": 165.3059, "tool_calls": 78, "mean_quality": 0.6375, "factual_errors": 0},
+    "Baseline": {"success": 4, "tokens": 77841, "mean_tokens": 19460.25, "mean_seconds": 194.6144, "tool_calls": 42, "mean_quality": 0.7, "factual_errors": 0}
+  },
+  "paired_deltas": {
+    "graphtyn_vs_graphify": {"token_reduction": 0.3712, "latency_reduction": 0.6216, "tool_call_reduction": 0.8846, "quality_delta": -0.0917},
+    "graphtyn_vs_baseline": {"token_reduction": 0.4846, "latency_reduction": 0.6786, "tool_call_reduction": 0.7857, "quality_delta": -0.1542}
+  },
+  "complete_response_sensitivity": {
+    "excluded_task": "signed-session-flow",
+    "reason": "Graphtyn response ended mid-section at 393 characters although OpenCode returned SUCCESS",
+    "Graphtyn": {"runs": 3, "mean_tokens": 11859.33, "mean_quality": 0.7278},
+    "Graphify": {"runs": 3, "mean_tokens": 11901.0, "mean_quality": 0.6833},
+    "Baseline": {"runs": 3, "mean_tokens": 22243.0, "mean_quality": 0.8778}
+  },
+  "structural": {
+    "Starlette": {"graphtyn_nodes": 638, "graphtyn_edges": 1194, "graphtyn_seconds": 0.538, "graphtyn_ambiguous_calls_rate": 0.5882, "graphify_nodes": 955, "graphify_edges": 2046, "graphify_estimated_query_tokens": 10081},
+    "UnityCommerceDemo": {"graphtyn_nodes": 1881, "graphtyn_edges": 4323, "graphtyn_seconds": 2.068, "graphtyn_duplicate_edges": 133, "graphtyn_ambiguous_calls_rate": 0.0, "graphify_nodes": 2294, "graphify_edges": 3880, "graphify_estimated_query_tokens": 10848}
+  },
+  "limitations": [
+    "Four tasks are a diagnostic sample, not a statistically significant superiority claim.",
+    "OpenCode total_tokens includes provider-side context/cache accounting and is the comparable cost metric used here.",
+    "Graphify benchmark token estimates are synthetic and are not substituted for observed OpenCode usage.",
+    "One Graphtyn response was incomplete; both the full result and the sensitivity analysis are reported."
+  ]
+}

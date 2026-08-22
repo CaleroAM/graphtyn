@@ -1,6 +1,6 @@
 import json
 
-from aether_graph.core.watcher import ProjectWatcher
+from graphtyn.core.watcher import ProjectWatcher
 
 
 def test_watcher_detects_create_modify_delete(tmp_path):

@@ -1,5 +1,5 @@
-# AetherGraph local generated indexes and runtime state
-.aether-graph/
+# Graphtyn local generated indexes and runtime state
+.graphtyn/
 .env
 .env.local
 *.log

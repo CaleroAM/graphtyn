@@ -1,0 +1,62 @@
+[
+  {
+    "task_id": "auction-service",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 36.8564,
+    "usage": {
+      "input_tokens": 1787,
+      "output_tokens": 577,
+      "thinking_tokens": 39,
+      "total_tokens": 6307
+    },
+    "tool_calls": 1,
+    "answer": "**AuctionService** (`Gameplay.Services`, clase en `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/Services/AuctionService.cs:9`) según evidencia del grafo:\n\n- **Flujo**: `StartAuction(artworkId, startingPrice)` activa la subasta asignando `IsAuctionActive = true` y registra el precio base (:17-20). `PlaceBid(bidderName, bidAmount)` corta con guard clause si no hay subasta activa (`if (!IsAuctionActive) return;`, :25), loguea e invoca `OnBidPlaced?.Invoke(...)` (:26-27). `CloseAuction(winnerName, finalPrice)` desactiva `IsAuctionActive = false` (:32), loguea al ganador e invoca `OnAuctionCompleted?.Invoke(...)` (:33-34).\n- **Estado**: dos propiedades — `TimeLimit { get; set; } = 15` (int, :11) y `IsAuctionActive { get; private set; } = false` (bool, :12). Sin persistencia más allá del estado en memoria.\n- **Eventos publicados**: `OnBidPlaced : Action<string, int>` (:14) y `OnAuctionCompleted : Action<string, int>` (:15).\n- **Dependencias**: imports `using System;` y `using UnityEngine;` (para `Action` y `Debug.Log`). No hay llamadas salientes a otros servicios en el grafo.\n- **Interfaces/implementación**: cero relaciones de tipo `implementa` para este símbolo; tampoco hereda (`hereda` = 0). Es una clase concreta sin interfaz asociada.\n- **Consumidores actuales**: cero relaciones entrantes de `llama/usa` hacia AuctionService o sus métodos en el grafo completo. La única relación externa es inferida (`docs-architecture-GameEngine.md` → `usa` → `TimeLimit`, marcada I).\n\nAmbigüedad: la relación documental es INFERRED, no verificada contra consumidores reales; ningún nodo AMBIGUOUS se reportó. El grafo marcó la consulta como completa (`complete_for: flow`, `do_not_expand: true`), así que los ceros son evidencia negativa válida dentro del presupuesto seleccionado.",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 4,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 0.6667,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.6667,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "start",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "bid",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "close",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "dependencies",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "no-interface",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "no-consumers",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  }
+]

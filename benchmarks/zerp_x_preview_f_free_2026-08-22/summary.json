@@ -3,20 +3,20 @@
   "revision": "7e12392a3882682018cd86071d4d51ac7f142076",
   "technology": "Laravel 12, PHP, Inertia, React 18, TypeScript, JavaScript, Blade/HTML, Tailwind/CSS",
   "model": "opencode/x-preview-f-free",
-  "protocol": {"tasks": 4, "facts_per_variant": 24, "variants": ["AetherGraph", "Graphify", "Baseline"]},
+  "protocol": {"tasks": 4, "facts_per_variant": 24, "variants": ["Graphtyn", "Graphify", "Baseline"]},
   "indexes": {
-    "aethergraph": {"nodes": 3137, "links": 10434, "engine": "ast_pure"},
+    "graphtyn": {"nodes": 3137, "links": 10434, "engine": "ast_pure"},
     "graphify": {"nodes": 3184, "links": 8412, "communities": 304, "llm_indexing": false}
   },
   "raw_results": {
-    "aethergraph": {"quality": 0.083325, "tokens_per_task": 6003.5, "seconds_per_task": 222.408475, "calls_per_task": 1.75, "success": "3/4"},
+    "graphtyn": {"quality": 0.083325, "tokens_per_task": 6003.5, "seconds_per_task": 222.408475, "calls_per_task": 1.75, "success": "3/4"},
     "graphify": {"quality": 0.22915, "tokens_per_task": 32459.75, "seconds_per_task": 206.672275, "calls_per_task": 30.25, "success": "4/4"},
     "baseline": {"quality": 0.64585, "tokens_per_task": 34643.75, "seconds_per_task": 263.284825, "calls_per_task": 31.75, "success": "3/4"}
   },
   "reliability_notes": {
-    "aethergraph_bootstrap": "Timed out after 600 seconds before OpenCode emitted a tool call; recorded as infrastructure/model failure, not factual evidence.",
+    "graphtyn_bootstrap": "Timed out after 600 seconds before OpenCode emitted a tool call; recorded as infrastructure/model failure, not factual evidence.",
     "baseline_bootstrap": "OpenCode made 22 calls but emitted no final answer.",
-    "three_business_tasks_only_quality": {"aethergraph": 0.1111, "graphify": 0.3055, "baseline": 0.8611},
-    "conclusion": "AetherGraph is not yet competitive on Laravel cross-stack recovery. PHP currently uses the generic fallback rather than a precise Tree-sitter PHP/Laravel relationship extractor. Low token use here reflects missing evidence, not an efficiency win."
+    "three_business_tasks_only_quality": {"graphtyn": 0.1111, "graphify": 0.3055, "baseline": 0.8611},
+    "conclusion": "Graphtyn is not yet competitive on Laravel cross-stack recovery. PHP currently uses the generic fallback rather than a precise Tree-sitter PHP/Laravel relationship extractor. Low token use here reflects missing evidence, not an efficiency win."
   }
 }

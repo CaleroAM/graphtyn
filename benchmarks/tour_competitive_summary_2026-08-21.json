@@ -5,19 +5,19 @@
   "structural_ground_truth": {
     "positive_edges": 25,
     "negative_edges": 10,
-    "aethergraph": {"precision": 1.0, "recall": 1.0, "f1": 1.0, "ambiguous_calls": 0, "call_edges": 1088},
+    "graphtyn": {"precision": 1.0, "recall": 1.0, "f1": 1.0, "ambiguous_calls": 0, "call_edges": 1088},
     "graphify_0_9_48": {"precision": 1.0, "recall": 0.8, "f1": 0.8889, "false_negatives": 5}
   },
   "agent_n6": {
     "grading": "atomic key-fact coverage with 0.5 partial credit and contradiction penalty",
-    "aethergraph": {"coverage": 0.925, "adjusted_coverage": 0.925, "mean_tokens": 50968, "mean_seconds": 16.335, "terminal_success": 4},
+    "graphtyn": {"coverage": 0.925, "adjusted_coverage": 0.925, "mean_tokens": 50968, "mean_seconds": 16.335, "terminal_success": 4},
     "graphify": {"coverage": 0.925, "adjusted_coverage": 0.8917, "mean_tokens": 58040, "mean_seconds": 17.956, "terminal_success": 5},
     "direct_read": {"coverage": 0.9167, "adjusted_coverage": 0.9167, "mean_tokens": 93551, "mean_seconds": 38.526, "terminal_success": 1},
-    "aether_vs_graphify": {"token_reduction": 0.1218, "token_delta_ci95": [-13910.2, -233.46], "effect_dz": -0.8275, "permutation_p": 0.0625},
-    "aether_vs_direct": {"token_reduction": 0.4552, "token_delta_ci95": [-74251.08, -10914.92], "effect_dz": -1.076, "permutation_p": 0.0625}
+    "graphtyn_vs_graphify": {"token_reduction": 0.1218, "token_delta_ci95": [-13910.2, -233.46], "effect_dz": -0.8275, "permutation_p": 0.0625},
+    "graphtyn_vs_direct": {"token_reduction": 0.4552, "token_delta_ci95": [-74251.08, -10914.92], "effect_dz": -1.076, "permutation_p": 0.0625}
   },
   "context_compression": {
-    "aethergraph_six_task_bundle": {"corpus_tokens_est": 123956, "mean_query_tokens_est": 3840, "reduction_x": 32.28, "reduction_pct": 0.969},
+    "graphtyn_six_task_bundle": {"corpus_tokens_est": 123956, "mean_query_tokens_est": 3840, "reduction_x": 32.28, "reduction_pct": 0.969},
     "graphify_official_three_query_benchmark": {"corpus_tokens_est": 133133, "mean_query_tokens_est": 14250, "reduction_x": 9.3, "reduction_pct": 0.8925},
     "directly_comparable": false
   },

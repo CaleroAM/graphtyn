@@ -1,5 +1,5 @@
 import json
-from aether_graph.core.storage import project_store_dir
+from graphtyn.core.storage import project_store_dir
 
 def test_homonymous_nested_projects_have_distinct_store(tmp_path):
     base = tmp_path / "store"

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "project": "UnityCommerceDemo",
+  "path": "/home/developer/Documentos/docker/PROYECTOS/UnityCommerceDemo",
+  "elapsed_seconds": 2.068,
+  "warm_cache_seconds": 2.0841,
+  "warm_cache_speedup": 0.99,
+  "nodes": 1881,
+  "links": 4323,
+  "node_kinds": {
+    "module": 104,
+    "file": 169,
+    "asset": 135,
+    "image": 125,
+    "class": 148,
+    "interface": 4,
+    "method": 671,
+    "field": 396,
+    "property": 118,
+    "enum": 5,
+    "event": 4,
+    "struct": 2
+  },
+  "parsers": {
+    "tree-sitter": 1348
+  },
+  "quality": {
+    "dangling_edges": 0,
+    "duplicate_edges": 133,
+    "structural_validity": 1.0,
+    "call_edges": 1115,
+    "ambiguous_calls": 0,
+    "ambiguous_call_rate": 0.0,
+    "symbol_to_symbol_calls": 1103
+  }
+}

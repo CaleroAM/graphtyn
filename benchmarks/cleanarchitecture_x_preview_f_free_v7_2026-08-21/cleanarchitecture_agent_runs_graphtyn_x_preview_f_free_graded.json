@@ -1,0 +1,222 @@
+[
+  {
+    "task_id": "create-contributor-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 108.7677,
+    "usage": {
+      "input_tokens": 4105,
+      "output_tokens": 271,
+      "thinking_tokens": 168,
+      "total_tokens": 34368
+    },
+    "tool_calls": 9,
+    "answer": "## Flujo completo: POST → Crear Contributor (proyecto principal `src/Clean.Architecture.*`)\n\nEl grafo contiene dos variantes (`src/` y `sample/`); describo la principal y señalo diferencias al final. Todas las aristas citadas son evidencia extraída (E) del grafo; hay 7 relaciones `hereda` marcadas ambiguas entre ambos proyectos, que descarto para esta respuesta.\n\n### 1. Endpoint HTTP (FastEndpoints)\n- **`Create(IMediator mediator)`** — clase endpoint en `src/Clean.Architecture.Web/Contributors/Create.cs:15`.\n- **`Configure()`** (Create.cs:23): `Post(CreateContributorRequest.Route)`, `Tags(\"Contributors\")`, documenta 201 + problemas 400/500 (ops en Create.cs:44).\n- **`ExecuteAsync`** (Create.cs:51): construye el comando y lo envía por mediador:\n  - `_mediator.Send(new CreateContributorCommand(ContributorName.From(request.Name!), request.PhoneNumber))` (:54)\n  - `return result.ToCreatedResult(id => $\"/Contributors/{id}\", id => new CreateContributorResponse(id.Value, request.Name!))` (:56) → `Results<Created<CreateContributorResponse>, ValidationProblem, ProblemHttpResult>`.\n\n### 2. Validación de entrada\n- **`CreateContributorValidator : Validator<CreateContributorRequest>`** (Create.cs:71); reglas (Create.cs:75):\n  - `RuleFor(x => x.Name).NotEmpty().WithMessage(\"Name is required.\").MinimumLength(2).MaximumLength(ContributorName.MaxLength)`\n  - Falla → FastEndpoints devuelve `ValidationProblem` (400) antes de invocar el handler.\n\n### 3. Comando\n- **`CreateContributorCommand(ContributorName Name, string? PhoneNumber) : ICommand<Result<ContributorId>>`** — record en `src/Clean.Architecture.UseCases/Contributors/Create/CreateContributorCommand.cs:9`.\n- Registro DI: `MediatorConfig.AddMediatorSourceGen` (`src/Clean.Architecture.Web/Configurations/MediatorConfig.cs:11`) escanea `typeof(CreateContributorCommand)` y añade pipeline `LoggingBehavior<,>` (ops :18,:30).\n\n### 4. Handler\n- **`CreateContributorHandler(IRepository<Contributor> _repository)`** (`src/Clean.Architecture.UseCases/Contributors/Create/CreateContributorHandler.cs:5`), **`Handle`** (:8-20):\n  1. `var newContributor = new Contributor(command.Name)` (:11)\n  2. **Cambio de estado opcional**: `if (!string.IsNullOrEmpty(command.PhoneNumber))` → `new PhoneNumber(\"+1\", command.PhoneNumber, String.Empty)` y `newContributor.UpdatePhoneNumber(phoneNumber)` (:12-15)\n  3. `var createdItem = await _repository.AddAsync(newContributor, cancellationToken)` (:17)\n  4. `return createdItem.Id` (:19) → `Result<ContributorId>`.\n\n### 5. Dominio\n- **`Contributor(ContributorName name) : EntityBase<Contributor, ContributorId>, IAggregateRoot`** (`src/Clean.Architecture.Core/ContributorAggregate/Contributor.cs:5`) — arista `llama` desde `Handle`:11 (E).\n- **`ContributorName`**: ValueObject `[ValueObject<string>]` (`src/.../ContributorName.cs:5`), `MaxLength = 100` (:8) y `Validate` (:9-14): nombre vacío → `Validation.Invalid(\"Name cannot be empty\")`; >100 → `\"Name cannot be longer than {MaxLength} characters\"` (segunda capa de validación, de dominio).\n- **`UpdatePhoneNumber(newPhoneNumber)`** (Contributor.cs:11): solo asigna `PhoneNumber =",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "endpoint",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "command",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "handler",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "persistence",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "phone",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "validation",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "delete-event-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 179.899,
+    "usage": {
+      "input_tokens": 1259,
+      "output_tokens": 1642,
+      "thinking_tokens": 166,
+      "total_tokens": 20667
+    },
+    "tool_calls": 9,
+    "answer": "Traza completa según el grafo (existen dos variantes paralelas del código: `sample/…NimblePros.SampleToDo` y `src/Clean.Architecture`; evidencia en ambas):\n\n**Cadena de ejecución**\n\n```\nHTTP DELETE → Delete (endpoint)\n  └─ DeleteContributorRequest (record) + DeleteContributorValidator\n  └─ DeleteContributorCommand : ICommand<Result>\n      └─ DeleteContributorHandler : ICommandHandler<DeleteContributorCommand, Result>\n          └─ IDeleteContributorService.DeleteContributor(ContributorId)   ← interfaz\n              └─ DeleteContributorService : IDeleteContributorService     ← implementación\n                  ├─ GetByIdAsync / Result.NotFound() si null\n                  ├─ _repository.DeleteAsync(aggregateToDelete)\n                  └─ _mediator.Publish(new ContributorDeletedEvent(contributorId))\n                      ├─ [sample] ContributorDeletedHandler → limpia Projects/Items\n                      └─ [src]    ContributorDeletedHandler → envía email\n```\n\n**Evidencia por capa**\n\n| Capa | Símbolo | Archivo:línea | Ops observadas |\n|---|---|---|---|\n| Endpoint | `Delete` (clase), ctor `Delete(IMediator)` | `sample/src/...Web/Contributors/Delete.cs:7,14`; `src/Clean.Architecture.Web/Contributors/Delete.cs:8,15` | `_mediator = mediator`; hereda `DeleteContributorRequest` |\n| Request DTO | `DeleteContributorRequest` | `...Web/Contributors/Delete.DeleteContributorRequest.cs:3` (ambas soluciones) | record con validador `DeleteContributorValidator : Validator<DeleteContributorRequest>` (`Delete.DeleteContributorValidator.cs:9/8`) |\n| Comando | `DeleteContributorCommand(ContributorId) : ICommand<Result>` | `sample/...UseCases/Contributors/Commands/Delete/DeleteContributorCommand.cs:5`; `src/...UseCases/Contributors/Delete/DeleteContributorCommand.cs:5` | — |\n| Caso de uso | `DeleteContributorHandler.Handle` | `sample/...Commands/Delete/DeleteContributorHandler.cs:14` | `return await _deleteContributorService.DeleteContributor(request.ContributorId)` (línea 17); en `src/`: expresión única en línea 11 |\n| Interfaz Core | `IDeleteContributorService.DeleteContributor` | `sample/src/...Core/Interfaces/IDeleteContributorService.cs:9` (Task\\<Result\\>); `src/...Core/Interfaces/IDeleteContributorService.cs:9` (ValueTask\\<Result\\>) | — |\n| Implementación | `DeleteContributorService : IDeleteContributorService` | `sample/...Core/Services/DeleteContributorService.cs:8,23-32`; `src/...Core/Services/DeleteContributorService.cs:14,18-28` | `GetByIdAsync(contributorId)` → si null `Result.NotFound()` → `DeleteAsync(aggregateToDelete)` → `new ContributorDeletedEvent(contributorId)` → `_mediator.Publish(...)` → `Result.Success()` |\n| Evento dominio | `ContributorDeletedEvent(ContributorId) : DomainEventBase` | `sample/...Core/ContributorAggregate/Events/ContributorDeletedEvent.cs:7` (prop `ContributorId` privada, l.9); `src/...Events/ContributorDeletedEvent.cs:8` (prop init, l.10) | — |\n\n**Efectos secundarios (consumidores del evento)**\n\n1. **Variante sample** — `ContributorDeletedHandler : INotificationHandler<ContributorDeletedEvent>` (`sample/...Core/ContributorAggregate/Handlers/ContributorDeletedHandler.cs:8,20`):\n   - Log `\"Removing deleted contributor {contributorId} from all projects...\"` (l.22)\n   - `new ProjectsWithItemsByContributorIdSpec(domainEvent.ContributorId)` (l.24) + `_repository.ListAsync(projectSpec)` (l.25)\n   - Filtra `item.ContributorId == domainEvent.ContributorId` y llama `item.RemoveContributor()` (l.28-31)\n   - Persiste con `_repository.UpdateAsync(project)` (l.32)\n\n2. **Variante src/Clean.Architecture** — `ContributorDeletedHandler(logger, IEmailSender)` (`src/...Core/ContributorAggregate/Handlers/ContributorDeletedHandler.cs:6,9`):\n   - Log `\"Handling Contributed Deleted event for {contributorId}\"` (l.11)\n   - `emailSender.SendEmailAsync(\"to@test.com\", \"from@test.com\", \"Contributor Deleted\", $\"Contributor with id {domainEvent.ContributorId} was deleted.\")` (l.13) vía interfaz `IEmailSender.SendEmailAsync` (`src/...Core/Interfaces/IEmailSender.cs:5`; implementación MailKit análoga en `sample/...Infrastructure/Email/MimeKitEmailSender.cs:13`)\n\n**Notas del grafo**\n- El blast radius de `DeleteContributor` confirma consumidores entrantes: solo el `DeleteContributorHandler` de cada solución y los tests `ReturnsNotFoundGivenCantFindContributor` (`tests/Clean.Architecture.UnitTests/Core/Services/DeleteContributorSevice_DeleteContributor.cs:18`; `sample/tests/...UnitTests/Core/Services/...cs:19`).\n- La relación evento→handler es evidencia directa (`ContributorDeletedHandler hereda/implementa ContributorDeletedEvent`, aristas E en el neighborhood de `ContributorDeletedEvent`).\n- No se encontró en el grafo ningún otro suscriptor de `ContributorDeletedEvent` (coverage de incoming uses = 0 para nodos restantes): los únicos efectos secundarios son limpieza de proyectos (sample) y email (src).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "endpoint-command",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "handler-service",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "service-delete",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "event-publish",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "event-handler",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "email",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "infrastructure-bindings",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 83.7441,
+    "usage": {
+      "input_tokens": 3838,
+      "output_tokens": 139,
+      "thinking_tokens": 38,
+      "total_tokens": 14127
+    },
+    "tool_calls": 6,
+    "answer": "# Auditoría de `AddInfrastructureServices` (evidencia Graphtyn)\n\nEl grafo registra **tres versiones** del método (`complete=true` en ambos análisis; alias citados):\n\n## 1. `NimblePros.SampleToDo.Infrastructure` — `AddInfrastructureServices` @ sample/src/NimblePros.SampleToDo.Infrastructure/InfrastructureServiceExtensions.cs:16\n\nFlujo por entorno (ops extraídas, E): `if environmentName == \"Development\"` → `RegisterDevelopmentOnlyDependencies` (:24); `if == \"Testing\"` → `RegisterTestingOnlyDependencies` (:28); luego `RegisterProductionOnlyDependencies` (:32)",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 0,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 0.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "repository-bindings",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "query-binding",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "delete-binding",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "dispatcher",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "interceptor",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "database-choice",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "list-query-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 213.3142,
+    "usage": {
+      "input_tokens": 957,
+      "output_tokens": 73,
+      "thinking_tokens": 34,
+      "total_tokens": 20328
+    },
+    "tool_calls": 11,
+    "answer": "## Flujo completo de la lista paginada de Contributors\n\n**Endpoint** — `List` (`src/Clean.Architecture.Web/Contributors/List.cs:8`) hereda `Endpoint<ListContributorsRequest, ContributorListResponse, ListContributorsMapper>`. `HandleAsync` (:49) hace `_mediator.Send(new ListContributorsQuery(request.Page, request.PerPage))` (:51), y si falla responde `Send.ErrorsAsync(statusCode: 400)` (:54); luego `AddLinkHeader(pagedResult.Page, pagedResult.PerPage, pagedResult.TotalPages)` (:59) y `Map.FromEntity(pagedResult)` (:61). Los parámetros llegan por bindings: `Page [BindFrom(\"page\")]` (:90) y `PerPage [BindFrom(\"per_page\")]` (:94).\n\n**Abstracción** — `IListContributorsQueryService` (`src/Clean.Architecture.UseCases/Contributors/List/IListContributorsQueryService.cs:7`) define `Task<UseCases.PagedResult<ContributorDto>> ListAsync(int page, int perPage)` (:9). El handler la recibe por constructor: campo `private readonly IListContributorsQueryService _query` (`ListContributorsHandler.cs:5`).\n\n**Handler** — `ListContributorsHandler : IQueryHandler<ListContributorsQuery, Result<PagedResult<ContributorDto>>>` (`ListContributorsHandler.cs:3`). `Handle` normaliza valores nulos: `_query.ListAsync(request.Page ?? 1, request.PerPage ?? Constants.DEFAULT_PAGE_SIZE)` (:16) y devuelve `Result.Success(result)` (:18). El query es `record ListContributorsQuery(int? Page = 1, int? PerPage = Constants.DEFAULT_PAGE_SIZE)` (`ListContributorsQuery.cs:3`). En DI, `AddInfrastructureServices` registra `IListContributorsQueryService → ListContributorsQueryService` (`src/Clean.Architecture.Infrastructure/InfrastructureServiceExtensions.cs:48`).\n\n**Consulta real** — `ListContributorsQueryService.ListAsync` (`src/Clean.Architecture.Infrastructure/Data/Queries/ListContributorsQueryService.cs:17`) ejecuta contra el `DbSet<Contributor> Contributors` (`AppDbContext.cs:6`):\n```csharp\n_db.Contributors.FromSqlRaw(\"SELECT Id, Name, PhoneNumber_CountryCode, PhoneNumber_Number, PhoneNumber_Extension FROM Contributors\")\n  .AsNoTracking().OrderBy(c => c.Id)\n  .Skip((page - 1) * perPage).Take(perPage)...ToListAsync()   // :19\n```\nmás `_db.Contributors.CountAsync()` para totalCount (:27), `totalPages = (int)Math.Ceiling(totalCount / (double)perPage)` (:28), `new UseCases.PagedResult<ContributorDto>(items, page, perPage, totalCount, totalPages)` (:29).\n\n**Fake** — `FakeListContributorsQueryService : IListContributorsQueryService` (`src/Clean.Architecture.Infrastructure/Data/Queries/FakeListContributorsQueryService.cs:7`). Su `ListAsync` (:9) no toca BD: crea una `List<ContributorDto>` en memoria (:11), bucle `for i = 1..25` (:12), `new PhoneNumber(\"+1\", \"555\", \"1234567\")` (:14) e `items.Add(new ContributorDto(ContributorId.From(i), ContributorName.From($\"Fake {i}\"), phone))` (:15); calcula `totalPages = Math.Ceiling(items.Count / (double)perPage)` (:18) y devuelve `Task.FromResult(new PagedResult(items, page, perPage, items.Count, totalPages))` (:19-20). Se registra solo en testing: `RegisterTestingOnlyDependencies` del proyecto sample (`sample/src/NimblePros.SampleToDo.Infrastructure/InfrastructureServiceExtensions.cs:71`).\n\n## Diferencias clave (según ops del grafo)\n\n| Aspecto | Real | Fake |\n|---|---|---|\n| Fuente | EF Core + `FromSqlRaw` sobre `DbSet.Contributors` | Lista en memoria generada |\n| Paginación | `Skip/Take` en BD (:19) | Sin ops de Skip/Take: devuelve los 25 ítems completos cada llamada |\n| Total | `CountAsync()` en BD (:27) | `items.Count` local (:19) |\n| Datos | Proyecta Id, Name y columnas de `PhoneNumber` | Teléfono fijo `+1 555 1234567`; nombres `Fake {i}`; IDs 1..25 |\n| Retorno | `async`/`await",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "handler",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "pagination-default",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "real-query",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "real-pagination",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "real-count",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "fake-query",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]

@@ -1,8 +1,8 @@
 # 📚 Comparativa de Contexto: Yo (Agente) vs Modelos Locales
 
-Documento de trabajo para **pulir el enriquecimiento semántico** de AetherGraph hasta que el texto generado por los modelos locales sea tan bueno como el que genera un agente experto.
+Documento de trabajo para **pulir el enriquecimiento semántico** de Graphtyn hasta que el texto generado por los modelos locales sea tan bueno como el que genera un agente experto.
 
-La comparación visual está disponible en [`http://localhost:9210/comparison`](http://localhost:9210/comparison) mientras `aether-graph serve` está activo.
+La comparación visual está disponible en [`http://localhost:9210/comparison`](http://localhost:9210/comparison) mientras `graphtyn serve` está activo.
 
 ---
 
@@ -36,7 +36,7 @@ Cuando analizo un proyecto, **no leo nombres ni pedazos sueltos**: reconstruyo e
 
 ## Parte B — Mi mapeo del proyecto (contexto gold-standard)
 
-> AetherGraph: motor que convierte un repositorio en un **grafo de conocimiento** (nodos = archivos/símbolos, links = dependencias) para que agentes de IA naveguen código sin consumir tokens.
+> Graphtyn: motor que convierte un repositorio en un **grafo de conocimiento** (nodos = archivos/símbolos, links = dependencias) para que agentes de IA naveguen código sin consumir tokens.
 
 **Arquitectura en 4 capas:**
 1. **Parsing determinista** (`core/ast_parser.py`) — AST 15+ lenguajes, $0 tokens.
@@ -58,10 +58,10 @@ Cuando analizo un proyecto, **no leo nombres ni pedazos sueltos**: reconstruyo e
 | `ASTParser.parse_python_file` | Único parser real (módulo `ast`): extrae clases/funciones/imports/calls con línea exacta. Base de precisión para Python (el resto es regex). |
 | `ASTParser.scan_directory` | Orquestador de 2 pasadas: construye nodos dir/archivo, extrae símbolos por lenguaje, resuelve dependencias entre archivos, calcula in/out/total grado. Produce el grafo completo. |
 | `_enrich_with_ai` | Motor híbrido: detecta Ollama (host/model), pre-warm, describe archivos (por lenguaje) y símbolos (extrayendo su código), genera `ai_summary` global. Convierte nombres → contexto. |
-| `reindex_project` | Endpoint POST: escanea → enriquece → escribe al índice central `~/.aether-graph/<proyecto>/index.json`. |
+| `reindex_project` | Endpoint POST: escanea → enriquece → escribe al índice central `~/.graphtyn/<proyecto>/index.json`. |
 | `generate_semantic_graph` | Crea la vista "Semántico IA": nodo concepto "Arquitectura Global" + nodos concepto por archivo, conectados con engloba/describe. |
 | `run_mcp_server` | Bucle stdio: lee JSON-RPC de stdin, despacha, responde. Punto de entrada MCP. |
-| `bfs_path` | BFS con cola para la ruta más corta entre dos símbolos por nombre. Comando `aether-graph path`. |
+| `bfs_path` | BFS con cola para la ruta más corta entre dos símbolos por nombre. Comando `graphtyn path`. |
 | `HistoryTracker.__init__` | Decisión de ubicación de la BD (local vs home) mediante prueba de escritura. |
 
 ---
@@ -74,10 +74,10 @@ Motor: `qwen2.5-coder:3b` vía Ollama (100% GPU, ~1.8s/llamada). Prompt actual: 
 
 | Nodo | Texto del modelo local (baseline) | Defectos |
 |---|---|---|
-| `README.md` | "AetherGraph es una herramienta que transforma los repositorios de código en gráficos interactivos, registra sesiones loc..." | Razona bien pero es redundante y largo; repite el nombre. |
+| `README.md` | "Graphtyn es una herramienta que transforma los repositorios de código en gráficos interactivos, registra sesiones loc..." | Razona bien pero es redundante y largo; repite el nombre. |
 | `test_ast_parser.py` | "El `test_parse_python_file` en `tests/test_ast_parser.py` define una función que prueba el método de análisis de un archivo Python..." | Repite el nombre/ubicación dentro del texto; 3 frases para decir algo simple. |
 | `ARCHITECTURE.md` | "Este archivo Markdown explica la arquitectura del proyecto `ather_graph`..." | Correcto en lenguaje, pero **superficial**: no explica QUÉ arquitectura. |
-| `main` (cli) | "La función `main` en aether_graph/cli.py define y ejecuta un parser de argumentos..." | Correcto pero no dice que **es el punto de entrada de todo el CLI**. |
+| `main` (cli) | "La función `main` en graphtyn/cli.py define y ejecuta un parser de argumentos..." | Correcto pero no dice que **es el punto de entrada de todo el CLI**. |
 
 ### Diagnóstico del nivel actual
 - ✅ **Nivel 3 de 5**: el modelo **entiende** el código (no inventa) y produce descripciones veraces.
@@ -139,10 +139,10 @@ Motor: `qwen2.5-coder:3b` vía Ollama (100% GPU, ~1.8s/llamada). Prompt actual: 
 | 💎💎💎 **OpenCode · `opencode-go/gpt-5.6-luna` (modelo actual verificado)** | Sesión actual | "Servidor MCP por stdio basado en JSON-RPC 2.0 que expone 7 herramientas para agentes de IA — consulta del grafo, radio de impacto, búsqueda semántica, historial de sesiones y registro de proyectos — lee el índice cacheado, registra operaciones en SQLite y entrega contexto sin consumir tokens del agente." |
 | 💎💎 **DeepSeek V4 PRO (MAX · modelo de paga)** | ~10s (razonamiento) | "Servidor MCP por stdio (JSON-RPC 2.0) que expone 7 herramientas a agentes de IA — mapa de código, radio de impacto, búsqueda de conceptos e historial de sesiones — devolviendo el grafo cacheado del proyecto sin consumir tokens del agente." |
 | 💎 **DeepSeek V4 Flash (opencode · modelo de paga)** | ~10-15s (razonamiento completo) | "Servidor MCP por stdio (JSON-RPC 2.0) que expone 7 herramientas para agentes de IA — grafo, radio de impacto, búsqueda de conceptos e historial de sesiones — sirviendo el grafo cacheado sin consumir tokens del agente." |
-| 🦙 `llama3.2:latest` | 6.2s | "Es una unidad del sistema que proporciona un servidor de protocolo estándar (MCP, Model Context Protocol) para la plataforma AetherGraph, permitiendo a los agentes de IA interactuar con gráficos y realizar operaciones como buscar vecinos gráficos, detectar conceptos y más." |
-| 👑 `qwen2.5-coder:3b` | 5.8s | "Define una API para el servidor de contexto del protocolo de modelo AetherGraph, que proporciona herramientas para AI agents como `graph_neighborhood`, `graph_blast_radius`, `graph_search_concepts` y `graph_register_project`." |
-| ⚠️ `qwen2.5-coder:7b` | 18.6s | "Define funciones para procesar solicitudes de un servidor MCP y generar respuestas basadas en un análisis del código fuente, sirviendo como la unidad principal del sistema para el protocolo Stdio Model Context Protocol (MCP) en AetherGraph." |
-| ⚠️ `llama3.1:8b` | 18.0s | "Es un servidor de protocolo de contexto modelo (MCP) para AetherGraph, que proporciona herramientas para agentes de inteligencia artificial y gestiona la representación gráfica del espacio de trabajo." |
+| 🦙 `llama3.2:latest` | 6.2s | "Es una unidad del sistema que proporciona un servidor de protocolo estándar (MCP, Model Context Protocol) para la plataforma Graphtyn, permitiendo a los agentes de IA interactuar con gráficos y realizar operaciones como buscar vecinos gráficos, detectar conceptos y más." |
+| 👑 `qwen2.5-coder:3b` | 5.8s | "Define una API para el servidor de contexto del protocolo de modelo Graphtyn, que proporciona herramientas para AI agents como `graph_neighborhood`, `graph_blast_radius`, `graph_search_concepts` y `graph_register_project`." |
+| ⚠️ `qwen2.5-coder:7b` | 18.6s | "Define funciones para procesar solicitudes de un servidor MCP y generar respuestas basadas en un análisis del código fuente, sirviendo como la unidad principal del sistema para el protocolo Stdio Model Context Protocol (MCP) en Graphtyn." |
+| ⚠️ `llama3.1:8b` | 18.0s | "Es un servidor de protocolo de contexto modelo (MCP) para Graphtyn, que proporciona herramientas para agentes de inteligencia artificial y gestiona la representación gráfica del espacio de trabajo." |
 
 **Observación**: los 7 resultados identifican `mcp_server.py` como servidor MCP. `qwen2.5-coder:3b` es el local más preciso (nombra las tools reales) y el más rápido (5.8s, 100% GPU). El **modelo actual verificado (`opencode-go/gpt-5.6-luna`)** alcanza el contexto más completo al añadir persistencia SQLite, lectura del índice cacheado y registro de proyectos, además del protocolo y las herramientas. La brecha local-vs-modelo actual (~5-10%) está en el **vocabulario de precisión**, el **flujo de datos** y la **concisión densa**.
 
@@ -166,14 +166,14 @@ Proyecto real: **277 archivos, 737 símbolos, 1,093 nodos, 1,884 conectores**. A
 | ⚠️ `qwen2.5-coder:7b` | 30/277 (muestra top) | 199s | ~5.2s | ~25 min | Precisa: "MonoBehavior de Unity", "coordina servicios y controladores" |
 | ⚠️ `llama3.1:8b` | 30/277 (muestra top) | 236s | ~6.2s | ~30 min | Correcta pero genérica: "unidad de negocio" |
 
-**Muestreo**: los 7B/8B usaron `AETHER_FILE_LIMIT=30` (los 30 archivos más conectados; extrapolación = tiempo medido ÷ llamadas × llamadas totales). Los 3B corrieron completos.
+**Muestreo**: los 7B/8B usaron `GRAPHTYN_FILE_LIMIT=30` (los 30 archivos más conectados; extrapolación = tiempo medido ÷ llamadas × llamadas totales). Los 3B corrieron completos.
 
 **Hallazgos de la prueba en real:**
 1. **Ganador local: `qwen2.5-coder:3b`** — completo en ~5.3 min y las descripciones son las más específicas (nombra sub-sistemas reales del juego).
 2. **El 7B no justifica su costo en 4GB VRAM**: mejor vocabulario en algunos nodos ("MonoBehavior", "coordina servicios"), pero 5× más lento por el offload CPU/GPU; la ganancia marginal no compensa.
 3. **Enriquecimiento de símbolos limitado a 8/737**: `_extract_symbol_source` solo encuentra definiciones con keywords (class/struct/interface…), no métodos C# (`public void Foo() { ... }`). Fix futuro: extender el regex para firmas de métodos tipo-C. Afecta igual a los 4 modelos (comparación justa).
 4. **El resumen global del 7B fue el más concreto**: "aplicación Unity que gestiona el estado del juego, incluyendo la autenticación, la interfaz gráfica, la selección de personajes y la lógica de los turnos".
-5. Nuevo límite configurable: `AETHER_FILE_LIMIT` (0 = ilimitado) para reindexes muestrales en proyectos grandes.
+5. Nuevo límite configurable: `GRAPHTYN_FILE_LIMIT` (0 = ilimitado) para reindexes muestrales en proyectos grandes.
 
 ### Prueba premium (modelo actual en MAX) sobre el PROYECTO COMPLETO (277 archivos)
 
@@ -206,7 +206,7 @@ Los 277 archivos fueron descritos también por el **modelo premium actual (openc
 
 ### Decisión aplicada
 
-La reindexación premium **sí se aplicó como índice real** de UnityCommerceDemo: los 277 archivos del índice central (`~/.aether-graph/UnityCommerceDemo/index.json`) usan las descripciones premium con `ai_model = opencode-go/gpt-5.6-luna (MAX, premium)` y un resumen global generado por el premium. El dashboard y el MCP sirven ahora ese contexto.
+La reindexación premium **sí se aplicó como índice real** de UnityCommerceDemo: los 277 archivos del índice central (`~/.graphtyn/UnityCommerceDemo/index.json`) usan las descripciones premium con `ai_model = opencode-go/gpt-5.6-luna (MAX, premium)` y un resumen global generado por el premium. El dashboard y el MCP sirven ahora ese contexto.
 
 ### Rediseño de la vista Semántico IA (comunidades + god nodes)
 
@@ -219,8 +219,8 @@ La vista semántica dejó de espejar "Concepto: X" por archivo (redundancia) y a
 ### Respetar .gitignore por proyecto (toggle)
 
 El parser ahora es **git-first**: con `respect_git=true` (default) escanea solo `git ls-files` (fallback a rglob si no hay `.git`). Configurable por proyecto desde:
-- **Dashboard**: checkbox "Respetar .gitignore" en el panel de settings (guarda en `~/.aether-graph/<proyecto>/config.json` y reindexa en full al cambiar).
-- **CLI**: `aether-graph gitignore on|off --path <proyecto>`.
+- **Dashboard**: checkbox "Respetar .gitignore" en el panel de settings (guarda en `~/.graphtyn/<proyecto>/config.json` y reindexa en full al cambiar).
+- **CLI**: `graphtyn gitignore on|off --path <proyecto>`.
 - **API**: `GET/POST /api/projects/config` (`{"respect_git": bool}`); `/api/projects` expone el estado por proyecto.
 
 Medido en UnityCommerceDemo: `ON` → **990 nodos / 1,703 links** vs `OFF` → **1,088 / 1,806** (−98 nodos y −103 aristas de ruido: `ProjectSettings/`, `Packages/`, `UserSettings/` regenerados por Unity, 36 archivos + 55 símbolos). Con `ON` el reindex completo evita ~36 llamadas LLM (~40s) por ciclo.
@@ -230,7 +230,7 @@ Medido en UnityCommerceDemo: `ON` → **990 nodos / 1,703 links** vs `OFF` → *
 El dashboard pasó de un HTML monolítico (~2,000 líneas con CSS y JS embebidos) a:
 
 ```
-aether_graph/web/
+graphtyn/web/
 ├── dashboard.html        (318 líneas — solo estructura HTML)
 ├── dashboard.css         (167 líneas — estilos)
 ├── dashboard.js          (88 líneas — entry ES module: imports, openFromChanges y exposición de handlers a window)
@@ -262,7 +262,9 @@ Rutas servidas por la API: `/dashboard.html` (index), `/dashboard.css`, `/dashbo
 ### Ronda de mejoras final (confianza visual, métodos C#, tests)
 
 - **Métodos C# extraíbles para símbolos**: `_extract_symbol_source` ahora detecta firmas tipo-C (`public int RollDice(...)`) con bloque por llaves, además de clases/structs. En UnityCommerceDemo los símbolos con contexto pasaron de **8 → 34** (límite de 60 por grado; el resto son keywords filtradas o sin bloque extraíble). Ejemplo: `AddMoney` → "Añade dinero al estado de un jugador".
-- **Confianza visual en el dashboard**: aristas INFERRED ahora se dibujan **punteadas, más finas y atenuadas**; el header muestra **leyenda** (`━ EXTRACTED · ┅ INFERRED`) y un **badge** con el modelo activo y el modo de reindex (`🧠 qwen2.5-coder:3b · full`).
+- **Confianza visual en el dashboard**: aristas INFERRED se dibujan **punteadas, más finas y atenuadas**; AMBIGUOUS se dibuja punteada en ámbar y conserva su etiqueta en el inspector. El header muestra los tres niveles de confianza y el modelo/modo de reindex activo.
+- **Flujo Web / Framework**: nodos `route` con color/filtro propio, búsqueda por método y endpoint, filtros de `invoca ruta`, `despacha`, `valida con`, `crea` y `despacha evento`, y enfoque React/Blade → ruta → controlador → FormRequest → modelo/evento. `/api/index-quality` expone cobertura framework resuelta, no resuelta y ambigua.
+- **Overview e informe persistente**: `graph_query_intent(intent=overview)` detecta propósito desde README, frameworks desde manifiestos, entradas, subsistemas, dependencias, flujos y señales de riesgo. `graphtyn report` materializa la misma evidencia como `GRAPHTYN_REPORT.md`, con diagrama Mermaid y métricas de tokens comparables contra `GRAPH_REPORT.md` sin presentar cobertura observable como precisión semántica.
 - **Tests nuevos** (`tests/test_enrichment.py`, 9 casos): `_clean_answer`, `_role_hint_and_fix`, `_maybe_compact` (fallback ≤140), extracción C# de métodos + keywords, confianza en links, filtrado de símbolos keyword, `_detect_changed_files` en repo git temporal, y comunidades/god nodes de la vista semántica. Suite total: **13 passed** (hoy 40 con API, MCP, CLI y smoke).
 
 ### Reindexado incremental (nuevo)
@@ -272,12 +274,12 @@ Antes: cada `reindex` re-enriquecía TODO el proyecto con IA (277 archivos ≈ 5
 - Los archivos/símbolos **sin cambios conservan su contexto previo** (0 llamadas LLM).
 - Solo se enriquece lo **nuevo o modificado**; el resumen global se regenera únicamente si hubo cambios.
 - `full: true` en el payload (o `--engine ast_pure`) fuerza reindex completo.
-- Nuevo env `AETHER_COMPACT=1`: comprime cada descripción local a ≤100 chars (segunda pasada LLM) para acercarse a la densidad premium.
+- Nuevo env `GRAPHTYN_COMPACT=1`: comprime cada descripción local a ≤100 chars (segunda pasada LLM) para acercarse a la densidad premium.
 - Medido en UnityCommerceDemo: reindex incremental con 0 cambios de código → **5-8s** (vs 5.3 min completo); archivo nuevo detectado y enriquecido en ~1s extra.
 
 ### Prueba de compactación en proyecto completo (OLD vs NEW vs premium)
 
-Reindex completo (`full: true`) de UnityCommerceDemo con `qwen2.5-coder:3b + AETHER_COMPACT=1` (con corte determinista de respaldo a ≤140 chars). Comparación de descripción **pura** (sin sufijo de ruta):
+Reindex completo (`full: true`) de UnityCommerceDemo con `qwen2.5-coder:3b + GRAPHTYN_COMPACT=1` (con corte determinista de respaldo a ≤140 chars). Comparación de descripción **pura** (sin sufijo de ruta):
 
 | Versión | Media chars | Total chars | Máx |
 |---|---|---|---|
@@ -296,15 +298,15 @@ Ejemplo `TurnManager.cs`:
 
 ### Flujo completo del reindexado (cómo funciona, paso a paso)
 
-`aether-graph reindex --engine ast_local_llm` ejecuta este pipeline **en una sola pasada**:
+`graphtyn reindex --engine ast_local_llm` ejecuta este pipeline **en una sola pasada**:
 
 1. **Escaneo AST determinista** (`scan_directory`): jerarquía + símbolos + dependencias. 0 tokens, <1s incluso en proyectos grandes.
 2. **Detección incremental** (`git status`): si el índice previo existe y es del mismo motor, se calcula el set de archivos cambiados/nuevos.
 3. **Enriquecimiento de archivos**: SOLO los nuevos/cambiados llaman al LLM (prompt config #9: rol + hints deterministas + snippet cabeza/cola). Los sin cambios **copian el contexto previo** (0 llamadas).
-4. **Enriquecimiento de símbolos**: top N por grado (`AETHER_SYMBOL_LIMIT`), solo de archivos cambiados; el resto copia el previo.
-5. **Compactación opcional INLINE** (`AETHER_COMPACT=1`): por cada descripción generada de >140 chars se hace **una segunda llamada inmediata** ("comprime a ≤100 chars") — no es un reindexado aparte, es parte del mismo paso del nodo.
+4. **Enriquecimiento de símbolos**: top N por grado (`GRAPHTYN_SYMBOL_LIMIT`), solo de archivos cambiados; el resto copia el previo.
+5. **Compactación opcional INLINE** (`GRAPHTYN_COMPACT=1`): por cada descripción generada de >140 chars se hace **una segunda llamada inmediata** ("comprime a ≤100 chars") — no es un reindexado aparte, es parte del mismo paso del nodo.
 6. **Resumen global** (`ai_summary`): se regenera solo si hubo cambios; si no, se reutiliza el previo.
-7. **Persistencia** en `~/.aether-graph/<proyecto>/index.json` → dashboard (`:9210`) y MCP (`graph_neighborhood`).
+7. **Persistencia** en `~/.graphtyn/<proyecto>/index.json` → dashboard (`:9210`) y MCP (`graph_neighborhood`).
 
 **Variables de entorno del motor:**
 
@@ -312,9 +314,9 @@ Ejemplo `TurnManager.cs`:
 |---|---|---|
 | `OLLAMA_HOST` | auto (localhost:11434…) | Servidor Ollama |
 | `OLLAMA_MODEL` | auto-detección | Modelo local a usar |
-| `AETHER_SYMBOL_LIMIT` | 60 | Máx. símbolos enriquecidos por reindex |
-| `AETHER_FILE_LIMIT` | 0 (ilimitado) | Máx. archivos enriquecidos (muestreo) |
-| `AETHER_COMPACT` | 0 | `1` = segunda pasada inline para comprimir a ≤100 chars |
+| `GRAPHTYN_SYMBOL_LIMIT` | 60 | Máx. símbolos enriquecidos por reindex |
+| `GRAPHTYN_FILE_LIMIT` | 0 (ilimitado) | Máx. archivos enriquecidos (muestreo) |
+| `GRAPHTYN_COMPACT` | 0 | `1` = segunda pasada inline para comprimir a ≤100 chars |
 | `GEMINI_API_KEY` | — | Motor cloud (`ast_cloud`) |
 
 ### ¿Cuál le conviene a un agente? (perspectiva del consumidor de contexto)

@@ -4,11 +4,11 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from aether_graph.api import main as api_main
+from graphtyn.api import main as api_main
 
 
 def _client(tmp_path, monkeypatch):
-    monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / ".aether-store")
+    monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / ".graphtyn-store")
     return TestClient(api_main.app)
 
 
@@ -18,14 +18,34 @@ def test_health_endpoint(tmp_path, monkeypatch):
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "ok"
-    assert data["service"] == "AetherGraph"
+    assert data["service"] == "Graphtyn"
+
+
+def test_explicit_registration_overrides_auto_discovered_name(tmp_path, monkeypatch):
+    project = tmp_path / "legacy-folder-name"
+    project.mkdir()
+    registry = tmp_path / "registered_projects.json"
+    registry.write_text(json.dumps([{
+        "id": "graphtyn",
+        "name": "Graphtyn",
+        "path": str(project),
+        "mode": "agent_discovered",
+    }]))
+    monkeypatch.chdir(project)
+    monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / "store")
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", registry)
+
+    projects = api_main._load_registered_projects()
+
+    assert projects[0]["id"] == "graphtyn"
+    assert projects[0]["name"] == "Graphtyn"
 
 
 def test_dashboard_assets_served(tmp_path, monkeypatch):
     client = _client(tmp_path, monkeypatch)
     html = client.get("/")
     assert html.status_code == 200
-    assert "AetherGraph" in html.text
+    assert "Graphtyn" in html.text
     assert "/dashboard.css" in html.text and "/dashboard.js" in html.text
     assert 'id="blast-content"' in html.text and "overflow-wrap:anywhere" in html.text
     css = client.get("/dashboard.css")
@@ -211,7 +231,7 @@ def test_history_endpoint(tmp_path, monkeypatch):
     client = _client(tmp_path, monkeypatch)
     proj = tmp_path / "proj"
     proj.mkdir()
-    from aether_graph.core.history import HistoryTracker
+    from graphtyn.core.history import HistoryTracker
     ht = HistoryTracker(proj)
     ht.log_event("s1", "cli", "evento de prueba", {"k": 1})
     res = client.get("/api/history", params={"path": str(proj)})

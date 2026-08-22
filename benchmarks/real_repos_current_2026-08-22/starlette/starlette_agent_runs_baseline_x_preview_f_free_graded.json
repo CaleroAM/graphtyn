@@ -1,0 +1,112 @@
+[
+  {
+    "task_id": "signed-session-flow",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 270.9092,
+    "usage": {
+      "input_tokens": 204,
+      "output_tokens": 135,
+      "thinking_tokens": 21,
+      "total_tokens": 11112
+    },
+    "tool_calls": 15,
+    "answer": "Voy a auditar el `SessionMiddleware` de Starlette usando solo herramientas locales. Primero localizo el archivo.\nAhora verifico las primitivas de soporte: `Secret`, `MutableHeaders.add_vary_header` y las cookies de `HTTPConnection`.\nEl repo no incluye el directorio de tests (copia reducida). Verifico un detalle clave: la jerarquía de excepciones de `itsdangerous` para saber si la expiración queda cubierta por `except BadSignature`.\nEl paquete `starlette` está en la raíz del repo junto a `tests/`. Localizo el test de sesión y la versión de `itsdangerous`.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.\n\u001b[93m\u001b[1m! \u001b[0mpermission requested: external_directory (/tmp/graphtyn-benchmark-starlette/*); auto-rejecting\n\u001b[93m\u001b[1m! \u001b[0mpermission requested: external_directory (/tmp/graphtyn-benchmark-starlette/*); auto-rejecting",
+    "covered": 0,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.1667,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.1667,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "signer",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "decode",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "invalid",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "tracking",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "persist",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "delete-security",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  },
+  {
+    "task_id": "router-dispatch-flow",
+    "variant": "Baseline",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 110.4041,
+    "usage": {
+      "input_tokens": 186,
+      "output_tokens": 2114,
+      "thinking_tokens": 266,
+      "total_tokens": 19270
+    },
+    "tool_calls": 7,
+    "answer": "He verificado todo en el código fuente de `/tmp/graphtyn-benchmark-starlette/starlette` sin usar Graphtyn/Graphify y sin modificar archivos.\n\n## Punto de entrada\n\n- `Starlette.__call__` inyecta `scope[\"app\"] = self` (applications.py:92-93) y delega al stack de middleware cuyo núcleo es `self.router` (applications.py:57, 80-82).\n- `Router.__call__` delega en `self.middleware_stack`, que es el propio `Router.app` cuando no hay middleware extra (routing.py:609, 666-670).\n\n## Algoritmo de `Router.app` para una petición HTTP (routing.py:672-720)\n\n1. **Validación y marca de router**: aserte `scope[\"type\"] in (\"http\", \"websocket\", \"lifespan\")` (routing.py:673) y fija `scope[\"router\"] = self` si no existe (routing.py:675-676).\n2. **Bucle de coincidencia completa**: itera `self.routes` en orden llamando `route.matches(scope)` (routing.py:684-687):\n   - `Match.FULL`: hace `scope.update(child_scope)` (inyecta `endpoint` y `path_params`), ejecuta `route.handle(scope, receive, send)` y retorna inmediatamente (routing.py:688-691). El primer match completo gana (orden de declaración = prioridad).\n   - `Match.PARTIAL` solo se recuerda si es la primera (`partial is None`) (routing.py:692-694).\n3. **Coincidencia parcial** (post-bucle): si hay `partial`, actualiza el scope con su `child_scope` y llama `partial.handle(...)` (routing.py:696-702). Esto materializa el **405 Method Not Allowed**: `Route.matches` devuelve `PARTIAL` cuando el path coincide con la regex pero el método HTTP no está en `self.methods` (routing.py:254-257), y `Route.handle` lanza `HTTPException(405)` con cabecera `Allow` si `\"app\" in scope`, o responde `PlainTextResponse(405)` en modo ASGI puro (routing.py:271-278). Nota: si `methods` incluye GET, se añade HEAD automáticamente (routing.py:237-238).\n4. **Redirección de slash**: solo si es HTTP, `redirect_slashes=True` (valor por defecto, routing.py:577, 587) y `route_path != \"/\"` (routing.py:704-705):\n   - Construye `redirect_scope` copiando el scope y quitando o añadiendo la barra final a `path` según corresponda (routing.py:706-710).\n   - Re-intenta `matches()` sobre todas las rutas con ese scope alterno (routing.py:712-714); si alguna da `!= Match.NONE` envía `RedirectResponse(url=...)` construida desde el scope redirigido y retorna (routing.py:715-718).\n   - `route_path` proviene de `get_route_path(scope)`, que resta `root_path` de `scope[\"path\"]` (_utils.py:96-111).\n5. **Fallback final**: `await self.default(scope, receive, send)` (routing.py:720), donde `default` es `Router.not_found` salvo override en el constructor (routing.py:588). `not_found` cierra el websocket con `WebSocketClose` si aplica, y en HTTP lanza `HTTPException(404)` si hay app Starlette (lo gestiona el handler configurable vía middleware) o responde `PlainTextResponse(\"Not Found\", 404)` en ASGI puro (routing.py:616-629).\n\n## Cómo se decide FULL vs NONE por tipo de ruta\n\n- `Route.matches` (HTTP): usa `path_regex` anclada `^…$` generada por `compile_path` (routing.py:111-164, concretamente 125 y 158-160); convierte los parámetros con los convertidores (routing.py:248-250, convertors.py) y arma el `child_scope` con `endpoint` + `path_params` fusionados (routing.py:251-253).\n- `WebSocketRoute.matches`: mismo mecanismo pero solo para `scope[\"type\"] == \"websocket\"` y siempre `FULL` al coincidir (routing.py:327-340).\n- `Mount.matches`: compila `path + \"/{path:path}\"` (routing.py:388); separa el prefijo del resto del path y ajusta `root_path` en el child scope (routing.py:396-424).\n- `Host.matches`: compara contra la cabecera `Host` sin puerto (routing.py:478-491).\n\n## Tratamiento de lifespan\n\n- `Router.app` detecta `scope[\"type\"] == \"lifespan\"` antes de cualquier routing y delega a `Router.lifespan`, retornando (routing.py:678-680). Las rutas nunca participan en lifespan.\n- `Router.lifespan` (routing.py:639-664):\n  1. Espera el primer mensaje del servidor con `await receive()` (startup, routing.py:646).\n  2. Entra en `async with self.lifespan_context(app)` (routing.py:648): `app` sale del scope (routing.py:645). Si no se pasó lifespan, se usa `_DefaultLifespan`, un no-op (routing.py:590-591, 559-570). Los lifespans como función async-generador o generador se aceptan con advertencia de deprecación (routing.py:593-605).\n  3. Si el contexto produce `state`, lo vuelca en `scope[\"state\"]` o falla si el servidor no lo soporta (routing.py:649-652).\n  4. Envía `lifespan.startup.complete`, marca `started = True` y espera el siguiente mensaje (shutdown) (routing.py:653-655).\n  5. Manejo de errores: ante `BaseException`, envía `lifespan.shutdown.failed` si ya arrancó o `lifespan.startup.failed` si no, y re-lanza (routing.py:656-662). Salida normal: `lifespan.shutdown.complete` (routing.py:663-664).\n- La aplicación pasa su parámetro `lifespan` al `Router` en el constructor (applications.py:57).\n\nEn síntesis: prioridad estricta de primer `FULL` → primer `PARTIAL` guardado (405) → heurística de redirección de slash re-evaluando todas las rutas → `not_found` (404/cierre WS), con lifespan desviado al inicio del método sin tocar las rutas.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "router-app",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "full-match",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "partial-match",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "slash-redirect",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "fallback",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "lifespan",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]

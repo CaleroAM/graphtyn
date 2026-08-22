@@ -1,0 +1,112 @@
+[
+  {
+    "task_id": "signed-session-flow",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 250.8708,
+    "usage": {
+      "input_tokens": 156,
+      "output_tokens": 1622,
+      "thinking_tokens": 268,
+      "total_tokens": 28094
+    },
+    "tool_calls": 27,
+    "answer": "# Auditoría del ciclo de `SessionMiddleware` (solo grafo Graphify)\n\n## 1. Definición e inicialización\n- `SessionMiddleware` definido en `middleware/sessions.py:L16` (arista `contains` desde `sessions.py`, **EXTRACTED**).\n- Métodos: `.__init__()` (`middleware/sessions.py:L17`) y `.__call__()` (`middleware/sessions.py:L39`) (**EXTRACTED**, aristas `method`).\n- `.__init__()` recibe `ASGIApp` (**EXTRACTED**, param_type, L17) y `Secret` (**EXTRACTED**, param_type, L17); `SessionMiddleware --uses--> Secret` (**INFERRED**, L20).\n- El módulo importa `json` (L3), `base64` (L5), `itsdangerous` (L8) y `itsdangerous_exc` (L9) (**EXTRACTED**).\n\n## 2. Lectura de cookie\n- `.__call__(scope: Scope, receive: Receive, send: Send)` (**EXTRACTED**, param types, L39).\n- `.__call__() --calls--> HTTPConnection` (**INFERRED**, L44). La primitiva de lectura disponible es `HTTPConnection.cookies()` (`requests.py:L150`), que llama a `cookie_parser()` (**EXTRACTED**, `requests.py:L156`).\n- *Brecha*: no existe arista directa \"lee `self.session_cookie`\" dentro de `sessions.py`; solo el uso inferido de `HTTPConnection`.\n\n## 3. Verificación de firma\n- Evidencia de dependencia criptográfica: imports de `itsdangerous` y `itsdangerous_exc` (**EXTRACTED**) más el uso de `Secret` (**INFERRED**, L20).\n- *Brecha*: el grafo **no** contiene nodos/aristas para `signer.unsign`, `max_age`, ni las excepciones concretas (`BadTimeSignature`); no puedo afirmar el mecanismo exacto de verificación desde el grafo.\n\n## 4. Estado ante firma inválida / sin cookie\n- `.__call__() --calls--> Session` (**EXTRACTED**, `middleware/sessions.py:L51`). `Session` está en `middleware/sessions.py:L91`.\n- La clase `Session` se instancia una sola vez en el flujo del grafo; la rama \"excepción → sesión vacía\" no está extraída como arista independiente (no se afirma como hecho).\n\n## 5. Seguimiento de acceso/modificación\n- `Session.mark_accessed()` (L95) y `Session.mark_modified()` (L98) (**EXTRACTED**).\n- Consumidores de `mark_modified()` (**EXTRACTED**, calls): `__setitem__` (L103), `__delitem__` (L107), `clear` (L111), `setdefault` (L120), `update` (L124).\n- `pop` (L114): **sin** arista hacia `mark_modified` (solo `references Any`) — brecha del grafo.\n- `mark_accessed()`: **sin llamadores extraídos** (ninguna arista entrante de llamada).\n\n## 6. Escritura de cookie\n- `SessionMiddleware --uses--> MutableHeaders` (**INFERRED**, `middleware/sessions.py:L61`). `MutableHeaders` hereda de `Headers` (**EXTRACTED**, `datastructures.py:L577`) y expone `__setitem__`, `append`, `update`, `raw` (**EXTRACTED**).\n- Primitiva general de cookies: `Response.set_cookie()` (`responses.py:L89`), que referencía `datetime` (**EXTRACTED**, param_type → parámetro `expires`); `Response --uses--> MutableHeaders` (**INFERRED**, L84).\n\n## 7. Borrado de cookie\n- `Response.delete_cookie()` (`responses.py:L134`) `--calls--> .set_cookie()` (**EXTRACTED**, `responses.py:L143`).\n\n## 8. Atributos de seguridad\n- El grafo **no extrae** aristas para `path`, `httponly`, `samesite`, `secure` ni `max_age` en el header Set-Cookie; lo único evidenciado es `CookieTypes` (nodo de tipo) y `datetime` en `set_cookie`. No afirman esos atributos desde el grafo.\n\n**Resumen**: ciclo completo trazable con evidencia (definición → `__call__` → `HTTPConnection` → `Session` con tracking via `mark_modified` → escritura con `MutableHeaders`/`set_cookie` → borrado con `delete_cookie`), con tres huecos declarados: mecanismo interno de `unsign`, rama de firma inválida y atributos de seguridad de la cookie, que el grafo no representa como relaciones.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 2,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.5,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.5,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "signer",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "decode",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "invalid",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "tracking",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "persist",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "delete-security",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "router-dispatch-flow",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 217.8406,
+    "usage": {
+      "input_tokens": 1625,
+      "output_tokens": 1253,
+      "thinking_tokens": 268,
+      "total_tokens": 14218
+    },
+    "tool_calls": 32,
+    "answer": "## Trazado de `Router.app` (evidencia del grafo, routing.py)\n\n**1. Entrada ASGI**\n- `Router` (routing.py:L573) expone `.__call__()` (routing.py:L666); el grafo tiene la arista `[rationale_for] \"The main entry point to the Router class\" --> .__call__() at=L667` **[EXTRACTED]**. Ambos `.__call__()` y `.app()` (routing.py:L672) referencian `Scope`, `Receive`, `Send`.\n\n**2. Lifespan se trata primero**\n- Arista **[EXTRACTED]**: `.app() --calls--> .lifespan() at=routing.py:L679`. Es la única rama despachada antes del bucle de rutas, por tipo de scope (`lifespan`) según el orden de llamadas en `.app()`.\n- `.lifespan()` (routing.py:L639); el lifespan por defecto es `_DefaultLifespan` (routing.py:L559), un gestor de contexto con `__aenter__` (L563) / `__aexit__` (L566) / `__call__` (L569), instanciado desde `Router.__init__` en L591 **[EXTRACTED]**.\n\n**3. Coincidencia completa vs parcial**\n- Cada tipo de ruta implementa `.matches()` que devuelve `Match`: `BaseRoute.matches` (L168), `Route.matches` (L242), y variantes en L327/L394/L478; todas referencian `Match` (routing.py:L41, `--inherits--> Enum` **[EXTRACTED]**).\n- Con coincidencia completa se invoca `route.handle()` → `Route.handle` (L271): llama `HTTPException` (L275) e `PlainTextResponse` (L277) **[INFERRED]** — rechazo por método no permitido — y luego el endpoint vía `.app()` en L280 **[EXTRACTED]**. Hay 4 aristas `.handle() --calls--> .app()` (L280, L354, L455, L517): una por clase de ruta.\n- Los endpoints se envuelven mediante `request_response()` (L67) y `websocket_session()` (L86) → `indirect_call` hacia `.app()` **[INFERRED]**.\n\n**4. Redirección de slash**\n- `.app() --calls[INFERRED]--> get_route_path() (_utils.py:L96) at=routing.py:L704` (ruta normalizada) y `.app() --calls[INFERRED]--> RedirectResponse (responses.py:L204) at=routing.py:L716`, con uso de `URL` en L715 **[INFERRED]**. Ese bloque va después del bucle de rutas.\n\n**5. Fallback final**\n- `Router.not_found()` (routing.py:L616): llama `WebSocketClose` (L618) para websockets y `HTTPException` (L626) / `PlainTextResponse` (L628) para HTTP, todo **[INFERRED]**.\n\n**Límites del grafo (no asumido como hecho):** no existen nodos para los miembros del enum `Match` (p. ej. FULL/PARTIAL/NONE) ni para el atributo `redirect_slashes`; la distinción completo/parcial queda evidenciada por el par `matches()/Match` + las 4 cadenas `handle→app`, pero el control de flujo interno exacto (variable `partial`, condición de redirección) no está extraído y debería verificarse en routing.py:672–720.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 3,
+    "partial": 3,
+    "total": 6,
+    "quality_score": 0.75,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.75,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "router-app",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "full-match",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "partial-match",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "slash-redirect",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "fallback",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "lifespan",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  }
+]

@@ -1,4 +1,6 @@
-# 📊 Benchmarks de AetherGraph
+# 📊 Benchmarks de Graphtyn
+
+Los casos se describen por tecnología y propósito para que sean comprensibles sin conocer sus nombres internos. Cuando aparece `UnityCommerceDemo`, se refiere al **repositorio real Unity/C# de un juego empresarial por turnos**; `Starlette` identifica el **framework público Python/ASGI** usado como validación externa. En las tablas, el competidor directo se presenta como **Gra…ify**. Los nombres exactos se conservan únicamente en rutas, comandos y artefactos necesarios para reproducibilidad.
 
 Mediciones reales, reproducibles en el hardware de referencia. Cada tabla indica fecha, proyecto y comando exacto de reproducción.
 
@@ -47,17 +49,17 @@ El corpus etiquetado se amplió con **25 llamadas positivas y 10 aristas negativ
 
 | Sistema sobre el mismo UnityCommerceDemo | Precisión | Recall | F1 | Ambiguas |
 |---|---:|---:|---:|---:|
-| AetherGraph v4 | **100%** (25 TP, 0 FP) | **100%** | **1.000** | **0/1,088 (0%)** |
-| Graphify 0.9.48, AST code-only | 100% (20 TP, 0 FP) | 80% | 0.889 | no expone métrica equivalente en este export |
+| Graphtyn v4 | **100%** (25 TP, 0 FP) | **100%** | **1.000** | **0/1,088 (0%)** |
+| Gra…ify 0.9.48, AST code-only | 100% (20 TP, 0 FP) | 80% | 0.889 | no expone métrica equivalente en este export |
 
-Graphify omitió cinco aristas etiquetadas: una llamada estática a `ApplyToGameManager`, un constructor `GameSetupState` y tres constructores cross-file (`Artwork`, `GameState`, `TurnManager`). Esta muestra es pequeña y está centrada en C#/Unity; no permite extrapolar precisión universal. Resultado Graphify reproducible con `aether-graph benchmark-graphify --graph ... --ground-truth ...` en `benchmarks/tour_graphify_structural_2026-08-21.json`.
+Gra…ify omitió cinco aristas etiquetadas: una llamada estática a `ApplyToGameManager`, un constructor `GameSetupState` y tres constructores cross-file (`Artwork`, `GameState`, `TurnManager`). Esta muestra es pequeña y está centrada en C#/Unity; no permite extrapolar precisión universal. Resultado Gra…ify reproducible con `graphtyn benchmark-graphify --graph ... --ground-truth ...` en `benchmarks/tour_graphify_structural_2026-08-21.json`.
 
 Antes del resolvedor contextual, el índice servido contenía 780 llamadas y 484 ambiguas (62.1%). La nueva pasada encuentra más del doble de llamadas y reduce la tasa ambigua a 19.76%. La comparación es de cobertura estructural sobre el mismo proyecto, no demuestra todavía precisión semántica de cada destino; eso requiere ampliar el ground truth con aristas positivas y negativas.
 
 Resultado completo y reproducible: `benchmarks/unity_commerce_demo_result.json`.
 
 ```bash
-aether-graph benchmark \
+graphtyn benchmark \
   --path /ruta/UnityCommerceDemo \
   --ground-truth benchmarks/unity_commerce_demo.json \
   --output benchmarks/unity_commerce_demo_result.json
@@ -76,22 +78,22 @@ aether-graph benchmark \
 
 ## ⏱️ 1. Pasada Determinista (Solo AST) — 0 Tokens
 
-**Comando:** `aether-graph reindex --path <proyecto> --engine ast_pure` (mide el roundtrip CLI→daemon; el scan directo del parser se mide aparte).
+**Comando:** `graphtyn reindex --path <proyecto> --engine ast_pure` (mide el roundtrip CLI→daemon; el scan directo del parser se mide aparte).
 
 | Proyecto | Archivos | Nodos | Conectores | Tiempo | Tokens |
 |---|---|---|---|---|---|
-| aether-graph (propio) | 11 | 50 | 44 | 0.147 s | 0 |
+| graphtyn (propio) | 11 | 50 | 44 | 0.147 s | 0 |
 | 366metrics-cdk (AWS CDK, Python) | 22 `.py` | 108 | 95+ | **0.406 s** (scan directo: 0.327 s) | 0 |
 
 *Medido: 18 ago 2026. Escala ~lineal con el tamaño del proyecto (~2.2× más grande → ~2.8× el tiempo del README base).*
 
 ## 🧠 2. AST + Enriquecimiento Local (Ollama, GPU) — 0 Tokens (Local)
 
-**Comando:** `OLLAMA_MODEL=qwen2.5-coder:3b aether-graph reindex --path <proyecto> --engine ast_local_llm`
+**Comando:** `OLLAMA_MODEL=qwen2.5-coder:3b graphtyn reindex --path <proyecto> --engine ast_local_llm`
 
 | Proyecto | Modelo | Tiempo Full | Enriquecidos | Tokens |
 |---|---|---|---|---|
-| aether-graph (propio) | qwen2.5-coder:3b | ~50 s | ~40 símbolos | 0 (local) |
+| graphtyn (propio) | qwen2.5-coder:3b | ~50 s | ~40 símbolos | 0 (local) |
 | 366metrics-cdk | qwen2.5-coder:3b | **96.3 s** (incluye carga en frío) | 26 archivos + 69 símbolos + `ai_summary` global | 0 (local) |
 
 **Reindexado incremental** (solo archivos cambiados según `git status`, sin untracked):
@@ -105,7 +107,7 @@ aether-graph benchmark \
 
 ## 🦙 3. Benchmark de Modelos Locales (vía Ollama)
 
-Prompts reales de AetherGraph (resumen de arquitectura global + resumen de archivo), temperatura 0.2.
+Prompts reales de Graphtyn (resumen de arquitectura global + resumen de archivo), temperatura 0.2.
 
 | Modelo | Tamaño | Resumen Arquitectura | Resumen Archivo | Distribución GPU/CPU |
 |---|---|---|---|---|
@@ -133,7 +135,7 @@ Cada consulta MCP registra en el historial (`graph_history_*`) el campo `tokens_
 
 ### Contexto real de un agente (medición de extremo a extremo)
 
-Sesión real de un agente (OpenClaw + Gemini 3.1 Pro) conectado al MCP de AetherGraph sobre 366metrics-cdk: **4.15M tokens en 125 llamadas al modelo**. Desglose:
+Sesión real de un agente (OpenClaw + Gemini 3.1 Pro) conectado al MCP de Graphtyn sobre 366metrics-cdk: **4.15M tokens en 125 llamadas al modelo**. Desglose:
 
 | Componente | Tokens |
 |---|---|
@@ -141,7 +143,7 @@ Sesión real de un agente (OpenClaw + Gemini 3.1 Pro) conectado al MCP de Aether
 | Salida del modelo | 56.6K |
 | Bucle de reintentos de una tool (20 llamadas a `graph_register_project`) | 928K |
 
-**Lectura:** el costo dominante no es el análisis de AetherGraph (0 tokens), sino el mecanismo del agente de reenviar su contexto completo en cada llamada. AetherGraph reduce la fracción que toca el código: el mapa completo en 1 consulta (~16K tokens) reemplaza la lectura de 22 archivos (~150K+ tokens).
+**Lectura:** el costo dominante no es el análisis de Graphtyn (0 tokens), sino el mecanismo del agente de reenviar su contexto completo en cada llamada. Graphtyn reduce la fracción que toca el código: el mapa completo en 1 consulta (~16K tokens) reemplaza la lectura de 22 archivos (~150K+ tokens).
 
 ### Antigravity sobre UnityCommerceDemo (21 ago 2026)
 
@@ -150,39 +152,39 @@ Misma tarea de cuatro preguntas arquitectónicas, mismo agente, modo `plan` y es
 | Variante | Tokens totales | Duración | Archivos leídos | Reducción vs. control |
 |---|---:|---:|---:|---:|
 | Control: búsqueda/lectura sin grafo | 333,728 | 126.84 s | 28 | — |
-| AetherGraph focalizado | 230,497 | 106.93 s | 2 | **30.93%** |
+| Graphtyn focalizado | 230,497 | 106.93 s | 2 | **30.93%** |
 | Prompt compacto de una ronda | 175,989 | 64.44 s | 2 | **47.27%** |
 
 Las tres ejecuciones generaron un informe, pero Antigravity terminó con `status=ERROR` por validaciones de sus herramientas. En la tercera corrida su catálogo no descubrió todavía `graph_context_bundle`; por tanto, el 47.27% demuestra el beneficio del flujo compacto/de menos rondas, **no** una validación end-to-end de la nueva tool. El payload compacto aislado redujo 20.4% para la vecindad de `AuctionService` y 23.5% para el impacto de `GetPlayerSelection`.
 
-### Benchmark competitivo pareado n=6: AetherGraph vs Graphify vs lectura directa
+### Benchmark competitivo pareado n=6: Graphtyn vs Gra…ify vs lectura directa
 
-Se replicó el diseño de código de Graphify: mismo agente Antigravity, modelo/configuración, esfuerzo `high`, seis preguntas, herramientas base equivalentes, un único contexto de grafo por tarea, hasta dos lecturas y hechos atómicos puntuados como `(cubierto + 0.5×parcial) / total`. Añadimos penalización por contradicciones verificables. Las corridas se hicieron secuencialmente; la tanda concurrente inicial se conserva solo como diagnóstico.
+Se replicó el diseño de código de Gra…ify: mismo agente Antigravity, modelo/configuración, esfuerzo `high`, seis preguntas, herramientas base equivalentes, un único contexto de grafo por tarea, hasta dos lecturas y hechos atómicos puntuados como `(cubierto + 0.5×parcial) / total`. Añadimos penalización por contradicciones verificables. Las corridas se hicieron secuencialmente; la tanda concurrente inicial se conserva solo como diagnóstico.
 
 | Sistema | Cobertura | Ajustada por errores | Tokens/tarea (IC95) | Tiempo/tarea | Éxito terminal |
 |---|---:|---:|---:|---:|---:|
-| **AetherGraph CLI context** | **92.50%** | **92.50%** (0 errores) | **50,968** (42,495–59,441) | **16.34 s** | 4/6 |
-| Graphify 0.9.48 + `query --budget 2000` | 92.50% | 89.17% (1 error) | 58,040 (49,347–66,732) | 17.96 s | 5/6 |
+| **Graphtyn CLI context** | **92.50%** | **92.50%** (0 errores) | **50,968** (42,495–59,441) | **16.34 s** | 4/6 |
+| Gra…ify 0.9.48 + `query --budget 2000` | 92.50% | 89.17% (1 error) | 58,040 (49,347–66,732) | 17.96 s | 5/6 |
 | Búsqueda/lectura directa | 91.67% | 91.67% (0 errores etiquetados) | 93,551 (67,660–119,442) | 38.53 s | 1/6 |
 
 Resultados pareados:
 
-- AetherGraph vs lectura directa: **45.52% menos tokens**, IC95 del delta −74,251 a −10,915, `dz=-1.076`, permutación exacta `p=0.0625`; tiempo −57.60%.
-- AetherGraph vs Graphify: **12.18% menos tokens**, IC95 −13,910 a −233, `dz=-0.828`, permutación exacta `p=0.0625`; tiempo −9.03%.
-- La cobertura sin penalización empata. AetherGraph gana una tarea al penalizar el falso positivo de Graphify que clasificó `PlayerNameService` como implementación de `IPlayerNameRegistry`; la prueba de signo de calidad no es significativa (`p=1.0`).
+- Graphtyn vs lectura directa: **45.52% menos tokens**, IC95 del delta −74,251 a −10,915, `dz=-1.076`, permutación exacta `p=0.0625`; tiempo −57.60%.
+- Graphtyn vs Gra…ify: **12.18% menos tokens**, IC95 −13,910 a −233, `dz=-0.828`, permutación exacta `p=0.0625`; tiempo −9.03%.
+- La cobertura sin penalización empata. Graphtyn gana una tarea al penalizar el falso positivo de Gra…ify que clasificó `PlayerNameService` como implementación de `IPlayerNameRegistry`; la prueba de signo de calidad no es significativa (`p=1.0`).
 
 Con `n=6`, la prueba exacta no puede cruzar cómodamente 0.05: los resultados son prometedores y de efecto grande, pero **todavía no estadísticamente concluyentes**. Los JSON de corridas, comparaciones, tareas y hechos están en `benchmarks/tour_agent_*_2026-08-21.json` y `benchmarks/unity_commerce_demo_agent_tasks.json`.
 
-En compresión aislada, el `graphify benchmark` oficial sobre UnityCommerceDemo informó 133,133 tokens de corpus, 14,250 por consulta y **9.3×**. El bundle unificado de AetherGraph sobre las seis preguntas etiquetadas mide 123,956 tokens de corpus, 3,840 por consulta y **32.28× (96.90%)**. Son suites de consulta distintas; la tabla end-to-end anterior es la comparación más justa.
+En compresión aislada, el `graphify benchmark` oficial sobre UnityCommerceDemo informó 133,133 tokens de corpus, 14,250 por consulta y **9.3×**. El bundle unificado de Graphtyn sobre las seis preguntas etiquetadas mide 123,956 tokens de corpus, 3,840 por consulta y **32.28× (96.90%)**. Son suites de consulta distintas; la tabla end-to-end anterior es la comparación más justa.
 
-### Comparación correcta con Graphify
+### Comparación correcta con Gra…ify
 
-Graphify publica dos métricas distintas que no deben mezclarse:
+Gra…ify publica dos métricas distintas que no deben mezclarse:
 
 - En su corpus Karpathy mixto informa **71.5× menos contexto** (aprox. 98.6%): compara ~123,488 tokens del corpus completo contra ~1,726 tokens del subgrafo promedio. Para código solamente informa 8.8× (aprox. 88.6%). Es **compresión de contexto contra cargar todo el corpus**, no tokens totales de una sesión de agente.
 - En su benchmark end-to-end sobre ERPNext reporta alrededor de **140K tokens por consulta** y `1.3×` los tokens del baseline grep/read, a cambio de subir la cobertura de hechos de 70.8% a 82.0%. Es decir, ese experimento no afirma reducción total contra grep/read; afirma mayor exactitud con costo monetario similar y muchas menos fichas que empaquetar el repositorio completo.
 
-Fuentes oficiales: [Graphify BENCHMARKS v8](https://github.com/Graphify-Labs/graphify/blob/v8/BENCHMARKS.md) y [benchmark Karpathy](https://github.com/Graphify-Labs/graphify/blob/v8/worked/karpathy-repos/review.md).
+Fuentes oficiales: [Gra…ify BENCHMARKS v8](https://github.com/Gra…ify-Labs/graphify/blob/v8/BENCHMARKS.md) y [benchmark Karpathy](https://github.com/Gra…ify-Labs/graphify/blob/v8/worked/karpathy-repos/review.md).
 
 ### OpenCode `x-preview-f-free`: MCP compacto `evidence-v1`
 
@@ -190,26 +192,26 @@ Prueba end-to-end sobre la raíz completa de UnityCommerceDemo, con seis tareas 
 
 | Variante | Calidad | Tokens/tarea | Tiempo/tarea | Llamadas | Errores |
 |---|---:|---:|---:|---:|---:|
-| AetherGraph anterior | 77.78% | 20,248 | 79.93 s | 31 | 0 |
-| **AetherGraph `evidence-v1`** | **75.00%** | **10,970** | 89.30 s | 38 | 0 |
-| Graphify 0.9.48 | 63.61% | 12,251 | 75.20 s | 65 | 1* |
+| Graphtyn anterior | 77.78% | 20,248 | 79.93 s | 31 | 0 |
+| **Graphtyn `evidence-v1`** | **75.00%** | **10,970** | 89.30 s | 38 | 0 |
+| Gra…ify 0.9.48 | 63.61% | 12,251 | 75.20 s | 65 | 1* |
 | Lectura directa sin grafo | 68.89% | 22,917 | 145.61 s | 81 | 1* |
 
-`evidence-v1` redujo **45.82%** los tokens frente al AetherGraph anterior y **52.13%** frente a lectura directa. La diferencia de calidad contra la versión anterior fue −2.78 puntos en `n=6`, sin significancia concluyente. Una optimización posterior de cobertura negativa redujo el peor caso `AuctionService` de 181.14 s/9 llamadas/9,023 tokens a **47.44 s/2 llamadas/4,393 tokens**, y elevó su cobertura de 25.00% a 58.33%.
+`evidence-v1` redujo **45.82%** los tokens frente al Graphtyn anterior y **52.13%** frente a lectura directa. La diferencia de calidad contra la versión anterior fue −2.78 puntos en `n=6`, sin significancia concluyente. Una optimización posterior de cobertura negativa redujo el peor caso `AuctionService` de 181.14 s/9 llamadas/9,023 tokens a **47.44 s/2 llamadas/4,393 tokens**, y elevó su cobertura de 25.00% a 58.33%.
 
 \* El patrón automático de contradicción sobre `PlayerNameService` puede producir un falso positivo cuando la respuesta dice que referencia o instancia la implementación, no que implemente la interfaz. Se conservan tanto calidad bruta como ajustada para auditoría. Artefactos: `benchmarks/x_preview_f_free_root_2026-08-21/`, `benchmarks/x_preview_f_free_compact_2026-08-21/` y `benchmarks/x_preview_f_free_latency_2026-08-21/`.
 
 ### Validación externa: `ardalis/CleanArchitecture` v11.1.1
 
-Prueba sobre la revisión fija `859b115072337b3b7074007f8231d19f24966f1a`, distinta del proyecto usado durante el desarrollo. Se evaluaron cuatro tareas y 24 hechos sobre creación, borrado/eventos, bindings de infraestructura y consultas paginadas. Las tres variantes usaron OpenCode con `opencode/x-preview-f-free`; las herramientas de escritura estuvieron deshabilitadas. Las celdas que terminaron `ERROR` recibieron un único reintento y se conservó la última corrida. El modelo gratuito mostró alta variación temporal: un intento de AetherGraph agotó 600 s y su reintento terminó en 120.39 s.
+Prueba sobre la revisión fija `859b115072337b3b7074007f8231d19f24966f1a`, distinta del proyecto usado durante el desarrollo. Se evaluaron cuatro tareas y 24 hechos sobre creación, borrado/eventos, bindings de infraestructura y consultas paginadas. Las tres variantes usaron OpenCode con `opencode/x-preview-f-free`; las herramientas de escritura estuvieron deshabilitadas. Las celdas que terminaron `ERROR` recibieron un único reintento y se conservó la última corrida. El modelo gratuito mostró alta variación temporal: un intento de Graphtyn agotó 600 s y su reintento terminó en 120.39 s.
 
 | Variante | Calidad ajustada | Tokens/tarea | Tiempo/tarea | Llamadas/tarea | Éxito | Errores factuales |
 |---|---:|---:|---:|---:|---:|---:|
-| AetherGraph `evidence-v1` + miembros v6 | 31.25% | 31,623 | 191.66 s | **13.25** | 4/4 | 0 |
-| Graphify 0.9.48 | 54.17% | **19,553** | **167.85 s** | 24.00 | 4/4 | 0 |
+| Graphtyn `evidence-v1` + miembros v6 | 31.25% | 31,623 | 191.66 s | **13.25** | 4/4 | 0 |
+| Gra…ify 0.9.48 | 54.17% | **19,553** | **167.85 s** | 24.00 | 4/4 | 0 |
 | Lectura directa sin grafo | **100.00%** | 24,808 | 182.70 s | 23.75 | 4/4 | 0 |
 
-En esta suite AetherGraph hizo 44.21% menos llamadas que la lectura directa, pero consumió 27.47% más tokens y perdió 68.75 puntos de calidad. Graphify consumió 21.18% menos tokens que el baseline, pero perdió 45.83 puntos. El resultado contradice el benchmark de UnityCommerceDemo y delimita la ventaja actual: el grafo funciona bien para topología y radio de impacto, pero no basta para preguntas cuyo ground truth vive en cuerpos de método (`AddScoped`, `Publish`, `Skip/Take`, `CountAsync`, validadores y constantes).
+En esta suite Graphtyn hizo 44.21% menos llamadas que la lectura directa, pero consumió 27.47% más tokens y perdió 68.75 puntos de calidad. Gra…ify consumió 21.18% menos tokens que el baseline, pero perdió 45.83 puntos. El resultado contradice el benchmark de UnityCommerceDemo y delimita la ventaja actual: el grafo funciona bien para topología y radio de impacto, pero no basta para preguntas cuyo ground truth vive en cuerpos de método (`AddScoped`, `Publish`, `Skip/Take`, `CountAsync`, validadores y constantes).
 
 La siguiente mejora debe ser una representación compacta y determinista de operaciones internas —accesos a miembros, asignaciones, retornos, creación de objetos, argumentos relevantes y llamadas externas sin target local— servida por intención (`flow`, `bindings`, `persistence`, `tests`). Añadir más prosa de Qwen no resolvería por sí solo esta ausencia de evidencia. Artefactos completos, tareas y resumen: `benchmarks/cleanarchitecture_x_preview_f_free_2026-08-21/` y `benchmarks/cleanarchitecture_agent_tasks.json`.
 
@@ -219,12 +221,12 @@ Se implementó la mejora indicada por la primera corrida: los métodos ahora con
 
 | Variante | Calidad ajustada | Tokens/tarea | Tiempo/tarea | Llamadas/tarea | Éxito |
 |---|---:|---:|---:|---:|---:|
-| AetherGraph v6 (miembros, sin operaciones) | 31.25% | 31,623 | 191.66 s | 13.25 | 4/4 |
-| **AetherGraph v7 (`ops`)** | **75.00%** | **22,372** | **146.43 s** | **8.75** | 4/4 |
-| Graphify 0.9.48 | 54.17% | 19,553 | 167.85 s | 24.00 | 4/4 |
+| Graphtyn v6 (miembros, sin operaciones) | 31.25% | 31,623 | 191.66 s | 13.25 | 4/4 |
+| **Graphtyn v7 (`ops`)** | **75.00%** | **22,372** | **146.43 s** | **8.75** | 4/4 |
+| Gra…ify 0.9.48 | 54.17% | 19,553 | 167.85 s | 24.00 | 4/4 |
 | Lectura directa sin grafo | 100.00% | 24,808 | 182.70 s | 23.75 | 4/4 |
 
-V7 elevó la calidad **+43.75 puntos**, redujo tokens **29.25%**, tiempo **23.62%** y llamadas **33.96%** frente a v6. Frente a Graphify obtuvo +20.83 puntos de calidad, 12.76% menos tiempo y 63.54% menos llamadas, aunque usó 14.42% más tokens. Frente a lectura directa redujo tokens 9.82%, tiempo 19.85% y llamadas 63.16%, con una brecha de calidad de 25 puntos.
+V7 elevó la calidad **+43.75 puntos**, redujo tokens **29.25%**, tiempo **23.62%** y llamadas **33.96%** frente a v6. Frente a Gra…ify obtuvo +20.83 puntos de calidad, 12.76% menos tiempo y 63.54% menos llamadas, aunque usó 14.42% más tokens. Frente a lectura directa redujo tokens 9.82%, tiempo 19.85% y llamadas 63.16%, con una brecha de calidad de 25 puntos.
 
 Tres tareas alcanzaron 100%. `infrastructure-bindings` puntuó 0% porque `x-preview-f-free` terminó una respuesta después de la primera sección pese a devolver estado `SUCCESS`; se conservó sin reintento para evitar selección favorable. El paquete sí contenía los bindings y ambas selecciones de base de datos. Por tanto, el 75% mezcla calidad del índice con estabilidad de generación del proveedor. Artefactos: `benchmarks/cleanarchitecture_x_preview_f_free_v7_2026-08-21/`.
 
@@ -236,26 +238,26 @@ Se repitieron las dos tareas críticas de la suite externa, con 12 hechos totale
 
 | Variante (mismas 2 tareas) | Calidad | Tokens/tarea | Tiempo/tarea | Llamadas/tarea |
 |---|---:|---:|---:|---:|
-| **AetherGraph v8 · perfil `intent`** | **100.00%** | **8,574** | **50.53 s** | **1.50** |
-| Graphify 0.9.48 | 54.17% | 15,663 | 156.32 s | 23.00 |
+| **Graphtyn v8 · perfil `intent`** | **100.00%** | **8,574** | **50.53 s** | **1.50** |
+| Gra…ify 0.9.48 | 54.17% | 15,663 | 156.32 s | 23.00 |
 | Lectura directa | **100.00%** | 23,218 | 149.24 s | 20.00 |
 
-V8 mantuvo la calidad del baseline con **63.07% menos tokens**, 66.14% menos tiempo y 92.50% menos llamadas. Frente a Graphify obtuvo +45.83 puntos, 45.26% menos tokens y 93.48% menos llamadas. Frente al intento con `graph_query_intent` pero catálogo completo, redujo tokens 67.09% y llamadas 82.35%, demostrando que el costo dominante era la estrategia multiherramienta, no el payload individual. Resultados por tarea: borrado/eventos 100%, 7,290 tokens y una llamada; bindings 100%, 9,858 tokens y dos llamadas. Artefactos: `benchmarks/cleanarchitecture_x_preview_f_free_intent_v2_2026-08-22/`.
+V8 mantuvo la calidad del baseline con **63.07% menos tokens**, 66.14% menos tiempo y 92.50% menos llamadas. Frente a Gra…ify obtuvo +45.83 puntos, 45.26% menos tokens y 93.48% menos llamadas. Frente al intento con `graph_query_intent` pero catálogo completo, redujo tokens 67.09% y llamadas 82.35%, demostrando que el costo dominante era la estrategia multiherramienta, no el payload individual. Resultados por tarea: borrado/eventos 100%, 7,290 tokens y una llamada; bindings 100%, 9,858 tokens y dos llamadas. Artefactos: `benchmarks/cleanarchitecture_x_preview_f_free_intent_v2_2026-08-22/`.
 
 ## 🔁 Reproducción
 
 ```bash
 # 1. Pasada determinista
-time aether-graph reindex --path /ruta/proyecto --engine ast_pure
+time graphtyn reindex --path /ruta/proyecto --engine ast_pure
 
 # 2. Enriquecimiento local (requiere Ollama con qwen2.5-coder:3b)
-OLLAMA_MODEL=qwen2.5-coder:3b time aether-graph reindex --path /ruta/proyecto --engine ast_local_llm
+OLLAMA_MODEL=qwen2.5-coder:3b time graphtyn reindex --path /ruta/proyecto --engine ast_local_llm
 
 # 3. Incremental (segunda corrida, sin cambios)
-OLLAMA_MODEL=qwen2.5-coder:3b time aether-graph reindex --path /ruta/proyecto --engine ast_local_llm
+OLLAMA_MODEL=qwen2.5-coder:3b time graphtyn reindex --path /ruta/proyecto --engine ast_local_llm
 
 # 4. Payloads MCP
-printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"graph_neighborhood","arguments":{"symbol":"NombreSimbolo","depth":2}}}' | aether-graph mcp --path /ruta/proyecto
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"graph_neighborhood","arguments":{"symbol":"NombreSimbolo","depth":2}}}' | graphtyn mcp --path /ruta/proyecto
 ```
 
 ## 📄 5. Multi-Modal (Docs · PDF · Office · Imágenes · Audio)
@@ -284,13 +286,13 @@ Se repitió el protocolo competitivo en un segundo repositorio y ecosistema: `en
 
 | Variante | Calidad (24 hechos) | Tokens/tarea | Segundos/tarea | Llamadas/tarea |
 |---|---:|---:|---:|---:|
-| **AetherGraph intent v2** | **95.84%** | **10,183** | **81.65** | **1.75** |
+| **Graphtyn intent v2** | **95.84%** | **10,183** | **81.65** | **1.75** |
 | OpenCode directo | 93.75% | 21,741 | 153.00 | 9.50 |
-| Graphify 0.9.48 | 62.50% | 21,880 | 228.98 | 26.75 |
+| Gra…ify 0.9.48 | 62.50% | 21,880 | 228.98 | 26.75 |
 
-AetherGraph redujo 53.16% de tokens y 81.58% de llamadas frente a lectura directa, con +2.09 puntos de calidad. Frente a Graphify redujo 53.46% de tokens y 93.46% de llamadas, con +33.34 puntos de calidad. Los tres resultados finales completaron 4/4 tareas y no activaron afirmaciones prohibidas.
+Graphtyn redujo 53.16% de tokens y 81.58% de llamadas frente a lectura directa, con +2.09 puntos de calidad. Frente a Gra…ify redujo 53.46% de tokens y 93.46% de llamadas, con +33.34 puntos de calidad. Los tres resultados finales completaron 4/4 tareas y no activaron afirmaciones prohibidas.
 
-La primera corrida de AetherGraph obtuvo 50% y expuso dos defectos que el benchmark C# no detectaba: un nodo sintáctico Python vacío causaba `IndexError`, y los componentes nombrados exactamente podían quedar desplazados por métodos genéricos con muchas operaciones. Se corrigieron ambos, se agregaron regresiones automatizadas y se repitió AetherGraph. Los artefactos iniciales y finales se conservan; los fallos transitorios de finalización/SQLite de OpenCode se reintentaron por tarea, sin repetir resultados exitosos de Graphify.
+La primera corrida de Graphtyn obtuvo 50% y expuso dos defectos que el benchmark C# no detectaba: un nodo sintáctico Python vacío causaba `IndexError`, y los componentes nombrados exactamente podían quedar desplazados por métodos genéricos con muchas operaciones. Se corrigieron ambos, se agregaron regresiones automatizadas y se repitió Graphtyn. Los artefactos iniciales y finales se conservan; los fallos transitorios de finalización/SQLite de OpenCode se reintentaron por tarea, sin repetir resultados exitosos de Gra…ify.
 
 Artefactos: `benchmarks/starlette_agent_tasks.json`, `benchmarks/starlette_x_preview_f_free_2026-08-22/` y `benchmarks/starlette_x_preview_f_free_intent_v2_2026-08-22/summary.json`.
 ## Diagnóstico corporativo Laravel/React: ZERP (2026-08-22)
@@ -299,11 +301,11 @@ Repositorio `zerp-pk/zerp`, revisión `7e12392a3882682018cd86071d4d51ac7f142076`
 
 | Variante | Calidad bruta | Tokens/tarea | Segundos/tarea | Llamadas/tarea | Completadas |
 |---|---:|---:|---:|---:|---:|
-| AetherGraph | 8.33% | 6,004 | 222.41 | 1.75 | 3/4 |
-| Graphify | 22.92% | 32,460 | 206.67 | 30.25 | 4/4 |
+| Graphtyn | 8.33% | 6,004 | 222.41 | 1.75 | 3/4 |
+| Gra…ify | 22.92% | 32,460 | 206.67 | 30.25 | 4/4 |
 | OpenCode directo | 64.59% | 34,644 | 263.28 | 31.75 | 3/4 |
 
-Este resultado **no demuestra ahorro útil de AetherGraph**: el contexto fue barato porque faltó evidencia. Excluyendo la tarea bootstrap que falló en AetherGraph y baseline, las tres tareas empresariales puntuaron 11.11%, 30.55% y 86.11%, respectivamente. El diagnóstico originó `treesitter-v9-laravel`: Tree-sitter PHP y resolución de rutas→controladores→FormRequests→modelos/eventos, además de enlaces Inertia entre nombres de ruta y llamadas TSX. Estas cifras se conservan como baseline previo al arreglo y requieren una nueva corrida para medir el resultado posterior.
+Este resultado **no demuestra ahorro útil de Graphtyn**: el contexto fue barato porque faltó evidencia. Excluyendo la tarea bootstrap que falló en Graphtyn y baseline, las tres tareas empresariales puntuaron 11.11%, 30.55% y 86.11%, respectivamente. El diagnóstico originó `treesitter-v9-laravel`: Tree-sitter PHP y resolución de rutas→controladores→FormRequests→modelos/eventos, además de enlaces Inertia entre nombres de ruta y llamadas TSX. Estas cifras se conservan como baseline previo al arreglo y requieren una nueva corrida para medir el resultado posterior.
 
 Artefactos: `benchmarks/zerp_agent_tasks.json` y `benchmarks/zerp_x_preview_f_free_2026-08-22/`.
 

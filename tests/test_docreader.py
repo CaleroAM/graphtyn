@@ -1,8 +1,8 @@
 import pytest
 from pathlib import Path
 
-from aether_graph.core.ast_parser import ASTParser
-from aether_graph.core.docreader import extract_document_text
+from graphtyn.core.ast_parser import ASTParser
+from graphtyn.core.docreader import extract_document_text
 
 
 def test_doc_reference_links(tmp_path):
@@ -92,5 +92,5 @@ def test_transcribe_missing_lib_returns_empty(monkeypatch, tmp_path):
     monkeypatch.setitem(sys.modules, "faster_whisper", fake)
     p = tmp_path / "audio.mp3"
     p.write_bytes(b"basura")
-    from aether_graph.core.docreader import transcribe_media
+    from graphtyn.core.docreader import transcribe_media
     assert transcribe_media(p) == ""

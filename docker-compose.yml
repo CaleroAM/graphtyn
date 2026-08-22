@@ -1,0 +1,13 @@
+services:
+  graphtyn:
+    build: .
+    ports:
+      - "127.0.0.1:9210:9210"
+    volumes:
+      - ./:/workspace
+      - graphtyn-index:/root/.graphtyn
+    environment:
+      GRAPHTYN_WATCH: "1"
+      GRAPHTYN_WATCH_PATH: /workspace
+volumes:
+  graphtyn-index:

@@ -4,13 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from aether_graph.core.ast_parser import ASTParser
-from aether_graph.api import main as api_main
+from graphtyn.core.ast_parser import ASTParser
+from graphtyn.api import main as api_main
 
 
 def test_clean_answer_strips_prefixes_and_quotes():
     cases = {
-        "La función bfs_path en aether_graph/cli.py realiza un recorrido": "Realiza un recorrido",
+        "La función bfs_path en graphtyn/cli.py realiza un recorrido": "Realiza un recorrido",
         '"Permite encontrar la ruta más corta"': "Permite encontrar la ruta más corta",
         "Este archivo Python define un parser": "Define un parser",
         "La clase HistoryTracker se encarga de gestionar el historial": "Se encarga de gestionar el historial",
@@ -31,7 +31,7 @@ def test_role_hint_and_fix_detects_cli_and_fastapi():
 
 
 def test_maybe_compact_deterministic_fallback(monkeypatch):
-    monkeypatch.setenv("AETHER_COMPACT", "1")
+    monkeypatch.setenv("GRAPHTYN_COMPACT", "1")
     long_ans = "Una descripcion exageradamente larga " * 10
     monkeypatch.setattr(api_main, "_llm_ask", lambda *a, **k: None)
     result = api_main._maybe_compact("host", "model", long_ans)
@@ -156,7 +156,7 @@ def test_ast_pure_refresh_preserves_previous_semantic_metadata(tmp_path):
 
 
 def test_project_config_roundtrip(tmp_path, monkeypatch):
-    monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / ".aether-store")
+    monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / ".graphtyn-store")
     assert api_main._load_project_config(tmp_path) == {}
     cfg = api_main._save_project_config(tmp_path, {"respect_git": False})
     assert cfg["respect_git"] is False
@@ -164,7 +164,7 @@ def test_project_config_roundtrip(tmp_path, monkeypatch):
 
 
 def test_blast_radius_traversal():
-    from aether_graph.mcp_server import blast_radius
+    from graphtyn.mcp_server import blast_radius
 
     graph = {
         "nodes": [

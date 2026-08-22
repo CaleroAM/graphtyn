@@ -2,8 +2,8 @@ import tempfile
 import json
 from pathlib import Path
 import pytest
-from aether_graph.core.ast_parser import ASTParser
-from aether_graph.core.tree_sitter_backend import parse_file as parse_tree_sitter_file
+from graphtyn.core.ast_parser import ASTParser
+from graphtyn.core.tree_sitter_backend import parse_file as parse_tree_sitter_file
 
 def test_parse_python_file():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -64,6 +64,22 @@ def test_tree_sitter_csharp_extracts_evidence_when_extra_installed(tmp_path):
     assert any(call["name"] == "Helper" and call["line"] == 3 for call in result["calls"])
 
 
+def test_csharp_try_get_value_return_exposes_nullable_hint(tmp_path):
+    pytest.importorskip("tree_sitter_c_sharp")
+    source = tmp_path / "Selections.cs"
+    source.write_text(
+        "using System.Collections.Generic; public class Selections { "
+        "Dictionary<int, Player> values = new(); "
+        "public Player Lookup(int id) { values.TryGetValue(id, out var value); return value; } } "
+        "public class Player {}",
+        encoding="utf-8",
+    )
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    method = next(node for node in graph["nodes"] if node.get("name") == "Lookup")
+    assert method["semantic_hints"][0]["confidence"] == "INFERRED"
+    assert "null" in method["semantic_hints"][0]["fact"]
+
+
 def test_tree_sitter_typescript_extracts_arrow_functions(tmp_path):
     pytest.importorskip("tree_sitter")
     pytest.importorskip("tree_sitter_typescript")
@@ -78,6 +94,22 @@ def test_tree_sitter_typescript_extracts_arrow_functions(tmp_path):
     assert ("Service", "class") in symbols
     assert ("run", "method") in symbols
     assert ("helper", "function") in symbols
+
+
+def test_tree_sitter_python_extracts_exception_evidence(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    source = tmp_path / "sessions.py"
+    source.write_text(
+        "def decode(signer, data):\n"
+        "    try:\n"
+        "        return signer.unsign(data)\n"
+        "    except BadSignature:\n"
+        "        return None\n",
+        encoding="utf-8",
+    )
+    result = parse_tree_sitter_file(source, "sessions.py")
+    catches = [op for op in result["operations"] if op["kind"] == "catch"]
+    assert catches and catches[0]["name"] == "BadSignature"
 
 
 def test_csharp_cross_file_resolution_prefers_container_and_interface(tmp_path):
@@ -182,7 +214,7 @@ def test_structural_cache_reuses_unchanged_tree_sitter_result(tmp_path, monkeypa
                          "parser": "tree-sitter"}],
         }
 
-    monkeypatch.setattr("aether_graph.core.ast_parser.parse_tree_sitter_file", fake_parse)
+    monkeypatch.setattr("graphtyn.core.ast_parser.parse_tree_sitter_file", fake_parse)
     first = ASTParser().scan_directory(tmp_path, respect_git=False, cache_path=cache_path)
     second = ASTParser().scan_directory(tmp_path, respect_git=False, cache_path=cache_path)
     assert len(calls) == 1

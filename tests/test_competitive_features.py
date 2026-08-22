@@ -3,12 +3,39 @@ import subprocess
 
 import pytest
 
-from aether_graph.api import main as api_main
-from aether_graph.core.benchmark import run_benchmark
-from aether_graph.core.impact import analyze_impact
-from aether_graph.core.ast_parser import ASTParser
-from aether_graph.core.tree_sitter_backend import parse_file
-from aether_graph.core.external_benchmark import score_graphify
+from graphtyn.api import main as api_main
+from graphtyn.core.benchmark import run_benchmark
+from graphtyn.core.impact import analyze_impact
+from graphtyn.core.ast_parser import ASTParser
+from graphtyn.core.tree_sitter_backend import parse_file
+from graphtyn.core.external_benchmark import score_graphify
+from graphtyn.core.change_analyst import classify_intent, query_intent
+
+
+def test_overview_intent_builds_diverse_repository_profile():
+    graph = {
+        "nodes": [
+            {"id": "file:README.md", "name": "README.md", "kind": "file", "details": "README.md", "degree": 2},
+            {"id": "file:package.json", "name": "package.json", "kind": "file", "details": "package.json", "degree": 1},
+            {"id": "file:src/main.ts", "name": "main.ts", "kind": "file", "details": "src/main.ts", "degree": 2},
+            {"id": "dir:src", "name": "src", "kind": "module", "details": "Carpeta: src", "degree": 4},
+            {"id": "symbol:src/App.ts:App", "name": "App", "kind": "class", "file": "src/App.ts", "degree": 8},
+            {"id": "symbol:tests/App.test.ts:test", "name": "test", "kind": "method", "file": "tests/App.test.ts", "degree": 20},
+        ],
+        "links": [],
+    }
+    request = "Utiliza Graphtyn y dime de qué trata el proyecto/repositorio"
+    assert classify_intent(request) == "overview"
+    result = query_intent(graph, request, "auto", 10)
+    assert result["planner"] == "overview-v1"
+    assert result["complete_for"] == ["overview"]
+    assert result["do_not_expand"] is True
+    assert result["project_profile"]["technologies"] == ["TypeScript"]
+    assert result["project_profile"]["entry_points"] == ["src/main.ts"]
+    assert "package.json" in result["project_profile"]["manifests"]
+    assert result["project_profile"]["read_first"][:2] == ["README.md", "package.json"]
+    assert "tests" not in result["project_profile"]["subsystems"]
+    assert not any("tests/" in str(node.get("file") or "") for node in result["nodes"])
 
 
 @pytest.mark.parametrize("module,filename,source,expected", [
@@ -58,7 +85,7 @@ public class AuctionService {
     public void PlaceBid(int amount) { CurrentBid = amount; BidChanged?.Invoke(amount); }
 }
 """, encoding="utf-8")
-    from aether_graph.core.change_analyst import analyze_change
+    from graphtyn.core.change_analyst import analyze_change
     graph = ASTParser().scan_directory(tmp_path)
     result = analyze_change(graph, "Cambiar AuctionService CurrentBid y el evento BidChanged")
     assert result["plan"]["confidence"] == "high"
@@ -99,7 +126,7 @@ public static class Bindings {
   }
 }
 """, encoding="utf-8")
-    from aether_graph.core.change_analyst import query_intent
+    from graphtyn.core.change_analyst import query_intent
     result = query_intent(ASTParser().scan_directory(tmp_path), "Audita bindings AddScoped", "auto", 6)
     assert result["intent"] == "bindings"
     assert result["complete_for"] == ["bindings"]
@@ -117,7 +144,7 @@ class SessionMiddleware:
         data = self.signer.unsign(scope["cookie"])
         await self.app(scope, receive, send)
 """, encoding="utf-8")
-    from aether_graph.core.change_analyst import query_intent
+    from graphtyn.core.change_analyst import query_intent
     result = query_intent(
         ASTParser().scan_directory(tmp_path),
         "Audita el ciclo completo de SessionMiddleware y su firma",
@@ -218,10 +245,10 @@ def test_symbol_level_diff_impacts_callers_not_every_symbol(tmp_path):
 
 
 def test_http_mcp_requires_token_and_serves_tools(monkeypatch):
-    monkeypatch.delenv("AETHER_MCP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)
     disabled = api_main.mcp_http({"id": 1, "method": "tools/list"}, authorization=None)
     assert disabled.status_code == 503
-    monkeypatch.setenv("AETHER_MCP_TOKEN", "secret")
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "secret")
     denied = api_main.mcp_http({"id": 1, "method": "tools/list"}, authorization="Bearer wrong")
     assert denied.status_code == 401
     allowed = api_main.mcp_http({"id": 1, "method": "tools/list"}, authorization="Bearer secret")
@@ -259,3 +286,27 @@ def test_graphify_adapter_scores_same_edge_truth(tmp_path):
     }))
     result = score_graphify(graph, truth)
     assert result["ground_truth"]["f1"] == 1
+
+
+def test_intent_prioritizes_named_component_file_and_security_operations():
+    graph = {
+        "nodes": [
+            {"id": "class:session", "name": "SessionMiddleware", "kind": "class", "file": "middleware/sessions.py", "degree": 3},
+            {"id": "method:call", "name": "__call__", "container": "SessionMiddleware", "kind": "method",
+             "file": "middleware/sessions.py", "line": 39, "degree": 2, "operations": [
+                 {"kind": "call", "name": "unsign", "line": 50, "text": "self.signer.unsign(data, max_age=self.max_age)"},
+                 {"kind": "catch", "name": "BadSignature", "line": 53, "text": "except BadSignature"},
+             ]},
+            {"id": "method:send", "name": "send_wrapper", "container": "SessionMiddleware", "kind": "method",
+             "file": "middleware/sessions.py", "line": 58, "degree": 2, "operations": [
+                 {"kind": "call", "name": "append", "line": 75, "text": "headers.append('Set-Cookie', header_value)"},
+             ]},
+            {"id": "method:delete", "name": "delete", "kind": "method", "file": "testclient.py", "line": 600,
+             "degree": 30, "operations": [{"kind": "call", "name": "request", "line": 601, "text": "request('DELETE')"}]},
+        ],
+        "links": [],
+    }
+    result = query_intent(graph, "Audita SessionMiddleware: verificación de firma inválida y borrado de cookie", "flow", 3)
+    selected = [node["id"] for node in result["nodes"]]
+    assert "method:call" in selected and "method:send" in selected
+    assert "method:delete" not in selected

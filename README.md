@@ -1,13 +1,13 @@
-# 🌌 AetherGraph
+# 🌌 Graphtyn
 
-[![PyPI Version](https://img.shields.io/badge/pypi-v0.1.0-blue.svg)](https://pypi.org/project/aether-graph/)
+[![PyPI Version](https://img.shields.io/badge/pypi-v0.5.0-blue.svg)](https://pypi.org/project/graphtyn/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Standard--Compatible-10b981.svg)](https://modelcontextprotocol.io/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 
 **El motor de mapa topológico de código, registro de sesiones local y servidor MCP estándar para Agentes de IA (Google Antigravity, Claude Code, Codex, Cursor y Windsurf).**
 
-AetherGraph convierte cualquier repositorio de código en un **grafo de conocimiento determinista de 2 pasadas**: analiza la estructura de archivos, módulos, clases, métodos y llamadas con **0 tokens de consumo** en menos de 0.5 segundos (medido) y enriquece semánticamente los nodos principales mediante **IA Local (Ollama Qwen2.5)** o **Cloud APIs (Gemini/Claude)**.
+Graphtyn convierte cualquier repositorio de código en un **grafo de conocimiento determinista de 2 pasadas**: analiza la estructura de archivos, módulos, clases, métodos y llamadas con **0 tokens de consumo** en menos de 0.5 segundos (medido) y enriquece semánticamente los nodos principales mediante **IA Local (Ollama Qwen2.5)** o **Cloud APIs (Gemini/Claude)**.
 
 ---
 
@@ -18,22 +18,25 @@ Cuando un agente de IA explora un proyecto grande sin un mapa de código, recurr
 * ⏳ **Lentitud extrema y amnesia de contexto entre sesiones**.
 * 💥 **Riesgo de bugs inesperados** por no conocer las dependencias indirectas.
 
-### 🌟 La Solución de AetherGraph
-AetherGraph actúa como un **GPS de código en tiempo real**:
-* 📉 **Reduce el consumo de tokens en un 99.5%**: La IA consulta la herramienta MCP (`graph_neighborhood`, `graph_blast_radius` o `graph_search_concepts`) y salta directamente al archivo y línea exactos.
+### 🌟 La Solución de Graphtyn
+Graphtyn actúa como un **GPS de código en tiempo real**:
+* 📉 **Reduce contexto sin ocultar el costo real**: en la matriz pareada actual de cuatro tareas usó **50.3% menos tokens que lectura directa**; el resultado varió entre 19.8% y 78.4% según la tarea. Las cifras, calidad y casos desfavorables están versionados en la sección de benchmarks.
 * ⚡ **Análisis sintáctico determinista de 23 lenguajes** a costo **$0 USD y <0.5 segundos**.
-* 🕒 **Línea de Tiempo y Memoria de Sesiones Local (100% Gratis / SQLite)**: Registra el historial de acciones y decisiones de la IA en `.aether-graph/history.db` sin pagar servicios externos ni consumir tokens.
-* 🎯 **Radio de Impacto en vivo y pre-Commit**: Permite evaluar exactamente qué clases y métodos se verán afectados antes de hacer `git push` (`aether-graph diff`).
-* 📝 **Generador de ARCHITECTURE.md**: Exporta un mapa de arquitectura conciso (~150 tokens) que cualquier Agente de IA puede leer al iniciar (`aether-graph export-md`).
+* 🕒 **Línea de Tiempo y Memoria de Sesiones Local (100% Gratis / SQLite)**: Registra el historial de acciones y decisiones de la IA en `.graphtyn/history.db` sin pagar servicios externos ni consumir tokens.
+* 🎯 **Radio de Impacto en vivo y pre-Commit**: Permite evaluar exactamente qué clases y métodos se verán afectados antes de hacer `git push` (`graphtyn diff`).
+* 📝 **Generador de ARCHITECTURE.md**: Exporta un mapa de arquitectura conciso (~150 tokens) que cualquier Agente de IA puede leer al iniciar (`graphtyn export-md`).
  * 🌐 **Dashboard Interactivo WebGL 2D/3D (`:9210`)**:
    - **Calidad & Contexto**: reporta salud observable del índice (parser, cobertura de ubicación y confianza de aristas) sin confundirla con precisión contra ground truth. Permite agrupar hasta 10 símbolos, generar `context_bundle`, copiar su JSON y comparar tokens estimados contra los archivos fuente incluidos. El planificador `relevance-v1` aplica un presupuesto global (12 nodos por defecto), conserva los símbolos solicitados y prioriza llamadas, herencia e implementación sobre enlaces contenedores.
+   - **Flujo Web / Framework**: los endpoints tienen filtro, color y metadatos propios (método HTTP, ruta, archivo y resolución). Desde una ruta, controlador, frontend, FormRequest, modelo o evento, **Ver flujo web** aísla `React/Blade → ruta → controlador → validación → persistencia → evento`; **Restablecer grafo completo** elimina el enfoque.
+   - **Filtros Laravel y confianza**: permite alternar `invoca ruta`, `despacha`, `valida con`, `crea` y `despacha evento`. La búsqueda incluye endpoint, método HTTP, archivo, contenedor, namespace e ID. `AMBIGUOUS` conserva su etiqueta real y se dibuja punteada en ámbar, separada de `EXTRACTED` e `INFERRED`.
+   - **Cobertura framework auditable**: Calidad & Contexto muestra rutas detectadas/resueltas/sin controlador, llamadas frontend y relaciones framework ambiguas. Los mismos contadores están en `GET /api/index-quality?path=/ruta/proyecto&scope=all`, dentro de `framework`.
    - **Perfiles de alcance**: separa el índice completo, producción, pruebas y copias legacy/backups para que duplicados históricos no contaminen una consulta productiva. La selección afecta tanto las métricas como el contexto generado.
    - **Selector Nativo del OS (`📂 Seleccionar...`)**: Abre el explorador de archivos nativo de tu sistema operativo (Windows, macOS, Linux).
    - **Paneles Colapsables (`◀` / `▶`)**: Botones flotantes centrados para expandir el lienzo 2D/3D a pantalla completa.
    - **Auto-descubrimiento Multiplataforma**: Cero rutas estáticas (*hardcoded*); descubre automáticamente los proyectos del desarrollador.
    - **Grafo Semántico de IA e Historial**: Integra precalentamiento con Ollama (`llama3.2`, `qwen2.5`) para generar descripciones de código y el grafo de Arquitectura Global interconectado.
    - **Vista Semántica rediseñada**: comunidades por subsistema (`Subsistema: src/GameEngine.Core`) + **god nodes** destacados (los conceptos más conectados), con aristas etiquetadas `EXTRACTED`/`INFERRED`. Incluye imágenes, documentos y audio/video enriquecidos, y crea un máximo acotado de relaciones `similitud semántica` a partir de sus descripciones locales cacheadas (sin volver a invocar al modelo al abrir la vista).
-   - **Respetar `.gitignore` por proyecto**: toggle en el panel de settings (o `aether-graph gitignore on|off`) — con `on` solo los archivos versionados entran al grafo (menos ruido, menos llamadas LLM); `off` incluye todo lo escaneable.
+   - **Respetar `.gitignore` por proyecto**: toggle en el panel de settings (o `graphtyn gitignore on|off`) — con `on` solo los archivos versionados entran al grafo (menos ruido, menos llamadas LLM); `off` incluye todo lo escaneable.
    - **Actualización automática (`--watch`)**: detecta archivos creados, modificados y eliminados, actualiza el índice estructural local y refresca el proyecto activo en el dashboard sin pulsar “Reindexar”.
    - **Estilos de grafo y forma de nodos (Paleta & Motor)**: selector de estilo — **Estándar** y **Neuronal** (tejido orgánico). **Neuronal en 3D** tiene dos modos: **Dibujo orgánico 2D en 3D** (default: halos respirando, enlaces con botones sinápticos y cometas — el estilo del 2D proyectado sobre el grafo 3D, respetando el **Estilo de Enlaces** sólido/punteado/curvo) y modo luces (vista Estándar + cometas, parpadeo de vértices y destello de nodos al recibir). En 2D también respeta el Estilo de Enlaces. Colores configurables: **Color de Nodos**, **Color de Ráfaga** y **Color de Vértices**. Selector de forma de nodos: **Círculos · Esferas** o **Cuadrados · Cubos**.
    - **Laboratorio de Comparación de Modelos**: Disponible en [`/comparison`](http://localhost:9210/comparison), compara el contexto generado por modelos locales y modelos de paga con el mismo nodo y prompt.
@@ -42,7 +45,7 @@ AetherGraph actúa como un **GPS de código en tiempo real**:
 
 ## 🛠️ Lenguajes Soportados Nativamente (23 Lenguajes a $0 Tokens)
 
-AetherGraph incluye un motor sintáctico determinista que soporta nativamente el parsing de clases, funciones, módulos, herencia y llamadas en los siguientes lenguajes:
+Graphtyn incluye un motor sintáctico determinista que soporta nativamente el parsing de clases, funciones, módulos, herencia y llamadas en los siguientes lenguajes:
 
 Para C#, JavaScript, TypeScript/TSX, Python, Java, Go y Rust puede utilizar el backend opcional **tree-sitter**. Este produce nodos con `file`, `line`, `end_line`, firma, contenedor, namespace y `parser: tree-sitter`, además de aristas `contiene`, `declara`, `hereda`, `implementa` y `llama` con evidencia verificable. En C# también indexa **campos, propiedades y eventos** como entidades tipadas, permitiendo razonar sobre estado y contratos sin enviar el archivo completo. El resolvedor cross-file pondera receptor/tipo inferido, clase contenedora, aridad, imports, namespace y ensamblado; conserva `AMBIGUOUS` cuando los mejores candidatos empatan. En Unity reconoce el `.asmdef` ancestro más cercano y sus referencias. Es una resolución contextual determinista, no equivale aún a la información de tipos completa de Roslyn/LSP. Si una gramática no está instalada, se conserva automáticamente el extractor integrado. Los fragmentos se cachean por SHA-256 en `structural_cache.json`.
 
@@ -74,7 +77,7 @@ Para C#, JavaScript, TypeScript/TSX, Python, Java, Go y Rust puede utilizar el b
 
 ### 📄 Documentos Multi-Modal (Docs · PDF · Office)
 
-Además del código, AetherGraph indexa documentos en el mismo grafo:
+Además del código, Graphtyn indexa documentos en el mismo grafo:
 
 | Formato | Extensiones | Qué extrae |
 |---|---|---|
@@ -92,9 +95,9 @@ Cada relación multimodal inferida incluye evidencia auditable: método utilizad
 Las librerías de documentos son **opcionales** (el MCP stdio sigue siendo 100% stdlib):
 
 ```bash
-pip install "aether-graph[multimodal]"   # pypdf + python-docx + openpyxl
-pip install "aether-graph[media]"        # faster-whisper (transcripción local)
-pip install "aether-graph[treesitter]"   # parser preciso C#, JavaScript y TypeScript/TSX
+pip install "graphtyn[multimodal]"   # pypdf + python-docx + openpyxl
+pip install "graphtyn[media]"        # faster-whisper (transcripción local)
+pip install "graphtyn[treesitter]"   # parser preciso C#, JavaScript y TypeScript/TSX
 ```
 
 **Modelos de visión local** (RTX 3050 4GB):
@@ -104,78 +107,147 @@ ollama pull qwen3-vl:2b        # calidad (recomendado, ~15-40s/imagen)
 ollama pull minicpm-v4.6:1b    # velocidad (~2-3s/imagen, 900MB VRAM)
 ```
 
-Configuración: `AETHER_VISION_MODEL` (default `qwen3-vl:2b`), `AETHER_IMAGE_LIMIT` (0=ilimitado), `AETHER_WHISPER_MODEL` (default `small`), `AETHER_MEDIA_LIMIT` (0=ilimitado). Sin los extras instalados, los documentos igual entran al grafo como nodos (sin extracción de texto).
+Configuración: `GRAPHTYN_VISION_MODEL` (default `qwen3-vl:2b`), `GRAPHTYN_IMAGE_LIMIT` (0=ilimitado), `GRAPHTYN_WHISPER_MODEL` (default `small`), `GRAPHTYN_MEDIA_LIMIT` (0=ilimitado). Sin los extras instalados, los documentos igual entran al grafo como nodos (sin extracción de texto).
 
 ---
 
 ## 📦 Instalación Sencilla (1 Solo Comando - Sin Docker)
 
-Instalar AetherGraph en cualquier sistema operativo requiere un único comando nativo de Pip:
+Instalar Graphtyn en cualquier sistema operativo requiere un único comando nativo de Pip:
 
 ```bash
-# Instalar AetherGraph globalmente
+# Instalar Graphtyn globalmente
 pip install git+https://github.com/CaleroAM/openclaw.git#subdirectory=code-graph-host
 
 # Iniciar el Dashboard WebGL interactivo en http://localhost:9210
-aether-graph serve
+graphtyn serve
 ```
 
 ---
 
 ## 🚀 Comandos CLI
 
-AetherGraph incluye herramientas CLI integradas para interactuar directamente desde la terminal o scripts de automatización:
+Graphtyn incluye herramientas CLI integradas para interactuar directamente desde la terminal o scripts de automatización:
 
 ```bash
-# Inicializar AetherGraph en el repositorio actual
-aether-graph init
+# Inicializar Graphtyn en el repositorio actual
+graphtyn init
 
 # Iniciar el servidor MCP por stdio para Agentes de IA
-aether-graph mcp
+graphtyn mcp
 
 # Iniciar el Dashboard WebGL interactivo en el puerto 9210
-aether-graph serve
+graphtyn serve
 
 # Mantener el grafo actualizado mientras editas el proyecto
-aether-graph serve --watch --path /ruta/al/proyecto
+graphtyn serve --watch --path /ruta/al/proyecto
 
 # Benchmark reproducible con ground truth
-aether-graph benchmark --path /ruta/proyecto --ground-truth benchmarks/ground_truth.json --output resultado.json
+graphtyn benchmark --path /ruta/proyecto --ground-truth benchmarks/ground_truth.json --output resultado.json
 
-# Comparar corridas JSON de un agente con y sin AetherGraph
-aether-graph agent-benchmark --treatment con-grafo.json --baseline sin-grafo.json --output comparacion.json
+# Comparar corridas JSON de un agente con y sin Graphtyn
+graphtyn agent-benchmark --treatment con-grafo.json --baseline sin-grafo.json --output comparacion.json
 
 # Riesgo e impacto de una rama/PR; simula conflictos sin modificar el repositorio
-aether-graph pr-impact --path /ruta/proyecto --base main
+graphtyn pr-impact --path /ruta/proyecto --base main
 
 # Consultar la línea de tiempo del historial de acciones de la IA (SQLite Local)
-aether-graph timeline
+graphtyn timeline
 
 # Evaluar el radio de impacto de cambios sin confirmar (git status / git diff)
-aether-graph diff
+graphtyn diff
 
 # Convertir un requisito en targets, estado, contratos, pruebas y riesgos verificables
-aether-graph analyze-change "Cambiar la subasta y notificar cada nueva oferta" --path /ruta/proyecto
+graphtyn analyze-change "Cambiar la subasta y notificar cada nueva oferta" --path /ruta/proyecto
 
 # Generar un archivo ARCHITECTURE.md compacto (~150 tokens) para Agentes de IA
-aether-graph export-md
+graphtyn export-md
 
 # Consultar conceptos o símbolos en el grafo
-aether-graph query "sistema de autenticación"
+graphtyn query "sistema de autenticación"
+
+# Contexto compacto de varios símbolos con un presupuesto global
+graphtyn context GameManager PlayerService --depth 1 --limit 12 --path /ruta/proyecto
+
+# Resolver una tarea completa con selección automática o explícita de intención
+graphtyn query-intent "Traza la creación de una propuesta" --intent flow --limit 12 --path /ruta/proyecto
+
+# Explicar propósito, tecnologías, entradas y arquitectura del repositorio
+graphtyn query-intent "¿De qué trata este repositorio?" --intent overview --limit 10 --path /ruta/proyecto
+
+# Generar el informe persistente; compara tokens si existe GRAPH_REPORT.md
+graphtyn report --path /ruta/proyecto --output GRAPHTYN_REPORT.md
+graphtyn report --path /ruta/proyecto --graphify-report /ruta/proyecto/graphify-out/GRAPH_REPORT.md
+
+# Puntuar respuestas de agentes contra hechos atómicos auditables
+graphtyn agent-grade --runs corridas.json --tasks tareas.json --output puntuadas.json
+
+# Evaluar el graph.json del comparador Gra…ify con el mismo ground truth
+graphtyn benchmark-graphify --graph graphify-out/graph.json --ground-truth benchmarks/ground_truth.json --output graphify-score.json
+
+# Perfiles de reindexado: AST rápido, IA local, análisis profundo o profundo+verificación
+graphtyn reindex --mode fast --path .
+graphtyn reindex --mode balanced --path .
+graphtyn reindex --mode deep --path .
+graphtyn reindex --mode verified --path .
+
+# Registrar y consultar varios repositorios como un grafo global
+graphtyn global add --as backend --path /ruta/backend
+graphtyn global add --as frontend --path /ruta/frontend
+graphtyn global list
+graphtyn global query "CustomerContract"
+
+# Guardar el resultado real de una respuesta y crear una capa de aprendizaje
+graphtyn memory save --question "¿Dónde se valida el pago?" --answer "PaymentService" \
+  --nodes PaymentService --files src/payment.py --outcome useful --path .
+graphtyn memory reflect --path .
+
+# Revisar una PR y generar un artefacto Markdown; código 2 si excede la política
+graphtyn ci-check --base origin/main --max-risk medium --output graphtyn-pr.md --path .
+graphtyn ci-install github --max-risk medium --path .
+
+# Verificación diferencial conservadora (Python): identidad AST o abstención honesta
+graphtyn verify-edit --base HEAD~1 --json --path .
+
+# Configurar instrucciones para los agentes detectados o uno específico
+graphtyn agent-install all --path .
 ```
+
+### Capacidades de equipo y verificación
+
+El **grafo global** vive en `~/.graphtyn/global-graph.json`. Cada ID se prefija con el alias del repositorio para impedir colisiones. Las coincidencias de símbolos entre proyectos se publican como `possible_cross_project_contract` con confianza `AMBIGUOUS`: sirven para descubrir un posible contrato, pero exigen verificarlo en código o documentación. Puede usarse un registro aislado mediante `--registry`.
+
+La **memoria de resultados** guarda señales `useful`, `dead_end` y `corrected` dentro de `.graphtyn/memory/`. `memory reflect` aplica decaimiento temporal, genera `.graphtyn/learning-overlay.json` y `LESSONS.md`, y compara SHA-256 de los archivos citados. Una lección cuyo código cambió se marca `source changed; re-verify` y no debe reutilizarse como evidencia vigente.
+
+`ci-check` combina el diff real, símbolos modificados, consumidores, conflictos y un plan de verificación. `ci-install github` genera un workflow de pull requests; `ci-install gitlab` genera una plantilla incluible desde `.gitlab-ci.yml`. La política `--max-risk` permite usarlo como aviso o compuerta reproducible sin enviar código a un servicio externo.
+
+`verify-edit` es el primer nivel de **verificación diferencial local**. Actualmente solo declara `equivalent` cuando la función Python tiene un AST canónico idéntico; una función agregada/eliminada se distingue estructuralmente y cualquier edición semántica produce `unsupported`. No ejecuta código del repositorio ni presenta pruebas heurísticas como demostraciones. Los futuros tiers de solver o property testing deberán conservar estos mismos veredictos explícitos.
+
+Los perfiles de análisis tienen costos previsibles: `fast` usa AST puro, `balanced` usa enriquecimiento local incremental, `deep` solicita una pasada completa con IA y `verified` añade el tier diferencial. En ausencia del daemon local, todos conservan un fallback AST funcional; por ello la indexación estructural nunca depende de una API de pago.
+
+El dashboard queda disponible en [`http://127.0.0.1:9210`](http://127.0.0.1:9210). El flujo web no agrega otro comando CLI: se usa desde **Filtros → Flujo Web / Framework** y desde **Ver flujo web** en la ficha Radio de Impacto.
+
+### Instrucciones para agentes
+
+El repositorio incluye dos plantillas listas para usar:
+
+- [`AGENTS.md`](AGENTS.md): política de proyecto para que el agente consulte `graph_query_intent` antes de explorar ampliamente, resuelva referencias conversacionales como “ese cambio” y respete `complete_for`/`do_not_expand`.
+- [`skills/graphtyn/SKILL.md`](skills/graphtyn/SKILL.md): skill portable y autodescubrible para agentes compatibles. Puede copiarse a la carpeta de skills del agente o distribuirse con el proyecto; incluye metadata en `skills/graphtyn/agents/openai.yaml`.
+
+Ambas usan un presupuesto inicial de 10 entidades, reutilizan `context_id` mediante `extends_context_id` y obligan a diferenciar evidencia `EXTRACTED`, `INFERRED` y `AMBIGUOUS`.
 
 ### Actualización automática
 
-`aether-graph serve --watch` observa el proyecto indicado por `--path` y cualquier otro proyecto que abras en el dashboard. El watcher es local y portátil: compara un manifiesto SHA-256, detecta altas, modificaciones y bajas, reutiliza los fragmentos tree-sitter cacheados de archivos sin cambios y escribe `index.json` de forma atómica. No llama a Ollama ni consume tokens; conserva el enriquecimiento semántico previo de los nodos que no cambiaron.
+`graphtyn serve --watch` observa el proyecto indicado por `--path` y cualquier otro proyecto que abras en el dashboard. El watcher es local y portátil: compara un manifiesto SHA-256, detecta altas, modificaciones y bajas, reutiliza los fragmentos tree-sitter cacheados de archivos sin cambios y escribe `index.json` de forma atómica. No llama a Ollama ni consume tokens; conserva el enriquecimiento semántico previo de los nodos que no cambiaron.
 
-El intervalo predeterminado es un segundo y puede configurarse con `AETHER_WATCH_INTERVAL`. El estado se expone en `/api/watch/status`; el dashboard lo consulta y recarga automáticamente el grafo activo cuando cambia su versión. En lenguajes que aún usan los extractores integrados se vuelve a ejecutar el parser estructural al ensamblar el grafo, por lo que esta primera versión no pretende ser incremental a nivel de fragmento para los 23 lenguajes.
+El intervalo predeterminado es un segundo y puede configurarse con `GRAPHTYN_WATCH_INTERVAL`. El estado se expone en `/api/watch/status`; el dashboard lo consulta y recarga automáticamente el grafo activo cuando cambia su versión. En lenguajes que aún usan los extractores integrados se vuelve a ejecutar el parser estructural al ensamblar el grafo, por lo que esta primera versión no pretende ser incremental a nivel de fragmento para los 23 lenguajes.
 
 ### MCP HTTP autenticado
 
 El transporte HTTP se sirve en `POST /mcp` y permanece deshabilitado si no existe un token. Para equipos, inicia el servidor con una variable secreta y envía `Authorization: Bearer <token>`:
 
 ```bash
-AETHER_MCP_TOKEN='un-secreto-largo-y-aleatorio' aether-graph serve --path /ruta/proyecto
+GRAPHTYN_MCP_TOKEN='un-secreto-largo-y-aleatorio' graphtyn serve --path /ruta/proyecto
 curl -X POST http://127.0.0.1:9210/mcp \
   -H 'Authorization: Bearer un-secreto-largo-y-aleatorio' \
   -H 'Content-Type: application/json' \
@@ -189,25 +261,39 @@ El endpoint usa comparación de token resistente a timing y expone vecindario, r
 `diff` y `pr-impact` leen hunks de `git diff --unified=0`, cruzan los rangos modificados con `line/end_line` y usan como semillas los métodos, clases o funciones tocados. Los cambios se clasifican como `logic`, `signature`, `configuration`, `documentation` o `asset`. Para relaciones `llama`/`usa`, el impacto se propaga hacia los consumidores; ya no expande automáticamente todos los símbolos de cada archivo modificado. La vista **Cambios** muestra estos símbolos y permite indicar una rama base.
 
 # Explicar la responsabilidad y conexiones de un módulo o clase
-aether-graph explain "TurnManager"
+graphtyn explain "TurnManager"
 
 # Encontrar la ruta de conexiones más corta entre dos símbolos
-aether-graph path "AuthService" "Database"
+graphtyn path "AuthService" "Database"
 
 # Reindexar el repositorio con el motor de IA deseado
-aether-graph reindex --engine ast_local_llm
+graphtyn reindex --engine ast_local_llm
 
 # Instalar el hook post-commit: reindexado incremental automático tras cada commit
-aether-graph hook install
+graphtyn hook install
 
 # Configurar si el grafo respeta .gitignore (por proyecto)
-aether-graph gitignore on --path .    # solo archivos versionados (default)
-aether-graph gitignore off --path .   # incluir también lo ignorado
+graphtyn gitignore on --path .    # solo archivos versionados (default)
+graphtyn gitignore off --path .   # incluir también lo ignorado
 ```
 
 ---
 
 ## 💻 Especificaciones de Hardware y Tiempos de Benchmark (Pruebas Reales)
+
+### Comparación pareada actual: Graphtyn, Gra…ify y agente sin grafo
+
+La prueba reproducible del 22 de agosto de 2026 usa el mismo `opencode/x-preview-f-free`, prompts y ground truth atómico sobre dos repositorios reales de tecnologías distintas: un **framework Python/ASGI** y un **juego empresarial por turnos desarrollado con Unity/C#**. **Sin grafo** significa que OpenCode no recibió Graphtyn ni Gra…ify: resolvió la tarea únicamente con lectura y búsqueda local. Para las dos tareas corregidas se usa la regresión v2; los comparadores son las corridas pareadas del mismo día.
+
+| Tipo de tarea | Graphtyn tokens · calidad | Gra…ify tokens · calidad | Sin grafo tokens · calidad | Reducción vs Gra…ify | Reducción vs sin grafo |
+|---|---:|---:|---:|---:|---:|
+| Seguridad / sesión firmada | 8,155 · **100.0%** | 28,094 · 50.0% | 11,112 · 16.7% | **71.0%** | **26.6%** |
+| Arquitectura / dispatch de rutas | 15,453 · **100.0%** | 14,218 · 75.0% | 19,270 · **100.0%** | −8.7% | **19.8%** |
+| Radio de impacto | 8,800 · 60.0% | **7,992 · 80.0%** | 18,263 · **80.0%** | −10.1% | **51.8%** |
+| Servicio / flujo de dominio | **6,307 · 66.7%** | 13,493 · 50.0% | 29,196 · **83.3%** | **53.3%** | **78.4%** |
+| **Promedio (4 tareas)** | **9,679 · 81.7%** | 15,949 · 63.8% | 19,460 · 70.0% | **39.3%** | **50.3%** |
+
+Un porcentaje negativo significa que Graphtyn gastó más tokens en esa tarea; no se ocultan esos casos. La muestra es pequeña y mezcla una regresión enfocada con la matriz original, por lo que demuestra funcionamiento y orienta optimizaciones, pero no prueba superioridad universal. Estadística consolidada legible por máquinas: [`benchmarks/task_type_comparison_2026-08-22.json`](benchmarks/task_type_comparison_2026-08-22.json). Evidencia cruda: [`benchmarks/real_repos_current_2026-08-22/REPORT.md`](benchmarks/real_repos_current_2026-08-22/REPORT.md) y [`benchmarks/quality_v2_real_2026-08-22/REPORT.md`](benchmarks/quality_v2_real_2026-08-22/REPORT.md).
 
 ### ⚙️ Hardware de Referencia de Pruebas
 * **Procesador:** Intel Core i5-12500H (12a Gen, 16 Hilos / Cores)
@@ -217,7 +303,7 @@ aether-graph gitignore off --path .   # incluir también lo ignorado
 * **Sistema Operativo:** NixOS 26.05 (Linux) — **Ollama 0.30.6** (con soporte CUDA 12.9)
 * **Modelo IA Local (Ollama):** `llama3.2:latest`, `qwen2.5-coder:3b`, `qwen2.5-coder:7b`, `llama3.1:8b`
 
-### 📊 Tiempos Reales de Reindexación (Proyecto AetherGraph: 50 Nodos · 44 Conectores · 11 Archivos)
+### 📊 Tiempos Reales de Reindexación (Proyecto Graphtyn: 50 Nodos · 44 Conectores · 11 Archivos)
 
 | Motor Seleccionado | Tiempo Real (GPU RTX 3050 4GB) | Consumo de Tokens |
 |---|---|---|
@@ -228,16 +314,16 @@ aether-graph gitignore off --path .   # incluir también lo ignorado
 >
 > **Modo incremental**: si el índice ya existe y el proyecto es un repo git, el reindex detecta los archivos cambiados con `git status` y **solo enriquece lo nuevo/modificado** (el resto conserva su contexto; ej. 0 cambios → 5-8s en un proyecto de 277 archivos vs ~5 min completos). Fuerza el reindex completo con `full: true` en el payload.
 >
-> **Configuración del motor** (env): `OLLAMA_HOST`, `OLLAMA_MODEL`, `AETHER_SYMBOL_LIMIT` (60), `AETHER_FILE_LIMIT` (0=ilimitado, para muestreo) y `AETHER_COMPACT=1` (segunda pasada inline que comprime cada descripción larga a ≤100 chars). Detalle completo del flujo en [`docs/contexto-comparativo.md`](docs/contexto-comparativo.md).
+> **Configuración del motor** (env): `OLLAMA_HOST`, `OLLAMA_MODEL`, `GRAPHTYN_SYMBOL_LIMIT` (60), `GRAPHTYN_FILE_LIMIT` (0=ilimitado, para muestreo) y `GRAPHTYN_COMPACT=1` (segunda pasada inline que comprime cada descripción larga a ≤100 chars). Detalle completo del flujo en [`docs/contexto-comparativo.md`](docs/contexto-comparativo.md).
 
 ---
 
 ### 🤖 Benchmark Real de Modelos Locales (vía Ollama, GPU RTX 3050 4GB)
 
-Pruebas ejecutadas con los **prompts reales de AetherGraph** (resumen de arquitectura global + resumen de archivo de código) sobre la instancia local de Ollama (`http://localhost:11434`). El modelo se selecciona vía la variable `OLLAMA_MODEL` (o auto-detección si no está definida):
+Pruebas ejecutadas con los **prompts reales de Graphtyn** (resumen de arquitectura global + resumen de archivo de código) sobre la instancia local de Ollama (`http://localhost:11434`). El modelo se selecciona vía la variable `OLLAMA_MODEL` (o auto-detección si no está definida):
 
 ```bash
-OLLAMA_MODEL=qwen2.5-coder:3b aether-graph reindex --path . --engine ast_local_llm
+OLLAMA_MODEL=qwen2.5-coder:3b graphtyn reindex --path . --engine ast_local_llm
 ```
 
 | Modelo Local (Ollama) | Tamaño | Resumen Arquitectura | Resumen Archivo | Distribución GPU/CPU | Veredicto |
@@ -253,17 +339,17 @@ OLLAMA_MODEL=qwen2.5-coder:3b aether-graph reindex --path . --engine ast_local_l
 
 ### ✍️ Ejemplo Real de Enriquecimiento Semántico por Modelo
 
-Mismo nodo (`mcp_server.py`), mismo prompt real de AetherGraph (config #9), misma temperatura (0.2). Resultado crudo de cada modelo — incluida la respuesta del modelo actual verificado (**OpenCode · `opencode-go/gpt-5.6-luna`**), además de referencias históricas de DeepSeek:
+Mismo nodo (`mcp_server.py`), mismo prompt real de Graphtyn (config #9), misma temperatura (0.2). Resultado crudo de cada modelo — incluida la respuesta del modelo actual verificado (**OpenCode · `opencode-go/gpt-5.6-luna`**), además de referencias históricas de DeepSeek:
 
 | Modelo | Tiempo | Ejemplo de descripción generada |
 |---|---|---|
 | 💎💎💎 **OpenCode · `opencode-go/gpt-5.6-luna` (modelo actual verificado)** | Sesión actual | "Servidor MCP por stdio basado en JSON-RPC 2.0 que expone 7 herramientas para agentes de IA — consulta del grafo, radio de impacto, búsqueda semántica, historial de sesiones y registro de proyectos — lee el índice cacheado, registra operaciones en SQLite y entrega contexto sin consumir tokens del agente." |
 | 💎💎 **DeepSeek V4 PRO (MAX · modelo de paga)** | ~10s (razonamiento) | "Servidor MCP por stdio (JSON-RPC 2.0) que expone 7 herramientas a agentes de IA — mapa de código, radio de impacto, búsqueda de conceptos e historial de sesiones — devolviendo el grafo cacheado del proyecto sin consumir tokens del agente." |
 | 💎 **DeepSeek V4 Flash (opencode · modelo de paga)** | ~10-15s (razonamiento completo) | "Servidor MCP por stdio (JSON-RPC 2.0) que expone 7 herramientas para agentes de IA — grafo, radio de impacto, búsqueda de conceptos e historial de sesiones — sirviendo el grafo cacheado sin consumir tokens del agente." |
-| 🦙 **`llama3.2:latest`** | 6.2s | "Es una unidad del sistema que proporciona un servidor de protocolo estándar (MCP, Model Context Protocol) para la plataforma AetherGraph, permitiendo a los agentes de IA interactuar con gráficos y realizar operaciones como buscar vecinos gráficos, detectar conceptos y más." |
-| 👑 **`qwen2.5-coder:3b`** | 5.8s | "Define una API para el servidor de contexto del protocolo de modelo AetherGraph, que proporciona herramientas para AI agents como `graph_neighborhood`, `graph_blast_radius`, `graph_search_concepts` y `graph_register_project`." |
-| ⚠️ **`qwen2.5-coder:7b`** | 18.6s | "Define funciones para procesar solicitudes de un servidor MCP y generar respuestas basadas en un análisis del código fuente, sirviendo como la unidad principal del sistema para el protocolo Stdio Model Context Protocol (MCP) en AetherGraph." |
-| ⚠️ **`llama3.1:8b`** | 18.0s | "Es un servidor de protocolo de contexto modelo (MCP) para AetherGraph, que proporciona herramientas para agentes de inteligencia artificial y gestiona la representación gráfica del espacio de trabajo." |
+| 🦙 **`llama3.2:latest`** | 6.2s | "Es una unidad del sistema que proporciona un servidor de protocolo estándar (MCP, Model Context Protocol) para la plataforma Graphtyn, permitiendo a los agentes de IA interactuar con gráficos y realizar operaciones como buscar vecinos gráficos, detectar conceptos y más." |
+| 👑 **`qwen2.5-coder:3b`** | 5.8s | "Define una API para el servidor de contexto del protocolo de modelo Graphtyn, que proporciona herramientas para AI agents como `graph_neighborhood`, `graph_blast_radius`, `graph_search_concepts` y `graph_register_project`." |
+| ⚠️ **`qwen2.5-coder:7b`** | 18.6s | "Define funciones para procesar solicitudes de un servidor MCP y generar respuestas basadas en un análisis del código fuente, sirviendo como la unidad principal del sistema para el protocolo Stdio Model Context Protocol (MCP) en Graphtyn." |
+| ⚠️ **`llama3.1:8b`** | 18.0s | "Es un servidor de protocolo de contexto modelo (MCP) para Graphtyn, que proporciona herramientas para agentes de inteligencia artificial y gestiona la representación gráfica del espacio de trabajo." |
 
 > Los 7 resultados identifican correctamente `mcp_server.py` como servidor MCP. **`qwen2.5-coder:3b` es el local más preciso** (nombra las tools reales, 5.8s, 100% GPU), y su calidad se acerca al **90-95% del modelo actual verificado**. El modelo actual añade el nivel más completo de contexto: protocolo, herramientas, flujo de lectura, persistencia SQLite y ausencia de consumo de tokens.
 
@@ -271,19 +357,25 @@ Mismo nodo (`mcp_server.py`), mismo prompt real de AetherGraph (config #9), mism
 
 ## 🤖 Integración con Agentes de IA (MCP Protocol)
 
-AetherGraph es un servidor MCP estándar por entrada/salida estándar (`stdio`). El perfil predeterminado `intent` expone **una sola herramienta** para minimizar catálogo, rondas y contexto acumulado; `--tool-profile full` conserva las **10 herramientas** para compatibilidad y diagnóstico.
+Graphtyn es un servidor MCP estándar por entrada/salida estándar (`stdio`). El perfil predeterminado `intent` expone **una sola herramienta** para minimizar catálogo, rondas y contexto acumulado; `--tool-profile full` conserva las **10 herramientas** para compatibilidad y diagnóstico.
 
 ### 🧭 Herramientas de Mapa de Código (0 Tokens)
 
 | Herramienta | Qué hace | Parámetros |
 |---|---|---|
-| `graph_query_intent` | Ruta predeterminada de una sola llamada. Clasifica `flow`, `bindings`, `persistence`, `tests` o `impact`, filtra operaciones y devuelve `complete_for`, `do_not_expand` y un `context_id` diferencial. | `request`, `intent`, `limit`, `extends_context_id` |
+| `graph_query_intent` | Ruta predeterminada de una sola llamada. Clasifica `overview`, `flow`, `bindings`, `persistence`, `tests` o `impact`, filtra evidencia y devuelve `complete_for`, `do_not_expand` y un `context_id` diferencial. `overview` diversifica README/manifiestos, puntos de entrada, subsistemas y símbolos centrales. | `request`, `intent`, `limit`, `extends_context_id` |
 | `graph_analyze_change` | Convierte un issue o requisito en un plan verificable con targets, archivos, contratos, estado, pruebas y riesgos. Puede alimentar a Qwen/API; la IA debe citar aliases y no inventar aristas. | `request`, `limit`, `response_mode` |
 | `graph_neighborhood` | Devuelve el subgrafo con evidencia. Por defecto usa respuesta compacta, máximo 40 nodos y descripciones de 240 caracteres; `response_mode=full` es opt-in. | `path`, `symbol`, `depth`, `limit`, `response_mode` |
 | `graph_blast_radius` | Calcula impacto por salto. La salida compacta limita el contexto a 40 impactos y avisa si hubo truncamiento. | `symbol`, `depth`, `limit`, `response_mode` |
 | `graph_context_bundle` | Agrupa vecindad e impacto de hasta 10 símbolos en una sola llamada, reduciendo rondas y reenvío acumulativo de contexto. | `symbols`, `depth`, `limit` |
 
 `limit` es un presupuesto global, no un límite repetido por cada símbolo. La respuesta incluye `planner`, `budget` y `omitted`, de modo que un agente puede detectar truncamiento y solicitar una expansión deliberada. El dashboard usa 12 nodos por defecto.
+
+### GRAPHTYN_REPORT.md
+
+`graphtyn report` genera un informe verificable con propósito extraído del README, lenguajes y frameworks detectados desde manifiestos, puntos de entrada, diagrama Mermaid, dependencias entre subsistemas, flujos representativos, hotspots y señales de deuda. Cada reindexado HTTP también guarda una copia central junto a `index.json`; puede consultarse sin escribir en el repositorio mediante `GET /api/report?path=/ruta/proyecto`.
+
+El bloque **Report metrics** estima tokens del informe y de la evidencia documental seleccionada. Si se proporciona un `GRAPH_REPORT.md`, añade `graphify_report_tokens`, diferencia de tokens y `graphify_observable_coverage` usando las mismas seis dimensiones. Esta cobertura compara presencia de evidencia/secciones; no se presenta como precisión semántica contra ground truth.
 
 La indexación híbrida conserva responsabilidades separadas: **Tree-sitter** extrae símbolos y aristas verificables; **Qwen 2.5 Coder 3B** enriquece descripciones, conceptos y señales semánticas locales. Qwen sigue siendo útil para significado y ranking, pero no sustituye evidencia estructural ni convierte una inferencia en una llamada demostrada.
 
@@ -293,10 +385,10 @@ El parser v8 representa cuerpos de método sin enviar el código completo. Cada 
 
 ```bash
 # Recomendado para agentes: una sola tool y menor costo acumulado
-aether-graph mcp --path /ruta/proyecto
+graphtyn mcp --path /ruta/proyecto
 
 # Catálogo histórico completo para diagnóstico o clientes existentes
-aether-graph mcp --path /ruta/proyecto --tool-profile full
+graphtyn mcp --path /ruta/proyecto --tool-profile full
 ```
 
 El resolvedor estructural v6 sigue receptores encadenados mediante los tipos declarados de campos y propiedades. Por ejemplo, `GameManager.Instance.hud.ShowTurnOrderRoll(...)` se resuelve como `GameHUDController.ShowTurnOrderRoll`; el grafo conserva la cadena, el tipo inferido, archivo y línea como evidencia auditable. Las ambigüedades de llamadas de código se reportan separadas de referencias textuales en documentación.
@@ -314,7 +406,7 @@ El resolvedor estructural v6 sigue receptores encadenados mediante los tipos dec
 
 | Herramienta | Qué hace | Parámetros |
 |---|---|---|
-| `graph_register_project` | Registra autónomamente una ruta de proyecto en AetherGraph para que aparezca en el dashboard (`:9210`). | `path` (obligatorio), `name` (opcional) |
+| `graph_register_project` | Registra autónomamente una ruta de proyecto en Graphtyn para que aparezca en el dashboard (`:9210`). | `path` (obligatorio), `name` (opcional) |
 
 ### 💬 Ejemplos de Prompt para el Agente
 
@@ -329,8 +421,8 @@ Agrega lo siguiente en tu archivo de configuración de MCP (`mcp_config.json`):
 ```json
 {
   "mcpServers": {
-    "aether-graph": {
-      "command": "aether-graph",
+    "graphtyn": {
+      "command": "graphtyn",
       "args": ["mcp", "--path", "/ruta/a/tu/proyecto"]
     }
   }
@@ -341,8 +433,8 @@ Agrega lo siguiente en tu archivo de configuración de MCP (`mcp_config.json`):
 Agrega en tu archivo `~/.claude/CLAUDE.md`:
 
 ```markdown
-- **AetherGraph MCP**: Servidor de contexto topológico AST, radio de impacto e historial de sesiones.
-  Comando MCP: `aether-graph mcp`
+- **Graphtyn MCP**: Servidor de contexto topológico AST, radio de impacto e historial de sesiones.
+  Comando MCP: `graphtyn mcp`
 ```
 
 ### 3. OpenAI Codex / Cursor / Windsurf
@@ -351,8 +443,8 @@ Agrega en tu configuración `AGENTS.md` o archivo `.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "aether-graph": {
-      "command": "aether-graph",
+    "graphtyn": {
+      "command": "graphtyn",
       "args": ["mcp"]
     }
   }
@@ -366,39 +458,39 @@ Agrega en tu configuración global `~/.config/opencode/opencode.json` (o en el `
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "aether-graph": {
+    "graphtyn": {
       "type": "local",
-      "command": ["aether-graph", "mcp", "--path", "/ruta/a/tu/proyecto"],
+      "command": ["graphtyn", "mcp", "--path", "/ruta/a/tu/proyecto"],
       "enabled": true
     }
   }
 }
 ```
 
-Las herramientas quedan disponibles como `aether-graph_graph_neighborhood`, `aether-graph_graph_blast_radius`, etc. El argumento `--path` fija el proyecto del grafo; si lo omites, el servidor usa el directorio de trabajo actual.
+Las herramientas quedan disponibles como `graphtyn_graph_neighborhood`, `graphtyn_graph_blast_radius`, etc. El argumento `--path` fija el proyecto del grafo; si lo omites, el servidor usa el directorio de trabajo actual.
 
 ### 5. Entornos Aislados (Contenedores / VMs)
 El MCP por `stdio` es **100% stdlib de Python** (no requiere `fastapi`/`uvicorn` ni instalación vía pip). Para ejecutarlo dentro de un contenedor Docker o una VM sin paquete instalado, basta con montar o compartir el código fuente y definir `PYTHONPATH`:
 
 ```bash
-export PYTHONPATH="/ruta/compartida/aether-graph${PYTHONPATH:+:$PYTHONPATH}"
-export AETHER_DAEMON_URL="http://IP_DEL_HOST:9210"   # opcional: daemon del dashboard para graph_register_project
-python3 -m aether_graph.cli mcp --path /ruta/al/proyecto
+export PYTHONPATH="/ruta/compartida/graphtyn${PYTHONPATH:+:$PYTHONPATH}"
+export GRAPHTYN_DAEMON_URL="http://IP_DEL_HOST:9210"   # opcional: daemon del dashboard para graph_register_project
+python3 -m graphtyn.cli mcp --path /ruta/al/proyecto
 ```
 
-- `AETHER_DAEMON_URL`: dentro de un contenedor, `127.0.0.1:9210` no apunta al daemon del dashboard (que vive en el host). Apunta esta variable a la IP del host (ej. la IP gateway de la VM) para que `graph_register_project` registre proyectos en el dashboard.
+- `GRAPHTYN_DAEMON_URL`: dentro de un contenedor, `127.0.0.1:9210` no apunta al daemon del dashboard (que vive en el host). Apunta esta variable a la IP del host (ej. la IP gateway de la VM) para que `graph_register_project` registre proyectos en el dashboard.
 - Las herramientas de grafo e historial funcionan standalone (leen el índice cacheado o escanean el código) sin depender del daemon.
 
-#### Ejemplo real: OpenClaw en una VM (wrapper `mcp_openclaw.sh`)
-El repositorio incluye [`mcp_openclaw.sh`](mcp_openclaw.sh), un wrapper usado para conectar AetherGraph con un agente **OpenClaw** que corre dentro de una VM: el contenedor `openclaw-agent` monta por bind el `Documentos` del host en `/home/node/proyectos`, así que el script exporta el `PYTHONPATH` con la ruta del contenedor, apunta `AETHER_DAEMON_URL` a la IP gateway de la VM (`192.168.122.1`) y arranca el MCP con la ruta del proyecto en el contenedor. Se registra en el `openclaw.json` del agente:
+#### Ejemplo real: OpenClaw en una VM (wrapper `graphtyn_openclaw.sh`)
+El repositorio incluye [`graphtyn_openclaw.sh`](graphtyn_openclaw.sh), un wrapper usado para conectar Graphtyn con un agente **OpenClaw** que corre dentro de una VM: el contenedor `openclaw-agent` monta por bind el `Documentos` del host en `/home/node/proyectos`, así que el script exporta el `PYTHONPATH` con la ruta del contenedor, apunta `GRAPHTYN_DAEMON_URL` a la IP gateway de la VM (`192.168.122.1`) y arranca el MCP con la ruta del proyecto en el contenedor. Se registra en el `openclaw.json` del agente:
 
 ```json
 {
   "mcp": {
     "servers": {
-      "aether-graph": {
+      "graphtyn": {
         "command": "bash",
-        "args": ["/ruta/en/el/contenedor/aether-graph/mcp_openclaw.sh"]
+        "args": ["/ruta/en/el/contenedor/graphtyn/graphtyn_openclaw.sh"]
       }
     }
   }
@@ -411,31 +503,77 @@ Copia el wrapper y ajusta las tres rutas/env a tu infraestructura (es un ejemplo
 
 ## 🏆 Comparativa de Mercado
 
-*Revisión de capacidades: agosto de 2026. Fuentes primarias: [README de Graphify v8](https://github.com/Graphify-Labs/graphify/blob/v8/README.md), [pipeline de Graphify](https://github.com/Graphify-Labs/graphify/blob/v8/docs/how-it-works.md), [navegación precisa de Sourcegraph](https://sourcegraph.com/docs/code-navigation/precise-code-navigation) y [MCP de Sourcegraph](https://sourcegraph.com/docs/api/mcp). Esta tabla compara enfoques; no constituye un benchmark de superioridad.*
+*Revisión de capacidades: agosto de 2026. Para evitar convertir esta documentación en publicidad de terceros, los productos comparados se identifican como **Gra…ify** y **Sou…aph**. Las fuentes primarias auditables permanecen enlazadas: [README v8](https://github.com/Graphify-Labs/graphify/blob/v8/README.md), [pipeline técnico](https://github.com/Graphify-Labs/graphify/blob/v8/docs/how-it-works.md), [navegación precisa](https://sourcegraph.com/docs/code-navigation/precise-code-navigation) y [MCP empresarial](https://sourcegraph.com/docs/api/mcp). Esta tabla compara enfoques; no constituye un benchmark de superioridad.*
 
-| Característica | 📦 Graphify (v8) | 🌐 Sourcegraph / LSIF | 🌌 AetherGraph |
+| Característica | 📦 Gra…ify (v8) | 🌐 Sou…aph / LSIF | 🌌 Graphtyn |
 |---|---|---|---|
 | **Parsing Estático Multi-Lenguaje** | **Sí** (36 gramáticas tree-sitter más extractores especializados, local, $0) | Sí (índices SCIP por lenguaje, con precisión de compilador cuando están configurados) | Sí (tree-sitter para 7 lenguajes + extractores integrados para el resto, local, $0) |
 | **Descripción semántica persistente por nodo de CÓDIGO** | No en el pipeline normal: el código usa tree-sitter; el pase con modelo se reserva para docs/PDFs/media | No como propiedad equivalente del índice SCIP | ✅ **Sí: cada archivo/clase/función puede recibir una descripción de rol mediante LLM local o cloud** |
 | **Etiquetas de confianza en aristas** | ✅ EXTRACTED / INFERRED / AMBIGUOUS por arista | Parcial | ✅ **EXTRACTED/INFERRED/AMBIGUOUS con evidencia y puntuación de resolución contextual** |
 | **Consumo de Tokens (grafo de código)** | 0 (tree-sitter local) | 0 (dump LSP) | **0 en Pasada 1** + Enriquecimiento Opcional (local = 0) |
 | **Reindexado incremental / automático** | ✅ actualización, modo `--watch` y hook que regenera tras commits | ✅ auto-indexación o indexación SCIP en CI; depende del indexador/lenguaje | ✅ **`--watch` + manifiesto SHA-256 + caché tree-sitter por archivo; git-status y hook post-commit opcional** |
-| **Compactación de densidad (≤140 chars/nodo)** | N/A (no describe código con LLM) | N/A | ✅ `AETHER_COMPACT=1` (local a +5% de la densidad premium) |
+| **Compactación de densidad (≤140 chars/nodo)** | N/A (no describe código con LLM) | N/A | ✅ `GRAPHTYN_COMPACT=1` (local a +5% de la densidad premium) |
 | **Memoria de historial de acciones del agente** | ❌ (query log opcional; no timeline de acciones) | ❌ | ✅ **SQLite local (`graph_history_*`) gratuito + `tokens_avoided` por consulta** |
 | **Visualizador** | `graph.html` interactivo (comunidades, filtros, nodos) | Navegación web de código, referencias y dependencias; no es un dashboard de grafo equivalente | Dashboard WebGL 2D/3D en vivo (`:9210`) |
 | **Impacto de cambios** | ✅ PR impact / triage / conflictos entre PRs (`graphify prs`) | Parcial en CLI | ✅ `diff` + `pr-impact`: hunks → símbolos, riesgo directo/transitivo y simulación no destructiva de conflictos Git |
-| **MCP** | ✅ stdio + HTTP compartido con API key (7 tools) | ✅ MCP en Sourcegraph Enterprise (search, navegación, historial y Deep Search) | ✅ stdio + HTTP opcional protegido con Bearer; transporte local por defecto |
+| **MCP** | ✅ stdio + HTTP compartido con API key (7 tools) | ✅ MCP empresarial (search, navegación, historial y Deep Search) | ✅ stdio + HTTP opcional protegido con Bearer; transporte local por defecto |
 | **Multi-modal (docs/PDFs/imagen/video en el mismo grafo)** | ✅ pase semántico sobre docs, PDFs, imágenes y transcripciones mediante el modelo del asistente/backend configurado | No es su objetivo principal | ✅ docs, PDF, DOCX, XLSX, visión local y transcripción local; **relaciones de similitud cacheadas y offline** |
-| **Benchmarks publicados** | ✅ recuperación/memoria y agente sobre ERPNext; distingue compresión de corpus de tokens end-to-end | Benchmarks y documentación empresarial | ✅ [BENCHMARKS.md](BENCHMARKS.md): `n=6` pareado en UnityCommerceDemo, 45.52% menos tokens que lectura directa y 12.18% menos que Graphify con igual cobertura; resultados aún no significativos (`p=0.0625`) |
+| **Benchmarks publicados** | ✅ recuperación/memoria y agente sobre ERPNext; distingue compresión de corpus de tokens end-to-end | Benchmarks y documentación empresarial | ✅ [BENCHMARKS.md](BENCHMARKS.md): baseline real sin grafo y comparador Gra…ify, con tokens y calidad desglosados por tipo de tarea |
 | **Ecosistema / Plataformas** | ✅ instalador para 20+ asistentes | ✅ plataforma empresarial e integraciones de código | ✅ MCP estándar para Antigravity, Claude Code, Codex, Cursor, Windsurf, OpenCode y OpenClaw |
 | **Soporte Offline** | ✅ código local; el pase semántico multimodal necesita un backend/modelo configurado | Depende del despliegue e índices | ✅ 100% offline con Ollama y Whisper locales |
 
-**Lectura honesta:** Graphify es más maduro en cobertura y precisión del parser, integraciones, flujo de PRs, servidor MCP compartido, extracción relacional multimodal y benchmarks de calidad. Sourcegraph domina la navegación precisa y cross-repository cuando existen índices SCIP, además de ofrecer MCP empresarial. AetherGraph se diferencia por **describir también el rol del código con modelos locales**, mantener **historial local del agente**, ofrecer un **dashboard WebGL 2D/3D**, ejecutar visión/transcripción y similitud multimodal **completamente offline**, y conservar un MCP stdio muy portátil. La tesis competitiva actual es “alternativa local-first, visual y semántica”, no “reemplazo universal”.
+**Lectura honesta:** Gra…ify es más maduro en cobertura y precisión del parser, integraciones, flujo de PRs, servidor MCP compartido, extracción relacional multimodal y benchmarks de calidad. Sou…aph domina la navegación precisa y cross-repository cuando existen índices SCIP, además de ofrecer MCP empresarial. Graphtyn se diferencia por **describir también el rol del código con modelos locales**, mantener **historial local del agente**, ofrecer un **dashboard WebGL 2D/3D**, ejecutar visión/transcripción y similitud multimodal **completamente offline**, y conservar un MCP stdio muy portátil. La tesis competitiva actual es “alternativa local-first, visual y semántica”, no “reemplazo universal”.
 
 ### Brechas antes de afirmar superioridad
 
+## Flujo de confianza, cambios Git y operación
+
+La entrega de producción expone los ocho controles tanto por CLI como en el dashboard de `http://127.0.0.1:9210`:
+
+```bash
+# 1. Auditar si una respuesta está respaldada por símbolos, relaciones y archivo:línea
+graphtyn validate-answer --answer @respuesta.md --path .
+
+# 2. Reindexar y consultar duración, archivos +/~/- y llamadas a IA local
+graphtyn reindex --mode balanced --path .
+curl 'http://127.0.0.1:9210/api/index-update?path=/ruta/absoluta'
+
+# 3. Revisar relaciones ambiguas; las decisiones quedan en .graphtyn/
+graphtyn review --ambiguities --path .
+graphtyn review --key CLAVE --decision accept --note 'verificado en código' --path .
+
+# 4 y 5. Analizar Git y generar GRAPHTYN_CHANGE_REPORT.md
+graphtyn impact --base main --head HEAD --path .
+graphtyn review --staged --path .
+
+# Reporte estable del repositorio
+graphtyn report --path .
+```
+
+`validate-answer` mide **trazabilidad**, no verdad formal: `SUPPORTED` significa que hay evidencia indexada identificable. Las aristas `INFERRED` deben verificarse y una `AMBIGUOUS` nunca debe presentarse como hecho. Las decisiones aceptar/rechazar/corregir son locales, persistentes y vuelven a aplicarse después de reindexar.
+
+La IA local es selectiva: en modo incremental solo resume archivos o símbolos nuevos/modificados y reutiliza lo demás. Tree-sitter conserva autoridad sobre declaraciones y relaciones; Qwen/Ollama no convierte una inferencia en evidencia extraída. El estado indica `local_ai_calls` y `estimated_paid_tokens`; Ollama tiene costo de proveedor cero, aunque sí consume cómputo local.
+
+### Instalación y adopción
+
+```bash
+pipx install 'graphtyn[treesitter]'
+graphtyn serve --host 127.0.0.1 --port 9210 --watch --path /ruta/proyecto
+
+# Alternativa reproducible
+docker compose up --build
+
+# Instrucciones para agentes y checks de PR
+graphtyn agent-install all --path .
+graphtyn ci-install github --max-risk medium --path .
+```
+
+Docker publica únicamente `127.0.0.1:9210`, monta el repositorio para poder escribir los reportes solicitados y persiste el índice en un volumen separado. También se incluyen plantillas para GitHub Actions/GitLab y políticas para Codex, OpenCode, Claude, Cursor, Gemini y Copilot.
+
+### Alcance honesto pendiente
+
 1. Extender el parsing incremental por fragmento a los lenguajes que todavía usan extractores integrados y evaluar LSP/SCIP para resolución cross-file de compilador.
-2. Ampliar el smoke ground truth de UnityCommerceDemo a un corpus etiquetado estadísticamente útil y comparar calidad de respuestas contra Graphify y un baseline sin grafo.
+2. Ampliar el ground truth del repositorio Unity/C# a un corpus etiquetado estadísticamente útil y comparar calidad de respuestas contra Gra…ify y un baseline sin grafo.
 3. Añadir TLS, rotación de credenciales, rate limiting y coordinación segura de índices para equipos al MCP HTTP.
 4. Incorporar triage entre múltiples PRs y defensas contra prompt injection en documentos.
 5. Validar con repositorios externos grandes; las cifras de ahorro de tokens deben reportar metodología, corpus, promedio y dispersión.

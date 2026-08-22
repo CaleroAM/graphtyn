@@ -1,0 +1,34 @@
+[
+  {
+    "task_id": "selection-impact",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 57.4695,
+    "usage": {
+      "input_tokens": 4220,
+      "output_tokens": 592,
+      "thinking_tokens": 148,
+      "total_tokens": 8800
+    },
+    "tool_calls": 2,
+    "answer": "**GetPlayerSelection** (evidencia EXTRACTED del grafo; sin lectura de archivos):\n\n- **Contenedor:** clase `TokenSelectionManager` (`public class TokenSelectionManager`)\n- **Ruta:** `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/TokenSelectionManager.cs:67`\n- **Firma:** `public PlayerSelection GetPlayerSelection(int playerID)`\n- **Comportamiento:** solo 2 operaciones extraídas:\n  - L69: `_playerSelections.TryGetValue(playerID, out var selection)` — búsqueda en el diccionario `_playerSelections` por `playerID`\n  - L70: `return selection;`\n  - El grafo no registra más operaciones (sin validaciones, logging ni efectos secundarios).\n- **Radio de impacto directo actual:** **cero consumidores entrantes** (`relations: []`, `incoming_calls_or_uses = 0`, con `complete=true` y `zero_is_evidence_when_complete=true`). Tampoco registra llamadas salientes hacia otras entidades del proyecto (`outgoing_calls_or_uses = 0`; `TryGetValue` es API externa). **Ningún test vinculado**: los módulos de tests del grafo (`GameEngine.Core.Tests`) no muestran relación dirigida con este método.\n\nAmbas consultas cerraron con `do_not_expand=true` y `complete_for=[flow]`/`[impact]`: no falta evidencia por recuperar. Nota estricta de confianza: la ausencia de consumidores es evidencia estructural del grafo, no garantía de que ningún call site exista fuera de lo indexado.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  },
+  {
+    "task_id": "auction-service",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 64.7614,
+    "usage": {
+      "input_tokens": 6459,
+      "output_tokens": 877,
+      "thinking_tokens": 149,
+      "total_tokens": 11325
+    },
+    "tool_calls": 4,
+    "answer": "## AuctionService — evidencia del grafo\n\n**Ubicación:** clase `public class AuctionService`, `Gameplay.Services` en `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/Services/AuctionService.cs:9`.\n\n### Estado\n- `TimeLimit : int = 15` — AuctionService.cs:11\n- `IsAuctionActive : bool { get; private set; } = false` — AuctionService.cs:12\n\nSin persistencia externa: el grafo muestra solo este flag en memoria; ninguna operación de repositorio/tabla/PlayerPrefs en sus métodos (coverage de persistencia saliente = 0).\n\n### Flujo (métodos declarados por la clase, relaciones `declara` EXTRACTED)\n1. **StartAuction(artworkId, startingPrice)** — AuctionService.cs:17 → asigna `IsAuctionActive = true` (:19) y loggea el inicio (:20).\n2. **PlaceBid(bidderName, bidAmount)** — AuctionService.cs:23 → guarda `if (!IsAuctionActive) return` (:25), loggea la puja (:26) y dispara `OnBidPlaced?.Invoke(...)` (:27).\n3. **CloseAuction(winnerName, finalPrice)** — AuctionService.cs:30 → asigna `IsAuctionActive = false` (:32), loggea al ganador (:33) y dispara `OnAuctionCompleted?.Invoke(...)` (:34).\n\n### Eventos (emite; no se evidencia que escuche ninguno)\n- `OnBidPlaced : Action<string, int>` — AuctionService.cs:14\n- `OnAuctionCompleted : Action<string, int>` — AuctionService.cs:15\n\n### Dependencias / interfaces\n- Ninguna inyección ni llamada saliente evidenciada (outgoing uses = 0). Solo usa `Debug.Log` e invoca sus propios eventos.\n- Firma del propietario: `public class AuctionService` sin lista de base visible → **sin interfaz implementada con evidencia en el grafo** (implementations = 0).\n\n### Consumidores actuales\n- **Ninguno**: `incoming_calls_or_uses = 0` en las consultas de impacto y bindings (`zero_is_evidence_when_complete: true`). El grafo no registra llamadas entrantes ni suscripciones a `OnBidPlaced`/`OnAuctionCompleted`.\n\nAmbigüedad residual: ninguna marcada como AMBIGUOUS o INFERRED para esta clase; todo lo citado es evidencia estructural EXTRACTED.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  }
+]

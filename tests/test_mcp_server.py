@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 VENV_PY = Path(__file__).resolve().parent.parent / ".venv" / "bin" / "python"
-MCP_RUNNER = "from pathlib import Path\nfrom aether_graph.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r))\n"
+MCP_RUNNER = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r))\n"
 
 
 def _mcp_call(workspace, requests, env=None):
@@ -40,17 +40,19 @@ def test_mcp_initialize_and_tools_list(workspace):
     ])
     init = next(r for r in resp if r.get("id") == 1)
     assert init["result"]["protocolVersion"] == "2024-11-05"
-    assert init["result"]["serverInfo"]["name"] == "aether-graph-mcp"
+    assert init["result"]["serverInfo"]["name"] == "graphtyn-mcp"
     tools = next(r for r in resp if r.get("id") == 2)
     names = {t["name"] for t in tools["result"]["tools"]}
     assert {"graph_neighborhood", "graph_blast_radius", "graph_search_concepts",
             "graph_context_bundle", "graph_analyze_change", "graph_query_intent",
             "graph_history_search", "graph_history_timeline", "graph_history_get",
             "graph_register_project"} <= names
+    intent_tool = next(t for t in tools["result"]["tools"] if t["name"] == "graph_query_intent")
+    assert "overview" in intent_tool["inputSchema"]["properties"]["intent"]["enum"]
 
 
 def test_mcp_intent_profile_exposes_only_one_tool(workspace):
-    runner = "from pathlib import Path\nfrom aether_graph.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'intent')\n"
+    runner = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'intent')\n"
     res = subprocess.run(
         [str(VENV_PY), "-c", runner % str(workspace)],
         input=json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}) + "\n",
@@ -98,6 +100,23 @@ def test_mcp_query_intent_supports_one_shot_and_delta(workspace):
     assert delta["estimated_tokens"] < first["estimated_tokens"]
 
 
+def test_mcp_query_intent_overview_preserves_project_profile(workspace):
+    (workspace / "README.md").write_text("# Sample service\n", encoding="utf-8")
+    (workspace / "main.py").write_text("from a import helper\nprint(helper())\n", encoding="utf-8")
+    _, responses = _mcp_call(workspace, [{
+        "jsonrpc": "2.0", "id": 38, "method": "tools/call",
+        "params": {"name": "graph_query_intent", "arguments": {
+            "request": "Utiliza Graphtyn y dime de qué trata este repositorio", "limit": 10,
+        }},
+    }])
+    result = json.loads(responses[0]["result"]["content"][0]["text"])
+    assert result["planner"] == "overview-v1"
+    assert result["complete_for"] == ["overview"]
+    assert result["project_profile"]["documentation"] == ["README.md"]
+    assert result["project_profile"]["entry_points"] == ["main.py"]
+    assert result["context_id"]
+
+
 def test_mcp_graph_neighborhood(workspace):
     _, resp = _mcp_call(workspace, [
         {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
@@ -120,6 +139,19 @@ def test_mcp_compact_coverage_reports_zero_as_negative_evidence(workspace):
     assert result["coverage"]["incoming_calls_or_uses"] == 0
     assert result["coverage"]["outgoing_calls_or_uses"] == 0
     assert result["coverage"]["zero_is_evidence_when_complete"] is True
+    assert "no incoming" in " ".join(result["negative_evidence"])
+
+
+def test_evidence_answer_checks_make_requested_zeros_explicit():
+    from graphtyn.mcp_server import evidence_result
+    node = {"id": "class:AuctionService", "name": "AuctionService", "kind": "class", "file": "AuctionService.cs",
+            "imports": ["using System;", "using UnityEngine;"]}
+    compact = evidence_result({
+        "matched": [node], "nodes": [node], "links": [],
+        "intent_terms": ["dependencies", "interfaces", "consumers"],
+    }, max_nodes=1)
+    assert len(compact["answer_checks"]) == 3
+    assert compact["entities"]["N1"]["imports"] == ["using System;", "using UnityEngine;"]
 
 
 def test_mcp_full_response_is_opt_in(workspace):
@@ -142,7 +174,7 @@ def test_mcp_context_bundle_combines_queries(workspace):
 
 
 def test_context_bundle_enforces_one_global_budget(tmp_path):
-    from aether_graph.mcp_server import context_bundle
+    from graphtyn.mcp_server import context_bundle
     graph = {"nodes": [], "links": []}
     graph["nodes"].append({"id": "file:large.cs", "name": "large.cs", "kind": "file", "degree": 12})
     for i in range(12):
@@ -159,8 +191,8 @@ def test_context_bundle_enforces_one_global_budget(tmp_path):
 
 def test_qualified_selector_disambiguates_same_named_methods(tmp_path):
     (tmp_path / "a.py").write_text("class A:\n    def run(self): pass\nclass B:\n    def run(self): pass\n")
-    from aether_graph.core.ast_parser import ASTParser
-    from aether_graph.mcp_server import neighborhood_subgraph
+    from graphtyn.core.ast_parser import ASTParser
+    from graphtyn.mcp_server import neighborhood_subgraph
     graph = ASTParser().scan_directory(tmp_path)
     result = neighborhood_subgraph(graph, "A.run", 0)
     assert len(result["matched"]) == 1
@@ -202,7 +234,7 @@ def test_mcp_search_concepts_matches_individual_query_terms(workspace):
 
 
 def test_evidence_format_deduplicates_paths_and_reduces_payload():
-    from aether_graph.mcp_server import evidence_result
+    from graphtyn.mcp_server import evidence_result
     path = "Assets/Very/Long/Repeated/Path/GameManager.cs"
     nodes = [
         {"id": f"symbol:{path}:M{i}", "name": f"M{i}", "kind": "method", "file": path,
@@ -224,7 +256,7 @@ def test_evidence_format_deduplicates_paths_and_reduces_payload():
 
 
 def test_evidence_prioritizes_query_relevant_operations():
-    from aether_graph.mcp_server import evidence_result
+    from graphtyn.mcp_server import evidence_result
     node = {
         "id": "symbol:a.cs:Register", "name": "Register", "kind": "method", "file": "a.cs", "line": 1,
         "operations": [

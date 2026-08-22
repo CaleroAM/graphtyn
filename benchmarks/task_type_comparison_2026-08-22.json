@@ -1,0 +1,57 @@
+{
+  "date": "2026-08-22",
+  "model": "opencode/x-preview-f-free",
+  "competitor_display_name": "Gra…ify",
+  "baseline": "OpenCode with local read/search only; no Graphtyn and no competing graph tool",
+  "method": "Four paired task types. The corrected v2 Graphtyn runs replace the incomplete signed-session-flow run and the earlier auction-service run; same-day comparator runs are reused.",
+  "task_types": [
+    {
+      "type": "security_session",
+      "task_id": "signed-session-flow",
+      "graphtyn": {"tokens": 8155, "quality": 1.0},
+      "competitor": {"tokens": 28094, "quality": 0.5},
+      "no_graph": {"tokens": 11112, "quality": 0.1667},
+      "graphtyn_token_reduction_vs_competitor": 0.7097,
+      "graphtyn_token_reduction_vs_no_graph": 0.2661
+    },
+    {
+      "type": "architecture_routing",
+      "task_id": "router-dispatch-flow",
+      "graphtyn": {"tokens": 15453, "quality": 1.0},
+      "competitor": {"tokens": 14218, "quality": 0.75},
+      "no_graph": {"tokens": 19270, "quality": 1.0},
+      "graphtyn_token_reduction_vs_competitor": -0.0869,
+      "graphtyn_token_reduction_vs_no_graph": 0.1981
+    },
+    {
+      "type": "impact_analysis",
+      "task_id": "selection-impact",
+      "graphtyn": {"tokens": 8800, "quality": 0.6},
+      "competitor": {"tokens": 7992, "quality": 0.8},
+      "no_graph": {"tokens": 18263, "quality": 0.8},
+      "graphtyn_token_reduction_vs_competitor": -0.1011,
+      "graphtyn_token_reduction_vs_no_graph": 0.5181
+    },
+    {
+      "type": "service_domain_flow",
+      "task_id": "auction-service",
+      "graphtyn": {"tokens": 6307, "quality": 0.6667},
+      "competitor": {"tokens": 13493, "quality": 0.5},
+      "no_graph": {"tokens": 29196, "quality": 0.8333},
+      "graphtyn_token_reduction_vs_competitor": 0.5326,
+      "graphtyn_token_reduction_vs_no_graph": 0.784
+    }
+  ],
+  "aggregate": {
+    "graphtyn": {"total_tokens": 38715, "mean_tokens": 9678.75, "mean_quality": 0.8167},
+    "competitor": {"total_tokens": 63797, "mean_tokens": 15949.25, "mean_quality": 0.6375},
+    "no_graph": {"total_tokens": 77841, "mean_tokens": 19460.25, "mean_quality": 0.7},
+    "graphtyn_token_reduction_vs_competitor": 0.3932,
+    "graphtyn_token_reduction_vs_no_graph": 0.5026
+  },
+  "limitations": [
+    "Four tasks across two repositories are a diagnostic sample, not a statistically significant superiority claim.",
+    "Two Graphtyn cells are focused regression reruns; comparator cells are reused from the same-day paired matrix.",
+    "Negative reduction means Graphtyn used more tokens for that task."
+  ]
+}

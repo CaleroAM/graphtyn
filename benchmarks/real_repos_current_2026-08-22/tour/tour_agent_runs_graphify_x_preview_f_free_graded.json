@@ -1,0 +1,107 @@
+[
+  {
+    "task_id": "selection-impact",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 70.757,
+    "usage": {
+      "input_tokens": 1187,
+      "output_tokens": 682,
+      "thinking_tokens": 107,
+      "total_tokens": 7992
+    },
+    "tool_calls": 7,
+    "answer": "## GetPlayerSelection — evidencia del grafo\n\n**Identidad y ruta**\n- Nodo: `.GetPlayerSelection()` (ID `...tokenselectionmanager_getplayerselection`)\n- Ruta: `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/TokenSelectionManager.cs` L67\n- Tipo `code`, grado 2, sin comunidad asignada.\n\n**Contenedor**\n- Clase `TokenSelectionManager` (L11) en el mismo archivo; sus miembros según el grafo: campos `List` (L13) y `Dictionary` (L23), métodos `SelectTokenForPlayer()` (L26), `GetPlayerSelection()` (L67) y `ResetSelections()` (L73).\n- Archivo importa `System.Collections.Generic` (L2) y `UnityEngine` (L3).\n\n**Comportamiento (solo lo estructural que evidencia el grafo)**\n- Arista saliente: `.GetPlayerSelection() --references[context=return_type]--> PlayerSelection` en L67 → es un método que devuelve `PlayerSelection`.\n- `PlayerSelection` está contenido en el mismo archivo (L5) y referencia `Color` (L8); también es tipo de retorno de `SelectTokenForPlayer()` (L26).\n- El grafo **no contiene aristas de sentencias internas del cuerpo**, por lo que su lógica interna no puede afirmarse desde aquí.\n\n**Radio de impacto directo actual**\n- Aristas entrantes: solo la de declaración `TokenSelectionManager --method--> .GetPlayerSelection()`. **No existe ninguna arista entrante de llamada** (`call`) desde otros métodos/clases → 0 consumidores directos registrados.\n- Aristas salientes: 1 (hacia `PlayerSelection`).\n- Verificación adicional: BFS depth=2 sobre `GetPlayerSelection` no encontró ningún nodo llamador externo (los nodos cercanos son hermanos de la clase y tipos base como `Dictionary`, `List`, `Color`).\n\n**Ambigüedad declarada:** todo lo anterior es `EXTRACTED`; no hay nodos `INFERRED` ni `AMBIGUOUS` involucrados. La ausencia de consumidores es un hecho del grafo actual, no garantiza ausencia de llamadas vía Unity (p. ej., invocación desde Inspector/Eventos), que este grafo no modela.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 4,
+    "partial": 0,
+    "total": 5,
+    "quality_score": 0.8,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.8,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "container",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "lookup",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "nullable",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "path",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "no-callers",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "auction-service",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 121.7551,
+    "usage": {
+      "input_tokens": 1062,
+      "output_tokens": 827,
+      "thinking_tokens": 340,
+      "total_tokens": 13493
+    },
+    "tool_calls": 12,
+    "answer": "# AuctionService según el grafo (todo `[EXTRACTED]`, verificado)\n\n**Nodo:** `AuctionService` — `UnityCommerceDemo/Assets/_Project/Scripts/Gameplay/Services/AuctionService.cs:L9`. Grado 4.\n\n**Interfaces/métodos públicos**\n- `.StartAuction()` — AuctionService.cs:L17\n- `.PlaceBid()` — AuctionService.cs:L23\n- `.CloseAuction()` — AuctionService.cs:L30\n- No hay aristas `inherits`/`implements`: ninguna interfaz declarada en el grafo.\n\n**Estado:** ninguna propiedad o campo extraído para AuctionService (sin aristas `field`). No afirmo que no exista: el grafo no lo capturó.\n\n**Eventos:** ningún evento (`Action`/`event`) asociado al servicio en el grafo.\n\n**Dependencias:** cero aristas `references`/`imports` salientes del nodo. Única evidencia a nivel archivo: `AuctionService.cs --imports--> system` (ruta más corta AuctionUIController→AuctionService, 4 hops).\n\n**Consumidores actuales:** ninguno con arista dirigida entrante hacia AuctionService ni sus 3 métodos (verificado con filtro `context=['call']`). Existen métodos homónimos sin conexión extraída: `GameHUDController.StartAuction()` (L292) y `AuctionUIController.StartAuction()` (L55); sí hay cadena UI extraída: `StartAuction() --calls--> UpdateAuctionUI()` (L180) `--calls--> EndAuction()` (L195) en AuctionUIController.cs.\n\n**Relacionado no conectado:** existe `AuctionEngine.cs` en `src/GameEngine.Core/Domain/Services` (`.ValidateBids()` L69, `AuctionRequest` L99, `AuctionBid` L107) sin arista hacia AuctionService.\n\n**Ambigüedad:** el grafo no muestra flujo interno entre Start/Place/Close ni consumidores; eso es ausencia de evidencia, no prueba de inexistencia.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 1,
+    "partial": 4,
+    "total": 6,
+    "quality_score": 0.5,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.5,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "start",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "bid",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "close",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "dependencies",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "no-interface",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "no-consumers",
+        "verdict": "missing",
+        "score": 0.0
+      }
+    ]
+  }
+]

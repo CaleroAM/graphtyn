@@ -1,15 +1,15 @@
-# 🎨 Especificación UI/UX de AetherGraph
+# 🎨 Especificación UI/UX de Graphtyn
 
 **Versión:** 1.0.0  
-**Proyecto:** AetherGraph (`aether-graph`)  
-**Ruta:** `/home/developer/Documentos/docker/PROYECTOS/aether-graph`  
+**Proyecto:** Graphtyn (`graphtyn`)
+**Ruta:** `/home/developer/Documentos/docker/PROYECTOS/graphtyn`
 **Estado:** Propuesta de Diseño y Especificación de Interfaz  
 
 ---
 
 ## 1. Resumen Ejecutivo y Objetivos
 
-AetherGraph es un motor de contexto determinista basado en AST y topología de agentes de IA para proyectos de desarrollo de software. Esta especificación define la evolución de la interfaz visual web (puerto `9210`), transformándola en un dashboard moderno, responsivo y de alto impacto visual con soporte para exploración de código y gobernanza de agentes en tiempo real.
+Graphtyn es un motor de contexto determinista basado en AST y topología de agentes de IA para proyectos de desarrollo de software. Esta especificación define la evolución de la interfaz visual web (puerto `9210`), transformándola en un dashboard moderno, responsivo y de alto impacto visual con soporte para exploración de código y gobernanza de agentes en tiempo real.
 
 ### Objetivos Clave de UI/UX:
 1. **Navegación Multiproyecto (Barra Lateral Izquierda):** Permitir al usuario explorar múltiples repositorios indexados, ver el estado de salud del AST y ejecutar reindexaciones bajo demanda con retroalimentación visual clara.
@@ -21,10 +21,10 @@ AetherGraph es un motor de contexto determinista basado en AST y topología de a
 ## 2. Maquetas y Wireframes Visuales
 
 ### 2.1 Vista Principal: Grafo AST de Código y Barra Lateral Izquierda
-![AetherGraph Main AST Graph UI](/home/developer/.gemini/antigravity-cli/brain/f567f07f-7a33-46ad-a9c8-d2a8d6f4d746/aethergraph_ui_main_1785948974624.jpg)
+![Graphtyn Main AST Graph UI](/home/developer/.gemini/antigravity-cli/brain/f567f07f-7a33-46ad-a9c8-d2a8d6f4d746/graphtyn_ui_main_1785948974624.jpg)
 
 ### 2.2 Vista Alternativa: Topología de Agentes del Arnés (Agent Harness Topology)
-![AetherGraph Agent Harness Topology UI](/home/developer/.gemini/antigravity-cli/brain/f567f07f-7a33-46ad-a9c8-d2a8d6f4d746/aethergraph_agent_topology_1785948987795.jpg)
+![Graphtyn Agent Harness Topology UI](/home/developer/.gemini/antigravity-cli/brain/f567f07f-7a33-46ad-a9c8-d2a8d6f4d746/graphtyn_agent_topology_1785948987795.jpg)
 
 ---
 
@@ -32,7 +32,7 @@ AetherGraph es un motor de contexto determinista basado en AST y topología de a
 
 ```
 +-----------------------------------------------------------------------------------+
-|  [🌌 AetherGraph]       [ 📈 Project AST Graph ]  [ 🤖 Agent Harness Topology ]   |
+|  [🌌 Graphtyn]       [ 📈 Project AST Graph ]  [ 🤖 Agent Harness Topology ]   |
 +------------------------+----------------------------------------------------------+
 |  Proyectos Indexados   |                                                          |
 |                        |                  CANVAS DE GRAFO 3D/2D                  |
@@ -90,7 +90,7 @@ Para resolver la problemática de los conectores oscuros e invisibles:
 
 ## 4. Arquitectura de UI y Cambios de Código Sugeridos
 
-Para actualizar `aether_graph/api/main.py` con esta especificación UI/UX:
+Para actualizar `graphtyn/api/main.py` con esta especificación UI/UX:
 
 ```html
 <!-- Fragmento HTML/CSS del Sidebar y Tabs en index() -->
@@ -139,6 +139,6 @@ Para actualizar `aether_graph/api/main.py` con esta especificación UI/UX:
 
 ## 6. Próximos Pasos de Implementación
 
-1. Modificar `aether_graph/api/main.py` para incluir la estructura HTML5/CSS3 responsiva con Sidebar y Header Tabs.
+1. Modificar `graphtyn/api/main.py` para incluir la estructura HTML5/CSS3 responsiva con Sidebar y Header Tabs.
 2. Añadir el endpoint backend `@app.post("/api/reindex")` en la API FastAPI para re-escanear el repositorio determinista.
 3. Integrar la visualización diferenciada de topología de agentes en la configuración de `3d-force-graph`.

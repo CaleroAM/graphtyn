@@ -1,0 +1,34 @@
+[
+  {
+    "task_id": "signed-session-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 65.4903,
+    "usage": {
+      "input_tokens": 3967,
+      "output_tokens": 407,
+      "thinking_tokens": 166,
+      "total_tokens": 4540
+    },
+    "tool_calls": 1,
+    "answer": "## Auditoría del ciclo de `SessionMiddleware` (solo evidencia Graphtyn)\n\nClase `SessionMiddleware` en `middleware/sessions.py:16` (N5); relaciones extraídas `declara` → `__init__` (:17), `__call__` (:39), `send_wrapper` (:58), todas **EXTRACTED**. Contexto `eac85c5965ad`, `complete_for: flow`, `do_not_expand: true`.\n\n**1. Primitivas y atributos de seguridad — `__init__` (F1:17)**\n- Firma",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  },
+  {
+    "task_id": "router-dispatch-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 62.4819,
+    "usage": {
+      "input_tokens": 9414,
+      "output_tokens": 1843,
+      "thinking_tokens": 356,
+      "total_tokens": 15453
+    },
+    "tool_calls": 2,
+    "answer": "## Algoritmo de `Router.app` (routing.py:672)\n\n**0. Entrada y guardas**\n- `assert scope[\"type\"] in (\"http\", \"websocket\", \"lifespan\")` y si `\"router\" not in scope` se marca `scope[\"router\"] = self` (routing.py:675-676).\n\n**1. Bucle de coincidencia** — `for route in self.routes:` con `match, child_scope = route.matches(scope)` (routing.py:684).\n\n**2. Coincidencia completa (Match.FULL)** — `scope.update(child_scope)` → `await route.handle(...)` → `return` inmediato (routing.py:688-691). La primera ruta FULL gana.\n\n**3. Coincidencia parcial (Match.PARTIAL)** — solo se recuerda la primera: `elif match == Match.PARTIAL and partial is None: partial = route; partial_scope = child_scope` (routing.py:691-693). Tras el bucle: `if partial is not None:` → `scope.update(partial_scope)` → `partial.handle(...)`. El grafo captura el comentario del código: se usa para \"405 Method Not Allowed\" (routing.py:696-702).\n\n**4. Redirección de slash** — condicionada a `scope[\"type\"] == \"http\"` + `self.redirect_slashes` (por defecto `True`, firma del constructor en routing.py:574) + `route_path != \"/\"` (routing.py:705). Se construye un `redirect_scope` quitando el `/` final (`rstrip(\"/\")`) o añadiéndolo, y se reejecuta el matching sobre todas las rutas (routing.py:712). Si `match != Match.NONE` → `RedirectResponse(url=str(redirect_url))` y `return` (routing.py:714-718).\n\n**5. Fallback final** — el método `Router.not_found` (routing.py:616): para websocket cierra con `WebSocketClose` (routing.py:617-619); para HTTP lanza `HTTPException(status_code=404)` si `\"app\" in scope` (para que sea manejable por excepciones de la app) o responde `PlainTextResponse(\"Not Found\", 404)` (routing.py:625-629). Complementariamente, `BaseRoute.__call__` maneja `Match.NONE` con 404/close cuando una ruta se usa como app aislada (routing.py:184-190). Nota de evidencia: las ops extraídas de `app` cubren hasta la línea 712; el enlace explícito `app → not_found` no aparece como op en el grafo, así que lo señalo como fallback evidenciado en su definición, sin afirmar la línea de llamada exacta.\n\n## Tratamiento de lifespan\n\n- **Despacho**: dentro de `app`, `if scope[\"type\"] == \"lifespan\": await self.lifespan(scope, receive, send); return` (routing.py:678-679). El lifespan se intercepta **antes** del bucle de rutas; nunca pasa por matching.\n- **Configuración**: `Router.__init__` fija `self.lifespan_context` → `_DefaultLifespan(self)` si no se pasa lifespan, `asynccontextmanager(lifespan)` para context manager, `_wrap_gen_lifespan_context` para generador legacy, o directo (routing.py:590-607).\n- **Protocolo**: `Router.lifespan` (routing.py:639) hace `await receive()`, entra en `async with self.lifespan_context(app)` (routing.py:648), actualiza `scope[\"state\"]` si el contexto devuelve estado —con `RuntimeError` si el servidor no soporta `\"state\"` (routing.py:649-652)— y envía `lifespan.startup.complete` (routing.py:653). En error: `lifespan.startup.failed` (routing.py:661) o `lifespan.shutdown.failed` si ya arrancó (routing.py:658-659); al salir envía `lifespan.shutdown.complete` (routing.py:664).\n- **Cliente de pruebas**: `TestClient.lifespan` construye `{\"type\": \"lifespan\", \"state\": self.app_state}` e invoca la misma app (testclient.py:712-714), confirmando que el lifespan entra por el mismo punto de entrada ASGI.\n\nAmbas consultas devolvieron `complete_for=[\"flow\"]` y `do_not_expand=true`; todo lo anterior procede del grafo, sin lectura directa de archivos.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete."
+  }
+]

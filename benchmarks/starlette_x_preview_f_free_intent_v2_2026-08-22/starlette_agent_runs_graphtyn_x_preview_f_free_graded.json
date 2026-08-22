@@ -1,0 +1,222 @@
+[
+  {
+    "task_id": "asgi-middleware-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 134.7957,
+    "usage": {
+      "input_tokens": 4615,
+      "output_tokens": 2606,
+      "thinking_tokens": 924,
+      "total_tokens": 11537
+    },
+    "tool_calls": 1,
+    "answer": "# Flujo ASGI en Starlette según el grafo\n\n## 1. Entrada de la llamada\n- `Starlette.__call__` — **starlette/applications.py:92**: hace `scope[\"app\"] = self` (l.93), comprueba `if self.middleware_stack is None` (l.94), delega en `await self.middleware_stack(scope, receive, send)` (l.96).\n\n## 2. Cuándo se construye la pila\n- **Perezosamente, en la primera llamada ASGI**: `self.middleware_stack = self.build_middleware_stack()` (**applications.py:95**, dentro de `__call__`).\n- Tras eso ya no se puede mutar: `add_middleware` (**applications.py:104**) lanza `RuntimeError(\"Cannot add middleware after an application has started\")` si el stack existe (l.105‑106) e inserta con `insert(0, ...)` (l.107) → el último middleware añadido queda más externo.\n\n## 3. Orden de construcción — `build_middleware_stack` (applications.py:63)\nLas ops del grafo muestran el llenado de la lista:\n1. **l.74**: `middleware = [Middleware(ServerErrorMiddleware, handler=error_handler, debug=debug)]` → primero = más externo.\n2. **l.75‑76**: `if self.max_body_size is not None:` → `middleware.append(Middleware(RequestBodyLimitMiddleware, max_body_size=self.max_body_size))` → condicional, solo si hay límite configurado.\n3. **l.78**: `middleware.append(Middleware(ExceptionMiddleware, handlers=exception_handlers, debug=debug))` → último = más interno.\n4. **l.81**: `for cls, args, kwargs in reversed(middleware): app = cls(app, *args, **kwargs)` → el bucle invertido deja la primera entrada de la lista envolviendo a todas.\n\n*Nota*: la op de la l.77 (incorporación de `user_middleware`) no fue devuelta por el grafo; por el hueco de línea y la semántica de `insert(0)`/`reversed`, el middleware del usuario queda entre el límite de cuerpo y `ExceptionMiddleware` — esto es inferencia, no evidencia directa.\n\n## 4. Orden en ejecución (externo → interno)\n1. **Manejo de errores global** — `ServerErrorMiddleware.__call__` (**starlette/middleware/errors.py:149**): filtra no‑http (l.150), envuelve `send` para marcar `response_started` (l.154), llama `self.app(scope, receive, _send)` (l.164); si hay excepción y `not response_started` responde 500/debug (l.180‑181). Su docstring indica que debe envolver *todo lo demás*.\n2. **Límite del cuerpo** — `__call__` en **starlette/middleware/body_limit.py:71** (`RequestBodyLimitResponder`): escribe `scope[MAX_BODY_SIZE_SCOPE_KEY]` (l.73), delega con `receive_with_limit`/`send_with_limit` (l.89) y puede lanzar `_RequestBodyTooLarge`.\n3. **Middleware del usuario** — patrón cebolla evidenciado en: `BaseHTTPMiddleware.__call__` (**starlette/middleware/base.py:101**, `dispatch`), y ejemplos concretos `SessionMiddleware.__call__` (**sessions.py:39**), `AuthenticationMiddleware.__call__` (**authentication.py:29**), `TrustedHostMiddleware.__call__` (**trustedhost.py:31**) — todos terminan en `self.app(...)`.\n4. **Excepciones manejadas** — `ExceptionMiddleware`, construida en **applications.py:78**; es la última capa creada antes del bucle `reversed`, luego es la más interna de la pila listada.\n5. **Router/endpoint** — el grafo no devolvió la entidad `Router` ni la op inicial `app = …` del bucle (relations vacías, coverage 0), por lo que **no puedo citar el símbolo exacto** que forma la base; lo último evidenciado aguas abajo es la generación de respuesta vía `StreamingResponse.__call__` (**starlette/responses.py:257**).\n\n## Resumen del orden\n```\nASGI → Starlette.__call__ (F1:92, build lazy F1:95)\n  → ServerErrorMiddleware   (errores no manejados, 500)   errors.py:149\n    → RequestBodyLimitMiddleware (si max_body_size)       body_limit.py:71\n      → middleware usuario (BaseHTTPMiddleware/sesión/auth/host)\n        → ExceptionMiddleware (handlers registrados)      construida F1:78\n          → [router — no evidenciado en el grafo]\n```\nDos niveles de error diferenciados: excepciones registradas las atrapa `ExceptionMiddleware` (interna); las no manejadas suben hasta `ServerErrorMiddleware`, que solo puede responder si `response_started` es falso (errors.py:180).",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "entrypoint",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "lazy-stack",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "outer-error",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "body-limit",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "user-middleware",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "inner-exception-router",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "router-dispatch-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 49.4641,
+    "usage": {
+      "input_tokens": 7869,
+      "output_tokens": 1172,
+      "thinking_tokens": 185,
+      "total_tokens": 12618
+    },
+    "tool_calls": 2,
+    "answer": "## Algoritmo de `Router.app` (`starlette/routing.py:672`, clase `Router`)\n\n**0. Entrada:** `assert scope[\"type\"] in (\"http\", \"websocket\", \"lifespan\")` y `scope[\"router\"] = self` (routing.py:675–676).\n\n**1. Coincidencia completa (FULL)** — routing.py:684–691:\n```python\nfor route in self.routes:\n    match, child_scope = route.matches(scope)\n    if match == Match.FULL:\n        scope.update(child_scope)\n        await route.handle(scope, receive, send)\n        return\n```\n`Match` es un enum con `NONE=0, PARTIAL=1, FULL=2` (`Match`, starlette/routing.py:41).\n\n**2. Coincidencia parcial (PARTIAL)** — routing.py:688 + 696: si `match == Match.PARTIAL` y no hay parcial previa, guarda `partial = route` y `partial_scope = child_scope`; tras el bucle:\n```python\nif partial is not None:\n    ...\n    await partial.handle(scope, receive, send)\n```\nEl comentario del grafo lo vincula a **\"405 Method Not Allowed\"**: la ruta existe pero el método no es el preferido.\n\n**3. Redirección de slash** — routing.py:705–716: solo si `scope[\"type\"] == \"http\"`, `self.redirect_slashes` y `route_path != \"/\"`. Se construye `redirect_scope` quitando la barra final (`rstrip(\"/\")`) o añadiéndola (`+ \"/\"`) según la ruta, se reiteran las rutas y si `match != Match.NONE` responde con `RedirectResponse(url=str(redirect_url))`.\n\n**4. Fallback final** — `Router.not_found` (`starlette/routing.py:616`): para websocket envía `WebSocketClose()`; para http lanza `HTTPException(status_code=404)` si hay `\"app\"` en el scope, o devuelve `PlainTextResponse(\"Not Found\", status_code=404)` en caso contrario (routing.py:625–629). El constructor admite además `default: ASGIApp | None = None` (routing.py:574), aunque el grafo solo evidencia la rama `not_found`.\n\n## Tratamiento del lifespan\n\nNo es una petición que recorra rutas: en `app` se despacha antes del bucle — `if scope[\"type\"] == \"lifespan\": await self.lifespan(...); return` (routing.py:678–679). En `Router.lifespan` (routing.py:639):\n- hace un primer `await receive()`,\n- entra en `self.lifespan_context(app)` (línea 648),\n- propaga estado opcional al `scope[\"state\"]` o falla con `RuntimeError` si el servidor no soporta `\"state\"` (650),\n- emite `lifespan.startup.complete` (653), `lifespan.startup.failed`/`shutdown.failed` en error (659/661) y `lifespan.shutdown.complete` al salir (664).\n\nEl contexto viene de `Router.__init__` (routing.py:590–607): por defecto `_DefaultLifespan(self)`; funciones async-generator se envuelven con `asynccontextmanager` (con warning de deprecación) o `_wrap_gen_lifespan_context`; si ya es contexto, se asigna directamente.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "router-app",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "full-match",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "partial-match",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "slash-redirect",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "fallback",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "lifespan",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "signed-session-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 61.7946,
+    "usage": {
+      "input_tokens": 7513,
+      "output_tokens": 1659,
+      "thinking_tokens": 252,
+      "total_tokens": 12816
+    },
+    "tool_calls": 2,
+    "answer": "# Auditoría del ciclo completo de `SessionMiddleware`\n\nFuente única del grafo: `starlette/middleware/sessions.py` (`F1`), clase `SessionMiddleware` (`F1:16`). Relaciones extraídas: la clase declara tres métodos — `__init__` (`F1:17`), `__call__` (`F1:39`) y `send_wrapper` (`F1:58`).\n\n## 0. Inicialización — primitivas y atributos de seguridad (`F1:17`)\n- Firma: `secret_key: str | Secret`, `session_cookie=\"session\"`, `max_age=14*24*60*60` (14 días), `path=\"/\"`, `same_site=\"lax\"` (`Literal[\"lax\",\"strict\",\"none\"]`), `https_only=False`, `domain=None`.\n- Firmante: `self.signer = itsdangerous.TimestampSigner(str(secret_key))` (`F1:29`) — primitiva concreta de firma con timestamp.\n- Flags: `self.security_flags = \"httponly; samesite=\" + same_site` (`F1:33`); si `https_only` → añade `\"; secure\"` (`F1:34-35`); si `domain is not None` → añade `\"; domain=...\"` (`F1:36`).\n\n## 1. Lectura de la cookie (`__call__`, `F1:39`)\n- Scopes que no son `http`/`websocket`: pasa directo al app (`F1:40-42`).\n- `connection = HTTPConnection(scope)` (`F1:44`); `initial_session_was_empty = True` (`F1:45`).\n- Guarda `if self.session_cookie in connection.cookies:` → `data = connection.cookies[...].encode(\"utf-8\")` (`F1:47-48`). El grafo muestra el origen: `HTTPConnection.cookies` (`requests.py:150-159`) parsea los headers vía `headers.getlist(\"cookie\")` + `cookie_parser`.\n\n## 2. Verificación de firma (`F1:50-51`)\n- `data = self.signer.unsign(data, max_age=self.max_age)` — valida firma **y antigüedad** contra `max_age`.\n- Éxito: `scope[\"session\"] = Session(json.loads(b64decode(data)))`; `initial_session_was_empty = False` (`F1:51-52`).\n\n## 3. Estado ante firma inválida (`F1:54`)\n- `except BadSignature: scope[\"session\"] = Session()` — sesión vacía nueva; no hay excepción propagada ni respuesta de error; `initial_session_was_empty` queda en `True`.\n\n## 4–5. Seguimiento de acceso/modificación y escritura (`send_wrapper`, `F1:58`)\nEnvolvente de `send` activada solo para `\"http.response.start\"` (`F1:59`):\n- `session: Session = scope[\"session\"]` y `MutableHeaders(scope=message)` (`F1:60-61`).\n- Acceso: `if session.accessed: headers.add_vary_header(\"Cookie\")` (`F1:62-63`).\n- Modificación con datos: `if session.modified and session:` (`F1:64`) → serializa `b64encode(json.dumps(session).encode(\"utf-8\"))` (`F1:66`), firma `self.signer.sign(data)` (`F1:67`), compone `\"{cookie}={data}; path={path}; {Max-Age}; {security_flags}\"` (`F1:68`) y emite `headers.append(\"Set-Cookie\", header_value)` (`F1:75`).\n- Si no está modificada: no se reescribe la cookie (solo el posible `Vary`); delegación final `self.app(scope, receive, send_wrapper)` (`F1:88`).\n\n## 6. Borrado de cookie (`F1:78`)\nRama alternativa cuando `modified` pero sin datos (sesión limpiada): valor `\"null\"` y caducidad inmediata `expires=Thu, 01 Jan 1970 00:00:00 GMT`, conservando `path` y `security_flags`.\n\nCobertura declarada por el grafo: `complete=true`, todas las ops provienen de evidencia extraída (E); ninguna relación inferida o ambigua fue necesaria.",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 5,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.9167,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.9167,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "signer",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "decode",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "invalid",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "tracking",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "persist",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "delete-security",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "cors-decision-flow",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 80.5565,
+    "usage": {
+      "input_tokens": 3430,
+      "output_tokens": 255,
+      "thinking_tokens": 77,
+      "total_tokens": 3762
+    },
+    "tool_calls": 2,
+    "answer": "Evidencia del grafo: `F1 = starlette/middleware/cors.py`, clase `CORSMiddleware` (N9, F1:15).\n\n## Flujo de entrada (`__call__`, N3, F1:78)\n\n1. **Sin `Origin`:** `origin = headers.get(\"origin\")` (F1:85) y `if origin is None: await self.app(scope, receive, send); return` (F1:87-88). La petición pasa íntegra a la app, sin cabeceras CORS ni validación alguna.\n2. **Preflight:** `if method == \"OPTIONS\" and \"access-control-request-method\" in headers:` → se responde con `self.preflight_response(request_headers=headers)` y `return` (F1:91-93). Nunca llega a la app.\n3. **Resto (respuestas simples):** `self.simple_response(...)` (F1:96).\n\n## Preflight (`preflight_response`, N2, F1:107)\n\nLee de la petición: `requested_origin` (108), `access-control-request-method` (109), `access-control-request-headers` (110) y `access-control-request-private-network` (111). Copia `dict(self.preflight_headers)` (113) y acumula rechazos en una lista `failures`:\n\n- **Origen:** `if self.is_allowed_origin(origin=requested_origin)` y si `preflight_explicit_allow_origin` → `headers[\"Access-Control-Allow-Origin\"] = requested_origin`; si falla → `failures.append(\"origin\")` (F1:116-118).\n- **Cabeceras pedidas:** con comodín (`allow_all_headers`) se espeja la lista tal cual (129-130); sin comodín, cada cabecera se compara en minúsculas (`[h.lower() for h in requested_headers.split(\",\")]`) contra `self.allow_headers`; cualquier fallo → `failures.append(\"headers\"); break` (129-133).\n- **Red privada:** `if requested_private_network is not None:` → si `allow_private_network`, `headers[\"Access-Control-Allow-Private-Network\"] = \"true\"` (138-139); si no, `failures.append(\"private-network\")`.\n\nNota: el grafo no devolvió el op explícito que valida `requested_method` contra `allow_methods` (solo su lectura en F1:109 y el patrón `failures`), así que no afirmo su forma exacta. Tampoco expuso el constructor de la respuesta de rechazo; lo único evidenciado es que los rechazos se acumulan en `failures` para origin/headers/private-network antes de emitir respuesta.\n\n## Validación de origen (`is_allowed_origin`, N5, F1:98)\n\nTres reglas en orden: (1) `allow_all_origins` → `True`; (2) `allow_origin_regex.fullmatch(origin)` → `True` (coincidencia completa); (3) pertenencia exacta a",
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "covered": 5,
+    "partial": 1,
+    "total": 6,
+    "quality_score": 0.9167,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.9167,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "no-origin",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "preflight",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "simple",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "origin-validation",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "method-headers",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "private-failure",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  }
+]
