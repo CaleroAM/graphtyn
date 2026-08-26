@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from graphtyn.core.adapters import install_adapter, list_adapters, remove_adapter, validate_manifest
-from graphtyn.core.deployment import apply_setup, detect_environment, rotate_token, service_artifact
+from graphtyn.core.deployment import apply_setup, detect_environment, manage_user_service, rotate_token, service_artifact
 from graphtyn.core.memory_admin import backup_memory, restore_memory, verify_backup
 from graphtyn.core.memory_extraction import deterministic_proposals
 from graphtyn.core.shared_memory import SharedMemoryStore
@@ -35,8 +35,43 @@ def test_service_artifacts_have_no_machine_hardcodes(tmp_path, monkeypatch):
     systemd = service_artifact(project, kind="systemd", output=tmp_path / "graphtyn.service")
     compose = service_artifact(project, kind="compose", output=tmp_path / "compose.yml")
     assert "Restart=on-failure" in systemd.read_text()
+    assert "serve --host 127.0.0.1 --port 9210 --path" in systemd.read_text()
+    assert " --watch " not in systemd.read_text()
+    assert 'ExecStart="' in systemd.read_text()
+    assert "WantedBy=default.target" in systemd.read_text()
+    assert "Environment=GRAPHTYN_WATCH_INTERVAL=10" in systemd.read_text()
     assert "GRAPHTYN_MEMORY_TOKENS_FILE" in compose.read_text()
     assert "192.168." not in systemd.read_text() + compose.read_text()
+    watched = service_artifact(project, kind="systemd", output=tmp_path / "watched.service", watch=True)
+    assert " --watch --path" in watched.read_text()
+
+
+def test_user_service_management_uses_unprivileged_systemctl(monkeypatch, tmp_path):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    calls = []
+    class Result:
+        returncode = 0
+        stdout = "active"
+        stderr = ""
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        return Result()
+    enabled = manage_user_service("enable", run=fake_run)
+    assert enabled["ok"] and enabled["dashboard"] == "http://127.0.0.1:9210"
+    assert calls == [["systemctl", "--user", "daemon-reload"],
+                     ["systemctl", "--user", "enable", "--now", "graphtyn-dashboard.service"],
+                     ["systemctl", "--user", "restart", "graphtyn-dashboard.service"]]
+    assert all("sudo" not in command for command in calls)
+
+
+def test_user_service_status_propagates_failure():
+    class Result:
+        returncode = 3
+        stdout = "inactive"
+        stderr = ""
+    result = manage_user_service("status", run=lambda *args, **kwargs: Result())
+    assert result["ok"] is False
+    assert result["steps"][0]["command"][2] == "is-active"
 
 
 def test_token_rotation_uses_private_file_and_scopes(tmp_path):

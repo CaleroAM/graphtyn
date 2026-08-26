@@ -129,7 +129,7 @@ export async function loadMemoryOverview() {
     try {
       const path = encodeURIComponent(state.activePath);
       const [info, sessions] = await Promise.all([
-        request(`/api/memory/status?path=${path}`), request(`/api/memory/sessions?path=${path}&limit=20`)
+        request(`/api/memory/status?path=${path}`), request(`/api/memory/sessions?path=${path}&limit=100`)
       ]);
       let freshness = '';
       if (info.last_capture_at) {
@@ -141,7 +141,7 @@ export async function loadMemoryOverview() {
     if (legend) legend.innerHTML = '<div class="memory-empty">Abre el mapa para ver la atribución por agente.</div>';
     document.getElementById('memory-sessions').innerHTML = sessions.sessions.length ? sessions.sessions.map(item => `
       <article class="memory-card memory-session-card" data-session-id="${esc(item.id)}" onclick="openSessionDetail(this.dataset.sessionId)">
-        <div class="memory-card-head"><span>${esc(item.agent_id)}</span><span class="memory-pill">${esc(item.status)}</span></div>
+        <div class="memory-card-head"><span>${esc(item.agent_id)}</span><span class="memory-pill">${item.id.startsWith('ses_ext_') ? 'histórica · ' : ''}${esc(item.status)}</span></div>
         <div class="memory-card-content">${esc(item.task)}</div>
         <div class="memory-card-meta">${esc(item.branch || 'sin rama')} · ${item.memories} memorias · ver detalle →</div></article>`).join('') : '<div class="memory-empty">Sin sesiones registradas.</div>';
   } catch (error) { status.textContent = `No se pudo cargar: ${error.message}`; }

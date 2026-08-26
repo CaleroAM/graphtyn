@@ -42,6 +42,27 @@ def test_openclaw_history_discovery_preserves_attribution(tmp_path):
     assert discovered["sessions"][0]["fingerprint"]
 
 
+def test_discovery_ignores_skill_templates_that_look_like_conversations(tmp_path):
+    source = tmp_path / "hermes"
+    template = source / "profiles" / "dev" / "skills" / "sample" / "templates" / "prefill.json"
+    template.parent.mkdir(parents=True)
+    template.write_text(json.dumps({"messages": [
+        {"role": "user", "content": "template prompt"},
+        {"role": "assistant", "content": "template completion"},
+    ]}), encoding="utf-8")
+    db = source / "profiles" / "dev" / "state.db"
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE messages(session_id TEXT, role TEXT, content TEXT)")
+    conn.executemany("INSERT INTO messages VALUES(?,?,?)", [
+        ("real", "user", "real question"), ("real", "assistant", "real answer")])
+    conn.commit(); conn.close()
+
+    discovered = discover_histories("hermes", [str(source)])
+
+    assert discovered["count"] == 1
+    assert discovered["sessions"][0]["external_session_id"] == "real"
+
+
 def test_invalid_ssh_history_source_is_rejected_without_execution():
     result = discover_histories("openclaw", ["ssh://bad host/tmp/history"])
     assert result["count"] == 0

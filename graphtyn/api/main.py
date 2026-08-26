@@ -47,7 +47,7 @@ async def lifespan(_app: FastAPI):
     watch_manager.stop_all()
 
 
-app = FastAPI(title="Graphtyn API", version="0.6.0b1", lifespan=lifespan)
+app = FastAPI(title="Graphtyn API", version="0.6.0", lifespan=lifespan)
 
 # Central writable index store — user home ~/.graphtyn/
 INDEX_STORE = data_home()
@@ -555,7 +555,7 @@ def generate_semantic_graph(data: dict) -> dict:
 
 @app.get("/health")
 def health_check():
-    return JSONResponse({"status": "ok", "service": "Graphtyn", "version": "0.6.0b1"})
+    return JSONResponse({"status": "ok", "service": "Graphtyn", "version": "0.6.0"})
 
 
 @app.get("/api/history")
@@ -1267,7 +1267,7 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
     req_id = payload.get("id")
     method = payload.get("method")
     if method == "initialize":
-        result = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "graphtyn-http", "version": "0.6.0b1"}}
+        result = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "graphtyn-http", "version": "0.6.0"}}
     elif method == "tools/list":
         result = {"tools": _http_mcp_tools()}
     elif method == "tools/call":

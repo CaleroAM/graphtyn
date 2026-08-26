@@ -345,6 +345,8 @@ def test_attribution_graph_colors_creator_and_context_consumer(tmp_path, monkeyp
 
     assert nodes["memory-agent:antigravity"]["agent_color"] == nodes[f"memory:{memory['id']}"]["agent_color"]
     assert f"memory-file:src/auth.py" in nodes
+    assert f"memory-session:{session['id']}" in nodes
+    assert any(link["label"] == "produjo" and link["target"] == f"memory:{memory['id']}" for link in graph["links"])
     assert any(link["label"] == "creó memoria" and link["target"] == f"memory:{memory['id']}" for link in graph["links"])
     assert any(link["label"] == "consultó" and link["source"] == "memory-agent:nexus" for link in graph["links"])
     assert [a["id"] for a in graph["agents"]] == ["antigravity"]

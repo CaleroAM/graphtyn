@@ -499,7 +499,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.6.0b1"}
+                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.6.0"}
                 }
             }
         elif method == "tools/list":

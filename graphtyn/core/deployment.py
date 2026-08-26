@@ -4,6 +4,8 @@ import json
 import os
 import secrets
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 from .history_import import default_sources, save_source
@@ -36,15 +38,60 @@ def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str
     return {"ok": True, "project": str(project), "agents": installed, "sources": configured,
             "token_file": str(token_file) if token_file else None}
 
-def service_artifact(project: Path, *, kind: str, output: Path, interval: float = 10) -> Path:
+def service_artifact(project: Path, *, kind: str, output: Path, interval: float = 10,
+                     watch: bool = False) -> Path:
     project, output = project.resolve(), output.expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     if kind == "systemd":
-        content = f"""[Unit]\nDescription=Graphtyn conversation synchronization\nAfter=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nExecStart={shutil.which('graphtyn') or 'graphtyn'} memory sync --consent --watch --interval {interval:g} --path {project}\nRestart=on-failure\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
+        # Do not resolve the interpreter symlink: virtualenv/pipx launchers live
+        # beside sys.executable even when it points into Nix/store or /usr.
+        adjacent_cli = Path(sys.executable).absolute().with_name("graphtyn")
+        executable = str(adjacent_cli) if adjacent_cli.is_file() else (shutil.which("graphtyn") or "graphtyn")
+        watch_flag = " --watch" if watch else ""
+        content = f"""[Unit]\nDescription=Graphtyn persistent dashboard\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nEnvironment=GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}\nExecStart=\"{executable}\" serve --host 127.0.0.1 --port 9210{watch_flag} --path \"{project}\"\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
     elif kind == "compose":
         content = f"""services:\n  graphtyn:\n    image: graphtyn:latest\n    command: [\"serve\",\"--host\",\"0.0.0.0\",\"--port\",\"9210\",\"--path\",\"/workspace\",\"--watch\"]\n    ports: [\"127.0.0.1:9210:9210\"]\n    volumes:\n      - {project}:/workspace:ro\n      - graphtyn-state:/state\n    environment:\n      GRAPHTYN_HOME: /state\n      GRAPHTYN_MEMORY_TOKENS_FILE: /run/secrets/graphtyn_tokens\n    secrets: [graphtyn_tokens]\n    restart: unless-stopped\nsecrets:\n  graphtyn_tokens:\n    file: ./memory-tokens.json\nvolumes:\n  graphtyn-state:\n"""
     else: raise ValueError("kind debe ser systemd o compose")
     output.write_text(content, encoding="utf-8"); return output
+
+
+def default_service_output(kind: str) -> Path:
+    if kind == "systemd":
+        return Path.home() / ".config" / "systemd" / "user" / "graphtyn-dashboard.service"
+    if kind == "compose":
+        return Path.cwd() / "compose.graphtyn.yml"
+    raise ValueError("kind debe ser systemd o compose")
+
+
+def manage_user_service(action: str, *, unit: str = "graphtyn-dashboard.service",
+                        run=subprocess.run) -> dict[str, Any]:
+    """Manage the generated systemd user unit without requiring root."""
+    if action not in {"enable", "start", "stop", "restart", "status", "uninstall"}:
+        raise ValueError("acción de servicio inválida")
+    unit_path = Path.home() / ".config" / "systemd" / "user" / unit
+    commands: list[list[str]] = []
+    if action == "enable":
+        commands = [["systemctl", "--user", "daemon-reload"],
+                    ["systemctl", "--user", "enable", "--now", unit],
+                    ["systemctl", "--user", "restart", unit]]
+    elif action == "uninstall":
+        commands = [["systemctl", "--user", "disable", "--now", unit],
+                    ["systemctl", "--user", "daemon-reload"]]
+    else:
+        verb = "is-active" if action == "status" else action
+        commands = [["systemctl", "--user", verb, unit]]
+    outputs = []
+    for command in commands:
+        result = run(command, capture_output=True, text=True, check=False)
+        outputs.append({"command": command, "returncode": result.returncode,
+                        "stdout": result.stdout.strip(), "stderr": result.stderr.strip()})
+        # `disable` may report an already inactive unit; continue so daemon-reload runs.
+        if result.returncode and not (action == "uninstall" and command[2] == "disable"):
+            return {"ok": False, "action": action, "unit": unit, "steps": outputs}
+        if action == "uninstall" and command[2] == "disable" and unit_path.exists():
+            unit_path.unlink()
+    return {"ok": True, "action": action, "unit": unit, "steps": outputs,
+            "dashboard": "http://127.0.0.1:9210"}
 
 def rotate_token(*, role: str = "admin", projects: list[str] | None = None,
                  path: Path | None = None, keep_existing: bool = False) -> dict[str, Any]:

@@ -1048,10 +1048,15 @@ class SharedMemoryStore:
             rows = conn.execute("""SELECT * FROM memories
                 WHERE status != 'deleted' AND (scope != 'private' OR agent_id = ?)
                 ORDER BY created_at DESC LIMIT ?""", (requester, limit)).fetchall()
+            session_rows = conn.execute("""SELECT s.*, COUNT(m.id) AS memories
+                FROM sessions s LEFT JOIN memories m ON m.session_id=s.id AND m.status!='deleted'
+                GROUP BY s.id ORDER BY s.started_at DESC LIMIT ?""", (limit,)).fetchall()
             telemetry = conn.execute("""SELECT agent_id,metadata_json,timestamp FROM memory_telemetry
                 WHERE operation='context' AND agent_id IS NOT NULL ORDER BY timestamp DESC LIMIT 1000""").fetchall()
         memories = [self._row(row) for row in rows]
-        creators = {self._resolve_agent(item["agent_id"]) for item in memories}
+        sessions = [dict(row) for row in session_rows]
+        creators = ({self._resolve_agent(item["agent_id"]) for item in memories}
+                    | {self._resolve_agent(item["agent_id"]) for item in sessions})
         consulters: set[str] = set()
         for row in telemetry:
             agent = self._resolve_agent(row["agent_id"])
@@ -1075,6 +1080,19 @@ class SharedMemoryStore:
             return node_id
 
         memory_ids = {item["id"] for item in memories}
+        for item in sessions:
+            agent = self._resolve_agent(item["agent_id"])
+            add_agent(agent)
+            session_node = f"memory-session:{item['id']}"
+            historical = str(item["id"]).startswith("ses_ext_")
+            nodes[session_node] = {"id": session_node, "session_id": item["id"],
+                "name": item["task"] or "Conversación", "kind": "memory_session",
+                "agent_id": agent, "agent_color": colors[agent], "status": item["status"],
+                "historical": historical, "created_at": item["started_at"],
+                "details": ("Conversación histórica" if historical else "Conversación")
+                           + f" de {agent} · {item['memories']} memorias", "val": 8}
+            links.append({"source": f"memory-agent:{agent}", "target": session_node,
+                          "label": "participó", "confidence": "EXTRACTED", "agent_color": colors[agent]})
         for item in memories:
             agent, memory_id = self._resolve_agent(item["agent_id"]), f"memory:{item['id']}"
             add_agent(agent)
@@ -1086,6 +1104,10 @@ class SharedMemoryStore:
                 "node_ids": item["node_ids"], "val": 9}
             links.append({"source": f"memory-agent:{agent}", "target": memory_id,
                           "label": "creó memoria", "confidence": "EXTRACTED", "agent_color": colors[agent]})
+            session_node = f"memory-session:{item['session_id']}"
+            if session_node in nodes:
+                links.append({"source": session_node, "target": memory_id, "label": "produjo",
+                              "confidence": "EXTRACTED", "agent_color": colors[agent]})
             if item.get("supersedes_id") and item["supersedes_id"] in memory_ids:
                 links.append({"source": memory_id, "target": f"memory:{item['supersedes_id']}",
                               "label": "corrige", "confidence": "EXTRACTED", "agent_color": colors[agent]})
@@ -1115,7 +1137,8 @@ class SharedMemoryStore:
                 "consulters": [{"id": agent, "color": colors[agent]} for agent in sorted(consulters)],
                 "metadata": {"storage": "memory-v2.db", "scope": "project", "color_basis": "agent_id",
                              "aliases": load_config_aliases()},
-                "legend": {"creó memoria": "autoría", "consultó": "recuperación", "corrige": "supersesión",
+                "legend": {"participó": "conversación", "produjo": "memoria derivada",
+                           "creó memoria": "autoría", "consultó": "recuperación", "corrige": "supersesión",
                            "respalda": "archivo o nodo del proyecto"}}
 
     def telemetry_summary(self, limit: int = 1000) -> dict[str, Any]:

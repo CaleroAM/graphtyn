@@ -2,7 +2,7 @@
 
 ## Versiones soportadas
 
-Durante la beta sólo la versión `0.6.x` recibe correcciones de seguridad.
+La serie estable `0.6.x` recibe correcciones de seguridad.
 
 ## Reportar una vulnerabilidad
 
@@ -12,7 +12,7 @@ para enviar un aviso privado. Hasta entonces, comunica el hallazgo por el canal
 privado usado para recibir el código y proporciona versión, impacto, reproducción
 mínima y mitigación propuesta. Se confirmará recepción antes de divulgar detalles.
 
-## Modelo de seguridad de la beta
+## Modelo de seguridad
 
 - El dashboard debe escuchar en `127.0.0.1`; no se recomienda exposición directa.
 - MCP HTTP requiere token cuando sale de un proceso local confiable.
@@ -24,4 +24,3 @@ mínima y mitigación propuesta. Se confirmará recepción antes de divulgar det
 
 Para red compartida o producción empresarial añade proxy TLS, autenticación,
 rate limiting, gestión de secretos y políticas de retención externas.
-

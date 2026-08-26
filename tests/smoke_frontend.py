@@ -71,6 +71,9 @@ def main():
     proj.mkdir()
     (proj / "a.py").write_text("def helper():\n    return 42\n", encoding="utf-8")
     (proj / "b.py").write_text("from a import helper\n\nprint(helper())\n", encoding="utf-8")
+    proj2 = tmp / "proj-two"
+    proj2.mkdir()
+    (proj2 / "worker.py").write_text("def work():\n    return 'ok'\n", encoding="utf-8")
     home = tmp / "home"
     home.mkdir()
 
@@ -89,6 +92,36 @@ def main():
         assert r.returncode == 0, r.stderr
         body = json.loads(r.stdout)
         assert body.get("ok") and body.get("nodes", 0) > 0, r.stdout
+
+        # Seed attributed memory through the public CLI so the browser must
+        # render a real agent -> memory -> file graph, not merely an empty view.
+        started = subprocess.run(
+            [str(ROOT / ".venv" / "bin" / "graphtyn"), "memory", "session-start",
+             "--agent", "smoke-agent", "--task", "Dashboard memory smoke", "--capture",
+             "--path", str(proj)], cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=30)
+        assert started.returncode == 0, started.stderr
+        session_id = json.loads(started.stdout)["id"]
+        checkpoint = subprocess.run(
+            [str(ROOT / ".venv" / "bin" / "graphtyn"), "memory", "checkpoint",
+             "--session", session_id, "--kind", "outcome", "--title", "Memory graph visible",
+             "--content", "The dashboard renders attributed project memory automatically.",
+             "--scope", "project", "--files", "a.py", "--nodes", "symbol:a.py:helper",
+             "--tests", "tests/smoke_frontend.py", "--path", str(proj)],
+            cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=30)
+        assert checkpoint.returncode == 0, checkpoint.stderr
+        started2 = subprocess.run(
+            [str(ROOT / ".venv" / "bin" / "graphtyn"), "memory", "session-start",
+             "--agent", "smoke-agent-two", "--task", "Second project memory", "--capture",
+             "--path", str(proj2)], cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=30)
+        assert started2.returncode == 0, started2.stderr
+        session2 = json.loads(started2.stdout)["id"]
+        checkpoint2 = subprocess.run(
+            [str(ROOT / ".venv" / "bin" / "graphtyn"), "memory", "checkpoint",
+             "--session", session2, "--kind", "decision", "--title", "Second graph isolated",
+             "--content", "Project switching must never reuse another project's graph response.",
+             "--scope", "project", "--files", "worker.py", "--path", str(proj2)],
+            cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=30)
+        assert checkpoint2.returncode == 0, checkpoint2.stderr
 
         with sync_playwright() as pw:
             launch = {"args": ["--no-sandbox"]}
@@ -110,6 +143,12 @@ def main():
 
             page.goto(f"{BASE}/", timeout=30000)
             page.wait_for_selector("#stats", timeout=30000)
+            page.wait_for_selector("#modal-welcome.show", state="visible")
+            assert page.locator("#welcome-dashboard-url").inner_text() == BASE
+            assert "primera vez" in page.locator("#modal-welcome").inner_text().lower()
+            page.click("#welcome-start")
+            assert page.locator("#modal-welcome").evaluate("el => !el.classList.contains('show')")
+            assert page.evaluate("localStorage.getItem('graphtyn.welcome.0.6.0')") == "seen"
             page.wait_for_timeout(2500)
             page.evaluate("path => selectProject(path)", str(proj))
             page.wait_for_timeout(1500)
@@ -145,6 +184,20 @@ def main():
             assert page.locator("#dd-viewport #btn-3d").count() == 1
             page.keyboard.press("Escape")
             assert page.locator("#dd-viewport").evaluate("el => !el.classList.contains('open')")
+
+            # Header menus own the foreground while open: floating MCP/actions/reindex
+            # controls must not cover filter fields such as "Tipo de nodo".
+            page.click("#dd-filter > button")
+            page.wait_for_selector("#dd-filter.open .dd-panel", state="visible")
+            filter_panel = page.locator("#dd-filter .dd-panel").bounding_box()
+            assert filter_panel and filter_panel["y"] + filter_panel["height"] <= 900, "panel Filtros sale del viewport"
+            assert "tipo de nodo" in page.locator("#dd-filter").inner_text().lower()
+            floating_state = page.locator(".float-actions").evaluate(
+                "el => { const s=getComputedStyle(el); return {visibility:s.visibility,pointerEvents:s.pointerEvents,opacity:s.opacity,bodyClass:document.body.className,filterClass:document.getElementById('dd-filter').className}; }"
+            )
+            visually_absent = floating_state["visibility"] == "hidden" or float(floating_state["opacity"]) == 0
+            assert visually_absent and floating_state["pointerEvents"] == "none", f"MCP/Acciones/Reindexar cubren el panel Filtros: {floating_state}"
+            page.keyboard.press("Escape")
 
             page.click("#dd-actions > button")
             page.wait_for_selector("#dd-actions.open .action-menu", state="visible")
@@ -202,6 +255,24 @@ def main():
             page.wait_for_function("() => !document.querySelector('#memory-results').innerText.includes('Buscando contexto')", timeout=5000)
             assert page.locator("#memory-results").inner_text().strip()
             page.evaluate("closeMemoryPanel()")
+
+            page.evaluate("setView('memory')")
+            page.wait_for_function(
+                "() => document.querySelector('#stats').innerText.includes('nodos') && !document.querySelector('#stats').innerText.includes('Cargando')",
+                timeout=15000)
+            assert "Memoria compartida" in page.locator("#model-badge").inner_text()
+            page.wait_for_selector("#memory-legend-overlay", state="visible", timeout=5000)
+            assert "smoke-agent" in page.locator("#memory-legend-overlay").inner_text()
+            assert page.locator("#graph-container canvas").count() >= 1, "grafo visual de memoria no renderizado"
+
+            # Switch projects while requests from the previous view may still be
+            # in flight; only the newest project's memory may paint the canvas.
+            page.evaluate("path => selectProject(path)", str(proj2))
+            page.evaluate("setView('memory')")
+            page.wait_for_function(
+                "() => document.querySelector('#memory-legend-overlay')?.innerText.includes('smoke-agent-two')",
+                timeout=15000)
+            assert "smoke-agent\n" not in page.locator("#memory-legend-overlay").inner_text()
 
             page.evaluate("setView('semantic')")
             page.wait_for_timeout(1500)

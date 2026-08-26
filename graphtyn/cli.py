@@ -85,12 +85,17 @@ def main():
     for action in ("install", "validate"):
         item = adapter_sub.add_parser(action); item.add_argument("manifest")
     remove_adapter_p = adapter_sub.add_parser("remove"); remove_adapter_p.add_argument("name")
-    service_p = subparsers.add_parser("service", help="Genera integración systemd o Docker Compose")
+    service_p = subparsers.add_parser("service", help="Instala y administra el dashboard persistente")
     service_sub = service_p.add_subparsers(dest="service_action", required=True)
     service_install = service_sub.add_parser("install")
     service_install.add_argument("--kind", choices=["systemd", "compose"], default="systemd")
-    service_install.add_argument("--output", required=True); service_install.add_argument("--interval", type=float, default=10)
+    service_install.add_argument("--output", default=None); service_install.add_argument("--interval", type=float, default=10)
     service_install.add_argument("--path", default=".")
+    service_install.add_argument("--enable", action="store_true", help="Activa el servicio systemd ahora y al iniciar sesión")
+    service_install.add_argument("--watch", action="store_true", help="Activa reindexación automática (puede usar CPU en repositorios grandes)")
+    for service_action in ("start", "stop", "restart", "status", "uninstall"):
+        service_command = service_sub.add_parser(service_action)
+        service_command.add_argument("--unit", default="graphtyn-dashboard.service")
     backup_p = subparsers.add_parser("backup", help="Crea o verifica backup de memoria")
     backup_p.add_argument("--output", required=True); backup_p.add_argument("--path", default=".")
     verify_backup_p = subparsers.add_parser("backup-verify"); verify_backup_p.add_argument("backup")
@@ -371,6 +376,8 @@ def main():
     bootstrap_p.add_argument("--path", default=".")
     projects_p = memory_sub.add_parser("projects", help="Lista identidades globales de proyectos y alias")
     projects_p.add_argument("--path", default=".")
+    projects_p.add_argument("--alias", action="append", default=[],
+                            help="Alias local o ruta remota equivalente al proyecto (repetible)")
     sync_p = memory_sub.add_parser("sync", help="Importa incrementalmente historiales nuevos o modificados")
     sync_p.add_argument("--provider", default=None, help="Proveedor/adaptador")
     sync_p.add_argument("--source", action="append", default=[])
@@ -419,7 +426,7 @@ def main():
     serve_p.add_argument("--reload", action="store_true", help="Habilitar recarga automática en vivo")
     serve_p.add_argument("--watch", action="store_true", help="Reindexa automáticamente proyectos al cambiar archivos")
     serve_p.add_argument("--mcp-token", default=None, help="Activa MCP HTTP con este token Bearer (preferible: GRAPHTYN_MCP_TOKEN)")
-    serve_p.add_argument("--host", default="0.0.0.0", help="Host")
+    serve_p.add_argument("--host", default="127.0.0.1", help="Host (predeterminado: sólo acceso local)")
     serve_p.add_argument("--port", type=int, default=9210, help="Puerto")
     serve_p.add_argument("--path", default=".", help="Ruta del proyecto")
     serve_p.add_argument("--ssl-certfile", default=None)
@@ -458,9 +465,24 @@ def main():
         else: result = {"ok": True, "removed": remove_adapter(args.name)}
         print(json.dumps(result, ensure_ascii=False, indent=2))
     elif args.command == "service":
-        from .core.deployment import service_artifact
-        output = service_artifact(root, kind=args.kind, output=Path(args.output), interval=args.interval)
-        print(json.dumps({"ok": True, "kind": args.kind, "output": str(output)}, indent=2))
+        from .core.deployment import default_service_output, manage_user_service, service_artifact
+        if args.service_action == "install":
+            output_path = Path(args.output).expanduser() if args.output else default_service_output(args.kind)
+            output = service_artifact(root, kind=args.kind, output=output_path, interval=args.interval,
+                                      watch=args.watch)
+            result = {"ok": True, "kind": args.kind, "output": str(output),
+                      "dashboard": "http://127.0.0.1:9210"}
+            if args.enable:
+                if args.kind != "systemd":
+                    parser.error("--enable sólo aplica a systemd; para Compose use docker compose up -d")
+                result["activation"] = manage_user_service("enable", unit=output.name)
+                result["ok"] = result["activation"]["ok"]
+            print(json.dumps(result, indent=2))
+            if not result["ok"]: raise SystemExit(1)
+        else:
+            result = manage_user_service(args.service_action, unit=args.unit)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            if not result["ok"]: raise SystemExit(1)
     elif args.command == "token":
         from .core.deployment import rotate_token
         result = rotate_token(role=args.role, projects=args.project,
@@ -477,7 +499,7 @@ def main():
     elif args.command == "init":
         dot_dir = root / ".graphtyn"
         dot_dir.mkdir(exist_ok=True)
-        config = {"version": "0.6.0b1", "name": root.name}
+        config = {"version": "0.6.0", "name": root.name}
         (dot_dir / "graphtyn.json").write_text(json.dumps(config, indent=2))
         print(f"✓ Inicializado .graphtyn/ en {root}")
         gi = root / ".gitignore"
@@ -831,7 +853,7 @@ def main():
                 result["output"] = str(output)
             print(json.dumps(result, ensure_ascii=False, indent=2))
         elif args.memory_action == "projects":
-            current = ProjectIdentityRegistry().register(Path(args.path))
+            current = ProjectIdentityRegistry().register(Path(args.path), aliases=args.alias)
             print(json.dumps({"ok": True, "current": current,
                               "projects": ProjectIdentityRegistry().list()}, ensure_ascii=False, indent=2))
         elif args.memory_action == "sync":
@@ -956,7 +978,12 @@ def main():
         if args.mcp_token:
             os.environ["GRAPHTYN_MCP_TOKEN"] = args.mcp_token
         os.environ["GRAPHTYN_MCP_PATH"] = str(root)
-        print(f"🚀 Servidor Graphtyn escuchando en http://{args.host}:{args.port} (Hot-Reloading={args.reload}, Watch={args.watch})")
+        scheme = "https" if args.ssl_certfile and args.ssl_keyfile else "http"
+        dashboard_host = "127.0.0.1" if args.host in {"0.0.0.0", "::"} else args.host
+        print("\n🌌 Graphtyn está listo")
+        print(f"   Dashboard: {scheme}://{dashboard_host}:{args.port}")
+        print(f"   Proyecto:  {root}")
+        print(f"   Servidor:  {args.host}:{args.port} · Recarga={args.reload} · Watch={args.watch}\n", flush=True)
         if args.reload:
             uvicorn.run("graphtyn.api.main:app", host=args.host, port=args.port, reload=True,
                         ssl_certfile=args.ssl_certfile, ssl_keyfile=args.ssl_keyfile)

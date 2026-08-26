@@ -326,6 +326,11 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                 files = ([root] if root.is_file() else [p for p in root.rglob("*.jsonl") if ".trajectory." not in p.name]
                          + list(root.rglob("*.json"))
                          + list(root.rglob("*.db")) + list(root.rglob("*.sqlite")) + list(root.rglob("*.sqlite3")))
+                # Agent distributions often bundle prompts and skill fixtures that
+                # happen to use role/content fields. They are not conversations.
+                ignored_parts = {"skills", "templates", "examples", "fixtures", "node_modules", ".git"}
+                files = [path for path in files if not ignored_parts.intersection(
+                    part.casefold() for part in path.relative_to(root).parts[:-1])]
                 for path in files:
                     parser = parse_history_database if path.suffix.casefold() in {".db", ".sqlite", ".sqlite3"} else parse_history_file
                     for session in parser(path, name):

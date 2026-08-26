@@ -12,6 +12,8 @@ export const state = {
   linkStyle: 'solid',
   regMode: 'single_folder',
   graphInst: null,
+  graphLoadId: 0,
+  graphRequestController: null,
   fullData: { nodes: [], links: [] },
   respectMap: {},
   graphStyle: 'standard',

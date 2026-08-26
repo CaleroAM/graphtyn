@@ -15,6 +15,7 @@ export function toggleDD(id) {
         const button = el.querySelector(':scope > button');
         if (button) button.setAttribute('aria-expanded', 'true');
       }
+      document.body.classList.toggle('header-menu-open', Boolean(document.querySelector('header .dd-wrap.open')));
     }
 
 export function openRegister() {

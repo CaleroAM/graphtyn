@@ -19,7 +19,25 @@ modelo.
 
 `graphtyn setup` detecta primero y sólo escribe con `--apply`. Los adaptadores se
 gestionan con `graphtyn adapter`; las fuentes con `memory sources
-add|test|remove|list`. `service install` genera systemd o Compose sin activarlos.
+add|test|remove|list`. `service install --kind systemd --enable` instala y activa
+el dashboard persistente como servicio del usuario; Compose sólo genera el
+artefacto para conservar control explícito sobre Docker.
+
+El ciclo operativo completo no requiere privilegios root:
+
+```bash
+graphtyn service install --kind systemd --path /ruta/proyecto --enable
+graphtyn service status
+graphtyn service stop
+graphtyn service start
+graphtyn service restart
+graphtyn service uninstall
+```
+
+El servicio escucha exclusivamente en `http://127.0.0.1:9210` y conserva la ruta
+absoluta del ejecutable instalado para funcionar con pipx, virtualenv y NixOS.
+El watch incremental es opcional mediante `--watch --interval 10`, evitando que
+una reindexación pesada retrase el grafo de memoria por defecto.
 Los tokens pueden residir en `GRAPHTYN_MEMORY_TOKENS_FILE` y rotarse por rol.
 
 `graphtyn backup` usa la API de backup SQLite; `backup-verify` comprueba SHA-256
@@ -61,11 +79,23 @@ Admite historiales JSON/JSONL anidados y bases SQLite con columnas comunes de
 sesión, rol y contenido. Cada adaptador normaliza hacia el mismo `ingest_turn`,
 por lo que redacción, compactación, embeddings y deduplicación no se bifurcan.
 Las fechas originales se conservan separadas de la fecha de ingesta.
+Cuando cambió la ruta del proyecto, `memory projects --path . --alias
+/ruta/histórica` registra la equivalencia explícita antes de importar; una ruta
+desconocida permanece ambigua y nunca se mezcla automáticamente.
+Las conversaciones importadas aparecen en **Memoria de proyecto** como nodos
+`memory_session` marcados como históricos. Cada nodo se conecta con el agente
+que participó y con las memorias compactadas que produjo; el panel muestra hasta
+100 sesiones recientes, incluidas las anteriores a Graphtyn.
 Las fuentes admiten ruta local, `docker://contenedor/ruta`,
 `ssh://usuario@host/ruta` y `ssh+docker://usuario@host:contenedor/ruta`. Se
 registran con `graphtyn memory sources add`; Graphtyn transfiere por SSH/Docker
 un tar comprimido y filtrado, procesa una copia temporal y la elimina incluso si
 el adaptador falla. Las trazas `*.trajectory.jsonl`, imágenes y logs se excluyen.
+Durante el descubrimiento tampoco se recorren archivos dentro de `skills`,
+`templates`, `examples`, `fixtures`, `node_modules` o `.git`: aunque contengan
+campos `role` y `content`, son recursos auxiliares y no conversaciones. La regla
+es independiente del proveedor y funciona igual con una instalación que sólo
+use OpenClaw, sólo Hermes o adaptadores adicionales.
 
 La identidad global combina remoto Git, rutas y alias para unir proyectos
 renombrados. Las asociaciones con otro proyecto conocido se marcan ambiguas en

@@ -301,7 +301,7 @@
     <div id="blast-content" style="font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:6px;min-width:0;overflow-wrap:anywhere;"></div>
   </div>
 
-  <!-- ===== MODAL: Register ===== -->
+  <!-- ===== MODAL: First-run welcome ===== -->
   <div class="modal-bg" id="modal-quality" role="dialog" aria-modal="true" aria-labelledby="quality-title">
     <div class="modal-box quality-modal">
       <div class="modal-hdr"><span id="quality-title">Calidad del índice y contexto para agentes</span><button class="modal-close" onclick="closeQualityPanel()" aria-label="Cerrar">✕</button></div>
@@ -359,6 +359,24 @@
       <div class="memory-layout">
         <section><div class="section-label">RESULTADOS ATRIBUIDOS</div><div id="memory-results" class="memory-results" aria-live="polite"></div></section>
         <section><div class="section-label">SESIONES RECIENTES</div><div id="memory-sessions" class="memory-sessions"></div></section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: Register ===== -->
+  <div class="modal-bg" id="modal-welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div class="modal-box welcome-modal">
+      <div class="modal-hdr"><span id="welcome-title">Bienvenido a Graphtyn</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px;color:#cbd5e1;font-size:13px;line-height:1.55;">
+        <p style="margin:0;">Tu mapa de código y memoria compartida ya está listo para comenzar.</p>
+        <div style="background:#0d1117;border:1px solid #1e293b;border-left:3px solid #38bdf8;border-radius:7px;padding:12px;">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:5px;">El dashboard de Graphtyn corre en</div>
+          <strong id="welcome-dashboard-url" style="color:#38bdf8;font-family:monospace;font-size:15px;">http://127.0.0.1:9210</strong>
+        </div>
+        <p style="margin:0;color:#94a3b8;">Selecciona o registra un proyecto, reindexa su contenido y explora el grafo. Este mensaje sólo aparece la primera vez en este navegador.</p>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+        <button class="btn-action btn-primary" id="welcome-start" onclick="closeWelcome()">Comenzar</button>
       </div>
     </div>
   </div>

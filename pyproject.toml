@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "graphtyn"
-version = "0.6.0b1"
+version = "0.6.0"
 description = "Graphtyn: deterministic code graph, impact analysis and compact context for AI coding agents"
 readme = "README.md"
 authors = [{ name = "Graphtyn Contributors" }]
@@ -19,7 +19,7 @@ dependencies = [
     "typing-extensions>=4.10.0"
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",

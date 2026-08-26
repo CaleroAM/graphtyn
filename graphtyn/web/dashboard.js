@@ -28,6 +28,7 @@ import { state } from './js/state.js';
         const button = d.querySelector(':scope > button');
         if (button) button.setAttribute('aria-expanded', 'false');
       });
+      document.body.classList.remove('header-menu-open');
     }
     document.addEventListener('click', e => {
       if (!e.target.closest('.dd-wrap')) closeDropdownMenus();
@@ -89,10 +90,25 @@ import { state } from './js/state.js';
 
     
 // ── Boot ──────────────────────────────────────────────────────────────────
+    const WELCOME_KEY = 'graphtyn.welcome.0.6.0';
+    function showWelcomeOnce() {
+      try {
+        if (localStorage.getItem(WELCOME_KEY)) return;
+      } catch (_) { /* El dashboard sigue funcionando si el almacenamiento está bloqueado. */ }
+      const url = document.getElementById('welcome-dashboard-url');
+      if (url) url.textContent = window.location.origin;
+      document.getElementById('modal-welcome')?.classList.add('show');
+    }
+    function closeWelcome() {
+      document.getElementById('modal-welcome')?.classList.remove('show');
+      try { localStorage.setItem(WELCOME_KEY, 'seen'); } catch (_) {}
+    }
+
     let booted = false;
     function boot() {
       if (booted) return;
       booted = true;
+      showWelcomeOnce();
       loadProjects(true);
       initWatchPolling();
     }
@@ -110,4 +126,4 @@ function openFromChanges(nodeId) {
   setTimeout(() => focusNode(nodeId), 500);
 }
 
-Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, closeBlastPanel, closeRegister, closeTutorial, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory});
+Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, closeBlastPanel, closeRegister, closeTutorial, closeWelcome, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory});

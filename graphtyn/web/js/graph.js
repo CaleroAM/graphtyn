@@ -512,6 +512,10 @@ export function setPRBase(base) {
     }
 
 export function loadGraph() {
+      const loadId = ++state.graphLoadId;
+      if (state.graphRequestController) state.graphRequestController.abort();
+      state.graphRequestController = new AbortController();
+      const requestSignal = state.graphRequestController.signal;
       if (state.activeView === 'changes') { loadChangesView(); return; }
       if (!state.activePath && state.activeView !== 'agents') {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
@@ -536,15 +540,22 @@ export function loadGraph() {
       const memoryToken = localStorage.getItem('graphtyn-memory-token') || '';
       const fetchOptions = state.activeView === 'memory' && memoryToken
         ? {headers:{'Authorization':`Bearer ${memoryToken}`}} : {};
-      fetch(url, fetchOptions).then(async r => {
+      fetch(url, {...fetchOptions, signal:requestSignal}).then(async r => {
         const data = await r.json();
         if (!r.ok || data.ok === false) throw new Error(data.error || `HTTP ${r.status}`);
         return data;
       }).then(data => {
+        if (loadId !== state.graphLoadId) return;
         if (!data.nodes || data.nodes.length === 0) {
+          const emptyMessage = state.activeView === 'memory'
+            ? 'Sin memorias capturadas para este proyecto. Abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.'
+            : 'Sin nodos de código. Haz clic en Reindexar para escanear el proyecto.';
           document.getElementById('graph-container').innerHTML =
-            '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Sin nodos. Haz clic en Reindexar para escanear el proyecto.</div>';
+            '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;padding:24px;text-align:center;">' + emptyMessage + '</div>';
           document.getElementById('stats').textContent = '0 nodos';
+          const badge = document.getElementById('model-badge');
+          if (badge && state.activeView === 'memory') badge.textContent = 'Memoria compartida · 0 agentes';
+          document.getElementById('memory-legend-overlay')?.remove();
           buildCommunities(data); updateEstTime();
           return;
         }
@@ -671,6 +682,7 @@ export function loadGraph() {
             '<strong>Error al renderizar el grafo</strong><br/><span style="color:#94a3b8;font-size:11px;margin-top:6px;">' + err.message + '</span></div>';
         }
       }).catch(err => {
+        if (loadId !== state.graphLoadId || err?.name === 'AbortError') return;
         console.error("Fetch error:", err);
         const msg = String(err && err.message || '');
         const isAuth = /401|token/i.test(msg);

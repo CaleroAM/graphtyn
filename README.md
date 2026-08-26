@@ -1,16 +1,16 @@
 # 🌌 Graphtyn
 
-[![Release](https://img.shields.io/badge/release-0.6.0b1-blue.svg)](#estado-de-la-versión)
+[![Release](https://img.shields.io/badge/release-0.6.0-blue.svg)](#estado-de-la-versión)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Standard--Compatible-10b981.svg)](https://modelcontextprotocol.io/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 
 **El motor de mapa topológico de código, registro de sesiones local y servidor MCP estándar para Agentes de IA (Google Antigravity, Claude Code, Codex, Cursor y Windsurf).**
 
-> **Estado de la versión:** beta pública candidata `0.6.0b1`, orientada a uso
+> **Estado de la versión:** versión estable `0.6.0`, orientada a uso
 > local/single-user. El grafo, MCP, dashboard y memoria multiagente están
 > implementados; TLS, aislamiento multi-tenant y SSO empresarial no forman parte
-> de esta beta. No se afirma superioridad general a partir de pruebas parciales.
+> de esta versión. No se afirma superioridad general a partir de pruebas parciales.
 
 **Navegación:** [arquitectura](ARCHITECTURE.md) ·
 [memoria compartida](docs/shared-memory.md) · [pruebas](docs/testing.md) ·
@@ -141,7 +141,7 @@ Configuración: `GRAPHTYN_VISION_MODEL` (default `qwen3-vl:2b`), `GRAPHTYN_IMAGE
 
 ---
 
-## 📦 Instalación beta
+## 📦 Instalación
 
 Graphtyn aún no está publicado en PyPI. Desde un checkout local, la instalación
 aislada y reproducible es:
@@ -155,7 +155,7 @@ graphtyn serve --host 127.0.0.1 --port 9210 --path /ruta/proyecto
 
 También puede probarse sin instalación global con
 `.venv/bin/graphtyn --version`. Los artefactos wheel/sdist se generan en cada
-tag beta mediante el workflow de release. La futura publicación en PyPI se
+tag de versión mediante el workflow de release. La futura publicación en PyPI se
 documentará sólo después de habilitar Trusted Publishing.
 
 ---
@@ -654,6 +654,13 @@ El bootstrap histórico descubre JSON, JSONL y bases SQLite de OpenClaw, Hermes,
 Codex, Antigravity/AGY, OpenCode y Claude. La primera ejecución sólo genera una
 previsualización; importar requiere consentimiento explícito y es idempotente:
 
+Para no confundir recursos internos del agente con conversaciones, el
+descubrimiento excluye cualquier archivo ubicado bajo directorios `skills`,
+`templates`, `examples`, `fixtures`, `node_modules` o `.git`. También ignora
+trazas `*.trajectory.jsonl`, imágenes y logs al copiar fuentes remotas. Este
+filtro se aplica por igual si el usuario tiene un solo proveedor —por ejemplo,
+sólo OpenClaw o sólo Hermes— o varios proveedores configurados.
+
 ```bash
 graphtyn memory bootstrap --provider openclaw --source ~/.openclaw --path . \
   --output import-plan.json
@@ -683,6 +690,14 @@ graphtyn memory sources add --provider openclaw --source ssh://usuario@host/ruta
 # Docker dentro de un VPS
 graphtyn memory sources add --provider openclaw --source ssh+docker://usuario@host:mi-contenedor/home/node/.openclaw/agents
 graphtyn memory sources list
+```
+
+Si el workspace histórico tenía otra ruta o nombre, vincúlelo antes de importar;
+esto evita mezclar conversaciones de proyectos distintos:
+
+```bash
+graphtyn memory projects --path . --alias /ruta/antigua/del/workspace
+graphtyn memory bootstrap --provider openclaw --path . --apply --consent
 ```
 
 Para conservar conversaciones de proyectos desconocidos sin mezclarlas con el
@@ -731,8 +746,15 @@ saneador antes de llegar a SQLite.
 ### Operación, seguridad y recuperación
 
 ```bash
-# Servicio persistente (genera el artefacto; el usuario decide instalarlo)
-graphtyn service install --kind systemd --output ~/.config/systemd/user/graphtyn-sync.service --path .
+# Dashboard persistente del usuario: instala, inicia ahora y arranca con la sesión
+graphtyn service install --kind systemd --path . --enable
+graphtyn service status
+graphtyn service restart
+graphtyn service stop
+graphtyn service start
+graphtyn service uninstall
+
+# Alternativa Docker Compose (genera el archivo; después use docker compose up -d)
 graphtyn service install --kind compose --output compose.graphtyn.yml --path .
 
 # Token por rol/proyecto, almacenado con modo 0600
@@ -747,6 +769,14 @@ graphtyn backup --output memory.zip --path .
 graphtyn backup-verify memory.zip
 graphtyn restore memory.zip --path /ruta/destino
 graphtyn restore memory.zip --path /ruta/destino --apply
+```
+
+El servicio prioriza la respuesta del dashboard y no activa watch por defecto.
+Para reindexación automática use `--watch`; su intervalo predeterminado es de
+10 segundos y puede ajustarse con `--interval SEGUNDOS`:
+
+```bash
+graphtyn service install --kind systemd --path . --enable --watch --interval 10
 ```
 
 El dashboard permite guardar, probar y eliminar fuentes, además de administrar

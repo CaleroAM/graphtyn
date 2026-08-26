@@ -4,7 +4,7 @@
 - [Política de seguridad](../SECURITY.md)
 - [Guía de contribución](../CONTRIBUTING.md)
 - [Checklist de release](release-checklist.md)
-- [Validación local de 0.6.0b1](release-validation-0.6.0b1.md)
+- [Validación local de 0.6.0](release-validation-0.6.0.md)
 
 Los documentos se organizan por propósito para no mezclar uso, diseño, resultados
 experimentales y comparaciones comerciales.

@@ -1,7 +1,7 @@
 # Arquitectura de Graphtyn
 
 Este documento es la fuente canónica de la arquitectura vigente de Graphtyn
-`0.6.0b1`. Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
+`0.6.0`. Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
 mantienen manualmente aquí.
 
 ## Mapa del sistema
@@ -89,7 +89,10 @@ correcciones y procedencia. `memory_extraction.py` deriva recuerdos candidatos;
 `history_import.py` y `adapters.py` incorporan conversaciones anteriores desde
 fuentes locales, Docker, SSH o adaptadores instalables. Primero muestran una
 previsualización y sólo escriben con consentimiento explícito. Los fingerprints
-hacen la sincronización incremental e idempotente.
+hacen la sincronización incremental e idempotente. Antes de adaptar registros,
+el descubridor descarta árboles auxiliares (`skills`, `templates`, `examples`,
+`fixtures`, `node_modules` y `.git`) para que prompts, ejemplos y plantillas no
+se conviertan accidentalmente en sesiones históricas.
 
 ### 4. Interfaces
 
@@ -183,7 +186,7 @@ sequenceDiagram
 - Backups verifican forma y checksum antes de restaurarse.
 - La memoria es evidencia histórica, no una instrucción confiable. Puede quedar
   obsoleta, disputarse, corregirse o eliminarse.
-- La beta es local/single-user: aún no ofrece aislamiento multi-tenant, SSO ni
+- La versión estable está orientada a uso local/single-user: aún no ofrece aislamiento multi-tenant, SSO ni
   administración empresarial de claves.
 
 ## Empaquetado, despliegue y entrega
@@ -200,7 +203,7 @@ flowchart LR
   TEST --> BROWSER[Playwright + Chromium]
   TEST --> PACKAGE[wheel + sdist + instalación limpia]
   TEST --> DOCKER[build + CLI]
-  SECURITY --> TAG[Tag beta]
+  SECURITY --> TAG[Tag estable]
   BROWSER --> TAG
   PACKAGE --> TAG
   DOCKER --> TAG

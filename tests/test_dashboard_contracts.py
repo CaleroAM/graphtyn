@@ -204,3 +204,40 @@ def test_dashboard_control_ids_are_unique_and_dropdowns_are_accessible():
         opening_button = block[:block.index("</button>")]
         assert 'aria-haspopup="true"' in opening_button
         assert 'aria-expanded="false"' in opening_button
+
+
+def test_header_dropdowns_hide_floating_actions_to_prevent_overlap():
+    css = (WEB / "dashboard.css").read_text()
+    assert "header:has(.dd-wrap.open) + .float-actions" in css
+    assert "body.header-menu-open .float-actions" in css
+    assert "opacity:0; visibility:hidden; pointer-events:none" in css
+    assert "z-index:80" in css
+
+
+def test_first_run_welcome_explains_dashboard_address_and_is_persistent():
+    html = (WEB / "dashboard.html").read_text()
+    dashboard = (WEB / "dashboard.js").read_text()
+    assert 'id="modal-welcome"' in html
+    assert 'id="welcome-dashboard-url"' in html
+    assert "http://127.0.0.1:9210" in html
+    assert "Este mensaje sólo aparece la primera vez" in html
+    assert "graphtyn.welcome.0.6.0" in dashboard
+    assert "window.location.origin" in dashboard
+    assert "localStorage.setItem" in dashboard
+
+
+def test_graph_loading_cancels_stale_project_requests_and_has_memory_specific_empty_state():
+    graph = (WEB / "js" / "graph.js").read_text()
+    state = (WEB / "js" / "state.js").read_text()
+    assert "graphLoadId" in state and "graphRequestController" in state
+    assert "state.graphRequestController.abort()" in graph
+    assert "loadId !== state.graphLoadId" in graph
+    assert "err?.name === 'AbortError'" in graph
+    assert "Sin memorias capturadas para este proyecto" in graph
+    assert "Sin nodos de código" in graph
+
+
+def test_memory_dashboard_lists_and_maps_historical_conversations():
+    memory = (WEB / "js" / "memory.js").read_text()
+    assert "/api/memory/sessions?path=${path}&limit=100" in memory
+    assert "item.id.startsWith('ses_ext_') ? 'histórica · '" in memory
