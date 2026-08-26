@@ -1,22 +1,43 @@
 # 🌌 Graphtyn
 
-[![PyPI Version](https://img.shields.io/badge/pypi-v0.6.0-blue.svg)](https://pypi.org/project/graphtyn/)
+[![Release](https://img.shields.io/badge/release-0.6.0b1-blue.svg)](#estado-de-la-versión)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Standard--Compatible-10b981.svg)](https://modelcontextprotocol.io/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 
 **El motor de mapa topológico de código, registro de sesiones local y servidor MCP estándar para Agentes de IA (Google Antigravity, Claude Code, Codex, Cursor y Windsurf).**
 
-> **Estado:** desarrollo activo `0.5.x`. El grafo, MCP, dashboard y memoria
-> multiagente están implementados; la matriz competitiva de 108 celdas sigue
-> pendiente. No se afirma superioridad general a partir de pruebas parciales.
+> **Estado de la versión:** beta pública candidata `0.6.0b1`, orientada a uso
+> local/single-user. El grafo, MCP, dashboard y memoria multiagente están
+> implementados; TLS, aislamiento multi-tenant y SSO empresarial no forman parte
+> de esta beta. No se afirma superioridad general a partir de pruebas parciales.
 
 **Navegación:** [arquitectura](ARCHITECTURE.md) ·
 [memoria compartida](docs/shared-memory.md) · [pruebas](docs/testing.md) ·
 [benchmarks](BENCHMARKS.md) · [mercado](docs/market-study.md) ·
+[seguridad](SECURITY.md) · [cambios](CHANGELOG.md) ·
 [documentación completa](docs/index.md)
 
 Graphtyn convierte cualquier repositorio de código en un **grafo de conocimiento determinista de 2 pasadas**: analiza la estructura de archivos, módulos, clases, métodos y llamadas con **0 tokens de consumo** en menos de 0.5 segundos (medido) y enriquece semánticamente los nodos principales mediante **IA Local (Ollama Qwen2.5)** o **Cloud APIs (Gemini/Claude)**.
+
+## Arquitectura en un minuto
+
+```mermaid
+flowchart LR
+  AGENTS[Agentes y CLI] --> MCP[MCP stdio / HTTP]
+  USER[Navegador] --> WEB[Dashboard] --> API[FastAPI · Starlette · Uvicorn]
+  MCP --> CORE[Núcleo Graphtyn]
+  API --> CORE
+  CORE --> CODE[Grafo de código<br/>AST · Tree-sitter · impacto]
+  CORE --> MEMORY[Grafo de memoria<br/>sesiones · FTS · embeddings]
+  CODE --> STATE[Índice y caché local]
+  MEMORY --> DB[SQLite local]
+```
+
+El grafo de código y el grafo de memoria comparten referencias explícitas, pero
+no se mezclan: una conversación no se interpreta como dependencia estructural.
+Consulta componentes, flujos, persistencia, seguridad, dashboard, Docker y
+release en [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
@@ -120,17 +141,22 @@ Configuración: `GRAPHTYN_VISION_MODEL` (default `qwen3-vl:2b`), `GRAPHTYN_IMAGE
 
 ---
 
-## 📦 Instalación Sencilla (1 Solo Comando - Sin Docker)
+## 📦 Instalación beta
 
-Instalar Graphtyn en cualquier sistema operativo requiere un único comando nativo de Pip:
+Graphtyn aún no está publicado en PyPI. Desde un checkout local, la instalación
+aislada y reproducible es:
 
 ```bash
-# Instalar Graphtyn globalmente
-pip install git+https://github.com/CaleroAM/openclaw.git#subdirectory=code-graph-host
+pipx install '.[treesitter]'
 
-# Iniciar el Dashboard WebGL interactivo en http://localhost:9210
-graphtyn serve
+# Dashboard local; no lo expongas públicamente sin autenticación y TLS
+graphtyn serve --host 127.0.0.1 --port 9210 --path /ruta/proyecto
 ```
+
+También puede probarse sin instalación global con
+`.venv/bin/graphtyn --version`. Los artefactos wheel/sdist se generan en cada
+tag beta mediante el workflow de release. La futura publicación en PyPI se
+documentará sólo después de habilitar Trusted Publishing.
 
 ---
 
@@ -619,7 +645,7 @@ La ruta recomendada para una instalación nueva es primero previsualizar y luego
 aplicar. No modifica archivos fuente del repositorio:
 
 ```bash
-pipx install graphtyn
+pipx install '.[treesitter]'
 graphtyn setup --path .                 # detección, sin cambios
 graphtyn setup --path . --apply         # configura agentes/fuentes y token privado
 ```
@@ -1012,7 +1038,7 @@ La IA local es selectiva: en modo incremental solo resume archivos o símbolos n
 ### Instalación y adopción
 
 ```bash
-pipx install 'graphtyn[treesitter]'
+pipx install '.[treesitter]'
 graphtyn serve --host 127.0.0.1 --port 9210 --watch --path /ruta/proyecto
 
 # Alternativa reproducible

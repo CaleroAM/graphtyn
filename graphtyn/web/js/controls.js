@@ -3,6 +3,9 @@ import { destroyGraph, loadGraph, refreshStyleInPlace, toggleRotate } from './gr
 
 export function setView(v) {
       state.activeView = v;
+      const labels = { code: 'Code AST', semantic: 'Semántico', memory: 'Memoria', agents: 'Harness', changes: 'Cambios' };
+      const activeLabel = document.getElementById('active-view-label');
+      if (activeLabel) activeLabel.textContent = labels[v] || v;
       const bCode = document.getElementById('btn-code');
       const bSem = document.getElementById('btn-semantic');
       const bMem = document.getElementById('btn-memory-view');
@@ -13,6 +16,12 @@ export function setView(v) {
       if (bMem) bMem.classList.toggle('active', v === 'memory');
       if (bAg) bAg.classList.toggle('active', v === 'agents');
       if (bCh) bCh.classList.toggle('active', v === 'changes');
+      const explore = document.getElementById('dd-explore');
+      if (explore) {
+        explore.classList.remove('open');
+        const trigger = explore.querySelector(':scope > button');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      }
       destroyGraph();
       loadGraph();
     }
@@ -23,7 +32,7 @@ export function setDim(d) {
       document.getElementById('btn-2d').classList.toggle('active', d === '2d');
       document.getElementById('btn-3d').classList.toggle('active', d === '3d');
       const rotBtn = document.getElementById('btn-rotate');
-      if (rotBtn) rotBtn.style.display = (d === '3d') ? 'inline-block' : 'none';
+      if (rotBtn) rotBtn.style.display = (d === '3d') ? 'flex' : 'none';
       if (d === '2d' && state.isRotating) toggleRotate();
       destroyGraph();
       loadGraph();

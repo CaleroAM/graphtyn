@@ -1,16 +1,51 @@
 import json
+import socket
 import subprocess
+import threading
+import time
 from pathlib import Path
 
-from fastapi.testclient import TestClient
+import httpx
+import uvicorn
 
 from graphtyn.api import main as api_main
 from graphtyn.core.shared_memory import SharedMemoryStore
 
 
+class _LiveClient:
+    """Exercise the real Uvicorn HTTP stack without Starlette TestClient."""
+
+    def request(self, method, path, **kwargs):
+        listener = socket.socket()
+        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(128)
+        port = listener.getsockname()[1]
+        config = uvicorn.Config(api_main.app, log_level="error", lifespan="off")
+        server = uvicorn.Server(config)
+        thread = threading.Thread(target=server.run, kwargs={"sockets": [listener]}, daemon=True)
+        thread.start()
+        deadline = time.monotonic() + 5
+        while not server.started and thread.is_alive() and time.monotonic() < deadline:
+            time.sleep(0.01)
+        try:
+            assert server.started, "Uvicorn did not start"
+            return httpx.request(method, f"http://127.0.0.1:{port}{path}", timeout=20, **kwargs)
+        finally:
+            server.should_exit = True
+            thread.join(timeout=5)
+            listener.close()
+
+    def get(self, path, **kwargs):
+        return self.request("GET", path, **kwargs)
+
+    def post(self, path, **kwargs):
+        return self.request("POST", path, **kwargs)
+
+
 def _client(tmp_path, monkeypatch):
     monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / ".graphtyn-store")
-    return TestClient(api_main.app)
+    return _LiveClient()
 
 
 def test_health_endpoint(tmp_path, monkeypatch):
@@ -306,11 +341,9 @@ def test_projects_list_includes_respect_git(tmp_path, monkeypatch):
 
 
 def test_memory_search_all_federated(tmp_path, monkeypatch):
-    from fastapi.testclient import TestClient
-    from graphtyn.api.main import app
     monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
     monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)
-    client = TestClient(app)
+    client = _client(tmp_path, monkeypatch)
     a, b = tmp_path / "a", tmp_path / "b"
     a.mkdir(); b.mkdir()
     sa = SharedMemoryStore(a)

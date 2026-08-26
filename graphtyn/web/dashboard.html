@@ -48,12 +48,21 @@
   <!-- ===== HEADER ===== -->
   <header>
     <div class="header-controls">
-      <!-- View tabs -->
-      <button class="mode-btn active" id="btn-code" onclick="setView('code')">Code AST</button>
-      <button class="mode-btn" id="btn-semantic" onclick="setView('semantic')" title="Relaciones semánticas derivadas del código y documentos indexados">Semántico del código</button>
-      <button class="mode-btn" id="btn-memory-view" onclick="setView('memory')" title="Conversaciones, decisiones y resultados compartidos por los agentes">Memoria del proyecto</button>
-      <button class="mode-btn" id="btn-agents" onclick="setView('agents')">Harness Topology</button>
-      <button class="mode-btn" id="btn-changes" onclick="setView('changes')">Cambios</button>
+      <!-- Task-oriented navigation -->
+      <div class="dd-wrap" id="dd-explore">
+        <button class="mode-btn active nav-menu-trigger" id="explore-trigger" onclick="toggleDD('dd-explore')" aria-haspopup="true" aria-expanded="false">
+          Explorar <span class="nav-current" id="active-view-label">Code AST</span> ▾
+        </button>
+        <div class="dd-panel nav-menu" role="menu" aria-label="Vistas del proyecto">
+          <div class="menu-heading">Grafo del proyecto</div>
+          <button class="menu-item active" id="btn-code" onclick="setView('code')"><span class="menu-icon">⌘</span><span><strong>Code AST</strong><small>Estructura y llamadas extraídas</small></span></button>
+          <button class="menu-item" id="btn-semantic" onclick="setView('semantic')"><span class="menu-icon">◎</span><span><strong>Semántico del código</strong><small>Similitud y comunidades</small></span></button>
+          <button class="menu-item" id="btn-memory-view" onclick="setView('memory')"><span class="menu-icon">◈</span><span><strong>Memoria del proyecto</strong><small>Decisiones y conversaciones por agente</small></span></button>
+          <div class="menu-heading">Operación</div>
+          <button class="menu-item" id="btn-agents" onclick="setView('agents')"><span class="menu-icon">⌁</span><span><strong>Harness Topology</strong><small>Integraciones y agentes conectados</small></span></button>
+          <button class="menu-item" id="btn-changes" onclick="setView('changes')"><span class="menu-icon">Δ</span><span><strong>Cambios</strong><small>Impacto respecto a Git</small></span></button>
+        </div>
+      </div>
       <!-- History dropdown -->
       <div class="dd-wrap" id="dd-hist">
         <button class="mode-btn" id="btn-hist" onclick="toggleDD('dd-hist');loadHistoryUI()">Historial IA ▾</button>
@@ -68,15 +77,23 @@
         </div>
       </div>
       <div class="sep"></div>
-      <!-- Dimension tabs -->
-      <button class="mode-btn active" id="btn-2d" onclick="setDim('2d')">2D</button>
-      <button class="mode-btn" id="btn-3d" onclick="setDim('3d')">3D</button>
-      <button class="mode-btn" id="btn-rotate" style="display:none;" onclick="toggleRotate()">⟳ Rotar 3D</button>
-      <div class="sep"></div>
+
+      <div class="dd-wrap" id="dd-viewport">
+        <button class="btn-action" onclick="toggleDD('dd-viewport')" aria-haspopup="true" aria-expanded="false">Visualización ▾</button>
+        <div class="dd-panel compact-menu" role="menu">
+          <div class="menu-heading">Dimensión del lienzo</div>
+          <div class="dimension-switch" aria-label="Dimensión del grafo">
+            <button class="mode-btn active" id="btn-2d" onclick="setDim('2d')">2D</button>
+            <button class="mode-btn" id="btn-3d" onclick="setDim('3d')">3D</button>
+          </div>
+          <button class="menu-item compact" id="btn-rotate" style="display:none;" onclick="toggleRotate()"><span>⟳</span><strong>Rotar automáticamente</strong></button>
+          <p class="settings-help">Los controles visuales no cambian el índice ni la memoria.</p>
+        </div>
+      </div>
 
       <!-- Node Filters dropdown -->
       <div class="dd-wrap" id="dd-filter">
-        <button class="btn-action" onclick="toggleDD('dd-filter')">
+        <button class="btn-action" onclick="toggleDD('dd-filter')" aria-haspopup="true" aria-expanded="false">
           <svg class="svg-ico" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
           Filtros ▾
         </button>
@@ -248,28 +265,24 @@
     </div>
   </header>
 
-  <!-- Floating quick actions -->
+  <!-- Focused quick actions: one primary action, the rest grouped by task -->
   <div class="float-actions">
-    <div style="font-size:10px;font-weight:700;color:#10b981;background:rgba(16,185,129,0.12);padding:4px 8px;border-radius:6px;border:1px solid rgba(16,185,129,0.25);display:flex;align-items:center;gap:5px;">
+    <div class="service-status">
       <span style="width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></span> MCP Activo
     </div>
-    <button class="btn-action" onclick="exportGraphData()" title="Descargar datos del grafo en JSON">
-      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-      Exportar
-    </button>
-    <button class="btn-action" onclick="exportGraphPNG()" title="Descargar imagen PNG del grafo actual">
-      PNG
-    </button>
-    <button class="btn-action" id="quality-btn" onclick="openQualityPanel()" title="Salud del índice y contexto compacto">
-      Calidad & Contexto <span id="context-count">0</span>
-    </button>
-    <button class="btn-action" id="memory-btn" onclick="openMemoryPanel()" title="Buscar o administrar recuerdos dentro de la memoria del proyecto">
-      Buscar en memoria
-    </button>
-    <button class="btn-action btn-primary" onclick="openRegister()">
-      <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      Registrar
-    </button>
+    <div class="dd-wrap" id="dd-actions">
+      <button class="btn-action" onclick="toggleDD('dd-actions')" aria-haspopup="true" aria-expanded="false">Acciones ▾</button>
+      <div class="dd-panel action-menu" role="menu">
+        <div class="menu-heading">Análisis y memoria</div>
+        <button class="menu-item" id="quality-btn" onclick="openQualityPanel()"><span class="menu-icon">✓</span><span><strong>Calidad y contexto</strong><small>Salud, ambigüedades y contexto compacto <b id="context-count">0</b></small></span></button>
+        <button class="menu-item" id="memory-btn" onclick="openMemoryPanel()"><span class="menu-icon">◈</span><span><strong>Administrar memoria</strong><small>Buscar, importar y revisar atribución</small></span></button>
+        <div class="menu-heading">Compartir</div>
+        <button class="menu-item compact" onclick="exportGraphData()"><span>⇩</span><strong>Exportar datos JSON</strong></button>
+        <button class="menu-item compact" onclick="exportGraphPNG()"><span>▧</span><strong>Exportar imagen PNG</strong></button>
+        <div class="menu-heading">Proyectos</div>
+        <button class="menu-item compact" onclick="openRegister()"><span>＋</span><strong>Registrar otro proyecto</strong></button>
+      </div>
+    </div>
     <button class="btn-action" id="reindex-btn" onclick="doReindex()">
       <svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
       Reindexar

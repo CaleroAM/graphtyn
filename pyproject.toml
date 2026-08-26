@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "graphtyn"
-version = "0.6.0"
+version = "0.6.0b1"
 description = "Graphtyn: deterministic code graph, impact analysis and compact context for AI coding agents"
 readme = "README.md"
 authors = [{ name = "Graphtyn Contributors" }]
@@ -12,14 +12,27 @@ license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.110.0",
+    "starlette>=1.3.1",
     "uvicorn>=0.28.0",
     "mcp>=1.0.0",
     "pydantic>=2.6.0",
     "typing-extensions>=4.10.0"
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+]
+keywords = ["code-graph", "mcp", "ai-agents", "semantic-memory", "impact-analysis"]
 
 [project.optional-dependencies]
 dev = [
+    "build>=1.2.2",
     "pytest>=8.0.0",
     "httpx>=0.27.0",
     "playwright>=1.50.0"
@@ -51,7 +64,7 @@ treesitter = [
 graphtyn = "graphtyn.cli:main"
 
 [tool.setuptools.package-data]
-graphtyn = ["client.ts", "web/*.html", "web/*.css", "web/*.js", "web/js/*.js"]
+graphtyn = ["client.ts", "web/*.html", "web/*.css", "web/*.js", "web/*.svg", "web/js/*.js"]
 
 [tool.setuptools.packages.find]
 include = ["graphtyn*"]

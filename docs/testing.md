@@ -1,9 +1,9 @@
 # Pruebas y benchmarks
 
-La regresión ejecuta `pytest -q --ignore=tests/test_api.py`. En el entorno de
-agosto de 2026, `fastapi.testclient.TestClient` se bloquea incluso con una app
-FastAPI mínima; la API se valida además levantando Uvicorn temporalmente y
-consultando salud, OpenAPI y rutas v1 autenticadas. CI no debe omitir esa prueba.
+La regresión ejecuta `pytest -q` sin exclusiones. `tests/test_api.py` evita el
+portal bloqueante de `fastapi.testclient.TestClient` y levanta Uvicorn en un
+puerto efímero de `127.0.0.1` para validar las 17 rutas/escenarios mediante HTTP
+real, conservando el aislamiento y los monkeypatches de cada prueba.
 
 `tests/test_security_leaks.py` es la barrera adversarial de privacidad. Comprueba
 texto y metadatos anidados, Bearer/JWT/AWS, credenciales en URL, prompts del

@@ -127,6 +127,32 @@ def main():
             canvas.first.wait_for(state="visible", timeout=30000)
             assert canvas.count() >= 1, "canvas del grafo no renderizado"
 
+            # Primary navigation is grouped by task instead of exposing every view as a top-level button.
+            page.click("#dd-explore > button")
+            page.wait_for_selector("#dd-explore.open .nav-menu", state="visible")
+            explore = page.locator("#dd-explore .dd-panel").bounding_box()
+            assert explore and explore["y"] + explore["height"] <= 900, "menú Explorar sale del viewport"
+            assert page.locator("#dd-explore .menu-item").count() == 5
+            page.click("#btn-semantic")
+            page.wait_for_timeout(800)
+            assert page.locator("#active-view-label").inner_text() == "Semántico"
+            assert page.locator("#dd-explore").evaluate("el => !el.classList.contains('open')")
+            page.evaluate("setView('code')")
+
+            page.click("#dd-viewport > button")
+            page.wait_for_selector("#dd-viewport.open .dd-panel", state="visible")
+            assert page.locator("#dd-viewport #btn-2d").count() == 1
+            assert page.locator("#dd-viewport #btn-3d").count() == 1
+            page.keyboard.press("Escape")
+            assert page.locator("#dd-viewport").evaluate("el => !el.classList.contains('open')")
+
+            page.click("#dd-actions > button")
+            page.wait_for_selector("#dd-actions.open .action-menu", state="visible")
+            actions = page.locator("#dd-actions .dd-panel").bounding_box()
+            assert actions and actions["x"] >= 0 and actions["x"] + actions["width"] <= 1440, "menú Acciones sale del viewport"
+            assert page.locator("#dd-actions .menu-item").count() == 5
+            page.keyboard.press("Escape")
+
             # Appearance and indexing are independent, viewport-bounded panels.
             page.click("#dd-appearance > button")
             page.wait_for_selector("#dd-appearance.open .dd-panel", state="visible")

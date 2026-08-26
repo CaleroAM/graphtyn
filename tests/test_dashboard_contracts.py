@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from graphtyn.api import main as api_main
@@ -174,3 +175,32 @@ def test_dashboard_separates_graph_design_from_index_engine_and_wraps_status():
     assert html.count('class="confidence-item') == 3
     assert "flex-wrap:wrap" in css and "max-height:min(650px" in css
     assert "aria-expanded" in ui
+
+
+def test_dashboard_groups_navigation_and_secondary_actions_into_menus():
+    html = (WEB / "dashboard.html").read_text()
+    css = (WEB / "dashboard.css").read_text()
+    controls = (WEB / "js" / "controls.js").read_text()
+    dashboard = (WEB / "dashboard.js").read_text()
+    for menu_id in ("dd-explore", "dd-viewport", "dd-actions"):
+        assert f'id="{menu_id}"' in html
+    assert 'id="active-view-label"' in html
+    assert 'class="dd-panel nav-menu"' in html
+    assert 'class="dd-panel action-menu"' in html
+    assert html.count('id="reindex-btn"') == 1
+    assert "Calidad y contexto" in html and "Administrar memoria" in html
+    assert "Exportar datos JSON" in html and "Exportar imagen PNG" in html
+    assert ".menu-item" in css and ".dimension-switch" in css
+    assert "activeLabel.textContent" in controls
+    assert "closeDropdownMenus" in dashboard
+
+
+def test_dashboard_control_ids_are_unique_and_dropdowns_are_accessible():
+    html = (WEB / "dashboard.html").read_text()
+    ids = re.findall(r'\bid="([^"]+)"', html)
+    assert len(ids) == len(set(ids)), "duplicate element ids make controls unreliable"
+    for menu_id in ("dd-explore", "dd-viewport", "dd-filter", "dd-appearance", "dd-engine", "dd-actions"):
+        block = html[html.index(f'id="{menu_id}"'):]
+        opening_button = block[:block.index("</button>")]
+        assert 'aria-haspopup="true"' in opening_button
+        assert 'aria-expanded="false"' in opening_button

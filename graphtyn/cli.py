@@ -477,7 +477,7 @@ def main():
     elif args.command == "init":
         dot_dir = root / ".graphtyn"
         dot_dir.mkdir(exist_ok=True)
-        config = {"version": "0.6.0", "name": root.name}
+        config = {"version": "0.6.0b1", "name": root.name}
         (dot_dir / "graphtyn.json").write_text(json.dumps(config, indent=2))
         print(f"✓ Inicializado .graphtyn/ en {root}")
         gi = root / ".gitignore"

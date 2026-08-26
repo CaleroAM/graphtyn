@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev,treesitter]'
+      - run: python -m pytest -q
+
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip build
+      - run: python -m build
+      - run: python -m venv /tmp/graphtyn-release-venv
+      - run: /tmp/graphtyn-release-venv/bin/pip install dist/*.whl
+      - run: /tmp/graphtyn-release-venv/bin/graphtyn --version
+      - run: /tmp/graphtyn-release-venv/bin/python -c "import importlib.resources as r; assert r.files('graphtyn').joinpath('web/dashboard.html').is_file()"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m playwright install --with-deps chromium
+      - run: python tests/smoke_frontend.py
+
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]' pip-audit
+      - run: python -m pytest -q tests/test_security_leaks.py tests/test_release_contracts.py
+      - run: python -m pip_audit
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --tag graphtyn:ci .
+      - run: docker run --rm graphtyn:ci --version

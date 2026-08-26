@@ -2,7 +2,7 @@
 
 **Versión:** 1.1.0
 **Proyecto:** Graphtyn (`graphtyn`)
-**Ruta:** `<HOME>/Documentos/docker/PROYECTOS/graphtyn`
+**Ruta:** `<REPOSITORY_ROOT>`
 **Estado:** Implementado y verificado
 
 ---

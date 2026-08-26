@@ -22,11 +22,19 @@ import { state } from './js/state.js';
     // ── Dropdown ──────────────────────────────────────────────────────────────
 
 
+    function closeDropdownMenus() {
+      document.querySelectorAll('.dd-wrap').forEach(d => {
+        d.classList.remove('open');
+        const button = d.querySelector(':scope > button');
+        if (button) button.setAttribute('aria-expanded', 'false');
+      });
+    }
     document.addEventListener('click', e => {
-      if (!e.target.closest('.dd-wrap')) document.querySelectorAll('.dd-wrap').forEach(d => d.classList.remove('open'));
+      if (!e.target.closest('.dd-wrap')) closeDropdownMenus();
     });
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
+        closeDropdownMenus();
         closeQualityPanel();
         closeMemoryPanel();
         closeRegister();
