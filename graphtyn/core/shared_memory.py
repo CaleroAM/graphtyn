@@ -12,6 +12,7 @@ import threading
 import time
 import uuid
 import base64
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,10 @@ CAPTURE_ROLES = {"user", "assistant", "tool"}
 _SCHEMA_LOCK = threading.Lock()
 _SECRET_PATTERNS = (
     re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.S),
+    re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{8,}"),
+    re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b"),
+    re.compile(r"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b"),
+    re.compile(r"(?i)\bhttps?://[^\s/:@]+:[^\s/@]+@[^\s]+"),
     re.compile(r"(?i)\b(api[_-]?key|token|password|passwd|secret|authorization)\s*[:=]\s*['\"]?([^\s,'\"]+)") ,
     re.compile(r"\b(?:ghp|github_pat|sk|xox[baprs])[-_][A-Za-z0-9_-]{12,}\b"),
 )
@@ -257,6 +262,7 @@ class SharedMemoryStore:
         agent_id = agent_id.strip().casefold()
         if not agent_id or not task.strip():
             raise ValueError("agent_id y task son obligatorios")
+        task, _ = self._sanitize(task.strip(), 1000)
         git = self._git_state()
         branch = branch or git.get("branch")
         base_commit = base_commit or git.get("commit")
@@ -268,7 +274,7 @@ class SharedMemoryStore:
             conn.execute("""INSERT OR IGNORE INTO sessions
                 (id, agent_id, task, branch, base_commit, worktree, capture_enabled, started_at)
                 VALUES(?,?,?,?,?,?,?,?)""",
-                (sid, agent_id, task.strip(), branch, base_commit, str(self.workspace), int(capture_enabled), now))
+                (sid, agent_id, task, branch, base_commit, str(self.workspace), int(capture_enabled), now))
             self._audit(conn, "session_start", agent_id, sid, None, {"task": task})
         return self.get_session(sid)
 
@@ -657,6 +663,7 @@ class SharedMemoryStore:
         item = self.get(memory_id, requester_agent=requester_agent)
         if not item: raise ValueError("memoria no encontrada o no visible")
         now = time.time()
+        reason, _ = self._sanitize(str(reason or ""), 1000)
         with self._connect() as conn:
             conn.execute("UPDATE memories SET status=?,updated_at=? WHERE id=?", (status, now, memory_id))
             self._audit(conn, "status_change", requester_agent, item["session_id"], memory_id,
@@ -677,9 +684,23 @@ class SharedMemoryStore:
                 "SELECT * FROM memories WHERE status!='deleted' ORDER BY created_at")]
             messages = [self._message_row(row) for row in conn.execute(
                 "SELECT * FROM messages ORDER BY created_at")] if include_messages else []
-        return {"schema": "graphtyn-memory-export-v1", "workspace": str(self.workspace),
+        payload = {"schema": "graphtyn-memory-export-v1", "workspace": self.workspace.name,
+                "workspace_id": hashlib.sha256(str(self.workspace).encode()).hexdigest()[:16],
                 "exported_at": time.time(), "sessions": sessions, "memories": memories,
                 "messages": messages, "includes_messages": include_messages}
+        return self._portable_export(payload)
+
+    def _portable_export(self, value: Any) -> Any:
+        """Remove host-specific absolute roots from a shareable snapshot."""
+        if isinstance(value, dict): return {str(key): self._portable_export(item) for key, item in value.items()}
+        if isinstance(value, list): return [self._portable_export(item) for item in value]
+        if not isinstance(value, str): return value
+        replacements = [(str(self.workspace), "<WORKSPACE>"), (str(Path.home()), "<HOME>"),
+                        (tempfile.gettempdir(), "<TEMP>")]
+        result = value
+        for prefix, marker in replacements:
+            if prefix and prefix != "/": result = result.replace(prefix, marker)
+        return result
 
     def apply_retention(self, days: int, *, statuses: list[str] | None = None,
                         dry_run: bool = True) -> dict[str, Any]:

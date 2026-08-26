@@ -696,6 +696,11 @@ rol+contenido, conserva todas las fuentes como procedencia y no reabre sesiones
 normales. Por ello los registros de origen pueden superar a las sesiones lógicas.
 Nunca exporta prompts del sistema, razonamiento oculto ni vectores; secretos
 reconocibles se redactan y los archivos exportados usan permisos `0600`.
+Las exportaciones sustituyen rutas absolutas del proyecto, `$HOME` y temporales
+por `<WORKSPACE>`, `<HOME>` y `<TEMP>`. Se redactan claves comunes, Bearer/JWT,
+credenciales HTTP y claves AWS; las URLs de fuentes no admiten contraseñas
+embebidas. Tareas, etiquetas, metadatos y razones de auditoría usan el mismo
+saneador antes de llegar a SQLite.
 
 ### Operación, seguridad y recuperación
 

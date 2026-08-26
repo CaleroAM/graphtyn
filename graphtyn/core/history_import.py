@@ -94,10 +94,13 @@ def save_source(provider: str, source: str, *, label: str = "", path: Path | Non
     provider, source = provider.strip().casefold(), source.strip()
     if not re.fullmatch(r"[a-z0-9][a-z0-9._-]{1,63}", provider): raise ValueError("proveedor inválido")
     if not source or "\x00" in source: raise ValueError("fuente inválida")
+    parsed = urlparse(source) if "://" in source else None
+    if parsed and parsed.password: raise ValueError("no incluya contraseñas en la URL; use SSH keys o secretos externos")
+    safe_label, _ = SharedMemoryStore._sanitize(label.strip(), 200)
     target = path or sources_config_file()
     target.parent.mkdir(parents=True, exist_ok=True)
     rows = configured_sources(target)
-    item = {"provider": provider, "source": source, "label": label.strip(), "enabled": True}
+    item = {"provider": provider, "source": source, "label": safe_label, "enabled": True}
     rows = [row for row in rows if not (row["provider"] == item["provider"] and row["source"] == item["source"])]
     rows.append(item)
     target.write_text(json.dumps({"version": 1, "sources": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -154,7 +157,8 @@ def _materialize_source(source: str | Path) -> tuple[Path, tempfile.TemporaryDir
         result = subprocess.run(command, stdout=stream, stderr=subprocess.PIPE, timeout=600)
     if result.returncode:
         temp.cleanup()
-        raise OSError(f"no se pudo copiar la fuente remota: {result.stderr.decode(errors='replace').strip()[:300]}")
+        detail, _ = SharedMemoryStore._sanitize(result.stderr.decode(errors="replace").strip()[:300], 300)
+        raise OSError(f"no se pudo copiar la fuente remota: {detail}")
     with tarfile.open(archive, "r:gz") as bundle:
         bundle.extractall(destination, filter="data")
     archive.unlink(missing_ok=True)

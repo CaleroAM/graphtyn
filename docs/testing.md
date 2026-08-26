@@ -5,6 +5,13 @@ agosto de 2026, `fastapi.testclient.TestClient` se bloquea incluso con una app
 FastAPI mínima; la API se valida además levantando Uvicorn temporalmente y
 consultando salud, OpenAPI y rutas v1 autenticadas. CI no debe omitir esa prueba.
 
+`tests/test_security_leaks.py` es la barrera adversarial de privacidad. Comprueba
+texto y metadatos anidados, Bearer/JWT/AWS, credenciales en URL, prompts del
+sistema, rutas absolutas, temporales, vectores, stderr remoto, permisos de API,
+salida CLI de tokens, traversal de backups/adaptadores y ausencia de identidades
+de una máquina concreta. También inspecciona bytes crudos de SQLite/configuración,
+no solamente las respuestas de alto nivel.
+
 ## Estados de evidencia
 
 - **FULL**: mismo corpus, tarea, modelo, presupuesto y rúbrica; corrida completa.

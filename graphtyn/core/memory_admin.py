@@ -16,7 +16,9 @@ def backup_memory(workspace: Path, output: Path) -> dict:
         copy = Path(temp) / "memory-v2.db"
         source = sqlite3.connect(store.db_path); target = sqlite3.connect(copy); source.backup(target); target.close(); source.close()
         digest = hashlib.sha256(copy.read_bytes()).hexdigest()
-        manifest = {"schema": "graphtyn-memory-backup-v1", "workspace": str(workspace.resolve()),
+        resolved = workspace.resolve()
+        manifest = {"schema": "graphtyn-memory-backup-v1", "workspace": resolved.name,
+                    "workspace_id": hashlib.sha256(str(resolved).encode()).hexdigest()[:16],
                     "created_at": time.time(), "database_sha256": digest}
         with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as bundle:
             bundle.write(copy, "memory-v2.db"); bundle.writestr("manifest.json", json.dumps(manifest, indent=2))
