@@ -133,10 +133,12 @@ def analyze_impact(root: Path, graph: dict, base: str | None = None, staged_only
     files_with_symbols = {item["file"] for item in changed_symbols}
     changed_ids = symbol_seed_ids | {f"file:{path}" for path in changed if path not in files_with_symbols}
     adjacency: dict[str, list[tuple[str, dict]]] = {}
+    consumer_labels = {"llama", "usa", "referencia", "implementa", "hereda", "suscribe", "escucha",
+                       "despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
     for link in graph.get("links", []):
         source, target = link.get("source"), link.get("target")
         label = link.get("label", "")
-        if label in {"llama", "usa", "referencia"}:
+        if label in consumer_labels:
             adjacency.setdefault(target, []).append((source, link))
         elif label == "contiene":
             adjacency.setdefault(source, []).append((target, link))
@@ -146,9 +148,10 @@ def analyze_impact(root: Path, graph: dict, base: str | None = None, staged_only
     impacted = []
     seen = set(changed_ids)
     frontier = [(node_id, 0) for node_id in changed_ids]
+    max_hops = 3 if any("signature" in item["change_types"] for item in changed_symbols) else 2
     while frontier:
         current, hop = frontier.pop(0)
-        if hop >= 2:
+        if hop >= max_hops:
             continue
         for neighbor, edge in adjacency.get(current, []):
             if neighbor in seen:
@@ -160,6 +163,8 @@ def analyze_impact(root: Path, graph: dict, base: str | None = None, staged_only
                 "via": current,
                 "label": edge.get("label", "conecta"),
                 "confidence": edge.get("confidence", "EXTRACTED"),
+                "confidence_score": edge.get("confidence_score"),
+                "evidence": {key: edge.get(key) for key in ("file", "line", "evidence") if edge.get(key) is not None},
             })
             frontier.append((neighbor, hop + 1))
     direct = sum(1 for item in impacted if item["hop"] == 1)
@@ -184,6 +189,30 @@ def analyze_impact(root: Path, graph: dict, base: str | None = None, staged_only
             conflict_note = f"No se pudo resolver la rama base '{base}'."
     impacted.sort(key=lambda item: (item["hop"], -item["node"].get("degree", 0), item["node"].get("name", "")))
     total_impacted = len(impacted)
+    categories = {"consumers": [], "contracts": [], "tests": [], "configuration": [], "ambiguous": []}
+    for item in impacted:
+        node = item["node"]
+        path = str(node.get("file") or node.get("details") or "")
+        if item["confidence"] == "AMBIGUOUS":
+            categories["ambiguous"].append(node.get("id"))
+        if item["label"] in {"implementa", "hereda"} or node.get("kind") in {"interface", "event", "property"}:
+            categories["contracts"].append(node.get("id"))
+        elif re.search(r"(?:^|[/_.])tests?(?:[/_.]|$)", path, re.I):
+            categories["tests"].append(node.get("id"))
+        elif node.get("kind") == "file" and Path(path).suffix.lower() in {".json", ".yaml", ".yml", ".toml", ".xml", ".csproj"}:
+            categories["configuration"].append(node.get("id"))
+        else:
+            categories["consumers"].append(node.get("id"))
+    categories = {key: list(dict.fromkeys(value)) for key, value in categories.items()}
+    verification = []
+    if categories["tests"]:
+        verification.append({"action": "run_adjacent_tests", "targets": categories["tests"][:20]})
+    else:
+        verification.append({"action": "add_or_locate_targeted_tests", "targets": [item["id"] for item in changed_symbols]})
+    if categories["contracts"]:
+        verification.append({"action": "verify_contract_implementations", "targets": categories["contracts"][:20]})
+    if categories["ambiguous"]:
+        verification.append({"action": "review_ambiguous_relations", "targets": categories["ambiguous"][:20]})
     return {
         "base": base,
         "staged_only": staged_only,
@@ -193,6 +222,10 @@ def analyze_impact(root: Path, graph: dict, base: str | None = None, staged_only
         "impacted_nodes": impacted[:250],
         "impacted_count": total_impacted,
         "impacted_truncated": total_impacted > 250,
+        "categories": categories,
+        "verification_plan": verification,
+        "traversal": {"max_hops": max_hops, "consumer_labels": sorted(consumer_labels),
+                      "direction": "incoming consumers; containment descendants; contract/event dependents"},
         "risk": {"level": risk, "score": score, "direct": direct, "transitive": len(impacted) - direct},
         "conflicts": sorted(set(conflicts)),
         "conflict_detection": conflict_note,

@@ -5,9 +5,14 @@ services:
       - "127.0.0.1:9210:9210"
     volumes:
       - ./:/workspace
-      - graphtyn-index:/root/.graphtyn
+      - graphtyn-index:/state
     environment:
+      GRAPHTYN_HOME: /state
       GRAPHTYN_WATCH: "1"
       GRAPHTYN_WATCH_PATH: /workspace
+      GRAPHTYN_MCP_TOKEN: ${GRAPHTYN_MCP_TOKEN:?define GRAPHTYN_MCP_TOKEN en .env}
+    read_only: true
+    tmpfs: [/tmp]
+    restart: unless-stopped
 volumes:
   graphtyn-index:

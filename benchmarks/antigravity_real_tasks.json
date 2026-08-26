@@ -1,0 +1,52 @@
+{
+  "protocol": "antigravity-real-repos-v1",
+  "model": "gemini-3.7-flash-high",
+  "tasks": [
+    {
+      "id": "starlette-asgi-entry",
+      "repository": "starlette",
+      "prompt": "Trace the ASGI application entry and exact middleware construction order. Explain the router handoff and cite file:line evidence.",
+      "facts": [
+        {"id": "entry", "patterns": ["Starlette.__call__", "applications.py"]},
+        {"id": "lazy_stack", "patterns": ["middleware_stack", "build_middleware_stack"]},
+        {"id": "outer_error", "patterns": ["ServerErrorMiddleware", "outer"]},
+        {"id": "inner_exception", "patterns": ["ExceptionMiddleware", "inner"]},
+        {"id": "router_handoff", "patterns": ["self.router", "reversed"]}
+      ]
+    },
+    {
+      "id": "starlette-routing",
+      "repository": "starlette",
+      "prompt": "Trace Router.app handling of FULL, PARTIAL and no route matches, including redirect and fallback behavior. Cite file:line evidence.",
+      "facts": [
+        {"id": "full", "patterns": ["Match.FULL", "handle"]},
+        {"id": "partial", "patterns": ["Match.PARTIAL", "partial"]},
+        {"id": "redirect", "patterns": ["redirect_slashes", "RedirectResponse"]},
+        {"id": "fallback", "patterns": ["default", "scope"]}
+      ]
+    },
+    {
+      "id": "go-chi-http-entry",
+      "repository": "go-chi",
+      "prompt": "Trace request entry through Mux.ServeHTTP into routeHTTP and route lookup, including context pooling and failure branches. Cite file:line evidence.",
+      "facts": [
+        {"id": "entry", "patterns": ["Mux.ServeHTTP", "mux.go"]},
+        {"id": "pool", "patterns": ["pool.Get", "pool.Put"]},
+        {"id": "context", "patterns": ["RouteCtxKey", "WithContext"]},
+        {"id": "route", "patterns": ["routeHTTP", "FindRoute"]},
+        {"id": "failure", "patterns": ["MethodNotAllowed", "NotFound"]}
+      ]
+    },
+    {
+      "id": "go-chi-url-params",
+      "repository": "go-chi",
+      "prompt": "Trace how route URL parameters are captured, stored and exposed through URLParam. Cite file:line evidence.",
+      "facts": [
+        {"id": "storage", "patterns": ["RouteParams", "URLParams"]},
+        {"id": "capture", "patterns": ["FindRoute", "Values"]},
+        {"id": "api", "patterns": ["URLParam", "RouteContext"]},
+        {"id": "source", "patterns": ["context.go", "tree.go"]}
+      ]
+    }
+  ]
+}

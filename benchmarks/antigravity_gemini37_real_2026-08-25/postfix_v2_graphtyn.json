@@ -1,0 +1,70 @@
+{
+  "protocol": "antigravity-real-repos-v1",
+  "model": "gemini-3.7-flash-high",
+  "seed": 20260825,
+  "runs": [
+    {
+      "conversation_id": "62066679-7fe4-4f27-b5bd-e2f980e76690",
+      "status": "SUCCESS",
+      "response": "### ASGI Application Entry\n\nThe ASGI entry point for Starlette is defined in [`Starlette.__call__`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L92-L96):\n\n1. **Scope Initialization**: Attaches the application instance to the ASGI scope: `scope[\"app\"] = self` ([`applications.py:93`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L93)).\n2. **Lazy Stack Construction**: Checks if the middleware stack has been initialized; if not, builds it via `self.build_middleware_stack()` ([`applications.py:94-95`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L94-L95)).\n3. **Execution**: Delegates the call to the constructed stack: `await self.middleware_stack(scope, receive, send)` ([`applications.py:96`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L96)).\n\n---\n\n### Exact Middleware Construction Order\n\nMiddleware construction is defined in [`Starlette.build_middleware_stack`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L63-L83):\n\n1. **Exception Handler Partitioning** ([`applications.py:68-72`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L68-L72)):\n   - Handlers for `500` or `Exception` are assigned to `error_handler`.\n   - All other handlers are collected in `exception_handlers`.\n\n2. **Middleware Sequence Definition** (Outermost to Innermost order):\n   - [`applications.py:74`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L74): `ServerErrorMiddleware(handler=error_handler, debug=debug)` (Outermost)\n   - [`applications.py:75-76`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L75-L76): `RequestBodyLimitMiddleware(max_body_size=self.max_body_size)` (Appended if `self.max_body_size is not None`)\n   - [`applications.py:77`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L77): `self.user_middleware` (Appended in user-specified order)\n   - [`applications.py:78`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L78): `ExceptionMiddleware(handlers=exception_handlers, debug=debug)` (Innermost)\n\n3. **Stack Wrapping**:\n   - Initial base target is `app = self.router` ([`applications.py:80`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L80)).\n   - Wrapped by iterating over `reversed(middleware)` ([`applications.py:81-82`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L81-L82)):\n     ```python\n     for cls, args, kwargs in reversed(middleware):\n         app = cls(app, *args, **kwargs)\n     ```\n   - Wrapping order: `ExceptionMiddleware` directly wraps `self.router`, followed by `self.user_middleware` (in reverse order), `RequestBodyLimitMiddleware` (if configured), and finally `ServerErrorMiddleware` at the outer layer.\n\n---\n\n### Router Handoff\n\n1. **Instantiation**: `self.router = Router(routes, lifespan=lifespan)` is created during application initialization ([`applications.py:57`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L57)).\n2. **Base ASGI Target**: `self.router` serves as the innermost ASGI application passed to the middleware chain ([`applications.py:80`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L80)).\n3. **Dispatch Flow**: Inbound ASGI requests enter `self.middleware_stack` ([`applications.py:96`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L96)), traverse each middleware layer down to `ExceptionMiddleware`, and are finally handed off to `self.router` to resolve routes and endpoints.\n",
+      "duration_seconds": 12.960989618,
+      "usage": {
+        "input_tokens": 33300,
+        "output_tokens": 2230,
+        "thinking_tokens": 1080,
+        "cache_read_tokens": 0,
+        "total_tokens": 35530
+      },
+      "events": 19,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "starlette-asgi-entry",
+      "repository": "starlette",
+      "variant": "graphtyn",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "entry",
+          "matched": true,
+          "patterns": [
+            "Starlette.__call__",
+            "applications.py"
+          ]
+        },
+        {
+          "id": "lazy_stack",
+          "matched": true,
+          "patterns": [
+            "middleware_stack",
+            "build_middleware_stack"
+          ]
+        },
+        {
+          "id": "outer_error",
+          "matched": true,
+          "patterns": [
+            "ServerErrorMiddleware",
+            "outer"
+          ]
+        },
+        {
+          "id": "inner_exception",
+          "matched": true,
+          "patterns": [
+            "ExceptionMiddleware",
+            "inner"
+          ]
+        },
+        {
+          "id": "router_handoff",
+          "matched": true,
+          "patterns": [
+            "self.router",
+            "reversed"
+          ]
+        }
+      ],
+      "wall_seconds": 15.77
+    }
+  ]
+}

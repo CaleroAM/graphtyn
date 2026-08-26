@@ -1,5 +1,8 @@
 # 📚 Comparativa de Contexto: Yo (Agente) vs Modelos Locales
 
+> **Registro histórico.** Para resultados vigentes consulte
+> [`../BENCHMARKS.md`](../BENCHMARKS.md) y [`testing.md`](testing.md).
+
 Documento de trabajo para **pulir el enriquecimiento semántico** de Graphtyn hasta que el texto generado por los modelos locales sea tan bueno como el que genera un agente experto.
 
 La comparación visual está disponible en [`http://localhost:9210/comparison`](http://localhost:9210/comparison) mientras `graphtyn serve` está activo.
@@ -262,7 +265,9 @@ Rutas servidas por la API: `/dashboard.html` (index), `/dashboard.css`, `/dashbo
 ### Ronda de mejoras final (confianza visual, métodos C#, tests)
 
 - **Métodos C# extraíbles para símbolos**: `_extract_symbol_source` ahora detecta firmas tipo-C (`public int RollDice(...)`) con bloque por llaves, además de clases/structs. En UnityCommerceDemo los símbolos con contexto pasaron de **8 → 34** (límite de 60 por grado; el resto son keywords filtradas o sin bloque extraíble). Ejemplo: `AddMoney` → "Añade dinero al estado de un jugador".
-- **Confianza visual en el dashboard**: aristas INFERRED se dibujan **punteadas, más finas y atenuadas**; AMBIGUOUS se dibuja punteada en ámbar y conserva su etiqueta en el inspector. El header muestra los tres niveles de confianza y el modelo/modo de reindex activo.
+- **Confianza visual en el dashboard**: aristas INFERRED se dibujan **punteadas, más finas y atenuadas**; AMBIGUOUS se dibuja punteada en ámbar y conserva su etiqueta en el inspector. El header muestra modelo/modo, conteos y los tres niveles como elementos flexibles separados, sin superposición.
+- **Configuración comprensible**: `Diseño del grafo` contiene solo paleta, nodos, enlaces, efectos y físicas; `Motor de índice` contiene AST/IA, modelos y alcance. Los paneles son independientes, desplazables y adaptados a la altura visible.
+- **Evidencia híbrida bajo demanda**: `graph_query_intent` acepta `evidence_mode=auto|compact|balanced|precision`. `auto` conserva el paquete compacto salvo que orden, ramas, ciclo de vida o fallos requieran cuerpos numerados de símbolos seleccionados.
 - **Flujo Web / Framework**: nodos `route` con color/filtro propio, búsqueda por método y endpoint, filtros de `invoca ruta`, `despacha`, `valida con`, `crea` y `despacha evento`, y enfoque React/Blade → ruta → controlador → FormRequest → modelo/evento. `/api/index-quality` expone cobertura framework resuelta, no resuelta y ambigua.
 - **Overview e informe persistente**: `graph_query_intent(intent=overview)` detecta propósito desde README, frameworks desde manifiestos, entradas, subsistemas, dependencias, flujos y señales de riesgo. `graphtyn report` materializa la misma evidencia como `GRAPHTYN_REPORT.md`, con diagrama Mermaid y métricas de tokens comparables contra `GRAPH_REPORT.md` sin presentar cobertura observable como precisión semántica.
 - **Tests nuevos** (`tests/test_enrichment.py`, 9 casos): `_clean_answer`, `_role_hint_and_fix`, `_maybe_compact` (fallback ≤140), extracción C# de métodos + keywords, confianza en links, filtrado de símbolos keyword, `_detect_changed_files` en repo git temporal, y comunidades/god nodes de la vista semántica. Suite total: **13 passed** (hoy 40 con API, MCP, CLI y smoke).

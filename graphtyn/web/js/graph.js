@@ -227,6 +227,10 @@ export function onNodeClick(node) {
           '<code style="color:#cbd5e1;font-size:9px;white-space:pre-wrap;">' + escapeHtml(node.evidence) + '</code></div>'
         : '';
       const metadataRows = [
+        node.agent_id ? ['Agente', node.agent_id] : null,
+        node.session_id ? ['Sesión', node.session_id] : null,
+        node.status ? ['Estado memoria', node.status] : null,
+        node.observed_commit ? ['Commit observado', node.observed_commit] : null,
         node.http_method ? ['Método', node.http_method] : null,
         node.path ? ['Endpoint', node.path] : null,
         node.container ? ['Contenedor', node.container] : null,
@@ -237,6 +241,7 @@ export function onNodeClick(node) {
         : '';
       const hasWebFlow = node.kind === 'route' || connectedLinks.some(link =>
         ['invoca ruta', 'despacha', 'valida con', 'crea', 'despacha evento'].includes(link.label));
+      const isMemoryNode = String(node.kind || '').startsWith('memory');
 
       const descText = node.details || (node.id ? node.id.replace(/^(file|symbol):/, '') : 'Sin detalles disponibles');
       const descBlock = (function(){
@@ -267,7 +272,7 @@ export function onNodeClick(node) {
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
         '</div>' +
         '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;"><button class="btn-action btn-primary" style="justify-content:center;" data-node-id="' + safeId + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
-        '<button class="btn-action" data-node-id="' + safeId + '" onclick="addNodeToContext(this.dataset.nodeId);openQualityPanel()">Añadir al contexto</button>' +
+        (!isMemoryNode ? '<button class="btn-action" data-node-id="' + safeId + '" onclick="addNodeToContext(this.dataset.nodeId);openQualityPanel()">Añadir al contexto</button>' : '') +
         (hasWebFlow ? '<button class="btn-action" data-node-id="' + safeId + '" onclick="focusWebFlow(this.dataset.nodeId)">Ver flujo web</button>' : '') + '</div>' +
         '<hr style="border:none;border-top:1px solid #1e293b;margin:4px 0;">' +
         '<div style="font-weight:700;color:#64748b;font-size:10px;">VECINOS DIRECTOS (BLAST RADIUS):</div>' +
@@ -508,7 +513,7 @@ export function setPRBase(base) {
 
 export function loadGraph() {
       if (state.activeView === 'changes') { loadChangesView(); return; }
-      if (!state.activePath && state.activeView === 'code') {
+      if (!state.activePath && state.activeView !== 'agents') {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
         document.getElementById('graph-container').innerHTML =
           '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda</div>';
@@ -516,14 +521,26 @@ export function loadGraph() {
       }
       const url = state.activeView === 'agents'
         ? '/api/graph?view=agents'
+        : state.activeView === 'memory'
+        ? '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&limit=400'
         : state.activeView === 'semantic'
         ? '/api/graph?view=semantic&path=' + encodeURIComponent(state.activePath)
         : '/api/graph?path=' + encodeURIComponent(state.activePath);
 
-      showGraphSpinner(state.activeView === 'agents' ? 'Cargando topologia de agentes...' : 'Escaneando proyecto...');
+      const loadingMessage = state.activeView === 'agents' ? 'Cargando topología de agentes...'
+        : state.activeView === 'memory' ? 'Cargando memoria compartida del proyecto...'
+        : 'Escaneando proyecto...';
+      showGraphSpinner(loadingMessage);
       document.getElementById('stats').textContent = 'Cargando...';
 
-      fetch(url).then(r => r.json()).then(data => {
+      const memoryToken = localStorage.getItem('graphtyn-memory-token') || '';
+      const fetchOptions = state.activeView === 'memory' && memoryToken
+        ? {headers:{'Authorization':`Bearer ${memoryToken}`}} : {};
+      fetch(url, fetchOptions).then(async r => {
+        const data = await r.json();
+        if (!r.ok || data.ok === false) throw new Error(data.error || `HTTP ${r.status}`);
+        return data;
+      }).then(data => {
         if (!data.nodes || data.nodes.length === 0) {
           document.getElementById('graph-container').innerHTML =
             '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Sin nodos. Haz clic en Reindexar para escanear el proyecto.</div>';
@@ -539,9 +556,9 @@ export function loadGraph() {
         const meta = data.metadata || {};
         const badge = document.getElementById('model-badge');
         if (badge) {
-          badge.textContent =
-            (meta.ai_model ? meta.ai_model : '') +
-            (meta.reindex_mode ? ' · ' + meta.reindex_mode : '');
+          badge.textContent = state.activeView === 'memory'
+            ? `Memoria compartida · ${(data.agents || []).length} agentes`
+            : (meta.ai_model ? meta.ai_model : '') + (meta.reindex_mode ? ' · ' + meta.reindex_mode : '');
         }
 
         if (state.graphStyle !== 'standard' && badge) {
@@ -549,6 +566,8 @@ export function loadGraph() {
         }
 
         buildCommunities(data); updateEstTime();
+
+        requestAnimationFrame(() => updateMemoryLegend(data));
 
         const container = document.getElementById('graph-container');
 
@@ -653,9 +672,33 @@ export function loadGraph() {
         }
       }).catch(err => {
         console.error("Fetch error:", err);
+        const msg = String(err && err.message || '');
+        const isAuth = /401|token/i.test(msg);
         document.getElementById('graph-container').innerHTML =
-          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;">Error al conectar con la API</div>';
+          '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;padding:20px;text-align:center;">' +
+          '<strong>' + (isAuth ? 'Token de memoria requerido' : 'Error al conectar con la API') + '</strong><br/>' +
+          '<span style="color:#94a3b8;font-size:11px;margin-top:6px;">' +
+          (isAuth
+            ? 'Abre el panel "Buscar en memoria", pega el token de memoria y vuelve a seleccionar esta pestaña.'
+            : escapeHtml(msg)) +
+          '</span></div>';
       });
+    }
+
+function updateMemoryLegend(data) {
+      const old = document.getElementById('memory-legend-overlay');
+      if (old) old.remove();
+      if (state.activeView !== 'memory') return;
+      const key = a => '<span class="memory-agent-key"><i style="background:' + escapeHtml(a.color) + '"></i>' + escapeHtml(a.id) + '</span>';
+      let html = '<div class="memory-legend-title">Agentes del proyecto</div>' +
+        (data.agents || []).map(key).join('');
+      if ((data.consulters || []).length) {
+        html += '<div class="memory-legend-title">Sólo consultaron</div>' + data.consulters.map(key).join('');
+      }
+      const overlay = document.createElement('div');
+      overlay.id = 'memory-legend-overlay';
+      overlay.innerHTML = html;
+      document.getElementById('graph-container').appendChild(overlay);
     }
 
 export function refreshStyleInPlace() {

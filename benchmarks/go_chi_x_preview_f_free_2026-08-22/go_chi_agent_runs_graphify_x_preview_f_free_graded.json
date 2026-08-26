@@ -1,0 +1,244 @@
+[
+  {
+    "task_id": "mux-request-lifecycle",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 122.4414,
+    "usage": {
+      "input_tokens": 929,
+      "output_tokens": 2065,
+      "thinking_tokens": 467,
+      "total_tokens": 12805
+    },
+    "tool_calls": 15,
+    "answer": "# Ciclo de una petición en `Mux.ServeHTTP`\n\nGrafo: go-chi (698 nodos). Todas las aristas citadas son `EXTRACTED` salvo que se marque `INFERRED`.\n\n## Estructura base\n\n- `Mux` (mux.go:21) declara como campos: `net/http.Handler` (mux.go:24), `node` (mux.go:27 — la raíz del árbol de rutas), `net/http.HandlerFunc` (mux.go:30) y **`sync.Pool` (mux.go:37)** para reciclar el contexto de ruta.\n- `NewMux()` → `NewRouteContext()` (INFERRED, mux.go:55): pre-pobla el pool.\n- `Context` (context.go:48) agrupa: `Routes` (context.go:49), `context.Context` embebido (context.go:54), `RouteParams` (context.go:63) y `methodTyp` (context.go:80).\n\n## Ramas de `ServeHTTP` (mux.go:63), en orden de línea\n\n1. **Ausencia de rutas** — `.ServeHTTP() --calls--> .NotFoundHandler()` en **mux.go:66**; handler definido en **mux.go:404**. Existe porque si el árbol (`node`, tree.go:97, con `endpoints` en tree.go:126 y `methodTyp` en tree.go:18) no matchea método+ruta, la petición debe tener destino definido en vez de caer al `nil`. El middleware `SupressNotFound()` (middleware/supress_notfound.go:15) existe para suprimir esa rama cuando un subrouter delega.\n\n2. **Adquisición y reinicio del contexto** — `.ServeHTTP() --calls--> Context` en **mux.go:71**. El contexto sale del `sync.Pool` (mux.go:37) vía `NewRouteContext()` (**context.go:34**, constructor de `Context`) y se limpia con `.Reset()` (**context.go:85**, arista `method`). `Reset` existe porque el objeto se recicla entre peticiones: sin reinicio, `Routes`, `RouteParams` y `URLParams` de la petición anterior contaminarían la actual.\n\n3. **Router padre** — *el grafo NO contiene un campo `parentRouter` extraído* (ni campo ni arista). La única evidencia relacionada es `.Mount() --calls--> RouteContext()` (**INFERRED**, mux.go:316): los subrouters montados comparten/recuperan el `RouteContext` del router ancestro. Por política de evidencia, lo reporto como `INFERRED`: requiere verificación en fuente antes de afirmarlo como hecho.\n\n4. **Inserción en request.Context** — `RouteContext()` (**context.go:28**) referencia tanto `context.Context` como `Context` (EXTRACTED); es la puerta de entrada/salida del contexto de ruta dentro del `request.Context` estándar. Sus consumidores: `URLParam()` (context.go:12) y `URLParamFromCtx()` (context.go:20). Existe para que handlers y middlewares accedan a parámetros sin firmas acopladas a chi.\n\n5. **Ejecución** — `.ServeHTTP() --calls--> .Get()` en **mux.go:81** (búsqueda en el árbol: `Route` en tree.go:872 con campos `Routes` tree.go:873 y `net/http.Handler` tree.go:874; interfaz `Routes` en chi.go:121). La cadena de ejecución registrada por el grafo: `.handle()` (mux.go:422) → `.updateRouteHandler()` (mux.go:429/517) → `chain()` (INFERRED, chain.go:36) sobre `Middlewares` (chain.go:12), construida con `Chain()` (chain.go:6).\n\n6. **Devolución al pool** — `.ServeHTTP() --calls--> .Put()` en **mux.go:91**, sobre el mismo `sync.Pool` declarado en mux.go:37. Existe para reusar la estructura `Context` y evitar una asignación por petición.\n\n## Resumen del flujo\n\n```\nServeHTTP (mux.go:63)\n ├─ L66: sin match → NotFoundHandler (mux.go:404)\n ├─ L71: pool.Get → NewRouteContext (context.go:34) + Reset (context.go:85)\n ├─ L81: lookup árbol (node/Routes) → handle (mux.go:422) → chain (chain.go:36*)\n └─ L91: pool.Put (sync.Pool, mux.go:37)\n```\n(*) INFERRED. Advertencia: las ramas L81/L91 aparecen etiquetadas en el grafo con los símbolos `.Get()`/`.Put()` de registro HTTP (mux.go:155/185); posicionalmente corresponden a la fase de adquisición/devolución del pool, pero esa identificación es interpretativa, no respaldada por una arista explícita del grafo hacia `pool.Get/pool.Put`.",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 0,
+    "partial": 3,
+    "total": 6,
+    "quality_score": 0.25,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.25,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "nil-handler",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "parent-context",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "pool-get",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "parent-ctx",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "context-value",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "pool-put",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  },
+  {
+    "task_id": "middleware-chain-order",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 98.4376,
+    "usage": {
+      "input_tokens": 174,
+      "output_tokens": 1122,
+      "thinking_tokens": 221,
+      "total_tokens": 14957
+    },
+    "tool_calls": 10,
+    "answer": "# Cadena de middlewares en chi según el grafo\n\n## Construcción del `http.Handler`\n\n- **`Chain()`** (`chain.go:L6`) es el constructor: el grafo registra `Chain() --calls--> Middlewares` en `chain.go:L7` y `Chain() --references [return_type]--> Middlewares` en `chain.go:L6`. Es decir, guarda los middlewares como tipo `Middlewares`.\n- **`Middlewares.Handler()`** (`chain.go:L12`) recibe un `net/http.Handler` (arista EXTRACTED de parámetro en L12) y hace la única llamada relevante: `.Handler() --calls [EXTRACTED]--> chain()` en `chain.go:L13`. Devuelve el resultado como handler final.\n- **`Middlewares.HandlerFunc()`** (`chain.go:L18`) es la variante para `net/http.HandlerFunc`: referencia ese tipo como parámetro (L18), declara retorno `net/http.Handler` (L18) y también delega: `.HandlerFunc() --calls [EXTRACTED]--> chain()` en `chain.go:L19`.\n- La lógica común está en **`chain()`** (`chain.go:L36`), cuya única arista estructural es `chain() --references [param]--> net/http.Handler`: toma el handler final que envolverá con la lista de middlewares.\n\n## Estructura y delegación de `ChainHandler`\n\n- **`ChainHandler`** (`chain.go:L24`) tiene dos campos evidenciados: `--references [field]--> net/http.Handler` (`chain.go:L25`) y `--references [field]--> Middlewares` (`chain.go:L27`). Es decir, almacena el handler envuelto más la lista de middlewares.\n- Su método **`.ServeHTTP()`** (`chain.go:L30`) firma con `net/http.ResponseWriter` y `net/http.Request` (aristas EXTRACTED en L30). El grafo **no captura ninguna arista de llamada saliente** desde este método (p. ej. hacia `h.ServeHTTP`), por lo que la delegación exacta interna no puede afirmarse solo con evidencia del grafo.\n\n## Orden de envoltura y lista vacía — advertencia de confianza\n\nEl grafo documenta *quién llama a quién* entre `Handler`/`HandlerFunc` → `chain()`, pero **no contiene nodos ni aristas para el cuerpo interno de `chain()`**: no hay evidencia de iteración inversa (orden de envoltura/ejecución m₁(m₂(h))) ni de una rama para lista vacía. Según la política de confianza, eso queda como **no evidenciado / ambiguo**: afirmar \"el último middleware se ejecuta primero\" o \"con lista vacía devuelve el handler sin modificar\" sería una suposición, no un hecho extraído. Verificarlo requeriría inspeccionar `chain.go:L36-L44`, lo cual excede lo que este grafo expone.\n\n**Resumen con evidencia:** construcción = `Chain()` → `Middlewares` (L6-L7) → `.Handler()`/`.HandlerFunc()` → `chain()` (L13/L19) → `ChainHandler{handler, middlewares}` (L24-L27) expuesto vía `ServeHTTP(w,r)` (L30).",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 1,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.3333,
+    "factual_errors": 1,
+    "adjusted_quality_score": 0.1667,
+    "contradictions": [
+      "last-executes-first"
+    ],
+    "facts": [
+      {
+        "id": "chain-cast",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "handler-build",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "empty",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "last-wrap",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "reverse-loop",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "delegate",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  },
+  {
+    "task_id": "routing-context-safety",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 127.1335,
+    "usage": {
+      "input_tokens": 3879,
+      "output_tokens": 1374,
+      "thinking_tokens": 326,
+      "total_tokens": 15179
+    },
+    "tool_calls": 21,
+    "answer": "# Auditoría vía Grafo (`go-chi`, 698 nodos)\n\n**Nota previa:** el grafo registra relaciones estructurales (EXTRACTED); no contiene cuerpos de función ni comentarios, así que marco explícitamente lo que **no está evidenciado** en lugar de suponerlo.\n\n## 1. `URLParam()` — cadena de resolución (context.go)\n- `Context --contains--> URLParam()` en **context.go:L11**; recibe `net/http.Request` como parámetro (**L11**, edge `parameter_type`).\n- **L12**: llama a `RouteContext()` (recupera la `*Context` del `context.Context` de Go, **context.go:L28**).\n- **L13**: delega en el método `Context.URLParam()` (**context.go:L127**).\n- Variante directa: `URLParamFromCtx()` (**L19**) hace lo mismo sin necesitar `*http.Request` (**L20–21**).\n\n## 2. `Context.Reset()` — **context.go:L85**\nEvidencia del grafo: es método de `Context` (struct en **L48**) y su único edge entrante es `Context --method--> .Reset()`. Los campos del struct que existen según el grafo: `Routes` (**L49**), `context.Context` embebido (**L54**), `RouteParams` (**L63**), `methodTyp` (**L80**).\n⚠️ **No evidenciado:** qué campos exactamente pone a cero. El grafo no tiene edges campo-por-campo desde `.Reset()`; afirmarlo sería suposición.\n\n## 3. `Context.Clone()` — **context.go:L107**\nEdges: método de `Context` y `--references [return_type]--> Context`: devuelve una **nueva instancia** en lugar de mutar/reusar la existente. Dado que `NewRouteContext()` devuelve `*Context` (**L34**) y esa misma instancia viaja por el request, copiarla evita compartir el mismo puntero.\n⚠️ **No evidenciado:** qué referencias se copian en profundidad (p. ej. si clona `RouteParams.Keys`) ni comentarios sobre goroutines/concurrencia. El único soporte indirecto es el edge de tipo de retorno: crear un valor nuevo es la condición necesaria para que cada goroutine tenga su propio estado de ruta.\n\n## 4. Clave repetida\nEl grafo muestra los componentes implicados pero **no documenta la política de resolución**:\n- `Context --references [field]--> RouteParams` (**L63**); `RouteParams` (**L174**) con método `.Add()` (**L179**).\n- Búsqueda real ocurre en `Context.URLParam()` (**L127**) — el método tiene grado 3, pero sus edges internos no fueron capturados.\n⚠️ **No evidenciado:** si ante clave duplicada gana la primera o la última ocurrencia (el recorrido hacia atrás en `Keys`). El test relacionado más cercano es `TestMuxSubrouterWildcardParam()` (**mux_test.go:L1657**), que sugiere escenarios de subrouter+param, pero no prueba la semántica de duplicados.\n\n## Conclusión\nConfiable según grafo: ubicaciones (`Reset` L85, `Clone` L107, `URLParam` L11/L127), estructura de `Context` (L48–L80) y la delegación paquete→`RouteContext()`→método. **Pendiente de verificación en fuente** (el grafo no la captura): detalle de campos limpiados por `Reset`, profundidad exacta de la copia de `Clone`, justificación explícita de goroutines, y precedencia de claves duplicadas.",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 0,
+    "partial": 4,
+    "total": 6,
+    "quality_score": 0.3333,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.3333,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "reset",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "reset-private",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "clone-parent",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "deep-copy",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "reverse-param",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "missing-param",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  },
+  {
+    "task_id": "failure-middleware-semantics",
+    "variant": "Graphify",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 80.0252,
+    "usage": {
+      "input_tokens": 3415,
+      "output_tokens": 1375,
+      "thinking_tokens": 281,
+      "total_tokens": 17551
+    },
+    "tool_calls": 12,
+    "answer": "## Comparación Recoverer vs Timeout según el grafo (`/tmp/graphtyn-go-chi`, 698 nodos)\n\n### Recoverer — `middleware/recoverer.go:L22`\n| Aspecto | Evidencia del grafo |\n|---|---|\n| Firma | `Recoverer() --references [EXTRACTED, parameter_type]--> net/http.Handler` en `recoverer.go:L22` |\n| Panic/stack | `Recoverer() --calls [EXTRACTED]--> PrintPrettyStack()` en `recoverer.go:L36`; cadena: `PrintPrettyStack() → printPrettyStack()` (L55) → `.parse()` (L64) → `.decorateLine()` (L106) → `.decorateSourceLine()` (L121) / `.decorateFuncCallLine()` (L124) |\n| Logging | `Recoverer() --calls [INFERRED]--> GetLogEntry()` en `recoverer.go:L32`; también `.Panic() --calls [INFERRED]--> printPrettyStack()` desde `logger.go:L169`. Ambos requieren verificación en fuente |\n| Imports relevantes | `recoverer.go --imports_from [EXTRACTED]--> errors (L8), fmt (L9), net/http (L11), runtime/debug (L13)` — consistentes con recover+stack, pero el grafo **no** contiene ningún nodo ni arista con `http.ErrAbortHandler`, ni la condición que escribe el 500 |\n\n### Timeout — `middleware/timeout.go:L32`\n| Aspecto | Evidencia del grafo |\n|---|---|\n| Firma | `Timeout() --references [EXTRACTED]--> time.Duration` (parámetro) y `--> net/http.Handler` (retorno), ambos en `timeout.go:L32` |\n| Contexto | Solo evidencia estructural: `timeout.go --imports_from [EXTRACTED]--> go_pkg_context (L4)` y `go_pkg_time (L6)`. El grafo **no** extrae ninguna arista de creación/cancelación de contexto dentro de `Timeout()` |\n| Consumidor real | `main() --calls [EXTRACTED]--> Timeout()` en `_examples/limits/main.go:L43` |\n\n### Momento exacto del 504 y obligación respecto a `ctx.Done()`\nEl grafo **no contiene** esa evidencia: no existe nodo/arista para `ctx.Done()`, `StatusGatewayTimeout`, ni escritura del 504 en `timeout.go`. El único símbolo \"GatewayTimeout\" es `TestThrottleTriggerGatewayTimeout()` (`middleware/throttle_test.go:L90`, EXTRACTED), que pertenece a **Throttle**, no a `Timeout()`. Por tanto no puedo citar líneas para esos puntos sin leer archivos, cosa que excluyes.\n\n### Conclusión soportada por el grafo\n- **Verificado (EXTRACTED):** Recoverer recibe un `http.Handler` e invoca impresión de stack decorado (L36→L55→L64→L106/L121/L124); Timeout toma `time.Duration` y devuelve `http.Handler` (L32) importando `context` (L4).\n- **Solo inferido:** logging vía `GetLogEntry` (recoverer.go:L32) y vía `.Panic()` (logger.go:L169).\n- **No presente en el grafo:** excepción `http.ErrAbortHandler`, condición exacta del 500, cancelación de contexto, momento del 504 y la obligación del handler de respetar `ctx.Done()`. Afirmarlos sería suposición; se requiere inspección de fuente o reindexado del grafo para cubrirlos.",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 1,
+    "partial": 4,
+    "total": 6,
+    "quality_score": 0.5,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.5,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "recover",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "abort",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "logging",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "upgrade-500",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "timeout-context",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "deadline-504",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  }
+]

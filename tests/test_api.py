@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from graphtyn.api import main as api_main
+from graphtyn.core.shared_memory import SharedMemoryStore
 
 
 def _client(tmp_path, monkeypatch):
@@ -19,6 +20,51 @@ def test_health_endpoint(tmp_path, monkeypatch):
     data = res.json()
     assert data["status"] == "ok"
     assert data["service"] == "Graphtyn"
+
+
+def test_memory_http_search_context_sessions_and_auth(tmp_path, monkeypatch):
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+    session = store.start_session("agy", "Auth memory", branch="main")
+    memory = store.checkpoint(session["id"], "decision", "JWT centralizado", "AuthService validates credentials")
+    monkeypatch.setenv("GRAPHTYN_MEMORY_HTTP_TOKEN", "memory-secret")
+    denied = api_main.memory_status(str(project), authorization=None)
+    assert denied.status_code == 401
+    auth = "Bearer memory-secret"
+    status = api_main.memory_status(str(project), authorization=auth)
+    sessions = api_main.memory_sessions(str(project), 50, authorization=auth)
+    search = api_main.memory_search({"path": str(project), "query": "credentials",
+                                     "requester_agent": "opencode"}, authorization=auth)
+    context = api_main.memory_context({"path": str(project), "query": "credentials",
+                                       "requester_agent": "opencode", "token_budget": 500}, authorization=auth)
+
+    assert status["memories"] == 1
+    assert sessions["sessions"][0]["agent_id"] == "agy"
+    assert search["results"][0]["id"] == memory["id"]
+    assert context["memories"][0]["agent_id"] == "agy"
+    graph = api_main.memory_graph(str(project), requester_agent="opencode", limit=300, authorization=auth)
+    assert graph["ok"] is True
+    assert any(node.get("kind") == "memory_agent" for node in graph["nodes"])
+
+
+def test_memory_http_correct_and_forget_enforce_author(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+    session = store.start_session("agy", "Database")
+    old = store.checkpoint(session["id"], "decision", "DB", "Use MySQL")
+    corrected = api_main.memory_correct({"path": str(project), "memory_id": old["id"],
+        "session_id": session["id"], "title": "DB corrected", "content": "Use PostgreSQL"})
+    new_id = corrected["memory"]["id"]
+    forbidden = api_main.memory_forget({"path": str(project), "memory_id": new_id, "requester_agent": "opencode"})
+    forgotten = api_main.memory_forget({"path": str(project), "memory_id": new_id, "requester_agent": "agy"})
+
+    assert corrected["ok"] is True
+    assert forbidden.status_code == 403
+    assert forgotten["ok"] is True
 
 
 def test_explicit_registration_overrides_auto_discovered_name(tmp_path, monkeypatch):
@@ -54,7 +100,7 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     js = client.get("/dashboard.js")
     assert js.status_code == 200
     assert "Object.assign(window" in js.text
-    for module in ["state", "painters", "sim", "styles", "graph", "controls", "ui", "quality"]:
+    for module in ["state", "painters", "sim", "styles", "graph", "controls", "ui", "quality", "memory"]:
         r = client.get(f"/js/{module}.js")
         assert r.status_code == 200, module
         assert "export " in r.text, module
@@ -257,3 +303,29 @@ def test_projects_list_includes_respect_git(tmp_path, monkeypatch):
     res = client.get("/api/projects")
     assert res.status_code == 200
     assert isinstance(res.json(), list)
+
+
+def test_memory_search_all_federated(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+    from graphtyn.api.main import app
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)
+    client = TestClient(app)
+    a, b = tmp_path / "a", tmp_path / "b"
+    a.mkdir(); b.mkdir()
+    sa = SharedMemoryStore(a)
+    s1 = sa.start_session("career", "t", capture_enabled=True)
+    sa.checkpoint(s1["id"], "fact", "Entrevista AWS", "Preguntas de kubernetes y lambdas")
+    sb = SharedMemoryStore(b)
+    s2 = sb.start_session("opencode", "t2", capture_enabled=True)
+    sb.checkpoint(s2["id"], "fact", "Nota ingles", "vocabulario stand-up")
+
+    r = client.post("/api/memory/search-all", json={"paths": [str(a), str(b)], "query": "kubernetes entrevista"})
+    assert r.status_code == 200
+    data = r.json()
+    stores = {item["store"] for item in data["results"]}
+    assert stores <= {str(a), str(b)}
+    assert any("Entrevista AWS" in item["title"] for item in data["results"])
+
+    r2 = client.post("/api/memory/search-all", json={"paths": ["/ruta/inexistente"], "query": "x"})
+    assert r2.status_code == 200 and r2.json()["results"] == []

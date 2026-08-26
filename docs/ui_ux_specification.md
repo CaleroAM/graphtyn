@@ -1,9 +1,9 @@
 # 🎨 Especificación UI/UX de Graphtyn
 
-**Versión:** 1.0.0  
+**Versión:** 1.1.0
 **Proyecto:** Graphtyn (`graphtyn`)
-**Ruta:** `/home/developer/Documentos/docker/PROYECTOS/graphtyn`
-**Estado:** Propuesta de Diseño y Especificación de Interfaz  
+**Ruta:** `<HOME>/Documentos/docker/PROYECTOS/graphtyn`
+**Estado:** Implementado y verificado
 
 ---
 
@@ -21,10 +21,12 @@ Graphtyn es un motor de contexto determinista basado en AST y topología de agen
 ## 2. Maquetas y Wireframes Visuales
 
 ### 2.1 Vista Principal: Grafo AST de Código y Barra Lateral Izquierda
-![Graphtyn Main AST Graph UI](/home/developer/.gemini/antigravity-cli/brain/f567f07f-7a33-46ad-a9c8-d2a8d6f4d746/graphtyn_ui_main_1785948974624.jpg)
+> La maqueta histórica del grafo AST no se versionó; el dashboard ejecutable es
+> la referencia visual vigente.
 
 ### 2.2 Vista Alternativa: Topología de Agentes del Arnés (Agent Harness Topology)
-![Graphtyn Agent Harness Topology UI](/home/developer/.gemini/antigravity-cli/brain/f567f07f-7a33-46ad-a9c8-d2a8d6f4d746/graphtyn_agent_topology_1785948987795.jpg)
+> La maqueta histórica de topología no se versionó; valide esta vista en el
+> dashboard.
 
 ---
 
@@ -67,8 +69,13 @@ Graphtyn es un motor de contexto determinista basado en AST y topología de agen
 ### 3.2 Conmutador de Vistas (Header View Switcher Tabs)
 * **Ubicación:** En la barra superior (Header Navigation Bar).
 * **Segmented Control Tabs:**
-  1. **`Project AST Graph`:** Muestra la estructura sintáctica del código fuente (Archivos, Clases, Funciones, Llamadas).
-  2. **`Agent Harness Topology`:** Muestra la arquitectura del sistema multi-agente en ejecución (Supervisor, Code Parser, Test Runner, Memory Store).
+  1. **`Code AST`:** estructura comprobable del repositorio.
+  2. **`Semántico del código`:** comunidades y similitud derivadas del contenido
+     indexado; no representa conversaciones.
+  3. **`Memoria del proyecto`:** sesiones, agentes, decisiones, resultados y
+     vínculos con código. Se carga automáticamente al seleccionar el proyecto.
+  4. **`Harness Topology`:** arquitectura del arnés multiagente.
+  5. **`Cambios`:** impacto Git y estado del trabajo.
 * **Estilo de Pestaña Activa:** Borde inferior brillante `#00f0ff` (Cyan) o `#8b5cf6` (Violeta), fondo semitransparente `rgba(56, 189, 248, 0.12)` e icono resaltado.
 
 ### 3.3 Sistema de Conectores de Alto Contraste y Brillo (High-Contrast Graph Edges)
@@ -78,6 +85,19 @@ Para resolver la problemática de los conectores oscuros e invisibles:
   * `INHERITS` (Herencia de Clase): Magenta Neón `#ff007f` (`rgba(255, 0, 127, 0.85)`).
   * `CALLS` (Llamada a Función): Púrpura Radiante `#a855f7` (`rgba(168, 85, 247, 0.85)`).
   * `AGENT_CHANNEL` (Bus Inter-Agente): Verde Lima Neón `#10b981` / Ámbar `#f59e0b`.
+
+### 3.4 Controles separados y estado responsivo
+
+- **Diseño del grafo:** controla exclusivamente paleta, estilo, forma, enlaces,
+  efectos neuronales, repulsión y distancia. Ninguna opción provoca reindexación.
+- **Motor de índice:** controla el pipeline AST/local/cloud, modelos de código y
+  visión y respeto de `.gitignore`. La interfaz indica que se aplica al reindexar.
+- Ambos son dropdowns independientes con `max-height` dependiente del viewport,
+  desplazamiento interno y cierre mutuamente exclusivo.
+- El estado `modelo · modo`, `nodos · conectores` y la leyenda de confianza usa
+  elementos flexibles separados. Puede envolver líneas sin solaparse a zoom 100%.
+- La leyenda ya no usa caracteres y espacios duros como layout: cada nivel posee
+  muestra de línea CSS, texto y color accesible.
 * **Mejoras Tecnológicas de Renderizado:**
   * **Ancho de Línea:** Aumento del grosor base a `2.5px` en 2D / `1.8px` en 3D.
   * **Material Resplandeciente (Bloom / Glow Effect):**

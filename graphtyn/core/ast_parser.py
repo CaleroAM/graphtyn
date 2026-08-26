@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Set, Optional
 from .tree_sitter_backend import PARSER_VERSION, parse_file as parse_tree_sitter_file
 from .overview_report import collect_project_evidence
+from .graph_hygiene import normalize_graph
+from .type_evidence import apply_type_evidence
 
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
@@ -71,6 +73,8 @@ class ASTParser:
         tree_members: Dict[str, List[Dict[str, Any]]] = {}
         file_namespaces: Dict[str, str] = {}
         tree_parsed_files: Set[str] = set()
+        cache_hits = 0
+        cache_misses = 0
 
         structural_cache = {"version": PARSER_VERSION, "files": {}}
         if cache_path and Path(cache_path).exists():
@@ -82,12 +86,15 @@ class ASTParser:
                 pass
 
         def _tree_facts(path: Path, rel_file: str) -> Optional[Dict[str, Any]]:
+            nonlocal cache_hits, cache_misses
             if path.suffix.lower() not in (".cs", ".php", ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".go", ".rs"):
                 return None
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             cached = structural_cache.get("files", {}).get(rel_file, {})
             if cached.get("sha256") == digest and cached.get("result", {}).get("parser") == "tree-sitter":
+                cache_hits += 1
                 return cached["result"]
+            cache_misses += 1
             result = parse_tree_sitter_file(path, rel_file)
             if result is not None:
                 structural_cache.setdefault("files", {})[rel_file] = {"sha256": digest, "result": result}
@@ -799,17 +806,26 @@ class ASTParser:
             except OSError:
                 pass
 
-        return self._enrich_graph_with_degree({
+        graph = {
             "nodes": nodes,
             "links": links,
             "metadata": {
                 "structural_parser": "tree-sitter+fallback" if tree_parsed_files else "builtin-fallback",
                 "tree_sitter_files": len(tree_parsed_files),
                 "structural_cache": bool(cache_path),
+                "incremental": {
+                    "reused_files": cache_hits,
+                    "parsed_files": cache_misses,
+                    "invalidated_files": cache_misses,
+                    "cache_version": PARSER_VERSION,
+                },
                 "laravel_routes": laravel_stats["routes"],
                 "project_evidence": collect_project_evidence(root_dir),
             },
-        })
+        }
+        apply_type_evidence(graph, root_dir)
+        normalize_graph(graph)
+        return self._enrich_graph_with_degree(graph)
 
     def _enrich_graph_with_degree(self, graph: Dict[str, Any]) -> Dict[str, Any]:
         in_degree: Dict[str, int] = {}

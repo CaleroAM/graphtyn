@@ -1,0 +1,86 @@
+[
+  {
+    "task_id": "mux-request-lifecycle",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 161.2215,
+    "usage": {
+      "input_tokens": 3192,
+      "output_tokens": 3362,
+      "thinking_tokens": 943,
+      "total_tokens": 14729
+    },
+    "tool_calls": 2,
+    "answer": "La consulta inicial marcó `do_not_expand=true` con `complete_for=[\"flow\"]`, pero el grafo seleccionado no incluye el cuerpo de `ServeHTTP` ni la adquisición/liberación del pool (hay un hueco de evidencia concreto y nombrado). Hago una única expansión con `extends_context_id` para ese hecho faltante:\n# Ciclo de una petición en `Mux.ServeHTTP` (chi)\n\nEvidencia del grafo (intent=`flow`, dos consultas, `do_not_expand=true` en ambas; relaciones `contiene` marcadas **E**=extraída). Todo lo citado abajo son operaciones extraídas del grafo; lo que el grafo **no** expongo lo marco explícitamente.\n\n## 1. Entrada y rama \"sin rutas\"\n- **`ServeHTTP`** — `mux.go:63` (relación `mux.go contiene ServeHTTP`, E, línea 63).\n- Op extraída: `mux.go:66` → `mx.NotFoundHandler().ServeHTTP(w, r)` con `return` en `mux.go:67`.\n\n**Por qué existe:** es el guard inicial. Si el mux nunca registró rutas, no hay nada que despachar y se responde directo con el 404, antes de tocar `request.Context()`. El `NotFoundHandler` se alimenta de **`NotFound`** (`mux.go:203`): registra el handler y lo propaga a subrouters montados (`updateSubRoutes` en `:214`, `subMux.NotFound(hFn)` en `:215-216`) solo cuando aplica (`if mx.inline && mx.parent != nil`, `:207`). Además **`Mount`** (`mux.go:308-309`) hereda `subr.NotFound(mx.notFoundHandler)` si el hijo no definió uno — por eso un subrouter vacío también cae al 404 correcto.\n\n## 2. Detección de contexto previo / router padre\n- Ops extraídas: `mux.go:71` → `r.Context().Value(RouteCtxKey)` y `return` en `mux.go:74`.\n\n**Por qué existe:** si ya hay un `*Context` bajo `RouteCtxKey` en `request.Context()`, este mux es un router hijo montado dentro de otro; crear un segundo contexto rompería la cadena. Evidencia correlata de que los hijos reutilizan el contexto existente: en **`Mount`** (`mux.go:315-319`) el handler montado hace `rctx := RouteContext(r.Context())` (`:316`) y `mx.nextRoutePath(rctx)` (`:319`, método en `mux.go:493`) para recortar el path ya consumido.\n\n⚠️ **Ambigüedad no resuelta:** el grafo expone la condición y el `return` (`:71`, `:74`), pero **no** la operación concreta de delegación al padre dentro de ese bloque (no hay op tipo `parent.ServeHTTP` extraída). La existencia del campo `parent` sí es evidencia extraída (`NotFound` en `mux.go:207`: `if mx.inline && mx.parent != nil`), pero la línea exacta de la llamada al padre queda sin verificar.\n\n## 3. Inserción en `request.Context`\n- Op extraída: `mux.go:87` → `r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))`.\n\n**Por qué existe:** publica el `*Context` para todo el pipeline (middlewares + handler final) usando la interfaz estándar de Go, no variables globales. Consumidores directos extraídos: **`routeHTTP`** lee ese valor en `mux.go:449` (`r.Context().Value(RouteCtxKey)`); también `SupressNotFound` en `middleware/supress_notfound.go:15-19` hace `chi.RouteContext(r.Context())` y `rctx.Routes.Match(...)`.\n\n## 4. Adquisición, reinicio y devolución al pool\n⚠️ **Hueco de evidencia:** las ops extraídas de `ServeHTTP` (`mux.go:63-87`) **no incluyen** `pool.Get`, `rctx.Reset()` ni `pool.Put`. El grafo confirma la inserción del `rctx` (`:87`) y su lectura posterior (`:449`), pero la adquisición/reinicio/devolución al `sync.Pool` **no está expuesta en las ops retornadas**, así que no puedo afirmarlas como hecho citando línea. Quedan como ambigüedad pendiente de verificación en fuente.\n\n## 5. Ejecución y despacho final\n- **`updateRouteHandler`** — `mux.go:517`: construye `chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))` (`:518`); es decir, el handler interno de `ServeHTTP` es `routeHTTP` con middlewares aplicados.\n- **`routeHTTP`** — `mux.go:447`:\n  - `:449` recupera el `*Context` (insertado en el paso 3);\n  - `:453`, `:459` (`if routePath == \"\"`) y `:465` (`if rctx.RouteMethod == \"\"`) normalizan ruta/método heredados del router padre, con `return` temprano en `:471`;\n  - `:475` `if _, _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil` → ejecuta el handler encontrado, `return` en `:484`; sin match ⇒ 404.\n- **`FindRoute`** — `tree.go:383`: llama `n.findRoute(...)` (`:390`); sin match devuelve `nil, nil, nil` (`:392`); con match copia `URLParams.Keys/Values` (`:396-397`), acumula `RoutePatterns` (`:402`) y devuelve `(rn, endpoints, endpoints[method].handler)` (`:405`).\n\n## Resumen del flujo con evidencia\n```\nServeHTTP (mux.go:63)\n├─ sin handler de rutas → NotFoundHandler().ServeHTTP (:66-67)        [404]\n├─ RouteCtxKey ya presente (:71) → return (:74)                        [rama padre; llamada exacta no extraída]\n├─ r = r.WithContext(WithValue(ctx, RouteCtxKey, rctx)) (:87)\n└─ handler interno (updateRouteHandler :517-518)\n   └─ routeHTTP (mux.go:447)\n      ├─ lee RouteCtxKey (:449), normaliza (:453,:459,:465,:471)\n      └─ tree.FindRoute (tree.go:383) → handler (:405) | nil (:392)\n```\n\n**No verificado por el grafo** (declarado como tal): líneas exactas de adquisición/reset/`Put` del pool y de la delegación `parent.ServeHTTP` dentro de `ServeHTTP`. Las condiciones de guard (`:63-65`, `:70-73`) solo están evidenciadas por sus efectos (ops `:66`, `:71`, `:74`), no por su texto completo.",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1
+  },
+  {
+    "task_id": "middleware-chain-order",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 78.1675,
+    "usage": {
+      "input_tokens": 2574,
+      "output_tokens": 1735,
+      "thinking_tokens": 634,
+      "total_tokens": 8975
+    },
+    "tool_calls": 1,
+    "answer": "## Respuesta basada exclusivamente en el grafo (context_id `2849eb770812`, `complete_for: flow`, `do_not_expand: true`)\n\n**Construcción del http.Handler final — `chain()` en `chain.go:36`**\n\nFirma extraída: `func chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler` (chain.go:36).\n\n1. **Lista vacía**: `if len(middlewares) == 0` → `return endpoint` (chain.go:38–39). El endpoint se devuelve **sin envolver**, tal cual.\n2. **Envoltura inicial**: `middlewares[len(middlewares)-1](endpoint)` (chain.go:43). El **último** middleware del slice es el primero en envolver al endpoint (queda más adentro).\n3. **Bucle de envoltura**: `for i := len(middlewares) - 2; i >= 0; i--` (chain.go:44) — recorre desde el penúltimo hasta el índice 0, acumulando el resultado en `h`.\n4. **Retorno**: `return h` (chain.go:48).\n\n**Orden resultante** (derivado de la estructura anidada extraída):\n- *Envoltura*: orden inverso al índice (de n-1 hacia 0); `middlewares[0]` se aplica al final y queda como capa más externa.\n- *Ejecución*: la capa externa primero, es decir `middlewares[0] → … → middlewares[n-1] → endpoint`. Esto es consistente con el patrón `next.ServeHTTP(w, r…)` que aparece en los middlewares reales del grafo (p. ej. mux_test.go:966, 978, 1007 en `bigMux`), donde cada middleware invoca al siguiente.\n\n**Rol del Mux**: `(*Mux).Middlewares()` en mux.go:355 solo hace `return mx.middlewares` — expone el slice almacenado; la composición real la realiza `chain`.\n\n**Lo que el grafo NO evidencia (no lo afirmo)**: los símbolos `Middlewares.Handler` y `ChainHandler.ServeHTTP` no aparecen entre los 10 nodos seleccionados, y las `negative_evidence` del grafo confirman ausencia de consumidores/implementaciones relacionadas en la selección completa. Como `do_not_expand=true` prohíbe expandir y tú prohibiste leer archivos, no puedo citar evidencia concreta de cómo `ChainHandler` delega `ServeHTTP`; cualquier descripción sería suposición (AMBIGUOUS) y la omito.",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1
+  },
+  {
+    "task_id": "routing-context-safety",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 66.0107,
+    "usage": {
+      "input_tokens": 3736,
+      "output_tokens": 1456,
+      "thinking_tokens": 357,
+      "total_tokens": 9581
+    },
+    "tool_calls": 1,
+    "answer": "## Auditoría vía Graphtyn (`context_id: e6f547801a76`, intent `bindings`, `do_not_expand=true`)\n\n### `Context.Clone` — context.go:107-122\nFirma: `func (x *Context) Clone() *Context`. Copia en profundidad con `slices.Clone` cada par de slices (evidencia EXTRACTED, ops del grafo):\n\n| Línea | Operación |\n|---|---|\n| 113 | `slices.Clone(x.URLParams.Keys)` |\n| 114 | `slices.Clone(x.URLParams.Values)` |\n| 116 | `slices.Clone(x.routeParams.Keys)` |\n| 117 | `slices.Clone(x.routeParams.Values)` |\n| 119 | `slices.Clone(x.RoutePatterns)` |\n| 120 | `slices.Clone(x.methodsAllowed)` |\n| 122 | `return &clone` |\n\n**Por qué es necesario para goroutines**: cada `Clone` crea arrays subyacentes nuevos para claves y valores por separado; sin ello, dos `Context` compartirían los mismos backing arrays y escrituras/apéndices concurrentes sobre `URLParams`/`routeParams` competirían por la misma memoria. Esto se deriva directamente de las ops listadas (cada slice se clona individualmente antes de devolver un puntero nuevo).\n\n### Resolución de clave repetida — `(x *Context) URLParam`, context.go:127-133\n- Línea 128: `for k := len(x.URLParams.Keys) - 1; k >= 0; k--` — recorre **del final hacia el inicio**.\n- Líneas 129-130: al primer match (`x.URLParams.Keys[k] == key`) devuelve `x.URLParams.Values[k]`.\n- Por tanto, ante clave repetida **gana la última insertada** (búsqueda inversa); línea 133 devuelve `\"\"` si no hay match.\n\nFunción de paquete `URLParam(r, key)` (context.go:11-15): obtiene el contexto de ruta vía `RouteContext(r.Context())` en la línea 12, delega en `rctx.URLParam(key)` (línea 13) o devuelve `\"\"` (línea 15). `URLParamFromCtx` (context.go:19-21) delega igual. Consumidores verificados en el grafo: mux_test.go:212/218/222-223, 988-1001, 1111/1114, 1734-1749 (relaciones `llama`, evidencia INFERRED).\n\n### `Context.Reset`\nEl grafo **no retornó el cuerpo ni las ops internas de `Reset`** en esta consulta (no aparece como nodo). Solo está evidenciado por sus sitios de llamada: `tctx.Reset()` en mux_test.go:1889 y 1894 (`TestMuxMatch`) y mux_test.go:1974, 1979, 1984, 1989, 1994, 1999 (`TestMuxFind`), patrón de reutilización del contexto entre intentos de match. **No puedo afirmar qué campos limpia sin evidencia del grafo** — queda como brecha no resuelta (`missing` reportado vacío, pero el nodo `Reset` no fue seleccionado en el presupuesto de 10 entidades).\n\nAmbigüedades: ninguna relación marcada `A`; todas las citadas son `E` (extraídas) salvo las llamadas de tests, marcadas `I`.",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1
+  },
+  {
+    "task_id": "failure-middleware-semantics",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 77.8725,
+    "usage": {
+      "input_tokens": 2427,
+      "output_tokens": 1819,
+      "thinking_tokens": 498,
+      "total_tokens": 8776
+    },
+    "tool_calls": 1,
+    "answer": "Evidencia del grafo (contexto `ca00e531c359`, completo para `flow`; sin relaciones ambiguas que alegar):\n\n## Recoverer — middleware/recoverer.go:22\n`func Recoverer(next http.Handler) http.Handler`\n\n| Aspecto | Evidencia |\n|---|---|\n| Manejo de panic | `recover()` en función diferida: `if rvr := recover(); rvr != nil` (recoverer.go:24-25) |\n| Excepción `http.ErrAbortHandler` | `if rvr == http.ErrAbortHandler` (recoverer.go:26) → **re-lanza** con `panic(rvr)` (recoverer.go:29); comentario del grafo: \"we don't recover http.ErrAbortHandler so the response to the client is aborted, this should not be logged\" |\n| Logging / stack | Dos ramas: `logEntry.Panic(rvr, debug.Stack())` si hay log entry (recoverer.go:33-34, con `debug.Stack()` en :34); si no, `PrintPrettyStack(rvr)` (recoverer.go:36). El método `Panic` del logger delega a `printPrettyStack(v, l.useColor)` (logger.go:168-169) |\n| Condición para el 500 | `w.WriteHeader(StatusInternalServerError)` (recoverer.go:24) se ejecuta solo si `rvr != nil` tras `recover()` (:25) y **no** es `ErrAbortHandler` (:26-29, porque ahí se re-entra en panic antes) |\n| Contexto | Sin evidencia de creación/cancelación de contexto: ninguna operación `context.*` ni `cancel()` en sus ops |\n\n## Timeout — middleware/timeout.go:32\n`func Timeout(timeout time.Duration) func(next http.Handler) http.Handler`\n\n| Aspecto | Evidencia |\n|---|---|\n| Manejo de panic | Ninguno: no hay operación `recover()` en sus ops |\n| Creación de contexto | `ctx, cancel := context.WithTimeout(r.Context(), timeout)` (timeout.go:35) |\n| Cancelación | En `defer`: `cancel()` (timeout.go:36-37) |\n| Momento exacto del 504 | Dentro del mismo `defer`, **después** de `cancel()`: `if ctx.Err() == context.DeadlineExceeded` (timeout.go:38) → `w.WriteHeader(http.StatusGatewayTimeout)` (timeout.go:39). Como el `defer` se registra (:36) antes de invocar `next.ServeHTTP`, el 504 se escribe **al retornar el handler**, no al vencer el plazo |\n| Logging | Ninguna operación de logging en sus ops |\n\n## Comparación clave\n\n- **Recuperación vs. plazos**: Recoverer solo actúa ante panic (recoverer.go:25); Timeout solo ante expiración (timeout.go:38). Ninguno cubre el caso del otro.\n- **Escritura de respuesta**: 500 condicionada a `rvr != nil` excluyendo `ErrAbortHandler` (recoverer.go:25-29); 504 condicionada a `DeadlineExceeded` post-cancel (timeout.go:38-39).\n- **Contexto**: Recoverer no crea ni cancela nada; Timeout crea con `WithTimeout` (:35) y siempre cancela vía defer (:37).\n- **ErrAbortHandler**: solo tiene tratamiento explícito en Recoverer (:26-29); en Timeout no aparece.\n\n## Obligación del handler respecto a ctx.Done()\n\nEl grafo muestra que Timeout sustituye el contexto (`r = r.WithContext(ctx)`) y difiere la escritura del 504 hasta el retorno del handler (timeout.go:36-39, cierre en :46). Es decir, la expiración **no interrumpe** al handler: solo se materializa como respuesta cuando este termina. Por tanto, respetar `ctx.Done()` es responsabilidad del handler envuelto — si lo ignora, el cliente no recibirá el 504 hasta que finalice. Nota de evidencia negativa: el grafo no registra ninguna llamada `ctx.Done()` dentro del propio middleware Timeout, así que esa vigilancia no ocurre ahí.\n\nSin ambigüedades pendientes (`do_not_expand=true`, cobertura completa para `flow`).",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1
+  }
+]

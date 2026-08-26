@@ -5,8 +5,16 @@ import { loadGraph, focusNode } from './graph.js';
 export function toggleDD(id) {
       const el = document.getElementById(id);
       const was = el.classList.contains('open');
-      document.querySelectorAll('.dd-wrap').forEach(d => d.classList.remove('open'));
-      if (!was) el.classList.add('open');
+      document.querySelectorAll('.dd-wrap').forEach(d => {
+        d.classList.remove('open');
+        const button = d.querySelector(':scope > button');
+        if (button) button.setAttribute('aria-expanded', 'false');
+      });
+      if (!was) {
+        el.classList.add('open');
+        const button = el.querySelector(':scope > button');
+        if (button) button.setAttribute('aria-expanded', 'true');
+      }
     }
 
 export function openRegister() {
@@ -86,7 +94,7 @@ export function selectProject(path) {
       state.lastContextBundle = null;
       const gi = document.getElementById('chk-gitignore');
       if (gi) gi.checked = state.respectMap[path] !== false;
-      if (state.activeView === 'agents' || state.activeView === 'changes') setView('code'); // switch to code view when selecting a project
+      if (state.activeView === 'agents' || state.activeView === 'changes') setView('code'); // project-scoped views reload below
       else { loadProjects(); loadGraph(); }
     }
 

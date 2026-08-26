@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "graphtyn"
-version = "0.5.0"
+version = "0.6.0"
 description = "Graphtyn: deterministic code graph, impact analysis and compact context for AI coding agents"
 readme = "README.md"
-authors = [{ name = "OpenClaw Team", email = "developer@openclaw.dev" }]
+authors = [{ name = "Graphtyn Contributors" }]
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
@@ -32,6 +32,9 @@ multimodal = [
 media = [
     "faster-whisper>=1.0.0"
 ]
+security = [
+    "cryptography>=42.0.0"
+]
 treesitter = [
     "tree-sitter>=0.25,<0.26",
     "tree-sitter-c-sharp>=0.23.1,<0.24",
@@ -48,7 +51,7 @@ treesitter = [
 graphtyn = "graphtyn.cli:main"
 
 [tool.setuptools.package-data]
-graphtyn = ["web/*.html", "web/*.css", "web/*.js", "web/js/*.js"]
+graphtyn = ["client.ts", "web/*.html", "web/*.css", "web/*.js", "web/js/*.js"]
 
 [tool.setuptools.packages.find]
 include = ["graphtyn*"]

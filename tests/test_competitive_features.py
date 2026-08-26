@@ -10,6 +10,7 @@ from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.tree_sitter_backend import parse_file
 from graphtyn.core.external_benchmark import score_graphify
 from graphtyn.core.change_analyst import classify_intent, query_intent
+from graphtyn.core.shared_memory import SharedMemoryStore
 
 
 def test_overview_intent_builds_diverse_repository_profile():
@@ -257,6 +258,61 @@ def test_http_mcp_requires_token_and_serves_tools(monkeypatch):
     assert "graph_pr_impact" in {tool["name"] for tool in body["result"]["tools"]}
     assert "graph_context_bundle" in {tool["name"] for tool in body["result"]["tools"]}
     assert "graph_analyze_change" in {tool["name"] for tool in body["result"]["tools"]}
+    assert "memory_context" in {tool["name"] for tool in body["result"]["tools"]}
+
+
+def test_http_mcp_memory_is_shared_across_remote_clients(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "remote-secret")
+    auth = "Bearer remote-secret"
+    def call(req_id, name, arguments):
+        response = api_main.mcp_http({"jsonrpc": "2.0", "id": req_id, "method": "tools/call",
+            "params": {"name": name, "arguments": {"path": str(tmp_path), **arguments}}}, authorization=auth)
+        body = json.loads(response.body)
+        assert response.status_code == 200 and "error" not in body
+        return json.loads(body["result"]["content"][0]["text"])
+
+    session = call(1, "memory_session_start", {"agent_id": "agy", "task": "Remote auth"})
+    call(2, "memory_checkpoint", {"session_id": session["id"], "kind": "decision",
+        "title": "Remote JWT", "content": "AuthGateway validates remote credentials"})
+    recalled = call(3, "memory_search", {"query": "remote credentials", "requester_agent": "openclaw"})
+
+    assert recalled["results"][0]["agent_id"] == "agy"
+    assert recalled["results"][0]["attribution"]["session_id"] == session["id"]
+
+
+def test_http_mcp_reports_capture_consent_failure_as_tool_error(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "remote-secret")
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "central-state"))
+    auth = "Bearer remote-secret"
+
+    def call(req_id, name, arguments):
+        response = api_main.mcp_http({"jsonrpc": "2.0", "id": req_id, "method": "tools/call",
+            "params": {"name": name, "arguments": {"path": str(tmp_path), **arguments}}}, authorization=auth)
+        assert response.status_code == 200
+        return json.loads(response.body)["result"]
+
+    started = call(1, "memory_session_start", {"agent_id": "openclaw", "task": "Consent"})
+    session = json.loads(started["content"][0]["text"])
+    rejected = call(2, "memory_append", {"session_id": session["id"], "role": "user", "content": "secret"})
+
+    assert rejected["isError"] is True
+    assert "captura deshabilitada" in json.loads(rejected["content"][0]["text"])["error"]
+
+
+def test_explicit_graphtyn_home_is_authoritative_across_clients(tmp_path, monkeypatch):
+    workspace = tmp_path / "project"
+    workspace.mkdir()
+    central = tmp_path / "shared-state"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(central))
+
+    first = SharedMemoryStore(workspace)
+    session = first.start_session("openclaw", "Cross-client", capture_enabled=True)
+    first.checkpoint(session["id"], "decision", "Shared", "Visible from Codex")
+    second = SharedMemoryStore(workspace)
+
+    assert first.db_path == second.db_path
+    assert str(first.db_path).startswith(str(central))
+    assert second.search("Visible from Codex", requester_agent="codex")[0]["agent_id"] == "openclaw"
 
 
 def test_semantic_media_edges_include_auditable_evidence():

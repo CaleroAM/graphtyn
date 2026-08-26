@@ -47,10 +47,11 @@
 
   <!-- ===== HEADER ===== -->
   <header>
-    <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;min-width:0;">
+    <div class="header-controls">
       <!-- View tabs -->
       <button class="mode-btn active" id="btn-code" onclick="setView('code')">Code AST</button>
-      <button class="mode-btn" id="btn-semantic" onclick="setView('semantic')">Semántico IA</button>
+      <button class="mode-btn" id="btn-semantic" onclick="setView('semantic')" title="Relaciones semánticas derivadas del código y documentos indexados">Semántico del código</button>
+      <button class="mode-btn" id="btn-memory-view" onclick="setView('memory')" title="Conversaciones, decisiones y resultados compartidos por los agentes">Memoria del proyecto</button>
       <button class="mode-btn" id="btn-agents" onclick="setView('agents')">Harness Topology</button>
       <button class="mode-btn" id="btn-changes" onclick="setView('changes')">Cambios</button>
       <!-- History dropdown -->
@@ -126,30 +127,19 @@
               <span>Ocultar aislados</span>
               <label class="chk-wrap"><input type="checkbox" id="f-isolated" onchange="applyFilter()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
             </div>
-            <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
-            <div class="section-label">Físicas del Grafo</div>
-            <div class="filter-row">
-              <span>Repulsión: <strong id="rep-val" style="color:#38bdf8;">-300</strong></span>
-            </div>
-            <input type="range" id="f-repulsion" min="-600" max="-50" value="-300" step="25" style="width:100%;"
-              oninput="document.getElementById('rep-val').textContent=this.value;updatePhysics();">
-            <div class="filter-row" style="margin-top:4px;">
-              <span>Distancia Enlaces: <strong id="dist-val" style="color:#38bdf8;">80</strong></span>
-            </div>
-            <input type="range" id="f-distance" min="30" max="180" value="80" step="5" style="width:100%;"
-              oninput="document.getElementById('dist-val').textContent=this.value;updatePhysics();">
           </div>
         </div>
       </div>
 
-      <!-- Settings dropdown -->
-      <div class="dd-wrap" id="dd-settings">
-        <button class="btn-action" onclick="toggleDD('dd-settings')">
+      <!-- Graph appearance (does not alter the index) -->
+      <div class="dd-wrap" id="dd-appearance">
+        <button class="btn-action" onclick="toggleDD('dd-appearance')" aria-haspopup="true" aria-expanded="false">
           <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-          Paleta & Motor ▾
+          Diseño del grafo ▾
         </button>
-        <div class="dd-panel">
+        <div class="dd-panel settings-panel appearance-panel">
           <div class="filter-section">
+            <div class="settings-heading"><strong>Diseño del grafo</strong><span>No modifica el índice</span></div>
             <label class="section-label">Paleta de Color</label>
             <select id="palette-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changePalette()">
               <option value="obsidian" selected>Obsidian Dark</option>
@@ -162,24 +152,6 @@
               <option value="matrix">Emerald Matrix</option>
               <option value="community">Por Comunidad (Carpetas)</option>
             </select>
-            <label class="section-label" style="margin-top:8px;">Motor IA (Código / Docs)</label>
-            <select id="engine-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;">
-              <option value="ast_local_llm" selected>AST + Local (Ollama)</option>
-              <option value="ast_cloud">AST + Cloud API (Gemini/Claude)</option>
-              <option value="ast_pure">Solo AST (cero tokens)</option>
-            </select>
-            <label class="section-label" style="margin-top:6px;">Modelo Código (primario)</label>
-            <select id="code-model-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateModelEstimate()">
-              <option value="">Auto-detectar</option>
-            </select>
-            <label class="section-label" style="margin-top:6px;">Modelo Visión (imágenes)</label>
-            <select id="vision-model-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateModelEstimate()">
-              <option value="">Auto-detectar</option>
-            </select>
-            <div id="est-time" style="font-size:10px;color:#64748b;margin-top:4px;">
-              <span id="est-time-val"></span>
-            </div>
-            <hr style="border:none;border-top:1px solid #1e293b;margin:8px 0;">
             <label class="section-label">Estilo de Enlaces</label>
             <select id="link-style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateLinkStyles()">
               <option value="solid" selected>Línea Sólida (Recta)</option>
@@ -194,10 +166,6 @@
               <div class="filter-row">
                 <span>Flechas Direccionales</span>
                 <label class="chk-wrap"><input type="checkbox" id="chk-arrows" checked onchange="updateLinkStyles()"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
-              </div>
-              <div class="filter-row">
-                <span title="Si está activo, solo los archivos versionados por git entran al grafo; desactívalo para incluir también lo ignorado por .gitignore">Respetar .gitignore (por proyecto)</span>
-                <label class="chk-wrap"><input type="checkbox" id="chk-gitignore" checked onchange="toggleGitignore(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
               </div>
               <label class="section-label" style="margin-top:8px;">Estilo del Grafo</label>
               <select id="style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changeGraphStyle()">
@@ -230,20 +198,53 @@
                 <span title="En 3D, dibuja el estilo Neuronal orgánico (halos, enlaces curvos, botones y cometas) proyectado sobre el grafo, como en 2D">Dibujo orgánico 2D en 3D</span>
                 <label class="chk-wrap"><input type="checkbox" id="chk-organic3d" checked onchange="toggleOrganic3d(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
               </div>
+              <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
+              <label class="section-label">Físicas del Grafo</label>
+              <div class="range-head"><span>Repulsión</span><strong id="rep-val">-300</strong></div>
+              <input type="range" id="f-repulsion" min="-600" max="-50" value="-300" step="25" oninput="document.getElementById('rep-val').textContent=this.value;updatePhysics();">
+              <div class="range-head"><span>Distancia de enlaces</span><strong id="dist-val">80</strong></div>
+              <input type="range" id="f-distance" min="30" max="180" value="80" step="5" oninput="document.getElementById('dist-val').textContent=this.value;updatePhysics();">
             </div>
-            <button class="btn-action" style="margin-top:10px;justify-content:center;width:100%;" onclick="openTutorial()">
-              Tutorial Conexión IA
-            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Index engine (changes reindex behavior) -->
+      <div class="dd-wrap" id="dd-engine">
+        <button class="btn-action" onclick="toggleDD('dd-engine')" aria-haspopup="true" aria-expanded="false">Motor de índice ▾</button>
+        <div class="dd-panel settings-panel engine-panel">
+          <div class="filter-section">
+            <div class="settings-heading"><strong>Motor de índice</strong><span>Se aplica al reindexar</span></div>
+            <label class="section-label" for="engine-sel">Pipeline de código y documentos</label>
+            <select id="engine-sel" class="control-select">
+              <option value="ast_local_llm" selected>AST + Local (Ollama)</option>
+              <option value="ast_cloud">AST + Cloud API (Gemini/Claude)</option>
+              <option value="ast_pure">Solo AST (cero tokens)</option>
+            </select>
+            <label class="section-label" for="code-model-sel">Modelo de código</label>
+            <select id="code-model-sel" class="control-select" onchange="updateModelEstimate()"><option value="">Auto-detectar</option></select>
+            <label class="section-label" for="vision-model-sel">Modelo de visión</label>
+            <select id="vision-model-sel" class="control-select" onchange="updateModelEstimate()"><option value="">Auto-detectar</option></select>
+            <div id="est-time" class="engine-estimate"><span id="est-time-val"></span></div>
+            <div class="filter-row engine-scope-row">
+              <span title="Incluye solo archivos versionados y respeta las exclusiones del proyecto">Respetar .gitignore</span>
+              <label class="chk-wrap"><input type="checkbox" id="chk-gitignore" checked onchange="toggleGitignore(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+            </div>
+            <p class="settings-help">Cambiar estas opciones no altera la vista actual hasta ejecutar <strong>Reindexar</strong>.</p>
+            <button class="btn-action settings-wide-action" onclick="openTutorial()">Tutorial de conexión IA</button>
           </div>
         </div>
       </div>
 
       <input type="text" class="search-input" id="search-box" placeholder="Buscar símbolo, ruta, método…" oninput="applyFilter()">
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-left:8px;">
-      <div id="model-badge" style="font-size:10px;color:#10b981;white-space:nowrap;">—</div>
-      <div id="stats" style="font-size:11px;color:#475569;white-space:nowrap;">—</div>
-      <div id="conf-legend" style="font-size:9px;color:#64748b;white-space:nowrap;" title="Sólida = extraída · punteada = inferida · ámbar = ambigua">━ EXTRACTED&nbsp;&nbsp;┅ INFERRED&nbsp;&nbsp;<span style="color:#f59e0b">┅ AMBIGUOUS</span></div>
+    <div class="graph-status" aria-label="Estado del índice y confianza de relaciones">
+      <div class="graph-status-primary"><span id="model-badge">—</span><span id="stats">—</span></div>
+      <div id="conf-legend" class="confidence-legend" title="Sólida = extraída · punteada = inferida · ámbar = ambigua">
+        <span class="confidence-item extracted"><i></i>EXTRACTED</span>
+        <span class="confidence-item inferred"><i></i>INFERRED</span>
+        <span class="confidence-item ambiguous"><i></i>AMBIGUOUS</span>
+      </div>
     </div>
   </header>
 
@@ -261,6 +262,9 @@
     </button>
     <button class="btn-action" id="quality-btn" onclick="openQualityPanel()" title="Salud del índice y contexto compacto">
       Calidad & Contexto <span id="context-count">0</span>
+    </button>
+    <button class="btn-action" id="memory-btn" onclick="openMemoryPanel()" title="Buscar o administrar recuerdos dentro de la memoria del proyecto">
+      Buscar en memoria
     </button>
     <button class="btn-action btn-primary" onclick="openRegister()">
       <svg class="svg-ico" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
@@ -295,6 +299,54 @@
         <div class="context-actions"><button class="btn-action btn-primary" onclick="generateContextBundle()">Generar contexto compacto</button><button class="btn-action" id="copy-context-btn" onclick="copyContextBundle()">Copiar JSON</button></div><div id="context-output"></div>
       </section>
       <section class="context-section"><div class="section-label">VALIDAR RESPUESTA DEL AGENTE</div><textarea id="answer-validation-input" class="quality-textarea" placeholder="Pega una respuesta con referencias archivo:línea"></textarea><div class="context-actions"><button class="btn-action" onclick="validateAgentAnswer()">Validar evidencia</button><button class="btn-action btn-primary" onclick="generateChangeReport()">Generar reporte Git</button></div><div id="answer-validation-output"></div></section>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modal-memory" role="dialog" aria-modal="true" aria-labelledby="memory-title">
+    <div class="modal-box memory-modal">
+      <div class="modal-hdr"><span id="memory-title">Memoria compartida</span><button class="modal-close" onclick="closeMemoryPanel()" aria-label="Cerrar">✕</button></div>
+      <div class="memory-toolbar">
+        <input id="memory-query" class="text-inp" placeholder="Pregunta por una decisión, cambio o tema…" onkeydown="if(event.key==='Enter') searchSharedMemory()">
+        <input id="memory-agent" class="text-inp memory-agent" value="dashboard" aria-label="Agente solicitante">
+        <button class="btn-action btn-primary" onclick="searchSharedMemory()">Buscar</button>
+      </div>
+      <div class="memory-options">
+        <label>Token HTTP <input id="memory-token" class="text-inp" type="password" placeholder="Opcional si el servidor lo exige"></label>
+        <label><input id="memory-include-stale" type="checkbox"> Incluir obsoletos</label>
+        <label><input id="memory-search-all" type="checkbox" title="Consulta también los demás espacios registrados (búsqueda federada)"> Todos los espacios</label>
+        <button class="btn-link" onclick="loadMemoryOverview()">Actualizar estado</button>
+        <button class="btn-action" id="memory-graph-btn" onclick="showSharedMemoryGraph()">Ver mapa por agente</button>
+      </div>
+      <div class="memory-options">
+        <label>Ruta del agente <input id="memory-agent-ws" class="text-inp" style="width:280px" placeholder="/ruta/al/workspace del agente (IDENTITY.md/SOUL.md)"></label>
+        <button class="btn-action" id="memory-agent-link-btn" onclick="linkAgentProfile()" title="Lee IDENTITY.md y SOUL.md del workspace y registra el perfil atribuido al agente">Vincular agente</button>
+      </div>
+      <section class="memory-import-panel">
+        <div class="section-label">IMPORTAR CONVERSACIONES ANTERIORES A GRAPHTYN</div>
+        <div class="memory-options">
+          <input id="memory-import-provider" class="text-inp" list="memory-import-providers"
+                 aria-label="Proveedor histórico" placeholder="Proveedor/adaptador">
+          <datalist id="memory-import-providers"></datalist>
+          <input id="memory-import-source" class="text-inp" style="min-width:280px" placeholder="Local, docker://, ssh:// o ssh+docker://">
+          <button class="btn-action" onclick="saveHistoricalSource()">Guardar fuente</button>
+          <button class="btn-action" onclick="testHistoricalSource()">Probar conexión</button>
+          <button class="btn-link" onclick="removeHistoricalSource()">Eliminar</button>
+          <button class="btn-action" onclick="discoverHistoricalMemory()">Previsualizar</button>
+          <button class="btn-action btn-primary" id="memory-import-apply" onclick="applyHistoricalMemory()" disabled>Importar con consentimiento</button>
+        </div>
+        <div id="memory-import-status" class="quality-summary">La previsualización no modifica la memoria.</div>
+        <div class="memory-options">
+          <label>Alias <input id="memory-alias" class="text-inp" placeholder="identidad observada"></label>
+          <label>Identidad <input id="memory-canonical" class="text-inp" placeholder="identidad canónica"></label>
+          <button class="btn-action" onclick="saveMemoryAlias()">Guardar alias</button>
+        </div>
+      </section>
+      <div id="memory-status" class="quality-summary">Selecciona un proyecto para consultar su memoria.</div>
+      <div id="memory-agent-legend" class="memory-agent-legend" aria-label="Colores de agentes"></div>
+      <div class="memory-layout">
+        <section><div class="section-label">RESULTADOS ATRIBUIDOS</div><div id="memory-results" class="memory-results" aria-live="polite"></div></section>
+        <section><div class="section-label">SESIONES RECIENTES</div><div id="memory-sessions" class="memory-sessions"></div></section>
+      </div>
     </div>
   </div>
 

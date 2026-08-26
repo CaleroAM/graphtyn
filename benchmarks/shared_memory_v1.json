@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "memories": [
+    {"key":"auth-decision","agent_id":"agy","session":"auth","kind":"decision","task":"Refactor authentication","title":"Authentication centralized","content":"AuthService validates JWT credentials for every request","branch":"feature/auth"},
+    {"key":"db-correction","agent_id":"opencode","session":"database","kind":"correction","task":"Database migration","title":"PostgreSQL selected","content":"The team replaced the MySQL proposal with PostgreSQL and retained WAL backups","branch":"main"},
+    {"key":"ui-outcome","agent_id":"codex","session":"dashboard","kind":"outcome","task":"Dashboard layout","title":"Responsive settings panels","content":"Palette and engine controls were separated and constrained to the viewport","branch":"main"},
+    {"key":"tests-handoff","agent_id":"openclaw","session":"tests","kind":"handoff","task":"Regression suite","title":"Frontend verification","content":"Playwright smoke checks node dragging, modal layout and API error visibility","branch":"test/ui"}
+  ],
+  "queries": [
+    {"id":"q1","query":"¿cómo se comprueba la identidad del usuario?","expected_key":"auth-decision","expected_agent":"agy"},
+    {"id":"q2","query":"which database replaced the earlier mysql idea?","expected_key":"db-correction","expected_agent":"opencode"},
+    {"id":"q3","query":"¿qué pasó con paleta y configuración del motor?","expected_key":"ui-outcome","expected_agent":"codex"},
+    {"id":"q4","query":"who verified dragging and modal errors?","expected_key":"tests-handoff","expected_agent":"openclaw"}
+  ]
+}

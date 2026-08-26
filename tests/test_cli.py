@@ -225,6 +225,30 @@ def test_agent_grade_scores_atomic_facts(git_repo, tmp_path):
     assert data[0]["adjusted_quality_score"] == 0.25
 
 
+def test_agent_install_antigravity_uses_project_gemini_policy(git_repo, tmp_path):
+    home = tmp_path / "home-antigravity"
+    home.mkdir()
+    result = _run_cli(["agent-install", "antigravity", "--path", str(git_repo)], git_repo, home)
+    assert result.returncode == 0, result.stderr
+    policy = (git_repo / "GEMINI.md").read_text(encoding="utf-8")
+    assert "graphtyn query-intent" in policy
+    assert "memory_ingest_turn" in policy
+    assert "Before any repository listing" in policy
+    assert "do_not_expand=true" in policy
+    assert "without reopening files" in policy
+    manifest = json.loads((git_repo / ".graphtyn" / "agent-install.json").read_text())
+    assert manifest["platforms"] == ["antigravity"]
+
+
+def test_agent_policies_enforce_context_stop_contract():
+    root = Path(__file__).resolve().parents[1]
+    for policy_path in (root / "AGENTS.md", root / "skills" / "graphtyn" / "SKILL.md"):
+        policy = policy_path.read_text(encoding="utf-8")
+        assert "do_not_expand=true" in policy
+        assert "entire file" in policy
+        assert "before" in policy.lower()
+
+
 def test_pr_impact_cli_json(git_repo, tmp_path):
     home = tmp_path / "home"
     home.mkdir()
@@ -261,3 +285,18 @@ def test_memory_cli_and_ci_install(git_repo, tmp_path):
     installed = _run_cli(["ci-install", "github", "--path", str(git_repo)], git_repo, home)
     assert installed.returncode == 0
     assert (git_repo / ".github/workflows/graphtyn.yml").is_file()
+
+
+def test_memory_doctor_and_benchmark_cli(git_repo, tmp_path):
+    home = tmp_path / "home-memory-benchmark"
+    home.mkdir()
+    doctor = _run_cli(["memory", "doctor", "--path", str(git_repo)], git_repo, home)
+    dataset = Path(__file__).resolve().parents[1] / "benchmarks" / "shared_memory_v1.json"
+    benchmark = _run_cli(["memory", "benchmark", "--dataset", str(dataset), "--path", str(git_repo)], git_repo, home)
+
+    assert doctor.returncode == 0
+    assert json.loads(doctor.stdout)["ok"] is True
+    assert benchmark.returncode == 0
+    metrics = json.loads(benchmark.stdout)["metrics"]
+    assert metrics["recall_at_5"] == 1.0
+    assert metrics["attribution_accuracy"] == 1.0

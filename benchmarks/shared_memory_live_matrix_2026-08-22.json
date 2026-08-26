@@ -1,0 +1,61 @@
+{
+  "date": "2026-08-22",
+  "project": "graphtyn",
+  "transport": "authenticated streamable HTTP MCP",
+  "storage": "persistent GRAPHTYN_HOME",
+  "results": [
+    {
+      "writer": "openclaw",
+      "readers": ["openclaw-new-session", "opencode", "agy", "codex"],
+      "memory": "GT-PERSIST-4CLIENTS",
+      "passed": true
+    },
+    {
+      "writer": "opencode",
+      "reader": "openclaw-new-session",
+      "memory": "GT-FROM-OPENCODE-822",
+      "passed": true
+    },
+    {
+      "writer": "agy",
+      "reader": "codex",
+      "query": "semantic paraphrase",
+      "memory": "GT-FROM-AGY-822",
+      "passed": true
+    },
+    {
+      "writer": "openclaw",
+      "reader": "agy-new-session",
+      "operation": "memory_ingest_turn",
+      "external_session_id": "auto-ingest-e2e-20260822",
+      "summary_provider": "ollama:qwen2.5-coder:3b",
+      "embedding_provider": "ollama:nomic-embed-text:latest:cosine-v1",
+      "dimensions": 768,
+      "passed": true
+    }
+  ],
+  "integrity": {
+    "memories": 3,
+    "embedded_memories": 3,
+    "fts_rows": 3,
+    "foreign_key_violations": 0,
+    "orphan_embeddings": 0
+  },
+  "neural_embedding": {
+    "provider": "ollama:nomic-embed-text:latest:cosine-v1",
+    "dimensions": 768,
+    "embedded_memories": 3,
+    "paraphrase_query": "que estrategia protege actualizaciones concurrentes ante colisiones",
+    "expected_top": "GT-PERSIST-4CLIENTS",
+    "actual_top": "GT-PERSIST-4CLIENTS",
+    "lexical_score": 0.0,
+    "cosine_similarity": 0.6191,
+    "passed": true
+  },
+  "notes": [
+    "OpenClaw blind recall used a fresh session and did not receive expected content in the prompt.",
+    "OpenCode used opencode/x-preview-f-free.",
+    "AGY was verified again without the permission-bypass flag after adding mcp(graphtyn/*).",
+    "An initial opt-in omission exposed an HTTP 500; the server now returns a structured MCP tool error."
+  ]
+}

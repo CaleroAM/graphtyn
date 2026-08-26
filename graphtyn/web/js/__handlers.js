@@ -12,3 +12,8 @@ export { openQualityPanel, closeQualityPanel, loadIndexQuality, addNodeToContext
          removeNodeFromContext, clearContextSelection, generateContextBundle,
          copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity,
          validateAgentAnswer, generateChangeReport } from './quality.js';
+export { openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory,
+         correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph,
+         openSessionDetail, focusMemoryNode, linkAgentProfile, discoverHistoricalMemory,
+         applyHistoricalMemory, saveHistoricalSource, testHistoricalSource,
+         removeHistoricalSource, saveMemoryAlias } from './memory.js';

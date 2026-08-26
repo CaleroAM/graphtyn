@@ -1,11 +1,20 @@
 # 🌌 Graphtyn
 
-[![PyPI Version](https://img.shields.io/badge/pypi-v0.5.0-blue.svg)](https://pypi.org/project/graphtyn/)
+[![PyPI Version](https://img.shields.io/badge/pypi-v0.6.0-blue.svg)](https://pypi.org/project/graphtyn/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Standard--Compatible-10b981.svg)](https://modelcontextprotocol.io/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 
 **El motor de mapa topológico de código, registro de sesiones local y servidor MCP estándar para Agentes de IA (Google Antigravity, Claude Code, Codex, Cursor y Windsurf).**
+
+> **Estado:** desarrollo activo `0.5.x`. El grafo, MCP, dashboard y memoria
+> multiagente están implementados; la matriz competitiva de 108 celdas sigue
+> pendiente. No se afirma superioridad general a partir de pruebas parciales.
+
+**Navegación:** [arquitectura](ARCHITECTURE.md) ·
+[memoria compartida](docs/shared-memory.md) · [pruebas](docs/testing.md) ·
+[benchmarks](BENCHMARKS.md) · [mercado](docs/market-study.md) ·
+[documentación completa](docs/index.md)
 
 Graphtyn convierte cualquier repositorio de código en un **grafo de conocimiento determinista de 2 pasadas**: analiza la estructura de archivos, módulos, clases, métodos y llamadas con **0 tokens de consumo** en menos de 0.5 segundos (medido) y enriquece semánticamente los nodos principales mediante **IA Local (Ollama Qwen2.5)** o **Cloud APIs (Gemini/Claude)**.
 
@@ -38,7 +47,7 @@ Graphtyn actúa como un **GPS de código en tiempo real**:
    - **Vista Semántica rediseñada**: comunidades por subsistema (`Subsistema: src/GameEngine.Core`) + **god nodes** destacados (los conceptos más conectados), con aristas etiquetadas `EXTRACTED`/`INFERRED`. Incluye imágenes, documentos y audio/video enriquecidos, y crea un máximo acotado de relaciones `similitud semántica` a partir de sus descripciones locales cacheadas (sin volver a invocar al modelo al abrir la vista).
    - **Respetar `.gitignore` por proyecto**: toggle en el panel de settings (o `graphtyn gitignore on|off`) — con `on` solo los archivos versionados entran al grafo (menos ruido, menos llamadas LLM); `off` incluye todo lo escaneable.
    - **Actualización automática (`--watch`)**: detecta archivos creados, modificados y eliminados, actualiza el índice estructural local y refresca el proyecto activo en el dashboard sin pulsar “Reindexar”.
-   - **Estilos de grafo y forma de nodos (Paleta & Motor)**: selector de estilo — **Estándar** y **Neuronal** (tejido orgánico). **Neuronal en 3D** tiene dos modos: **Dibujo orgánico 2D en 3D** (default: halos respirando, enlaces con botones sinápticos y cometas — el estilo del 2D proyectado sobre el grafo 3D, respetando el **Estilo de Enlaces** sólido/punteado/curvo) y modo luces (vista Estándar + cometas, parpadeo de vértices y destello de nodos al recibir). En 2D también respeta el Estilo de Enlaces. Colores configurables: **Color de Nodos**, **Color de Ráfaga** y **Color de Vértices**. Selector de forma de nodos: **Círculos · Esferas** o **Cuadrados · Cubos**.
+   - **Diseño del grafo y Motor de índice separados**: `Diseño del grafo` agrupa paleta, estilo Estándar/Neuronal, forma, enlaces, colores y físicas sin alterar datos. `Motor de índice` agrupa AST puro, Ollama/cloud, modelos de código/visión y `.gitignore`; sus cambios se aplican al reindexar. Ambos paneles tienen desplazamiento interno y altura adaptativa para mostrar todas las opciones con zoom 100%. El estado superior distribuye modelo/modo, nodos/conectores y la leyenda EXTRACTED/INFERRED/AMBIGUOUS en filas flexibles para evitar superposición.
    - **Laboratorio de Comparación de Modelos**: Disponible en [`/comparison`](http://localhost:9210/comparison), compara el contexto generado por modelos locales y modelos de paga con el mismo nodo y prompt.
 
 ---
@@ -145,6 +154,12 @@ graphtyn serve --watch --path /ruta/al/proyecto
 # Benchmark reproducible con ground truth
 graphtyn benchmark --path /ruta/proyecto --ground-truth benchmarks/ground_truth.json --output resultado.json
 
+# Validar la matriz estadística de 36 tareas (108 celdas pareadas)
+graphtyn benchmark-suite --protocol benchmarks/statistical_protocol_36_tasks.json
+
+# Detectar Roslyn/dotnet, TypeScript, Pyright y PHPStan disponibles
+graphtyn type-status --path .
+
 # Comparar corridas JSON de un agente con y sin Graphtyn
 graphtyn agent-benchmark --treatment con-grafo.json --baseline sin-grafo.json --output comparacion.json
 
@@ -171,6 +186,12 @@ graphtyn context GameManager PlayerService --depth 1 --limit 12 --path /ruta/pro
 
 # Resolver una tarea completa con selección automática o explícita de intención
 graphtyn query-intent "Traza la creación de una propuesta" --intent flow --limit 12 --path /ruta/proyecto
+
+# Para orden, condiciones o ciclo de vida, auto añade sólo los cuerpos seleccionados
+graphtyn query-intent "Explica el orden exacto de Mux.ServeHTTP" --intent flow --evidence-mode auto --path /ruta/proyecto
+
+# Control explícito del presupuesto: compact, balanced o precision
+graphtyn query-intent "Audita cuándo se cancela Timeout" --evidence-mode precision --path /ruta/proyecto
 
 # Explicar propósito, tecnologías, entradas y arquitectura del repositorio
 graphtyn query-intent "¿De qué trata este repositorio?" --intent overview --limit 10 --path /ruta/proyecto
@@ -224,6 +245,16 @@ La **memoria de resultados** guarda señales `useful`, `dead_end` y `corrected` 
 `verify-edit` es el primer nivel de **verificación diferencial local**. Actualmente solo declara `equivalent` cuando la función Python tiene un AST canónico idéntico; una función agregada/eliminada se distingue estructuralmente y cualquier edición semántica produce `unsupported`. No ejecuta código del repositorio ni presenta pruebas heurísticas como demostraciones. Los futuros tiers de solver o property testing deberán conservar estos mismos veredictos explícitos.
 
 Los perfiles de análisis tienen costos previsibles: `fast` usa AST puro, `balanced` usa enriquecimiento local incremental, `deep` solicita una pasada completa con IA y `verified` añade el tier diferencial. En ausencia del daemon local, todos conservan un fallback AST funcional; por ello la indexación estructural nunca depende de una API de pago.
+
+### Precisión, recuperación híbrida e incrementalidad
+
+Cada reindex normaliza el grafo antes de servirlo: elimina relaciones lógicas duplicadas, conserva la evidencia más fuerte y añade `confidence_score` auditable sin convertir una relación `AMBIGUOUS` en hecho. El radio de impacto `directional-consumers-v2` recorre consumidores entrantes, implementaciones, herencia, eventos y relaciones de framework; un cambio de firma amplía automáticamente el análisis hasta tres saltos y devuelve categorías de contratos, consumidores, configuración, pruebas y relaciones por revisar.
+
+La recuperación combina coincidencia exacta/operaciones con un índice de embeddings local persistente. Sin configuración utiliza feature hashing bilingüe determinista de 384 dimensiones y **0 tokens**; exige solapamiento léxico para evitar que una colisión hash se presente como similitud semántica. Con `GRAPHTYN_EMBED_MODEL=nomic-embed-text` usa Ollama local y permite similitud vectorial real. `semantic_index.json` conserva SHA-256 por nodo: las siguientes reindexaciones reutilizan vectores sin recalcular nodos intactos. El planner `adaptive-intent-v2` ajusta el presupuesto a intención y complejidad, y detiene expansión cuando ya existe evidencia suficiente y válida.
+
+Los analizadores de tipos son opcionales y explícitos. `graphtyn type-status` detecta `dotnet`/Roslyn, TypeScript (`tsc`), Pyright y PHPStan. Graphtyn no ejecuta código ni compiladores del proyecto automáticamente: CI o el desarrollador pueden escribir relaciones comprobadas en `.graphtyn/type-evidence.json`; al reindexar se validan IDs y se incorporan con confianza `TYPED`. Esto permite precisión de compilador sin hacer que el modo AST puro dependa del entorno.
+
+La caché estructural informa archivos reutilizados, analizados e invalidados. El enriquecimiento semántico y los embeddings conservan resultados cuyo hash no cambió; archivos eliminados salen tanto del grafo como de las cachés. La validación previa comprueba nodos/aristas colgantes, ubicación de evidencia y ambigüedad, mientras `validate-answer` detecta respuestas truncadas, fences o paréntesis sin cerrar y afirmaciones sin respaldo.
 
 El dashboard queda disponible en [`http://127.0.0.1:9210`](http://127.0.0.1:9210). El flujo web no agrega otro comando CLI: se usa desde **Filtros → Flujo Web / Framework** y desde **Ver flujo web** en la ficha Radio de Impacto.
 
@@ -279,7 +310,11 @@ graphtyn gitignore off --path .   # incluir también lo ignorado
 
 ---
 
-## 💻 Especificaciones de Hardware y Tiempos de Benchmark (Pruebas Reales)
+## 💻 Resumen de benchmarks
+
+Los artefactos, condiciones y estados `FULL/PARTIAL/HISTORICAL` viven en
+[`BENCHMARKS.md`](BENCHMARKS.md). Esta sección es introductoria y no debe usarse
+aislada para comparar proveedores.
 
 ### Comparación pareada actual: Graphtyn, Gra…ify y agente sin grafo
 
@@ -357,19 +392,429 @@ Mismo nodo (`mcp_server.py`), mismo prompt real de Graphtyn (config #9), misma t
 
 ## 🤖 Integración con Agentes de IA (MCP Protocol)
 
-Graphtyn es un servidor MCP estándar por entrada/salida estándar (`stdio`). El perfil predeterminado `intent` expone **una sola herramienta** para minimizar catálogo, rondas y contexto acumulado; `--tool-profile full` conserva las **10 herramientas** para compatibilidad y diagnóstico.
+Graphtyn es un servidor MCP estándar por entrada/salida estándar (`stdio`). El
+perfil predeterminado `intent` expone únicamente `graph_query_intent` y
+`memory_context`; `--tool-profile memory` añade el ciclo de escritura compartida
+y `--tool-profile full` conserva el catálogo completo para diagnóstico.
+
+> **Arquitectura disponible — memoria semántica compartida:** AGY, OpenCode,
+> OpenClaw, Codex, Claude y Hermes pueden compartir conversaciones, decisiones,
+> resultados y handoffs con atribución, embeddings, retrieval híbrido y vigencia
+> por rama/commit. El diseño y protocolo están especificados en
+> [`docs/shared_semantic_memory_plan.md`](docs/shared_semantic_memory_plan.md).
+> Las funciones actuales de historial y outcomes son la base, no se presentan aún
+> como RAG conversacional completa.
+
+La primera base de memoria compartida v2 ya está disponible. Funciona entre
+sesiones y clientes distintos mediante un almacén SQLite por proyecto:
+
+```bash
+graphtyn memory session-start --agent agy --task "Refactor de autenticación" --path .
+# Añade --capture únicamente cuando el usuario autorice guardar conversación.
+graphtyn memory append --session SESIÓN --role assistant \
+  --content "AuthService quedó probado" --event-type result --path .
+graphtyn memory checkpoint --session SESIÓN --kind decision \
+  --title "JWT centralizado" --content "AuthService valida los tokens" \
+  --files src/AuthService.ts --path .
+graphtyn memory search "¿quién valida los tokens?" --agent opencode --path .
+graphtyn memory context "¿cómo se comprueba la identidad?" \
+  --agent openclaw --branch feature/auth --token-budget 1800 --path .
+# Opcional: --neighbor-limit 12 o --no-graph
+graphtyn memory ingest-turn --agent opencode --external-session CHAT_ID \
+  --task "Cambio actual" --role assistant --content "Resultado conciso" \
+  --consent --provider auto --path .
+graphtyn memory session-end --session SESIÓN --summary "Cambio probado" --path .
+graphtyn memory migrate --path .       # importa history.db y memory/*.json una vez
+graphtyn memory reindex --path .       # reutiliza vectores cuyo contenido no cambió
+graphtyn memory ingest-evidence --path . # benchmarks verificados y ligados a Git
+graphtyn memory status --path .
+graphtyn memory correct --memory MEMORIA --session SESIÓN \
+  --title "Decisión corregida" --content "Ahora se usa PostgreSQL" --path .
+graphtyn memory forget --memory MEMORIA --agent agy --path .
+```
+
+`memory_ingest_turn` y `memory_context` incluyen telemetría persistente por
+operación: tokens locales de entrada/salida, caracteres vectorizados, tokens del
+contexto compacto, historial bruto evitado y latencia. `graphtyn memory status
+--path .` agrega estas métricas. Los conteos usan `bytes UTF-8 / 4`: son
+estimaciones comparativas, no facturación. Con Qwen y Nomic en Ollama,
+`local_provider_billed_tokens` permanece en cero; el proveedor remoto sólo recibe
+`remote_context_tokens` cuando el cliente incorpora el resultado a su prompt.
+
+Las tools MCP equivalentes son `memory_session_start`, `memory_checkpoint`,
+`memory_ingest_turn`, `memory_search`, `memory_context`, `memory_compact` y
+`memory_session_end`. `memory_ingest_turn` es la ruta recomendada para adaptadores:
+reutiliza de forma idempotente el ID de conversación externo, captura uno o varios
+mensajes y compacta automáticamente cuando el turno contiene una respuesta del
+asistente. La búsqueda fusiona
+FTS5 y embeddings locales por RRF, favorece la rama actual, explica cada score y
+marca recuerdos stale cuando cambian sus archivos de evidencia. El fallback
+`feature-hash-v2` funciona sin dependencias; `GRAPHTYN_EMBED_MODEL` permite usar
+Ollama y, si no responde, Graphtyn mantiene disponible el fallback local.
+`memory_context` expande solamente vecinos directos explicables: consumidores,
+dependencias y relaciones estructurales de los archivos/símbolos citados. Además
+compara el commit observado con el `HEAD` actual y advierte ramas divergentes.
+Cada memoria incluye una puerta compacta `claim_policy`: `verified_measured`,
+`verified_fact`, `historical_only`, `proposed_only`, `contested`, `stale` o
+`unsupported`. El agente debe citar evidencia para las dos primeras y no puede
+convertir las demás en hechos. `memory_ingest_evidence` importa benchmarks de
+forma idempotente, conserva hash/archivo/commit y supersede versiones modificadas.
+
+La captura está desactivada por defecto. `memory_append` rechaza roles `system`,
+aplica límites, redacta credenciales tanto por contenido como por claves de
+metadatos y deduplica eventos. El cierre de una sesión opt-in crea un handoff
+determinista. Las memorias recuperadas se etiquetan como datos históricos no
+confiables: nunca se interpretan como instrucciones ni autorización.
+
+Compactación asistida opcional:
+
+```bash
+GRAPHTYN_MEMORY_SUMMARY_MODEL=qwen2.5-coder:3b \
+  graphtyn memory compact --session SESIÓN --provider ollama --path .
+
+# API externa: requiere consentimiento explícito, además de URL/modelo/clave
+GRAPHTYN_MEMORY_ALLOW_API=1 graphtyn memory compact \
+  --session SESIÓN --provider api --path .
+```
+
+Para el flujo automático local recomendado, inicie el daemon con ambos modelos:
+
+```bash
+export GRAPHTYN_MEMORY_SUMMARY_MODEL=qwen2.5-coder:3b
+export GRAPHTYN_EMBED_MODEL=nomic-embed-text:latest
+```
+
+Qwen recibe únicamente la conversación ya saneada y propone recuerdos; Nomic
+vectoriza cada recuerdo resultante. Los mensajes crudos permanecen asociados a
+su sesión y no se convierten individualmente en resultados de búsqueda.
+
+Qwen/API sólo generan recuerdos `proposed`, con confianza máxima 0.85 y mensajes
+fuente validados. Nunca convierten por sí solos una afirmación en `verified`.
+
+### Memoria compartida en HTTP y dashboard
+
+El dashboard de `http://127.0.0.1:9210` incluye una vista independiente
+**Memoria compartida** con buscador, sesiones recientes, atribución, vigencia,
+corrección y olvido. **Ver mapa por agente** colorea memorias y referencias con
+un color estable por autor y dibuja `creó memoria`, `consultó`, `corrige` y
+`respalda`; al abrir un nodo se muestran agente, sesión, estado y commit observado.
+Todos los clientes operan sobre la misma `memory-v2.db`.
+
+La pestaña principal **Memoria del proyecto** carga ese grafo automáticamente al
+seleccionar un proyecto; no exige escribir una consulta. **Semántico del código**
+es otra vista: conecta código, documentos y multimedia por similitud temática.
+Ambas usan recuperación semántica, pero la primera conserva trabajo y procedencia
+de agentes, mientras la segunda describe el contenido indexado del repositorio.
+**Buscar en memoria** queda como herramienta opcional para investigar un tema.
+
+```text
+GET  /api/memory/status
+GET  /api/memory/sessions
+POST /api/memory/search
+POST /api/memory/context
+POST /api/memory/compact
+POST /api/memory/correct
+POST /api/memory/forget
+```
+
+Para exigir autenticación:
+
+```bash
+GRAPHTYN_MEMORY_HTTP_TOKEN="un-token-largo" graphtyn serve \
+  --host 127.0.0.1 --port 9210 --path .
+```
+
+Si no existe esa variable se reutiliza `GRAPHTYN_MCP_TOKEN`; sin cualquiera de
+las dos se conserva el modo local sin token para compatibilidad.
+
+Diagnóstico y benchmark reproducible:
+
+```bash
+graphtyn memory doctor --path .
+graphtyn memory benchmark --dataset benchmarks/shared_memory_v1.json \
+  --output benchmarks/shared_memory_v1_result.json --path .
+```
+
+Resultados, evolución y límites: [`docs/shared_memory_benchmark.md`](docs/shared_memory_benchmark.md).
+
+Suite de estabilidad ampliada:
+
+```bash
+graphtyn memory benchmark --suite stability \
+  --output benchmarks/shared_memory_stability_result.json --path .
+```
+
+Diseño 30×3×3, resultados y guardrails: [`docs/shared_memory_stability.md`](docs/shared_memory_stability.md).
+
+### Cerebros de agentes (memoria personal sin repositorio)
+
+Además de la memoria por proyecto, cada agente u orquestador puede tener su propio
+**cerebro**: un almacén de memoria sin código asociado para conversaciones por tema
+(entrevistas, planes de carrera, práctica de idiomas). La separación recomendada es:
+
+- **Un cerebro por agente autónomo** (todas sus conversaciones en un grafo).
+- **Un cerebro por orquestador** que incluye las conversaciones de sus subagentes,
+  atribuidas individualmente.
+- **La memoria de proyecto**, aparte, con la evidencia técnica verificable.
+
+El flujo típico consulta primero a nivel conversacional (el cerebro) y baja a la
+memoria del proyecto sólo si necesita evidencia de código.
+
+Creación con autodescubrimiento de agentes (lee `IDENTITY.md`/`SOUL.md` de cada
+subcarpeta, registra su perfil atribuido y lo añade al dashboard):
+
+```bash
+graphtyn memory brain-init \
+  --brain-path ~/memoria-personal/cerebro-agent-alpha \
+  --name "Cerebro · Orchestrator" \
+  --agents-dir /ruta/al/directorio/de/workspaces \
+  --register
+```
+
+**Identidades de agente sin editar código.** Las variantes de nombre se resuelven
+en tres capas: tabla `agent_aliases` de cada almacén, archivo global opcional
+`$GRAPHTYN_HOME/agent-aliases.json`, y defaults integrados. Se importan en bloque:
+
+```bash
+# En un almacén concreto y, además, en la configuración global
+graphtyn memory alias-import --pairs "alias-local=identidad-canonica" --global-config --path .
+
+# Desde un archivo JSON {"alias": "canonico"}
+graphtyn memory alias-import --json-file aliases.json --path .
+```
+
+Al vincular un workspace de agente (`POST /api/memory/agent-profile` o el botón
+**Vincular agente** del panel "Buscar en memoria"), Graphtyn descubre y persiste
+sus alias automáticamente: no hay nada hardcodeado.
+
+**Búsqueda federada.** Una sola consulta puede cubrir varios cerebros y proyectos:
+
+```bash
+curl -X POST http://127.0.0.1:9210/api/memory/search-all \
+  -H 'Authorization: Bearer TOKEN' -H 'Content-Type: application/json' \
+  -d '{"paths":["~/memoria-personal/cerebro-agent-alpha","/ruta/proyecto"],
+       "query":"problemas resueltos esta semana","requester_agent":"nexus"}'
+```
+
+En el dashboard, el interruptor **Todos los espacios** activa esa búsqueda
+federada; cada resultado indica su espacio de origen.
+
+**Captura automática y frescura.** Cada agente debe ejecutar `memory ingest-turn`
+al cerrar una conversación (ver bloque "Memoria compartida Graphtyn" en su
+`AGENTS.md`). El panel muestra "última captura hace N días" para detectar
+espacios desactualizados.
+
+**Mantenimiento de almacenes.** Lista los espacios existentes con conteos y
+elimina residuos generados por tests:
+
+```bash
+graphtyn memory stores              # inventario
+graphtyn memory stores --clean-test # elimina almacenes test_*
+```
+
+
+### Importar conversaciones anteriores a Graphtyn
+
+La ruta recomendada para una instalación nueva es primero previsualizar y luego
+aplicar. No modifica archivos fuente del repositorio:
+
+```bash
+pipx install graphtyn
+graphtyn setup --path .                 # detección, sin cambios
+graphtyn setup --path . --apply         # configura agentes/fuentes y token privado
+```
+
+El bootstrap histórico descubre JSON, JSONL y bases SQLite de OpenClaw, Hermes,
+Codex, Antigravity/AGY, OpenCode y Claude. La primera ejecución sólo genera una
+previsualización; importar requiere consentimiento explícito y es idempotente:
+
+```bash
+graphtyn memory bootstrap --provider openclaw --source ~/.openclaw --path . \
+  --output import-plan.json
+graphtyn memory bootstrap --provider openclaw --source ~/.openclaw --path . \
+  --apply --consent
+graphtyn memory sync --provider openclaw --source ~/.openclaw --path . --consent
+```
+
+Para agentes en otra máquina, use la ruta persistente visible desde SSH (se copia
+a un temporal que se elimina al terminar):
+
+```bash
+graphtyn memory bootstrap --provider openclaw \
+  --source ssh://usuario@servidor/ruta/persistente/openclaw/agents \
+  --path . --output import-plan.json
+```
+
+La ubicación se configura, no se deduce de nombres de contenedor, usuarios o IPs:
+
+```bash
+# Host local
+graphtyn memory sources add --provider openclaw --source ~/.openclaw/agents
+# Docker local
+graphtyn memory sources add --provider openclaw --source docker://mi-contenedor/home/node/.openclaw/agents
+# VPS o host remoto
+graphtyn memory sources add --provider openclaw --source ssh://usuario@host/ruta/agents
+# Docker dentro de un VPS
+graphtyn memory sources add --provider openclaw --source ssh+docker://usuario@host:mi-contenedor/home/node/.openclaw/agents
+graphtyn memory sources list
+```
+
+Para conservar conversaciones de proyectos desconocidos sin mezclarlas con el
+proyecto abierto, use un cerebro histórico explícito:
+
+```bash
+graphtyn memory bootstrap --archive-all --apply --consent \
+  --path ~/.graphtyn/brains/historical-agent-memory
+graphtyn memory export --include-messages \
+  --output ~/.graphtyn/exports/agent-conversations.json \
+  --path ~/.graphtyn/brains/historical-agent-memory
+```
+
+Los mensajes se saneán, segmentan y compactan antes de generar embeddings. Se
+preservan proveedor, agente, sesión, fuente y fecha original con
+`capture_mode=historical_import`; reejecutar el comando reutiliza fingerprints y
+no duplica conversaciones. Las rutas ambiguas se reportan para revisión.
+
+Los adaptadores integrados no son una lista cerrada. Un proveedor adicional se
+declara mediante un manifiesto JSON, sin editar Graphtyn:
+
+```json
+{"name":"mi-agente","format":"jsonl","extensions":["jsonl"],"version":1}
+```
+
+```bash
+graphtyn adapter validate adapter.json
+graphtyn adapter install adapter.json
+graphtyn adapter list
+graphtyn memory sources add --provider mi-agente --source /ruta/historial
+graphtyn memory sources test --provider mi-agente --source /ruta/historial
+```
+
+Una conversación puede aparecer en varios archivos o crecer después de cerrarse.
+El importador fusiona fragmentos por proveedor, agente e ID externo; deduplica
+rol+contenido, conserva todas las fuentes como procedencia y no reabre sesiones
+normales. Por ello los registros de origen pueden superar a las sesiones lógicas.
+Nunca exporta prompts del sistema, razonamiento oculto ni vectores; secretos
+reconocibles se redactan y los archivos exportados usan permisos `0600`.
+
+### Operación, seguridad y recuperación
+
+```bash
+# Servicio persistente (genera el artefacto; el usuario decide instalarlo)
+graphtyn service install --kind systemd --output ~/.config/systemd/user/graphtyn-sync.service --path .
+graphtyn service install --kind compose --output compose.graphtyn.yml --path .
+
+# Token por rol/proyecto, almacenado con modo 0600
+graphtyn token rotate --role writer --project /ruta/proyecto
+export GRAPHTYN_MEMORY_TOKENS_FILE="$HOME/.graphtyn/memory-tokens.json"
+
+# TLS nativo de Uvicorn
+graphtyn serve --host 0.0.0.0 --ssl-certfile cert.pem --ssl-keyfile key.pem --path .
+
+# Backup consistente mediante SQLite backup API; restore es preview por defecto
+graphtyn backup --output memory.zip --path .
+graphtyn backup-verify memory.zip
+graphtyn restore memory.zip --path /ruta/destino
+graphtyn restore memory.zip --path /ruta/destino --apply
+```
+
+El dashboard permite guardar, probar y eliminar fuentes, además de administrar
+alias observados→identidad canónica. Docker Compose exige un token en `.env`, usa
+usuario sin privilegios, filesystem de sólo lectura y volumen separado para estado.
+
+La prueba real del 25 de agosto de 2026 procesó 91 registros de sesión y 2,834
+registros de mensaje desde Codex local, OpenClaw remoto y Hermes remoto. Tras
+fusionar fragmentos y duplicados produjo 85 sesiones lógicas, 2,665 mensajes
+saneados y 166 memorias; una segunda pasada reutilizó las 91 entradas con cero
+errores. El artefacto auditable es
+[`benchmarks/history_export_real_2026-08-25.json`](benchmarks/history_export_real_2026-08-25.json).
+
+Limitación: `auto` reconoce estructuras JSON/JSONL/SQLite comunes. Un formato
+binario o esquema propietario necesita un adaptador que lo convierta al contrato
+neutral de sesión/rol/contenido. La memoria importada sigue siendo histórica y no
+se presenta como verdad verificada hasta vincular evidencia vigente.
+
+La API estable ofrece `POST /api/v1/memory/ingest`, `POST /api/v1/context`,
+eventos de ciclo de sesión, identidad global de proyectos, jobs de importación y
+progreso SSE bajo `/api/v1/imports`. `GRAPHTYN_MEMORY_TOKENS` acepta un JSON
+`{"token":"reader|writer|admin"}`; el token MCP anterior conserva rol admin.
+También están disponibles el cliente Python `graphtyn.client.GraphtynClient` y
+el cliente TypeScript de referencia `graphtyn/client.ts`.
+
+Para aislamiento por proyecto, cada valor también puede ser
+`{"role":"writer","projects":["/ruta/permitida"]}`. El límite predeterminado es
+120 solicitudes/minuto por token (`GRAPHTYN_MEMORY_RATE_LIMIT`). SQLite y su
+directorio reciben permisos `0600/0700`; para cifrar títulos, memorias y mensajes
+instale `graphtyn[security]` y defina `GRAPHTYN_MEMORY_ENCRYPTION_KEY`. Con cifrado,
+la recuperación usa embeddings y no deja el contenido en FTS.
+
+Gobernanza:
+
+```bash
+graphtyn memory export --output memory-export.json --path .
+graphtyn memory retention --days 90 --path .          # previsualiza
+graphtyn memory retention --days 90 --apply --path .  # conserva verified por defecto
+graphtyn memory projects --path .
+```
+
+### OpenClaw en host, contenedor o VPS
+
+Graphtyn no presupone dónde corre OpenClaw. Si ambos están en el host puede usar
+stdio o HTTP local. Si están en contenedores/VPS distintos, Graphtyn debe escuchar
+en una interfaz alcanzable por el cliente:
+
+```bash
+export GRAPHTYN_MCP_TOKEN="un-token-largo-y-aleatorio"
+export GRAPHTYN_MCP_PATH="/ruta/del/proyecto/en-el-host"
+export GRAPHTYN_HOME="$HOME/.graphtyn" # estado central compartido, no dentro del checkout
+export GRAPHTYN_EMBED_MODEL="nomic-embed-text:latest" # embedding neuronal local vía Ollama
+export GRAPHTYN_HTTP_TOOL_PROFILE="memory"
+graphtyn serve --host 0.0.0.0 --port 9210 --path "$GRAPHTYN_MCP_PATH"
+```
+
+OpenClaw debe registrar la URL alcanzable `http://<host-graphtyn>:9210/mcp` y header
+`Authorization: Bearer <GRAPHTYN_MCP_TOKEN>`. La ruta del proyecto es la ruta vista
+por el host Graphtyn, no una ruta privada del sandbox. Restrinja el puerto 9210
+mediante firewall; no lo publique sin token.
+
+Cuando `GRAPHTYN_HOME` está definido, esa ubicación es autoritativa aunque el
+checkout también sea escribible. Así OpenClaw, Codex, AGY y OpenCode resuelven la
+misma `memory-v2.db` aunque sus sandboxes tengan permisos distintos. Para guardar
+mensajes de conversación, el agente debe abrir la sesión con
+`capture_enabled=true`; omitirlo mantiene el modo privado por defecto y
+`memory_append` devuelve un error MCP estructurado. Los checkpoints explícitos
+siguen disponibles sin captura automática.
+
+Graphtyn no trata cada línea del chat como una memoria independiente. Con captura
+autorizada conserva mensajes saneados; `memory_compact` extrae decisiones,
+hechos, procedimientos y resultados, y esos recuerdos sí reciben un embedding
+incremental. Con `GRAPHTYN_EMBED_MODEL` usa Ollama y similitud coseno normalizada;
+sin esa variable conserva el fallback determinista `feature-hash-v2`. Verifique
+proveedor, cobertura e integridad con `graphtyn memory doctor --path .`.
+
+Si el cliente OpenClaw instalado sólo admite MCP `stdio`, use el wrapper
+`graphtyn_openclaw.sh` ya incluido y un bind mount compartido. El transporte HTTP
+ahora expone el ciclo completo de memoria, por lo que ambos modos leen la misma
+`memory-v2.db`.
 
 ### 🧭 Herramientas de Mapa de Código (0 Tokens)
 
 | Herramienta | Qué hace | Parámetros |
 |---|---|---|
-| `graph_query_intent` | Ruta predeterminada de una sola llamada. Clasifica `overview`, `flow`, `bindings`, `persistence`, `tests` o `impact`, filtra evidencia y devuelve `complete_for`, `do_not_expand` y un `context_id` diferencial. `overview` diversifica README/manifiestos, puntos de entrada, subsistemas y símbolos centrales. | `request`, `intent`, `limit`, `extends_context_id` |
+| `graph_query_intent` | Ruta predeterminada adaptativa. Clasifica la intención y usa grafo compacto; para orden exacto, condiciones, seguridad o ciclo de vida añade únicamente cuerpos de símbolos ya seleccionados, con límites de líneas y caracteres. `evidence_mode` permite `auto`, `compact`, `balanced` o `precision`. | `request`, `intent`, `limit`, `evidence_mode`, `extends_context_id` |
 | `graph_analyze_change` | Convierte un issue o requisito en un plan verificable con targets, archivos, contratos, estado, pruebas y riesgos. Puede alimentar a Qwen/API; la IA debe citar aliases y no inventar aristas. | `request`, `limit`, `response_mode` |
 | `graph_neighborhood` | Devuelve el subgrafo con evidencia. Por defecto usa respuesta compacta, máximo 40 nodos y descripciones de 240 caracteres; `response_mode=full` es opt-in. | `path`, `symbol`, `depth`, `limit`, `response_mode` |
 | `graph_blast_radius` | Calcula impacto por salto. La salida compacta limita el contexto a 40 impactos y avisa si hubo truncamiento. | `symbol`, `depth`, `limit`, `response_mode` |
 | `graph_context_bundle` | Agrupa vecindad e impacto de hasta 10 símbolos en una sola llamada, reduciendo rondas y reenvío acumulativo de contexto. | `symbols`, `depth`, `limit` |
 
 `limit` es un presupuesto global, no un límite repetido por cada símbolo. La respuesta incluye `planner`, `budget` y `omitted`, de modo que un agente puede detectar truncamiento y solicitar una expansión deliberada. El dashboard usa 12 nodos por defecto.
+
+En `evidence_mode=auto`, una consulta común permanece en `compact`. Las preguntas
+que exigen orden, ramas, mutaciones, `defer`, panic, timeout o ciclo de vida pasan
+a `precision`: se incluyen como máximo tres cuerpos seleccionados, 120 líneas por
+símbolo y 12,000 caracteres totales. No se escanea ni se envía un archivo ajeno a
+los nodos elegidos por el grafo. La salida declara `requested_obligations`,
+`source_retrieval` y `source_evidence` para auditar por qué creció el contexto.
 
 ### GRAPHTYN_REPORT.md
 
@@ -384,10 +829,13 @@ El **Analista de Cambios** aplica primero un ranking determinista sobre el índi
 El parser v8 representa cuerpos de método sin enviar el código completo. Cada método puede incluir `ops`: tuplas compactas con tipo, nombre, línea y evidencia para llamadas locales o externas, creación de objetos, asignaciones, declaraciones, retornos y controles. El ranking conserva primero las operaciones relacionadas con la consulta y acciones de alto valor como `AddScoped`, `Publish`, `SaveChanges`, `Skip`, `Take` o `CountAsync`; también preserva la firma de la clase propietaria para contratos inyectados en constructores primarios.
 
 ```bash
-# Recomendado para agentes: una sola tool y menor costo acumulado
+# Recomendado para consulta: dos tools y menor costo acumulado
 graphtyn mcp --path /ruta/proyecto
 
-# Catálogo histórico completo para diagnóstico o clientes existentes
+# Ciclo de memoria completo sin catálogo legado del grafo
+graphtyn mcp --path /ruta/proyecto --tool-profile memory
+
+# Catálogo histórico completo para diagnóstico
 graphtyn mcp --path /ruta/proyecto --tool-profile full
 ```
 
@@ -481,8 +929,10 @@ python3 -m graphtyn.cli mcp --path /ruta/al/proyecto
 - `GRAPHTYN_DAEMON_URL`: dentro de un contenedor, `127.0.0.1:9210` no apunta al daemon del dashboard (que vive en el host). Apunta esta variable a la IP del host (ej. la IP gateway de la VM) para que `graph_register_project` registre proyectos en el dashboard.
 - Las herramientas de grafo e historial funcionan standalone (leen el índice cacheado o escanean el código) sin depender del daemon.
 
-#### Ejemplo real: OpenClaw en una VM (wrapper `graphtyn_openclaw.sh`)
-El repositorio incluye [`graphtyn_openclaw.sh`](graphtyn_openclaw.sh), un wrapper usado para conectar Graphtyn con un agente **OpenClaw** que corre dentro de una VM: el contenedor `openclaw-agent` monta por bind el `Documentos` del host en `/home/node/proyectos`, así que el script exporta el `PYTHONPATH` con la ruta del contenedor, apunta `GRAPHTYN_DAEMON_URL` a la IP gateway de la VM (`192.168.122.1`) y arranca el MCP con la ruta del proyecto en el contenedor. Se registra en el `openclaw.json` del agente:
+#### Wrapper stdio portable para OpenClaw
+[`graphtyn_openclaw.sh`](graphtyn_openclaw.sh) no contiene rutas, identidades,
+contenedores ni direcciones de una máquina concreta. Configure en el runtime
+`GRAPHTYN_PROJECT_PATH` y, sólo si no instaló el paquete, `GRAPHTYN_SOURCE_PATH`.
 
 ```json
 {

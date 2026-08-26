@@ -17,6 +17,7 @@ export function isDocOrMedia(n) {
 
 export function nodeColor(n) {
       if (n.god) return '#f472b6';
+      if (n.agent_color) return n.agent_color;
       if (isDocOrMedia(n)) return '#ffffff';
       if (state.activePalette === 'community') {
         const commKey = getCommKey(n);

@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "status": "protocol-ready; external model runs not executed by unit tests",
+  "model_policy": "same immutable model id, temperature and reasoning effort for every cell",
+  "variants": ["graphtyn", "competitor", "no_graph"],
+  "randomization": "blocked by task; randomize variant order within each task",
+  "retries": "one retry only for transport/provider failure; retain both costs",
+  "scoring": "atomic fact coverage, forbidden claims, completion, observed tokens, latency and tool calls",
+  "repositories": [
+    {"id":"python-asgi","source":"https://github.com/encode/starlette","revision":"398e5a3430eb1ddd33e1d48d766efe41426e231f"},
+    {"id":"unity-game","source":"local real-project fixture","revision":"c002fb1"},
+    {"id":"dotnet-clean-architecture","source":"https://github.com/ardalis/CleanArchitecture","revision":"859b115072337b3b7074007f8231d19f24966f1a"},
+    {"id":"laravel-erp","source":"https://github.com/andrewdwallo/erpsaas","revision":"7e12392a3882682018cd86071d4d51ac7f142076"},
+    {"id":"react-commerce-dashboard","source":"https://github.com/saleor/saleor-dashboard","revision":"f5a84f3afb4f9b25cd0ff75434dfb5b70ea3c282","scope":"src/auth","scope_reason":"the six tasks are authentication-only; full repository has 4,929 tracked TS/TSX files and is retained as a separate stress case"},
+    {"id":"go-http-router","source":"https://github.com/go-chi/chi","revision":"735ae2b87f8c733d616e809ae86e0985c1bc3350"}
+  ],
+  "tasks": [
+    {"id":"py-asgi-entry","repository":"python-asgi","technology":"Python","prompt":"Trace ASGI entry and middleware order.","facts":["entry symbol","middleware construction","router handoff"]},
+    {"id":"py-routing","repository":"python-asgi","technology":"Python","prompt":"Trace full, partial and fallback routing.","facts":["full match","partial match","fallback"]},
+    {"id":"py-session","repository":"python-asgi","technology":"Python","prompt":"Audit signed session lifecycle.","facts":["signature verification","invalid signature","cookie persistence"]},
+    {"id":"py-cors","repository":"python-asgi","technology":"Python","prompt":"Trace CORS decisions.","facts":["origin","preflight","rejection"]},
+    {"id":"py-websocket","repository":"python-asgi","technology":"Python","prompt":"Trace WebSocket routing and close behavior.","facts":["scope match","accept","close"]},
+    {"id":"py-background","repository":"python-asgi","technology":"Python","prompt":"Trace background task execution.","facts":["response","task call","exception behavior"]},
+
+    {"id":"cs-selection-impact","repository":"unity-game","technology":"C#","prompt":"Find direct and transitive consumers of player selection.","facts":["changed symbol","direct callers","tests"]},
+    {"id":"cs-auction-flow","repository":"unity-game","technology":"C#","prompt":"Trace auction service flow.","facts":["entry","state mutation","completion callback"]},
+    {"id":"cs-game-start","repository":"unity-game","technology":"C#","prompt":"Trace game startup.","facts":["manager","state transition","UI consumer"]},
+    {"id":"cs-contracts","repository":"unity-game","technology":"C#","prompt":"Map interfaces to implementations.","facts":["interface","implementation","consumer"]},
+    {"id":"cs-snapshot","repository":"unity-game","technology":"C#","prompt":"Trace snapshot roundtrip.","facts":["serialize","persist","restore"]},
+    {"id":"cs-events","repository":"unity-game","technology":"C#","prompt":"Trace event subscriptions and dispatch.","facts":["publisher","event","subscriber"]},
+
+    {"id":"dotnet-create","repository":"dotnet-clean-architecture","technology":"C#/.NET","prompt":"Trace HTTP create flow.","facts":["endpoint","handler","repository"]},
+    {"id":"dotnet-delete","repository":"dotnet-clean-architecture","technology":"C#/.NET","prompt":"Trace delete and domain event flow.","facts":["command","delete","publish"]},
+    {"id":"dotnet-bindings","repository":"dotnet-clean-architecture","technology":"C#/.NET","prompt":"Audit dependency bindings.","facts":["registration","lifetime","implementation"]},
+    {"id":"dotnet-query","repository":"dotnet-clean-architecture","technology":"C#/.NET","prompt":"Trace paginated query.","facts":["filter","pagination","count"]},
+    {"id":"dotnet-validation","repository":"dotnet-clean-architecture","technology":"C#/.NET","prompt":"Trace validation failures.","facts":["validator","rule","error response"]},
+    {"id":"dotnet-pr-impact","repository":"dotnet-clean-architecture","technology":"C#/.NET","prompt":"Assess repository contract change.","facts":["contract","implementors","tests"]},
+
+    {"id":"php-proposal-create","repository":"laravel-erp","technology":"PHP/Laravel","prompt":"Trace proposal creation.","facts":["route","request","model"]},
+    {"id":"php-invoice-convert","repository":"laravel-erp","technology":"PHP/Laravel","prompt":"Trace proposal-to-invoice conversion.","facts":["controller","service","event"]},
+    {"id":"php-purchase-return","repository":"laravel-erp","technology":"PHP/Laravel","prompt":"Trace purchase return.","facts":["validation","inventory mutation","persistence"]},
+    {"id":"php-authz","repository":"laravel-erp","technology":"PHP/Laravel","prompt":"Trace authorization and validation.","facts":["policy","request rules","failure"]},
+    {"id":"php-event","repository":"laravel-erp","technology":"PHP/Laravel","prompt":"Trace domain event dispatch.","facts":["dispatch","event","listener"]},
+    {"id":"php-impact","repository":"laravel-erp","technology":"PHP/Laravel","prompt":"Assess model field change.","facts":["model","controllers","frontend"]},
+
+    {"id":"ts-route-component","repository":"react-commerce-dashboard","technology":"TypeScript/React","prompt":"Trace authentication routes from AuthRouter to login and password views.","facts":["src/auth/index.tsx","AuthRouter","RootRoutes"]},
+    {"id":"ts-form-submit","repository":"react-commerce-dashboard","technology":"TypeScript/React","prompt":"Trace new-password form submission and token use.","facts":["NewPassword.tsx","setPassword","params.token"]},
+    {"id":"ts-auth","repository":"react-commerce-dashboard","technology":"TypeScript/React","prompt":"Trace external authentication callback state and error handling.","facts":["Login.tsx","code and state","handleExternalAuthentication"]},
+    {"id":"ts-query-cache","repository":"react-commerce-dashboard","technology":"TypeScript/React","prompt":"Trace Apollo client use during authentication state changes.","facts":["useApolloClient","useAuthProvider","AuthProvider tests"]},
+    {"id":"ts-error","repository":"react-commerce-dashboard","technology":"TypeScript/React","prompt":"Trace query authentication error handling.","facts":["src/auth/utils.ts","handleQueryAuthError","authentication error"]},
+    {"id":"ts-impact","repository":"react-commerce-dashboard","technology":"TypeScript/React","prompt":"Assess impact of changing external authentication method types.","facts":["src/auth/types.ts","GetExternalAuthUrlData","Login consumers"]},
+
+    {"id":"go-http","repository":"go-http-router","technology":"Go","prompt":"Trace request entry through Mux.ServeHTTP and route lookup.","facts":["mux.go","ServeHTTP","routeHTTP"]},
+    {"id":"go-storage","repository":"go-http-router","technology":"Go","prompt":"Trace how URL parameters are captured and exposed.","facts":["tree.go","RouteParams","URLParam"]},
+    {"id":"go-interface","repository":"go-http-router","technology":"Go","prompt":"Map Router interfaces to Mux methods and constructors.","facts":["Router interface","Mux","NewRouter"]},
+    {"id":"go-cancel","repository":"go-http-router","technology":"Go","prompt":"Trace timeout and cancellation behavior in middleware/tests.","facts":["context.WithTimeout","Done","cancel"]},
+    {"id":"go-error","repository":"go-http-router","technology":"Go","prompt":"Trace panic recovery middleware behavior.","facts":["Recoverer","recover","HTTP response"]},
+    {"id":"go-impact","repository":"go-http-router","technology":"Go","prompt":"Assess impact of changing routing Context URLParams.","facts":["context.go","URLParams","URLParam consumers"]}
+  ]
+}

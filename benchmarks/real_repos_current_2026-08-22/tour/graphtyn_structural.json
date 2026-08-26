@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "UnityCommerceDemo",
-  "path": "/home/developer/Documentos/docker/PROYECTOS/UnityCommerceDemo",
+  "path": "<HOME>/Documentos/docker/PROYECTOS/UnityCommerceDemo",
   "elapsed_seconds": 2.068,
   "warm_cache_seconds": 2.0841,
   "warm_cache_speedup": 0.99,

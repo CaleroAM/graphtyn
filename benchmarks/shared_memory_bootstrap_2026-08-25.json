@@ -1,0 +1,51 @@
+{
+  "protocol": "historical-agent-memory-bootstrap-v1",
+  "date": "2026-08-25",
+  "mode": "read-only discovery; no private conversation content retained in artifact",
+  "real_sources": [
+    {
+      "provider": "openclaw",
+      "agent": "career",
+      "source_files": 57,
+      "trajectory_files_excluded": 57,
+      "sessions_parsed": 57,
+      "messages_parsed": 1328,
+      "projects_detected": 1,
+      "ssh_discovery_seconds": 1.23,
+      "content_exposed": false
+    },
+    {
+      "provider": "hermes",
+      "agent": "nexus",
+      "source_files": 1,
+      "sessions_parsed": 9,
+      "messages_parsed": 261,
+      "content_exposed": false
+    }
+  ],
+  "automated_contracts": {
+    "formats": ["nested JSON", "JSONL", "SQLite sessions/messages"],
+    "attribution": true,
+    "project_identity_aliases": true,
+    "cross_project_ambiguity_gate": true,
+    "idempotent_reimport": true,
+    "historical_timestamp_preserved": true,
+    "hybrid_retrieval_after_import": true,
+    "federated_project_question": true,
+    "role_and_project_acl": true,
+    "rate_limit": true,
+    "retention_protects_verified": true,
+    "sanitized_export": true
+  },
+  "test_result": {
+    "non_api_suite_passed": 196,
+    "skipped": 3,
+    "api_contract_routes_checked": 6
+  },
+  "limitations": [
+    "Real histories were parsed in read-only mode and were not imported without explicit apply consent.",
+    "Unregistered project paths are reported as ambiguous rather than assigned automatically.",
+    "Provider schema changes require adapter regression fixtures.",
+    "The full FastAPI TestClient suite has a pre-existing hang; v1 endpoints are covered through direct contract tests and route inspection."
+  ]
+}

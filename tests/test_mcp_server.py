@@ -46,9 +46,12 @@ def test_mcp_initialize_and_tools_list(workspace):
     assert {"graph_neighborhood", "graph_blast_radius", "graph_search_concepts",
             "graph_context_bundle", "graph_analyze_change", "graph_query_intent",
             "graph_history_search", "graph_history_timeline", "graph_history_get",
-            "graph_register_project"} <= names
+            "graph_register_project", "memory_session_start", "memory_checkpoint",
+            "memory_append", "memory_search", "memory_context", "memory_session_end",
+            "memory_correct", "memory_forget", "memory_compact"} <= names
     intent_tool = next(t for t in tools["result"]["tools"] if t["name"] == "graph_query_intent")
     assert "overview" in intent_tool["inputSchema"]["properties"]["intent"]["enum"]
+    assert intent_tool["inputSchema"]["properties"]["evidence_mode"]["enum"] == ["auto", "compact", "balanced", "precision"]
 
 
 def test_mcp_intent_profile_exposes_only_one_tool(workspace):
@@ -59,7 +62,31 @@ def test_mcp_intent_profile_exposes_only_one_tool(workspace):
         capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ),
     )
     response = json.loads(res.stdout.strip())
-    assert [tool["name"] for tool in response["result"]["tools"]] == ["graph_query_intent"]
+    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "memory_context"}
+
+
+def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalog(workspace):
+    runner = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'memory')\n"
+    res = subprocess.run([str(VENV_PY), "-c", runner % str(workspace)],
+        input=json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}) + "\n",
+        capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ))
+    names = {tool["name"] for tool in json.loads(res.stdout)["result"]["tools"]}
+    assert "graph_query_intent" in names and "memory_compact" in names
+    assert "graph_neighborhood" not in names and all(name == "graph_query_intent" or name.startswith("memory_") for name in names)
+
+
+def test_mcp_memory_cross_session_attribution(workspace):
+    requests = [
+        {"jsonrpc": "2.0", "id": 101, "method": "tools/call", "params": {"name": "memory_session_start", "arguments": {"agent_id": "agy", "task": "Cambiar autenticación"}}},
+    ]
+    _, response = _mcp_call(workspace, requests)
+    session = json.loads(response[0]["result"]["content"][0]["text"])
+    _, response = _mcp_call(workspace, [
+        {"jsonrpc": "2.0", "id": 102, "method": "tools/call", "params": {"name": "memory_checkpoint", "arguments": {"session_id": session["id"], "kind": "decision", "title": "JWT centralizado", "content": "AuthService valida todos los tokens"}}},
+        {"jsonrpc": "2.0", "id": 103, "method": "tools/call", "params": {"name": "memory_search", "arguments": {"query": "quién valida los tokens", "requester_agent": "opencode"}}},
+    ])
+    result = json.loads(response[1]["result"]["content"][0]["text"])
+    assert result["results"][0]["attribution"]["agent_id"] == "agy"
 
 
 def test_mcp_change_analyst_is_compact_and_grounded(workspace):
@@ -77,7 +104,7 @@ def test_mcp_query_intent_supports_one_shot_and_delta(workspace):
     _, first_response = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 34, "method": "tools/call",
         "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8}}}])
     first = json.loads(first_response[0]["result"]["content"][0]["text"])
-    assert first["planner"] == "intent-v1"
+    assert first["planner"] == "adaptive-intent-v2"
     assert first["do_not_expand"] is True
     assert first["context_id"]
     # Delta must be exercised in the same MCP process because contexts are
@@ -98,6 +125,24 @@ def test_mcp_query_intent_supports_one_shot_and_delta(workspace):
     assert delta["entities"] == {}
     assert delta["relations"] == []
     assert delta["estimated_tokens"] < first["estimated_tokens"]
+
+
+def test_mcp_query_intent_auto_adds_bounded_source_for_exact_flow(workspace):
+    (workspace / "flow.py").write_text(
+        "def run():\n    if helper():\n        return 1\n    return 0\n",
+        encoding="utf-8",
+    )
+    _, responses = _mcp_call(workspace, [{
+        "jsonrpc": "2.0", "id": 39, "method": "tools/call",
+        "params": {"name": "graph_query_intent", "arguments": {
+            "request": "Explica el orden exacto y las condiciones de run", "intent": "flow", "limit": 8,
+        }},
+    }])
+    result = json.loads(responses[0]["result"]["content"][0]["text"])
+    assert result["evidence_mode"] == "precision"
+    assert result["source_retrieval"]["enabled"] is True
+    assert result["source_retrieval"]["characters"] < 12_000
+    assert "if helper()" in result["source_evidence"][0]["text"]
 
 
 def test_mcp_query_intent_overview_preserves_project_profile(workspace):

@@ -116,6 +116,34 @@ def test_dashboard_quality_controls_are_wired_end_to_end():
         assert handler in dashboard and handler in handlers
 
 
+def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
+    html = (WEB / "dashboard.html").read_text()
+    dashboard = (WEB / "dashboard.js").read_text()
+    handlers = (WEB / "js" / "__handlers.js").read_text()
+    memory = (WEB / "js" / "memory.js").read_text()
+    css = (WEB / "dashboard.css").read_text()
+    assert 'id="modal-memory"' in html and 'id="memory-results"' in html
+    assert 'id="memory-sessions"' in html and 'id="memory-token"' in html
+    assert "openMemoryPanel" in dashboard and "searchSharedMemory" in handlers
+    for endpoint in ("/api/memory/status", "/api/memory/sessions", "/api/memory/search",
+                     "/api/memory/correct", "/api/memory/forget", "/api/memory/graph"):
+        assert endpoint in memory
+    assert 'id="memory-graph-btn"' in html and 'id="memory-agent-legend"' in html
+    assert "showSharedMemoryGraph" in handlers and "agent_color" in (WEB / "js" / "painters.js").read_text()
+    assert 'id="btn-memory-view"' in html and "Memoria del proyecto" in html
+    assert "state.activeView === 'memory'" in (WEB / "js" / "graph.js").read_text()
+    assert "/api/memory/graph?path=" in (WEB / "js" / "graph.js").read_text()
+    assert "textContent" in memory and "esc(" in memory
+    assert ".memory-layout" in css and "grid-template-columns" in css
+    assert 'id="memory-import-provider"' in html and 'id="memory-import-apply"' in html
+    assert "/api/v1/imports/discover" in memory and "/api/v1/imports" in memory
+    assert "discoverHistoricalMemory" in dashboard and "applyHistoricalMemory" in handlers
+    assert "saveHistoricalSource" in memory and "testHistoricalSource" in handlers
+    assert "removeHistoricalSource" in memory and "saveMemoryAlias" in handlers
+    assert 'id="memory-alias"' in html and 'id="memory-canonical"' in html
+    assert ".memory-import-panel" in css
+
+
 def test_dashboard_exposes_framework_flow_filters_and_route_metadata():
     html = (WEB / "dashboard.html").read_text()
     dashboard = (WEB / "dashboard.js").read_text()
@@ -129,3 +157,20 @@ def test_dashboard_exposes_framework_flow_filters_and_route_metadata():
     assert "http_method" in graph and "node.path" in graph
     assert "k === 'route'" in painters
     assert "framework.resolved_routes" in quality
+
+
+def test_dashboard_separates_graph_design_from_index_engine_and_wraps_status():
+    html = (WEB / "dashboard.html").read_text()
+    css = (WEB / "dashboard.css").read_text()
+    ui = (WEB / "js" / "ui.js").read_text()
+    assert 'id="dd-appearance"' in html and "Diseño del grafo" in html
+    assert 'id="dd-engine"' in html and "Motor de índice" in html
+    assert "Paleta & Motor" not in html and 'id="dd-settings"' not in html
+    for element_id in ("palette-sel", "style-sel", "shape-sel", "link-style-sel",
+                       "engine-sel", "code-model-sel", "vision-model-sel",
+                       "f-repulsion", "f-distance"):
+        assert html.count(f'id="{element_id}"') == 1
+    assert 'class="graph-status"' in html
+    assert html.count('class="confidence-item') == 3
+    assert "flex-wrap:wrap" in css and "max-height:min(650px" in css
+    assert "aria-expanded" in ui

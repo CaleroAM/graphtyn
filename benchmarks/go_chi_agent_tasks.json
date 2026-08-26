@@ -1,0 +1,66 @@
+{
+  "repository": "https://github.com/go-chi/chi",
+  "revision": "735ae2b87f8c733d616e809ae86e0985c1bc3350",
+  "tasks": [
+    {
+      "id": "mux-request-lifecycle",
+      "prompt": "Traza el ciclo exacto de una petición en Mux.ServeHTTP: ausencia de rutas, router padre, adquisición y reinicio del contexto, inserción en request.Context, ejecución y devolución al pool. Explica por qué existe cada rama y cita archivo, símbolo y línea.",
+      "key_facts": [
+        {"id":"nil-handler","patterns":["mux\\.go", "handler == nil", "NotFoundHandler"]},
+        {"id":"parent-context","patterns":["RouteCtxKey", "rctx != nil", "mx\\.handler\\.ServeHTTP"]},
+        {"id":"pool-get","patterns":["pool\\.Get", "Reset", "Routes = mx"]},
+        {"id":"parent-ctx","patterns":["parentCtx", "r\\.Context"]},
+        {"id":"context-value","patterns":["context\\.WithValue", "RouteCtxKey", "WithContext"]},
+        {"id":"pool-put","patterns":["pool\\.Put", "request.*finished|termin"]}
+      ],
+      "forbidden_facts": [
+        {"id":"always-new-context","patterns":["siempre.{0,50}(crea|new).{0,30}Context"]}
+      ]
+    },
+    {
+      "id": "middleware-chain-order",
+      "prompt": "Explica cómo Chain y Middlewares.Handler construyen el http.Handler final, en qué orden se envuelven y ejecutan los middlewares, qué ocurre con una lista vacía y cómo ChainHandler delega ServeHTTP. Cita evidencia concreta.",
+      "key_facts": [
+        {"id":"chain-cast","patterns":["chain\\.go", "Chain", "Middlewares"]},
+        {"id":"handler-build","patterns":["Handler", "ChainHandler", "chain\\(mws, h\\)"]},
+        {"id":"empty","patterns":["len\\(middlewares\\) == 0", "return endpoint"]},
+        {"id":"last-wrap","patterns":["middlewares\\[len\\(middlewares\\)-1\\]", "endpoint"]},
+        {"id":"reverse-loop","patterns":["len\\(middlewares\\) - 2", "i--|decre"]},
+        {"id":"delegate","patterns":["ChainHandler.*ServeHTTP|ServeHTTP", "c\\.chain\\.ServeHTTP"]}
+      ],
+      "forbidden_facts": [
+        {"id":"last-executes-first","patterns":["último middleware.{0,60}(ejecuta primero|primero en ejecutarse)"]}
+      ]
+    },
+    {
+      "id": "routing-context-safety",
+      "prompt": "Audita Context.Reset, Context.Clone y URLParam: qué estado se limpia, qué referencias se copian profundamente, por qué Clone es necesario para goroutines y cómo se resuelve una clave repetida. Incluye archivo y líneas.",
+      "key_facts": [
+        {"id":"reset","patterns":["context\\.go", "Reset", "RoutePatterns\\[:0\\]"]},
+        {"id":"reset-private","patterns":["routeParams", "methodsAllowed", "parentCtx = nil"]},
+        {"id":"clone-parent","patterns":["Clone", "parentCtx = nil", "request.*returns|handler.*returns|retorn"]},
+        {"id":"deep-copy","patterns":["slices\\.Clone", "URLParams", "RoutePatterns"]},
+        {"id":"reverse-param","patterns":["len\\(x\\.URLParams\\.Keys\\) - 1", "k--"]},
+        {"id":"missing-param","patterns":["return \"\"", "URLParam"]}
+      ],
+      "forbidden_facts": [
+        {"id":"clone-shallow","patterns":["Clone.{0,80}(solo|only).{0,30}(shallow|superficial)"]}
+      ]
+    },
+    {
+      "id": "failure-middleware-semantics",
+      "prompt": "Compara Recoverer y Timeout: manejo de panic, excepción http.ErrAbortHandler, logging/stack, condición para escribir 500, creación/cancelación del contexto y momento exacto del 504. Señala la obligación del handler respecto a ctx.Done y cita líneas.",
+      "key_facts": [
+        {"id":"recover","patterns":["recoverer\\.go", "recover\\(\\)", "defer"]},
+        {"id":"abort","patterns":["http\\.ErrAbortHandler", "panic\\(rvr\\)"]},
+        {"id":"logging","patterns":["GetLogEntry", "Panic", "PrintPrettyStack"]},
+        {"id":"upgrade-500","patterns":["Connection", "Upgrade", "StatusInternalServerError"]},
+        {"id":"timeout-context","patterns":["timeout\\.go", "context\\.WithTimeout", "cancel\\(\\)"]},
+        {"id":"deadline-504","patterns":["DeadlineExceeded", "StatusGatewayTimeout", "ctx\\.Done"]}
+      ],
+      "forbidden_facts": [
+        {"id":"timeout-stops-work","patterns":["Timeout.{0,80}(detiene|mata|kills|stops).{0,40}(goroutine|trabajo|handler)"]}
+      ]
+    }
+  ]
+}

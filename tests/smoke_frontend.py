@@ -22,6 +22,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import traceback
 from pathlib import Path
 
 try:
@@ -126,20 +127,55 @@ def main():
             canvas.first.wait_for(state="visible", timeout=30000)
             assert canvas.count() >= 1, "canvas del grafo no renderizado"
 
+            # Appearance and indexing are independent, viewport-bounded panels.
+            page.click("#dd-appearance > button")
+            page.wait_for_selector("#dd-appearance.open .dd-panel", state="visible")
+            appearance = page.locator("#dd-appearance .dd-panel").bounding_box()
+            assert appearance and appearance["y"] + appearance["height"] <= 900, "panel de diseño sale del viewport"
+            assert page.locator("#dd-appearance #palette-sel").count() == 1
+            assert page.locator("#dd-appearance #f-repulsion").count() == 1
+            page.click("#dd-engine > button")
+            page.wait_for_selector("#dd-engine.open .dd-panel", state="visible")
+            assert page.locator("#dd-appearance").evaluate("el => !el.classList.contains('open')")
+            engine = page.locator("#dd-engine .dd-panel").bounding_box()
+            assert engine and engine["y"] + engine["height"] <= 900, "panel de motor sale del viewport"
+            assert page.locator("#dd-engine #engine-sel").count() == 1
+            assert page.locator("#dd-engine #code-model-sel").count() == 1
+
+            # Status items may wrap, but their boxes must never overlap.
+            status_parts = page.locator("#model-badge, #stats, #conf-legend").evaluate_all(
+                "els => els.map(el => { const r=el.getBoundingClientRect(); return {x:r.x,y:r.y,w:r.width,h:r.height}; })"
+            )
+            def overlaps(a, b):
+                return a["x"] < b["x"] + b["w"] and a["x"] + a["w"] > b["x"] and a["y"] < b["y"] + b["h"] and a["y"] + a["h"] > b["y"]
+            assert not overlaps(status_parts[0], status_parts[2]), "modelo y leyenda se enciman"
+            assert not overlaps(status_parts[1], status_parts[2]), "conteos y leyenda se enciman"
+            page.keyboard.press("Escape")
+
             page.evaluate("openQualityPanel()")
             page.wait_for_selector("#modal-quality.show", timeout=5000)
             page.wait_for_timeout(800)
             assert "salud observable" in page.locator("#quality-summary").inner_text().lower()
             assert page.locator("#index-update").inner_text().strip(), "estado incremental vacío"
             assert page.locator("#ambiguity-queue").inner_text().strip(), "cola de ambigüedades vacía"
-            page.fill("#answer-validation-input", "helper está definido en a.py:1.")
+            page.fill("#answer-validation-input", "La función helper está definida y devuelve el valor esperado en a.py:1.")
             page.evaluate("validateAgentAnswer()")
-            page.wait_for_timeout(500)
-            assert "trazabilidad" in page.locator("#answer-validation-output").inner_text().lower()
+            page.wait_for_function("() => document.querySelector('#answer-validation-output').innerText.trim().length > 0", timeout=5000)
+            validation_text = page.locator("#answer-validation-output").inner_text().lower()
+            assert "trazabilidad" in validation_text, f"validación inesperada: {validation_text}"
             page.evaluate("generateChangeReport()")
-            page.wait_for_timeout(500)
-            assert "reporte generado" in page.locator("#answer-validation-output").inner_text().lower()
+            page.wait_for_function("() => document.querySelector('#answer-validation-output').innerText.toLowerCase().includes('reporte generado')", timeout=5000)
             page.evaluate("closeQualityPanel()")
+
+            page.evaluate("openMemoryPanel()")
+            page.wait_for_selector("#modal-memory.show", timeout=5000)
+            page.wait_for_function("() => !document.querySelector('#memory-status').innerText.includes('Consultando')", timeout=5000)
+            assert "memorias" in page.locator("#memory-status").inner_text().lower()
+            page.fill("#memory-query", "decisión de autenticación")
+            page.evaluate("searchSharedMemory()")
+            page.wait_for_function("() => !document.querySelector('#memory-results').innerText.includes('Buscando contexto')", timeout=5000)
+            assert page.locator("#memory-results").inner_text().strip()
+            page.evaluate("closeMemoryPanel()")
 
             page.evaluate("setView('semantic')")
             page.wait_for_timeout(1500)
@@ -167,6 +203,7 @@ def main():
     except Exception as exc:
         failures.append(str(exc))
         print(f"FAIL: {exc}")
+        traceback.print_exc()
         slog = tmp / "server.log"
         if slog.exists():
             lines = [l for l in slog.read_text(encoding="utf-8", errors="replace").splitlines() if " 404 " in l or " 500 " in l]

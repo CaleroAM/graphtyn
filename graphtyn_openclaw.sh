@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Wrapper para lanzar el MCP de Graphtyn dentro del contenedor openclaw-agent.
-# Rutas del contenedor: /home/node/proyectos = bind de /mnt/share-code (VM) = Documentos del host.
-# El daemon HTTP de Graphtyn vive en el HOST; desde el contenedor se alcanza
-# por la IP gateway de la VM (192.168.122.1), no por 127.0.0.1.
-export PYTHONPATH="/home/node/proyectos/docker/PROYECTOS/graphtyn${PYTHONPATH:+:$PYTHONPATH}"
-export GRAPHTYN_DAEMON_URL="${GRAPHTYN_DAEMON_URL:-http://192.168.122.1:9210}"
-exec python3 -m graphtyn.cli mcp --path /home/node/proyectos/docker/PROYECTOS/recodding/366metrics-cdk
+# Portable stdio wrapper. Install Graphtyn in the runtime environment or set
+# GRAPHTYN_SOURCE_PATH; set GRAPHTYN_PROJECT_PATH to the path visible there.
+: "${GRAPHTYN_PROJECT_PATH:?define GRAPHTYN_PROJECT_PATH}"
+if [[ -n "${GRAPHTYN_SOURCE_PATH:-}" ]]; then
+  export PYTHONPATH="${GRAPHTYN_SOURCE_PATH}${PYTHONPATH:+:$PYTHONPATH}"
+fi
+exec python3 -m graphtyn.cli mcp --path "${GRAPHTYN_PROJECT_PATH}"

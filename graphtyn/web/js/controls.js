@@ -5,10 +5,12 @@ export function setView(v) {
       state.activeView = v;
       const bCode = document.getElementById('btn-code');
       const bSem = document.getElementById('btn-semantic');
+      const bMem = document.getElementById('btn-memory-view');
       const bAg = document.getElementById('btn-agents');
       const bCh = document.getElementById('btn-changes');
       if (bCode) bCode.classList.toggle('active', v === 'code');
       if (bSem) bSem.classList.toggle('active', v === 'semantic');
+      if (bMem) bMem.classList.toggle('active', v === 'memory');
       if (bAg) bAg.classList.toggle('active', v === 'agents');
       if (bCh) bCh.classList.toggle('active', v === 'changes');
       destroyGraph();

@@ -1,0 +1,242 @@
+[
+  {
+    "task_id": "mux-request-lifecycle",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 51.5956,
+    "usage": {
+      "input_tokens": 4294,
+      "output_tokens": 838,
+      "thinking_tokens": 136,
+      "total_tokens": 9428
+    },
+    "tool_calls": 1,
+    "answer": "Graphtyn (`intent=flow`, evidencia `precision`) devolvió el cuerpo completo de `Mux.ServeHTTP` en `mux.go` con `complete_for=[flow, conditions_and_branches, state_mutation]` y `do_not_expand=true`: no falta evidencia. Ciclo exacto:\n\n**1. Ausencia de rutas — `mux.go:ServeHTTP` L65-68**\n```go\nif mx.handler == nil {\n    mx.NotFoundHandler().ServeHTTP(w, r)\n    return\n}\n```\nExiste porque si nunca se registró una ruta ni middleware, `mx.handler` es nulo; delegar en `NotFoundHandler()` garantiza respuesta 404 sin pánico.\n\n**2. Router padre — L71-75**\n```go\nrctx, _ := r.Context().Value(RouteCtxKey).(*Context)\nif rctx != nil {\n    mx.handler.ServeHTTP(w, r); return\n}\n```\nSi un subrouter/mux padre ya creó el `*Context` de ruta, se reutiliza: el hijo solo ejecuta su cadena y evita un segundo `pool.Get()` y otra asignación de contexto.\n\n**3. Adquisición y reinicio del pool — L81-84**\n```go\nrctx = mx.pool.Get().(*Context)\nrctx.Reset()\nrctx.Routes = mx\nrctx.parentCtx = r.Context()\n```\nEl `sync.Pool` recicla contextos entre peticiones; `Reset()` limpia estado residual de la petición anterior antes de vincular este mux como raíz de rutas y el contexto HTTP entrante como padre.\n\n**4. Inserción en request.Context — L87**\n```go\nr = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))\n```\nPublica el `rctx` bajo `RouteCtxKey` para que handlers y subrouters lo recuperen (paso 2). El comentario L86 advierte el coste: 2 asignaciones de `WithContext` + 1 de `WithValue`.\n\n**5. Ejecución — L90**\n```go\nmx.handler.ServeHTTP(w, r)\n```\nSegún el comentario L77-78, `mx.handler` es la composición `mx.middlewares + mx.routeHTTP`: primero la pila de middlewares, luego el enrutado real.\n\n**6. Devolución al pool — L91**\n```go\nmx.pool.Put(rctx)\n```\nAl terminar la petición sincrónicamente, el contexto vuelve al pool para reuso por otra petición (comentario L79-80).\n\nNota de confianza: todas las líneas provienen de `source_evidence[1]` (`EXTRACTED/precision`), sin relaciones ambiguas que asertar.",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "nil-handler",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "parent-context",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "pool-get",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "parent-ctx",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "context-value",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "pool-put",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "middleware-chain-order",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 84.1504,
+    "usage": {
+      "input_tokens": 8203,
+      "output_tokens": 1467,
+      "thinking_tokens": 548,
+      "total_tokens": 10218
+    },
+    "tool_calls": 1,
+    "answer": "## Construcción del http.Handler final\n\n**Constructor central: `chain` (chain.go:36)** — firma `chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler`:\n\n1. **Lista vacía**: si `len(middlewares) == 0` retorna `endpoint` directamente, sin envolverlo (chain.go:38-39).\n2. **Orden de envoltura**: primero el **último** middleware envuelve al endpoint (`h = middlewares[len(middlewares)-1](endpoint)`, chain.go:43); luego el bucle desciende `i := len(middlewares)-2 … 0` aplicando `h = middlewares[i](h)` (chain.go:44-45).\n3. **Orden de ejecución**: resultado directo del anidado anterior — el índice `0` queda más externo, por lo que en tiempo de petición se ejecutan en orden registrado: `middlewares[0]` → … → `middlewares[n-1]` → `endpoint`.\n\n## Delegación de ServeHTTP\n\n**`Mux.ServeHTTP` (mux.go:63)**:\n- Si `mx.handler == nil` → delega a `mx.NotFoundHandler().ServeHTTP(w, r)` y retorna (mux.go:65-68).\n- Si ya existe un `RouteCtxKey` en el contexto (router padre), delega directo: `mx.handler.ServeHTTP(w, r)` (mux.go:71-75).\n- Caso normal: obtiene/resetea `rctx` del pool, lo inyecta con `context.WithValue` (mux.go:81-87) y delega en `mx.handler.ServeHTTP(w, r)` (mux.go:90). El comentario del código afirma que ese `mx.handler` está compuesto por `mx.middlewares + mx.routeHTTP` (mux.go:77-78).\n\n## Sobre `ChainHandler`\n\nEl subgrafo devuelto (10 nodos, `complete_for=[\"flow\",\"order_and_control_flow\"]`, `do_not_expand=true`) **no contiene ningún símbolo llamado `ChainHandler`** (evidencia negativa explícita: sin consumidores entrantes ni implementaciones para el símbolo consultado). Con evidencia solo puedo afirmar el comportamiento del constructor interno `chain`; cualquier afirmación sobre `ChainHandler` sería una suposición que la política prohíbe.\n\nConfianza: fragmentos `EXTRACTED` con ubicación exacta (`chain.go:36`, `mux.go:63`).",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 2,
+    "partial": 3,
+    "total": 6,
+    "quality_score": 0.5833,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.5833,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "chain-cast",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "handler-build",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "empty",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "last-wrap",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "reverse-loop",
+        "verdict": "missing",
+        "score": 0.0
+      },
+      {
+        "id": "delegate",
+        "verdict": "partial",
+        "score": 0.5
+      }
+    ]
+  },
+  {
+    "task_id": "routing-context-safety",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 85.06,
+    "usage": {
+      "input_tokens": 1236,
+      "output_tokens": 1279,
+      "thinking_tokens": 372,
+      "total_tokens": 10247
+    },
+    "tool_calls": 2,
+    "answer": "La consulta devolvió evidencia para Clone y URLParam, pero el cuerpo de `Reset` (context.go:85) quedó sin extracto de fuente. Es un hecho concreto nombrado que la tarea exige, así que hago una única expansión con el contexto preservado:\n## Auditoría (solo evidencia Graphtyn)\n\n**1. `URLParam` (función de paquete) — `context.go:11-16`**\n```go\n12: if rctx := RouteContext(r.Context()); rctx != nil {\n13:     return rctx.URLParam(key)\n15: return \"\"\n```\nExtrae el `*Context` desde `r.Context()` vía `RouteContext` (que lee `ctx.Value(RouteCtxKey)`, `context.go:28-29`). Si no hay contexto de ruta, devuelve cadena vacía (context.go:15).\n\n**2. Clave repetida en `(*Context).URLParam` — `context.go:127-134`**\n```go\n128: for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {\n129:     if x.URLParams.Keys[k] == key {\n130:         return x.URLParams.Values[k]\n```\nRecorre las claves **desde el final hacia el inicio**: ante una clave duplicada gana el **último valor insertado** (primera coincidencia en búsqueda inversa). Sin coincidencia devuelve `\"\"` (context.go:133).\n\n**3. `(*Context).Clone` — `context.go:107-123`**\n- `clone := *x` (108): copia **superficial** del struct.\n- `clone.parentCtx = nil` (111): el comentario fuente (110) indica que se desacopla del contexto del request *\"which is canceled once the request finishes\"*.\n- Copias profundas explícitas con `slices.Clone`: `URLParams.Keys` y `.Values` (113-114), `routeParams.Keys` y `.Values` (116-117), `RoutePatterns` (119), `methodsAllowed` (120).\n\n**4. Por qué Clone es necesario para goroutines**\n- Hecho EXTRACTED: sin Clone, `clone := *x` dejaría ambos objetos compartiendo los mismos slices subyacentes de `URLParams`, `routeParams`, `RoutePatterns` y `methodsAllowed`; Clone los independiza (113-120) y elimina `parentCtx` cancelable al finalizar el request (110-111).\n- Inferido (verificar en fuente): dos goroutines sobre el mismo `*Context` compartirían esas referencias y cualquier mutación posterior provocaría condición de carrera. El grafo **no** muestra un `sync.Pool` de contexts, así que no afirmo reutilización de instancias.\n\n**5. `(*Context).Reset` — `context.go:85` ⚠️**\nEl grafo localiza el símbolo (firma `func (x *Context) Reset()`) pero **no expuso cuerpo ni operaciones** ni en la consulta inicial (precision, máx. 3 fragmentos) ni en la expansión dirigida (`context_id: ac3ece887db1`, `do_not_expand: true`). Con la prohibición de leer archivos directamente, no puedo afirmar qué campos limpia: queda como **ambigüedad no resuelta**. Sugerencia: `graphtyn review --ambiguities --path .` para inspeccionar ese candidato.\n\nConsumidores directos verificados: `bigMux` llama `URLParam`/`URLParamFromCtx` (mux_test.go:988-1057) y `TestMuxSubroutes` usa `NewRouteContext()` (mux_test.go:1265).",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "stop"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 4,
+    "partial": 2,
+    "total": 6,
+    "quality_score": 0.8333,
+    "factual_errors": 0,
+    "adjusted_quality_score": 0.8333,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "reset",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "reset-private",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "clone-parent",
+        "verdict": "partial",
+        "score": 0.5
+      },
+      {
+        "id": "deep-copy",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "reverse-param",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "missing-param",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  },
+  {
+    "task_id": "failure-middleware-semantics",
+    "variant": "Graphtyn",
+    "model": "opencode/x-preview-f-free",
+    "status": "SUCCESS",
+    "duration_seconds": 65.2041,
+    "usage": {
+      "input_tokens": 4180,
+      "output_tokens": 297,
+      "thinking_tokens": 127,
+      "total_tokens": 4604
+    },
+    "tool_calls": 1,
+    "answer": "Evidencia del grafo (`complete_for`: flow, order_and_control_flow, conditions_and_branches, failure_semantics; `do_not_expand=true`). Comparación con líneas citadas:\n\n## Recoverer (`middleware/recoverer.go:22-49`)\n| Aspecto | Comportamiento |\n|---|---|\n| Manejo de panic | `defer` + `recover()` en recoverer.go:24-25 |\n| Excepción `http.ErrAbortHandler` | Si `rvr == http.ErrAbortHandler` hace re-`panic(rvr)` (recoverer.go:26-29): no se recupera ni se registra, la respuesta al cliente se aborta |\n| Logging/stack | `GetLogEntry(r)` (:32); si hay log entry → `logEntry.Panic(rvr, debug.Stack())` (:34); si no → `PrintPrettyStack(rvr)` (:36) |\n| Condición para el 500 | Solo si `r.Header.Get(\"Connection\") != \"Upgrade\"` escribe `w.WriteHeader(http.StatusInternalServerError)` (:39-40) |\n| Contexto | No crea ni cancela contexto; ejecuta `next.ServeHTTP(w, r)` con la request original (:45) |\n\n## Timeout (`middleware/timeout.go:32-48`)\n| Aspecto | Comportamiento |\n|---|---|\n| Manejo de panic | Ninguno: no hay `recover()` en su cuerpo |\n| Contexto | Crea `ctx, cancel := context.WithTimeout(r.Context(), timeout)` (timeout.go:35) y lo inyecta con `r = r.WithContext(ctx)` (:43); el `cancel()` ocurre en el `defer` (:37) |\n| Momento exacto del 504 | En el bloque diferido, **después** de que `cancel()` retorna y de que `next.ServeHTTP(w, r)` haya devuelto (:36-41): solo si `ctx.Err() == context.DeadlineExceeded` ejecuta `w.WriteHeader(http.StatusGatewayTimeout)` (:38-39). No interrumpe la cadena en curso |\n\n## Obligación del handler respecto a `ctx.Done()`\nEl código extraído muestra que `Timeout` corre `next.ServeHTTP` de forma síncrona (timeout.go:44) y el 504 solo se escribe cuando esa llamada ya retornó con `DeadlineExceeded` (:36",
+    "completion_check": {
+      "syntactically_complete": true,
+      "finish_reason": "unknown"
+    },
+    "terminal_error": "Performing one time database migration, may take a few minutes...\nsqlite-migration:0\nsqlite-migration:100\nsqlite-migration:done\nDatabase migration complete.",
+    "attempts": 1,
+    "covered": 6,
+    "partial": 0,
+    "total": 6,
+    "quality_score": 1.0,
+    "factual_errors": 0,
+    "adjusted_quality_score": 1.0,
+    "contradictions": [],
+    "facts": [
+      {
+        "id": "recover",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "abort",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "logging",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "upgrade-500",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "timeout-context",
+        "verdict": "covered",
+        "score": 1.0
+      },
+      {
+        "id": "deadline-504",
+        "verdict": "covered",
+        "score": 1.0
+      }
+    ]
+  }
+]

@@ -9,7 +9,15 @@ from .core.ast_parser import ASTParser
 from .core.change_analyst import analyze_change, query_intent
 from .core.work_memory import attach_learning
 from .core.history import HistoryTracker
+from .core.shared_memory import SharedMemoryStore
 from .core.storage import data_home, project_store_dir
+from .core.source_evidence import attach_source_evidence
+
+
+def _mcp_text(req_id: Any, result: Any) -> Dict[str, Any]:
+    return {"jsonrpc": "2.0", "id": req_id, "result": {"content": [
+        {"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}
+    ]}}
 
 def _cached_index_dir(workspace: Path) -> Path:
     return project_store_dir(data_home(), workspace)
@@ -414,13 +422,29 @@ def blast_radius(graph: dict, symbol: str, depth: int = 2) -> dict:
 
     adj: Dict[str, list] = {}
     edge_map = {}
+    incoming_labels = {"llama", "usa", "referencia", "implementa", "hereda", "suscribe", "escucha",
+                       "despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
     for l in links:
         s = l["source"]
         t = l["target"]
-        adj.setdefault(s, []).append(t)
-        adj.setdefault(t, []).append(s)
-        edge_map[(s, t)] = l
-        edge_map[(t, s)] = l
+        label = str(l.get("label") or "")
+        if label in incoming_labels:
+            # A target is impacted through its real incoming consumers. For
+            # contracts, also retain the implemented/base contract when the
+            # concrete implementation itself is selected.
+            adj.setdefault(t, []).append(s)
+            edge_map[(t, s)] = l
+            if label in {"implementa", "hereda"}:
+                adj.setdefault(s, []).append(t)
+                edge_map[(s, t)] = l
+        elif label == "contiene":
+            adj.setdefault(s, []).append(t)
+            adj.setdefault(t, []).append(s)
+            edge_map[(s, t)] = edge_map[(t, s)] = l
+        else:
+            adj.setdefault(s, []).append(t)
+            adj.setdefault(t, []).append(s)
+            edge_map[(s, t)] = edge_map[(t, s)] = l
 
     impacted = []
     seen = {n["id"] for n in matches}
@@ -440,6 +464,8 @@ def blast_radius(graph: dict, symbol: str, depth: int = 2) -> dict:
                 "via": nodes_map.get(nid, {}).get("name", nid),
                 "label": edge.get("label", "conecta"),
                 "confidence": edge.get("confidence", "EXTRACTED"),
+                "confidence_score": edge.get("confidence_score"),
+                "evidence": {key: edge.get(key) for key in ("file", "line", "evidence") if edge.get(key) is not None},
             })
             frontier.append((nb, d + 1))
 
@@ -448,6 +474,8 @@ def blast_radius(graph: dict, symbol: str, depth: int = 2) -> dict:
         "depth": depth,
         "matched": matches[:10],
         "impacted": impacted,
+        "traversal": "directional-consumers-v2",
+        "ambiguous_relations": sum(item["confidence"] == "AMBIGUOUS" for item in impacted),
     }
 
 def run_mcp_server(workspace: Path, tool_profile: str = "full"):
@@ -457,6 +485,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
     """
     parser = ASTParser()
     history = HistoryTracker(workspace)
+    memory = SharedMemoryStore(workspace)
     intent_contexts: dict[str, dict] = {}
 
     def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
@@ -470,7 +499,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.5.0"}
+                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.6.0"}
                 }
             }
         elif method == "tools/list":
@@ -481,13 +510,14 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     "tools": [
                         {
                             "name": "graph_query_intent",
-                            "description": "Ruta principal de una sola llamada para overview/flow/bindings/persistence/tests/impact. Devuelve evidencia filtrada, complete_for y do_not_expand; responde inmediatamente cuando do_not_expand=true.",
+                            "description": "Ruta principal adaptativa. Usa grafo compacto y, cuando la pregunta exige orden/condiciones/ciclo de vida, adjunta fragmentos mínimos de fuente. Devuelve complete_for y do_not_expand.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
                                     "request": {"type": "string", "description": "Pregunta o tarea completa"},
                                     "intent": {"type": "string", "enum": ["auto", "overview", "flow", "bindings", "persistence", "tests", "impact"]},
                                     "limit": {"type": "integer", "description": "Máximo de entidades; default 10"},
+                                    "evidence_mode": {"type": "string", "enum": ["auto", "compact", "balanced", "precision"], "description": "auto amplía solo preguntas que necesitan evidencia del cuerpo"},
                                     "extends_context_id": {"type": "string", "description": "Contexto previo para devolver sólo evidencia nueva"}
                                 },
                                 "required": ["request"]
@@ -590,6 +620,103 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                             }
                         },
                         {
+                            "name": "memory_session_start",
+                            "description": "Abre una sesión atribuida para compartir conocimiento dentro de este proyecto.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "agent_id": {"type": "string"}, "task": {"type": "string"},
+                                "branch": {"type": "string"}, "base_commit": {"type": "string"},
+                                "capture_enabled": {"type": "boolean"}}, "required": ["agent_id", "task"]}
+                        },
+                        {
+                            "name": "memory_checkpoint",
+                            "description": "Guarda una decisión, resultado o handoff con atribución y evidencia.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "session_id": {"type": "string"},
+                                "kind": {"type": "string", "enum": ["episodic", "decision", "fact", "procedure", "outcome", "correction", "handoff"]},
+                                "title": {"type": "string"}, "content": {"type": "string"},
+                                "scope": {"type": "string", "enum": ["private", "project", "team"]},
+                                "files": {"type": "array", "items": {"type": "string"}},
+                                "node_ids": {"type": "array", "items": {"type": "string"}},
+                                "tests": {"type": "array", "items": {"type": "string"}}},
+                                "required": ["session_id", "kind", "title", "content"]}
+                        },
+                        {
+                            "name": "memory_append",
+                            "description": "Añade un mensaje o evento saneado; requiere captura opt-in en la sesión.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "session_id": {"type": "string"}, "role": {"type": "string", "enum": ["user", "assistant", "tool"]},
+                                "content": {"type": "string"}, "event_type": {"type": "string"},
+                                "metadata": {"type": "object"}}, "required": ["session_id", "role", "content"]}
+                        },
+                        {
+                            "name": "memory_ingest_turn",
+                            "description": "Hook idempotente por turno: abre/reutiliza sesión externa, captura mensajes autorizados, compacta y genera embeddings.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "agent_id": {"type": "string"}, "external_session_id": {"type": "string"},
+                                "task": {"type": "string"}, "branch": {"type": "string"},
+                                "messages": {"type": "array", "items": {"type": "object", "properties": {
+                                    "role": {"type": "string", "enum": ["user", "assistant", "tool"]},
+                                    "content": {"type": "string"}, "event_type": {"type": "string"},
+                                    "metadata": {"type": "object"}}, "required": ["role", "content"]}},
+                                "consent": {"type": "boolean"}, "compact": {"type": "boolean"},
+                                "close": {"type": "boolean"},
+                                "provider": {"type": "string", "enum": ["auto", "deterministic", "ollama", "api"]}},
+                                "required": ["agent_id", "external_session_id", "task", "messages", "consent"]}
+                        },
+                        {
+                            "name": "memory_search",
+                            "description": "Recupera recuerdos compartidos entre sesiones con atribución de agente y sesión.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "query": {"type": "string"}, "requester_agent": {"type": "string"},
+                                "limit": {"type": "integer"}, "branch": {"type": "string"}}, "required": ["query"]}
+                        },
+                        {
+                            "name": "memory_context",
+                            "description": "Genera contexto compacto con política de afirmaciones; identifique siempre al agente solicitante.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "query": {"type": "string"}, "requester_agent": {"type": "string", "description": "Identidad real del cliente o perfil, sin alias implícitos."},
+                                "branch": {"type": "string"}, "limit": {"type": "integer"},
+                                "token_budget": {"type": "integer"},
+                                "include_graph": {"type": "boolean"},
+                                "neighbor_limit": {"type": "integer"}}, "required": ["query", "requester_agent"]}
+                        },
+                        {
+                            "name": "memory_ingest_evidence",
+                            "description": "Ingiere benchmarks como evidencia verificada, hasheada y ligada a la revisión Git.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "files": {"type": "array", "items": {"type": "string"}}}}
+                        },
+                        {
+                            "name": "memory_session_end",
+                            "description": "Cierra una sesión y opcionalmente persiste un resumen handoff.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "session_id": {"type": "string"}, "summary": {"type": "string"},
+                                "observed_commit": {"type": "string"}}, "required": ["session_id"]}
+                        },
+                        {
+                            "name": "memory_correct",
+                            "description": "Crea una corrección versionada y marca la memoria anterior como superseded.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "memory_id": {"type": "string"}, "session_id": {"type": "string"},
+                                "title": {"type": "string"}, "content": {"type": "string"}},
+                                "required": ["memory_id", "session_id", "title", "content"]}
+                        },
+                        {
+                            "name": "memory_forget",
+                            "description": "Invalida o elimina físicamente una memoria; sólo puede hacerlo su agente autor.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "memory_id": {"type": "string"}, "requester_agent": {"type": "string"},
+                                "physical": {"type": "boolean"}}, "required": ["memory_id", "requester_agent"]}
+                        },
+                        {
+                            "name": "memory_compact",
+                            "description": "Extrae memorias proposed desde mensajes saneados de una sesión opt-in; Qwen/API nunca verifica hechos automáticamente.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "session_id": {"type": "string"},
+                                "provider": {"type": "string", "enum": ["auto", "deterministic", "ollama", "api"]}},
+                                "required": ["session_id"]}
+                        },
+                        {
                             "name": "graph_register_project",
                             "description": "Registra autónomamente una ruta de proyecto en Graphtyn.",
                             "inputSchema": {
@@ -607,7 +734,12 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
             if tool_profile == "intent":
                 response["result"]["tools"] = [
                     tool for tool in response["result"]["tools"]
-                    if tool["name"] == "graph_query_intent"
+                    if tool["name"] in {"graph_query_intent", "memory_context"}
+                ]
+            elif tool_profile == "memory":
+                response["result"]["tools"] = [
+                    tool for tool in response["result"]["tools"]
+                    if tool["name"] == "graph_query_intent" or tool["name"].startswith("memory_")
                 ]
             return response
         elif method == "tools/call":
@@ -619,7 +751,9 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 graph = get_workspace_graph(workspace, parser)
                 request = str(args.get("request") or "").strip()
                 limit = max(4, min(24, int(args.get("limit") or 10)))
-                raw = attach_learning(query_intent(graph, request, str(args.get("intent") or "auto"), limit), workspace)
+                raw = query_intent(graph, request, str(args.get("intent") or "auto"), limit)
+                raw = attach_source_evidence(workspace, raw, request, str(args.get("evidence_mode") or "auto"))
+                raw = attach_learning(raw, workspace)
                 result = evidence_result(raw, max_nodes=limit)
                 context_id = hashlib.sha256(json.dumps(result, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:12]
                 previous_id = str(args.get("extends_context_id") or "")
@@ -715,6 +849,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 graph = get_workspace_graph(workspace, parser)
                 terms = list(dict.fromkeys(term for term in re.findall(r"[\w.]+", query) if len(term) >= 3))[:12]
                 ranked = []
+                ranked_ids = set()
                 for node in graph.get("nodes", []):
                     name_text = str(node.get("name") or "").lower()
                     details_text = str(node.get("details") or "").lower()
@@ -727,9 +862,16 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                         exact_name = any(term == name_text for term in terms)
                         score = (100 if query and query in searchable else 0) + matched_terms * 10 + (30 if exact_name else 0) + min(10, int(node.get("degree") or 0))
                         ranked.append((score, node))
+                        ranked_ids.add(node.get("id"))
+                from .core.semantic_index import semantic_search
+                semantic_hits = semantic_search(graph, query, limit=int(args.get("limit") or 12))
+                for hit in semantic_hits:
+                    if hit["node"].get("id") not in ranked_ids:
+                        ranked.append((int(hit["score"] * 100), hit["node"]))
                 ranked.sort(key=lambda item: (-item[0], str(item[1].get("name") or ""), str(item[1].get("id") or "")))
                 matches = [_prune_node(node) for _, node in ranked]
-                result_search = {"query": query, "matches": matches}
+                result_search = {"query": query, "matches": matches,
+                                 "retrieval": "hybrid lexical + local embeddings"}
                 if args.get("response_mode", "compact") != "full":
                     result_search = evidence_result(result_search, max_nodes=int(args.get("limit") or 12), max_links=0)
                 history.log_event("mcp", "search_concepts", f"Búsqueda semántica de concepto: {query}", {"query": query, "count": len(matches), "tokens_avoided": _tokens_avoided(workspace, result_search, json.dumps(result_search))})
@@ -745,6 +887,60 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps({"query": q, "results": events}, indent=2)}]}
                 }
+            elif name == "memory_session_start":
+                result = memory.start_session(str(args.get("agent_id") or ""), str(args.get("task") or ""),
+                                              branch=args.get("branch"), base_commit=args.get("base_commit"),
+                                              capture_enabled=bool(args.get("capture_enabled", False)))
+                return _mcp_text(req_id, result)
+            elif name == "memory_checkpoint":
+                result = memory.checkpoint(str(args.get("session_id") or ""), str(args.get("kind") or ""),
+                                           str(args.get("title") or ""), str(args.get("content") or ""),
+                                           scope=str(args.get("scope") or "project"), files=args.get("files") or [],
+                                           node_ids=args.get("node_ids") or [], tests=args.get("tests") or [])
+                return _mcp_text(req_id, result)
+            elif name == "memory_append":
+                result = memory.append_message(str(args.get("session_id") or ""), str(args.get("role") or ""),
+                                               str(args.get("content") or ""), event_type=args.get("event_type"),
+                                               metadata=args.get("metadata") or {})
+                return _mcp_text(req_id, result)
+            elif name == "memory_ingest_turn":
+                result = memory.ingest_turn(str(args.get("agent_id") or ""),
+                    str(args.get("external_session_id") or ""), str(args.get("task") or ""),
+                    args.get("messages") or [], consent=bool(args.get("consent", False)),
+                    branch=args.get("branch"), compact=bool(args.get("compact", True)),
+                    close=bool(args.get("close", False)), provider=str(args.get("provider") or "auto"))
+                return _mcp_text(req_id, result)
+            elif name == "memory_search":
+                result = {"query": args.get("query", ""), "results": memory.search(
+                    str(args.get("query") or ""), requester_agent=args.get("requester_agent"),
+                    limit=int(args.get("limit") or 8), branch=args.get("branch"))}
+                return _mcp_text(req_id, result)
+            elif name == "memory_context":
+                result = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"),
+                                        branch=args.get("branch"), limit=int(args.get("limit") or 8),
+                                        token_budget=int(args.get("token_budget") or 1800),
+                                        include_graph=bool(args.get("include_graph", True)),
+                                        neighbor_limit=int(args.get("neighbor_limit") or 12))
+                return _mcp_text(req_id, result)
+            elif name == "memory_ingest_evidence":
+                return _mcp_text(req_id, memory.ingest_benchmark_evidence(args.get("files") or None))
+            elif name == "memory_session_end":
+                result = memory.end_session(str(args.get("session_id") or ""), args.get("summary"),
+                                            args.get("observed_commit"))
+                return _mcp_text(req_id, result)
+            elif name == "memory_correct":
+                result = memory.correct(str(args.get("memory_id") or ""), str(args.get("session_id") or ""),
+                                        str(args.get("title") or ""), str(args.get("content") or ""))
+                return _mcp_text(req_id, result)
+            elif name == "memory_forget":
+                result = memory.forget(str(args.get("memory_id") or ""),
+                                       requester_agent=str(args.get("requester_agent") or ""),
+                                       physical=bool(args.get("physical", False)))
+                return _mcp_text(req_id, result)
+            elif name == "memory_compact":
+                result = memory.compact_session(str(args.get("session_id") or ""),
+                                                str(args.get("provider") or "auto"))
+                return _mcp_text(req_id, result)
             elif name == "graph_history_timeline":
                 sid = args.get("session_id")
                 timeline = history.get_timeline(sid)

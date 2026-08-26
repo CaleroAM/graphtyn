@@ -1,0 +1,715 @@
+{
+  "protocol": "antigravity-real-repos-v1",
+  "model": "gemini-3.7-flash-high",
+  "seed": 20260825,
+  "runs": [
+    {
+      "conversation_id": "5115c895-3fef-4bef-9619-0b9ae90d6e4a",
+      "status": "SUCCESS",
+      "response": "### 1. ASGI Application Entry\n\nWhen an ASGI server (such as Uvicorn) invokes the Starlette application, entry begins at [`Starlette.__call__`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L92-L96):\n\n```python\n# starlette/applications.py:92-96\nasync def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:\n    scope[\"app\"] = self\n    if self.middleware_stack is None:\n        self.middleware_stack = self.build_middleware_stack()\n    await self.middleware_stack(scope, receive, send)\n```\n\n- **Scope Mutation ([`applications.py:93`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L93))**: Injects the application instance into `scope[\"app\"] = self`.\n- **Lazy Stack Initialization ([`applications.py:94-95`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L94-L95))**: On the first incoming ASGI request/lifespan call, `self.middleware_stack` is built once via `self.build_middleware_stack()` and cached.\n- **Invocation ([`applications.py:96`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L96))**: Dispatches `(scope, receive, send)` down through the constructed middleware stack.\n\n---\n\n### 2. Middleware Construction & Exact Order\n\nMiddleware stack construction is defined in [`Starlette.build_middleware_stack`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L63-L83):\n\n```python\n# starlette/applications.py:63-83\ndef build_middleware_stack(self) -> ASGIApp:\n    debug = self.debug\n    error_handler = None\n    exception_handlers: dict[Any, ExceptionHandler] = {}\n\n    for key, value in self.exception_handlers.items():\n        if key in (500, Exception):\n            error_handler = value\n        else:\n            exception_handlers[key] = value\n\n    middleware = [Middleware(ServerErrorMiddleware, handler=error_handler, debug=debug)]\n    if self.max_body_size is not None:\n        middleware.append(Middleware(RequestBodyLimitMiddleware, max_body_size=self.max_body_size))\n    middleware += self.user_middleware\n    middleware.append(Middleware(ExceptionMiddleware, handlers=exception_handlers, debug=debug))\n\n    app = self.router\n    for cls, args, kwargs in reversed(middleware):\n        app = cls(app, *args, **kwargs)\n    return app\n```\n\n#### Middleware List Assembly Sequence (Outer to Inner):\n1. **[`ServerErrorMiddleware`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L74)**: Outermost layer. Catches unhandled exceptions (`500` / `Exception`) occurring anywhere downstream.\n2. **[`RequestBodyLimitMiddleware`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L75-L76)** *(optional)*: Enforces `max_body_size` byte limits if configured.\n3. **`user_middleware` ([`applications.py:77`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L77))**: Custom middleware provided at initialization or via `add_middleware()` (which prepends via `insert(0, ...)` at [`applications.py:107`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L107)).\n4. **[`ExceptionMiddleware`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L78)**: Innermost middleware. Catches HTTP and domain-specific exceptions raised by endpoints and routes.\n5. **Target Application (`self.router`) ([`applications.py:80`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/applications.py#L80))**: Core router wrapped by `reversed(middleware)`.\n\n---\n\n### 3. Router Handoff\n\nOnce a request traverses all middleware layers, it enters [`Router.__call__`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L666-L670), invoking `self.middleware_stack`, which executes [`Router.app`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L672-L721):\n\n1. **Router Scope Registration ([`routing.py:675-676`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L675-L676))**:\n   Sets `scope[\"router\"] = self` if not already present.\n2. **Lifespan Handling ([`routing.py:678-680`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L678-L680))**:\n   If `scope[\"type\"] == \"lifespan\"`, delegates directly to `await self.lifespan(scope, receive, send)`.\n3. **Route Resolution Loop ([`routing.py:684-695`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L684-L695))**:\n   Iterates through `self.routes`, evaluating `match, child_scope = route.matches(scope)`:\n   - **`Match.FULL` ([`routing.py:688-691`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L688-L691))**: Updates `scope.update(child_scope)` and delegates execution via `await route.handle(scope, receive, send)`.\n   - **`Match.PARTIAL` ([`routing.py:692-694`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L692-L694))**: Stored if path matches but HTTP method does not ([`routing.py:254-255`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L254-L255)).\n4. **Method Not Allowed Handoff ([`routing.py:696-702`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L696-L702))**:\n   If no full match was found but a partial match exists, invokes `await partial.handle(scope, receive, send)`, raising or returning HTTP `405 Method Not Allowed` ([`routing.py:272-278`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L272-L278)).\n5. **Slash Redirect Check ([`routing.py:704-718`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L704-L718))**:\n   If `redirect_slashes=True`, toggles the trailing slash; if matched, sends a `RedirectResponse`.\n6. **Not Found Fallback ([`routing.py:720`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L720))**:\n   Dispatches to `self.default` ([`Router.not_found`](file://<HOME>/.cache/uv/archive-v0/hxG3rKpTryxY5ePP/starlette/routing.py#L616-L630)), which raises `HTTPException(status_code=404)` when `\"app\"` is in scope so `ExceptionMiddleware` can handle it.\n",
+      "duration_seconds": 73.535883505,
+      "usage": {
+        "input_tokens": 119577,
+        "output_tokens": 6865,
+        "thinking_tokens": 3121,
+        "cache_read_tokens": 353404,
+        "total_tokens": 126442
+      },
+      "events": 81,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "starlette-asgi-entry",
+      "repository": "starlette",
+      "variant": "no_graph",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "entry",
+          "matched": true,
+          "patterns": [
+            "Starlette.__call__",
+            "applications.py"
+          ]
+        },
+        {
+          "id": "lazy_stack",
+          "matched": true,
+          "patterns": [
+            "middleware_stack",
+            "build_middleware_stack"
+          ]
+        },
+        {
+          "id": "outer_error",
+          "matched": true,
+          "patterns": [
+            "ServerErrorMiddleware",
+            "outer"
+          ]
+        },
+        {
+          "id": "inner_exception",
+          "matched": true,
+          "patterns": [
+            "ExceptionMiddleware",
+            "inner"
+          ]
+        },
+        {
+          "id": "router_handoff",
+          "matched": true,
+          "patterns": [
+            "self.router",
+            "reversed"
+          ]
+        }
+      ],
+      "wall_seconds": 76.541
+    },
+    {
+      "conversation_id": "571d4a8c-1e0a-464a-99a2-2dbe0b8630f5",
+      "status": "SUCCESS",
+      "response": "### 1. ASGI Application Entry Point\n\n* **Application Instantiation**: [`Starlette.__init__`](file:///applications.py#L23) initializes state ([`applications.py:L56`](file:///applications.py#L56)), sets up the underlying [`Router`](file:///routing.py#L573) instance ([`applications.py:L57`](file:///applications.py#L57)), and compiles the ASGI middleware pipeline via [`Starlette.build_middleware_stack`](file:///applications.py#L63).\n* **ASGI Call Invocation**: [`Starlette.__call__`](file:///applications.py#L92) serves as the primary ASGI entry point (`scope`, `receive`, `send`), forwarding incoming ASGI connections to `self.middleware_stack` ([`applications.py:L95`](file:///applications.py#L95)).\n\n---\n\n### 2. Middleware Construction Order\n\nMiddleware layers are constructed from the innermost layer (the root ASGI application / router) outward in [`Starlette.build_middleware_stack`](file:///applications.py#L63):\n\n1. **Innermost Core / Base App**:\n   * Initialized with `app = self.router` ([`applications.py:L57`](file:///applications.py#L57), [`applications.py:L63`](file:///applications.py#L63)).\n2. **User-Defined Middleware**:\n   * Configured via [`Middleware`](file:///middleware/__init__.py#L21) definitions ([`middleware/__init__.py:L22`](file:///middleware/__init__.py#L22)) and iterated in reverse so that the first registered middleware forms the outer processing boundary.\n3. **Exception & Error Handling Layers**:\n   * [`ExceptionMiddleware`](file:///middleware/exceptions.py#L18) wraps inner routing handlers to catch HTTP/WebSocket exceptions ([`middleware/exceptions.py:L34`](file:///middleware/exceptions.py#L34), [`middleware/exceptions.py:L65`](file:///middleware/exceptions.py#L65)).\n   * [`RequestBodyLimitMiddleware`](file:///middleware/body_limit.py#L30) handles body sizing constraints ([`applications.py:L76`](file:///applications.py#L76), [`middleware/body_limit.py:L33`](file:///middleware/body_limit.py#L33)).\n   * [`ServerErrorMiddleware`](file:///middleware/errors.py#L127) is wrapped at the outermost layer ([`applications.py:L74`](file:///applications.py#L74), [`middleware/errors.py:L139`](file:///middleware/errors.py#L139)) to capture uncaught 500 server errors and generate diagnostic responses ([`middleware/errors.py:L172`](file:///middleware/errors.py#L172), [`middleware/errors.py:L249`](file:///middleware/errors.py#L249)).\n\n---\n\n### 3. Router Handoff & Dispatch\n\nOnce a request traverses the outer middleware stack, execution passes to the router:\n\n1. **Router Entry**:\n   * Inbound ASGI calls reach [`Router.__call__`](file:///routing.py#L666) / [`routing.py:L672`](file:///routing.py#L672).\n   * Lifespan events (`scope[\"type\"] == \"lifespan\"`) route directly to [`Router.lifespan`](file:///routing.py#L639) ([`routing.py:L679`](file:///routing.py#L679)).\n2. **Route Matching**:\n   * The router evaluates registered routes inheriting from [`BaseRoute`](file:///routing.py#L167):\n     * [`Route.matches`](file:///routing.py#L242) for standard HTTP routes ([`routing.py:L197`](file:///routing.py#L197)).\n     * [`WebSocketRoute.matches`](file:///routing.py#L327) for WebSocket routes ([`routing.py:L297`](file:///routing.py#L297)).\n     * [`Mount.matches`](file:///routing.py#L394) for sub-mounted applications ([`routing.py:L363`](file:///routing.py#L363)).\n     * [`Host.matches`](file:///routing.py#L478) for host-based routing ([`routing.py:L466`](file:///routing.py#L466)).\n3. **Handoff & Handler Execution**:\n   * Matched routes invoke their corresponding handler via `route.handle(scope, receive, send)`:\n     * HTTP dispatch: [`Route.handle`](file:///routing.py#L271) calls the wrapped ASGI app generated by [`request_response`](file:///routing.py#L47) ([`routing.py:L67`](file:///routing.py#L67)).\n     * WebSocket dispatch: [`WebSocketRoute.handle`](file:///routing.py#L353) calls the session handler generated by [`websocket_session`](file:///routing.py#L70) ([`routing.py:L86`](file:///routing.py#L86)).\n     * Mount dispatch: [`Mount.handle`](file:///routing.py#L454) delegates to the sub-app.\n     * Host dispatch: [`Host.handle`](file:///routing.py#L516) delegates to the host app.\n4. **Fallback Handling**:\n   * If no route matches, [`Router.not_found`](file:///routing.py#L616) handles fallback termination (returning a 404 response at [`routing.py:L628`](file:///routing.py#L628) or closing WebSocket connections with [`WebSocketClose`](file:///websockets.py#L190) at [`routing.py:L618`](file:///routing.py#L618)).\n",
+      "duration_seconds": 33.046144186,
+      "usage": {
+        "input_tokens": 91995,
+        "output_tokens": 6761,
+        "thinking_tokens": 3606,
+        "cache_read_tokens": 321649,
+        "total_tokens": 98756
+      },
+      "events": 58,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "starlette-asgi-entry",
+      "repository": "starlette",
+      "variant": "competitor",
+      "quality_score": 0.8,
+      "fact_checks": [
+        {
+          "id": "entry",
+          "matched": true,
+          "patterns": [
+            "Starlette.__call__",
+            "applications.py"
+          ]
+        },
+        {
+          "id": "lazy_stack",
+          "matched": true,
+          "patterns": [
+            "middleware_stack",
+            "build_middleware_stack"
+          ]
+        },
+        {
+          "id": "outer_error",
+          "matched": true,
+          "patterns": [
+            "ServerErrorMiddleware",
+            "outer"
+          ]
+        },
+        {
+          "id": "inner_exception",
+          "matched": true,
+          "patterns": [
+            "ExceptionMiddleware",
+            "inner"
+          ]
+        },
+        {
+          "id": "router_handoff",
+          "matched": false,
+          "patterns": [
+            "self.router",
+            "reversed"
+          ]
+        }
+      ],
+      "wall_seconds": 35.666
+    },
+    {
+      "conversation_id": "771ba4f6-3349-48ad-805a-f96fa9fa4777",
+      "status": "SUCCESS",
+      "response": "### 1. ASGI Middleware Stack Construction Order\n\nIn [`routing.py`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L574-L614) (`Router.__init__`):\n1. **Base Inner Application**: The stack starts with the inner ASGI handler `self.app`:\n   - `self.middleware_stack = self.app` ([routing.py:609](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L609))\n2. **Reverse Wrapping**: If a `middleware` sequence is supplied, it is wrapped in reverse order so that the first middleware specified becomes the outermost layer encountered on incoming requests:\n   - `for cls, args, kwargs in reversed(middleware):` ([routing.py:611](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L611))\n   - `self.middleware_stack = cls(self.middleware_stack, *args, **kwargs)` ([routing.py:612](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L612))\n3. **Outer Body Limit Layer**: If configured, `RequestBodyLimitMiddleware` is wrapped outermost:\n   - `if max_body_size is not None:` `self.middleware_stack = RequestBodyLimitMiddleware(self.middleware_stack, max_body_size=max_body_size)` ([routing.py:613-614](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L613-L614))\n\n---\n\n### 2. ASGI Application Entry & Lifespan Dispatch\n\nIn [`routing.py`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L672-L720) (`Router.app`):\n1. **Type Assertion & Scope Setup**:\n   - Asserts scope type is valid: `assert scope[\"type\"] in (\"http\", \"websocket\", \"lifespan\")` ([routing.py:673](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L673)).\n   - Injects the router reference: `if \"router\" not in scope: scope[\"router\"] = self` ([routing.py:675-676](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L675-L676)).\n2. **Lifespan Execution**:\n   - If `scope[\"type\"] == \"lifespan\"`, routes directly to `await self.lifespan(scope, receive, send)` and terminates early ([routing.py:678-680](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L678-L680)).\n   - `lifespan` runs within `self.lifespan_context(app)`, sending `\"lifespan.startup.complete\"` and `\"lifespan.shutdown.complete\"` messages ([routing.py:648-664](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L648-L664)).\n\n---\n\n### 3. Router Handoff and Request Flow\n\nFor HTTP and WebSocket scopes in [`routing.py`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L682-L720):\n\n1. **Route Iteration & Full Match**:\n   - Iterates through `self.routes` evaluating `match, child_scope = route.matches(scope)` ([routing.py:684-687](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L684-L687)).\n   - When `match == Match.FULL`: Merges `scope.update(child_scope)` and hands off execution to `await route.handle(scope, receive, send)` before returning ([routing.py:688-691](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L688-L691)).\n2. **Partial Match Tracking & Fallback**:\n   - If `match == Match.PARTIAL` and no partial has been saved yet, stores `partial = route` and `partial_scope = child_scope` ([routing.py:692-694](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L692-L694)).\n   - If no route fully matched but a partial match exists (e.g. for `405 Method Not Allowed`), merges `scope.update(partial_scope)` and calls `await partial.handle(scope, receive, send)` ([routing.py:696-702](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L696-L702)).\n3. **Trailing Slash Redirection**:\n   - Obtains route path via `route_path = get_route_path(scope)` ([routing.py:704](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L704), [_utils.py:96-111](file:///tmp/aether-benchmark-starlette/starlette/_utils.py#L96-L111)).\n   - If `scope[\"type\"] == \"http\"` and `self.redirect_slashes` is enabled and `route_path != \"/\"`: toggles trailing slash in `redirect_scope` ([routing.py:705-710](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L705-L710)).\n   - Checks if any route matches `redirect_scope` (`match != Match.NONE`); if so, sends a `RedirectResponse` ([routing.py:712-718](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L712-L718)).\n4. **Default / Not Found Handler**:\n   - If no routes match or redirect, dispatches to `await self.default(scope, receive, send)` ([routing.py:720](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L720)).\n   - `self.default` defaults to `self.not_found` ([routing.py:588](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L588)):\n     - Websocket connections are closed with `WebSocketClose()` ([routing.py:617-620](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L617-L620)).\n     - If `\"app\" in scope`, raises `HTTPException(status_code=404)` ([routing.py:625-626](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L625-L626)).\n     - Otherwise, responds with `PlainTextResponse(\"Not Found\", status_code=404)` ([routing.py:627-629](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L627-L629)).\n",
+      "duration_seconds": 41.327030766,
+      "usage": {
+        "input_tokens": 81477,
+        "output_tokens": 5690,
+        "thinking_tokens": 2555,
+        "cache_read_tokens": 105829,
+        "total_tokens": 87167
+      },
+      "events": 43,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "starlette-asgi-entry",
+      "repository": "starlette",
+      "variant": "graphtyn",
+      "quality_score": 0.0,
+      "fact_checks": [
+        {
+          "id": "entry",
+          "matched": false,
+          "patterns": [
+            "Starlette.__call__",
+            "applications.py"
+          ]
+        },
+        {
+          "id": "lazy_stack",
+          "matched": false,
+          "patterns": [
+            "middleware_stack",
+            "build_middleware_stack"
+          ]
+        },
+        {
+          "id": "outer_error",
+          "matched": false,
+          "patterns": [
+            "ServerErrorMiddleware",
+            "outer"
+          ]
+        },
+        {
+          "id": "inner_exception",
+          "matched": false,
+          "patterns": [
+            "ExceptionMiddleware",
+            "inner"
+          ]
+        },
+        {
+          "id": "router_handoff",
+          "matched": false,
+          "patterns": [
+            "self.router",
+            "reversed"
+          ]
+        }
+      ],
+      "wall_seconds": 44.086
+    },
+    {
+      "conversation_id": "a928a840-b034-4140-b587-d84db45b96e5",
+      "status": "SUCCESS",
+      "response": "### Trace of `Router.app` Request & Route Match Handling\n\n[`Router.app()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L672) (invoked via [`Router.__call__()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L666)) coordinates ASGI scope routing, handling [`Match`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L41) evaluations, redirections, and fallback defaults:\n\n---\n\n#### 1. Scope Type Dispatch\n* **Lifespan Scopes (`scope[\"type\"] == \"lifespan\"`)**: Routed directly to [`Router.lifespan()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L639) at [`routing.py:L679`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L679).\n* **HTTP / WebSocket Scopes**: Iterates through registered `routes` ([`Route`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L197), [`WebSocketRoute`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L297), [`Mount`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L363), [`Host`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L466)) to evaluate `.matches(scope)`.\n\n---\n\n#### 2. Route Matching Lifecycle (`Match.FULL`, `Match.PARTIAL`, `Match.NONE`)\n\n* **`Match.FULL`**:\n  * Returned when both path/host and connection prerequisites (such as HTTP method or protocol type) match successfully (e.g., [`Route.matches()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L242), [`Mount.matches()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L394), [`Host.matches()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L478)).\n  * When encountered in the routing loop, matching short-circuits and immediately dispatches to the route's `.handle(scope, receive, send)` (e.g., [`Route.handle()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L271), [`Mount.handle()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L454), [`Host.handle()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L516)).\n\n* **`Match.PARTIAL`**:\n  * Returned when a path pattern matches but the request cannot be fully satisfied by that route (e.g., path matches but HTTP method is unsupported in [`Route.matches()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L242)).\n  * The loop retains the first partial match candidate and continues evaluating subsequent routes in search of a potential `Match.FULL`.\n  * If no subsequent route matches `Match.FULL`, the partial match route handles the request, returning an appropriate response (e.g., `405 Method Not Allowed` via [`Route.handle()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L271) invoking [`HTTPException`](file:///tmp/aether-benchmark-starlette/starlette/exceptions.py#L7) / [`PlainTextResponse`](file:///tmp/aether-benchmark-starlette/starlette/responses.py#L177) at [`routing.py:L275-L277`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L275-L277)).\n\n* **`Match.NONE`**:\n  * Indicates no path or pattern match for the current route; evaluation proceeds to the next route in `Router.routes`.\n\n---\n\n#### 3. Redirect Behavior (Trailing Slash Resolution)\n* If no route matches and `redirect_slashes=True`, [`Router.app()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L672) inspects the path via [`get_route_path()`](file:///tmp/aether-benchmark-starlette/starlette/_utils.py#L96) at [`routing.py:L704`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L704).\n* It checks whether appending or stripping a trailing slash produces a valid match against registered routes.\n* If a redirected path matches, a redirect is returned using [`URL`](file:///tmp/aether-benchmark-starlette/starlette/datastructures.py#L28) and [`RedirectResponse`](file:///tmp/aether-benchmark-starlette/starlette/responses.py#L204) at [`routing.py:L715-L716`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L715-L716).\n\n---\n\n#### 4. Fallback & Default Not Found Behavior\n* If all routes return `Match.NONE` and no redirect or partial match applies, the request falls back to the default handler:\n  * Calls [`Router.not_found()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L616).\n  * **HTTP Scopes**: Raises / sends a 404 response via [`HTTPException`](file:///tmp/aether-benchmark-starlette/starlette/exceptions.py#L7) / [`PlainTextResponse(\"Not Found\", status_code=404)`](file:///tmp/aether-benchmark-starlette/starlette/responses.py#L177) at [`routing.py:L626-L628`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L626-L628).\n  * **WebSocket Scopes**: Closes the connection using [`WebSocketClose(code=1000)`](file:///tmp/aether-benchmark-starlette/starlette/websockets.py#L190) at [`routing.py:L618`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L618).\n",
+      "duration_seconds": 38.517721757,
+      "usage": {
+        "input_tokens": 101920,
+        "output_tokens": 7759,
+        "thinking_tokens": 4636,
+        "cache_read_tokens": 313307,
+        "total_tokens": 109679
+      },
+      "events": 63,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "starlette-routing",
+      "repository": "starlette",
+      "variant": "competitor",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "full",
+          "matched": true,
+          "patterns": [
+            "Match.FULL",
+            "handle"
+          ]
+        },
+        {
+          "id": "partial",
+          "matched": true,
+          "patterns": [
+            "Match.PARTIAL",
+            "partial"
+          ]
+        },
+        {
+          "id": "redirect",
+          "matched": true,
+          "patterns": [
+            "redirect_slashes",
+            "RedirectResponse"
+          ]
+        },
+        {
+          "id": "fallback",
+          "matched": true,
+          "patterns": [
+            "default",
+            "scope"
+          ]
+        }
+      ],
+      "wall_seconds": 41.318
+    },
+    {
+      "conversation_id": "73b342d8-d0f0-4eb5-bf55-4d88320bdfb6",
+      "status": "SUCCESS",
+      "response": "Based on the Graphtyn evidence for [`Router.app`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L672-L720) in [`routing.py`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L672-L720), the routing flow is executed as follows:\n\n---\n\n### 1. Scope Setup & Lifespan Dispatch\n* **Validation & Binding**: Verifies `scope[\"type\"]` is `\"http\"`, `\"websocket\"`, or `\"lifespan\"`, and populates `scope[\"router\"] = self` if not already set ([`routing.py:672-676`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L672-L676)).\n* **Lifespan Handling**: If `scope[\"type\"] == \"lifespan\"`, delegates directly to `await self.lifespan(scope, receive, send)` and terminates early ([`routing.py:678-680`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L678-L680)).\n\n---\n\n### 2. Route Matching Loop (`Match.FULL` & `Match.PARTIAL`)\nThe router iterates sequentially across `self.routes` evaluating `match, child_scope = route.matches(scope)` ([`routing.py:684-687`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L684-L687)):\n\n* **`Match.FULL`**:\n  * Immediately updates `scope` with `child_scope` ([`routing.py:688-689`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L688-L689)).\n  * Calls `await route.handle(scope, receive, send)` and returns immediately ([`routing.py:690-691`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L690-L691)).\n* **`Match.PARTIAL`**:\n  * If `partial is None`, stores the first partial route and its `child_scope` in `partial` and `partial_scope` ([`routing.py:692-694`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L692-L694)).\n  * Iteration continues through remaining routes in case a subsequent route produces a `Match.FULL`.\n\n---\n\n### 3. Partial Match Resolution\n* If no route yielded `Match.FULL` and `partial is not None`:\n  * Updates `scope` with `partial_scope` ([`routing.py:696-700`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L696-L700)).\n  * Dispatches to `await partial.handle(scope, receive, send)` (typically handling `405 Method Not Allowed`) and returns ([`routing.py:701-702`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L701-L702)).\n\n---\n\n### 4. No Route Match: Slash Redirection Behavior\n* If no full or partial matches were found, it checks if slash redirection applies when `scope[\"type\"] == \"http\"`, `self.redirect_slashes` is enabled, and `route_path != \"/\"` ([`routing.py:704-705`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L704-L705)):\n  * Retrieves `route_path = get_route_path(scope)` ([`routing.py:704`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L704)).\n  * Inverts the trailing slash on `redirect_scope[\"path\"]` (strips trailing `/` if present, appends `/` if absent) ([`routing.py:706-710`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L706-L710)).\n  * Checks all `self.routes` against `redirect_scope`; if any route yields `match != Match.NONE` ([`routing.py:712-714`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L712-L714)):\n    * Generates a redirect URL via `URL(scope=redirect_scope)` ([`routing.py:715`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L715)).\n    * Sends `RedirectResponse(url=str(redirect_url))` with `await response(scope, receive, send)` and returns ([`routing.py:716-718`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L716-L718)).\n\n---\n\n### 5. Fallback Default\n* If no route matches (and redirection does not apply or find a target), execution falls through to the default handler:\n  * Calls `await self.default(scope, receive, send)` ([`routing.py:720`](file:///tmp/aether-benchmark-starlette/starlette/starlette/routing.py#L720)).\n",
+      "duration_seconds": 12.75033125,
+      "usage": {
+        "input_tokens": 33746,
+        "output_tokens": 4100,
+        "thinking_tokens": 2639,
+        "cache_read_tokens": 0,
+        "total_tokens": 37846
+      },
+      "events": 21,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "starlette-routing",
+      "repository": "starlette",
+      "variant": "graphtyn",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "full",
+          "matched": true,
+          "patterns": [
+            "Match.FULL",
+            "handle"
+          ]
+        },
+        {
+          "id": "partial",
+          "matched": true,
+          "patterns": [
+            "Match.PARTIAL",
+            "partial"
+          ]
+        },
+        {
+          "id": "redirect",
+          "matched": true,
+          "patterns": [
+            "redirect_slashes",
+            "RedirectResponse"
+          ]
+        },
+        {
+          "id": "fallback",
+          "matched": true,
+          "patterns": [
+            "default",
+            "scope"
+          ]
+        }
+      ],
+      "wall_seconds": 15.333
+    },
+    {
+      "conversation_id": "851d6100-5763-4630-9ce5-e6939106f488",
+      "status": "ERROR",
+      "response": "The routing logic in Starlette is implemented in [`Router.app`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L672-L721) within [`starlette/routing.py`](file:///tmp/aether-benchmark-starlette/starlette/routing.py).\n\n---\n\n### 1. Initialization & Scope Setup\n- **Scope Verification & Router Assignment**:\n  - [`Router.app`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L673-L677) asserts `scope[\"type\"]` is `\"http\"`, `\"websocket\"`, or `\"lifespan\"`.\n  - Sets `scope[\"router\"] = self` if not already present.\n- **Lifespan Handling**:\n  - If `scope[\"type\"] == \"lifespan\"`, it delegates to `await self.lifespan(scope, receive, send)` and terminates early ([`starlette/routing.py:678-680`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L678-L680)).\n- **Partial Tracking**:\n  - Initializes `partial = None` ([`starlette/routing.py:682`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L682)).\n\n---\n\n### 2. Route Matching Iteration\n[`Router.app`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L684-L695) iterates through `self.routes`, invoking `match, child_scope = route.matches(scope)` for each route:\n\n- **`Match.FULL` Handling**:\n  - If a route returns `Match.FULL` ([`starlette/routing.py:688-691`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L688-L691)):\n    1. Updates the connection scope with route parameters: `scope.update(child_scope)`.\n    2. Awaits the route handler: `await route.handle(scope, receive, send)`.\n    3. Exits immediately (stops evaluating subsequent routes).\n  - *Context*: A full match occurs when the path matches and (for HTTP [`Route`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L256-L257)) the request method is in `self.methods`, or for [`WebSocketRoute`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L339), [`Mount`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L424), or [`Host`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L490).\n\n- **`Match.PARTIAL` Handling**:\n  - If a route returns `Match.PARTIAL` and `partial is None` ([`starlette/routing.py:692-694`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L692-L694)):\n    1. Captures the first matching partial route and scope: `partial = route`, `partial_scope = child_scope`.\n    2. Continues iterating through remaining routes to check if a later route provides a `Match.FULL`.\n  - *Context*: A partial match occurs in [`Route.matches`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L254-L255) when the URL path matches the pattern regex but the HTTP method is not allowed by `self.methods`.\n\n- **Handling Stored Partial Match**:\n  - If the loop finishes with no `Match.FULL` and `partial is not None` ([`starlette/routing.py:696-702`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L696-L702)):\n    1. Updates `scope.update(partial_scope)`.\n    2. Dispatches to `await partial.handle(scope, receive, send)`.\n    3. In [`Route.handle`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L272-L279), this raises `HTTPException(status_code=405, headers={\"Allow\": ...})` if `\"app\" in scope` (handled by `ExceptionMiddleware`), or returns a 405 `PlainTextResponse(\"Method Not Allowed\")`.\n    4. Exits immediately.\n\n---\n\n### 3. No Route Matches (`Match.NONE`)\n\nWhen all routes evaluate to `Match.NONE` (and no partial matches exist):\n\n#### A. Trailing Slash Redirection\n[`Router.app`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L704-L719) checks whether redirecting trailing slashes applies:\n1. Verifies `scope[\"type\"] == \"http\"`, `self.redirect_slashes is True`, and `route_path != \"/\"`.\n2. Creates `redirect_scope = dict(scope)` with the inverted slash suffix:\n   - Strips trailing slash (`.rstrip(\"/\")`) if `route_path` ended with `/`.\n   - Adds trailing slash (`+ \"/\"`) if `route_path` did not end with `/`.\n3. Iterates over `self.routes` calling `route.matches(redirect_scope)`.\n4. If any route matches (`match != Match.NONE`):\n   - Builds redirect target URL: `redirect_url = URL(scope=redirect_scope)`.\n   - Returns a 307 temporary redirect response: `response = RedirectResponse(url=str(redirect_url))` and calls `await response(scope, receive, send)`.\n   - Returns immediately.\n\n#### B. Fallback / Default Handler\nIf redirection does not apply or no route matches the inverted slash path, control reaches the fallback ([`starlette/routing.py:720`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L720)):\n1. Calls `await self.default(scope, receive, send)`.\n2. By default, `self.default` is configured as [`self.not_found`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L588,L616-L630):\n   - **WebSocket (`scope[\"type\"] == \"websocket\"`)**: Sends [`WebSocketClose()`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L618-L620).\n   - **HTTP with Application Context (`\"app\" in scope`)**: Raises [`HTTPException(status_code=404)`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L625-L626) to allow Starlette's exception middleware to process it.\n   - **HTTP without Application Context**: Returns [`PlainTextResponse(\"Not Found\", status_code=404)`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L627-L629).\n",
+      "duration_seconds": 57.123268309,
+      "usage": {
+        "input_tokens": 93835,
+        "output_tokens": 7777,
+        "thinking_tokens": 5308,
+        "cache_read_tokens": 276643,
+        "total_tokens": 101612
+      },
+      "events": 62,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "starlette-routing",
+      "repository": "starlette",
+      "variant": "no_graph",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "full",
+          "matched": true,
+          "patterns": [
+            "Match.FULL",
+            "handle"
+          ]
+        },
+        {
+          "id": "partial",
+          "matched": true,
+          "patterns": [
+            "Match.PARTIAL",
+            "partial"
+          ]
+        },
+        {
+          "id": "redirect",
+          "matched": true,
+          "patterns": [
+            "redirect_slashes",
+            "RedirectResponse"
+          ]
+        },
+        {
+          "id": "fallback",
+          "matched": true,
+          "patterns": [
+            "default",
+            "scope"
+          ]
+        }
+      ],
+      "wall_seconds": 59.783
+    },
+    {
+      "conversation_id": "96ef34f5-5986-4baa-86ef-e9011be799e4",
+      "status": "SUCCESS",
+      "response": "### Request Trace: Entry via `Mux.ServeHTTP` to `Mux.routeHTTP` and Route Lookup\n\n#### 1. Request Entry & Guard Checks in [`Mux.ServeHTTP`](file:///mux.go#L63-L92)\n* **Handler Initialization Check**: If `mx.handler == nil` ([mux.go:65](file:///mux.go#L65)), the mux immediately delegates to [`mx.NotFoundHandler().ServeHTTP(w, r)`](file:///mux.go#L66) and terminates execution ([mux.go:67](file:///mux.go#L67)).\n* **Parent Context Detection**: Retrieves the existing routing context via `r.Context().Value(RouteCtxKey).(*Context)` ([mux.go:71](file:///mux.go#L71)). If an active `rctx` is found from a parent router ([mux.go:72](file:///mux.go#L72)), it bypasses context allocation, directly executes [`mx.handler.ServeHTTP(w, r)`](file:///mux.go#L73), and returns ([mux.go:74](file:///mux.go#L74)).\n\n#### 2. Context Pooling & Dispatch in [`Mux.ServeHTTP`](file:///mux.go#L63-L92)\n* **Acquiring Context**: When no parent context exists, fetches a context from the `sync.Pool` via `rctx = mx.pool.Get().(*Context)` ([mux.go:81](file:///mux.go#L81)).\n* **Context State Initialization**: Resets the context state with [`rctx.Reset()`](file:///mux.go#L82), assigns the current router reference `rctx.Routes = mx` ([mux.go:83](file:///mux.go#L83)), and stores the parent request context `rctx.parentCtx = r.Context()` ([mux.go:84](file:///mux.go#L84)).\n* **Context Injection**: Wraps the request with the routing context using `r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))` ([mux.go:87](file:///mux.go#L87)).\n* **Handler Execution & Deferral**: Executes the middleware and routing chain via [`mx.handler.ServeHTTP(w, r)`](file:///mux.go#L90), then returns the context back to the pool with [`mx.pool.Put(rctx)`](file:///mux.go#L91).\n\n---\n\n#### 3. Path Resolution & Route Lookup in [`Mux.routeHTTP`](file:///mux.go#L447-L491)\n* **Context & Path Extraction**: Reads `RouteCtxKey` from context ([mux.go:449](file:///mux.go#L449)) and resolves `routePath`, checking `r.URL.RawPath` when empty ([mux.go:453-459](file:///mux.go#L453-L459)).\n* **HTTP Method Validation**: Validates the request method ([mux.go:465](file:///mux.go#L465)). If method mapping fails (`!ok` at [mux.go:469](file:///mux.go#L469)), dispatches [`mx.MethodNotAllowedHandler().ServeHTTP(w, r)`](file:///mux.go#L470) and returns ([mux.go:471](file:///mux.go#L471)).\n* **Tree Lookup**: Performs radix tree traversal via `_, _, h := mx.tree.FindRoute(rctx, method, routePath)` ([mux.go:475](file:///mux.go#L475)).\n\n---\n\n#### 4. Execution & Failure Branches in [`Mux.routeHTTP`](file:///mux.go#L447-L491)\n* **Match Success Branch (`h != nil`)**:\n  * Populates URL path parameters by iterating `rctx.URLParams.Keys` ([mux.go:477](file:///mux.go#L477)) and executing `r.SetPathValue(key, value)` ([mux.go:479](file:///mux.go#L479)).\n  * Resolves route pattern via [`rctx.RoutePattern()`](file:///mux.go#L481).\n  * Dispatches to the matched handler via [`h.ServeHTTP(w, r)`](file:///mux.go#L483) and returns ([mux.go:484](file:///mux.go#L484)).\n* **Match Failure Branches (`h == nil`)**:\n  * **Method Not Allowed**: If `rctx.methodNotAllowed` evaluates to true ([mux.go:486](file:///mux.go#L486)), calls [`mx.MethodNotAllowedHandler(rctx.methodsAllowed...).ServeHTTP(w, r)`](file:///mux.go#L487).\n  * **Not Found Fallback**: Otherwise, delegates to [`mx.NotFoundHandler().ServeHTTP(w, r)`](file:///mux.go#L489).\n",
+      "duration_seconds": 29.148873469,
+      "usage": {
+        "input_tokens": 50722,
+        "output_tokens": 5105,
+        "thinking_tokens": 2057,
+        "cache_read_tokens": 69145,
+        "total_tokens": 55827
+      },
+      "events": 33,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "go-chi-http-entry",
+      "repository": "go-chi",
+      "variant": "graphtyn",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "entry",
+          "matched": true,
+          "patterns": [
+            "Mux.ServeHTTP",
+            "mux.go"
+          ]
+        },
+        {
+          "id": "pool",
+          "matched": true,
+          "patterns": [
+            "pool.Get",
+            "pool.Put"
+          ]
+        },
+        {
+          "id": "context",
+          "matched": true,
+          "patterns": [
+            "RouteCtxKey",
+            "WithContext"
+          ]
+        },
+        {
+          "id": "route",
+          "matched": true,
+          "patterns": [
+            "routeHTTP",
+            "FindRoute"
+          ]
+        },
+        {
+          "id": "failure",
+          "matched": true,
+          "patterns": [
+            "MethodNotAllowed",
+            "NotFound"
+          ]
+        }
+      ],
+      "wall_seconds": 31.766
+    },
+    {
+      "conversation_id": "a39e9782-4b9a-4870-82bb-d087a37eaf5e",
+      "status": "SUCCESS",
+      "response": "### 1. Request Entry & Context Pooling: [`Mux.ServeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L63-L92)\n\nWhen an HTTP request enters chi via [`Mux.ServeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L63-L92):\n\n1. **Uninitialized / Empty Router Check**:\n   - Checks `if mx.handler == nil` ([`mux.go:65`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L65)).\n   - **Failure Branch**: Invokes [`mx.NotFoundHandler().ServeHTTP(w, r)`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L66-L68) and returns immediately.\n2. **Subrouter Context Reuse**:\n   - Inspects the request context for an existing routing context: `r.Context().Value(RouteCtxKey).(*Context)` ([`mux.go:71`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L71)).\n   - If `rctx != nil` (e.g., executing within a mounted subrouter), it directly calls `mx.handler.ServeHTTP(w, r)` ([`mux.go:72-L75`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L72-L75)) without allocating/pooling a new context.\n3. **Context Pool Allocation (`sync.Pool`)**:\n   - If `rctx == nil`, acquires a [`Context`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L48-L82) from [`mx.pool`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L37) via `mx.pool.Get().(*Context)` ([`mux.go:81`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L81)) (initialized via [`NewRouteContext()`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L34-L36) at [`NewMux()`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L53-L56)).\n   - Resets state via [`rctx.Reset()`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L85-L99) ([`mux.go:82`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L82)).\n   - Sets `rctx.Routes = mx` and `rctx.parentCtx = r.Context()` ([`mux.go:83-84`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L83-L84)).\n   - Injects the context into the request: `r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))` ([`mux.go:87`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L87)).\n4. **Middleware Execution & Pool Return**:\n   - Calls `mx.handler.ServeHTTP(w, r)` ([`mux.go:90`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L90)), traversing the middleware chain built by [`chain()`](file:///tmp/graphtyn-benchmark-go-chi/chain.go#L36-L49) ending at [`Mux.routeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L447-L491) (see [`updateRouteHandler`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L518-L519)).\n   - Returns the routing context to the pool: `mx.pool.Put(rctx)` ([`mux.go:91`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L91)).\n\n---\n\n### 2. Request Routing: [`Mux.routeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L447-L491)\n\nOnce request processing reaches [`Mux.routeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L447-L491):\n\n1. **Path Resolution**:\n   - Retrieves `rctx := r.Context().Value(RouteCtxKey).(*Context)` ([`mux.go:449`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L449)).\n   - If `rctx.RoutePath` is unset, resolves path from `r.URL.RawPath`, falling back to `r.URL.Path` or `\"/\"` ([`mux.go:452-462`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L452-L462)).\n2. **Method Validation**:\n   - If `rctx.RouteMethod == \"\"`, assigns `rctx.RouteMethod = r.Method` ([`mux.go:465-467`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L465-L467)).\n   - Looks up internal [`methodTyp`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L18) in [`methodMap`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L42-L53) ([`mux.go:468`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L468)).\n   - **Failure Branch (Unknown Method)**: If `!ok`, invokes [`mx.MethodNotAllowedHandler().ServeHTTP(w, r)`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L470-L471) and returns.\n3. **Route Search Execution**:\n   - Calls [`mx.tree.FindRoute(rctx, method, routePath)`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L475).\n\n---\n\n### 3. Trie Route Lookup: [`node.FindRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L383-L406) & [`node.findRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L410-L557)\n\n1. **Context Initialization**:\n   - In [`node.FindRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L383-L406), resets `rctx.routePattern = \"\"` and resets `rctx.routeParams` ([`tree.go:385-387`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L385-L387)).\n   - Calls [`n.findRoute(rctx, method, path)`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L390).\n2. **Multi-Dimensional Radix Search ([`node.findRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L410-L557))**:\n   - Iterates through child buckets ordered by [`nodeTyp`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L88):\n     - **`ntStatic`** ([`tree.go:429-435`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L429-L435)): Binary searches matching edge byte via `findEdge(label)` and verifies `strings.HasPrefix(xsearch, xn.prefix)`.\n     - **`ntParam` / `ntRegexp`** ([`tree.go:437-505`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L437-L505)): Searches up to `xn.tail` delimiter (or `/`), tests regexp matcher `xn.rex` if applicable, and records parameter value in `rctx.routeParams.Values`.\n     - **`ntCatchAll`** ([`tree.go:507-511`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L507-L511)): Matches the entire remaining search string as parameter.\n3. **Leaf & Endpoint Evaluation**:\n   - When the path segment is consumed (`len(xsearch) == 0`) and `xn.isLeaf()` ([`tree.go:470-491, 518-539`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L470-L491)):\n     - **Matching Method**: If `h := xn.endpoints[method]` exists and `h.handler != nil`, copies `h.paramKeys` into `rctx.routeParams.Keys` and returns `xn` ([`tree.go:473-476, 520-524`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L473-L476)).\n     - **Method Mismatch Tracking (405 Preparation)**: If the route exists but not for the requested method, collects allowed methods into `rctx.methodsAllowed` and flags `rctx.methodNotAllowed = true` ([`tree.go:478-490, 526-538`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L478-L490)).\n4. **Lookup Return & Pattern Merging**:\n   - On match, [`FindRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L383-L406) appends `rctx.routeParams` to `rctx.URLParams` ([`tree.go:396-397`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L396-L397)), records `rn.endpoints[method].pattern` in `rctx.RoutePatterns` ([`tree.go:400-403`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L400-L403)), and returns `(rn, endpoints, handler)` ([`tree.go:405`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L405)).\n   - If no node matches, returns `(nil, nil, nil)` ([`tree.go:391-393`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L391-L393)).\n\n---\n\n### 4. Dispatch & Terminal Failure Branches: [`Mux.routeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L475-L491)\n\n1. **Success Branch (Handler Found)**:\n   - When handler `h != nil` ([`mux.go:475`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L475)):\n     - Populates request URL parameters via `r.SetPathValue(key, value)` ([`mux.go:477-480`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L477-L480)).\n     - Sets `r.Pattern = rctx.RoutePattern()` ([`mux.go:481`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L481)).\n     - Executes endpoint handler: `h.ServeHTTP(w, r)` ([`mux.go:483`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L483)).\n2. **Failure Branch (405 Method Not Allowed)**:\n   - When `h == nil` and `rctx.methodNotAllowed` is true ([`mux.go:486`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L486)):\n     - Calls [`mx.MethodNotAllowedHandler(rctx.methodsAllowed...).ServeHTTP(w, r)`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L487) (configured via [`methodNotAllowedHandler`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L524-L532) / [`Mux.MethodNotAllowedHandler`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L413-L418)), writing the `Allow` header with valid methods and returning HTTP 405.\n3. **Failure Branch (404 Not Found)**:\n   - When `h == nil` and `!rctx.methodNotAllowed` ([`mux.go:488-490`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L488-L490)):\n     - Calls [`mx.NotFoundHandler().ServeHTTP(w, r)`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L489) (configured via [`Mux.NotFoundHandler`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L404-L409), defaulting to `http.NotFound`).\n",
+      "duration_seconds": 58.01239359,
+      "usage": {
+        "input_tokens": 123796,
+        "output_tokens": 10745,
+        "thinking_tokens": 6274,
+        "cache_read_tokens": 529359,
+        "total_tokens": 134541
+      },
+      "events": 90,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "go-chi-http-entry",
+      "repository": "go-chi",
+      "variant": "no_graph",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "entry",
+          "matched": true,
+          "patterns": [
+            "Mux.ServeHTTP",
+            "mux.go"
+          ]
+        },
+        {
+          "id": "pool",
+          "matched": true,
+          "patterns": [
+            "pool.Get",
+            "pool.Put"
+          ]
+        },
+        {
+          "id": "context",
+          "matched": true,
+          "patterns": [
+            "RouteCtxKey",
+            "WithContext"
+          ]
+        },
+        {
+          "id": "route",
+          "matched": true,
+          "patterns": [
+            "routeHTTP",
+            "FindRoute"
+          ]
+        },
+        {
+          "id": "failure",
+          "matched": true,
+          "patterns": [
+            "MethodNotAllowed",
+            "NotFound"
+          ]
+        }
+      ],
+      "wall_seconds": 60.656
+    },
+    {
+      "conversation_id": "6094d48e-dda1-4f65-8f2f-81000a9c4880",
+      "status": "SUCCESS",
+      "response": "### Request Entry & Execution Trace\n\n1. **Request Entry & Context Pooling**\n   - **`Mux.ServeHTTP`** ([mux.go:L63](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L63)): Entry point implementing `net/http.Handler`. Obtains and manages the request route context.\n   - **Context Pooling & Initialization**:\n     - Route contexts are pooled using `sync.Pool` and initialized via **`NewRouteContext`** ([context.go:L34](file:///tmp/graphtyn-benchmark-go-chi/context.go#L34), invoked during initialization at [mux.go:L55](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L55)).\n     - **`RouteContext`** ([context.go:L28](file:///tmp/graphtyn-benchmark-go-chi/context.go#L28)): Retrieves the active **`Context`** ([context.go:L48](file:///tmp/graphtyn-benchmark-go-chi/context.go#L48)) from `r.Context()`.\n     - **`Context.Reset`** ([context.go:L85](file:///tmp/graphtyn-benchmark-go-chi/context.go#L85)): Resets routing state before recycling or reusing the context across request lifecycles.\n     - **`Context.Clone`** ([context.go:L107](file:///tmp/graphtyn-benchmark-go-chi/context.go#L107)): Duplicates context state when branching into sub-handlers.\n\n2. **Routing Flow & Middleware Chain**\n   - **`Mux.routeHTTP`** ([mux.go:L447](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L447)): Evaluates routing branches, dispatches to sub-routes or executes matching middleware pipelines.\n   - **Subroute & Path Management**:\n     - **`Mux.nextRoutePath`** ([mux.go:L493](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L493)): Computes remaining URL path segments for subrouter handoffs.\n     - **`Mux.updateSubRoutes`** ([mux.go:L503](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L503)): Propagates mounting configuration to mounted subrouters.\n     - **`Mux.updateRouteHandler`** ([mux.go:L517](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L517)): Assembles and updates handler chains via **`chain`** ([chain.go:L36](file:///tmp/graphtyn-benchmark-go-chi/chain.go#L36)).\n     - **`Mux.handle`** ([mux.go:L422](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L422)): Wraps endpoints with middleware chains using **`Chain`** ([chain.go:L6](file:///tmp/graphtyn-benchmark-go-chi/chain.go#L6) called at [mux.go:L436](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L436)).\n\n3. **Radix Tree Route Lookup**\n   - **`node.FindRoute`** ([tree.go:L383](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L383)): Root entry point on the radix tree **`node`** ([tree.go:L97](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L97)) to search for routes matching the request path and method.\n   - **`node.findRoute`** ([tree.go:L410](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L410)): Recursive search traversing prefix nodes, wildcards, and parametric edges.\n   - **Edge Traversal & Pattern Matching**:\n     - **`node.findEdge`** ([tree.go:L559](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L559)) and **`nodes.findEdge`** ([tree.go:L850](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L850)): Locates matching child edges for the current path prefix.\n     - **`node.findPattern`** ([tree.go:L591](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L591)): Resolves pattern routes using prefix helpers (**`longestPrefix`** [tree.go:L822](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L822), **`patNextSegment`** [tree.go:L735](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L735), and **`patParamKeys`** [tree.go:L803](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L803)).\n   - **Endpoint & Param Extraction**:\n     - Matched HTTP method handlers are retrieved from **`endpoints.Value`** ([tree.go:L139](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L139)) on **`endpoints`** ([tree.go:L126](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L126)) keyed by **`methodTyp`** ([tree.go:L18](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L18)).\n     - Extracted URL parameter key-value pairs are stored in **`RouteParams`** ([context.go:L174](file:///tmp/graphtyn-benchmark-go-chi/context.go#L174)) via **`RouteParams.Add`** ([context.go:L179](file:///tmp/graphtyn-benchmark-go-chi/context.go#L179)).\n\n4. **Failure Branches**\n   - **404 Not Found**:\n     - If path lookup fails to find a matching node, execution branches to **`Mux.NotFoundHandler`** ([mux.go:L404](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L404)), which invokes the handler registered with **`Mux.NotFound`** ([mux.go:L203](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L203), chained via [mux.go:L209](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L209)).\n   - **405 Method Not Allowed**:\n     - If a path matches but no endpoint exists for the requested HTTP method, execution branches to **`Mux.MethodNotAllowedHandler`** ([mux.go:L413](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L413)) / **`methodNotAllowedHandler`** ([mux.go:L524](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L524)), invoking the handler set via **`Mux.MethodNotAllowed`** ([mux.go:L223](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L223), chained via [mux.go:L229](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L229)).\n",
+      "duration_seconds": 36.662697918,
+      "usage": {
+        "input_tokens": 83083,
+        "output_tokens": 9170,
+        "thinking_tokens": 4584,
+        "cache_read_tokens": 325907,
+        "total_tokens": 92253
+      },
+      "events": 57,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "go-chi-http-entry",
+      "repository": "go-chi",
+      "variant": "competitor",
+      "quality_score": 0.6,
+      "fact_checks": [
+        {
+          "id": "entry",
+          "matched": true,
+          "patterns": [
+            "Mux.ServeHTTP",
+            "mux.go"
+          ]
+        },
+        {
+          "id": "pool",
+          "matched": false,
+          "patterns": [
+            "pool.Get",
+            "pool.Put"
+          ]
+        },
+        {
+          "id": "context",
+          "matched": false,
+          "patterns": [
+            "RouteCtxKey",
+            "WithContext"
+          ]
+        },
+        {
+          "id": "route",
+          "matched": true,
+          "patterns": [
+            "routeHTTP",
+            "FindRoute"
+          ]
+        },
+        {
+          "id": "failure",
+          "matched": true,
+          "patterns": [
+            "MethodNotAllowed",
+            "NotFound"
+          ]
+        }
+      ],
+      "wall_seconds": 39.199
+    },
+    {
+      "conversation_id": "d71c0480-137d-4fe2-bf93-962b47b5999c",
+      "status": "SUCCESS",
+      "response": "Based on the graph evidence, here is the trace of how route URL parameters are captured, stored, and exposed:\n\n---\n\n### 1. Request Routing & Context Initialization\n* **[mux.go:L63](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L63)** (`Mux.ServeHTTP()`) & **[mux.go:L447](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L447)** (`Mux.routeHTTP()`): Entry points for incoming HTTP requests.\n* **[context.go:L34](file:///tmp/graphtyn-benchmark-go-chi/context.go#L34)** (`NewRouteContext()`): Allocates/initializes a `Context` (**[context.go:L48](file:///tmp/graphtyn-benchmark-go-chi/context.go#L48)**) associated with the request.\n* **[mux.go:L365](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L365)** (`Mux.Match()`) & **[mux.go:L374](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L374)** (`Mux.Find()`): Pass the `Context` into the radix tree for route matching.\n\n---\n\n### 2. Parameter Capturing in Radix Tree\n* **[tree.go:L148](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L148)** (`node.InsertRoute()`): Configures route patterns with URL parameter segments using helper functions like **[tree.go:L735](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L735)** (`patNextSegment()`) and **[tree.go:L803](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L803)** (`patParamKeys()`).\n* **[tree.go:L383](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L383)** (`node.FindRoute()`) & **[tree.go:L410](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L410)** (`node.findRoute()`): Traverse tree nodes (**[tree.go:L97](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L97)**) against the request URL path, extracting matched URL parameter values into the `Context` (**[context.go:L48](file:///tmp/graphtyn-benchmark-go-chi/context.go#L48)**).\n\n---\n\n### 3. Parameter Storage in `Context` & `RouteParams`\n* **[context.go:L48](file:///tmp/graphtyn-benchmark-go-chi/context.go#L48)** (`Context`): Encapsulates routing context and contains `RouteParams` (**[context.go:L174](file:///tmp/graphtyn-benchmark-go-chi/context.go#L174)**).\n* **[context.go:L179](file:///tmp/graphtyn-benchmark-go-chi/context.go#L179)** (`RouteParams.Add()`): Appends parsed key-value parameter pairs to the parameter collection.\n* **[context.go:L85](file:///tmp/graphtyn-benchmark-go-chi/context.go#L85)** (`Context.Reset()`) & **[context.go:L107](file:///tmp/graphtyn-benchmark-go-chi/context.go#L107)** (`Context.Clone()`): Manage context lifecycle and propagation across request handlers.\n* **[context.go:L187](file:///tmp/graphtyn-benchmark-go-chi/context.go#L187)** (`contextKey`): Used to store and retrieve the routing context in `context.Context`.\n\n---\n\n### 4. Exposure through `URLParam`\n* **[context.go:L11](file:///tmp/graphtyn-benchmark-go-chi/context.go#L11)** (`URLParam(r *http.Request, key string)`):\n  * Calls **[context.go:L28](file:///tmp/graphtyn-benchmark-go-chi/context.go#L28)** (`RouteContext()`) at **[context.go:L12](file:///tmp/graphtyn-benchmark-go-chi/context.go#L12)** to extract `Context` from `r.Context()`.\n  * Calls **[context.go:L127](file:///tmp/graphtyn-benchmark-go-chi/context.go#L127)** (`Context.URLParam()`) at **[context.go:L13](file:///tmp/graphtyn-benchmark-go-chi/context.go#L13)**.\n* **[context.go:L19](file:///tmp/graphtyn-benchmark-go-chi/context.go#L19)** (`URLParamFromCtx(ctx context.Context, key string)`):\n  * Calls **[context.go:L28](file:///tmp/graphtyn-benchmark-go-chi/context.go#L28)** (`RouteContext()`) at **[context.go:L20](file:///tmp/graphtyn-benchmark-go-chi/context.go#L20)**.\n  * Calls **[context.go:L127](file:///tmp/graphtyn-benchmark-go-chi/context.go#L127)** (`Context.URLParam()`) at **[context.go:L21](file:///tmp/graphtyn-benchmark-go-chi/context.go#L21)**.\n* **[context.go:L127](file:///tmp/graphtyn-benchmark-go-chi/context.go#L127)** (`Context.URLParam()`): Looks up the parameter key from `RouteParams` (**[context.go:L174](file:///tmp/graphtyn-benchmark-go-chi/context.go#L174)**) and returns the captured parameter string.\n",
+      "duration_seconds": 57.907808493,
+      "usage": {
+        "input_tokens": 117356,
+        "output_tokens": 10725,
+        "thinking_tokens": 3616,
+        "cache_read_tokens": 479936,
+        "total_tokens": 128081
+      },
+      "events": 74,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "go-chi-url-params",
+      "repository": "go-chi",
+      "variant": "competitor",
+      "quality_score": 0.75,
+      "fact_checks": [
+        {
+          "id": "storage",
+          "matched": false,
+          "patterns": [
+            "RouteParams",
+            "URLParams"
+          ]
+        },
+        {
+          "id": "capture",
+          "matched": true,
+          "patterns": [
+            "FindRoute",
+            "Values"
+          ]
+        },
+        {
+          "id": "api",
+          "matched": true,
+          "patterns": [
+            "URLParam",
+            "RouteContext"
+          ]
+        },
+        {
+          "id": "source",
+          "matched": true,
+          "patterns": [
+            "context.go",
+            "tree.go"
+          ]
+        }
+      ],
+      "wall_seconds": 60.469
+    },
+    {
+      "conversation_id": "da89bb8f-0766-41ec-a7f6-ccfa582fa89b",
+      "status": "SUCCESS",
+      "response": "### 1. Pattern Registration & Parameter Key Extraction\n* **[`Mux.handle`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L422-L443)** registers route patterns into the radix tree via **[`node.InsertRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L148-L238)**.\n* **[`node.setEndpoint`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L353-L381)** extracts parameter names by calling **[`patParamKeys`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L803-L819)** at [tree.go:359](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L359).\n* **[`patParamKeys`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L803-L819)** uses **[`patNextSegment`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L735-L801)** to parse `{param}`, `{param:regexp}`, or `*` wildcards and stores the keys on the handler's **[`endpoint.paramKeys`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L136)** at [tree.go:368, 373, 379](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L368).\n\n---\n\n### 2. Request Routing & Context Initialization\n* **[`Mux.ServeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L63-L92)** retrieves a **[`Context`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L48-L82)** from `mx.pool` (`sync.Pool`), resets it via **[`Context.Reset`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L85-L99)** at [mux.go:82](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L82), and attaches it to the request context under **[`RouteCtxKey`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L40)** at [mux.go:87](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L87).\n* **[`Mux.routeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L447-L491)** initiates path matching by calling **[`node.FindRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L383-L406)** at [mux.go:475](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L475).\n\n---\n\n### 3. Capturing & Storing Parameter Values\n* **[`node.FindRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L383-L406)** clears `rctx.routeParams` at [tree.go:386-387](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L386-L387) and calls **[`node.findRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L410-L557)**:\n  * For **`ntParam`** and **`ntRegexp`** nodes ([tree.go:436-502](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L436-L502)), path segments delimited by `xn.tail` are captured and appended to `rctx.routeParams.Values` at [tree.go:467](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L467).\n  * For **`ntCatchAll`** (`*`) nodes ([tree.go:507-511](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L507-L511)), the remaining path is appended to `rctx.routeParams.Values` at [tree.go:508](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L508).\n  * When a leaf endpoint matches the method, `h.paramKeys` are appended to `rctx.routeParams.Keys` at [tree.go:474, 522](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L474).\n* In **[`node.FindRoute`](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L396-L397)**, the matched `routeParams` are appended to the cumulative `rctx.URLParams`:\n  * `rctx.URLParams.Keys = append(rctx.URLParams.Keys, rctx.routeParams.Keys...)` ([tree.go:396](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L396))\n  * `rctx.URLParams.Values = append(rctx.URLParams.Values, rctx.routeParams.Values...)` ([tree.go:397](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L397))\n* **[`RouteParams`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L174-L176)** stores parallel slices:\n  ```go\n  type RouteParams struct {\n      Keys, Values []string\n  }\n  ```\n* In **[`Mux.routeHTTP`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L477-L480)**, captured parameters are also mirrored to Go's standard request via `r.SetPathValue(key, value)`.\n\n---\n\n### 4. Parameter Exposure through `URLParam`\n* **[`chi.URLParam`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L11-L16)**:\n  1. Retrieves the routing context via **[`RouteContext(r.Context())`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L28-L31)** at [context.go:12](file:///tmp/graphtyn-benchmark-go-chi/context.go#L12) (which looks up `RouteCtxKey`).\n  2. Delegates to **[`Context.URLParam(key)`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L127-L134)** at [context.go:13](file:///tmp/graphtyn-benchmark-go-chi/context.go#L13).\n* **[`chi.URLParamFromCtx`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L19-L24)**: Directly extracts `Context` from `context.Context` and calls `rctx.URLParam(key)` at [context.go:20-21](file:///tmp/graphtyn-benchmark-go-chi/context.go#L20-L21).\n* **[`Context.URLParam`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L127-L134)**:\n  * Iterates **backwards** over `x.URLParams.Keys` (`for k := len(x.URLParams.Keys) - 1; k >= 0; k--`) at [context.go:128](file:///tmp/graphtyn-benchmark-go-chi/context.go#L128).\n  * Returns `x.URLParams.Values[k]` for the first matching key ([context.go:130](file:///tmp/graphtyn-benchmark-go-chi/context.go#L130)), ensuring the most specific / deepest sub-router value is returned, or `\"\"` if not found ([context.go:133](file:///tmp/graphtyn-benchmark-go-chi/context.go#L133)).\n",
+      "duration_seconds": 69.516368717,
+      "usage": {
+        "input_tokens": 179559,
+        "output_tokens": 8815,
+        "thinking_tokens": 4918,
+        "cache_read_tokens": 638593,
+        "total_tokens": 188374
+      },
+      "events": 92,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "go-chi-url-params",
+      "repository": "go-chi",
+      "variant": "no_graph",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "storage",
+          "matched": true,
+          "patterns": [
+            "RouteParams",
+            "URLParams"
+          ]
+        },
+        {
+          "id": "capture",
+          "matched": true,
+          "patterns": [
+            "FindRoute",
+            "Values"
+          ]
+        },
+        {
+          "id": "api",
+          "matched": true,
+          "patterns": [
+            "URLParam",
+            "RouteContext"
+          ]
+        },
+        {
+          "id": "source",
+          "matched": true,
+          "patterns": [
+            "context.go",
+            "tree.go"
+          ]
+        }
+      ],
+      "wall_seconds": 72.295
+    },
+    {
+      "conversation_id": "b8884191-c523-4b46-993e-ce32d3165883",
+      "status": "SUCCESS",
+      "response": "### Flow Trace: URL Parameter Handling and `URLParam`\n\n1. **Routing and Parameter Pattern Definition**\n   * Subroutes with URL parameter patterns (e.g., `\"/accounts/{accountID}\"`) are mounted via `Route` ([`mux.go:278-286`](file:///tmp/graphtyn-benchmark-go-chi/mux.go#L278-L286), [`mux_test.go:1214`](file:///tmp/graphtyn-benchmark-go-chi/mux_test.go#L1214)).\n   * The request executes with a routing context attached under `RouteCtxKey` ([`mux_test.go:1265-1266`](file:///tmp/graphtyn-benchmark-go-chi/mux_test.go#L1265-L1266)).\n\n2. **Storage Structure**\n   * Captured route parameters are held in the route context's `URLParams` structure as parallel slices: `x.URLParams.Keys` and `x.URLParams.Values` ([`context.go:128-130`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L128-L130)).\n\n3. **Retrieval via Request Helper (`URLParam`)**\n   * [`URLParam(r *http.Request, key string) string`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L11-L16) retrieves the routing context from request context via `rctx := RouteContext(r.Context())` ([`context.go:12`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L12)).\n   * If `rctx != nil`, it calls `rctx.URLParam(key)` ([`context.go:13`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L13)).\n   * If no context is present, it returns `\"\"` ([`context.go:15`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L15)).\n\n4. **Context Lookup (`Context.URLParam`)**\n   * [`(x *Context) URLParam(key string) string`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L127-L134) scans `x.URLParams.Keys` in reverse order:\n     * Iterates backwards: `for k := len(x.URLParams.Keys) - 1; k >= 0; k--` ([`context.go:128`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L128)).\n     * If `x.URLParams.Keys[k] == key` ([`context.go:129`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L129)), it returns the matching value `x.URLParams.Values[k]` ([`context.go:130`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L130)).\n     * Returns `\"\"` if the key is not found ([`context.go:133`](file:///tmp/graphtyn-benchmark-go-chi/context.go#L133)).\n",
+      "duration_seconds": 36.06235389,
+      "usage": {
+        "input_tokens": 57297,
+        "output_tokens": 3129,
+        "thinking_tokens": 1326,
+        "cache_read_tokens": 105857,
+        "total_tokens": 60426
+      },
+      "events": 30,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "go-chi-url-params",
+      "repository": "go-chi",
+      "variant": "graphtyn",
+      "quality_score": 0.25,
+      "fact_checks": [
+        {
+          "id": "storage",
+          "matched": false,
+          "patterns": [
+            "RouteParams",
+            "URLParams"
+          ]
+        },
+        {
+          "id": "capture",
+          "matched": false,
+          "patterns": [
+            "FindRoute",
+            "Values"
+          ]
+        },
+        {
+          "id": "api",
+          "matched": true,
+          "patterns": [
+            "URLParam",
+            "RouteContext"
+          ]
+        },
+        {
+          "id": "source",
+          "matched": false,
+          "patterns": [
+            "context.go",
+            "tree.go"
+          ]
+        }
+      ],
+      "wall_seconds": 38.832
+    }
+  ]
+}

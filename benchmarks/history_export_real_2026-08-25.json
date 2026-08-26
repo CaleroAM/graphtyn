@@ -1,0 +1,48 @@
+{
+  "schema": "graphtyn-history-export-test-v2",
+  "discovery": {
+    "codex": {
+      "sessions": 1,
+      "messages": 864,
+      "errors": 0
+    },
+    "openclaw": {
+      "sessions": 73,
+      "messages": 1685,
+      "errors": 0
+    },
+    "hermes": {
+      "sessions": 17,
+      "messages": 285,
+      "errors": 0
+    }
+  },
+  "totals": {
+    "source_sessions": 91,
+    "source_messages": 2834,
+    "counting_note": "Source counts are adapter records at export time. Stored counts are unique logical sessions/messages after collision merging, sanitization and content deduplication."
+  },
+  "completion": {
+    "imported_or_extended": 5,
+    "reused": 86,
+    "errors": 0
+  },
+  "idempotency": {
+    "second_imported": 0,
+    "second_reused": 91,
+    "errors": 0
+  },
+  "export": {
+    "path": "<HOME>/.graphtyn/exports/agent-conversations-2026-08-25.json",
+    "mode": "0o600",
+    "stored_sessions": 85,
+    "stored_messages": 2665,
+    "memories": 166
+  },
+  "privacy": {
+    "system_prompts_exported": false,
+    "embedding_vectors_exported": false,
+    "secrets_redacted": true,
+    "original_sources_modified": false
+  }
+}

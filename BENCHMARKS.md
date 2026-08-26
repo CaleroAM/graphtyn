@@ -1,6 +1,49 @@
 # 📊 Benchmarks de Graphtyn
 
+> **Lectura:** este archivo conserva resultados actuales e históricos. Use los
+> estados de [`docs/testing.md`](docs/testing.md). La matriz de 36 tareas/108
+> celdas continúa `PENDING`; los resultados parciales no prueban liderazgo general.
+
+## Estado resumido
+
+| Corpus | Estado |
+|---|---|
+| Starlette, Python/ASGI | FULL para ese corpus |
+| go-chi, Go | PARTIAL; la regresión dirigida cambió el protocolo |
+| CleanArchitecture, .NET | PARTIAL; v8 no completó las tres condiciones |
+| ZERP, Laravel/React | PARTIAL; diagnóstico y una tarea dirigida |
+| Memoria compartida | PARTIAL; falta más escala y repetición |
+| 36 tareas multilenguaje | PENDING |
+
+## Validación de regresión — 25 ago 2026
+
+| Comprobación | Resultado | Estado |
+|---|---:|---|
+| Suite sin arnés HTTP `TestClient` | 180 passed, 3 skipped, 16.37 s | FULL |
+| Protocolo multilenguaje | 36 tareas, 6 tecnologías, 108 celdas, 0 errores | FULL (estructura) |
+| SQLite de memoria real | 56 memorias, 56 embeddings, 56 FTS, 0 huérfanos | FULL |
+| Grafo HTTP de memoria | 82 nodos, 118 aristas, 5 autores, 4 consultores | FULL |
+| Estabilidad de retrieval | 285 consultas; Recall@5 1.0; MRR 0.9889 | FULL para dataset sintético |
+| Atribución / negativos | 1.0 / 1.0 | FULL para dataset sintético |
+| Contexto recuperado | media estimada 315.85 tokens | estimación, no facturación |
+| Latencia local | media 12.412 ms; p95 14.095 ms | entorno de referencia |
+| Smoke visual Playwright | omitido: falta `libstdc++.so.6` en runtime | BLOCKED ambiental |
+| Suite HTTP en proceso | `TestClient.get()` se bloquea en Python 3.13 | BLOCKED del arnés |
+
+Los endpoints reales `/health`, `/`, `/api/projects` y `/api/memory/graph` sí
+respondieron en `127.0.0.1:9210`. El benchmark de estabilidad crea un corpus
+sintético controlado; no debe extrapolarse a conversaciones empresariales sin la
+matriz viva adicional.
+
 Los casos se describen por tecnología y propósito para que sean comprensibles sin conocer sus nombres internos. Cuando aparece `UnityCommerceDemo`, se refiere al **repositorio real Unity/C# de un juego empresarial por turnos**; `Starlette` identifica el **framework público Python/ASGI** usado como validación externa. En las tablas, el competidor directo se presenta como **Gra…ify**. Los nombres exactos se conservan únicamente en rutas, comandos y artefactos necesarios para reproducibilidad.
+
+## Protocolo estadístico multilenguaje (36 tareas)
+
+[`benchmarks/statistical_protocol_36_tasks.json`](benchmarks/statistical_protocol_36_tasks.json) define **36 tareas y 108 celdas pareadas**: Graphtyn, Gra…ify y agente sin grafo. Cubre seis familias tecnológicas y seis repositorios: Python/ASGI, Unity/C#, .NET, PHP/Laravel, TypeScript/React y Go. Cada tarea exige prompt y al menos tres hechos atómicos; la variante se aleatoriza dentro de cada bloque y un reintento solo se admite por fallo de transporte, conservando ambos costos.
+
+Las revisiones están fijadas. El caso TypeScript/React limita explícitamente el índice a `src/auth`, porque sus seis tareas pertenecen a autenticación; ese alcance produjo 153 nodos/212 aristas en 0.11 s. El checkout completo contiene 4,929 archivos TS/TSX y no terminó su primera indexación en 90 s, por lo que se registra como prueba de estrés pendiente y no se oculta dentro de las cifras del alcance. El repositorio Go completo produjo 493 nodos/1,184 aristas en 1.30 s.
+
+`graphtyn benchmark-suite --protocol ...` valida tamaño, unicidad, tecnologías y comparadores. Con `--results resultados.json --control no_graph|competitor` calcula delta pareado de tokens, bootstrap IC95, diferencia de calidad, tamaño de efecto `dz` y prueba de permutación por cambio de signo. El manifiesto está listo, pero no contiene resultados inventados: ejecutar las 108 llamadas externas es una fase experimental separada y potencialmente costosa.
 
 Mediciones reales, reproducibles en el hardware de referencia. Cada tabla indica fecha, proyecto y comando exacto de reproducción.
 
@@ -314,3 +357,67 @@ Artefactos: `benchmarks/zerp_agent_tasks.json` y `benchmarks/zerp_x_preview_f_fr
 La implementación posterior indexó 572 archivos con Tree-sitter y extrajo relaciones Laravel/Inertia deterministas: rutas resource y explícitas, dispatch a controller, FormRequests, creación de modelos, dispatch de eventos y llamadas `route(...)` desde TS/TSX. En ZERP produjo 249 rutas, 233 dispatches a controller, 369 invocaciones Inertia, 31 enlaces de validación, 98 creaciones de modelo y 41 eventos despachados.
 
 La tarea evaluable `purchase-return-lifecycle` subió de **8.33% a 83.33%**, usando 7,968 tokens y una llamada MCP. Las otras dos corridas posteriores no son puntuables: `x-preview-f-free` cerró una sin respuesta final y devolvió sólo un encabezado en otra. No se publica un promedio post-fix sesgado; se conservan artefactos crudos en `benchmarks/zerp_x_preview_f_free_laravel_v9_2026-08-22/`.
+
+Una regresión posterior de recuperación entre capas corrigió el hecho faltante de esa tarea: las aristas `invoca ruta` que parten de un archivo TSX ahora se proyectan al símbolo React que contiene la línea exacta, priorizando callers frontend antes de expandir rutas backend. La evidencia de precisión se centra en la línea de la arista, no al inicio del componente. Sobre la misma revisión de ZERP, el paquete determinista conserva 11 nodos y 22 enlaces y aporta 3 fragmentos/3,850 caracteres que contienen las condiciones UI `draft`/`approved`, ambos permisos y ambas llamadas `router.post`. Esto demuestra cobertura de los seis hechos requeridos en el contexto; no se publica como nueva puntuación del agente hasta repetir la celda completa con el mismo modelo.
+
+## Validación externa Go: go-chi (2026-08-22)
+
+Repositorio `go-chi/chi`, revisión fija `735ae2b87f8c733d616e809ae86e0985c1bc3350`.
+Se probaron cuatro flujos internos con 24 hechos atómicos: ciclo de petición,
+orden de middleware, seguridad del contexto y manejo de panic/timeout. Las tres
+variantes usaron `opencode/x-preview-f-free`; los tratamientos MCP no tuvieron
+acceso a lectura, grep, glob ni shell.
+
+| Variante | Calidad ajustada | Tokens/tarea | Segundos/tarea | Llamadas/tarea |
+|---|---:|---:|---:|---:|
+| OpenCode directo | **95.84%** | 16,491 | 145.30 | 10.25 |
+| Gra…ify 0.9.48 | 31.25% | 15,123 | 107.01 | 14.50 |
+| **Graphtyn** | 72.92% | **10,515** | **95.82** | **1.25** |
+
+Graphtyn redujo tokens 36.24% y tiempo 34.05% frente a lectura directa, pero
+perdió 22.92 puntos de calidad. Frente a Gra…ify redujo tokens 30.47%, ganó
+41.67 puntos de calidad y evitó el único error factual detectado. No hay una
+conclusión de significancia todavía: una repetición de cuatro pares produce
+`p=0.125` en la prueba de signos. El informe auditable, respuestas crudas,
+calificaciones y comparaciones pareadas están en
+`benchmarks/go_chi_x_preview_f_free_2026-08-22/`.
+
+### Regresión híbrida dirigida
+
+Al añadir fragmentos acotados para preguntas de orden, condiciones y ciclo de
+vida, Graphtyn subió de 72.92% a **85.42%**, bajó de 10,515 a **8,624 tokens por
+tarea** y de 95.82 a **71.50 segundos por tarea** en una nueva repetición de sus
+cuatro celdas. Dos tareas alcanzaron 100%; no hubo errores ni reintentos. El hueco
+restante reveló una colisión entre métodos Go homónimos que también quedó
+corregida y cubierta por pruebas, sin adjudicarle una cifra remota todavía.
+Artefactos: `benchmarks/go_chi_x_preview_f_free_hybrid_v2_2026-08-22/`.
+
+## Antigravity / Gemini 3.7 Flash: Starlette y go-chi (2026-08-25)
+
+Se ejecutó una matriz real de cuatro tareas y tres tratamientos con
+`gemini-3.7-flash-high`: lectura directa, Gra…ify 0.9.49 y Graphtyn. La corrida
+original obtuvo respectivamente 100.00%, 78.75% y 56.25% de calidad, con 137,742,
+107,192 y 60,317 tokens medios. Los fallos de selección hallados en Graphtyn se
+corrigieron; una repetición dirigida de esas dos celdas, combinada con las dos
+celdas ya correctas, alcanzó 100.00% y 41,306 tokens medios. Esta última cifra es
+una regresión posterior, no una matriz completa nueva ni evidencia estadística.
+
+El informe, protocolo, commits, resultados crudos, costes y validación de memoria
+OpenClaw están en
+`benchmarks/antigravity_gemini37_real_2026-08-25/REPORT.md`.
+
+## Bootstrap de memoria histórica multiagente (2026-08-25)
+
+Los adaptadores se ejecutaron en modo lectura contra historiales reales, sin
+publicar ni importar contenido: OpenClaw/Career produjo 57 sesiones y 1,328
+mensajes desde 57 JSONL útiles en 1.23 s vía SSH; otros 57 archivos de trayectoria
+se excluyeron. Hermes/Nexus produjo 9 sesiones y 261 mensajes desde su
+SQLite real. Los contratos sintéticos cubren JSON/JSONL anidado, SQLite,
+atribución, fechas, alias de proyectos, bloqueo de mezcla entre proyectos,
+reimportación idempotente, búsqueda posterior y contexto federado. La suite sin
+el módulo API bloqueado obtuvo 196 passed y 3 skipped.
+
+Artefacto: `benchmarks/shared_memory_bootstrap_2026-08-25.json`. Esto valida
+compatibilidad estructural, no calidad semántica de todo el historial: la
+importación real requiere consentimiento y después debe medirse sobre preguntas
+privadas elegidas por el usuario.

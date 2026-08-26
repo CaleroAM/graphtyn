@@ -1,0 +1,125 @@
+{
+  "protocol": "antigravity-real-repos-v1",
+  "model": "gemini-3.7-flash-high",
+  "seed": 20260825,
+  "runs": [
+    {
+      "conversation_id": "bfba33c9-da75-4e72-b6f0-3b83aa0aa213",
+      "status": "SUCCESS",
+      "response": "### 1. ASGI Application Entry\n\n* **Entry Point**: [`Starlette.__call__`](file:///tmp/aether-benchmark-starlette/starlette/applications.py#L92-L96)\n  * **Line 93**: Sets the ASGI application reference in scope: `scope[\"app\"] = self`.\n  * **Lines 94\u201395**: Lazily constructs the middleware stack if not already initialized:\n    ```python\n    if self.middleware_stack is None:\n        self.middleware_stack = self.build_middleware_stack()\n    ```\n  * **Line 96**: Hands off execution to the outermost middleware layer:\n    ```python\n    await self.middleware_stack(scope, receive, send)\n    ```\n\n---\n\n### 2. Exact Middleware Construction Order\n\n* **Middleware Construction**: [`Router.__init__`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L574-L614)\n  * **Line 609**: Initializes the base of the stack to the innermost ASGI application:\n    ```python\n    self.middleware_stack = self.app\n    ```\n  * **Lines 610\u2013612**: Iterates through the configured middleware sequence in reverse order (`reversed(middleware)`), wrapping each middleware around the previous stack:\n    ```python\n    if middleware:\n        for cls, args, kwargs in reversed(middleware):\n            self.middleware_stack = cls(self.middleware_stack, *args, **kwargs)\n    ```\n    *Because the sequence is wrapped in reverse order, the first middleware in the list becomes the outermost layer that intercepts requests first.*\n  * **Lines 613\u2013614**: If `max_body_size` is configured, it is wrapped on top:\n    ```python\n    if max_body_size is not None:\n        self.middleware_stack = RequestBodyLimitMiddleware(self.middleware_stack, max_body_size=max_body_size)\n    ```\n\n* **Middleware Dispatch Execution Points**:\n  * [`ServerErrorMiddleware.__call__`](file:///tmp/aether-benchmark-starlette/starlette/middleware/errors.py#L149-L186) ([errors.py:150\u2013181](file:///tmp/aether-benchmark-starlette/starlette/middleware/errors.py#L150-L181)): Bypasses non-HTTP requests ([L150\u2013151](file:///tmp/aether-benchmark-starlette/starlette/middleware/errors.py#L150-L151)), invokes `self.app` ([L164](file:///tmp/aether-benchmark-starlette/starlette/middleware/errors.py#L164)), and catches unhandled exceptions ([L165\u2013181](file:///tmp/aether-benchmark-starlette/starlette/middleware/errors.py#L165-L181)).\n  * [`ExceptionMiddleware.__call__`](file:///tmp/aether-benchmark-starlette/starlette/middleware/exceptions.py#L47-L63) ([exceptions.py:48\u201363](file:///tmp/aether-benchmark-starlette/starlette/middleware/exceptions.py#L48-L63)): Wraps exception handling around inner calls for HTTP/WebSocket scopes via `wrap_app_handling_exceptions` ([L63](file:///tmp/aether-benchmark-starlette/starlette/middleware/exceptions.py#L63)).\n  * [`AuthenticationMiddleware.__call__`](file:///tmp/aether-benchmark-starlette/starlette/middleware/authentication.py#L29-L48) ([authentication.py:30\u201348](file:///tmp/aether-benchmark-starlette/starlette/middleware/authentication.py#L30-L48)): Executes authentication flow and traps `AuthenticationError` ([L37\u201342](file:///tmp/aether-benchmark-starlette/starlette/middleware/authentication.py#L37-L42)).\n  * [`BaseHTTPMiddleware.__call__`](file:///tmp/aether-benchmark-starlette/starlette/middleware/base.py#L101-L198) ([base.py:102\u2013194](file:///tmp/aether-benchmark-starlette/starlette/middleware/base.py#L102-L194)): Dispatches HTTP requests through `dispatch_func` ([L193](file:///tmp/aether-benchmark-starlette/starlette/middleware/base.py#L193)).\n  * [`RequestBodyLimitResponder.__call__`](file:///tmp/aether-benchmark-starlette/starlette/middleware/body_limit.py#L71-L102) ([body_limit.py:76\u201394](file:///tmp/aether-benchmark-starlette/starlette/middleware/body_limit.py#L76-L94)): Limits request payload stream size and handles `_RequestBodyTooLarge` ([L90\u201394](file:///tmp/aether-benchmark-starlette/starlette/middleware/body_limit.py#L90-L94)).\n  * [`CORSMiddleware.__call__`](file:///tmp/aether-benchmark-starlette/starlette/middleware/cors.py#L78-L96) ([cors.py:79\u201396](file:///tmp/aether-benchmark-starlette/starlette/middleware/cors.py#L79-L96)): Handles preflight OPTIONS requests ([L91\u201393](file:///tmp/aether-benchmark-starlette/starlette/middleware/cors.py#L91-L93)) or standard responses ([L96](file:///tmp/aether-benchmark-starlette/starlette/middleware/cors.py#L96)).\n\n---\n\n### 3. Router Handoff and Route Handling\n\n* **Route Handoff**: [`BaseRoute.__call__`](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L177-L194)\n  * **Line 183**: Evaluates route matching against the incoming scope:\n    ```python\n    match, child_scope = self.matches(scope)\n    ```\n  * **Lines 184\u2013191**: If no route matches (`match == Match.NONE`):\n    * For HTTP scopes, sends 404 `PlainTextResponse(\"Not Found\", status_code=404)` ([L185\u2013187](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L185-L187)).\n    * For WebSocket scopes, closes connection via `WebSocketClose()` ([L188\u2013190](file:///tmp/aether-benchmark-starlette/starlette/routing.py#L188-L190)).\n  * **Line 193**: Merges matched parameters and sub-scope into the primary scope:\n    ```python\n    scope.update(child_scope)\n    ```\n  * **Line 194**: Hands off execution to the route's endpoint handler:\n    ```python\n    await self.handle(scope, receive, send)\n    ```\n",
+      "duration_seconds": 40.077831246,
+      "usage": {
+        "input_tokens": 68885,
+        "output_tokens": 6429,
+        "thinking_tokens": 1944,
+        "cache_read_tokens": 158621,
+        "total_tokens": 75314
+      },
+      "events": 48,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "starlette-asgi-entry",
+      "repository": "starlette",
+      "variant": "graphtyn",
+      "quality_score": 0.8,
+      "fact_checks": [
+        {
+          "id": "entry",
+          "matched": true,
+          "patterns": [
+            "Starlette.__call__",
+            "applications.py"
+          ]
+        },
+        {
+          "id": "lazy_stack",
+          "matched": true,
+          "patterns": [
+            "middleware_stack",
+            "build_middleware_stack"
+          ]
+        },
+        {
+          "id": "outer_error",
+          "matched": true,
+          "patterns": [
+            "ServerErrorMiddleware",
+            "outer"
+          ]
+        },
+        {
+          "id": "inner_exception",
+          "matched": true,
+          "patterns": [
+            "ExceptionMiddleware",
+            "inner"
+          ]
+        },
+        {
+          "id": "router_handoff",
+          "matched": false,
+          "patterns": [
+            "self.router",
+            "reversed"
+          ]
+        }
+      ],
+      "wall_seconds": 43.102
+    },
+    {
+      "conversation_id": "5f41d23a-c6b7-4750-b93b-2ce419852ed8",
+      "status": "SUCCESS",
+      "response": "### Flow Trace: URL Parameter Capture, Storage, and Retrieval\n\n#### 1. Route Matching and Parameter Capture\nDuring route resolution, routing matches the path against the routing tree:\n* **Tree Route Search**: The route is resolved via `findRoute(rctx, method, path)` ([tree.go:390](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L390)).\n* **Storage into Request Context**: When a matching route node is found, captured parameters in `rctx.routeParams` are appended into the context's `URLParams`:\n  * Keys are appended: `append(rctx.URLParams.Keys, rctx.routeParams.Keys...)` ([tree.go:396](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L396)).\n  * Values are appended: `append(rctx.URLParams.Values, rctx.routeParams.Values...)` ([tree.go:397](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L397)).\n  * Route patterns are updated in `rctx.RoutePatterns` ([tree.go:400-402](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L400-L402)), returning the matched handler ([tree.go:405](file:///tmp/graphtyn-benchmark-go-chi/tree.go#L405)).\n\n#### 2. Request Helper Function (`URLParam`)\nThe package-level helper retrieves the parameter value for a given request and key:\n* **`URLParam(r *http.Request, key string)`** ([context.go:11-16](file:///tmp/graphtyn-benchmark-go-chi/context.go#L11-L16)):\n  * Retrieves the routing context using `RouteContext(r.Context())` ([context.go:12](file:///tmp/graphtyn-benchmark-go-chi/context.go#L12)).\n  * If `rctx != nil`, delegates lookup to `rctx.URLParam(key)` ([context.go:13](file:///tmp/graphtyn-benchmark-go-chi/context.go#L13)).\n  * Returns `\"\"` if no context is found ([context.go:15](file:///tmp/graphtyn-benchmark-go-chi/context.go#L15)).\n\n#### 3. Context Parameter Lookup (`(*Context).URLParam`)\nThe context method performs the lookup against the stored key/value slices:\n* **`(*Context).URLParam(key string)`** ([context.go:127-134](file:///tmp/graphtyn-benchmark-go-chi/context.go#L127-L134)):\n  * Scans backwards over the keys slice: `for k := len(x.URLParams.Keys) - 1; k >= 0; k--` ([context.go:128](file:///tmp/graphtyn-benchmark-go-chi/context.go#L128)).\n  * Matches the key: `if x.URLParams.Keys[k] == key` ([context.go:129](file:///tmp/graphtyn-benchmark-go-chi/context.go#L129)).\n  * Returns the corresponding value `x.URLParams.Values[k]` on match ([context.go:130](file:///tmp/graphtyn-benchmark-go-chi/context.go#L130)).\n  * Returns `\"\"` if no matching parameter key is found ([context.go:133](file:///tmp/graphtyn-benchmark-go-chi/context.go#L133)).\n",
+      "duration_seconds": 14.538401124,
+      "usage": {
+        "input_tokens": 33780,
+        "output_tokens": 2240,
+        "thinking_tokens": 1223,
+        "cache_read_tokens": 0,
+        "total_tokens": 36020
+      },
+      "events": 17,
+      "returncode": 0,
+      "stderr": "",
+      "task_id": "go-chi-url-params",
+      "repository": "go-chi",
+      "variant": "graphtyn",
+      "quality_score": 1.0,
+      "fact_checks": [
+        {
+          "id": "storage",
+          "matched": true,
+          "patterns": [
+            "RouteParams",
+            "URLParams"
+          ]
+        },
+        {
+          "id": "capture",
+          "matched": true,
+          "patterns": [
+            "FindRoute",
+            "Values"
+          ]
+        },
+        {
+          "id": "api",
+          "matched": true,
+          "patterns": [
+            "URLParam",
+            "RouteContext"
+          ]
+        },
+        {
+          "id": "source",
+          "matched": true,
+          "patterns": [
+            "context.go",
+            "tree.go"
+          ]
+        }
+      ],
+      "wall_seconds": 17.153
+    }
+  ]
+}
