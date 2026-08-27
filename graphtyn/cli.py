@@ -34,6 +34,7 @@ from .core.answer_validation import validate_answer
 from .core.ambiguity_review import ambiguity_queue, apply_decisions, save_decision
 from .core.change_report import render_change_report
 from .mcp_server import context_bundle, run_mcp_server
+from .core.console import configure_utf8_stdio
 
 def bfs_path(graph: dict, start_sym: str, end_sym: str):
     nodes = {n['id']: n for n in graph.get('nodes', [])}
@@ -67,6 +68,7 @@ def bfs_path(graph: dict, start_sym: str, end_sym: str):
     return None
 
 def main():
+    configure_utf8_stdio()
     parser = argparse.ArgumentParser(
         prog="graphtyn",
         description="Graphtyn — Zero-Token AST Deterministic + Hybrid RAG Graph for AI Coding Agents"
@@ -79,6 +81,14 @@ def main():
     setup_p.add_argument("--agent", action="append", default=[])
     setup_p.add_argument("--apply", action="store_true")
     setup_p.add_argument("--no-token", action="store_true")
+    setup_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="intent")
+    onboard_p = subparsers.add_parser("onboard", help="Configura agentes, índice, MCP y dashboard en una sola orden")
+    onboard_p.add_argument("--path", default=".")
+    onboard_p.add_argument("--agent", action="append", default=[])
+    onboard_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="full")
+    onboard_p.add_argument("--start-dashboard", action="store_true")
+    onboard_p.add_argument("--watch", action="store_true")
+    onboard_p.add_argument("--no-token", action="store_true")
     adapter_p = subparsers.add_parser("adapter", help="Gestiona adaptadores de historiales")
     adapter_sub = adapter_p.add_subparsers(dest="adapter_action", required=True)
     adapter_sub.add_parser("list")
@@ -406,6 +416,7 @@ def main():
     install_p = subparsers.add_parser("agent-install", help="Instala instrucciones Graphtyn para asistentes")
     install_p.add_argument("platform", choices=["all", "codex", "opencode", "openclaw", "hermes", "claude", "cursor", "gemini", "antigravity", "copilot"])
     install_p.add_argument("--path", default=".")
+    install_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="intent")
 
     ci_install_p = subparsers.add_parser("ci-install", help="Instala check de impacto para GitHub o GitLab")
     ci_install_p.add_argument("platform", choices=["github", "gitlab"])
@@ -454,9 +465,37 @@ def main():
             agents = args.agent or sorted({row["provider"] for row in plan["sources"]
                                             if row["provider"] in TARGETS})
             print(json.dumps(apply_setup(root, agents=agents, sources=plan["sources"],
-                                         create_token=not args.no_token), ensure_ascii=False, indent=2))
+                                         create_token=not args.no_token,
+                                         tool_profile=args.tool_profile), ensure_ascii=False, indent=2))
         else:
             print(json.dumps({**plan, "dry_run": True, "message": "Repita con --apply"}, ensure_ascii=False, indent=2))
+    elif args.command == "onboard":
+        from .core.deployment import (DASHBOARD_URL, apply_setup, build_local_index,
+            default_service_output, detect_environment, initialize_project,
+            manage_user_service, native_service_kind, service_artifact)
+        plan = detect_environment(root)
+        from .core.agent_installer import TARGETS
+        agents = args.agent or sorted({row["provider"] for row in plan["sources"]
+                                       if row["provider"] in TARGETS})
+        initialized = initialize_project(root)
+        configured = apply_setup(root, agents=agents, sources=plan["sources"],
+                                 create_token=not args.no_token, tool_profile=args.tool_profile)
+        indexed = build_local_index(root)
+        service = None
+        if args.start_dashboard:
+            kind = native_service_kind()
+            artifact = service_artifact(root, kind=kind, output=default_service_output(kind),
+                                        watch=args.watch)
+            service = manage_user_service("enable", kind=kind,
+                unit=(artifact.name if kind == "systemd" else None), artifact=artifact)
+        result = {"ok": bool(indexed["nodes"]) and (service is None or service["ok"]),
+                  "project": str(root), "agents": agents, "tool_profile": args.tool_profile,
+                  "initialized": initialized, "setup": configured,
+                  "index": {key: indexed[key] for key in ("ok", "nodes", "links", "index")},
+                  "dashboard": DASHBOARD_URL, "service": service}
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if not result["ok"]:
+            raise SystemExit(1)
     elif args.command == "adapter":
         from .core.adapters import list_adapters, install_adapter, remove_adapter, validate_manifest
         if args.adapter_action == "list": result = {"ok": True, "adapters": list_adapters()}
@@ -500,23 +539,11 @@ def main():
         else: result = restore_memory(root, Path(args.backup), apply=args.apply)
         print(json.dumps(result, ensure_ascii=False, indent=2))
     elif args.command == "init":
-        dot_dir = root / ".graphtyn"
-        dot_dir.mkdir(exist_ok=True)
-        config = {"version": "0.6.0", "name": root.name}
-        (dot_dir / "graphtyn.json").write_text(json.dumps(config, indent=2))
+        from .core.deployment import initialize_project
+        initialized = initialize_project(root)
         print(f"✓ Inicializado .graphtyn/ en {root}")
-        gi = root / ".gitignore"
-        try:
-            if gi.exists():
-                content = gi.read_text(encoding="utf-8")
-                if ".graphtyn/" not in content.splitlines():
-                    gi.write_text(content + ("" if content.endswith("\n") else "\n") + ".graphtyn/\n", encoding="utf-8")
-                    print("✓ .graphtyn/ agregado a .gitignore")
-            else:
-                gi.write_text(".graphtyn/\n", encoding="utf-8")
-                print("✓ .gitignore creado con .graphtyn/")
-        except Exception:
-            pass
+        if initialized["gitignore_added"]:
+            print("✓ .graphtyn/ agregado a .gitignore")
 
     elif args.command == "reindex":
         profiles = {"fast": "ast_pure", "balanced": "ast_local_llm", "deep": "ast_cloud", "verified": "ast_cloud"}
@@ -534,9 +561,9 @@ def main():
                     extra = f" · {res.get('changed_files', 0)} archivos cambiados · {res.get('enriched_files', 0)} archivos con contexto"
                 print(f"✓ Reindexado ({args.engine}, modo {args.mode or mode}){extra}: {res.get('nodes')} nodos, {res.get('links')} conectores.")
         except Exception:
-            ast_p = ASTParser()
-            graph = ast_p.scan_directory(root)
-            print(f"✓ Reindexado AST local completado ({args.mode or 'fast'}): {len(graph['nodes'])} nodos, {len(graph['links'])} conectores.")
+            from .core.deployment import build_local_index
+            indexed = build_local_index(root)
+            print(f"✓ Reindexado AST local completado ({args.mode or 'fast'}): {indexed['nodes']} nodos, {indexed['links']} conectores.")
         if args.mode == "verified":
             print(json.dumps(verify_python_edits(root), ensure_ascii=False))
 
@@ -952,8 +979,9 @@ def main():
             print(json.dumps(result, ensure_ascii=False, indent=2))
 
     elif args.command == "agent-install":
-        files = install_agent(root, args.platform)
-        print(json.dumps({"ok": True, "platform": args.platform, "files": files}, ensure_ascii=False, indent=2))
+        files = install_agent(root, args.platform, tool_profile=args.tool_profile)
+        print(json.dumps({"ok": True, "platform": args.platform,
+                          "tool_profile": args.tool_profile, "files": files}, ensure_ascii=False, indent=2))
 
     elif args.command == "ci-install":
         output = install_ci(root, args.platform, args.max_risk)

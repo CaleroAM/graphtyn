@@ -1,6 +1,6 @@
 # 🌌 Graphtyn
 
-[![Release](https://img.shields.io/badge/release-0.6.0-blue.svg)](docs/CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-0.6.1-blue.svg)](docs/CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-10b981.svg)](https://modelcontextprotocol.io/)
@@ -10,7 +10,7 @@ contexto compacto a agentes mediante MCP. También conserva memoria semántica
 compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
 estructurales.
 
-> Versión estable `0.6.0`, orientada a uso local y single-user. TLS, SSO y
+> Versión estable `0.6.1`, orientada a uso local y single-user. TLS, SSO y
 > aislamiento multi-tenant no forman parte de esta versión. Graphtyn aún no está
 > publicado en PyPI.
 
@@ -62,7 +62,7 @@ Graphtyn aún no está publicado en PyPI. Desde un checkout del repositorio:
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[treesitter]'
-graphtyn setup --path . --apply
+graphtyn onboard --path . --agent antigravity --tool-profile full
 graphtyn serve --path .
 ```
 
@@ -82,7 +82,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\install.ps1 -ProjectPath "C:\ruta\al\proyecto"
 ```
 
-El instalador es por usuario, configura Graphtyn, registra el dashboard y abre
+El instalador es por usuario, crea el primer índice, configura Graphtyn,
+registra el dashboard y abre
 `http://127.0.0.1:9210`. Consulte instalación, Docker, VPS y desinstalación en
 [la guía de operación](docs/ARCHITECTURE.md#empaquetado-despliegue-y-entrega).
 

@@ -80,7 +80,7 @@ class ProjectWatcher:
         for path in self._eligible_files():
             try:
                 stat = path.stat()
-                rel = str(path.relative_to(self.root))
+                rel = path.relative_to(self.root).as_posix()
                 previous = self._manifest.get(rel, {})
                 if previous.get("size") == stat.st_size and previous.get("mtime_ns") == stat.st_mtime_ns:
                     digest = previous.get("sha256", "")

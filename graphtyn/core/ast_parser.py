@@ -32,7 +32,7 @@ class ASTParser:
     """
 
     def parse_python_file(self, file_path: Path, root_dir: Path) -> Dict[str, Any]:
-        rel_path = str(file_path.relative_to(root_dir))
+        rel_path = file_path.relative_to(root_dir).as_posix()
         symbols = []
         calls = []
         imports = []
@@ -255,10 +255,15 @@ class ASTParser:
             try:
                 import subprocess
                 res = subprocess.run(
-                    ["git", "ls-files"], cwd=root_dir, capture_output=True, text=True, timeout=30
+                    ["git", "ls-files", "-z"], cwd=root_dir, capture_output=True, timeout=30
                 )
                 if res.returncode == 0:
-                    tracked_files = set(res.stdout.splitlines())
+                    # NUL-delimited raw bytes avoid core.quotePath escaping
+                    # Unicode names such as "Código" before comparison.
+                    tracked_files = {
+                        raw.decode("utf-8", errors="surrogateescape").replace("\\", "/")
+                        for raw in res.stdout.split(b"\0") if raw
+                    }
             except Exception:
                 tracked_files = None
 
@@ -281,7 +286,7 @@ class ASTParser:
             if ext not in VALID_EXTS:
                 continue
 
-            rel_file = str(path.relative_to(root_dir))
+            rel_file = path.relative_to(root_dir).as_posix()
             if tracked_files is not None and rel_file not in tracked_files:
                 continue
             f_id = f"file:{rel_file}"
@@ -289,7 +294,7 @@ class ASTParser:
             # Parent folder node
             try:
                 parent_dir = path.parent.relative_to(root_dir)
-                p_id = f"dir:{parent_dir}" if str(parent_dir) != "." else "dir:root"
+                p_id = f"dir:{parent_dir.as_posix()}" if str(parent_dir) != "." else "dir:root"
                 p_name = parent_dir.name if str(parent_dir) != "." else root_dir.name
             except Exception:
                 p_id = "dir:root"
@@ -330,7 +335,7 @@ class ASTParser:
         # nearest ancestor definition; files without one use Assembly-CSharp.
         asmdefs: Dict[str, Dict[str, Any]] = {}
         for asm_path in root_dir.rglob("*.asmdef"):
-            rel_asm = str(asm_path.relative_to(root_dir))
+            rel_asm = asm_path.relative_to(root_dir).as_posix()
             if tracked_files is not None and rel_asm not in tracked_files:
                 continue
             try:
@@ -798,7 +803,7 @@ class ASTParser:
 
         if cache_path:
             try:
-                active = set(file_contents) | {str(p.relative_to(root_dir)) for p, _, _ in csharp_files}
+                active = set(file_contents) | {p.relative_to(root_dir).as_posix() for p, _, _ in csharp_files}
                 structural_cache["files"] = {
                     key: value for key, value in structural_cache.get("files", {}).items() if key in active
                 }

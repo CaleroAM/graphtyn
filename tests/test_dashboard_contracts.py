@@ -221,7 +221,7 @@ def test_first_run_welcome_explains_dashboard_address_and_is_persistent():
     assert 'id="welcome-dashboard-url"' in html
     assert "http://127.0.0.1:9210" in html
     assert "Este mensaje sólo aparece la primera vez" in html
-    assert "graphtyn.welcome.0.6.0" in dashboard
+    assert "graphtyn.welcome.0.6.1" in dashboard
     assert "window.location.origin" in dashboard
     assert "localStorage.setItem" in dashboard
 

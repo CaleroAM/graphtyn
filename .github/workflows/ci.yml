@@ -69,6 +69,23 @@ jobs:
           ./install.ps1 -PackageSource $wheel -ProjectPath . -SkipService -SkipSetup -NoOpen
           $binDir = (py -3 -m pipx environment --value PIPX_BIN_DIR | Select-Object -Last 1).Trim()
           & (Join-Path $binDir "graphtyn.exe") --version
+      - name: Exercise Windows onboarding, UTF-8 and nested path indexing
+        shell: pwsh
+        run: |
+          $fixture = Join-Path $env:RUNNER_TEMP "graphtyn-unity-fixture"
+          New-Item -ItemType Directory -Force (Join-Path $fixture "Assets\Código") | Out-Null
+          Set-Content -Encoding UTF8 (Join-Path $fixture "Assets\Código\GameManager.cs") 'public class GameManager { public void Iniciar() {} }'
+          git -C $fixture init
+          git -C $fixture add .
+          git -C $fixture commit -m "fixture"
+          $binDir = (py -3 -m pipx environment --value PIPX_BIN_DIR | Select-Object -Last 1).Trim()
+          $exe = Join-Path $binDir "graphtyn.exe"
+          $env:PYTHONIOENCODING = "cp1252"
+          $result = (& $exe onboard --path $fixture --agent antigravity --tool-profile full --no-token | ConvertFrom-Json)
+          if (-not $result.ok -or $result.index.nodes -lt 1) { throw "El onboarding no produjo un índice útil en Windows." }
+          if (-not (Test-Path (Join-Path $fixture ".agents\plugins\graphtyn\mcp_config.json"))) { throw "Falta la integración MCP de Antigravity." }
+          $index = Get-Content $result.index.index -Raw | ConvertFrom-Json
+          if (($index.nodes | ConvertTo-Json -Depth 8) -match '\\\\') { throw "El índice contiene separadores Windows no normalizados." }
       - name: Start and query the dashboard on Windows
         shell: pwsh
         run: |

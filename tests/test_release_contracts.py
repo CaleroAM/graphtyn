@@ -22,7 +22,7 @@ def test_public_versions_are_synchronized_and_stable():
 def test_release_documents_and_workflows_exist():
     required = ["LICENSE", "docs/CHANGELOG.md", "docs/SECURITY.md", "docs/CONTRIBUTING.md",
                 "docs/release-checklist.md", ".github/workflows/ci.yml",
-                ".github/workflows/release.yml", "docs/release-validation-0.6.0.md",
+                ".github/workflows/release.yml", "docs/release-validation-0.6.1.md",
                 "install.ps1", "uninstall.ps1"]
     assert all((ROOT / item).is_file() for item in required)
 
@@ -41,7 +41,8 @@ def test_ci_has_required_release_gates():
         assert version in ci
     for gate in ("python -m pytest -q", "python -m build", "smoke_frontend.py",
                  "test_security_leaks.py", "pip_audit", "docker build", "windows-latest",
-                 "./install.ps1", "Invoke-RestMethod"):
+                 "./install.ps1", "Invoke-RestMethod", "graphtyn-unity-fixture",
+                 "onboard --path"):
         assert gate in ci
 
 
@@ -50,7 +51,8 @@ def test_windows_installer_is_user_scoped_and_release_bundled():
     uninstaller = (ROOT / "uninstall.ps1").read_text(encoding="utf-8")
     release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
     for contract in ("Python 3.10", "pip install --user --upgrade pipx", "pipx install --force",
-                     "service install --kind windows", "graphtyn-*.whl"):
+                     "service install --kind windows", "graphtyn-*.whl", '"onboard"',
+                     '"--tool-profile"'):
         assert contract in installer
     assert "Read-Host" in uninstaller and "ELIMINAR" in uninstaller
     assert "cp install.ps1 uninstall.ps1 dist/" in release
@@ -66,7 +68,7 @@ def test_architecture_is_canonical_and_readme_has_compact_map():
     architecture = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for concept in ("FastAPI", "Starlette", "Uvicorn", "Dos grafos", "SQLite",
-                    "Empaquetado, despliegue y entrega", "0.6.0"):
+                    "Empaquetado, despliegue y entrega", "0.6.1"):
         assert concept in architecture
     assert architecture.count("```mermaid") >= 5
     assert "## Arquitectura en un minuto" in readme

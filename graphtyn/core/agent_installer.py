@@ -22,23 +22,53 @@ TARGETS = {
     "copilot": Path(".github/copilot-instructions.md"),
 }
 
+ANTIGRAVITY_SKILL = """---
+name: graphtyn
+description: Use Graphtyn before broad repository exploration to obtain compact, evidence-backed context, impact and shared project memory.
+---
 
-def install_agent(root: Path, platform: str) -> list[str]:
-    selected = list(TARGETS) if platform == "all" else [platform]
+""" + POLICY
+
+
+def install_agent(root: Path, platform: str | list[str], tool_profile: str = "intent") -> list[str]:
+    if tool_profile not in {"intent", "memory", "full"}:
+        raise ValueError("tool_profile debe ser intent, memory o full")
+    requested = [platform] if isinstance(platform, str) else list(platform)
+    selected = list(TARGETS) if requested == ["all"] else list(dict.fromkeys(requested))
     unknown = set(selected) - set(TARGETS)
     if unknown:
         raise ValueError(f"Plataforma desconocida: {', '.join(sorted(unknown))}")
-    written = []
-    for name in selected:
-        target = root / TARGETS[name]
+    written: list[str] = []
+    for relative in dict.fromkeys(TARGETS[name] for name in selected):
+        target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         current = target.read_text(encoding="utf-8") if target.exists() else ""
         if "# Graphtyn" not in current:
             target.write_text(current + ("\n" if current and not current.endswith("\n") else "") + POLICY, encoding="utf-8")
         written.append(str(target))
+
+    if "antigravity" in selected:
+        skill = root / ".agents" / "skills" / "graphtyn" / "SKILL.md"
+        plugin_dir = root / ".agents" / "plugins" / "graphtyn"
+        plugin = plugin_dir / "plugin.json"
+        mcp_config = plugin_dir / "mcp_config.json"
+        skill.parent.mkdir(parents=True, exist_ok=True)
+        plugin_dir.mkdir(parents=True, exist_ok=True)
+        skill.write_text(ANTIGRAVITY_SKILL, encoding="utf-8")
+        plugin.write_text(json.dumps({
+            "name": "graphtyn",
+            "description": "Graphtyn code graph, impact analysis and MCP server",
+        }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        mcp_config.write_text(json.dumps({"mcpServers": {"graphtyn": {
+            "command": "graphtyn", "args": ["mcp", "--tool-profile", tool_profile]
+        }}}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        written.extend(map(str, (skill, plugin, mcp_config)))
+
+    written = list(dict.fromkeys(written))
     manifest = root / ".graphtyn" / "agent-install.json"
     manifest.parent.mkdir(exist_ok=True)
-    manifest.write_text(json.dumps({"platforms": selected, "files": written}, indent=2), encoding="utf-8")
+    manifest.write_text(json.dumps({"platforms": selected, "tool_profile": tool_profile,
+                                    "files": written}, indent=2), encoding="utf-8")
     return written
 
 
@@ -54,15 +84,15 @@ jobs:
   impact:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: pip install .
       - run: graphtyn ci-check --base origin/${{{{ github.base_ref }}}} --max-risk {max_risk} --output graphtyn-pr.md --path .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: graphtyn-pr-impact

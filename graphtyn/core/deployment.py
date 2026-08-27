@@ -15,6 +15,46 @@ from .storage import data_home, secure_private_file
 DASHBOARD_URL = "http://127.0.0.1:9210"
 
 
+def initialize_project(project: Path) -> dict[str, Any]:
+    """Create project metadata and an idempotent gitignore entry."""
+    project = project.expanduser().resolve()
+    project.mkdir(parents=True, exist_ok=True)
+    dot = project / ".graphtyn"
+    dot.mkdir(exist_ok=True)
+    (dot / "graphtyn.json").write_text(
+        json.dumps({"version": 1, "name": project.name}, indent=2), encoding="utf-8"
+    )
+    gitignore = project / ".gitignore"
+    existing = gitignore.read_text(encoding="utf-8") if gitignore.exists() else ""
+    added = ".graphtyn/" not in existing.splitlines()
+    if added:
+        gitignore.write_text(existing + ("" if not existing or existing.endswith("\n") else "\n")
+                             + ".graphtyn/\n", encoding="utf-8")
+    return {"ok": True, "project": str(project), "metadata": str(dot / "graphtyn.json"),
+            "gitignore": str(gitignore), "gitignore_added": added}
+
+
+def build_local_index(project: Path, *, respect_git: bool = True) -> dict[str, Any]:
+    """Build and persist the deterministic index without requiring the daemon."""
+    from .ast_parser import ASTParser
+    from .storage import project_store_dir
+    project = project.expanduser().resolve()
+    index_dir = project_store_dir(data_home(), project)
+    index_dir.mkdir(parents=True, exist_ok=True)
+    graph = ASTParser().scan_directory(
+        project, respect_git=respect_git, cache_path=index_dir / "structural_cache.json"
+    )
+    graph.setdefault("metadata", {}).update({
+        "indexed_with": "onboarding_ast_pure", "status": "ok",
+        "path": str(project), "respect_git": respect_git,
+    })
+    target, temporary = index_dir / "index.json", index_dir / "index.tmp"
+    temporary.write_text(json.dumps(graph, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.replace(target)
+    return {"ok": True, "nodes": len(graph.get("nodes", [])),
+            "links": len(graph.get("links", [])), "index": str(target), "graph": graph}
+
+
 def native_service_kind(system: str | None = None) -> str:
     current = (system or platform.system()).casefold()
     if current == "windows":
@@ -40,12 +80,12 @@ def detect_environment(project: Path) -> dict[str, Any]:
             "warnings": ([] if project.exists() else ["project_path_missing"])}
 
 def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str]],
-                create_token: bool = True) -> dict[str, Any]:
+                create_token: bool = True, tool_profile: str = "intent") -> dict[str, Any]:
     from .agent_installer import install_agent
     project = project.expanduser().resolve(); project.mkdir(parents=True, exist_ok=True)
     dot = project / ".graphtyn"; dot.mkdir(exist_ok=True)
     (dot / "graphtyn.json").write_text(json.dumps({"version": 1, "name": project.name}, indent=2), encoding="utf-8")
-    installed = {agent: install_agent(project, agent) for agent in agents}
+    installed = install_agent(project, agents, tool_profile=tool_profile) if agents else []
     configured = [save_source(row["provider"], row["source"], label="setup discovery") for row in sources]
     token_file = None
     if create_token:
@@ -53,7 +93,11 @@ def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str
         token_file.parent.mkdir(parents=True, exist_ok=True)
         token_file.write_text(json.dumps({secrets.token_urlsafe(32): {"role": "admin", "projects": [str(project)]}}, indent=2), encoding="utf-8")
         secure_private_file(token_file)
-    return {"ok": True, "project": str(project), "agents": installed, "sources": configured,
+    # Preserve the 0.6.0 `agents` mapping while exposing the deduplicated list
+    # explicitly for newer clients.
+    agent_files = {agent: installed for agent in agents}
+    return {"ok": True, "project": str(project), "agents": agent_files,
+            "platforms": agents, "files": installed, "sources": configured,
             "token_file": str(token_file) if token_file else None}
 
 def service_artifact(project: Path, *, kind: str, output: Path, interval: float = 10,

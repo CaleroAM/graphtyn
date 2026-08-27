@@ -2,6 +2,9 @@ param(
     [string]$ProjectPath = (Get-Location).Path,
     [string]$Version = "",
     [string]$PackageSource = "graphtyn",
+    [string[]]$Agent = @(),
+    [ValidateSet("intent", "memory", "full")]
+    [string]$ToolProfile = "full",
     [switch]$SkipService,
     [switch]$SkipSetup,
     [switch]$NoOpen
@@ -58,9 +61,11 @@ if (-not (Test-Path $graphtyn)) { throw "pipx terminó, pero no se encontró $gr
 $project = [System.IO.Path]::GetFullPath($ProjectPath)
 if (-not (Test-Path $project -PathType Container)) { throw "El proyecto no existe: $project" }
 if (-not $SkipSetup) {
-    Write-Host "Configurando el proyecto..." -ForegroundColor Cyan
-    & $graphtyn setup --path $project --apply
-    if ($LASTEXITCODE -ne 0) { throw "No se pudo configurar el proyecto." }
+    Write-Host "Configurando e indexando el proyecto..." -ForegroundColor Cyan
+    $onboardArgs = @("onboard", "--path", $project, "--tool-profile", $ToolProfile)
+    foreach ($agentName in $Agent) { $onboardArgs += @("--agent", $agentName) }
+    & $graphtyn @onboardArgs
+    if ($LASTEXITCODE -ne 0) { throw "No se pudo configurar e indexar el proyecto." }
 }
 if (-not $SkipService) {
     Write-Host "Registrando el dashboard al iniciar sesión..." -ForegroundColor Cyan

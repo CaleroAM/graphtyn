@@ -149,7 +149,7 @@ def main():
             assert "primera vez" in page.locator("#modal-welcome").inner_text().lower()
             page.click("#welcome-start")
             assert page.locator("#modal-welcome").evaluate("el => !el.classList.contains('show')")
-            assert page.evaluate("localStorage.getItem('graphtyn.welcome.0.6.0')") == "seen"
+            assert page.evaluate("localStorage.getItem('graphtyn.welcome.0.6.1')") == "seen"
             page.wait_for_timeout(2500)
             page.evaluate("path => selectProject(path)", str(proj))
             page.wait_for_timeout(1500)
