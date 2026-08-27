@@ -90,7 +90,7 @@ import { state } from './js/state.js';
 
     
 // ── Boot ──────────────────────────────────────────────────────────────────
-    const WELCOME_KEY = 'graphtyn.welcome.0.6.0';
+    const WELCOME_KEY = 'graphtyn.welcome.0.6.1';
     function showWelcomeOnce() {
       try {
         if (localStorage.getItem(WELCOME_KEY)) return;

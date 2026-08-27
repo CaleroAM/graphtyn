@@ -62,7 +62,8 @@ def default_sources() -> dict[str, list[Path]]:
         "openclaw": [home / ".openclaw" / "agents"],
         "hermes": [home / ".hermes", home / ".config" / "hermes"],
         "codex": [home / ".codex" / "sessions"],
-        "antigravity": [home / ".agy", home / ".config" / "antigravity"],
+        "antigravity": [home / ".agy", home / ".config" / "antigravity",
+                        home / ".gemini" / "antigravity-cli" / "brain"],
         "opencode": [home / ".local" / "share" / "opencode"],
         "claude": [home / ".claude" / "projects"],
     }

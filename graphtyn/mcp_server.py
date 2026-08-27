@@ -12,6 +12,7 @@ from .core.history import HistoryTracker
 from .core.shared_memory import SharedMemoryStore
 from .core.storage import data_home, project_store_dir
 from .core.source_evidence import attach_source_evidence
+from .core.console import configure_utf8_stdio
 
 
 def _mcp_text(req_id: Any, result: Any) -> Dict[str, Any]:
@@ -479,6 +480,7 @@ def blast_radius(graph: dict, symbol: str, depth: int = 2) -> dict:
     }
 
 def run_mcp_server(workspace: Path, tool_profile: str = "full"):
+    configure_utf8_stdio()
     """
     Stdio Model Context Protocol (MCP) Server for Graphtyn.
     Provides tools for AI agents: graph_neighborhood, graph_blast_radius, graph_search_concepts, graph_register_project.
@@ -499,7 +501,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.6.0"}
+                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.6.1"}
                 }
             }
         elif method == "tools/list":

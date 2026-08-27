@@ -1,7 +1,7 @@
 # Arquitectura de Graphtyn
 
 Este documento es la fuente canónica de la arquitectura vigente de Graphtyn
-`0.6.0`. Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
+`0.6.1`. Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
 mantienen manualmente aquí.
 
 ## Mapa del sistema

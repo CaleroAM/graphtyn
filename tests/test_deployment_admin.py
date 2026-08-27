@@ -28,6 +28,9 @@ def test_setup_is_previewable_and_applies_without_source_edits(tmp_path, monkeyp
     assert detect_environment(project)["project"] == str(project)
     result = apply_setup(project, agents=["openclaw", "hermes"], sources=[], create_token=True)
     assert result["ok"] and (project / "AGENTS.md").exists()
+    assert set(result["agents"]) == {"openclaw", "hermes"}
+    assert result["platforms"] == ["openclaw", "hermes"]
+    assert len(result["files"]) == len(set(result["files"]))
     if os.name != "nt": assert Path(result["token_file"]).stat().st_mode & 0o777 == 0o600
 
 

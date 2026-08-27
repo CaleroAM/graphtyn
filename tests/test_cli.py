@@ -251,6 +251,50 @@ def test_agent_install_antigravity_uses_project_gemini_policy(git_repo, tmp_path
     assert "without reopening files" in policy
     manifest = json.loads((git_repo / ".graphtyn" / "agent-install.json").read_text())
     assert manifest["platforms"] == ["antigravity"]
+    assert manifest["tool_profile"] == "intent"
+    mcp = json.loads((git_repo / ".agents/plugins/graphtyn/mcp_config.json").read_text())
+    assert mcp["mcpServers"]["graphtyn"]["args"][-1] == "intent"
+    assert (git_repo / ".agents/skills/graphtyn/SKILL.md").is_file()
+
+
+def test_onboard_builds_index_and_full_antigravity_integration(git_repo, tmp_path):
+    home = tmp_path / "home-onboard"
+    home.mkdir()
+    result = _run_cli(["onboard", "--agent", "antigravity", "--tool-profile", "full",
+                       "--no-token", "--path", str(git_repo)], git_repo, home)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["ok"] is True
+    assert data["index"]["nodes"] >= 1
+    assert Path(data["index"]["index"]).is_file()
+    assert data["dashboard"] == "http://127.0.0.1:9210"
+    mcp = json.loads((git_repo / ".agents/plugins/graphtyn/mcp_config.json").read_text())
+    assert mcp["mcpServers"]["graphtyn"]["args"] == ["mcp", "--tool-profile", "full"]
+
+
+def test_onboard_indexes_unicode_tracked_paths(git_repo, tmp_path):
+    nested = git_repo / "Assets" / "Código"
+    nested.mkdir(parents=True)
+    (nested / "GameManager.cs").write_text(
+        "public class GameManager { public void Iniciar() {} }", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=git_repo, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "unicode fixture"], cwd=git_repo, check=True)
+    home = tmp_path / "home-unicode"
+    home.mkdir()
+    result = _run_cli(["onboard", "--no-token", "--path", str(git_repo)], git_repo, home)
+    assert result.returncode == 0, result.stderr
+    graph = json.loads(Path(json.loads(result.stdout)["index"]["index"]).read_text(encoding="utf-8"))
+    assert any(node["id"] == "file:Assets/Código/GameManager.cs" for node in graph["nodes"])
+
+
+def test_agent_install_all_deduplicates_shared_instruction_files(git_repo, tmp_path):
+    home = tmp_path / "home-all-agents"
+    home.mkdir()
+    result = _run_cli(["agent-install", "all", "--path", str(git_repo)], git_repo, home)
+    assert result.returncode == 0, result.stderr
+    files = json.loads(result.stdout)["files"]
+    assert len(files) == len(set(files))
+    assert files.count(str(git_repo / "AGENTS.md")) == 1
 
 
 def test_agent_policies_enforce_context_stop_contract():
