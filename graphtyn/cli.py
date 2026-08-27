@@ -88,14 +88,15 @@ def main():
     service_p = subparsers.add_parser("service", help="Instala y administra el dashboard persistente")
     service_sub = service_p.add_subparsers(dest="service_action", required=True)
     service_install = service_sub.add_parser("install")
-    service_install.add_argument("--kind", choices=["systemd", "compose"], default="systemd")
+    service_install.add_argument("--kind", choices=["auto", "systemd", "windows", "compose"], default="auto")
     service_install.add_argument("--output", default=None); service_install.add_argument("--interval", type=float, default=10)
     service_install.add_argument("--path", default=".")
-    service_install.add_argument("--enable", action="store_true", help="Activa el servicio systemd ahora y al iniciar sesión")
+    service_install.add_argument("--enable", action="store_true", help="Activa el servicio nativo ahora y al iniciar sesión")
     service_install.add_argument("--watch", action="store_true", help="Activa reindexación automática (puede usar CPU en repositorios grandes)")
     for service_action in ("start", "stop", "restart", "status", "uninstall"):
         service_command = service_sub.add_parser(service_action)
-        service_command.add_argument("--unit", default="graphtyn-dashboard.service")
+        service_command.add_argument("--kind", choices=["auto", "systemd", "windows"], default="auto")
+        service_command.add_argument("--unit", default=None, help="Unidad systemd o nombre de tarea de Windows")
     backup_p = subparsers.add_parser("backup", help="Crea o verifica backup de memoria")
     backup_p.add_argument("--output", required=True); backup_p.add_argument("--path", default=".")
     verify_backup_p = subparsers.add_parser("backup-verify"); verify_backup_p.add_argument("backup")
@@ -465,22 +466,24 @@ def main():
         else: result = {"ok": True, "removed": remove_adapter(args.name)}
         print(json.dumps(result, ensure_ascii=False, indent=2))
     elif args.command == "service":
-        from .core.deployment import default_service_output, manage_user_service, service_artifact
+        from .core.deployment import default_service_output, manage_user_service, native_service_kind, service_artifact
         if args.service_action == "install":
-            output_path = Path(args.output).expanduser() if args.output else default_service_output(args.kind)
-            output = service_artifact(root, kind=args.kind, output=output_path, interval=args.interval,
+            resolved_kind = native_service_kind() if args.kind == "auto" else args.kind
+            output_path = Path(args.output).expanduser() if args.output else default_service_output(resolved_kind)
+            output = service_artifact(root, kind=resolved_kind, output=output_path, interval=args.interval,
                                       watch=args.watch)
-            result = {"ok": True, "kind": args.kind, "output": str(output),
+            result = {"ok": True, "kind": resolved_kind, "output": str(output),
                       "dashboard": "http://127.0.0.1:9210"}
             if args.enable:
-                if args.kind != "systemd":
-                    parser.error("--enable sólo aplica a systemd; para Compose use docker compose up -d")
-                result["activation"] = manage_user_service("enable", unit=output.name)
+                if resolved_kind == "compose":
+                    parser.error("--enable no aplica a Compose; use docker compose up -d")
+                result["activation"] = manage_user_service("enable", kind=resolved_kind,
+                    unit=(output.name if resolved_kind == "systemd" else None), artifact=output)
                 result["ok"] = result["activation"]["ok"]
             print(json.dumps(result, indent=2))
             if not result["ok"]: raise SystemExit(1)
         else:
-            result = manage_user_service(args.service_action, unit=args.unit)
+            result = manage_user_service(args.service_action, unit=args.unit, kind=args.kind)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             if not result["ok"]: raise SystemExit(1)
     elif args.command == "token":

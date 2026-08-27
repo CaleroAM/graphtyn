@@ -147,6 +147,20 @@
 
     #graph-container { position:absolute; top:0; left:240px; right:260px; bottom:0; }
 
+    .changes-view {
+      height:100%; overflow-y:auto; padding:96px 26px 32px;
+      max-width:920px; margin:0 auto;
+    }
+    .changes-summary {
+      display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px;
+      min-height:24px;
+    }
+    .changes-empty {
+      margin:0 0 18px; padding:12px 14px; border:1px solid rgba(16,185,129,.28);
+      border-radius:8px; background:rgba(16,185,129,.08); color:#a7f3d0;
+      font-size:12px; line-height:1.5;
+    }
+
 
     /* Collapsible sidebars */
     header, aside.left-aside, aside.right-aside, #graph-container, .float-actions, #blast-panel {

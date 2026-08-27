@@ -23,6 +23,7 @@ jobs:
       - name: Verify tag and package versions
         run: python -c "import pathlib,tomllib; expected='v'+tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version']; assert expected == '${{ github.ref_name }}', (expected, '${{ github.ref_name }}')"
       - run: python -m build
+      - run: cp install.ps1 uninstall.ps1 dist/
       - run: sha256sum dist/* > dist/SHA256SUMS
       - uses: actions/attest-build-provenance@v2
         with:

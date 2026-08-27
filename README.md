@@ -745,14 +745,25 @@ saneador antes de llegar a SQLite.
 
 ### Operación, seguridad y recuperación
 
+El CLI y el dashboard son compatibles con Python 3.10–3.13 en Linux y Windows.
+`--kind auto` selecciona `systemd --user` en distribuciones Linux que lo ofrecen
+(Ubuntu, Arch Linux, CachyOS y derivadas) o el Programador de tareas en Windows.
+No requiere `sudo` ni una cuenta administradora. En Linux sin systemd, Windows
+Server sin sesión interactiva o despliegues homogéneos, use Docker Compose o
+ejecute `graphtyn serve` bajo el supervisor disponible en el sistema.
+
 ```bash
-# Dashboard persistente del usuario: instala, inicia ahora y arranca con la sesión
-graphtyn service install --kind systemd --path . --enable
+# Linux/Windows: detecta el gestor, inicia ahora y arranca con la sesión
+graphtyn service install --kind auto --path . --enable
 graphtyn service status
 graphtyn service restart
 graphtyn service stop
 graphtyn service start
 graphtyn service uninstall
+
+# Selección explícita, útil para automatización
+graphtyn service install --kind systemd --path . --enable  # Linux
+graphtyn service install --kind windows --path . --enable  # PowerShell/CMD
 
 # Alternativa Docker Compose (genera el archivo; después use docker compose up -d)
 graphtyn service install --kind compose --output compose.graphtyn.yml --path .
@@ -776,8 +787,38 @@ Para reindexación automática use `--watch`; su intervalo predeterminado es de
 10 segundos y puede ajustarse con `--interval SEGUNDOS`:
 
 ```bash
-graphtyn service install --kind systemd --path . --enable --watch --interval 10
+graphtyn service install --kind auto --path . --enable --watch --interval 10
 ```
+
+En Windows, Graphtyn genera `%APPDATA%\Graphtyn\graphtyn-dashboard.cmd` y
+registra la tarea de usuario `GraphtynDashboard` con `schtasks`; rutas de proyecto
+con espacios se escriben entre comillas. En Linux genera
+`~/.config/systemd/user/graphtyn-dashboard.service`. En ambos casos escucha sólo
+en `127.0.0.1:9210` de forma predeterminada.
+
+#### Instalación sencilla en Windows
+
+Cada release incluye [`install.ps1`](install.ps1), [`uninstall.ps1`](uninstall.ps1)
+y el wheel de Graphtyn. Descargue `install.ps1` y el archivo `.whl` en la misma
+carpeta, abra PowerShell dentro del proyecto y ejecute:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -ProjectPath .
+```
+
+El script verifica Python 3.10+, instala `pipx` y Graphtyn sólo para el usuario,
+configura el proyecto, registra el dashboard al iniciar sesión y abre
+`http://127.0.0.1:9210`. No solicita privilegios administrativos. Puede fijar una
+versión con `-Version 0.6.0`, omitir el servicio con `-SkipService` o evitar abrir
+el navegador con `-NoOpen`. Mientras el paquete aún no esté publicado, detecta
+automáticamente el wheel descargado junto al script; después podrá instalarlo
+directamente desde PyPI.
+
+No se afirma compatibilidad de Windows sólo por generar un `.cmd`: el workflow
+`windows-latest` construye el wheel, ejecuta `install.ps1` en un entorno limpio,
+invoca `graphtyn --version`, inicia el servidor y exige una respuesta real de
+`/api/projects`. La tarea `ONLOGON` se valida por contrato porque los runners de
+CI no mantienen una sesión interactiva después del job.
 
 El dashboard permite guardar, probar y eliminar fuentes, además de administrar
 alias observados→identidad canónica. Docker Compose exige un token en `.env`, usa

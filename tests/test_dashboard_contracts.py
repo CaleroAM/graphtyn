@@ -241,3 +241,13 @@ def test_memory_dashboard_lists_and_maps_historical_conversations():
     memory = (WEB / "js" / "memory.js").read_text()
     assert "/api/memory/sessions?path=${path}&limit=100" in memory
     assert "item.id.startsWith('ses_ext_') ? 'histórica · '" in memory
+
+
+def test_changes_view_stays_below_header_and_explains_clean_repository():
+    graph = (WEB / "js" / "graph.js").read_text()
+    css = (WEB / "dashboard.css").read_text()
+    assert 'class="changes-view"' in graph
+    assert "padding:96px 26px 32px" in css
+    assert "El repositorio está limpio" in graph
+    assert "SIN CAMBIOS" in graph
+    assert "Number.isFinite(d.impacted_count)" in graph

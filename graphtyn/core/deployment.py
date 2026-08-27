@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import os
+import platform
 import secrets
 import shutil
 import subprocess
@@ -10,6 +11,23 @@ from pathlib import Path
 from typing import Any
 from .history_import import default_sources, save_source
 from .storage import data_home
+
+DASHBOARD_URL = "http://127.0.0.1:9210"
+
+
+def native_service_kind(system: str | None = None) -> str:
+    current = (system or platform.system()).casefold()
+    if current == "windows":
+        return "windows"
+    if current == "linux" and shutil.which("systemctl"):
+        return "systemd"
+    raise RuntimeError("no hay gestor nativo compatible; use --kind compose o graphtyn serve")
+
+
+def _graphtyn_executable() -> str:
+    name = "graphtyn.exe" if platform.system().casefold() == "windows" else "graphtyn"
+    adjacent = Path(sys.executable).absolute().with_name(name)
+    return str(adjacent) if adjacent.is_file() else (shutil.which("graphtyn") or "graphtyn")
 
 def detect_environment(project: Path) -> dict[str, Any]:
     sources = []
@@ -42,35 +60,60 @@ def service_artifact(project: Path, *, kind: str, output: Path, interval: float 
                      watch: bool = False) -> Path:
     project, output = project.resolve(), output.expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
+    if kind == "auto": kind = native_service_kind()
     if kind == "systemd":
         # Do not resolve the interpreter symlink: virtualenv/pipx launchers live
         # beside sys.executable even when it points into Nix/store or /usr.
-        adjacent_cli = Path(sys.executable).absolute().with_name("graphtyn")
-        executable = str(adjacent_cli) if adjacent_cli.is_file() else (shutil.which("graphtyn") or "graphtyn")
+        executable = _graphtyn_executable()
         watch_flag = " --watch" if watch else ""
         content = f"""[Unit]\nDescription=Graphtyn persistent dashboard\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nEnvironment=GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}\nExecStart=\"{executable}\" serve --host 127.0.0.1 --port 9210{watch_flag} --path \"{project}\"\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
+    elif kind == "windows":
+        executable = _graphtyn_executable()
+        watch_flag = " --watch" if watch else ""
+        content = (f'@echo off\r\nsetlocal\r\nset "GRAPHTYN_HOME={data_home()}"\r\n'
+                   f'set "GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}"\r\n'
+                   f'"{executable}" serve --host 127.0.0.1 --port 9210{watch_flag} --path "{project}"\r\n')
     elif kind == "compose":
         content = f"""services:\n  graphtyn:\n    image: graphtyn:latest\n    command: [\"serve\",\"--host\",\"0.0.0.0\",\"--port\",\"9210\",\"--path\",\"/workspace\",\"--watch\"]\n    ports: [\"127.0.0.1:9210:9210\"]\n    volumes:\n      - {project}:/workspace:ro\n      - graphtyn-state:/state\n    environment:\n      GRAPHTYN_HOME: /state\n      GRAPHTYN_MEMORY_TOKENS_FILE: /run/secrets/graphtyn_tokens\n    secrets: [graphtyn_tokens]\n    restart: unless-stopped\nsecrets:\n  graphtyn_tokens:\n    file: ./memory-tokens.json\nvolumes:\n  graphtyn-state:\n"""
-    else: raise ValueError("kind debe ser systemd o compose")
+    else: raise ValueError("kind debe ser auto, systemd, windows o compose")
     output.write_text(content, encoding="utf-8"); return output
 
 
 def default_service_output(kind: str) -> Path:
+    if kind == "auto": kind = native_service_kind()
     if kind == "systemd":
         return Path.home() / ".config" / "systemd" / "user" / "graphtyn-dashboard.service"
     if kind == "compose":
         return Path.cwd() / "compose.graphtyn.yml"
-    raise ValueError("kind debe ser systemd o compose")
+    if kind == "windows":
+        appdata = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming")
+        return appdata / "Graphtyn" / "graphtyn-dashboard.cmd"
+    raise ValueError("kind debe ser auto, systemd, windows o compose")
 
 
-def manage_user_service(action: str, *, unit: str = "graphtyn-dashboard.service",
-                        run=subprocess.run) -> dict[str, Any]:
-    """Manage the generated systemd user unit without requiring root."""
+def manage_user_service(action: str, *, unit: str | None = None, kind: str = "auto",
+                        artifact: Path | None = None, run=subprocess.run) -> dict[str, Any]:
+    """Manage a native per-user service without requiring administrator rights."""
     if action not in {"enable", "start", "stop", "restart", "status", "uninstall"}:
         raise ValueError("acción de servicio inválida")
-    unit_path = Path.home() / ".config" / "systemd" / "user" / unit
+    if kind == "auto": kind = native_service_kind()
+    if kind not in {"systemd", "windows"}:
+        raise ValueError("la administración directa sólo admite systemd o windows")
+    unit = unit or ("GraphtynDashboard" if kind == "windows" else "graphtyn-dashboard.service")
+    unit_path = ((artifact or default_service_output("windows")) if kind == "windows"
+                 else Path.home() / ".config" / "systemd" / "user" / unit)
     commands: list[list[str]] = []
-    if action == "enable":
+    if kind == "windows" and action == "enable":
+        commands = [["schtasks", "/Create", "/TN", unit, "/SC", "ONLOGON", "/TR", f'"{unit_path}"', "/F"],
+                    ["schtasks", "/Run", "/TN", unit]]
+    elif kind == "windows" and action == "uninstall":
+        commands = [["schtasks", "/End", "/TN", unit], ["schtasks", "/Delete", "/TN", unit, "/F"]]
+    elif kind == "windows" and action == "restart":
+        commands = [["schtasks", "/End", "/TN", unit], ["schtasks", "/Run", "/TN", unit]]
+    elif kind == "windows":
+        verb = {"start": "/Run", "stop": "/End", "status": "/Query"}[action]
+        commands = [["schtasks", verb, "/TN", unit]]
+    elif action == "enable":
         commands = [["systemctl", "--user", "daemon-reload"],
                     ["systemctl", "--user", "enable", "--now", unit],
                     ["systemctl", "--user", "restart", unit]]
@@ -85,13 +128,15 @@ def manage_user_service(action: str, *, unit: str = "graphtyn-dashboard.service"
         result = run(command, capture_output=True, text=True, check=False)
         outputs.append({"command": command, "returncode": result.returncode,
                         "stdout": result.stdout.strip(), "stderr": result.stderr.strip()})
-        # `disable` may report an already inactive unit; continue so daemon-reload runs.
-        if result.returncode and not (action == "uninstall" and command[2] == "disable"):
-            return {"ok": False, "action": action, "unit": unit, "steps": outputs}
-        if action == "uninstall" and command[2] == "disable" and unit_path.exists():
+        ignorable_stop = action in {"restart", "uninstall"} and kind == "windows" and command[1] == "/End"
+        ignorable_disable = action == "uninstall" and kind == "systemd" and command[2] == "disable"
+        if result.returncode and not (ignorable_stop or ignorable_disable):
+            return {"ok": False, "action": action, "kind": kind, "unit": unit, "steps": outputs}
+        if action == "uninstall" and ((kind == "systemd" and command[2] == "disable")
+                                      or (kind == "windows" and command[1] == "/Delete")) and unit_path.exists():
             unit_path.unlink()
-    return {"ok": True, "action": action, "unit": unit, "steps": outputs,
-            "dashboard": "http://127.0.0.1:9210"}
+    return {"ok": True, "action": action, "kind": kind, "unit": unit, "steps": outputs,
+            "dashboard": DASHBOARD_URL}
 
 def rotate_token(*, role: str = "admin", projects: list[str] | None = None,
                  path: Path | None = None, keep_existing: bool = False) -> dict[str, Any]:

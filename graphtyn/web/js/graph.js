@@ -479,26 +479,31 @@ export function loadChangesView() {
         const risk = d.risk || {level:'low', score:0, direct:0, transitive:0};
         const conflicts = d.conflicts || [];
         const changedSymbols = d.changed_symbols || [];
-        document.getElementById('stats').textContent = files.length + ' cambiados · ' + impacted.length + ' impactados';
+        const isClean = files.length === 0;
+        const impactCount = Number.isFinite(d.impacted_count) ? d.impacted_count : impacted.length;
+        document.getElementById('stats').textContent = files.length + ' cambiados · ' + impactCount + ' impactados';
         container.innerHTML =
-          '<div style="height:100%;overflow-y:auto;padding:20px 26px;max-width:880px;">' +
+          '<div class="changes-view">' +
+          '<div style="font-weight:700;color:#f8fafc;font-size:18px;margin-bottom:4px;">Operación · Cambios</div>' +
+          '<div style="color:#64748b;font-size:11px;margin-bottom:16px;">Analiza el working tree de Git y recorre consumidores del índice para estimar impacto.</div>' +
           '<div style="display:flex;gap:8px;margin-bottom:12px;"><input id="pr-base-input" value="' + String(state.prBase || '').replace(/"/g, '&quot;') + '" placeholder="Rama base (ej. main)" style="flex:1;background:#111827;border:1px solid #374151;color:#e2e8f0;padding:7px;border-radius:6px;"><button class="btn-action" onclick="setPRBase(document.getElementById(\'pr-base-input\').value)">Analizar PR</button></div>' +
-          '<div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;"><span class="proj-badge ' + (risk.level === 'high' ? 'pend' : 'ok') + '">RIESGO ' + String(risk.level).toUpperCase() + ' · ' + risk.score + '/100</span>' +
-          '<span style="font-size:11px;color:#94a3b8;">' + risk.direct + ' directos · ' + risk.transitive + ' transitivos</span></div>' +
+          '<div class="changes-summary"><span class="proj-badge ' + (risk.level === 'high' ? 'pend' : 'ok') + '">' + (isClean ? 'SIN CAMBIOS' : 'RIESGO ' + escapeHtml(String(risk.level).toUpperCase())) + ' · ' + escapeHtml(risk.score) + '/100</span>' +
+          '<span style="font-size:11px;color:#94a3b8;">' + escapeHtml(risk.direct) + ' directos · ' + escapeHtml(risk.transitive) + ' transitivos</span></div>' +
+          (isClean ? '<div class="changes-empty"><strong>El repositorio está limpio.</strong> No hay cambios locales que usar como origen del radio de impacto. Modifica o agrega un archivo, o escribe una rama en “Analizar PR”.</div>' : '') +
           '<div style="font-weight:700;color:#38bdf8;font-size:14px;margin-bottom:10px;">Cambios sin commitear (git status)</div>' +
-          (files.length ? files.slice(0, 40).map(f => '<div style="color:#cbd5e1;font-size:12px;padding:3px 0;border-bottom:1px solid #1e293b;font-family:monospace;">' + f + '</div>').join('')
+          (files.length ? files.slice(0, 40).map(f => '<div style="color:#cbd5e1;font-size:12px;padding:3px 0;border-bottom:1px solid #1e293b;font-family:monospace;">' + escapeHtml(f) + '</div>').join('')
             : '<div style="color:#64748b;font-size:12px;">Sin archivos modificados.</div>') +
           '<div style="font-weight:700;color:#22d3ee;font-size:14px;margin:18px 0 10px;">Símbolos realmente modificados</div>' +
-          (changedSymbols.length ? changedSymbols.slice(0, 60).map(s => '<div style="color:#cbd5e1;font-size:12px;padding:4px 0;border-bottom:1px solid #1e293b;"><strong>' + s.name + '</strong> · ' + s.kind + ' · línea ' + s.line + ' <span class="proj-badge ok">' + (s.change_types || []).join(' · ') + '</span></div>').join('') : '<div style="color:#64748b;font-size:12px;">Los cambios no intersectan símbolos conocidos.</div>') +
+          (changedSymbols.length ? changedSymbols.slice(0, 60).map(s => '<div style="color:#cbd5e1;font-size:12px;padding:4px 0;border-bottom:1px solid #1e293b;"><strong>' + escapeHtml(s.name) + '</strong> · ' + escapeHtml(s.kind) + ' · línea ' + escapeHtml(s.line) + ' <span class="proj-badge ok">' + escapeHtml((s.change_types || []).join(' · ')) + '</span></div>').join('') : '<div style="color:#64748b;font-size:12px;">Los cambios no intersectan símbolos conocidos.</div>') +
           '<div style="font-weight:700;color:#a78bfa;font-size:14px;margin:18px 0 10px;">Radio de impacto (nodos conectados a los cambios)</div>' +
           (impacted.length ? impacted.slice(0, 60).map(i =>
             '<div class="project-item" style="margin-bottom:4px;" data-node-id="' + String(i.node.id || '').replace(/"/g, '&quot;') + '" onclick="openFromChanges(this.dataset.nodeId)">' +
-              '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + i.node.name + '</span>' +
-              '<span class="proj-badge ' + (i.confidence === 'INFERRED' ? 'pend' : 'ok') + '">' + i.confidence + '</span>' +
+              '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(i.node.name) + '</span>' +
+              '<span class="proj-badge ' + (i.confidence === 'INFERRED' ? 'pend' : 'ok') + '">' + escapeHtml(i.confidence) + '</span>' +
             '</div>').join('')
             : '<div style="color:#64748b;font-size:12px;">Sin impacto conocido.</div>') +
           '<div style="font-weight:700;color:#f59e0b;font-size:14px;margin:18px 0 10px;">Conflictos Git potenciales</div>' +
-          (conflicts.length ? conflicts.map(f => '<div style="font:12px monospace;color:#fca5a5;padding:3px 0;">' + f + '</div>').join('') : '<div style="color:#64748b;font-size:12px;">Ninguno detectado. ' + (d.conflict_detection || '') + '</div>') +
+          (conflicts.length ? conflicts.map(f => '<div style="font:12px monospace;color:#fca5a5;padding:3px 0;">' + escapeHtml(f) + '</div>').join('') : '<div style="color:#64748b;font-size:12px;">Ninguno detectado. ' + escapeHtml(d.conflict_detection || '') + '</div>') +
           '</div>';
       }).catch(err => {
         document.getElementById('graph-container').innerHTML =

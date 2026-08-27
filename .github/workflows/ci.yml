@@ -46,6 +46,46 @@ jobs:
           name: python-distributions
           path: dist/
 
+  windows:
+    name: Windows portability
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m pytest -q tests/test_deployment_admin.py tests/test_api.py tests/test_shared_memory.py tests/test_history_import.py
+      - run: python -m pip install build; python -m build
+      - name: Install the wheel through the public PowerShell installer
+        shell: pwsh
+        run: |
+          $wheel = (Resolve-Path "dist/*.whl").Path
+          ./install.ps1 -PackageSource $wheel -ProjectPath . -SkipService -SkipSetup -NoOpen
+          $binDir = (py -3 -m pipx environment --value PIPX_BIN_DIR | Select-Object -Last 1).Trim()
+          & (Join-Path $binDir "graphtyn.exe") --version
+      - name: Start and query the dashboard on Windows
+        shell: pwsh
+        run: |
+          $binDir = (py -3 -m pipx environment --value PIPX_BIN_DIR | Select-Object -Last 1).Trim()
+          $exe = Join-Path $binDir "graphtyn.exe"
+          $process = Start-Process -FilePath $exe -ArgumentList @("serve", "--host", "127.0.0.1", "--port", "9210", "--path", (Get-Location).Path) -PassThru
+          try {
+            $ready = $false
+            for ($attempt = 0; $attempt -lt 30; $attempt++) {
+              try { $response = Invoke-RestMethod "http://127.0.0.1:9210/api/projects"; $ready = $true; break }
+              catch { Start-Sleep -Seconds 1 }
+            }
+            if (-not $ready) { throw "El dashboard no respondió en Windows." }
+          } finally { Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue }
+      - shell: pwsh
+        run: |
+          $binDir = (py -3 -m pipx environment --value PIPX_BIN_DIR | Select-Object -Last 1).Trim()
+          & (Join-Path $binDir "graphtyn.exe") service install --kind windows --path . --output "$env:RUNNER_TEMP\graphtyn-dashboard.cmd"
+
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 20

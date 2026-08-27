@@ -21,6 +21,8 @@ dependencies = [
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Operating System :: OS Independent",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
