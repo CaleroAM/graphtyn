@@ -1,4 +1,5 @@
 import json
+import os
 import sqlite3
 import time
 from pathlib import Path
@@ -76,7 +77,7 @@ def test_history_sources_are_deployment_configuration(tmp_path):
 
     rows = configured_sources(config)
     assert {row["provider"] for row in rows} == {"openclaw", "custom-agent"}
-    assert config.stat().st_mode & 0o777 == 0o600
+    if os.name != "nt": assert config.stat().st_mode & 0o777 == 0o600
 
 
 def test_docker_history_source_uses_read_only_archive(tmp_path, monkeypatch):

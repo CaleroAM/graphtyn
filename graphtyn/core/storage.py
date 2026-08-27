@@ -1,10 +1,12 @@
 """Collision-safe per-project storage locations."""
 from __future__ import annotations
 import hashlib
+import getpass
 import json
 import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -12,6 +14,21 @@ def data_home() -> Path:
     """Central Graphtyn state root, overridable for containers and CI."""
     configured = os.environ.get("GRAPHTYN_HOME")
     return Path(configured).expanduser().resolve() if configured else Path.home() / ".graphtyn"
+
+
+def secure_private_file(path: Path) -> None:
+    """Restrict a state file to the current user on POSIX or Windows ACLs."""
+    target = Path(path)
+    if os.name != "nt":
+        target.chmod(0o600)
+        return
+    username = os.environ.get("USERNAME") or getpass.getuser()
+    domain = os.environ.get("USERDOMAIN")
+    account = f"{domain}\\{username}" if domain else username
+    result = subprocess.run(["icacls", str(target), "/inheritance:r", "/grant:r", f"{account}:(F)"],
+                            capture_output=True, text=True, check=False)
+    if result.returncode:
+        raise PermissionError(f"no se pudo restringir ACL de {target}: {result.stderr.strip()}")
 
 def project_store_dir(base: Path, project: Path, migrate_legacy: bool = True, create: bool = True) -> Path:
     resolved = project.resolve()

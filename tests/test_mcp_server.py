@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-VENV_PY = Path(__file__).resolve().parent.parent / ".venv" / "bin" / "python"
 MCP_RUNNER = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r))\n"
 
 
@@ -16,7 +15,7 @@ def _mcp_call(workspace, requests, env=None):
     if env:
         e.update(env)
     res = subprocess.run(
-        [str(VENV_PY), "-c", MCP_RUNNER % str(workspace)],
+        [sys.executable, "-c", MCP_RUNNER % str(workspace)],
         input=lines, capture_output=True, text=True, timeout=60, cwd=str(workspace), env=e,
     )
     responses = []
@@ -57,7 +56,7 @@ def test_mcp_initialize_and_tools_list(workspace):
 def test_mcp_intent_profile_exposes_only_one_tool(workspace):
     runner = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'intent')\n"
     res = subprocess.run(
-        [str(VENV_PY), "-c", runner % str(workspace)],
+        [sys.executable, "-c", runner % str(workspace)],
         input=json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}) + "\n",
         capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ),
     )
@@ -67,7 +66,7 @@ def test_mcp_intent_profile_exposes_only_one_tool(workspace):
 
 def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalog(workspace):
     runner = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'memory')\n"
-    res = subprocess.run([str(VENV_PY), "-c", runner % str(workspace)],
+    res = subprocess.run([sys.executable, "-c", runner % str(workspace)],
         input=json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}) + "\n",
         capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ))
     names = {tool["name"] for tool in json.loads(res.stdout)["result"]["tools"]}

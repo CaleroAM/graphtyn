@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 from .history_import import default_sources, save_source
-from .storage import data_home
+from .storage import data_home, secure_private_file
 
 DASHBOARD_URL = "http://127.0.0.1:9210"
 
@@ -52,7 +52,7 @@ def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str
         token_file = data_home() / "memory-tokens.json"
         token_file.parent.mkdir(parents=True, exist_ok=True)
         token_file.write_text(json.dumps({secrets.token_urlsafe(32): {"role": "admin", "projects": [str(project)]}}, indent=2), encoding="utf-8")
-        token_file.chmod(0o600)
+        secure_private_file(token_file)
     return {"ok": True, "project": str(project), "agents": installed, "sources": configured,
             "token_file": str(token_file) if token_file else None}
 
@@ -146,5 +146,5 @@ def rotate_token(*, role: str = "admin", projects: list[str] | None = None,
     except (OSError, ValueError): values = {}
     token = secrets.token_urlsafe(32)
     values[token] = {"role": role, "projects": [str(Path(p).expanduser().resolve()) for p in projects or []]}
-    target.parent.mkdir(parents=True, exist_ok=True); target.write_text(json.dumps(values, indent=2), encoding="utf-8"); target.chmod(0o600)
+    target.parent.mkdir(parents=True, exist_ok=True); target.write_text(json.dumps(values, indent=2), encoding="utf-8"); secure_private_file(target)
     return {"ok": True, "token": token, "role": role, "projects": values[token]["projects"], "file": str(target)}

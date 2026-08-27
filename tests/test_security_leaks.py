@@ -3,6 +3,7 @@ import json
 import os
 import sqlite3
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
@@ -104,7 +105,7 @@ def test_source_catalog_and_alias_admin_endpoints_reject_reader(tmp_path, monkey
 
 def test_token_cli_masks_secret_by_default(tmp_path, monkeypatch):
     target = tmp_path / "tokens.json"
-    command = [str(Path(__file__).parents[1] / ".venv" / "bin" / "graphtyn"), "token", "rotate",
+    command = [sys.executable, "-m", "graphtyn.cli", "token", "rotate",
                "--role", "writer", "--file", str(target)]
     result = subprocess.run(command, capture_output=True, text=True, check=True)
     stored_token = next(iter(json.loads(target.read_text())))

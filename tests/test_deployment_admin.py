@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import pytest
 
@@ -27,7 +28,7 @@ def test_setup_is_previewable_and_applies_without_source_edits(tmp_path, monkeyp
     assert detect_environment(project)["project"] == str(project)
     result = apply_setup(project, agents=["openclaw", "hermes"], sources=[], create_token=True)
     assert result["ok"] and (project / "AGENTS.md").exists()
-    assert Path(result["token_file"]).stat().st_mode & 0o777 == 0o600
+    if os.name != "nt": assert Path(result["token_file"]).stat().st_mode & 0o777 == 0o600
 
 
 def test_service_artifacts_have_no_machine_hardcodes(tmp_path, monkeypatch):
@@ -78,7 +79,7 @@ def test_user_service_management_uses_unprivileged_systemctl(monkeypatch, tmp_pa
     def fake_run(command, **kwargs):
         calls.append(command)
         return Result()
-    enabled = manage_user_service("enable", run=fake_run)
+    enabled = manage_user_service("enable", kind="systemd", run=fake_run)
     assert enabled["ok"] and enabled["dashboard"] == "http://127.0.0.1:9210"
     assert calls == [["systemctl", "--user", "daemon-reload"],
                      ["systemctl", "--user", "enable", "--now", "graphtyn-dashboard.service"],
@@ -91,7 +92,7 @@ def test_user_service_status_propagates_failure():
         returncode = 3
         stdout = "inactive"
         stderr = ""
-    result = manage_user_service("status", run=lambda *args, **kwargs: Result())
+    result = manage_user_service("status", kind="systemd", run=lambda *args, **kwargs: Result())
     assert result["ok"] is False
     assert result["steps"][0]["command"][2] == "is-active"
 
@@ -116,7 +117,7 @@ def test_token_rotation_uses_private_file_and_scopes(tmp_path):
     target = tmp_path / "tokens.json"
     result = rotate_token(role="writer", projects=[str(tmp_path)], path=target)
     assert result["token"] in json.loads(target.read_text())
-    assert target.stat().st_mode & 0o777 == 0o600
+    if os.name != "nt": assert target.stat().st_mode & 0o777 == 0o600
 
 
 def test_backup_verify_preview_restore_roundtrip(tmp_path, monkeypatch):

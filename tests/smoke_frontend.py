@@ -35,6 +35,7 @@ except (ImportError, OSError) as exc:
 PORT = 9211
 BASE = f"http://127.0.0.1:{PORT}"
 ROOT = Path(__file__).resolve().parent.parent
+CLI = [sys.executable, "-m", "graphtyn.cli"]
 CHROMIUM = os.environ.get(
     "GRAPHTYN_CHROMIUM",
     shutil.which("chromium") or shutil.which("chromium-browser") or "")
@@ -62,7 +63,7 @@ def main():
     if sync_playwright is None:
         print(f"SKIP: Playwright no ejecutable ({PLAYWRIGHT_IMPORT_ERROR})")
         return 0
-    if shutil.which("curl") is None or not (ROOT / ".venv" / "bin" / "graphtyn").exists():
+    if shutil.which("curl") is None:
         print("SKIP: dependencias ausentes")
         return 0
 
@@ -79,7 +80,7 @@ def main():
 
     env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"), OLLAMA_HOST="http://127.0.0.1:1")
     server = subprocess.Popen(
-        [str(ROOT / ".venv" / "bin" / "graphtyn"), "serve",
+        CLI + ["serve",
          "--host", "127.0.0.1", "--port", str(PORT), "--path", str(proj)],
         cwd=str(ROOT), env=env, stdout=subprocess.DEVNULL, stderr=open(str(tmp / "server.log"), "w"))
     failures = []
@@ -96,13 +97,13 @@ def main():
         # Seed attributed memory through the public CLI so the browser must
         # render a real agent -> memory -> file graph, not merely an empty view.
         started = subprocess.run(
-            [str(ROOT / ".venv" / "bin" / "graphtyn"), "memory", "session-start",
+            CLI + ["memory", "session-start",
              "--agent", "smoke-agent", "--task", "Dashboard memory smoke", "--capture",
              "--path", str(proj)], cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=30)
         assert started.returncode == 0, started.stderr
         session_id = json.loads(started.stdout)["id"]
         checkpoint = subprocess.run(
-            [str(ROOT / ".venv" / "bin" / "graphtyn"), "memory", "checkpoint",
+            CLI + ["memory", "checkpoint",
              "--session", session_id, "--kind", "outcome", "--title", "Memory graph visible",
              "--content", "The dashboard renders attributed project memory automatically.",
              "--scope", "project", "--files", "a.py", "--nodes", "symbol:a.py:helper",
@@ -110,13 +111,13 @@ def main():
             cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=30)
         assert checkpoint.returncode == 0, checkpoint.stderr
         started2 = subprocess.run(
-            [str(ROOT / ".venv" / "bin" / "graphtyn"), "memory", "session-start",
+            CLI + ["memory", "session-start",
              "--agent", "smoke-agent-two", "--task", "Second project memory", "--capture",
              "--path", str(proj2)], cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=30)
         assert started2.returncode == 0, started2.stderr
         session2 = json.loads(started2.stdout)["id"]
         checkpoint2 = subprocess.run(
-            [str(ROOT / ".venv" / "bin" / "graphtyn"), "memory", "checkpoint",
+            CLI + ["memory", "checkpoint",
              "--session", session2, "--kind", "decision", "--title", "Second graph isolated",
              "--content", "Project switching must never reuse another project's graph response.",
              "--scope", "project", "--files", "worker.py", "--path", str(proj2)],

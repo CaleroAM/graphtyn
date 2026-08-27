@@ -1,16 +1,17 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-CLI = Path(__file__).resolve().parent.parent / ".venv" / "bin" / "graphtyn"
+CLI = [sys.executable, "-m", "graphtyn.cli"]
 
 
 def _run_cli(args, cwd, home):
     env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"))
-    return subprocess.run([str(CLI)] + args, cwd=str(cwd), env=env,
+    return subprocess.run(CLI + args, cwd=str(cwd), env=env,
                           capture_output=True, text=True, timeout=90)
 
 
@@ -75,7 +76,7 @@ def test_reindex_ast_local_fallback_no_server(git_repo, tmp_path):
     home = tmp_path / "home"
     home.mkdir()
     env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"), http_proxy="http://127.0.0.1:1", https_proxy="http://127.0.0.1:1", no_proxy="")
-    res = subprocess.run([str(CLI), "reindex", "--engine", "ast_pure", "--path", str(git_repo)],
+    res = subprocess.run(CLI + ["reindex", "--engine", "ast_pure", "--path", str(git_repo)],
                          cwd=str(git_repo), env=env, capture_output=True, text=True, timeout=90)
     assert res.returncode == 0
     assert "Reindexado AST local" in res.stdout

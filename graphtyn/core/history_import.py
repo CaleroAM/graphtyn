@@ -23,7 +23,7 @@ from typing import Any, Iterable
 from urllib.parse import unquote, urlparse
 
 from .shared_memory import SharedMemoryStore
-from .storage import data_home
+from .storage import data_home, secure_private_file
 
 
 BUILTIN_PROVIDERS = {"openclaw", "hermes", "codex", "antigravity", "opencode", "claude"}
@@ -104,7 +104,7 @@ def save_source(provider: str, source: str, *, label: str = "", path: Path | Non
     rows = [row for row in rows if not (row["provider"] == item["provider"] and row["source"] == item["source"])]
     rows.append(item)
     target.write_text(json.dumps({"version": 1, "sources": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
-    os.chmod(target, 0o600)
+    secure_private_file(target)
     return item
 
 
@@ -114,7 +114,7 @@ def delete_source(provider: str, source: str, *, path: Path | None = None) -> bo
     changed = len(kept) != len(rows)
     if changed:
         target.write_text(json.dumps({"version": 1, "sources": kept}, ensure_ascii=False, indent=2), encoding="utf-8")
-        os.chmod(target, 0o600)
+        secure_private_file(target)
     return changed
 
 

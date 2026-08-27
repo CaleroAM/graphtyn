@@ -273,7 +273,8 @@ class ASTParser:
         for path in root_dir.rglob("*"):
             if not path.is_file():
                 continue
-            if any(part.startswith(".") or part in ignored_parts for part in path.parts):
+            relative_parts = path.relative_to(root_dir).parts
+            if any(part.startswith(".") or part in ignored_parts for part in relative_parts):
                 continue
 
             ext = path.suffix.lower()
