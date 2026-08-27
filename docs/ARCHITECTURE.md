@@ -226,9 +226,9 @@ las interfaces locales básicas.
 
 ## Documentación relacionada
 
-- [Mapa de documentación](docs/index.md)
-- [Memoria compartida](docs/shared-memory.md)
-- [Pruebas y benchmarks](docs/testing.md)
+- [Mapa de documentación](index.md)
+- [Memoria compartida](shared-memory.md)
+- [Pruebas y benchmarks](testing.md)
 - [Seguridad](SECURITY.md)
-- [Checklist de release](docs/release-checklist.md)
-- [Diseño detallado de memoria](docs/shared_semantic_memory_plan.md)
+- [Checklist de release](release-checklist.md)
+- [Diseño detallado de memoria](shared_semantic_memory_plan.md)

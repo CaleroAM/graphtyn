@@ -56,4 +56,4 @@ mayor automatización de PR. La afirmación defendible es: **diferenciación té
 fuerte con validación competitiva todavía parcial**.
 
 Las cifras externas son `VENDOR`; las mediciones propias están en
-[`../BENCHMARKS.md`](../BENCHMARKS.md).
+[`BENCHMARKS.md`](BENCHMARKS.md).

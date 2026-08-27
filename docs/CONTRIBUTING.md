@@ -27,4 +27,3 @@ ejecuta `tests/test_security_leaks.py` explícitamente.
 Incluye pruebas, documentación del comportamiento observable y una nota de
 compatibilidad. No incluyas conversaciones, índices, tokens ni benchmarks con
 datos privados.
-

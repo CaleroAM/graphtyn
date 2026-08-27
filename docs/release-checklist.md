@@ -12,7 +12,7 @@
 
 ## Publicación
 
-- [ ] `CHANGELOG.md` describe límites y cambios reales.
+- [ ] `docs/CHANGELOG.md` describe límites y cambios reales.
 - [ ] README no promete destinos de instalación aún inexistentes.
 - [ ] Artefactos y hashes se adjuntan a la release.
 - [ ] PyPI Trusted Publishing está configurado antes de habilitar publicación.
@@ -20,4 +20,3 @@
 
 El workflow `release.yml` ejecuta estas comprobaciones y crea artefactos para
 tags `v*`. La publicación en PyPI permanece deshabilitada deliberadamente.
-

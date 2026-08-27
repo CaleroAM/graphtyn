@@ -40,7 +40,7 @@ comparación concluyente.
 - índice inicial/incremental, tamaño y errores.
 
 La estimación `bytes UTF-8 / 4` compara payloads, pero no equivale a facturación.
-Los resultados están en [`BENCHMARKS.md`](../BENCHMARKS.md).
+Los resultados están en [`BENCHMARKS.md`](BENCHMARKS.md).
 
 ## Reproducción mínima
 

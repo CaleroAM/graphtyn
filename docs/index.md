@@ -1,8 +1,8 @@
 # Documentación de Graphtyn
 
-- [Estado de la versión y cambios](../CHANGELOG.md)
-- [Política de seguridad](../SECURITY.md)
-- [Guía de contribución](../CONTRIBUTING.md)
+- [Estado de la versión y cambios](CHANGELOG.md)
+- [Política de seguridad](SECURITY.md)
+- [Guía de contribución](CONTRIBUTING.md)
 - [Checklist de release](release-checklist.md)
 - [Validación local de 0.6.0](release-validation-0.6.0.md)
 
@@ -17,7 +17,7 @@ experimentales y comparaciones comerciales.
 
 ## Diseño y operación
 
-- [`ARCHITECTURE.md`](../ARCHITECTURE.md): capas y límites actuales.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md): capas y límites actuales.
 - [`shared-memory.md`](shared-memory.md): uso de la memoria multiagente.
 - [`shared_semantic_memory_plan.md`](shared_semantic_memory_plan.md): diseño
   detallado y registro de implementación.
@@ -26,7 +26,7 @@ experimentales y comparaciones comerciales.
 ## Evidencia
 
 - [`testing.md`](testing.md): protocolo, estados y reproducción.
-- [`BENCHMARKS.md`](../BENCHMARKS.md): resultados y artefactos medidos.
+- [`BENCHMARKS.md`](BENCHMARKS.md): resultados y artefactos medidos.
 - [`market-study.md`](market-study.md): estudio de mercado fechado.
 - [`shared_memory_benchmark.md`](shared_memory_benchmark.md): evaluación de memoria.
 - [`shared_memory_stability.md`](shared_memory_stability.md): estabilidad y costos.
@@ -35,5 +35,5 @@ experimentales y comparaciones comerciales.
 
 - [`contexto-comparativo.md`](contexto-comparativo.md): bitácora del
   enriquecimiento local; no es el resultado competitivo vigente.
-- [`GRAPHTYN_REPORT.md`](../GRAPHTYN_REPORT.md): snapshot generado; no reemplaza la
+- [`GRAPHTYN_REPORT.md`](GRAPHTYN_REPORT.md): snapshot generado; no reemplaza la
   documentación arquitectónica.

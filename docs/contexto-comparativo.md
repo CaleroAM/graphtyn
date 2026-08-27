@@ -1,7 +1,7 @@
 # 📚 Comparativa de Contexto: Yo (Agente) vs Modelos Locales
 
 > **Registro histórico.** Para resultados vigentes consulte
-> [`../BENCHMARKS.md`](../BENCHMARKS.md) y [`testing.md`](testing.md).
+> [`BENCHMARKS.md`](BENCHMARKS.md) y [`testing.md`](testing.md).
 
 Documento de trabajo para **pulir el enriquecimiento semántico** de Graphtyn hasta que el texto generado por los modelos locales sea tan bueno como el que genera un agente experto.
 

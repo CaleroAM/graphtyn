@@ -1,7 +1,7 @@
 # 📊 Benchmarks de Graphtyn
 
 > **Lectura:** este archivo conserva resultados actuales e históricos. Use los
-> estados de [`docs/testing.md`](docs/testing.md). La matriz de 36 tareas/108
+> estados de [`testing.md`](testing.md). La matriz de 36 tareas/108
 > celdas continúa `PENDING`; los resultados parciales no prueban liderazgo general.
 
 ## Estado resumido
@@ -39,7 +39,7 @@ Los casos se describen por tecnología y propósito para que sean comprensibles 
 
 ## Protocolo estadístico multilenguaje (36 tareas)
 
-[`benchmarks/statistical_protocol_36_tasks.json`](benchmarks/statistical_protocol_36_tasks.json) define **36 tareas y 108 celdas pareadas**: Graphtyn, Gra…ify y agente sin grafo. Cubre seis familias tecnológicas y seis repositorios: Python/ASGI, Unity/C#, .NET, PHP/Laravel, TypeScript/React y Go. Cada tarea exige prompt y al menos tres hechos atómicos; la variante se aleatoriza dentro de cada bloque y un reintento solo se admite por fallo de transporte, conservando ambos costos.
+[`benchmarks/statistical_protocol_36_tasks.json`](../benchmarks/statistical_protocol_36_tasks.json) define **36 tareas y 108 celdas pareadas**: Graphtyn, Gra…ify y agente sin grafo. Cubre seis familias tecnológicas y seis repositorios: Python/ASGI, Unity/C#, .NET, PHP/Laravel, TypeScript/React y Go. Cada tarea exige prompt y al menos tres hechos atómicos; la variante se aleatoriza dentro de cada bloque y un reintento solo se admite por fallo de transporte, conservando ambos costos.
 
 Las revisiones están fijadas. El caso TypeScript/React limita explícitamente el índice a `src/auth`, porque sus seis tareas pertenecen a autenticación; ese alcance produjo 153 nodos/212 aristas en 0.11 s. El checkout completo contiene 4,929 archivos TS/TSX y no terminó su primera indexación en 90 s, por lo que se registra como prueba de estrés pendiente y no se oculta dentro de las cifras del alcance. El repositorio Go completo produjo 493 nodos/1,184 aristas en 1.30 s.
 
