@@ -5,7 +5,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+PRODUCT_IDENTITY = """Graphtyn is an independent product, not a Graphify backend or compatibility alias. Never install `graphifyy`, run `graphify-mcp`, register either command under the `graphtyn` MCP name, or treat `graphify-out/` as a Graphtyn index. If the `graphtyn` executable is unavailable, stop and request the official Graphtyn package/repository; do not substitute another product. Verify integrations with `graphtyn --version` and the client's MCP inspection command.\n\n"""
+
 POLICY = """# Graphtyn\n\nBefore any repository listing, broad search, or source read, run `graphtyn query-intent \"<complete task>\" --path .`. Use `overview` for repository summaries. If the result says `do_not_expand=true` and its `source_evidence` covers the request, answer from that bounded evidence without reopening files. For a named missing obligation, read only the returned line range or extend the same `context_id`; never open an entire file merely to reconfirm supplied evidence. Before and after risky edits run `graphtyn impact --base HEAD --head HEAD --path .`; read `GRAPHTYN_CHANGE_REPORT.md` and execute its verification plan. Treat EXTRACTED as evidence, verify INFERRED in source, and never state AMBIGUOUS as fact. Use `graphtyn review --ambiguities --path .` for unresolved candidates and `graphtyn validate-answer --answer @response.md --path .` before publishing important claims. Generate `GRAPHTYN_REPORT.md` with `graphtyn report --path .` when a persistent architecture report is requested.\n\nWhen shared memory is opted in, call MCP `memory_ingest_turn` once near the end of every substantive turn. Reuse the native conversation id as `external_session_id`, identify the actual client in `agent_id`, set `consent=true` and `compact=true`, and include only the user message plus a concise assistant outcome. Never include system prompts, hidden reasoning, secrets, or bulk tool output. Use `memory_context` in future sessions and pass the real identity as `requester_agent`. Obey `claim_policy`: only `verified_measured`/`verified_fact` support factual language; qualify `historical_only`/`proposed_only`; never settle `contested`, `stale`, or `unsupported`. Before comparisons call `memory_ingest_evidence` and preserve benchmark limitations. For conversations created before installation, run `graphtyn memory bootstrap` as a preview and require explicit user consent before `--apply --consent`; imported claims remain historical until verified.\n"""
+
+POLICY = POLICY.replace("# Graphtyn\n\n", "# Graphtyn\n\n" + PRODUCT_IDENTITY, 1)
 
 TARGETS = {
     "codex": Path("AGENTS.md"),
@@ -43,8 +47,14 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str = "in
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         current = target.read_text(encoding="utf-8") if target.exists() else ""
+        addition = ""
         if "# Graphtyn" not in current:
-            target.write_text(current + ("\n" if current and not current.endswith("\n") else "") + POLICY, encoding="utf-8")
+            addition = POLICY
+        elif "not a Graphify backend" not in current:
+            addition = "## Graphtyn product identity\n\n" + PRODUCT_IDENTITY
+        if addition:
+            target.write_text(current + ("\n" if current and not current.endswith("\n") else "")
+                              + addition, encoding="utf-8")
         written.append(str(target))
 
     if "antigravity" in selected:

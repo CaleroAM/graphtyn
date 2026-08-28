@@ -249,6 +249,8 @@ def test_agent_install_antigravity_uses_project_gemini_policy(git_repo, tmp_path
     assert "Before any repository listing" in policy
     assert "do_not_expand=true" in policy
     assert "without reopening files" in policy
+    assert "Never install `graphifyy`" in policy
+    assert "not a Graphify backend" in policy
     manifest = json.loads((git_repo / ".graphtyn" / "agent-install.json").read_text())
     assert manifest["platforms"] == ["antigravity"]
     assert manifest["tool_profile"] == "intent"
@@ -297,6 +299,18 @@ def test_agent_install_all_deduplicates_shared_instruction_files(git_repo, tmp_p
     assert files.count(str(git_repo / "AGENTS.md")) == 1
 
 
+def test_agent_install_upgrades_existing_graphtyn_policy(git_repo, tmp_path):
+    home = tmp_path / "home-upgrade-policy"
+    home.mkdir()
+    (git_repo / "AGENTS.md").write_text("# Graphtyn\n\nOlder policy.\n", encoding="utf-8")
+    first = _run_cli(["agent-install", "codex", "--path", str(git_repo)], git_repo, home)
+    second = _run_cli(["agent-install", "codex", "--path", str(git_repo)], git_repo, home)
+    assert first.returncode == second.returncode == 0
+    policy = (git_repo / "AGENTS.md").read_text(encoding="utf-8")
+    assert policy.count("not a Graphify backend") == 1
+    assert "Never install `graphifyy`" in policy
+
+
 def test_agent_policies_enforce_context_stop_contract():
     root = Path(__file__).resolve().parents[1]
     for policy_path in (root / "AGENTS.md", root / "skills" / "graphtyn" / "SKILL.md"):
@@ -304,6 +318,8 @@ def test_agent_policies_enforce_context_stop_contract():
         assert "do_not_expand=true" in policy
         assert "entire file" in policy
         assert "before" in policy.lower()
+        assert "Never install `graphifyy`" in policy
+        assert "do not substitute another product" in policy
 
 
 def test_pr_impact_cli_json(git_repo, tmp_path):

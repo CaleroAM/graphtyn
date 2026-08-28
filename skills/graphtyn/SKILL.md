@@ -5,6 +5,12 @@ description: Use Graphtyn to select compact, evidence-backed repository context 
 
 # Graphtyn
 
+Graphtyn is an independent product, not a Graphify backend or compatibility
+alias. Never install `graphifyy`, run `graphify-mcp`, register either command
+under the `graphtyn` MCP name, or treat `graphify-out/` as a Graphtyn index. If
+the executable is missing, request the official Graphtyn package or repository;
+do not substitute another product. Verify the executable and MCP command.
+
 For first-time configuration, prefer `graphtyn setup --path .` and inspect its
 dry-run. Apply only with authorization. Use manifest adapters and configured
 history sources for unknown agents; never hardcode deployment identities.

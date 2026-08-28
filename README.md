@@ -131,6 +131,11 @@ sin convertir esta portada en un manual.
 
 ## Integración con agentes
 
+Graphtyn es un producto independiente. `graphifyy`, `graphify-mcp` y
+`graphify-out/` pertenecen a otro producto y nunca deben instalarse o
+registrarse como si fueran Graphtyn. Si `graphtyn --version` no funciona,
+instale el wheel oficial de la release; no use un paquete con nombre parecido.
+
 Instale instrucciones y configuración MCP sin modificar el código del proyecto:
 
 ```bash
