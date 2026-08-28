@@ -1,5 +1,12 @@
 # Graphtyn agent policy
 
+Graphtyn is an independent product, not a Graphify backend or compatibility
+alias. Never install `graphifyy`, run `graphify-mcp`, register either command
+under the `graphtyn` MCP name, or treat `graphify-out/` as a Graphtyn index. If
+`graphtyn` is unavailable, request the official Graphtyn package or repository;
+do not substitute another product. Verify with `graphtyn --version` and the
+client's MCP inspection command.
+
 For a new checkout, run `graphtyn setup --path .` as a read-only preview and
 only use `--apply` with user consent. Put runtime locations in configured memory
 sources; never bake user names, IPs, containers or personas into instructions.
