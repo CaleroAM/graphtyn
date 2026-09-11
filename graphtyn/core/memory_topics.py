@@ -417,7 +417,8 @@ class TopicMemoryMixin:
         return {"ok": True, "candidates": result, "status": status, "retrieval": "lexical-candidates-review"}
 
     def _ai_review_candidates(self, limit=20):
-        if not os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip():
+        from .memory_extraction import configured_summary_model
+        if not configured_summary_model():
             return
         from .memory_extraction import assisted_relation_review
         with self._connect() as db:
@@ -593,7 +594,8 @@ class TopicMemoryMixin:
                     processed += 1
                 topic_ids.add(row["topic_id"])
             ai_provider = "deterministic"
-            if os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL"):
+            from .memory_extraction import configured_summary_model
+            if configured_summary_model():
                 for topic_id in sorted(topic_ids):
                     topic = db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone()
                     message_rows = db.execute("""SELECT m.id,m.role,m.content FROM topic_messages tm

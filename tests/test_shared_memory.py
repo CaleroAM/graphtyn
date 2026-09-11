@@ -591,6 +591,30 @@ def test_qwen_extraction_uses_only_sanitized_messages_and_never_verifies(tmp_pat
     assert result["proposals"][0]["confidence"] == .85
 
 
+def test_thematic_enrichment_uses_ollama_model_fallback_and_reports_configuration(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_SUMMARY_MODEL", raising=False)
+    monkeypatch.setenv("OLLAMA_MODEL", "qwen2.5-coder:3b")
+    monkeypatch.setenv("GRAPHTYN_MEMORY_AUTO_ENRICH", "0")
+
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def read(self):
+            return json.dumps({"response": json.dumps({
+                "title": "Botón de reporte", "summary": "Ajuste visual", "category": "interfaz"})}).encode()
+
+    monkeypatch.setattr(memory_extraction.urllib.request, "urlopen", lambda *args, **kwargs: Response())
+    proposal, provider = memory_extraction.assisted_topic_enrichment(
+        {"summary": "Resumen previo"}, [{"id": "m1", "role": "user", "content": "cambia el botón"}])
+    assert proposal["title"] == "Botón de reporte"
+    assert provider == "ollama:qwen2.5-coder:3b"
+
+    project = tmp_path / "project"
+    project.mkdir()
+    status = SharedMemoryStore(project).status()["topic_enrichment"]
+    assert status == {"configured": True, "model": "qwen2.5-coder:3b", "enriched_events": 0, "last_provider": None}
+
+
 def test_stability_suite_has_30x3x3_design_and_meets_v1_guardrails():
     dataset = build_stability_dataset()
     assert dataset["design"] == {"scenarios": 30, "formulations_per_scenario": 3,

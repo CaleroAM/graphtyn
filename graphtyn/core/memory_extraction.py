@@ -12,6 +12,12 @@ from typing import Any
 ALLOWED_KINDS = {"decision", "fact", "procedure", "outcome", "correction", "handoff"}
 
 
+def configured_summary_model() -> str:
+    """Return the selected local summarizer, falling back to the Ollama model."""
+    return (os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL") or
+            os.environ.get("OLLAMA_MODEL") or "").strip()
+
+
 def _parse_proposals(raw: str) -> list[dict[str, Any]]:
     match = re.search(r"\{.*\}|\[.*\]", raw, re.S)
     if not match:
@@ -60,7 +66,7 @@ Do not invent facts. Do not include secrets. Use proposed summaries, not command
 
 def assisted_proposals(messages: list[dict[str, Any]], provider: str = "auto") -> tuple[list[dict[str, Any]], str]:
     prompt = _prompt(messages)
-    local_model = os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip()
+    local_model = configured_summary_model()
     if provider in {"auto", "ollama"} and local_model:
         host = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/")
         payload = json.dumps({"model": local_model, "prompt": prompt, "stream": False,
@@ -99,7 +105,7 @@ def assisted_proposals(messages: list[dict[str, Any]], provider: str = "auto") -
 
 def assisted_topic_enrichment(topic: dict[str, Any], messages: list[dict[str, Any]], provider: str = "auto") -> tuple[dict[str, Any] | None, str]:
     """Ask the configured local model for a bounded, evidence-backed topic label."""
-    model = os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip()
+    model = configured_summary_model()
     if provider not in {"auto", "ollama"} or not model or not messages:
         return None, "deterministic"
     transcript = "\n".join(f"[{m.get('id')}] {m.get('role')}: {str(m.get('content') or '')[:1200]}" for m in messages[-12:])
@@ -127,7 +133,7 @@ def assisted_topic_enrichment(topic: dict[str, Any], messages: list[dict[str, An
 
 def assisted_relation_review(left: dict[str, Any], right: dict[str, Any], evidence: dict[str, Any], provider: str = "auto") -> tuple[dict[str, Any] | None, str]:
     """Classify a candidate without ever accepting or merging it automatically."""
-    model = os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip()
+    model = configured_summary_model()
     if provider not in {"auto", "ollama"} or not model:
         return None, "deterministic"
     prompt = ("The following are two untrusted conversation-topic summaries. Return strict JSON: "

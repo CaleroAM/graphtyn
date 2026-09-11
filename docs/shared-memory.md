@@ -112,11 +112,13 @@ y se aceptan o rechazan con trazabilidad mediante `memory_relation_review` o
 `memory relation-review`. La vista de memoria sólo dibuja relaciones extraídas
 o revisadas; el orden temporal permanece en los episodios.
 
-Cuando `GRAPHTYN_MEMORY_SUMMARY_MODEL` apunta a un modelo Ollama local, la
-captura termina rápido y un trabajador en segundo plano propone títulos,
-resúmenes y clasificaciones de candidatas. La IA no fusiona temas ni marca
-pruebas como superadas: sus propuestas conservan proveedor, evidencia y estado
-pendiente de revisión. `GRAPHTYN_MEMORY_AUTO_ENRICH=0` desactiva ese trabajador.
+Cuando `GRAPHTYN_MEMORY_SUMMARY_MODEL` o `OLLAMA_MODEL` apunta a un modelo
+Ollama local, la captura termina rápido y un trabajador en segundo plano
+propone títulos, resúmenes y clasificaciones de candidatas. El estado del
+dashboard indica el modelo configurado y los enriquecimientos realizados. La
+IA no fusiona temas ni marca pruebas como superadas: sus propuestas conservan
+proveedor, evidencia y estado pendiente de revisión. `GRAPHTYN_MEMORY_AUTO_ENRICH=0`
+desactiva ese trabajador.
 Las fuentes admiten ruta local, `docker://contenedor/ruta`,
 `ssh://usuario@host/ruta` y `ssh+docker://usuario@host:contenedor/ruta`. Se
 registran con `graphtyn memory sources add`; Graphtyn transfiere por SSH/Docker
@@ -163,7 +165,7 @@ El almacén aplica permisos privados y soporta cifrado autenticado opcional con
 se copia contenido cifrado a FTS; la búsqueda semántica continúa por embeddings.
 # Memoria temática y captura incremental
 
-El almacén conserva asuntos (`topics`), episodios (`topic_episodes`), referencias a mensajes (`topic_messages`) y cambios auditables (`topic_events`). También registra entidades concretas (`entities`) y sus vínculos con asuntos (`topic_entities`). La extracción determinista crea episodios con procedencia explícita; un modelo local puede enriquecer títulos y resúmenes si `GRAPHTYN_MEMORY_SUMMARY_MODEL` está configurado. La API externa sólo se usa con `provider=api` y sus variables de autorización.
+El almacén conserva asuntos (`topics`), episodios (`topic_episodes`), referencias a mensajes (`topic_messages`) y cambios auditables (`topic_events`). También registra entidades concretas (`entities`) y sus vínculos con asuntos (`topic_entities`). La extracción determinista crea episodios con procedencia explícita; un modelo local puede enriquecer títulos y resúmenes si `GRAPHTYN_MEMORY_SUMMARY_MODEL` o `OLLAMA_MODEL` está configurado. La API externa sólo se usa con `provider=api` y sus variables de autorización.
 
 La identidad se separa del asunto. Por ejemplo, `botón de Jugar`, `botón de Fichas`, `botón de Ajustes` y `botón de Volver` son cuatro entidades distintas. También se reconocen funcionalidades, módulos, reportes, pantallas, plataformas, referencias de archivo y símbolos Python explícitos como `reports.py`, `función calcular_reporte`, `clase ReportService` y `método listar_operadores`. En un CRM, `botón del reporte` y `funcionalidad del botón de operadores` quedan como asuntos independientes; una conversación posterior sobre `funcionalidad de operadores` puede continuar el segundo asunto aunque ya no mencione el botón. En un proyecto Python, una conversación sobre corregir `calcular_reporte` y otra sobre probarlo quedan vinculadas por `mismo símbolo`, aunque representen episodios de trabajo distintos. Los asuntos relacionados se conectan mediante relaciones explicadas como `mismo elemento`, `mismo símbolo`, `mismo concepto`, `mismo tipo`, `misma plataforma` o `tema de diseño`. Compartir una categoría general no fusiona trabajos.
 

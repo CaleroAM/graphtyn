@@ -497,7 +497,7 @@ class SharedMemoryStore(TopicMemoryMixin):
                       "remote_billed_tokens": 0})
         # Capture stays fast; optional local-model enrichment runs after the
         # turn in a daemon worker and never blocks the MCP response.
-        if os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip() and \
+        if (os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip() or os.environ.get("OLLAMA_MODEL", "").strip()) and \
                 os.environ.get("GRAPHTYN_MEMORY_AUTO_ENRICH", "1").lower() in {"1", "true", "yes"}:
             threading.Thread(target=self._background_topic_enrichment,
                              args=(session_id, "auto"), daemon=True,
@@ -1156,12 +1156,15 @@ class SharedMemoryStore(TopicMemoryMixin):
         return item
 
     def status(self) -> dict[str, Any]:
+        summary_model = (os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL") or
+                         os.environ.get("OLLAMA_MODEL") or "").strip()
         with self._connect() as conn:
             sessions = conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
             memories = conn.execute("SELECT COUNT(*) FROM memories WHERE status != 'deleted'").fetchone()[0]
             agents = conn.execute("SELECT COUNT(*) FROM agents").fetchone()[0]
             embeddings = conn.execute("SELECT COUNT(*) FROM memory_embeddings").fetchone()[0]
             telemetry_events = conn.execute("SELECT COUNT(*) FROM memory_telemetry").fetchone()[0]
+            topic_events = conn.execute("SELECT details_json FROM topic_events WHERE action='enriched' ORDER BY id DESC LIMIT 100").fetchall()
             last_capture = conn.execute(
                 "SELECT MAX(ts) FROM (SELECT MAX(created_at) AS ts FROM messages "
                 "UNION ALL SELECT MAX(created_at) FROM memories)").fetchone()[0]
@@ -1170,11 +1173,23 @@ class SharedMemoryStore(TopicMemoryMixin):
             watchers = [dict(r) for r in conn.execute("SELECT * FROM history_watchers")] if exists else []
         for watcher in watchers:
             watcher["active"] = watcher["status"] in {"processing", "watching"} and time.time() - watcher["heartbeat"] < 90
+        enrichment_providers = []
+        for event in topic_events:
+            try:
+                details = json.loads(event["details_json"] or "{}")
+                provider = str(details.get("provider") or "")
+                if provider:
+                    enrichment_providers.append(provider)
+            except (TypeError, ValueError):
+                continue
         return {"ok": True, "version": 2, "db": str(self.db_path), "sessions": sessions,
                 "memories": memories, "agents": agents, "embeddings": embeddings,
                 "last_capture_at": last_capture, "topic_coverage": self.topic_coverage(),
                 "capture_watchers": watchers, "continuous_capture_active": any(w["active"] for w in watchers),
                 "embedding_provider": self._provider(), "telemetry_events": telemetry_events,
+                "topic_enrichment": {"configured": bool(summary_model), "model": summary_model or None,
+                                     "enriched_events": len(enrichment_providers),
+                                     "last_provider": enrichment_providers[0] if enrichment_providers else None},
                 "telemetry": self.telemetry_summary()}
 
     def attribution_graph(self, requester_agent: str | None = None, limit: int = 300) -> dict[str, Any]:

@@ -240,7 +240,12 @@ export function onNodeClick(node) {
       const safeName = escapeHtml(node.name || node.id || 'Sin nombre');
       const safeKind = escapeHtml(node.kind || 'nodo');
       const safeId = escapeHtml(node.id || '');
-      const safeReference = escapeHtml(node.reference || node.public_id || '');
+      // Every graph node has a stable technical id. Memory nodes additionally
+      // receive a short public reference (N-xxxxxx); old API responses still
+      // remain actionable through their technical id.
+      const nodeReference = String(node.reference || node.public_id || node.id || '');
+      const safeReference = escapeHtml(nodeReference);
+      const encodedReference = encodeURIComponent(nodeReference);
       const sourceBlock = node.file
         ? '<div><strong>Origen:</strong> <span style="color:#94a3b8;overflow-wrap:anywhere;">' +
           escapeHtml(node.file) + (node.line ? ':' + node.line : '') + '</span></div>'
@@ -252,7 +257,7 @@ export function onNodeClick(node) {
           '<code style="color:#cbd5e1;font-size:9px;white-space:pre-wrap;">' + escapeHtml(node.evidence) + '</code></div>'
         : '';
       const metadataRows = [
-        safeReference ? ['Referencia', node.reference || node.public_id] : null,
+        safeReference ? ['Identificador', nodeReference] : null,
         node.agent_id ? ['Agente', node.agent_id] : null,
         node.session_id ? ['Sesión', node.session_id] : null,
         node.status ? ['Estado memoria', node.status] : null,
@@ -289,7 +294,7 @@ export function onNodeClick(node) {
       body.innerHTML =
         '<div><strong>' + (isMemoryNode ? 'Nodo:' : 'Símbolo:') + '</strong> <span style="color:#38bdf8;">' + safeName + '</span></div>' +
         '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + safeKind + '</span></div>' +
-        (safeReference ? '<div style="display:flex;align-items:center;gap:6px;margin-top:3px;"><strong>Referencia:</strong> <code style="color:#a7f3d0;">' + safeReference + '</code><button class="btn-action" style="padding:2px 6px;" onclick="copyNodeReference(\'' + safeReference + '\')">Copiar</button><span id="blast-copy-status" style="color:#64748b;font-size:9px;"></span></div>' : '') +
+        (safeReference ? '<div style="display:flex;align-items:center;gap:6px;margin-top:3px;"><strong>Identificador:</strong> <code style="color:#a7f3d0;">' + safeReference + '</code><button class="btn-action" style="padding:2px 6px;" onclick="copyNodeReference(decodeURIComponent(\'' + encodedReference + '\'))">Copiar</button><span id="blast-copy-status" style="color:#64748b;font-size:9px;"></span></div>' : '') +
         sourceBlock +
         metadataBlock +
         evidenceBlock +
@@ -627,7 +632,7 @@ export function loadGraph() {
           const safeName = escapeHtml(n.name || '');
           const safeKind = escapeHtml(n.kind || '');
           const safeDetails = hasDesc ? escapeHtml(n.details) : '';
-          const safeReference = escapeHtml(n.reference || n.public_id || '');
+          const safeReference = escapeHtml(n.reference || n.public_id || n.id || '');
           const detailsHtml = hasDesc ? `<br/><span style="color:#38bdf8;font-size:11px;line-height:1.3;display:block;margin-top:3px;">${safeDetails}</span>` : '';
           return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:320px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);pointer-events:none;user-select:none;">` +
             `<strong>${safeName}</strong> <span style="color:#64748b;font-size:10px;">(${safeKind}${safeReference ? ' · ' + safeReference : ''})</span>` +

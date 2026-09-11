@@ -137,7 +137,10 @@ export async function loadMemoryOverview() {
         const days = (Date.now() / 1000 - info.last_capture_at) / 86400;
         freshness = days < 1 ? ' · capturado hoy' : ` · última captura: hace ${Math.floor(days)} día${days >= 2 ? 's' : ''}`;
       }
-      status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness}`;
+      const topicAi = info.topic_enrichment?.configured
+        ? `IA temática local: ${info.topic_enrichment.model}${info.topic_enrichment.enriched_events ? ` · ${info.topic_enrichment.enriched_events} enriquecimientos` : ' · pendiente de ejecutar'}`
+        : 'IA temática: determinista';
+      status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness} · ${topicAi}`;
     const legend = document.getElementById('memory-agent-legend');
     if (legend) legend.innerHTML = '<div class="memory-empty">Abre el mapa para ver la atribución por agente.</div>';
     document.getElementById('memory-sessions').innerHTML = sessions.sessions.length ? sessions.sessions.map(item => `
