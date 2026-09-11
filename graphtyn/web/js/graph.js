@@ -1,4 +1,4 @@
-import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, saveVisualPreferences, safePaint } from './state.js';
+import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
 import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
 import { apply2DStyle, apply3DStyle, paintNodePointerArea } from './styles.js';
@@ -723,9 +723,10 @@ export function loadGraph() {
             .onBackgroundClick(handleGraphBackgroundClick)
             .linkColor(l => memoryLinkColor(l, p.link))
             .linkWidth(l => { const width = l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW; return state.selectedNode && !selectedLink(l) ? width * 0.2 : width; })
-            .linkDirectionalParticles(() => (state.showParticles ? 2 : 0))
+            .linkDirectionalParticles(l => (state.showParticles ? particleProfile(l, 0.006).count : 0))
             .linkDirectionalParticleWidth(2.5)
-            .linkDirectionalParticleSpeed(0.006)
+            .linkDirectionalParticleSpeed(l => particleProfile(l, 0.006).speed)
+            .linkDirectionalParticleOffset(l => particleProfile(l, 0.006).offset)
             .linkDirectionalParticleColor(() => p.particle)
             .linkDirectionalArrowLength(() => (state.showArrows ? 5 : 0))
             .linkDirectionalArrowRelPos(0.95)
@@ -764,9 +765,10 @@ export function loadGraph() {
             .nodeLabel(tooltip).onNodeClick(handleGraphNodeClick).onBackgroundClick(handleGraphBackgroundClick)
             .linkColor(l => memoryLinkColor(l, p.link))
             .linkWidth(l => { const width = l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW; return state.selectedNode && !selectedLink(l) ? width * 0.2 : width; })
-            .linkDirectionalParticles(() => (state.showParticles ? 2 : (state.linkStyle === 'dashed' ? 3 : 0)))
+            .linkDirectionalParticles(l => (state.showParticles ? Math.max(state.linkStyle === 'dashed' ? 3 : 1, particleProfile(l, 0.006).count) : 0))
             .linkDirectionalParticleWidth(() => (state.linkStyle === 'dashed' ? 1.8 : 2.5))
-            .linkDirectionalParticleSpeed(0.006)
+            .linkDirectionalParticleSpeed(l => particleProfile(l, 0.006).speed)
+            .linkDirectionalParticleOffset(l => particleProfile(l, 0.006).offset)
             .linkDirectionalArrowLength(() => (state.showArrows ? 5 : 0))
             .linkDirectionalArrowRelPos(0.95)
             .linkCurvature(() => (state.linkStyle === 'curved' ? 0.25 : (state.linkStyle === 'dashed' ? 0.15 : 0.0)))

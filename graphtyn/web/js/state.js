@@ -277,6 +277,42 @@ export function hexRgb(hex) {
       return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
     }
 
+// ForceGraph otherwise advances every directional particle with the same
+// global clock. A stable profile per link gives each signal its own phase,
+// speed and particle count, so departures and arrivals are staggered without
+// random jitter on every repaint.
+function particleSeed(link) {
+      const source = link && typeof link.source === 'object' ? link.source.id : link?.source;
+      const target = link && typeof link.target === 'object' ? link.target.id : link?.target;
+      const raw = String(link?.id || `${source || ''}>${target || ''}:${link?.label || ''}`);
+      let hash = 2166136261;
+      for (let i = 0; i < raw.length; i++) {
+        hash ^= raw.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0) / 4294967295;
+    }
+
+export function particleProfile(link, baseSpeed = 0.006) {
+      if (!link || typeof link !== 'object') return {speed: baseSpeed, count: 2};
+      if (!link._particleProfile || link._particleProfile.baseSpeed !== baseSpeed) {
+        const seed = particleSeed(link);
+        const offsetSeed = particleSeed({
+          id: `${link.id || ''}:offset`, source: link.source, target: link.target, label: link.label
+        });
+        const countSeed = particleSeed({
+          id: `${link.id || ''}:count`, source: link.source, target: link.target, label: link.label
+        });
+        link._particleProfile = {
+          baseSpeed,
+          speed: baseSpeed * (0.58 + seed * 0.84),
+          offset: 0.05 + offsetSeed * 0.9,
+          count: countSeed < 0.22 ? 1 : (countSeed < 0.82 ? 2 : 3)
+        };
+      }
+      return link._particleProfile;
+    }
+
 export function showStyleErr(msg) {
       const box = document.createElement('div');
       box.style.cssText = 'position:absolute;bottom:70px;left:16px;z-index:500;background:#7f1d1d;color:#fecaca;padding:8px 12px;border-radius:8px;font-size:12px;border:1px solid #ef4444;';

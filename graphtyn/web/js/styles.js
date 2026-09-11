@@ -1,4 +1,4 @@
-import { state, hexRgb, mixColor, getMemoryColor, MEMORY_COLOR_DEFAULTS, showStyleErr, safePaint } from './state.js';
+import { state, hexRgb, mixColor, getMemoryColor, MEMORY_COLOR_DEFAULTS, particleProfile, showStyleErr, safePaint } from './state.js';
 import { nodeColor, nodeVal, isDocOrMedia, squareNodePainter, memoryStandardNodePainter, neuralNodePainter, neuralLinkPainter, holoNodePainter, holoLinkPainter } from './painters.js';
 import { buildPulseSim } from './sim.js';
 
@@ -143,10 +143,12 @@ export function apply2DStyle() {
       applyHitArea(state.graphInst);
       state.graphInst._stylePaintNode = safeNode;
       state.graphInst._stylePaintLink = safeLink;
-      state.graphInst.linkDirectionalParticles(state.showParticles ? 2 : 0)
+      const particleBaseSpeed = state.graphStyle === 'holo' ? 0.02 : 0.012;
+      state.graphInst.linkDirectionalParticles(l => (state.showParticles ? particleProfile(l, particleBaseSpeed).count : 0))
         .linkDirectionalParticleWidth(2.4)
         .linkDirectionalParticleColor(() => (state.graphStyle === 'holo' ? '#7fd7ff' : '#ff5aaf'))
-        .linkDirectionalParticleSpeed(state.graphStyle === 'holo' ? 0.02 : 0.012);
+        .linkDirectionalParticleSpeed(l => particleProfile(l, particleBaseSpeed).speed)
+        .linkDirectionalParticleOffset(l => particleProfile(l, particleBaseSpeed).offset);
       state.neuralTimer = setInterval(() => {
         state.neuralPhase += 0.5;
         if (state.pulseSim && state.graphStyle === 'neural') state.pulseSim.update(90, performance.now());

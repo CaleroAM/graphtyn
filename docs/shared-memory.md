@@ -199,9 +199,11 @@ El selector de memoria incluye paletas listas para usar (Obsidian, Cyberpunk,
 Dracula, Solarized, Nordic, Vaporwave, monocroma, Matrix y por comunidad) y
 “Personalizada”, que conserva los colores elegidos manualmente. El apartado
 “Halos / irradiación” permite apagar o encender la iluminación alrededor de
-nodos, enlaces y pulsos. “Parpadeo de Vértices (2D y 3D)” se guarda junto con
+nodos, enlaces y pulsos. “Parpadeo de Vértices” se guarda junto con
 esas preferencias y actualiza también el lienzo 2D cuando la simulación ya se
-ha estabilizado.
+ha estabilizado. Las partículas direccionales usan un desfase, una velocidad y
+una cantidad estables por enlace para que las señales salgan y lleguen de forma
+irregular, sin sincronizar todo el grafo con un único ciclo.
 
 Los estados de asunto son `abierto`, `en investigación`, `resuelto`, `reabierto` y `archivado`. La verificación es independiente (`sin verificar`, `declarado`, `prueba superada`, `prueba fallida`, `confirmado por usuario`). Las verificaciones requieren mensajes fuente compatibles y cada corrección, fusión o separación conserva un evento auditable.
 

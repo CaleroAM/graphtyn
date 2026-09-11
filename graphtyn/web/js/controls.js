@@ -1,4 +1,4 @@
-import { state, PALETTES, getMemoryColors, getMemoryColor, getMemoryPalette,
+import { state, PALETTES, getMemoryColors, getMemoryColor, getMemoryPalette, particleProfile,
          applyMemoryPalette, markMemoryColorsCustom, updateMemoryColor,
          resetMemoryColor, resetMemoryColors, saveMemoryColors, saveVisualPreferences } from './state.js';
 import { destroyGraph, loadGraph, refreshStyleInPlace, toggleRotate } from './graph.js';
@@ -166,9 +166,11 @@ export function updateLinkStyles() {
 
       if (state.graphInst) {
         state.graphInst
-          .linkDirectionalParticles(state.showParticles ? 2 : 0)
+          .linkDirectionalParticles(l => (state.showParticles ? particleProfile(l, state.graphStyle === 'holo' ? 0.02 : 0.012).count : 0))
           .linkDirectionalArrowLength(state.showArrows ? 5 : 0)
           .linkCurvature(state.linkStyle === 'curved' ? 0.2 : 0.0)
+          .linkDirectionalParticleSpeed(l => particleProfile(l, state.graphStyle === 'holo' ? 0.02 : 0.012).speed)
+          .linkDirectionalParticleOffset(l => particleProfile(l, state.graphStyle === 'holo' ? 0.02 : 0.012).offset)
           .linkLineDash(l => ((state.linkStyle === 'dashed' || l.confidence === 'INFERRED') ? [4, 4] : null));
       }
     }

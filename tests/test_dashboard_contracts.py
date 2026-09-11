@@ -136,14 +136,17 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
     assert 'id="memory-palette-sel"' in html and 'value="custom">Personalizada' in html
     assert html.count('value="custom">Personalizada') == 2
     assert 'id="chk-radiance"' in html and 'toggleRadiance' in dashboard
-    assert 'Parpadeo de Vértices (2D y 3D)' in html
+    assert 'Parpadeo de Vértices</span>' in html and 'Dibujo orgánico</span>' in html
     painters = (WEB / "js" / "painters.js").read_text()
     styles = (WEB / "js" / "styles.js").read_text()
     state = (WEB / "js" / "state.js").read_text()
+    graph = (WEB / "js" / "graph.js").read_text()
     assert "state.radianceOn" in painters and "state.radianceOn" in styles
     assert "state.vertexBlinkOn" in painters and "state.vertexBlinkOn" in styles
     assert "graphInst.refresh" in styles
     assert "linkHaloByDefault" in state and "MEMORY_CUSTOM_COLOR_KEY" in state
+    assert "particleProfile" in state and "particleProfile" in graph and "particleProfile" in styles
+    assert "linkDirectionalParticleOffset" in graph and "linkDirectionalParticleOffset" in styles
     assert 'loadMoreMemoryTopics' in dashboard and 'focusMemorySession' in dashboard
     assert 'memoryFocusSession' in (WEB / "js" / "graph.js").read_text()
     assert 'f97316' in (WEB / "js" / "state.js").read_text()
