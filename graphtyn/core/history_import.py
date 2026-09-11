@@ -564,10 +564,25 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
                               "discovered": discovered["count"], "import": imported,
                               "errors": list(discovered.get("errors") or [])}
     result["errors"].extend(imported.get("errors") or [])
+    # A brain may already contain captured sessions from MCP before a source
+    # was configured. Advance their thematic cursors too, so synchronization
+    # reports coverage for the whole space rather than only newly imported data.
+    store = SharedMemoryStore(root)
+    processed_sessions, processed_messages = 0, 0
+    with store._connect() as db:
+        existing_sessions = [row[0] for row in db.execute("SELECT id FROM sessions ORDER BY started_at,id")]
+    for session_id in existing_sessions:
+        try:
+            topic_result = store.process_topics(session_id)
+            processed_sessions += 1
+            processed_messages += int(topic_result.get("processed") or 0)
+        except PermissionError:
+            continue
+    result["topic_processing"] = {"sessions": processed_sessions, "messages": processed_messages}
     if enrich:
         if progress:
             progress(45, "Enriqueciendo temas nuevos o modificados")
-        enrichment = SharedMemoryStore(root).enrich_topics(None, provider=provider_model,
+        enrichment = store.enrich_topics(None, provider=provider_model,
                                                             force=force, progress=progress)
         result["enrichment"] = enrichment
     result["ok"] = not result["errors"] and bool(imported.get("ok", True))
