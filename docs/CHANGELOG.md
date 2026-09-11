@@ -3,6 +3,41 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [Unreleased]
+
+- Referencias estables `N-xxxxxx` para nodos de memoria, resolución por CLI,
+  MCP y API, y copia directa desde el dashboard.
+- Candidatas léxicas separadas de las aristas del grafo, con aceptación o
+  rechazo auditables y permisos validados para ambos temas.
+- Enriquecimiento opcional con Ollama local en segundo plano y resaltado de
+  sólo el nodo seleccionado, sus vecinos y sus conexiones.
+
+## [0.7.0] - 2026-09-10
+
+Memoria temática multiagente con captura incremental y soporte para el
+transcript SQLite actual de OpenClaw.
+
+### Incluye
+
+- Temas, episodios, entidades, estados, referencias a mensajes y evolución
+  auditable por proyecto.
+- Recuperación por temas, ventanas de mensajes, cobertura y filtros desde API,
+  MCP, CLI y dashboard.
+- Importación completa e incremental de historiales JSON/JSONL y SQLite,
+  incluyendo `agent/openclaw-agent.sqlite` y `transcript_events`.
+- Captura `memory_ingest_turn` idempotente, extracción determinista y soporte
+  para agentes distintos de OpenClaw/Evi.
+- Vistas de memoria simplificada y detallada con paginación, filtros y paneles
+  de conversación.
+- Protección de proyectos ambiguos, separación de autenticación MCP y API
+  local, y cobertura de procesamiento visible.
+
+### Validación
+
+- Suite completa: 289 pruebas pasadas y 2 omitidas.
+- Sesión real de OpenClaw importada y procesada sin duplicados: 1.224 mensajes
+  descubiertos y procesados.
+
 ## [0.6.1] - 2026-08-27
 
 Versión correctiva de instalación y primer uso, derivada de una sesión real en

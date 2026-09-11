@@ -3,6 +3,19 @@ import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.
 import { buildPulseSim } from './sim.js';
 import { apply2DStyle, apply3DStyle, paintNodePointerArea } from './styles.js';
 
+function endpointId(value) { return value && typeof value === 'object' ? value.id : value; }
+function selectedLink(link) {
+      const selected = state.selectedNode?.id;
+      if (!selected) return true;
+      return endpointId(link.source) === selected || endpointId(link.target) === selected;
+    }
+function memoryLinkColor(link, base) {
+      if (state.selectedNode && !selectedLink(link)) return 'rgba(255,255,255,0.06)';
+      if (link.confidence === 'AMBIGUOUS') return 'rgba(245,158,11,0.62)';
+      if (link.confidence === 'INFERRED') return 'rgba(148,163,184,0.22)';
+      return base;
+    }
+
 export function destroyGraph() {
       stop3DRotation();
       if (state.neuralTimer) { clearInterval(state.neuralTimer); state.neuralTimer = null; }
@@ -76,6 +89,17 @@ export function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = String(text);
       return div.innerHTML;
+    }
+
+export async function copyNodeReference(reference) {
+      if (!reference) return;
+      try {
+        await navigator.clipboard.writeText(String(reference));
+        const status = document.getElementById('blast-copy-status');
+        if (status) status.textContent = 'Referencia copiada';
+      } catch (error) {
+        window.prompt('Copia esta referencia:', String(reference));
+      }
     }
 
 export function applyFilter() {
@@ -216,6 +240,12 @@ export function onNodeClick(node) {
       const safeName = escapeHtml(node.name || node.id || 'Sin nombre');
       const safeKind = escapeHtml(node.kind || 'nodo');
       const safeId = escapeHtml(node.id || '');
+      // Every graph node has a stable technical id. Memory nodes additionally
+      // receive a short public reference (N-xxxxxx); old API responses still
+      // remain actionable through their technical id.
+      const nodeReference = String(node.reference || node.public_id || node.id || '');
+      const safeReference = escapeHtml(nodeReference);
+      const encodedReference = encodeURIComponent(nodeReference);
       const sourceBlock = node.file
         ? '<div><strong>Origen:</strong> <span style="color:#94a3b8;overflow-wrap:anywhere;">' +
           escapeHtml(node.file) + (node.line ? ':' + node.line : '') + '</span></div>'
@@ -227,6 +257,7 @@ export function onNodeClick(node) {
           '<code style="color:#cbd5e1;font-size:9px;white-space:pre-wrap;">' + escapeHtml(node.evidence) + '</code></div>'
         : '';
       const metadataRows = [
+        safeReference ? ['Identificador', nodeReference] : null,
         node.agent_id ? ['Agente', node.agent_id] : null,
         node.session_id ? ['Sesión', node.session_id] : null,
         node.status ? ['Estado memoria', node.status] : null,
@@ -261,8 +292,9 @@ export function onNodeClick(node) {
       })();
 
       body.innerHTML =
-        '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + safeName + '</span></div>' +
+        '<div><strong>' + (isMemoryNode ? 'Nodo:' : 'Símbolo:') + '</strong> <span style="color:#38bdf8;">' + safeName + '</span></div>' +
         '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + safeKind + '</span></div>' +
+        (safeReference ? '<div style="display:flex;align-items:center;gap:6px;margin-top:3px;"><strong>Identificador:</strong> <code style="color:#a7f3d0;">' + safeReference + '</code><button class="btn-action" style="padding:2px 6px;" onclick="copyNodeReference(decodeURIComponent(\'' + encodedReference + '\'))">Copiar</button><span id="blast-copy-status" style="color:#64748b;font-size:9px;"></span></div>' : '') +
         sourceBlock +
         metadataBlock +
         evidenceBlock +
@@ -292,6 +324,12 @@ export function onNodeClick(node) {
           if (neighbors.has(n.id)) return nodeColor(n);
           return 'rgba(255,255,255,0.22)';
         });
+        if (typeof state.graphInst.linkColor === 'function') {
+          state.graphInst.linkColor(l => selectedLink(l) ? (l.confidence === 'AMBIGUOUS' ? 'rgba(245,158,11,0.62)' : l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : '#8c96eb') : 'rgba(255,255,255,0.06)');
+        }
+        if (typeof state.graphInst.linkWidth === 'function') {
+          state.graphInst.linkWidth(l => selectedLink(l) ? 1.8 : 0.25);
+        }
       }
     }
 
@@ -416,6 +454,8 @@ export function closeBlastPanel() {
       if (panel) panel.style.display = 'none';
       if (state.graphInst) {
         state.graphInst.nodeColor(n => nodeColor(n));
+        if (typeof state.graphInst.linkColor === 'function') state.graphInst.linkColor(l => l.confidence === 'AMBIGUOUS' ? 'rgba(245,158,11,0.62)' : l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : '#8c96eb');
+        if (typeof state.graphInst.linkWidth === 'function') state.graphInst.linkWidth(l => l.confidence === 'AMBIGUOUS' ? 1.8 : l.confidence === 'INFERRED' ? 0.9 : 1.4);
       }
     }
 
@@ -531,13 +571,13 @@ export function loadGraph() {
       const url = state.activeView === 'agents'
         ? '/api/graph?view=agents'
         : state.activeView === 'memory'
-        ? '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&limit=400'
+        ? '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&view=topics&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400'
         : state.activeView === 'semantic'
         ? '/api/graph?view=semantic&path=' + encodeURIComponent(state.activePath)
         : '/api/graph?path=' + encodeURIComponent(state.activePath);
 
       const loadingMessage = state.activeView === 'agents' ? 'Cargando topología de agentes...'
-        : state.activeView === 'memory' ? 'Cargando memoria compartida del proyecto...'
+        : state.activeView === 'memory' ? 'Cargando temas y episodios del proyecto...'
         : 'Escaneando proyecto...';
       showGraphSpinner(loadingMessage);
       document.getElementById('stats').textContent = 'Cargando...';
@@ -553,7 +593,7 @@ export function loadGraph() {
         if (loadId !== state.graphLoadId) return;
         if (!data.nodes || data.nodes.length === 0) {
           const emptyMessage = state.activeView === 'memory'
-            ? 'Sin memorias capturadas para este proyecto. Abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.'
+            ? 'Sin memorias capturadas para este proyecto. No hay temas temáticos todavía; abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.'
             : 'Sin nodos de código. Haz clic en Reindexar para escanear el proyecto.';
           document.getElementById('graph-container').innerHTML =
             '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;padding:24px;text-align:center;">' + emptyMessage + '</div>';
@@ -573,7 +613,7 @@ export function loadGraph() {
         const badge = document.getElementById('model-badge');
         if (badge) {
           badge.textContent = state.activeView === 'memory'
-            ? `Memoria compartida · ${(data.agents || []).length} agentes`
+            ? `Memoria ${((data.metadata || {}).mode === 'detailed') ? 'detallada' : 'simplificada'} · ${(data.metadata || {}).topic_count || 0} temas · ${(data.agents || []).length} agentes`
             : (meta.ai_model ? meta.ai_model : '') + (meta.reindex_mode ? ' · ' + meta.reindex_mode : '');
         }
 
@@ -592,9 +632,10 @@ export function loadGraph() {
           const safeName = escapeHtml(n.name || '');
           const safeKind = escapeHtml(n.kind || '');
           const safeDetails = hasDesc ? escapeHtml(n.details) : '';
+          const safeReference = escapeHtml(n.reference || n.public_id || n.id || '');
           const detailsHtml = hasDesc ? `<br/><span style="color:#38bdf8;font-size:11px;line-height:1.3;display:block;margin-top:3px;">${safeDetails}</span>` : '';
           return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:320px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);pointer-events:none;user-select:none;">` +
-            `<strong>${safeName}</strong> <span style="color:#64748b;font-size:10px;">(${safeKind})</span>` +
+            `<strong>${safeName}</strong> <span style="color:#64748b;font-size:10px;">(${safeKind}${safeReference ? ' · ' + safeReference : ''})</span>` +
             detailsHtml +
             `<div style="margin-top:5px;font-size:10px;"><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#94a3b8;">Conexiones: ${n.degree || 0}</span></div>` +
             `</div>`;
@@ -621,8 +662,8 @@ export function loadGraph() {
             .nodeLabel(tooltip)
             .onNodeClick(handleGraphNodeClick)
             .onBackgroundClick(handleGraphBackgroundClick)
-            .linkColor(l => (l.confidence === 'AMBIGUOUS' ? 'rgba(245,158,11,0.62)' : l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : p.link))
-            .linkWidth(l => (l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW))
+            .linkColor(l => memoryLinkColor(l, p.link))
+            .linkWidth(l => { const width = l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW; return state.selectedNode && !selectedLink(l) ? width * 0.2 : width; })
             .linkDirectionalParticles(() => (state.showParticles ? 2 : 0))
             .linkDirectionalParticleWidth(2.5)
             .linkDirectionalParticleSpeed(0.006)
@@ -662,8 +703,8 @@ export function loadGraph() {
             })
             .linkHoverPrecision(0)
             .nodeLabel(tooltip).onNodeClick(handleGraphNodeClick).onBackgroundClick(handleGraphBackgroundClick)
-            .linkColor(l => (l.confidence === 'AMBIGUOUS' ? 'rgba(245,158,11,0.62)' : l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : p.link))
-            .linkWidth(l => (l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW))
+            .linkColor(l => memoryLinkColor(l, p.link))
+            .linkWidth(l => { const width = l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW; return state.selectedNode && !selectedLink(l) ? width * 0.2 : width; })
             .linkDirectionalParticles(() => (state.showParticles ? 2 : (state.linkStyle === 'dashed' ? 3 : 0)))
             .linkDirectionalParticleWidth(() => (state.linkStyle === 'dashed' ? 1.8 : 2.5))
             .linkDirectionalParticleSpeed(0.006)

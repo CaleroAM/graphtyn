@@ -54,6 +54,7 @@ export function loadProjects(thenLoadGraph) {
       fetch('/api/projects').then(r => r.json()).then(projects => {
         console.log("Projects received:", projects);
         projects.forEach(p => { if (p.path) state.respectMap[p.path] = p.respect_git !== false; });
+        state.nonAutoloadPaths = new Set(projects.filter(p => p && p.autoload === false).map(p => p.path));
         const el = document.getElementById('project-list');
         if (!Array.isArray(projects) || !projects.length) {
           el.innerHTML = `
@@ -68,7 +69,15 @@ export function loadProjects(thenLoadGraph) {
           `;
           return;
         }
-        if (!state.activePath && projects.length) state.activePath = projects[0].path;
+        // A master/home folder is only a project container. Never select it
+        // automatically: indexing it can traverse an entire user profile and
+        // exhaust memory. Users may still open it explicitly when needed.
+        const selectable = projects.filter(p => p && p.autoload !== false && p.mode !== 'master_folder');
+        if (!state.activePath && selectable.length) state.activePath = selectable[0].path;
+        if (!state.activePath && thenLoadGraph) {
+          const status = document.getElementById('graph-status');
+          if (status) status.textContent = 'Selecciona un repositorio para cargar el grafo.';
+        }
         el.innerHTML = projects.map(p => {
           const pPath = (p.path || '').replace(/"/g, '&quot;');
           const pName = p.name || p.id || 'Sin nombre';
@@ -78,7 +87,7 @@ export function loadProjects(thenLoadGraph) {
             '<span class="proj-badge ' + (p.indexed ? 'ok' : 'pend') + '">' + (p.indexed ? 'OK' : 'PEND') + '</span>' +
             '</div>';
         }).join('');
-        if (thenLoadGraph) loadGraph();
+        if (thenLoadGraph && state.activePath) loadGraph();
       }).catch(err => {
         console.error("Projects fetch error:", err);
         document.getElementById('project-list').innerHTML =
@@ -87,6 +96,11 @@ export function loadProjects(thenLoadGraph) {
     }
 
 export function selectProject(path) {
+      if (state.nonAutoloadPaths.has(path)) {
+        const status = document.getElementById('graph-status');
+        if (status) status.textContent = 'Selecciona un repositorio concreto; la carpeta personal no se indexa.';
+        return;
+      }
       state.activePath = path;
       state.webFlowNodeIds = null;
       const resetFlow = document.getElementById('reset-web-flow');

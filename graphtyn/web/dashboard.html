@@ -91,6 +91,14 @@
         </div>
       </div>
 
+      <div id="memory-graph-view-control" class="memory-graph-view-control" hidden>
+        <label for="memory-graph-mode">Memoria:</label>
+        <select id="memory-graph-mode" onchange="setMemoryGraphMode(this.value)" aria-label="Vista de memoria del proyecto">
+          <option value="simplified">Simplificada</option>
+          <option value="detailed">Detallada</option>
+        </select>
+      </div>
+
       <!-- Node Filters dropdown -->
       <div class="dd-wrap" id="dd-filter">
         <button class="btn-action" onclick="toggleDD('dd-filter')" aria-haspopup="true" aria-expanded="false">

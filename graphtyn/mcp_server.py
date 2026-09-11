@@ -501,7 +501,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.6.1"}
+                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.7.0"}
                 }
             }
         elif method == "tools/list":
@@ -733,10 +733,12 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     ]
                 }
             }
+            from .core.topic_contracts import TOPIC_TOOLS
+            response["result"]["tools"].extend(TOPIC_TOOLS)
             if tool_profile == "intent":
                 response["result"]["tools"] = [
                     tool for tool in response["result"]["tools"]
-                    if tool["name"] in {"graph_query_intent", "memory_context"}
+                    if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
                 ]
             elif tool_profile == "memory":
                 response["result"]["tools"] = [
@@ -917,6 +919,9 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     str(args.get("query") or ""), requester_agent=args.get("requester_agent"),
                     limit=int(args.get("limit") or 8), branch=args.get("branch"))}
                 return _mcp_text(req_id, result)
+            elif name in {"memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}:
+                from .core.topic_contracts import dispatch_topic
+                return _mcp_text(req_id, dispatch_topic(memory, name, args))
             elif name == "memory_context":
                 result = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"),
                                         branch=args.get("branch"), limit=int(args.get("limit") or 8),

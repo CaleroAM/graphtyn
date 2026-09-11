@@ -24,7 +24,7 @@ from ..core.ambiguity_review import ambiguity_queue, apply_decisions, save_decis
 from ..core.change_report import render_change_report
 from ..core.incremental_status import build_update_status, save_update_status
 from ..core.verification import verification_plan
-from ..core.storage import data_home, project_store_dir
+from ..core.storage import data_home, project_store_dir, unsafe_project_root
 from ..core.graph_scope import filter_graph_scope
 from ..core.source_evidence import attach_source_evidence
 from ..core.shared_memory import SharedMemoryStore, existing_store_db
@@ -47,7 +47,7 @@ async def lifespan(_app: FastAPI):
     watch_manager.stop_all()
 
 
-app = FastAPI(title="Graphtyn API", version="0.6.1", lifespan=lifespan)
+app = FastAPI(title="Graphtyn API", version="0.7.0", lifespan=lifespan)
 
 # Central writable index store — user home ~/.graphtyn/
 INDEX_STORE = data_home()
@@ -67,7 +67,10 @@ def _watch_enabled() -> bool:
 
 
 def _memory_auth(authorization: str | None) -> JSONResponse | None:
-    token = os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN") or os.environ.get("GRAPHTYN_MCP_TOKEN") or ""
+    # MCP and the local dashboard have separate trust boundaries.  A remote
+    # MCP token must not make the browser dashboard require a token it cannot
+    # know; set GRAPHTYN_MEMORY_HTTP_TOKEN when REST memory endpoints need auth.
+    token = os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN") or ""
     if token and (not authorization or not hmac.compare_digest(authorization, f"Bearer {token}")):
         return JSONResponse({"ok": False, "error": "Token de memoria inválido"}, status_code=401)
     return None
@@ -97,7 +100,7 @@ def _memory_principal(authorization: str | None) -> dict | None:
                 role, projects = str(config), []
             return {"role": role if role in _ROLE_LEVEL else "reader", "projects": projects,
                     "key": hashlib.sha256(supplied.encode()).hexdigest()[:16]}
-    legacy = os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN") or os.environ.get("GRAPHTYN_MCP_TOKEN") or ""
+    legacy = os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN") or ""
     if legacy and supplied and hmac.compare_digest(supplied, legacy):
         return {"role": "admin", "projects": [], "key": "legacy"}
     if not tokens and not legacy: return {"role": "admin", "projects": [], "key": "local"}
@@ -217,6 +220,14 @@ def _load_registered_projects() -> list[dict]:
                     existing.update(registered)
         except Exception:
             pass
+    # Never auto-load a user profile or a master/container folder. They may be
+    # registered for navigation, but scanning them on dashboard startup can
+    # traverse thousands of unrelated files and exhaust memory.
+    home_path = str(Path.home().resolve())
+    for project in projects:
+        project["autoload"] = (project.get("mode") != "master_folder"
+                               and str(Path(project.get("path", "")).resolve()) != home_path
+                               and unsafe_project_root(project.get("path", "")) is None)
     return projects
 
 @app.get("/api/projects")
@@ -245,6 +256,8 @@ def register_project(payload: dict = Body(...)):
     target_path = Path(path_str).resolve()
     if not target_path.exists():
         return JSONResponse({"ok": False, "error": f"La ruta '{path_str}' no existe en el sistema"}, status_code=404)
+    if reason := unsafe_project_root(target_path):
+        return JSONResponse({"ok": False, "error": reason + "; registra el repositorio concreto."}, status_code=400)
 
     REGISTRATION_FILE.parent.mkdir(exist_ok=True)
     custom_projects = []
@@ -555,7 +568,7 @@ def generate_semantic_graph(data: dict) -> dict:
 
 @app.get("/health")
 def health_check():
-    return JSONResponse({"status": "ok", "service": "Graphtyn", "version": "0.6.1"})
+    return JSONResponse({"status": "ok", "service": "Graphtyn", "version": "0.7.0"})
 
 
 @app.get("/api/history")
@@ -702,6 +715,10 @@ def get_graph(path: str = ".", view: str = "code"):
     if view == "agents":
         return JSONResponse(parser.get_agent_topology_graph())
     root = Path(path).resolve()
+    if unsafe_project_root(root) and os.environ.get("GRAPHTYN_ALLOW_HOME_SCAN") != "1":
+        return JSONResponse({"ok": False,
+                             "error": "La carpeta personal/contenedora no se puede indexar automáticamente. "
+                                      "Registra y selecciona un repositorio concreto."}, status_code=400)
     dot_dir = _index_dir(root)
     if _watch_enabled():
         watch_manager.ensure(root, dot_dir)
@@ -841,6 +858,153 @@ def watch_status():
     return JSONResponse({"enabled": _watch_enabled(), "projects": watch_manager.statuses()})
 
 
+from ..core.topic_contracts import TOPIC_TOOLS, SPECS as TOPIC_SPECS, dispatch_topic
+
+
+@app.get("/api/memory/topics")
+def memory_topics(path: str, query: str = "", state: str | None = None,
+                  agent_id: str | None = None, session_id: str | None = None,
+                  since: float | None = None, until: float | None = None,
+                  limit: int = 20, offset: int = 0, requester_agent: str = "dashboard",
+                  authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    return SharedMemoryStore(Path(path)).topics(query, state=state, agent_id=agent_id,
+        session_id=session_id, since=since, until=until, limit=limit, offset=offset, requester_agent=requester_agent)
+
+
+@app.get("/api/memory/entities")
+def memory_entities(path: str, query: str = "", kind: str | None = None,
+                    limit: int = 50, offset: int = 0, requester_agent: str = "dashboard",
+                    authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    return SharedMemoryStore(Path(path)).entities(query, kind=kind, limit=limit, offset=offset,
+        requester_agent=requester_agent)
+
+
+@app.get("/api/memory/entity")
+def memory_entity(path: str, entity_id: str, limit: int = 50,
+                  requester_agent: str = "dashboard", authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(path)).entity(entity_id, limit=limit, requester_agent=requester_agent)
+    except (ValueError, PermissionError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+
+
+@app.get("/api/memory/topic")
+def memory_topic(path: str, topic_id: str, limit: int = 20, offset: int = 0,
+                 requester_agent: str = "dashboard", authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(path)).topic(topic_id, limit=limit, offset=offset, requester_agent=requester_agent)
+    except (ValueError, PermissionError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+
+
+@app.get("/api/memory/window")
+def memory_message_window(path: str, message_id: str, before: int = 10, after: int = 10,
+                          token_budget: int = 3000, requester_agent: str = "dashboard",
+                          authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(path)).message_window(message_id, before=before, after=after,
+            token_budget=token_budget, requester_agent=requester_agent)
+    except (ValueError, PermissionError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+
+
+@app.post("/api/memory/topic/update")
+def memory_topic_update(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "writer", payload.get("path"))
+    if denied: return denied
+    try:
+        return dispatch_topic(SharedMemoryStore(Path(payload["path"])), "memory_topic_update", payload)
+    except (ValueError, PermissionError, KeyError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+
+@app.get("/api/memory/node")
+def memory_node(path: str, reference: str, limit: int = 20,
+                requester_agent: str = "dashboard", authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(path)).resolve_node_reference(reference, requester_agent=requester_agent, limit=limit)
+    except (ValueError, PermissionError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+
+
+@app.get("/api/memory/relation-candidates")
+def memory_relation_candidates(path: str, status: str = "pending", limit: int = 50,
+                               requester_agent: str = "dashboard", authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(path)).relation_candidates(requester_agent=requester_agent, status=status, limit=limit)
+    except (ValueError, PermissionError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+
+@app.post("/api/memory/relation-review")
+def memory_relation_review(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "writer", payload.get("path"))
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(payload["path"])).relation_review(
+            payload["relation_id"], status=payload["status"], actor=payload.get("requester_agent", "dashboard"),
+            reason=payload["reason"])
+    except (ValueError, PermissionError, KeyError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+
+@app.post("/api/memory/history/stream")
+def memory_history_stream(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "admin", payload.get("path"))
+    if denied: return denied
+    required = ("path", "source", "provider", "agent_id", "external_session_id", "consent", "explicit_project_selection")
+    if any(not payload.get(k) for k in required):
+        return JSONResponse({"ok": False, "error": "selección explícita de fuente, proyecto y sesión requerida"}, status_code=400)
+    from ..core.history_stream import ingest_jsonl
+    from ..core.memory_jobs import memory_jobs
+    job = memory_jobs.create("history-stream", payload)
+    def run(update):
+        return ingest_jsonl(SharedMemoryStore(Path(payload["path"])), payload["source"],
+            provider=payload["provider"], agent_id=payload["agent_id"], external_session_id=payload["external_session_id"],
+            consent=True, explicit_project_selection=True,
+            progress=lambda stats: update(50, json.dumps(stats)))
+    memory_jobs.run(job["id"], run)
+    return {"ok": True, "job": job}
+
+
+@app.post("/api/memory/topics/process")
+def memory_topics_process(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "writer", payload.get("path"))
+    if denied: return denied
+    if not payload.get("consent") or not payload.get("session_id") or not payload.get("path"):
+        return JSONResponse({"ok": False, "error": "path, session_id y consent requeridos"}, status_code=400)
+    from ..core.memory_jobs import memory_jobs
+    job = memory_jobs.create("topics", payload)
+    memory_jobs.run(job["id"], lambda update: SharedMemoryStore(Path(payload["path"])).compact_session(payload["session_id"], "deterministic"))
+    return {"ok": True, "job": job}
+
+
+@app.post("/api/memory/topics/enrich")
+def memory_topics_enrich(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "writer", payload.get("path"))
+    if denied: return denied
+    if not payload.get("consent") or not payload.get("path"):
+        return JSONResponse({"ok": False, "error": "path y consent requeridos"}, status_code=400)
+    from ..core.memory_jobs import memory_jobs
+    job = memory_jobs.create("topics-enrich", payload)
+    memory_jobs.run(job["id"], lambda update: SharedMemoryStore(Path(payload["path"])).enrich_topics(payload.get("session_id")))
+    return {"ok": True, "job": job}
+
+
 @app.get("/api/memory/status")
 def memory_status(path: str = Query(...), authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
@@ -878,9 +1042,14 @@ def memory_agent_profile(payload: dict = Body(...), authorization: str | None = 
 
 @app.get("/api/memory/graph")
 def memory_graph(path: str = Query(...), requester_agent: str = Query("dashboard"),
-                 limit: int = Query(300), authorization: str | None = Header(default=None)):
+                 limit: int = Query(300), view: str = Query("attribution"),
+                 detail: bool = Query(False),
+                 authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
-    return SharedMemoryStore(Path(path).expanduser().resolve()).attribution_graph(requester_agent, limit)
+    store = SharedMemoryStore(Path(path).expanduser().resolve())
+    if view in {"topics", "episodes"}:
+        return store.topic_graph(requester_agent=requester_agent, limit=limit, detail=detail)
+    return store.attribution_graph(requester_agent, limit)
 
 
 @app.post("/api/memory/search")
@@ -1246,10 +1415,12 @@ _HTTP_MCP_TOOLS = [
 ]
 
 
+_HTTP_MCP_TOOLS.extend(TOPIC_TOOLS)
+
 def _http_mcp_tools() -> list[dict]:
     profile = os.environ.get("GRAPHTYN_HTTP_TOOL_PROFILE", "full").lower()
     if profile == "intent":
-        return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] in {"graph_query_intent", "memory_context"}]
+        return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}]
     if profile == "memory":
         return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] == "graph_query_intent" or tool["name"].startswith("memory_")]
     return _HTTP_MCP_TOOLS
@@ -1267,7 +1438,7 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
     req_id = payload.get("id")
     method = payload.get("method")
     if method == "initialize":
-        result = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "graphtyn-http", "version": "0.6.1"}}
+        result = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "graphtyn-http", "version": "0.7.0"}}
     elif method == "tools/list":
         result = {"tools": _http_mcp_tools()}
     elif method == "tools/call":
@@ -1279,6 +1450,9 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
         if not root.is_dir():
             return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Ruta de proyecto inválida"}})
         if name.startswith("memory_"):
+            if name in TOPIC_SPECS:
+                _, denied = _require_role(authorization, "writer" if name in {"memory_topic_update", "memory_relation_review"} else "reader", str(root))
+                if denied: return denied
             memory = SharedMemoryStore(root)
             try:
                 if name == "memory_session_start": data = memory.start_session(str(args.get("agent_id") or ""), str(args.get("task") or ""), branch=args.get("branch"), capture_enabled=bool(args.get("capture_enabled", False)))
@@ -1286,6 +1460,7 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
                 elif name == "memory_ingest_turn": data = memory.ingest_turn(str(args.get("agent_id") or ""), str(args.get("external_session_id") or ""), str(args.get("task") or ""), args.get("messages") or [], consent=bool(args.get("consent", False)), branch=args.get("branch"), compact=bool(args.get("compact", True)), close=bool(args.get("close", False)), provider=str(args.get("provider") or "auto"))
                 elif name == "memory_checkpoint": data = memory.checkpoint(str(args.get("session_id") or ""), str(args.get("kind") or ""), str(args.get("title") or ""), str(args.get("content") or ""), files=args.get("files") or [], node_ids=args.get("node_ids") or [], tests=args.get("tests") or [])
                 elif name == "memory_search": data = {"query": args.get("query", ""), "results": memory.search(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), limit=int(args.get("limit") or 8))}
+                elif name in TOPIC_SPECS: data = dispatch_topic(memory, name, args)
                 elif name == "memory_context": data = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), token_budget=int(args.get("token_budget") or 1800))
                 elif name == "memory_ingest_evidence": data = memory.ingest_benchmark_evidence(args.get("files") or None)
                 elif name == "memory_session_end": data = memory.end_session(str(args.get("session_id") or ""), args.get("summary"), args.get("observed_commit"))

@@ -139,6 +139,57 @@ def test_codex_nested_payload_and_sqlite_histories(tmp_path):
     assert hermes_sessions[0].workspace == "/work/erp"
 
 
+def test_openclaw_sqlite_transcript_events_are_imported_with_roles(tmp_path):
+    db = tmp_path / "agents" / "career" / "agent" / "openclaw-agent.sqlite"
+    db.parent.mkdir(parents=True)
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE session_windows(session_id TEXT PRIMARY KEY, session_key TEXT, display_name TEXT, agent_harness_id TEXT, started_at INTEGER)")
+    conn.execute("CREATE TABLE transcript_events(session_id TEXT, seq INTEGER, event_json TEXT, created_at INTEGER, PRIMARY KEY(session_id,seq))")
+    conn.execute("INSERT INTO session_windows VALUES(?,?,?,?,?)", ("new-session", "main", "Asesorías", "career", 1789000000000))
+    conn.executemany("INSERT INTO transcript_events VALUES(?,?,?,?)", [
+        ("new-session", 1, json.dumps({"type": "message", "id": "u1", "message": {"role": "user", "content": "Diseña la aplicación"}}), 1789000000000),
+        ("new-session", 2, json.dumps({"type": "message", "id": "a1", "message": {"role": "assistant", "content": [{"type": "text", "text": "Primero definiremos el alcance."}]}}), 1789000001000),
+    ])
+    conn.commit(); conn.close()
+
+    sessions = parse_history_database(db, "openclaw")
+
+    assert len(sessions) == 1
+    assert sessions[0].agent_id == "openclaw/career"
+    assert sessions[0].external_session_id == "new-session"
+    assert [(item["role"], item["content"]) for item in sessions[0].messages] == [
+        ("user", "Diseña la aplicación"), ("assistant", "Primero definiremos el alcance.")]
+    assert sessions[0].messages[0]["metadata"]["source_message_id"] == "u1"
+
+
+def test_antigravity_transcript_schema_and_brain_id(tmp_path):
+    brain = tmp_path / "brain" / "8d7d6b91-6165-4f42-a275-7a79623c9ce9" / ".system_generated" / "logs"
+    brain.mkdir(parents=True)
+    path = brain / "transcript.jsonl"
+    path.write_text("\n".join(json.dumps(item) for item in [
+        {"source": "USER_EXPLICIT", "type": "USER_INPUT", "content": "Analiza el proyecto"},
+        {"source": "SYSTEM", "type": "CHECKPOINT", "content": "ruido"},
+        {"source": "MODEL", "type": "GENERIC", "content": "Resultado verificado"},
+        {"source": "MODEL", "type": "GENERIC", "content": "Resultado verificado"},
+    ]) + "\n", encoding="utf-8")
+    sessions = parse_history_file(path, "antigravity")
+    assert len(sessions) == 1
+    assert sessions[0].external_session_id == "8d7d6b91-6165-4f42-a275-7a79623c9ce9"
+    assert sessions[0].agent_id == "antigravity/agy"
+    assert sessions[0].agent_id != sessions[0].external_session_id
+    assert [m["role"] for m in sessions[0].messages] == ["user"]
+
+
+def test_jsonl_parser_skips_oversized_record_without_oom(tmp_path):
+    path = tmp_path / "large.jsonl"
+    path.write_text(json.dumps({"role": "user", "content": "ok"}) + "\n" +
+                    "{" + "x" * (8 * 1024 * 1024 + 100) + "}\n" +
+                    json.dumps({"role": "assistant", "content": "respuesta"}) + "\n", encoding="utf-8")
+    sessions = parse_history_file(path, "codex")
+    assert len(sessions) == 1
+    assert [m["content"] for m in sessions[0].messages] == ["ok", "respuesta"]
+
+
 def test_historical_import_is_idempotent_and_searchable(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
     project = tmp_path / "UnityCommerceDemo"

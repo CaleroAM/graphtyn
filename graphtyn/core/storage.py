@@ -9,6 +9,21 @@ import shutil
 import subprocess
 from pathlib import Path
 
+_GENERIC_ROOT_NAMES = {
+    "documents", "documentos", "desktop", "escritorio", "downloads", "descargas",
+    "projects", "proyectos", "work", "workspace", "code", "dev", "repos", "repositorios"
+}
+
+
+def unsafe_project_root(project: str | Path) -> str | None:
+    """Return a reason when a path is a user/container root, not a repository."""
+    path = Path(project).expanduser().resolve()
+    if path == Path.home().resolve():
+        return "la carpeta personal no se puede registrar como proyecto"
+    if path.name.casefold() in _GENERIC_ROOT_NAMES and not (path / ".git").exists():
+        return "la carpeta contenedora/general no se puede registrar como proyecto"
+    return None
+
 
 def data_home() -> Path:
     """Central Graphtyn state root, overridable for containers and CI."""

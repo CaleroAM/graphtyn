@@ -2,12 +2,12 @@ export { toggleDD, openRegister, closeRegister, selMode, submitRegister, openTut
          closeTutorial, loadProjects, selectProject, doReindex, toggleGitignore,
          onFolderPicked, loadHistoryUI, toggleLeftSidebar, toggleRightSidebar, updateModelEstimate,
          initWatchPolling } from './ui.js';
-export { setView, setDim, changePalette, updateLinkStyles,
+export { setView, setDim, setMemoryGraphMode, changePalette, updateLinkStyles,
          exportGraphData, exportGraphPNG } from './controls.js';
 export { focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape,
          changeStyleColors, closeBlastPanel, toggleAllComm, toggleComm, toggleNodeDesc,
          toggleVertexBlink, toggleOrganic3d, toggleRotate, setPRBase, focusWebFlow,
-         clearWebFlow } from './graph.js';
+         clearWebFlow, copyNodeReference } from './graph.js';
 export { openQualityPanel, closeQualityPanel, loadIndexQuality, addNodeToContext,
          removeNodeFromContext, clearContextSelection, generateContextBundle,
          copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity,

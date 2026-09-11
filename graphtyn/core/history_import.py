@@ -29,6 +29,8 @@ from .storage import data_home, secure_private_file
 BUILTIN_PROVIDERS = {"openclaw", "hermes", "codex", "antigravity", "opencode", "claude"}
 _ROLE_ALIASES = {"human": "user", "user": "user", "assistant": "assistant", "ai": "assistant",
                  "tool": "tool", "function": "tool"}
+_AGY_USER = {"USER_EXPLICIT", "USER_INPUT"}
+_AGY_ASSISTANT = {"MODEL", "ASSISTANT", "AGENT"}
 _PROJECT_PATH_RE = re.compile(r"(?:cwd|workspace|project|workdir|directory|path)\s*[:=]\s*([^\n]+)", re.I)
 
 
@@ -63,6 +65,7 @@ def default_sources() -> dict[str, list[Path]]:
         "hermes": [home / ".hermes", home / ".config" / "hermes"],
         "codex": [home / ".codex" / "sessions"],
         "antigravity": [home / ".agy", home / ".config" / "antigravity",
+                        home / ".gemini" / "antigravity-cli",
                         home / ".gemini" / "antigravity-cli" / "brain"],
         "opencode": [home / ".local" / "share" / "opencode"],
         "claude": [home / ".claude" / "projects"],
@@ -170,7 +173,7 @@ def _materialize_source(source: str | Path) -> tuple[Path, tempfile.TemporaryDir
 def _walk_records(value: Any) -> Iterable[dict[str, Any]]:
     if isinstance(value, dict):
         yield value
-        for key in ("messages", "history", "conversation", "turns", "events", "items", "payload", "message", "data"):
+        for key in ("messages", "history", "conversation", "turns", "events", "items", "item", "payload", "message", "data"):
             nested = value.get(key)
             if isinstance(nested, list):
                 for item in nested:
@@ -185,12 +188,12 @@ def _walk_records(value: Any) -> Iterable[dict[str, Any]]:
 
 
 def _content(record: dict[str, Any]) -> str:
-    value = record.get("content", record.get("text", record.get("message", record.get("body", ""))))
+    value = record.get("content", record.get("text", record.get("message", record.get("body", record.get("output", "")))))
     if isinstance(value, list):
         parts = []
         for item in value:
             if isinstance(item, str): parts.append(item)
-            elif isinstance(item, dict) and isinstance(item.get("text"), str): parts.append(item["text"])
+            elif isinstance(item, dict) and item.get("type") not in {"thinking", "reasoning", "analysis"} and isinstance(item.get("text"), str): parts.append(item["text"])
         value = "\n".join(parts)
     if isinstance(value, dict):
         value = value.get("text") or value.get("content") or ""
@@ -198,6 +201,30 @@ def _content(record: dict[str, Any]) -> str:
 
 
 def _role(record: dict[str, Any]) -> str | None:
+    channel = str(record.get("channel") or record.get("type") or "").casefold()
+    if channel in {"analysis", "reasoning", "thinking", "system", "developer"}:
+        return None
+    source = str(record.get("source") or "").upper()
+    record_type = str(record.get("type") or "").upper()
+    if record.get("tool_call_id") or record.get("toolUseId") or record_type in {"TOOL_RESULT", "FUNCTION_CALL_OUTPUT", "TOOL", "TOOL_RESPONSE"}:
+        return "tool"
+    if source in _AGY_USER or record_type in _AGY_USER: return "user"
+    if source in _AGY_ASSISTANT and record_type == "PLANNER_RESPONSE" and record.get("content"):
+        return "assistant"
+    if source in _AGY_ASSISTANT and record_type == "GENERIC":
+        # GENERIC is also used for tool/planner dumps. Only explicitly authored
+        # natural-language responses qualify as assistant evidence.
+        if any(record.get(k) for k in ("tool", "toolName", "tool_name", "toolResult", "tool_result", "toolResults")):
+            return "tool"
+        if str(record.get("content") or "").startswith("Created At:"):
+            if "File Path:" in str(record.get("content")):
+                return None  # Technical file copies are not conversational evidence.
+            return "tool"
+        if str(record.get("role") or "").casefold() != "assistant":
+            return None
+    if source in _AGY_ASSISTANT and record_type in {"GENERIC", "TEXT", "MESSAGE", "ASSISTANT", "AGENT"}: return "assistant"
+    if record_type in {"USERMESSAGE", "USER_MESSAGE"}: return "user"
+    if record_type in {"AGENTMESSAGE", "AGENT_MESSAGE", "ASSISTANTMESSAGE", "ASSISTANT_MESSAGE"}: return "assistant"
     raw = record.get("role") or record.get("author") or record.get("sender") or record.get("type")
     if isinstance(raw, dict): raw = raw.get("role") or raw.get("name")
     return _ROLE_ALIASES.get(str(raw or "").casefold())
@@ -212,6 +239,63 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
         conn.row_factory = sqlite3.Row
         tables = [row[0] for row in conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+
+        # OpenClaw 2026 stores the canonical transcript as JSON events rather
+        # than a role/content table.  The FTS table is only a derived index and
+        # omits stable message IDs, so prefer transcript_events when present.
+        # This keeps imports incremental across the SQLite migration and
+        # preserves user/assistant/tool attribution from the nested message.
+        openclaw_events = provider.casefold() == "openclaw" and "transcript_events" in tables
+        if openclaw_events:
+            session_meta: dict[str, dict[str, Any]] = {}
+            if "session_windows" in tables:
+                for row in conn.execute("SELECT session_id,session_key,display_name,agent_harness_id,started_at FROM session_windows"):
+                    session_meta[str(row["session_id"])] = dict(row)
+            for row in conn.execute("SELECT session_id,seq,event_json,created_at FROM transcript_events ORDER BY created_at,seq"):
+                try:
+                    root = json.loads(row["event_json"])
+                except (TypeError, ValueError):
+                    continue
+                if not isinstance(root, dict):
+                    continue
+                sid = str(row["session_id"])
+                meta = session_meta.get(sid, {})
+                group = grouped.setdefault(sid, {"messages": [], "timestamps": [],
+                    "workspace": None, "branch": None, "title": meta.get("display_name")})
+                for child_index, record in enumerate(_walk_records(root)):
+                    role, content = _role(record), _content(record)
+                    if role not in {"user", "assistant", "tool"} or not content:
+                        continue
+                    native_id = (record.get("id") or record.get("messageId") or record.get("message_id")
+                                 or root.get("id") or root.get("eventId") or root.get("event_id"))
+                    source_id = str(native_id or f"{sid}:{row['seq']}:{child_index}")
+                    stamp = record.get("timestamp") or record.get("created_at") or record.get("createdAt")
+                    if isinstance(stamp, str):
+                        try: stamp = datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp()
+                        except ValueError: stamp = None
+                    if isinstance(stamp, (int, float)):
+                        stamp = float(stamp) / (1000 if stamp > 1e11 else 1)
+                    else:
+                        stamp = float(row["created_at"] or 0) / (1000 if row["created_at"] > 1e11 else 1)
+                    group["messages"].append({"role": role, "content": content,
+                        "metadata": {"historical_source": str(path), "source_message_id": source_id,
+                                     "provider": provider, "table": "transcript_events",
+                                     "source_sequence": [int(row["seq"]), child_index],
+                                     "occurred_at": stamp}})
+                    group["timestamps"].append(stamp)
+                    group["title"] = group["title"] or (content[:180] if role == "user" else None)
+            conn.close()
+            agent = agent_hint or provider
+            parts = path.parts
+            if provider.casefold() == "openclaw" and "agents" in parts:
+                index = parts.index("agents")
+                if index + 1 < len(parts) and parts[index + 1] not in {"agent", "sessions"}:
+                    agent = parts[index + 1]
+            return [HistoricalSession(provider, f"{provider}/{agent}", sid,
+                str(group.get("title") or next((m["content"] for m in group["messages"] if m["role"] == "user"), "Historical session"))[:180],
+                group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"], group.get("branch"))
+                for sid, group in grouped.items() if group["messages"]]
+
         session_meta: dict[str, dict[str, Any]] = {}
         if "sessions" in tables:
             session_columns = {row[1] for row in conn.execute("PRAGMA table_info(sessions)")}
@@ -267,33 +351,63 @@ def _workspace(record: dict[str, Any]) -> str | None:
 
 def parse_history_file(path: Path, provider: str, agent_hint: str | None = None) -> list[HistoricalSession]:
     """Parse JSON/JSONL histories defensively; unknown records are ignored."""
+    values: Iterable[Any]
     try:
         if path.suffix.casefold() == ".jsonl":
-            values = [json.loads(line) for line in path.read_text(encoding="utf-8", errors="replace").splitlines()
-                      if line.strip().startswith(("{", "["))]
+            def records() -> Iterable[Any]:
+                # Never materialize an entire transcript. Oversized records are
+                # usually world-state/tool payloads and are intentionally skipped.
+                with path.open("r", encoding="utf-8", errors="replace") as stream:
+                    while True:
+                        line = stream.readline(8 * 1024 * 1024 + 1)
+                        if not line: break
+                        if len(line) > 8 * 1024 * 1024 and not line.endswith("\n"):
+                            while line and not line.endswith("\n"):
+                                line = stream.readline(8 * 1024 * 1024 + 1)
+                            continue
+                        if line.lstrip().startswith(("{", "[")):
+                            try: yield json.loads(line)
+                            except (ValueError, TypeError): continue
+            values = records()
         else:
             loaded = json.loads(path.read_text(encoding="utf-8", errors="replace"))
             values = loaded if isinstance(loaded, list) else [loaded]
     except (OSError, ValueError, TypeError):
         return []
     grouped: dict[str, dict[str, Any]] = {}
-    file_workspace = next((_workspace(value) for value in values
-                           if isinstance(value, dict) and _workspace(value)), None)
-    file_session = next((value.get("sessionId") or value.get("session_id") or value.get("conversation_id")
-                         for value in values if isinstance(value, dict) and
-                         (value.get("sessionId") or value.get("session_id") or value.get("conversation_id"))), None)
-    for root in values:
+    file_workspace = None
+    file_session = None
+    if provider == "antigravity":
+        file_session = next((part for part in path.parts
+                             if re.fullmatch(r"[0-9a-f]{8}-[0-9a-f-]{27,}", part, re.I)), None)
+    # A single-pass stream cannot pre-scan metadata; records update these values
+    # as they arrive and messages inherit the latest known context.
+    for record_index, root in enumerate(values):
+        if provider == "codex" and isinstance(root, dict) and root.get("type") in {"event_msg", "world_state", "turn_context", "compacted"}:
+            continue
         root_session = ((root.get("sessionId") or root.get("session_id") or root.get("conversation_id"))
                         if isinstance(root, dict) else None) or file_session
         root_workspace = (_workspace(root) if isinstance(root, dict) else None) or file_workspace
-        for record in _walk_records(root):
+        if isinstance(root, dict):
+            file_session = file_session or root_session
+            file_workspace = file_workspace or root_workspace
+        for child_index, record in enumerate(_walk_records(root)):
             role, content = _role(record), _content(record)
-            if not role or not content: continue
+            if role not in {"user", "assistant", "tool"} or not content: continue
             sid = str(record.get("sessionId") or record.get("session_id") or record.get("conversation_id")
                       or root_session or path.stem)
             group = grouped.setdefault(sid, {"messages": [], "workspace": root_workspace, "timestamps": []})
-            group["messages"].append({"role": role, "content": content,
-                                      "metadata": {"historical_source": str(path)}})
+            native_id = record.get("id") or record.get("uuid") or record.get("message_id") or (str(record["step_index"]) if "step_index" in record else None)
+            source_id = str(native_id or f"{sid}:{record_index}:{child_index}")
+            metadata = {"historical_source": str(path), "source_message_id": source_id,
+                        "provider": provider, "source_sequence": [record_index, child_index]}
+            stamp = record.get("timestamp") or record.get("created_at") or record.get("createdAt")
+            if isinstance(stamp, str):
+                try: stamp = datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp()
+                except ValueError: stamp = None
+            if isinstance(stamp, (float, int)):
+                metadata["occurred_at"] = float(stamp) / (1000 if stamp > 1e11 else 1)
+            group["messages"].append({"role": role, "content": content, "metadata": metadata})
             group["workspace"] = group["workspace"] or _workspace(record)
             stamp = record.get("timestamp") or record.get("created_at") or record.get("createdAt")
             if isinstance(stamp, (int, float)): group["timestamps"].append(float(stamp) / (1000 if stamp > 1e11 else 1))
@@ -301,6 +415,8 @@ def parse_history_file(path: Path, provider: str, agent_hint: str | None = None)
                 try: group["timestamps"].append(datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp())
                 except ValueError: pass
     agent = agent_hint or (path.parent.parent.name if provider == "openclaw" and path.parent.name == "sessions" else provider)
+    if provider == "antigravity":
+        agent = agent_hint or "agy"
     sessions = []
     for sid, group in grouped.items():
         if not group["messages"]: continue
@@ -324,15 +440,30 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
             try:
                 root, temp, source_label = _materialize_source(source)
                 if not root.exists(): continue
-                files = ([root] if root.is_file() else [p for p in root.rglob("*.jsonl") if ".trajectory." not in p.name]
-                         + list(root.rglob("*.json"))
-                         + list(root.rglob("*.db")) + list(root.rglob("*.sqlite")) + list(root.rglob("*.sqlite3")))
+                if root.is_file():
+                    files = [root]
+                elif name == "antigravity":
+                    # transcript.jsonl is the canonical AGY source. Other files
+                    # are compacted copies, planner/tool logs or UI metadata.
+                    files = [p for p in root.rglob("transcript.jsonl")
+                             if ".system_generated" in p.parts and "logs" in p.parts]
+                else:
+                    files = ([p for p in root.rglob("*.jsonl") if ".trajectory." not in p.name]
+                             + list(root.rglob("*.json"))
+                             + list(root.rglob("*.db")) + list(root.rglob("*.sqlite")) + list(root.rglob("*.sqlite3")))
                 # Agent distributions often bundle prompts and skill fixtures that
                 # happen to use role/content fields. They are not conversations.
                 ignored_parts = {"skills", "templates", "examples", "fixtures", "node_modules", ".git"}
                 files = [path for path in files if not ignored_parts.intersection(
                     part.casefold() for part in path.relative_to(root).parts[:-1])]
                 for path in files:
+                    if path.suffix.casefold() == ".jsonl" and not temp:
+                        from .history_stream import preview_jsonl
+                        preview = preview_jsonl(path, name)
+                        found.extend(preview["sessions"])
+                        if preview["errors"]:
+                            errors.append({"source": str(path), "error": f"{preview['errors']} registros JSON inválidos"})
+                        continue
                     parser = parse_history_database if path.suffix.casefold() in {".db", ".sqlite", ".sqlite3"} else parse_history_file
                     for session in parser(path, name):
                         if str(source).startswith(("ssh://", "docker://", "ssh+docker://")):
@@ -426,6 +557,9 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                 ambiguous.append({"session": raw.get("external_session_id"), "workspace": workspace_hint,
                                   "suggested_project": Path(workspace_hint).name, "reason": "proyecto no registrado"})
                 continue
+        if not workspace_hint and not raw.get("explicit_project_selection"):
+            ambiguous.append({"session": raw.get("external_session_id"), "reason": "sin metadatos de proyecto ni selección explícita"})
+            continue
         selected.append(raw)
     if dry_run:
         return {"ok": True, "dry_run": True, "project": project, "selected": len(selected),
@@ -433,6 +567,14 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
     store, imported, reused, errors = SharedMemoryStore(root), [], [], []
     for raw in selected:
         try:
+            if raw.get("streaming_source"):
+                from .history_stream import ingest_jsonl
+                result = ingest_jsonl(store, raw["source"], provider=raw["provider"],
+                    external_session_id=raw["external_session_id"], agent_id=raw["agent_id"],
+                    consent=True, explicit_project_selection=True)
+                (imported if result["processed_this_run"] else reused).append({"source": raw["source"], "session_id": result["session_id"],
+                    "external_session_id": raw["external_session_id"], "progress": result})
+                continue
             source_key = "external-history:" + str(raw.get("fingerprint") or hashlib.sha256(
                 json.dumps(raw, ensure_ascii=False, sort_keys=True).encode()).hexdigest())
             with store._connect() as conn:
@@ -443,16 +585,14 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                 continue
             occurred_at = float(raw.get("occurred_at") or time.time())
             agent_id = str(raw.get("agent_id") or raw.get("provider") or "unknown").strip().casefold()
-            external_id = f"historical:{raw.get('external_session_id') or raw.get('fingerprint')}"
+            external_id = str(raw.get("external_session_id") or raw.get("fingerprint"))
             session_id = "ses_ext_" + hashlib.sha256(f"{agent_id}\0{external_id}".encode()).hexdigest()[:24]
-            existing_pairs = {(message.get("role"), message.get("content"))
-                              for message in store.list_messages(session_id, limit=1000)}
             historical_messages = []
-            for message in list(raw.get("messages") or []):
-                if (message.get("role"), message.get("content")) in existing_pairs:
-                    continue
-                historical_messages.append({**message, "metadata": {**(message.get("metadata") or {}),
-                    "capture_mode": "historical_import", "occurred_at": occurred_at,
+            for index, message in enumerate(raw.get("messages") or []):
+                metadata = message.get("metadata") or {}
+                historical_messages.append({**message, "metadata": {**metadata,
+                    "source_message_id": metadata.get("source_message_id") or f"{raw.get('external_session_id')}:{index}",
+                    "capture_mode": "historical_import", "occurred_at": metadata.get("occurred_at", occurred_at),
                     "provider": raw.get("provider"), "historical_source": raw.get("source")}})
             if not historical_messages and store.get_session(session_id):
                 reused.append({"source": raw.get("source"), "session_id": session_id,
@@ -472,7 +612,6 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                              (source_key, result["session_id"], time.time()))
                 conn.execute("UPDATE sessions SET started_at=?,ended_at=? WHERE id=?",
                              (occurred_at, occurred_at, result["session_id"]))
-                conn.execute("UPDATE messages SET created_at=? WHERE session_id=?", (occurred_at, result["session_id"]))
                 rows = conn.execute("SELECT id,metadata_json FROM memories WHERE session_id=?",
                                     (result["session_id"],)).fetchall()
                 for row in rows:
@@ -496,7 +635,7 @@ def import_history_archive(workspace: str | Path, sessions: list[dict[str, Any]]
     """
     prepared = []
     for raw in sessions:
-        item = {**raw, "workspace": None}
+        item = {**raw, "workspace": None, "explicit_project_selection": True}
         original_workspace = raw.get("workspace")
         item["messages"] = [{**message, "metadata": {**(message.get("metadata") or {}),
             "original_workspace": original_workspace, "archive_import": True}}

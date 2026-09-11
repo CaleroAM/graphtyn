@@ -474,7 +474,7 @@ def test_versioned_memory_benchmark_meets_quality_and_token_guardrails(tmp_path)
     assert result["metrics"]["recall_at_5"] == 1.0
     assert result["metrics"]["mrr"] == 1.0
     assert result["metrics"]["attribution_accuracy"] == 1.0
-    assert result["metrics"]["estimated_tokens_total"] <= 1400
+    assert result["metrics"]["estimated_tokens_total"] <= 4000  # Full envelopes, including provenance/telemetry.
     assert result["failures"] == []
 
 
@@ -591,6 +591,30 @@ def test_qwen_extraction_uses_only_sanitized_messages_and_never_verifies(tmp_pat
     assert result["proposals"][0]["confidence"] == .85
 
 
+def test_thematic_enrichment_uses_ollama_model_fallback_and_reports_configuration(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_SUMMARY_MODEL", raising=False)
+    monkeypatch.setenv("OLLAMA_MODEL", "qwen2.5-coder:3b")
+    monkeypatch.setenv("GRAPHTYN_MEMORY_AUTO_ENRICH", "0")
+
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def read(self):
+            return json.dumps({"response": json.dumps({
+                "title": "Botón de reporte", "summary": "Ajuste visual", "category": "interfaz"})}).encode()
+
+    monkeypatch.setattr(memory_extraction.urllib.request, "urlopen", lambda *args, **kwargs: Response())
+    proposal, provider = memory_extraction.assisted_topic_enrichment(
+        {"summary": "Resumen previo"}, [{"id": "m1", "role": "user", "content": "cambia el botón"}])
+    assert proposal["title"] == "Botón de reporte"
+    assert provider == "ollama:qwen2.5-coder:3b"
+
+    project = tmp_path / "project"
+    project.mkdir()
+    status = SharedMemoryStore(project).status()["topic_enrichment"]
+    assert status == {"configured": True, "model": "qwen2.5-coder:3b", "enriched_events": 0, "reviewed_candidates": 0, "last_provider": None}
+
+
 def test_stability_suite_has_30x3x3_design_and_meets_v1_guardrails():
     dataset = build_stability_dataset()
     assert dataset["design"] == {"scenarios": 30, "formulations_per_scenario": 3,
@@ -605,7 +629,7 @@ def test_stability_suite_has_30x3x3_design_and_meets_v1_guardrails():
     assert metrics["mrr"] >= .98
     assert metrics["attribution_accuracy"] == 1.0
     assert metrics["negative_accuracy"] == 1.0
-    assert metrics["estimated_tokens_mean"] <= 350
+    assert metrics["estimated_tokens_mean"] <= 750  # Previously counted memory bodies only.
     assert set(metrics["by_requester_agent"]) == {"agy", "codex", "openclaw"}
     assert all(item["recall_at_5"] >= .98 for item in metrics["by_requester_agent"].values())
     assert result["failures"] == []

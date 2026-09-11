@@ -112,7 +112,19 @@ export function apply2DStyle() {
       const paintNode = state.graphStyle === 'holo' ? holoNodePainter : neuralNodePainter;
       const paintLink = state.graphStyle === 'holo' ? holoLinkPainter : neuralLinkPainter;
       const safeNode = safePaint(paintNode, 'nodo');
-      const safeLink = safePaint(paintLink, 'enlace');
+      const safeLink = safePaint((link, color, ctx, globalScale) => {
+        const selected = state.selectedNode?.id;
+        const source = link && typeof link.source === 'object' ? link.source.id : link?.source;
+        const target = link && typeof link.target === 'object' ? link.target.id : link?.target;
+        if (selected && source !== selected && target !== selected) {
+          ctx.save();
+          ctx.globalAlpha *= 0.08;
+          paintLink(link, color, ctx, globalScale);
+          ctx.restore();
+          return;
+        }
+        paintLink(link, color, ctx, globalScale);
+      }, 'enlace');
       state.graphInst
         .nodeCanvasObjectMode(() => 'after')
         .nodeCanvasObject(safeNode)
@@ -199,6 +211,11 @@ export function apply3DStyle() {
           const curved = state.linkStyle === 'curved';
           const dashed = state.linkStyle === 'dashed';
           for (const { l, a, b, d } of linkDraw) {
+            const selected = state.selectedNode?.id;
+            const sourceId = l.source && l.source.id !== undefined ? l.source.id : l.source;
+            const targetId = l.target && l.target.id !== undefined ? l.target.id : l.target;
+            octx.save();
+            octx.globalAlpha = !selected || sourceId === selected || targetId === selected ? 1 : 0.08;
             if (l._side === undefined) l._side = Math.random() < 0.5 ? -1 : 1;
             if (l._bt === undefined) l._bt = 0.15 + Math.random() * 0.7;
             const bend = d * 0.16 * l._side;
@@ -268,6 +285,7 @@ export function apply3DStyle() {
                 octx.beginPath(); octx.arc(head.x, head.y, 2.2, 0, Math.PI * 2); octx.fill();
               }
             }
+            octx.restore();
           }
           // nodos: halos orgánicos con energía
           const nodeOrder = visNodes.slice().sort((a, b) => ((a.z || 0) - (b.z || 0)));
@@ -347,6 +365,10 @@ export function apply3DStyle() {
 
       // ── MODO COMETAS (sin orgánico): vista Estándar + luces ──
       const pulseLinkColor = l => {
+        const selected = state.selectedNode?.id;
+        const source = l && typeof l.source === 'object' ? l.source.id : l?.source;
+        const target = l && typeof l.target === 'object' ? l.target.id : l?.target;
+        if (selected && source !== selected && target !== selected) return 'rgba(255,255,255,0.05)';
         const off = l.index !== undefined ? l.index : 0;
         const blink = state.vertexBlinkOn ? (0.5 + 0.5 * Math.sin(state.neuralPhase * 2.4 - off * 1.1)) : 0.5;
         const act = l._activity || 0;
@@ -357,6 +379,10 @@ export function apply3DStyle() {
         return `rgb(${r},${g},${b})`;
       };
       const pulseOpacity = l => {
+        const selected = state.selectedNode?.id;
+        const source = l && typeof l.source === 'object' ? l.source.id : l?.source;
+        const target = l && typeof l.target === 'object' ? l.target.id : l?.target;
+        if (selected && source !== selected && target !== selected) return 0.04;
         const off = l.index !== undefined ? l.index : 0;
         const blink = state.vertexBlinkOn ? (0.5 + 0.5 * Math.sin(state.neuralPhase * 2.4 - off * 1.1)) : 0.5;
         const act = l._activity || 0;
@@ -460,5 +486,3 @@ export function apply3DStyle() {
         }
       }, 100);
     }
-
-

@@ -53,7 +53,7 @@ def test_mcp_initialize_and_tools_list(workspace):
     assert intent_tool["inputSchema"]["properties"]["evidence_mode"]["enum"] == ["auto", "compact", "balanced", "precision"]
 
 
-def test_mcp_intent_profile_exposes_only_one_tool(workspace):
+def test_mcp_intent_profile_exposes_context_and_topic_expansion(workspace):
     runner = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'intent')\n"
     res = subprocess.run(
         [sys.executable, "-c", runner % str(workspace)],
@@ -61,7 +61,7 @@ def test_mcp_intent_profile_exposes_only_one_tool(workspace):
         capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ),
     )
     response = json.loads(res.stdout.strip())
-    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "memory_context"}
+    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
 
 
 def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalog(workspace):
