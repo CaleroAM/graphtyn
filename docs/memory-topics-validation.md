@@ -6,7 +6,7 @@ La validación reprocesó tres fuentes autorizadas de TourMuseosPuebla: dos hist
 
 La muestra real contiene asuntos sobre texturas, botones y generación de APK. En tres casos de referencia con mensajes fuente conocidos, la recuperación temática tuvo recall 3/3 y atribución 3/3. Las latencias de búsqueda fueron 78–85 ms; los contextos completos midieron 1.610–1.749 tokens y las ventanas 2.783–3.000 tokens. Es una muestra positiva pequeña, no una medición exhaustiva de precisión o recall.
 
-Pasaron 286 pruebas unitarias y de integración de memoria, historiales, CLI, MCP y dashboard; 2 pruebas opcionales quedaron omitidas. La prueba de navegador con Chromium verificó títulos, expansión de episodios, panel de conversación, filtro de estado y reintento tras error recuperable. El dashboard conserva el estado de procesamiento, pendientes y exclusiones; el modelo local es opt-in y la API externa no se activa como fallback.
+Pasaron 294 pruebas unitarias y de integración de memoria, historiales, CLI, MCP y dashboard; 2 pruebas opcionales quedaron omitidas. La prueba de navegador con Chromium verificó títulos, expansión de episodios, panel de conversación, filtro de estado y reintento tras error recuperable. El dashboard conserva el estado de procesamiento, pendientes y exclusiones; el modelo local es opt-in y la API externa no se activa como fallback.
 
 Limitaciones conocidas: la extracción determinista conserva episodios con contexto limitado; la similitud léxica/embeddings propone asociaciones, pero no fusiona asuntos automáticamente. La precisión completa requiere un conjunto etiquetado mayor y pruebas de navegador en el entorno de despliegue final.
 
@@ -32,3 +32,18 @@ borrar memorias. El grafo resultante contiene 32 entidades y 633 relaciones
 explícitas antes de limitar la vista; la respuesta acotada del dashboard queda
 en 2.574 enlaces simplificados y 3.419 detallados, con 829 sugerencias
 léxicas marcadas como ambiguas.
+
+## Validación del catálogo y la vista de sesiones (2026-09-11)
+
+Con el servicio del dashboard reiniciado, `GET /health` respondió correctamente.
+En `Cerebro-Eve` se verificó un catálogo de 62 sesiones con referencias estables
+(`N-xxxxxx`), búsqueda por tarea/agente y paginación. El grafo devolvió 472 temas
+procesados y permite cargar páginas adicionales; la vista detallada mantiene
+episodios y entidades bajo demanda. Una sesión enfocada devolvió sus 6 temas,
+12 mensajes y la referencia `N-000002` sin cruzar otras sesiones. Las sesiones
+privadas se ocultan a un agente no autorizado.
+
+El control de colores de memoria se comprobó en el contrato del dashboard: cada
+tipo (`tema`, `sesión`, `agente`, `episodio`, `entidad`) conserva núcleo y halo
+independientes, con persistencia local y aplicación restringida a “Memoria del
+proyecto”.
