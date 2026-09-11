@@ -137,6 +137,9 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
     assert html.count('value="custom">Personalizada') == 2
     assert 'id="chk-radiance"' in html and 'toggleRadiance' in dashboard
     assert 'Parpadeo de Vértices</span>' in html and 'Dibujo orgánico</span>' in html
+    assert "IDs de nodos" in (WEB / "js" / "graph.js").read_text()
+    assert "renderCommunityNodes" in dashboard and "renderCommunityNodes" in handlers
+    assert ".comm-node-id" in css and ".comm-node-details" in css
     painters = (WEB / "js" / "painters.js").read_text()
     styles = (WEB / "js" / "styles.js").read_text()
     state = (WEB / "js" / "state.js").read_text()

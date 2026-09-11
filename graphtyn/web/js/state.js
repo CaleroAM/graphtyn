@@ -32,6 +32,7 @@ export const state = {
   radianceOn: true,
   organic3dOn: true,
   commColorMap: {},
+  communityNodes: {},
   selectedNode: null,
   selectedNeighbors: null,
   contextSelection: [],

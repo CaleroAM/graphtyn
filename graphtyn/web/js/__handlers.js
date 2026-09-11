@@ -7,7 +7,7 @@ export { setView, setDim, setMemoryGraphMode, changePalette, updateLinkStyles,
          selectMemoryColorKind, selectMemoryPalette, changeMemoryColor, toggleMemoryHaloLink,
          toggleRadiance,
          resetMemoryColorType, resetMemoryColorSettings } from './controls.js';
-export { focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape,
+export { focusNode, applyFilter, renderCommunityNodes, changeGraphStyle, changeNodeColor, changeNodeShape,
          changeStyleColors, closeBlastPanel, toggleAllComm, toggleComm, toggleNodeDesc,
          toggleVertexBlink, toggleOrganic3d, toggleRotate, setPRBase, focusWebFlow,
          clearWebFlow, copyNodeReference } from './graph.js';

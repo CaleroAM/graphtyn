@@ -43,41 +43,72 @@ export function showGraphSpinner(msg) {
 
 export function buildCommunities(data) {
       // Build community groups by folder
-      const groups = {};
+      const groups = Object.create(null);
       data.nodes.forEach(n => {
         const key = getCommKey(n);
-        if (!groups[key]) groups[key] = 0;
-        groups[key]++;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(n);
       });
 
-      const sorted = Object.entries(groups).sort((a,b) => b[1] - a[1]);
+      const sorted = Object.entries(groups).sort((a,b) => b[1].length - a[1].length);
 
       // Build stable color map: community key -> fixed color (not affected by palette)
       state.commColorMap = {};
+      state.communityNodes = Object.create(null);
       sorted.forEach(([name], idx) => {
         state.commColorMap[name] = COMM_COLORS[idx % COMM_COLORS.length];
       });
 
       const el = document.getElementById('community-list');
-      el.innerHTML = sorted.map(([name, count]) => {
+      el.innerHTML = sorted.map(([name, nodes]) => {
+        const count = nodes.length;
         const color = state.commColorMap[name];
+        const safeName = escapeHtml(name);
+        state.communityNodes[name] = nodes
+          .map(node => ({
+            id: String(node.id || ''),
+            reference: String(node.reference || node.public_id || node.id || ''),
+            name: String(node.name || node.id || 'Sin nombre')
+          }))
+          .sort((a, b) => a.reference.localeCompare(b.reference, undefined, {numeric: true, sensitivity: 'base'}));
         return `
-          <div class="community-item" onclick="toggleComm('${name}')">
-            <div class="comm-left">
+          <div class="community-item">
+            <div class="community-row" data-community="${safeName}" onclick="toggleComm(this.dataset.community)">
+              <div class="comm-left">
               <label class="chk-wrap" onclick="event.stopPropagation()">
-                <input type="checkbox" class="comm-chk" data-comm="${name}" checked onchange="applyFilter()">
+                <input type="checkbox" class="comm-chk" data-comm="${safeName}" checked onchange="applyFilter()">
                 <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
               </label>
               <span class="comm-dot" style="background:${color};"></span>
-              <span class="comm-name" title="${name}">${name}</span>
+              <span class="comm-name" title="${safeName}">${safeName}</span>
+              </div>
+              <span class="comm-badge">${count}</span>
             </div>
-            <span class="comm-badge">${count}</span>
+            <details class="comm-node-details" data-community="${safeName}" ontoggle="renderCommunityNodes(this)">
+              <summary><span>IDs de nodos</span><span>${count}</span></summary>
+              <div class="comm-node-ids"><span class="comm-node-loading">Abre para cargar</span></div>
+            </details>
           </div>`;
       }).join('');
     }
 
+export function renderCommunityNodes(details) {
+      if (!details || !details.open) return;
+      const community = details.dataset.community || '';
+      const container = details.querySelector('.comm-node-ids');
+      if (!container || container.dataset.loaded === '1') return;
+      const nodes = state.communityNodes[community] || [];
+      container.innerHTML = nodes.length ? nodes.map(node => {
+        const safeId = escapeHtml(node.id);
+        const safeReference = escapeHtml(node.reference);
+        const safeName = escapeHtml(node.name);
+        return `<button type="button" class="comm-node-id" data-node-id="${safeId}" title="${safeName}" onclick="event.stopPropagation();focusNode(this.dataset.nodeId)"><code>${safeReference}</code><span>${safeName}</span></button>`;
+      }).join('') : '<span class="comm-node-loading">Sin nodos</span>';
+      container.dataset.loaded = '1';
+    }
+
 export function toggleComm(name) {
-      const chk = document.querySelector(`.comm-chk[data-comm="${name}"]`);
+      const chk = Array.from(document.querySelectorAll('.comm-chk')).find(input => input.dataset.comm === String(name));
       if (chk) { chk.checked = !chk.checked; applyFilter(); }
     }
 
