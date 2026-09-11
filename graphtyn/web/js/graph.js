@@ -99,8 +99,55 @@ export async function copyNodeReference(reference) {
         if (status) status.textContent = 'Referencia copiada';
       } catch (error) {
         window.prompt('Copia esta referencia:', String(reference));
+  }
+}
+
+async function loadMemoryNodeDetails(node, body) {
+      const kind = String(node?.kind || '');
+      if (!kind.startsWith('memory_') || !['memory_session', 'memory_episode'].includes(kind)) return;
+      const detail = document.getElementById('memory-node-detail');
+      if (!detail || !state.activePath) return;
+      const requestId = (state.memoryNodeDetailRequestId || 0) + 1;
+      state.memoryNodeDetailRequestId = requestId;
+      try {
+        const response = await fetch('/api/memory/node?path=' + encodeURIComponent(state.activePath) +
+          '&reference=' + encodeURIComponent(String(node.reference || node.public_id || '')) + '&limit=20');
+        const payload = await response.json();
+        if (requestId !== state.memoryNodeDetailRequestId || state.selectedNode?.id !== node.id) return;
+        if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo cargar el detalle');
+        if (payload.node_kind === 'memory_session' && payload.session) {
+          const session = payload.session;
+          const topics = Array.isArray(payload.topics) ? payload.topics : [];
+          detail.innerHTML = '<div style="font-weight:700;color:#38bdf8;margin-bottom:4px;">DETALLE DE SESIÓN</div>' +
+            '<div class="node-metadata">' +
+            '<strong>Agente</strong><span>' + escapeHtml(session.agent_id || '') + '</span>' +
+            '<strong>Tarea</strong><span style="white-space:pre-wrap;">' + escapeHtml(session.task || '') + '</span>' +
+            '<strong>Mensajes</strong><span>' + escapeHtml(payload.message_count || 0) + '</span>' +
+            '<strong>Temas</strong><span>' + escapeHtml(payload.topic_count || 0) + '</span>' +
+            '<strong>Estado</strong><span>' + escapeHtml(session.status || '') + '</span>' +
+            '</div>' +
+            '<div style="font-weight:700;color:#64748b;font-size:10px;margin-top:6px;">TEMAS DE ESTA SESIÓN</div>' +
+            '<div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">' +
+            (topics.length ? topics.map(topic => '<div style="background:#1a2234;padding:5px 6px;border-radius:4px;cursor:pointer;" data-node-id="topic:' + escapeHtml(topic.id) + '" onclick="focusNode(this.dataset.nodeId)">' +
+              '<span style="color:#e2e8f0;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(topic.title || topic.id) + '</span>' +
+              '<span style="color:#64748b;font-size:9px;">' + escapeHtml(topic.reference || '') + ' · ' + escapeHtml(topic.state || '') + ' · ' + escapeHtml(topic.verification || '') + '</span></div>').join('') :
+              '<div style="color:#64748b;">Sin temas asociados</div>') + '</div>';
+        } else if (payload.node_kind === 'memory_episode' && payload.episode) {
+          const episode = payload.episode;
+          detail.innerHTML = '<div style="font-weight:700;color:#38bdf8;margin-bottom:4px;">DETALLE DE EPISODIO</div>' +
+            '<div class="node-metadata"><strong>Tema</strong><span>' + escapeHtml(episode.topic_reference || '') + '</span>' +
+            '<strong>Agente</strong><span>' + escapeHtml(episode.agent_id || '') + '</span>' +
+            '<strong>Mensajes fuente</strong><span>' + escapeHtml((episode.message_ids || []).length) + '</span></div>' +
+            '<div style="color:#cbd5e1;white-space:pre-wrap;margin-top:5px;"><strong>Problema:</strong> ' + escapeHtml(episode.problem || '') + '</div>' +
+            (episode.decisions ? '<div style="color:#cbd5e1;white-space:pre-wrap;margin-top:4px;"><strong>Decisiones:</strong> ' + escapeHtml(episode.decisions) + '</div>' : '') +
+            (episode.result ? '<div style="color:#cbd5e1;white-space:pre-wrap;margin-top:4px;"><strong>Resultado:</strong> ' + escapeHtml(episode.result) + '</div>' : '');
+        }
+      } catch (error) {
+        if (requestId === state.memoryNodeDetailRequestId && state.selectedNode?.id === node.id) {
+          detail.innerHTML = '<span style="color:#fca5a5;">No se pudo cargar el detalle: ' + escapeHtml(error.message || error) + '</span>';
+        }
       }
-    }
+}
 
 export function applyFilter() {
       const q        = (document.getElementById('search-box')?.value || '').toLowerCase();
@@ -304,6 +351,8 @@ export function onNodeClick(node) {
         metadataBlock +
         evidenceBlock +
         descBlock +
+        (isMemoryNode && (node.kind === 'memory_session' || node.kind === 'memory_episode')
+          ? '<div id="memory-node-detail" style="margin-top:6px;padding-top:6px;border-top:1px solid #1e293b;color:#cbd5e1;">Cargando detalle…</div>' : '') +
         '<div style="display:flex;gap:12px;margin-top:2px;">' +
           '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
@@ -321,6 +370,8 @@ export function onNodeClick(node) {
           '</div>'
         ).join('') : '<div style="color:#64748b;">Sin conexiones directas</div>') +
         '</div>';
+
+      loadMemoryNodeDetails(node, body);
 
       // Highlight neighbors by dimming others in standard 2D and 3D
       if (state.graphInst) {
