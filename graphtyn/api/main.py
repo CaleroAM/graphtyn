@@ -1103,7 +1103,7 @@ def memory_topics_enrich(payload: dict = Body(...), authorization: str | None = 
     job = memory_jobs.create("topics-enrich", payload)
     memory_jobs.run(job["id"], lambda update: SharedMemoryStore(Path(payload["path"])).enrich_topics(
         payload.get("session_id"), provider=str(payload.get("provider") or "auto"),
-        force=bool(payload.get("force", False)), progress=update))
+        force=bool(payload.get("force", False)), retry_failed=bool(payload.get("retry_failed", False)), progress=update))
     return {"ok": True, "job": job}
 
 

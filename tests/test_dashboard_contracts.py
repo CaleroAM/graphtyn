@@ -168,6 +168,7 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
         assert handler in memory and handler in dashboard and handler in handlers
     for endpoint in ("/api/memory/sync", "/api/memory/watch"):
         assert endpoint in memory
+    assert "retry_failed" in memory
     assert "/api/v1/imports/discover" in memory and "/api/v1/imports" in memory
     assert "discoverHistoricalMemory" in dashboard and "applyHistoricalMemory" in handlers
     assert "saveHistoricalSource" in memory and "testHistoricalSource" in handlers

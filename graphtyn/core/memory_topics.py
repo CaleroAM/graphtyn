@@ -793,7 +793,8 @@ class TopicMemoryMixin:
                    (topic_id, fingerprint, source_revision, model, prompt_version, now, now))
         return True, "queued"
 
-    def enrich_topics(self, session_id=None, provider="auto", force=False, progress=None):
+    def enrich_topics(self, session_id=None, provider="auto", force=False, progress=None,
+                      retry_failed=False):
         """Index deterministic evidence and enrich only new or changed topics."""
         topic_ids, processed = set(), 0
         with self._connect() as db:
@@ -815,6 +816,9 @@ class TopicMemoryMixin:
             for topic_id in sorted(topic_ids):
                 fingerprint, revision, count, context = self._topic_source_snapshot(db, topic_id)
                 topic = db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone()
+                state_row = db.execute("SELECT status FROM topic_enrichment_state WHERE topic_id=?", (topic_id,)).fetchone()
+                if retry_failed and (not state_row or state_row["status"] != "failed"):
+                    continue
                 if not model or provider == "deterministic":
                     db.execute("""INSERT INTO topic_enrichment_state(topic_id,source_fingerprint,source_revision,status,last_error,created_at,updated_at)
                         VALUES(?,?,?,?,?,?,?) ON CONFLICT(topic_id) DO UPDATE SET source_fingerprint=excluded.source_fingerprint,source_revision=excluded.source_revision,status='not_applicable',last_error='',updated_at=excluded.updated_at""",

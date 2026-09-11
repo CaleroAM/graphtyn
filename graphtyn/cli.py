@@ -361,6 +361,7 @@ def main():
             topic_p.add_argument("--session", default=None)
             topic_p.add_argument("--provider", choices=["auto", "ollama", "deterministic", "api"], default="auto")
             topic_p.add_argument("--force", action="store_true", help="Reprocesa explícitamente aunque la fuente no haya cambiado")
+            topic_p.add_argument("--retry-failed", action="store_true", help="Reintenta sólo temas con enriquecimiento fallido")
         else:
             topic_p.add_argument("topic_id")
             if action == "topic-update":
@@ -1066,7 +1067,8 @@ def main():
             elif args.memory_action == "relation-review":
                 result = memory.relation_review(args.relation_id, status=args.status, actor=args.agent, reason=args.reason)
             elif args.memory_action == "topics-enrich":
-                result = memory.enrich_topics(args.session, provider=args.provider, force=args.force)
+                result = memory.enrich_topics(args.session, provider=args.provider, force=args.force,
+                                              retry_failed=args.retry_failed)
             elif args.memory_action == "topic-update":
                 result = memory.topic_update(args.topic_id, requester_agent=args.agent, reason=args.reason,
                     state=args.state, title=args.title, verification=args.verification,

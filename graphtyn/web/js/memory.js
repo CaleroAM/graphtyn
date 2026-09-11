@@ -206,7 +206,7 @@ export async function retryMemoryEnrichment() {
   if (button) { button.disabled = true; button.textContent = 'Reintentando IA…'; }
   try {
     const response = await request('/api/memory/topics/enrich', {method:'POST', body:JSON.stringify({
-      path:state.activePath, consent:true, provider:'ollama', force:true})});
+      path:state.activePath, consent:true, provider:'ollama', force:true, retry_failed:true})});
     const job = await waitImportJob(response.job.id);
     if (job.status !== 'completed') throw new Error(job.error || job.status);
     const result = job.result || {};
