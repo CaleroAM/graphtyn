@@ -195,6 +195,13 @@ proyecto” permite editar por separado el núcleo y el halo de temas, sesiones,
 agentes, episodios y entidades. Los colores se guardan localmente, se aplican en
 2D/3D y en los estilos estándar, neuronal y holográfico, y no afectan las otras
 vistas. La opción “Burbuja sigue al nodo” vincula ambos colores cuando se desea.
+El selector de memoria incluye paletas listas para usar (Obsidian, Cyberpunk,
+Dracula, Solarized, Nordic, Vaporwave, monocroma, Matrix y por comunidad) y
+“Personalizada”, que conserva los colores elegidos manualmente. El apartado
+“Halos / irradiación” permite apagar o encender la iluminación alrededor de
+nodos, enlaces y pulsos. “Parpadeo de Vértices (2D y 3D)” se guarda junto con
+esas preferencias y actualiza también el lienzo 2D cuando la simulación ya se
+ha estabilizado.
 
 Los estados de asunto son `abierto`, `en investigación`, `resuelto`, `reabierto` y `archivado`. La verificación es independiente (`sin verificar`, `declarado`, `prueba superada`, `prueba fallida`, `confirmado por usuario`). Las verificaciones requieren mensajes fuente compatibles y cada corrección, fusión o separación conserva un evento auditable.
 

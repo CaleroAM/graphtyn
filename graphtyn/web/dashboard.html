@@ -176,6 +176,7 @@
               <option value="mono">Monochrome Slate</option>
               <option value="matrix">Emerald Matrix</option>
               <option value="community">Por Comunidad (Carpetas)</option>
+              <option value="custom">Personalizada</option>
             </select>
             <label class="section-label">Estilo de Enlaces</label>
             <select id="link-style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateLinkStyles()">
@@ -218,8 +219,13 @@
                   <input type="color" id="link-color" value="#8c96eb" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
                 </div>
               </div>
+              <label class="section-label" style="margin-top:8px;">Iluminación</label>
               <div class="filter-row">
-                <span title="Activa/desactiva la animación de parpadeo de los enlaces en el estilo Neuronal (2D y 3D)">Parpadeo de Vértices</span>
+                <span title="Activa o elimina los halos y la irradiación alrededor de nodos y enlaces">Halos / irradiación</span>
+                <label class="chk-wrap"><input type="checkbox" id="chk-radiance" checked onchange="toggleRadiance(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+              </div>
+              <div class="filter-row">
+                <span title="Activa/desactiva la animación de parpadeo de enlaces y nodos en los estilos Neuronal y Holográfico (2D y 3D)">Parpadeo de Vértices (2D y 3D)</span>
                 <label class="chk-wrap"><input type="checkbox" id="chk-blink" checked onchange="toggleVertexBlink(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
               </div>
               <div class="filter-row">
@@ -230,6 +236,19 @@
                 <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
                 <label class="section-label">Colores de memoria del proyecto</label>
                 <p class="settings-help">Personaliza el núcleo y la burbuja de cada tipo. Sólo afecta a «Memoria del proyecto».</p>
+                <label class="section-label" style="margin-top:5px;">Paleta de memoria</label>
+                <select id="memory-palette-sel" class="control-select" onchange="selectMemoryPalette()" aria-label="Paleta de colores de memoria">
+                  <option value="obsidian">Obsidian Dark</option>
+                  <option value="cyberpunk">Neon Cyberpunk</option>
+                  <option value="dracula">Dracula Synthwave</option>
+                  <option value="solarized">Solarized Dark</option>
+                  <option value="nordic">Nordic Aurora</option>
+                  <option value="vaporwave">Vaporwave Sunset</option>
+                  <option value="mono">Monochrome Slate</option>
+                  <option value="matrix">Emerald Matrix</option>
+                  <option value="community">Por Comunidad (Carpetas)</option>
+                  <option value="custom">Personalizada</option>
+                </select>
                 <select id="memory-color-kind" class="control-select" onchange="selectMemoryColorKind()" aria-label="Tipo de nodo de memoria">
                   <option value="memory_topic">Tema</option>
                   <option value="memory_session">Sesión</option>

@@ -4,7 +4,8 @@ export { toggleDD, openRegister, closeRegister, selMode, submitRegister, openTut
          initWatchPolling } from './ui.js';
 export { setView, setDim, setMemoryGraphMode, changePalette, updateLinkStyles,
          exportGraphData, exportGraphPNG, refreshMemoryColorControls,
-         selectMemoryColorKind, changeMemoryColor, toggleMemoryHaloLink,
+         selectMemoryColorKind, selectMemoryPalette, changeMemoryColor, toggleMemoryHaloLink,
+         toggleRadiance,
          resetMemoryColorType, resetMemoryColorSettings } from './controls.js';
 export { focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape,
          changeStyleColors, closeBlastPanel, toggleAllComm, toggleComm, toggleNodeDesc,

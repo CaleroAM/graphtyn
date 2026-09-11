@@ -1,5 +1,6 @@
-import { state, PALETTES, getMemoryColors, getMemoryColor, updateMemoryColor,
-         resetMemoryColor, resetMemoryColors, saveMemoryColors } from './state.js';
+import { state, PALETTES, getMemoryColors, getMemoryColor, getMemoryPalette,
+         applyMemoryPalette, markMemoryColorsCustom, updateMemoryColor,
+         resetMemoryColor, resetMemoryColors, saveMemoryColors, saveVisualPreferences } from './state.js';
 import { destroyGraph, loadGraph, refreshStyleInPlace, toggleRotate } from './graph.js';
 
 export function setView(v) {
@@ -57,7 +58,7 @@ export function setDim(d) {
 
 export function changePalette() {
       state.activePalette = document.getElementById('palette-sel').value;
-      state.nodeColorHex = null;
+      if (state.activePalette !== 'custom') state.nodeColorHex = null;
       refreshStyleInPlace();
 }
 
@@ -68,11 +69,17 @@ export function refreshMemoryColorControls() {
       panel.hidden = !visible;
       const general = document.getElementById('general-style-colors');
       if (general) general.hidden = visible;
+      const radiance = document.getElementById('chk-radiance');
+      if (radiance) radiance.checked = state.radianceOn;
+      const blink = document.getElementById('chk-blink');
+      if (blink) blink.checked = state.vertexBlinkOn;
       if (!visible) return;
       const select = document.getElementById('memory-color-kind');
       const kind = select?.value || 'memory_topic';
       const colors = getMemoryColors()[kind];
       if (!colors) return;
+      const palette = document.getElementById('memory-palette-sel');
+      if (palette) palette.value = getMemoryPalette();
       const node = document.getElementById('memory-node-color');
       const halo = document.getElementById('memory-halo-color');
       const linked = document.getElementById('memory-halo-linked');
@@ -83,6 +90,15 @@ export function refreshMemoryColorControls() {
 
 export function selectMemoryColorKind() {
       refreshMemoryColorControls();
+}
+
+export function selectMemoryPalette() {
+      if (state.activeView !== 'memory') return;
+      const palette = document.getElementById('memory-palette-sel')?.value || 'custom';
+      applyMemoryPalette(palette);
+      refreshMemoryColorControls();
+      refreshMemoryLegendColors();
+      refreshStyleInPlace();
 }
 
 function refreshMemoryLegendColors() {
@@ -112,6 +128,7 @@ export function toggleMemoryHaloLink(linked) {
       if (!colors) return;
       colors.linkedHalo = Boolean(linked);
       if (colors.linkedHalo) colors.halo = colors.node;
+      markMemoryColorsCustom();
       saveMemoryColors();
       refreshMemoryColorControls();
       refreshMemoryLegendColors();
@@ -128,6 +145,13 @@ export function resetMemoryColorSettings() {
       if (state.activeView !== 'memory') return;
       resetMemoryColors();
       refreshMemoryColorControls(); refreshMemoryLegendColors(); refreshStyleInPlace();
+}
+
+export function toggleRadiance(on) {
+      state.radianceOn = Boolean(on);
+      saveVisualPreferences();
+      refreshMemoryColorControls();
+      refreshStyleInPlace();
 }
 
 export function updateLinkStyles() {

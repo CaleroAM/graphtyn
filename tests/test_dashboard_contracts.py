@@ -132,9 +132,21 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
     assert 'id="memory-graph-btn"' in html and 'id="memory-agent-legend"' in html
     assert "showSharedMemoryGraph" in handlers and "agent_color" in (WEB / "js" / "painters.js").read_text()
     assert 'id="memory-color-controls"' in html and 'id="memory-halo-color"' in html
+    assert 'id="memory-palette-sel"' in html and 'value="custom">Personalizada' in html
+    assert html.count('value="custom">Personalizada') == 2
+    assert 'id="chk-radiance"' in html and 'toggleRadiance' in dashboard
+    assert 'Parpadeo de Vértices (2D y 3D)' in html
+    painters = (WEB / "js" / "painters.js").read_text()
+    styles = (WEB / "js" / "styles.js").read_text()
+    state = (WEB / "js" / "state.js").read_text()
+    assert "state.radianceOn" in painters and "state.radianceOn" in styles
+    assert "state.vertexBlinkOn" in painters and "state.vertexBlinkOn" in styles
+    assert "graphInst.refresh" in styles
+    assert "linkHaloByDefault" in state and "MEMORY_CUSTOM_COLOR_KEY" in state
     assert 'loadMoreMemoryTopics' in dashboard and 'focusMemorySession' in dashboard
     assert 'memoryFocusSession' in (WEB / "js" / "graph.js").read_text()
     assert 'f97316' in (WEB / "js" / "state.js").read_text()
+    assert 'MEMORY_PALETTES' in (WEB / "js" / "state.js").read_text()
     assert 'id="btn-memory-view"' in html and "Memoria del proyecto" in html
     assert "state.activeView === 'memory'" in (WEB / "js" / "graph.js").read_text()
     assert "/api/memory/graph?path=" in (WEB / "js" / "graph.js").read_text()

@@ -1,4 +1,4 @@
-import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, safePaint } from './state.js';
+import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, saveVisualPreferences, safePaint } from './state.js';
 import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
 import { apply2DStyle, apply3DStyle, paintNodePointerArea } from './styles.js';
@@ -874,6 +874,11 @@ export function changeNodeShape() {
 export function changeNodeColor() {
       const nc = document.getElementById('node-color');
       state.nodeColorHex = nc ? nc.value : null;
+      if (state.activeView !== 'memory') {
+        state.activePalette = 'custom';
+        const palette = document.getElementById('palette-sel');
+        if (palette) palette.value = 'custom';
+      }
       refreshStyleInPlace();
     }
 
@@ -882,11 +887,17 @@ export function changeStyleColors() {
       const lc = document.getElementById('link-color');
       if (pc) state.pulseColorHex = pc.value;
       if (lc) state.linkColorHex = lc.value;
+      if (state.activeView !== 'memory') {
+        state.activePalette = 'custom';
+        const palette = document.getElementById('palette-sel');
+        if (palette) palette.value = 'custom';
+      }
       refreshStyleInPlace();
     }
 
 export function toggleVertexBlink(on) {
       state.vertexBlinkOn = on;
+      saveVisualPreferences();
       refreshStyleInPlace();
     }
 
