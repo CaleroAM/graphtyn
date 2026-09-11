@@ -162,9 +162,9 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
     assert "textContent" in memory and "esc(" in memory
     assert ".memory-layout" in css and "grid-template-columns" in css
     assert 'id="memory-import-provider"' in html and 'id="memory-import-apply"' in html
-    for element_id in ("memory-sync-btn", "memory-sync-all-btn", "memory-watch-btn"):
+    for element_id in ("memory-sync-btn", "memory-sync-all-btn", "memory-enrich-retry-btn", "memory-watch-btn"):
         assert f'id="{element_id}"' in html
-    for handler in ("syncMemorySpace", "syncAllMemorySpaces", "toggleMemoryWatch"):
+    for handler in ("syncMemorySpace", "syncAllMemorySpaces", "retryMemoryEnrichment", "toggleMemoryWatch"):
         assert handler in memory and handler in dashboard and handler in handlers
     for endpoint in ("/api/memory/sync", "/api/memory/watch"):
         assert endpoint in memory

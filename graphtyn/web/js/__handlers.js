@@ -21,4 +21,4 @@ export { openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemo
          loadMoreMemoryTopics, searchMemorySessions, loadMoreMemorySessions, linkAgentProfile, discoverHistoricalMemory,
          applyHistoricalMemory, saveHistoricalSource, testHistoricalSource,
          removeHistoricalSource, saveMemoryAlias, syncMemorySpace, syncAllMemorySpaces,
-         toggleMemoryWatch } from './memory.js';
+         retryMemoryEnrichment, toggleMemoryWatch } from './memory.js';

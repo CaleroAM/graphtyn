@@ -168,8 +168,10 @@ export async function loadMemoryOverview(append = false) {
         watchButton.dataset.enabled = watcher ? 'true' : 'false';
         watchButton.title = watcher ? `Activa · intervalo ${watcher.interval || 30}s` : 'La captura queda asociada a este espacio';
       }
+      const failed = info.topic_enrichment?.coverage?.failed || 0;
+      const failureText = failed ? ` · ${failed} fallos de IA` : '';
       const capture = info.continuous_capture_active ? ' · captura continua activa' : ' · captura continua inactiva';
-      status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness}${capture} · ${topicAi}`;
+      status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness}${capture}${failureText} · ${topicAi}`;
     const legend = document.getElementById('memory-agent-legend');
     if (legend) legend.innerHTML = '<div class="memory-empty">Abre el mapa para ver la atribución por agente.</div>';
     renderMemorySessions(sessions, append);
@@ -196,6 +198,23 @@ async function runMemorySync(allSpaces) {
 
 export function syncMemorySpace() { return runMemorySync(false); }
 export function syncAllMemorySpaces() { return runMemorySync(true); }
+
+export async function retryMemoryEnrichment() {
+  const output = document.getElementById('memory-status');
+  if (!state.activePath) { output.textContent = 'Selecciona un espacio de memoria.'; return; }
+  const button = document.getElementById('memory-enrich-retry-btn');
+  if (button) { button.disabled = true; button.textContent = 'Reintentando IA…'; }
+  try {
+    const response = await request('/api/memory/topics/enrich', {method:'POST', body:JSON.stringify({
+      path:state.activePath, consent:true, provider:'ollama', force:true})});
+    const job = await waitImportJob(response.job.id);
+    if (job.status !== 'completed') throw new Error(job.error || job.status);
+    const result = job.result || {};
+    output.textContent = `IA reintentada · ${result.ai_enriched || 0} enriquecidos · ${result.failed || 0} fallos restantes`;
+    await loadMemoryOverview();
+  } catch (error) { output.textContent = `No se pudo reintentar la IA: ${error.message}`; }
+  finally { if (button) { button.disabled = false; button.textContent = 'Reintentar IA'; } }
+}
 
 export async function toggleMemoryWatch() {
   if (!state.activePath) { document.getElementById('memory-status').textContent = 'Selecciona un espacio de memoria.'; return; }
