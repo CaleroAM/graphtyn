@@ -166,7 +166,9 @@ export async function showSharedMemoryGraph() {
     const legend = document.getElementById('memory-agent-legend');
     if (legend) {
       const keyHtml = item => `<span class="memory-agent-key"><i style="background:${esc(item.color)}"></i>${esc(item.id)}</span>`;
-      const html = (data.agents || []).map(keyHtml).join('')
+      const html = '<span class="memory-agent-key"><i style="background:#38bdf8"></i>tema</span>' +
+        '<span class="memory-agent-key"><i style="background:#f97316"></i>sesión</span>' +
+        (data.agents || []).map(keyHtml).join('')
         + ((data.consulters || []).length ? '<span class="memory-agent-key">· sólo consulta:</span>'
           + data.consulters.map(keyHtml).join('') : '');
       legend.innerHTML = html || '<div class="memory-empty">No hay agentes atribuidos.</div>';

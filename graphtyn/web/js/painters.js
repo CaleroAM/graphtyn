@@ -18,6 +18,10 @@ export function isDocOrMedia(n) {
 export function nodeColor(n) {
       if (n.god) return '#f472b6';
       if (n.agent_color) return n.agent_color;
+      // Memory sessions are provenance containers. Keep them visually
+      // distinct from blue topic nodes and purple agent nodes in every
+      // palette so a session can be identified at a glance.
+      if ((n.kind || '').toLowerCase() === 'memory_session') return '#f97316';
       if (isDocOrMedia(n)) return '#ffffff';
       if (state.activePalette === 'community') {
         const commKey = getCommKey(n);
@@ -91,6 +95,8 @@ export function neuralNodePainter(node, ctx) {
       const a = isSelected ? 1.0 : (glow * (0.55 + 0.45 * breathe));
       const halo = base * (isSelected ? 3.5 : (2.4 + 1.2 * breathe));
       const isWhite = isDocOrMedia(node);
+      const isSession = (node.kind || '').toLowerCase() === 'memory_session';
+      const sessionRgb = hexRgb(nodeColor(node));
 
       const g = ctx.createRadialGradient(nx, ny, 0, nx, ny, halo);
       if (isSelected) {
@@ -101,6 +107,10 @@ export function neuralNodePainter(node, ctx) {
         g.addColorStop(0, `rgba(255,255,255,${Math.min(0.95, a)})`);
         g.addColorStop(0.4, `rgba(220,235,255,${Math.min(0.7, a * 0.7)})`);
         g.addColorStop(1, 'rgba(200,225,255,0)');
+      } else if (isSession) {
+        g.addColorStop(0, `rgba(${sessionRgb[0]},${sessionRgb[1]},${sessionRgb[2]},${Math.min(0.95, a)})`);
+        g.addColorStop(0.4, `rgba(${sessionRgb[0]},${sessionRgb[1]},${sessionRgb[2]},${Math.min(0.66, a * 0.66)})`);
+        g.addColorStop(1, `rgba(${sessionRgb[0]},${sessionRgb[1]},${sessionRgb[2]},0)`);
       } else {
         g.addColorStop(0, `rgba(255,190,225,${Math.min(0.9, a)})`);
         g.addColorStop(0.4, `rgba(255,90,175,${Math.min(0.6, a * 0.6)})`);
@@ -109,7 +119,7 @@ export function neuralNodePainter(node, ctx) {
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(nx, ny, halo, 0, Math.PI * 2); ctx.fill();
 
-      const bc = hexRgb(isSelected ? '#ff007f' : (isWhite ? '#ffffff' : (state.nodeColorHex || nodeColor(node))));
+      const bc = hexRgb(isSelected ? '#ff007f' : (isWhite ? '#ffffff' : (isSession ? nodeColor(node) : (state.nodeColorHex || nodeColor(node)))));
       const coreC = isSelected
         ? [255, 255, 255]
         : (node.god
@@ -136,6 +146,15 @@ export function neuralNodePainter(node, ctx) {
         ctx.beginPath();
         ctx.arc(nx, ny, halo * 0.8, 0, Math.PI * 2);
         ctx.stroke();
+      }
+      if (!isSelected && isSession) {
+        ctx.strokeStyle = 'rgba(255,237,213,0.9)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 2]);
+        ctx.beginPath();
+        ctx.arc(nx, ny, halo * 0.68, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
       }
 
       ctx.restore();
@@ -240,8 +259,10 @@ export function holoNodePainter(node, ctx) {
       const glow = Math.min(1, (isSelected ? 1.0 : (node.god ? 0.85 : 0.12 + Math.min(0.5, (node.degree || 0) / 25))) + simE * 0.6);
       const r = base * (0.8 + 0.3 * idle) * (node.god || isSelected ? 1.35 : 1);
       const isWhite = isDocOrMedia(node);
+      const isSession = (node.kind || '').toLowerCase() === 'memory_session';
+      const sessionRgb = hexRgb(nodeColor(node));
 
-      const col = isSelected ? [255, 0, 128] : (isWhite ? [255, 255, 255] : (node.god ? [190, 240, 255] : [70, 210, 255]));
+      const col = isSelected ? [255, 0, 128] : (isWhite ? [255, 255, 255] : (isSession ? sessionRgb : (node.god ? [190, 240, 255] : [70, 210, 255])));
       const c = [
         Math.min(255, col[0] + (255 - col[0]) * glow),
         Math.min(255, col[1] + (255 - col[1]) * glow),
@@ -269,13 +290,13 @@ export function holoNodePainter(node, ctx) {
         ctx.fill();
       }
       ctx.restore();
-      if (node.god || isSelected) {
+      if (node.god || isSelected || isSession) {
         ctx.save();
         ctx.translate(nx, ny);
         ctx.rotate(-ang * 0.6);
-        ctx.strokeStyle = isSelected ? '#ffffff' : `rgba(190,240,255,${0.35 + glow * 0.4})`;
+        ctx.strokeStyle = isSelected ? '#ffffff' : (isSession ? 'rgba(255,237,213,0.92)' : `rgba(190,240,255,${0.35 + glow * 0.4})`);
         ctx.lineWidth = isSelected ? 1.5 : Math.max(0.4, 0.7);
-        ctx.setLineDash([5, 3]);
+        ctx.setLineDash(isSession ? [3, 2] : [5, 3]);
         ctx.beginPath();
         ctx.ellipse(0, 0, r * 3.2, r * 3.2 * 0.82, 0, 0, Math.PI * 2);
         ctx.stroke();

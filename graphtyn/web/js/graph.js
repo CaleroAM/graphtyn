@@ -715,6 +715,7 @@ export function loadGraph() {
             })
             .linkHoverPrecision(0)
             .linkPointerAreaPaint(() => {})
+            .nodeColor(n => nodeColor(n))
             .nodeLabel(tooltip)
             .onNodeClick(handleGraphNodeClick)
             .onBackgroundClick(handleGraphBackgroundClick)
@@ -804,7 +805,10 @@ function updateMemoryLegend(data) {
       if (old) old.remove();
       if (state.activeView !== 'memory') return;
       const key = a => '<span class="memory-agent-key"><i style="background:' + escapeHtml(a.color) + '"></i>' + escapeHtml(a.id) + '</span>';
-      let html = '<div class="memory-legend-title">Agentes del proyecto</div>' +
+      let html = '<div class="memory-legend-title">Tipos de memoria</div>' +
+        '<span class="memory-agent-key"><i style="background:#38bdf8"></i>tema</span>' +
+        '<span class="memory-agent-key"><i style="background:#f97316"></i>sesión</span>' +
+        '<div class="memory-legend-title">Agentes del proyecto</div>' +
         (data.agents || []).map(key).join('');
       if ((data.consulters || []).length) {
         html += '<div class="memory-legend-title">Sólo consultaron</div>' + data.consulters.map(key).join('');

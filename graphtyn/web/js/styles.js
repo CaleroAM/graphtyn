@@ -297,6 +297,8 @@ export function apply3DStyle() {
             const glow = Math.min(1, (n.god ? 0.85 : 0.15 + Math.min(0.5, (n.degree || 0) / 25)) + energy * 0.65);
             const isSelected = state.selectedNode && state.selectedNode.id === n.id;
             const isWhite = isDocOrMedia(n);
+            const isSession = (n.kind || '').toLowerCase() === 'memory_session';
+            const sessionRgb = hexRgb(nodeColor(n));
             const base = (n.god ? 7 : (isWhite ? 5.5 : 4.5)) * (0.8 + 0.3 * breathe) * (1 + energy * 0.6);
             const halo = base * (isSelected ? 3.5 : (2.6 + 1.2 * breathe));
             const g = octx.createRadialGradient(sc.x, sc.y, 0, sc.x, sc.y, halo);
@@ -308,6 +310,10 @@ export function apply3DStyle() {
               g.addColorStop(0, `rgba(255,255,255,${Math.min(0.95, glow * 0.9).toFixed(3)})`);
               g.addColorStop(0.4, `rgba(220,235,255,${Math.min(0.7, glow * 0.6).toFixed(3)})`);
               g.addColorStop(1, 'rgba(200,225,255,0)');
+            } else if (isSession) {
+              g.addColorStop(0, `rgba(${sessionRgb[0]},${sessionRgb[1]},${sessionRgb[2]},${Math.min(0.9, glow * 0.85).toFixed(3)})`);
+              g.addColorStop(0.4, `rgba(${sessionRgb[0]},${sessionRgb[1]},${sessionRgb[2]},${Math.min(0.62, glow * 0.6).toFixed(3)})`);
+              g.addColorStop(1, `rgba(${sessionRgb[0]},${sessionRgb[1]},${sessionRgb[2]},0)`);
             } else {
               g.addColorStop(0, `rgba(255,190,225,${Math.min(0.85, glow * 0.75).toFixed(3)})`);
               g.addColorStop(0.4, `rgba(${pc[0]},${pc[1]},${pc[2]},${Math.min(0.5, glow * 0.5).toFixed(3)})`);
@@ -315,7 +321,7 @@ export function apply3DStyle() {
             }
             octx.fillStyle = g;
             octx.beginPath(); octx.arc(sc.x, sc.y, halo, 0, Math.PI * 2); octx.fill();
-            const bc = hexRgb(isSelected ? '#ff007f' : (isWhite ? '#ffffff' : (state.nodeColorHex || nodeColor(n))));
+            const bc = hexRgb(isSelected ? '#ff007f' : (isWhite ? '#ffffff' : (isSession ? nodeColor(n) : (state.nodeColorHex || nodeColor(n)))));
             const cc = isSelected ? [255, 255, 255] : (isWhite ? [255, 255, 255] : [
               Math.round(bc[0] + (255 - bc[0]) * glow * 0.6),
               Math.round(bc[1] + (255 - bc[1]) * glow * 0.6),
@@ -331,6 +337,17 @@ export function apply3DStyle() {
               octx.restore();
             } else {
               octx.beginPath(); octx.arc(sc.x, sc.y, base * 0.45, 0, Math.PI * 2); octx.fill();
+            }
+            if (!isSelected && isSession) {
+              octx.save();
+              octx.strokeStyle = 'rgba(255,237,213,0.92)';
+              octx.lineWidth = 1.1;
+              octx.setLineDash([3, 2]);
+              octx.beginPath();
+              octx.arc(sc.x, sc.y, halo * 0.68, 0, Math.PI * 2);
+              octx.stroke();
+              octx.setLineDash([]);
+              octx.restore();
             }
           }
           octx.globalCompositeOperation = 'source-over';
