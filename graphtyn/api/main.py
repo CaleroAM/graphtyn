@@ -88,7 +88,7 @@ def _write_agent_registry(rows: list[dict]) -> None:
 
 def _project_memory_db(path: Path) -> Path | None:
     """Resolve an existing store without creating one or depending on cwd."""
-    candidates = [project_store_dir(INDEX_STORE, path, create=False) / "memory-v2.db",
+    candidates = [project_store_dir(INDEX_STORE, path, migrate_legacy=False, create=False) / "memory-v2.db",
                   path / ".graphtyn" / "memory-v2.db"]
     return next((candidate for candidate in candidates if candidate.is_file()), None)
 
