@@ -9,6 +9,7 @@ import re
 import sqlite3
 import time
 from pathlib import Path
+from typing import Any
 
 STATES = {"abierto", "en investigación", "resuelto", "reabierto", "archivado"}
 VERIFICATIONS = {"sin verificar", "declarado", "prueba superada", "prueba fallida", "confirmado por usuario"}
@@ -160,7 +161,7 @@ class TopicMemoryMixin:
                 node["public_id"] = node["reference"]
         return nodes
 
-    def resolve_node_reference(self, reference: str, *, requester_agent=None, limit=20):
+    def resolve_node_reference(self, reference: str, *, requester_agent=None, limit=20, offset=0):
         with self._connect() as db:
             row = db.execute("SELECT kind,node_id,reference FROM memory_node_references WHERE reference=?",
                              (str(reference).strip().upper(),)).fetchone()
@@ -178,9 +179,11 @@ class TopicMemoryMixin:
                 if not session or (not session["capture_enabled"] and session["agent_id"] != (requester_agent or "")):
                     raise PermissionError("sesión inexistente o no accesible")
                 total_topics = db.execute("SELECT COUNT(DISTINCT topic_id) FROM topic_episodes WHERE session_id=?", (session_id,)).fetchone()[0]
+                offset = max(0, min(100000, int(offset)))
+                page_limit = max(1, min(200, int(limit)))
                 topics = db.execute("""SELECT DISTINCT t.id,t.title,t.summary,t.state,t.verification,t.updated_at
                     FROM topics t JOIN topic_episodes e ON e.topic_id=t.id WHERE e.session_id=?
-                    ORDER BY t.updated_at DESC,t.id LIMIT ?""", (session_id, max(1, min(200, int(limit))))).fetchall()
+                    ORDER BY t.updated_at DESC,t.id LIMIT ? OFFSET ?""", (session_id, page_limit, offset)).fetchall()
                 topic_items = []
                 for topic in topics:
                     item = dict(topic)
@@ -192,6 +195,8 @@ class TopicMemoryMixin:
             result = {"ok": True, "node": {"kind": kind, "id": node_id, "reference": row["reference"]},
                       "session": dict(session), "message_count": message_count,
                       "topic_count": total_topics, "topics_returned": len(topic_items), "topics": topic_items,
+                      "topic_offset": offset,
+                      "next_topic_offset": offset + page_limit if offset + len(topic_items) < total_topics else None,
                       "trust": "untrusted_history"}
         elif kind == "memory_episode":
             with self._connect() as db:
@@ -350,20 +355,39 @@ class TopicMemoryMixin:
         target.chmod(0o600)
         return {"ok": True, "source": str(self.db_path.resolve()), "backup": str(target)}
 
-    def topic_graph(self, *, requester_agent="dashboard", limit=400, detail=False):
+    def topic_graph(self, *, requester_agent="dashboard", limit=400, detail=False,
+                    session_id=None, topic_offset=0, session_offset=0,
+                    session_limit=100, session_query=""):
         """Return a bounded topic/session/agent graph for the dashboard.
 
         Messages remain references opened from an episode; they are deliberately
         not rendered as thousands of force-layout nodes.
         """
         limit = max(1, min(1000, int(limit)))
+        topic_offset = max(0, min(100000, int(topic_offset)))
+        session_offset = max(0, min(100000, int(session_offset)))
+        session_limit = max(1, min(100, int(session_limit)))
+        requester = requester_agent or ""
+        focus_session_id = str(session_id or "").removeprefix("session:") or None
         with self._connect() as db:
-            rows = db.execute("""
+            selected_where = ["(s0.capture_enabled=1 OR s0.agent_id=?)"]
+            selected_args = [requester]
+            if focus_session_id:
+                selected_where.append("e0.session_id=?")
+                selected_args.append(focus_session_id)
+            selected_predicate = " AND ".join(selected_where)
+            outer_where = ["(s.capture_enabled=1 OR s.agent_id=?)"]
+            outer_args = []
+            if focus_session_id:
+                outer_where.append("e.session_id=?")
+                outer_args.append(focus_session_id)
+            outer_predicate = " AND ".join(outer_where)
+            rows = db.execute(f"""
               WITH selected_topics AS (
                 SELECT t0.id FROM topics t0 JOIN topic_episodes e0 ON e0.topic_id=t0.id
                 JOIN sessions s0 ON s0.id=e0.session_id
-                WHERE (s0.capture_enabled=1 OR s0.agent_id=?)
-                GROUP BY t0.id ORDER BY t0.updated_at DESC, t0.id LIMIT ?
+                WHERE {selected_predicate}
+                GROUP BY t0.id ORDER BY t0.updated_at DESC, t0.id LIMIT ? OFFSET ?
               )
               SELECT DISTINCT t.id, t.title, t.summary, t.state, t.verification,
                      t.updated_at, e.session_id, e.agent_id,
@@ -375,15 +399,55 @@ class TopicMemoryMixin:
               JOIN sessions s ON s.id=e.session_id
               LEFT JOIN topic_enrichment_state ai ON ai.topic_id=t.id
               JOIN selected_topics st ON st.id=t.id
-              WHERE (s.capture_enabled=1 OR s.agent_id=?)
-              ORDER BY t.updated_at DESC, t.id""", (requester_agent or "", limit,
+              WHERE {outer_predicate}
+              ORDER BY t.updated_at DESC, t.id""", (*selected_args, limit, topic_offset,
                 os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL") or os.environ.get("OLLAMA_MODEL") or "",
-                requester_agent or "")).fetchall()
+                requester, *outer_args)).fetchall()
+            total_topic_where = ["(s.capture_enabled=1 OR s.agent_id=?)"]
+            total_topic_args: list[Any] = [requester]
+            if focus_session_id:
+                total_topic_where.append("e.session_id=?")
+                total_topic_args.append(focus_session_id)
+            topic_total = db.execute("""SELECT COUNT(DISTINCT e.topic_id)
+                FROM topic_episodes e JOIN sessions s ON s.id=e.session_id
+                WHERE """ + " AND ".join(total_topic_where), total_topic_args).fetchone()[0]
+
+            session_where = ["(s.capture_enabled=1 OR s.agent_id=?)"]
+            session_args: list[Any] = [requester]
+            if focus_session_id:
+                session_where.append("s.id=?")
+                session_args.append(focus_session_id)
+            if session_query:
+                session_where.append("LOWER(s.id || ' ' || COALESCE(s.task,'') || ' ' || s.agent_id) LIKE ?")
+                session_args.append("%" + str(session_query).casefold() + "%")
+            session_predicate = " AND ".join(session_where)
+            session_total = db.execute("SELECT COUNT(*) FROM sessions s WHERE " + session_predicate,
+                                       session_args).fetchone()[0]
+            session_sql = """SELECT s.*, COUNT(DISTINCT e.topic_id) AS topic_count,
+                    COUNT(DISTINCT msg.id) AS message_count
+                FROM sessions s LEFT JOIN topic_episodes e ON e.session_id=s.id
+                LEFT JOIN messages msg ON msg.session_id=s.id
+                WHERE """ + session_predicate + """ GROUP BY s.id
+                ORDER BY s.started_at DESC, s.id DESC LIMIT ? OFFSET ?"""
+            session_rows = db.execute(session_sql,
+                [*session_args, session_limit, session_offset]).fetchall()
         nodes, links, agents, sessions = {}, [], set(), set()
+        session_catalog = {str(row["id"]): row for row in session_rows}
+        for row in session_rows:
+            session_node_id = "session:" + str(row["id"])
+            agent_node_id = "agent:" + str(row["agent_id"])
+            nodes.setdefault(session_node_id, {"id": session_node_id, "kind": "memory_session",
+                "name": row["task"] or row["id"], "details": "Sesión de conversación",
+                "session_id": row["id"], "agent_id": row["agent_id"],
+                "task": row["task"], "status": row["status"],
+                "topic_count": row["topic_count"], "message_count": row["message_count"]})
+            nodes.setdefault(agent_node_id, {"id": agent_node_id, "kind": "memory_agent",
+                "name": row["agent_id"], "details": "Agente participante"})
+            sessions.add(session_node_id); agents.add(agent_node_id)
         topic_rows = []
         for row in rows:
             topic_id = "topic:" + row["id"]
-            session_id = "session:" + row["session_id"]
+            session_node_id = "session:" + row["session_id"]
             agent_id = "agent:" + row["agent_id"]
             title = self._unprotect(row["title"])
             nodes.setdefault(topic_id, {"id": topic_id, "kind": "memory_topic", "name": title,
@@ -393,12 +457,19 @@ class TopicMemoryMixin:
                 "ai_status": row["ai_status"], "ai_model": row["ai_model"],
                 "ai_source_revision": row["ai_source_revision"], "ai_prompt_version": row["ai_prompt_version"],
                 "ai_error": row["ai_error"], "ai_processed_at": row["ai_processed_at"]})
-            nodes.setdefault(session_id, {"id": session_id, "kind": "memory_session",
-                "name": row["session_id"], "details": "Sesión de conversación"})
+            session_meta = session_catalog.get(str(row["session_id"]))
+            nodes.setdefault(session_node_id, {"id": session_node_id, "kind": "memory_session",
+                "name": (session_meta["task"] if session_meta else None) or row["session_id"],
+                "details": "Sesión de conversación",
+                "session_id": row["session_id"], "agent_id": row["agent_id"],
+                "task": session_meta["task"] if session_meta else None,
+                "status": session_meta["status"] if session_meta else None,
+                "topic_count": session_meta["topic_count"] if session_meta else None,
+                "message_count": session_meta["message_count"] if session_meta else None})
             nodes.setdefault(agent_id, {"id": agent_id, "kind": "memory_agent",
                 "name": row["agent_id"], "details": "Agente participante"})
-            sessions.add(session_id); agents.add(agent_id)
-            links.append({"source": topic_id, "target": session_id, "label": "episodio", "confidence": "EXTRACTED"})
+            sessions.add(session_node_id); agents.add(agent_id)
+            links.append({"source": topic_id, "target": session_node_id, "label": "episodio", "confidence": "EXTRACTED"})
             links.append({"source": topic_id, "target": agent_id, "label": "participó", "confidence": "EXTRACTED"})
             topic_rows.append(row)
         # Episode order remains available through the topic detail. Temporal
@@ -452,9 +523,17 @@ class TopicMemoryMixin:
                 links.append({"source": topic_id, "target": episode_id, "label": "episodio", "confidence": "EXTRACTED"})
                 links.append({"source": episode_id, "target": "session:" + episode["session_id"], "label": "ocurrió en", "confidence": "EXTRACTED"})
         node_list = self._decorate_node_refs(list(nodes.values()))
+        returned_topics = len({row["id"] for row in topic_rows})
+        returned_sessions = len({node for node in sessions if node.startswith("session:")})
         return {"ok": True, "view": "topics", "nodes": node_list, "links": links,
                 "agents": [{"id": node.removeprefix("agent:"), "color": "#22d3ee"} for node in sorted(agents)],
                 "consulters": [], "metadata": {"topic_count": len([n for n in node_list if n["kind"] == "memory_topic"]),
+                    "topic_total": topic_total, "topic_offset": topic_offset, "topic_returned": returned_topics,
+                    "next_topic_offset": topic_offset + limit if topic_offset + returned_topics < topic_total else None,
+                    "session_count": returned_sessions, "session_offset": session_offset, "session_total": session_total,
+                    "session_returned": returned_sessions,
+                    "next_session_offset": session_offset + session_limit if session_offset + returned_sessions < session_total else None,
+                    "session_focus": focus_session_id,
                     "episode_count": len([n for n in node_list if n["kind"] == "memory_episode"]),
                     "entity_count": len([n for n in node_list if n["kind"] == "memory_entity"]),
                     "mode": "detailed" if detail else "simplified",

@@ -102,6 +102,10 @@ Las conversaciones importadas aparecen en **Memoria de proyecto** como nodos
 `memory_session` marcados como históricos. Cada nodo se conecta con el agente
 que participó y con las memorias compactadas que produjo; el panel muestra hasta
 100 sesiones recientes, incluidas las anteriores a Graphtyn.
+El catálogo se pagina con `GET /api/memory/sessions?limit=100&offset=N` y admite
+`query` por identificador, tarea o agente. Al seleccionar una sesión se puede
+abrir su detalle y enfocar el mapa; el foco mantiene la sesión aislada y permite
+cargar la siguiente página de temas sin cruzar conversaciones.
 Cada nodo de memoria recibe una referencia pública persistente (`N-000001`) que
 el dashboard muestra y permite copiar. `memory_node` o `memory node` resuelve
 esa referencia dentro del almacén seleccionado.
@@ -184,6 +188,13 @@ Interfaces equivalentes:
 Las ventanas usan 10 mensajes anteriores y 10 posteriores en la misma sesión, con presupuesto predeterminado de 3.000 tokens y cursores. `memory_context` mantiene 1.800 tokens por defecto, informa cobertura, pendientes, truncamiento y referencias; una respuesta encontrada no marca `do_not_expand` como completa.
 
 El lienzo de “Memoria del proyecto” ofrece dos modos: `Simplificada` conecta temas, sesiones, agentes y relaciones temáticas; `Detallada` añade entidades y episodios de cada tema. El selector sólo aparece en esa vista y no altera Code AST, Semántico, Harness ni Cambios. Los mensajes se abren bajo demanda desde el episodio para conservar el rendimiento del navegador.
+El grafo inicia con una página acotada y muestra el total procesado; “Cargar más
+temas” amplía el proyecto o la sesión enfocada sin reemplazar lo ya visible.
+En **Diseño del grafo**, mientras está activa esta vista, “Colores de memoria del
+proyecto” permite editar por separado el núcleo y el halo de temas, sesiones,
+agentes, episodios y entidades. Los colores se guardan localmente, se aplican en
+2D/3D y en los estilos estándar, neuronal y holográfico, y no afectan las otras
+vistas. La opción “Burbuja sigue al nodo” vincula ambos colores cuando se desea.
 
 Los estados de asunto son `abierto`, `en investigación`, `resuelto`, `reabierto` y `archivado`. La verificación es independiente (`sin verificar`, `declarado`, `prueba superada`, `prueba fallida`, `confirmado por usuario`). Las verificaciones requieren mensajes fuente compatibles y cada corrección, fusión o separación conserva un evento auditable.
 

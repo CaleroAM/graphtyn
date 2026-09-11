@@ -615,7 +615,7 @@ def get_index_update(path: str = Query(..., min_length=1)):
 def get_ambiguities(path: str = Query(..., min_length=1)):
     try:
         root, graph = _load_index_for_api(path)
-    except ValueError as exc:
+    except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
     return JSONResponse(ambiguity_queue(graph, root))
 
@@ -929,12 +929,12 @@ def memory_topic_update(payload: dict = Body(...), authorization: str | None = H
 
 
 @app.get("/api/memory/node")
-def memory_node(path: str, reference: str, limit: int = 20,
+def memory_node(path: str, reference: str, limit: int = 20, offset: int = 0,
                 requester_agent: str = "dashboard", authorization: str | None = Header(default=None)):
     _, denied = _require_role(authorization, "reader", path)
     if denied: return denied
     try:
-        return SharedMemoryStore(Path(path)).resolve_node_reference(reference, requester_agent=requester_agent, limit=limit)
+        return SharedMemoryStore(Path(path)).resolve_node_reference(reference, requester_agent=requester_agent, limit=limit, offset=offset)
     except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
@@ -1014,18 +1014,23 @@ def memory_status(path: str = Query(...), authorization: str | None = Header(def
 
 
 @app.get("/api/memory/sessions")
-def memory_sessions(path: str = Query(...), limit: int = Query(50), authorization: str | None = Header(default=None)):
+def memory_sessions(path: str = Query(...), limit: int = Query(50), offset: int = 0,
+                    query: str = "", requester_agent: str | None = None,
+                    authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
-    return {"ok": True, "sessions": SharedMemoryStore(Path(path).expanduser().resolve()).list_sessions(limit)}
+    return SharedMemoryStore(Path(path).expanduser().resolve()).list_sessions_page(
+        limit=limit, offset=offset, query=query, requester_agent=requester_agent)
 
 
 @app.get("/api/memory/session")
 def memory_session(path: str = Query(...), session_id: str = Query(...),
+                   requester_agent: str = "dashboard",
                    authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
     try:
-        return SharedMemoryStore(Path(path).expanduser().resolve()).session_detail(session_id)
-    except ValueError as exc:
+        return SharedMemoryStore(Path(path).expanduser().resolve()).session_detail(
+            session_id, requester_agent=requester_agent)
+    except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
 
@@ -1046,11 +1051,16 @@ def memory_agent_profile(payload: dict = Body(...), authorization: str | None = 
 def memory_graph(path: str = Query(...), requester_agent: str = Query("dashboard"),
                  limit: int = Query(300), view: str = Query("attribution"),
                  detail: bool = Query(False),
+                 session_id: str | None = None, topic_offset: int = 0,
+                 session_offset: int = 0, session_limit: int = 100,
+                 session_query: str = "",
                  authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
     store = SharedMemoryStore(Path(path).expanduser().resolve())
     if view in {"topics", "episodes"}:
-        return store.topic_graph(requester_agent=requester_agent, limit=limit, detail=detail)
+        return store.topic_graph(requester_agent=requester_agent, limit=limit, detail=detail,
+            session_id=session_id, topic_offset=topic_offset, session_offset=session_offset,
+            session_limit=session_limit, session_query=session_query)
     return store.attribution_graph(requester_agent, limit)
 
 

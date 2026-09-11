@@ -3,7 +3,9 @@ export { toggleDD, openRegister, closeRegister, selMode, submitRegister, openTut
          onFolderPicked, loadHistoryUI, toggleLeftSidebar, toggleRightSidebar, updateModelEstimate,
          initWatchPolling } from './ui.js';
 export { setView, setDim, setMemoryGraphMode, changePalette, updateLinkStyles,
-         exportGraphData, exportGraphPNG } from './controls.js';
+         exportGraphData, exportGraphPNG, refreshMemoryColorControls,
+         selectMemoryColorKind, changeMemoryColor, toggleMemoryHaloLink,
+         resetMemoryColorType, resetMemoryColorSettings } from './controls.js';
 export { focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape,
          changeStyleColors, closeBlastPanel, toggleAllComm, toggleComm, toggleNodeDesc,
          toggleVertexBlink, toggleOrganic3d, toggleRotate, setPRBase, focusWebFlow,
@@ -14,6 +16,7 @@ export { openQualityPanel, closeQualityPanel, loadIndexQuality, addNodeToContext
          validateAgentAnswer, generateChangeReport } from './quality.js';
 export { openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory,
          correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph,
-         openSessionDetail, focusMemoryNode, linkAgentProfile, discoverHistoricalMemory,
+         openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus,
+         loadMoreMemoryTopics, searchMemorySessions, loadMoreMemorySessions, linkAgentProfile, discoverHistoricalMemory,
          applyHistoricalMemory, saveHistoricalSource, testHistoricalSource,
          removeHistoricalSource, saveMemoryAlias } from './memory.js';

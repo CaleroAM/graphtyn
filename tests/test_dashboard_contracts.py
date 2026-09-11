@@ -131,6 +131,10 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
         assert endpoint in memory
     assert 'id="memory-graph-btn"' in html and 'id="memory-agent-legend"' in html
     assert "showSharedMemoryGraph" in handlers and "agent_color" in (WEB / "js" / "painters.js").read_text()
+    assert 'id="memory-color-controls"' in html and 'id="memory-halo-color"' in html
+    assert 'loadMoreMemoryTopics' in dashboard and 'focusMemorySession' in dashboard
+    assert 'memoryFocusSession' in (WEB / "js" / "graph.js").read_text()
+    assert 'f97316' in (WEB / "js" / "state.js").read_text()
     assert 'id="btn-memory-view"' in html and "Memoria del proyecto" in html
     assert "state.activeView === 'memory'" in (WEB / "js" / "graph.js").read_text()
     assert "/api/memory/graph?path=" in (WEB / "js" / "graph.js").read_text()

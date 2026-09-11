@@ -294,6 +294,49 @@ class SharedMemoryStore(TopicMemoryMixin):
                 GROUP BY s.id ORDER BY s.started_at DESC LIMIT ?""", (max(1, min(200, limit)),)).fetchall()
         return [dict(row) for row in rows]
 
+    def list_sessions_page(self, *, limit: int = 100, offset: int = 0,
+                           query: str = "", requester_agent: str | None = None) -> dict[str, Any]:
+        """Return a stable, permission-aware session catalog page.
+
+        Sessions are first-class provenance nodes, so their catalog cannot be
+        derived from the currently selected topic page.  The old
+        ``list_sessions`` method remains unchanged for callers that only need
+        a short recent list.
+        """
+        limit = max(1, min(100, int(limit)))
+        offset = max(0, min(100000, int(offset)))
+        requester = str(requester_agent or "")
+        words = [word.casefold() for word in str(query or "").split() if word.strip()]
+        with self._connect() as conn:
+            where = [] if requester_agent is None else ["(s.capture_enabled=1 OR s.agent_id=?)"]
+            args: list[Any] = [] if requester_agent is None else [requester]
+            for word in words:
+                where.append("LOWER(s.id || ' ' || COALESCE(s.task,'') || ' ' || s.agent_id) LIKE ?")
+                args.append(f"%{word}%")
+            predicate = " AND ".join(where)
+            where_sql = (" WHERE " + predicate) if predicate else ""
+            total = conn.execute(f"SELECT COUNT(*) FROM sessions s{where_sql}", args).fetchone()[0]
+            rows = conn.execute(f"""SELECT s.*, COUNT(DISTINCT m.id) AS memories,
+                    COUNT(DISTINCT e.topic_id) AS topic_count,
+                    COUNT(DISTINCT msg.id) AS message_count
+                FROM sessions s
+                LEFT JOIN memories m ON m.session_id=s.id AND m.status!='deleted'
+                LEFT JOIN topic_episodes e ON e.session_id=s.id
+                LEFT JOIN messages msg ON msg.session_id=s.id
+                {where_sql}
+                GROUP BY s.id ORDER BY s.started_at DESC, s.id DESC LIMIT ? OFFSET ?""",
+                [*args, limit, offset]).fetchall()
+            sessions = []
+            for row in rows:
+                item = dict(row)
+                node_id = "session:" + str(item["id"])
+                item["reference"] = self._node_reference(conn, "memory_session", node_id)
+                item["public_id"] = item["reference"]
+                sessions.append(item)
+        next_offset = offset + limit if offset + limit < total else None
+        return {"ok": True, "sessions": sessions, "total": total,
+                "offset": offset, "limit": limit, "next_offset": next_offset}
+
     def _resolve_agent(self, agent_id: Any) -> str:
         """Canonicaliza identidad: alias de BD > agent-aliases.json > defaults."""
         raw = str(agent_id or "").strip().casefold()
@@ -401,6 +444,9 @@ class SharedMemoryStore(TopicMemoryMixin):
         session = self.get_session(session_id)
         if not session:
             raise ValueError("sesión desconocida")
+        if (requester_agent is not None and not session["capture_enabled"]
+                and session["agent_id"] != requester_agent):
+            raise PermissionError("sesión inexistente o no accesible")
         with self._connect() as conn:
             messages = [self._message_row(r) for r in conn.execute(
                 "SELECT * FROM messages WHERE session_id=? ORDER BY created_at LIMIT 300",

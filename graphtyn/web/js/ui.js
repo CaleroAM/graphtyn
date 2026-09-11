@@ -102,6 +102,7 @@ export function selectProject(path) {
         return;
       }
       state.activePath = path;
+      state.memoryFocusSession = null;
       state.webFlowNodeIds = null;
       const resetFlow = document.getElementById('reset-web-flow');
       if (resetFlow) resetFlow.style.display = 'none';

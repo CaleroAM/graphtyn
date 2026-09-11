@@ -278,3 +278,8 @@ Para OpenClaw, Graphtyn reconoce tanto sesiones JSONL como el almacén SQLite
 `agent/openclaw-agent.sqlite` (`transcript_events`). Si el agente vive en otra
 máquina, publica `/mcp` con `GRAPHTYN_MCP_TOKEN`, comprueba desde ese runtime que
 `tools/list` incluye `memory_ingest_turn` y usa el MCP al cerrar cada turno.
+En el dashboard, “Memoria del proyecto” separa sesiones, temas, episodios y
+agentes: el catálogo de sesiones admite búsqueda y paginación, cada nodo muestra
+su referencia `N-xxxxxx` y el mapa puede enfocarse en una sesión o ampliarse por
+páginas. El panel “Diseño del grafo” ofrece colores de núcleo y halo exclusivos
+de esta vista; se conservan en el navegador y no cambian el grafo de código.

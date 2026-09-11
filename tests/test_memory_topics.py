@@ -48,6 +48,13 @@ def test_window_order_edges_permissions_and_budget(store):
     assert store.message_window(messages[0]['id'], requester_agent='codex')['ok']
 
 
+def test_session_detail_respects_private_session_visibility(store):
+    session = store.start_session('codex', 'Private session', capture_enabled=False)
+    with pytest.raises(PermissionError):
+        store.session_detail(session['id'], requester_agent='agy')
+    assert store.session_detail(session['id'], requester_agent='codex')['session']['id'] == session['id']
+
+
 def test_state_evidence_merge_and_split_audit(store):
     sid = populate(store, 4)
     store.process_topics(sid)
@@ -102,9 +109,28 @@ def test_topic_graph_connects_topics_sessions_and_agents(store):
     assert {'memory_topic', 'memory_session', 'memory_agent'} <= kinds
     assert graph['links']
     assert graph['metadata']['coverage']['pending'] == 0
+    assert graph['metadata']['session_focus'] is None
     labels = {link['label'] for link in graph['links']}
     assert 'continuación' not in labels
     assert all(node.get('reference', '').startswith('N-') for node in graph['nodes'])
+
+
+def test_session_catalog_and_focus_graph_include_empty_and_paginated_sessions(store):
+    empty = store.start_session('agy', 'Empty session', capture_enabled=True)['id']
+    focused = store.start_session('codex', 'Buttons session', capture_enabled=True)['id']
+    for index in range(3):
+        store.append_message(focused, 'user', f'Cambia el color del botón {index}')
+    store.process_topics(focused)
+    catalog = store.list_sessions_page(query='Empty', limit=1)
+    assert catalog['total'] == 1
+    assert catalog['sessions'][0]['reference'].startswith('N-')
+    graph = store.topic_graph(session_id=empty, limit=10)
+    assert graph['metadata']['session_total'] == 1
+    assert graph['metadata']['topic_total'] == 0
+    assert any(node['kind'] == 'memory_session' and node['session_id'] == empty for node in graph['nodes'])
+    page = store.topic_graph(session_id=focused, limit=1)
+    assert page['metadata']['topic_total'] >= 2
+    assert page['metadata']['next_topic_offset'] == 1
 
 
 def test_topic_graph_marks_possible_relations_ambiguous(store):

@@ -1,6 +1,7 @@
 import {
   setView, setDim, setMemoryGraphMode, toggleRotate, toggleVertexBlink, updateLinkStyles,
-  focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette,
+  refreshMemoryColorControls, selectMemoryColorKind, changeMemoryColor, toggleMemoryHaloLink,
+  resetMemoryColorType, resetMemoryColorSettings, focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette,
   changeStyleColors, closeBlastPanel, doReindex, exportGraphData, exportGraphPNG, setPRBase,
   onFolderPicked, selectProject, toggleAllComm, toggleComm, toggleDD, toggleGitignore,
   toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, loadHistoryUI, toggleNodeDesc,
@@ -10,7 +11,8 @@ import {
   copyContextBundle, focusWebFlow, clearWebFlow, loadIndexUpdate, loadAmbiguities,
   reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel,
   closeMemoryPanel, loadMemoryOverview, searchSharedMemory, correctSharedMemory, forgetSharedMemory,
-  showSharedMemoryGraph, openSessionDetail, focusMemoryNode, linkAgentProfile,
+  showSharedMemoryGraph, openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus,
+  loadMoreMemoryTopics, searchMemorySessions, loadMoreMemorySessions, linkAgentProfile,
   discoverHistoricalMemory, applyHistoricalMemory, copyNodeReference
 } from './js/__handlers.js';
 import { state } from './js/state.js';
@@ -126,4 +128,4 @@ function openFromChanges(nodeId) {
   setTimeout(() => focusNode(nodeId), 500);
 }
 
-Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, closeBlastPanel, closeRegister, closeTutorial, closeWelcome, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setMemoryGraphMode, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, copyNodeReference, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory});
+Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, refreshMemoryColorControls, selectMemoryColorKind, changeMemoryColor, toggleMemoryHaloLink, resetMemoryColorType, resetMemoryColorSettings, closeBlastPanel, closeRegister, closeTutorial, closeWelcome, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setMemoryGraphMode, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, copyNodeReference, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, searchMemorySessions, loadMoreMemorySessions, loadMoreMemoryTopics, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory});

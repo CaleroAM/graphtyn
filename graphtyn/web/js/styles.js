@@ -1,5 +1,5 @@
-import { state, hexRgb, mixColor, showStyleErr, safePaint } from './state.js';
-import { nodeColor, nodeVal, isDocOrMedia, squareNodePainter, neuralNodePainter, neuralLinkPainter, holoNodePainter, holoLinkPainter } from './painters.js';
+import { state, hexRgb, mixColor, getMemoryColor, showStyleErr, safePaint } from './state.js';
+import { nodeColor, nodeVal, isDocOrMedia, squareNodePainter, memoryStandardNodePainter, neuralNodePainter, neuralLinkPainter, holoNodePainter, holoLinkPainter } from './painters.js';
 import { buildPulseSim } from './sim.js';
 
 export function holoBgEnsure() {
@@ -91,7 +91,11 @@ export function apply2DStyle() {
       if (!state.graphInst) return;
       if (state.graphStyle === 'standard') {
         state.graphInst.backgroundColor('#0b0e17');
-        if (state.nodeShape === 'squares') {
+        if (state.activeView === 'memory') {
+          state.graphInst
+            .nodeCanvasObjectMode(() => 'replace')
+            .nodeCanvasObject(safePaint(memoryStandardNodePainter, 'memoria'));
+        } else if (state.nodeShape === 'squares') {
           state.graphInst
             .nodeCanvasObjectMode(() => 'replace')
             .nodeCanvasObject(safePaint(squareNodePainter, 'cuadrados'));
@@ -146,6 +150,22 @@ export function apply2DStyle() {
 export function apply3DStyle() {
       if (!state.graphInst) return;
       if (state.graphStyle === 'standard') {
+        if (state.activeView === 'memory' && typeof THREE !== 'undefined') {
+          state.graphInst.nodeThreeObject(n => {
+            if (!n._memoryGroup) {
+              n._memoryGroup = new THREE.Group();
+              n._memoryCore = new THREE.Mesh(new THREE.SphereGeometry(1.8, 12, 8), new THREE.MeshBasicMaterial());
+              n._memoryHalo = new THREE.Mesh(new THREE.SphereGeometry(4.2, 16, 10), new THREE.MeshBasicMaterial({transparent: true, opacity: 0.16, side: THREE.BackSide}));
+              n._memoryGroup.add(n._memoryHalo, n._memoryCore);
+            }
+            const kind = (n.kind || '').toLowerCase();
+            n._memoryCore.material.color.set(nodeColor(n));
+            n._memoryHalo.material.color.set(getMemoryColor(kind, 'halo'));
+            n._memoryHalo.material.opacity = kind === 'memory_session' ? 0.22 : 0.16;
+            return n._memoryGroup;
+          }).nodeThreeObjectExtend(false);
+          return;
+        }
         if (state.nodeShape === 'squares' && typeof THREE !== 'undefined') {
           state.graphInst.nodeThreeObject(n => {
             if (!n._cube) {

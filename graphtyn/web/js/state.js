@@ -40,7 +40,69 @@ export const state = {
   watchTimer: null,
   prBase: '',
   webFlowNodeIds: null,
+  memoryFocusSession: null,
+  memoryGraphMeta: null,
+  memoryColors: null,
 };
+
+export const MEMORY_COLOR_DEFAULTS = {
+  memory_topic:  { label: 'Tema',     node: '#38bdf8', halo: '#38bdf8', linkedHalo: true },
+  memory_session:{ label: 'Sesión',   node: '#f97316', halo: '#f97316', linkedHalo: true },
+  memory_agent:  { label: 'Agente',   node: '#7c3aed', halo: '#7c3aed', linkedHalo: true },
+  memory_episode:{ label: 'Episodio', node: '#22c55e', halo: '#22c55e', linkedHalo: true },
+  memory_entity: { label: 'Entidad',  node: '#14b8a6', halo: '#14b8a6', linkedHalo: true },
+};
+
+const MEMORY_COLOR_KEY = 'graphtyn-memory-colors-v1';
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+function cloneMemoryColors(value) {
+  return Object.fromEntries(Object.entries(MEMORY_COLOR_DEFAULTS).map(([kind, defaults]) => {
+    const saved = value && typeof value[kind] === 'object' ? value[kind] : {};
+    const node = HEX_COLOR.test(saved.node || '') ? saved.node : defaults.node;
+    const halo = HEX_COLOR.test(saved.halo || '') ? saved.halo : defaults.halo;
+    return [kind, { ...defaults, node, halo, linkedHalo: saved.linkedHalo !== false }];
+  }));
+}
+
+export function getMemoryColors() {
+  if (state.memoryColors) return state.memoryColors;
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(MEMORY_COLOR_KEY) || 'null'); } catch (_) { /* valores por defecto */ }
+  state.memoryColors = cloneMemoryColors(saved);
+  return state.memoryColors;
+}
+
+export function getMemoryColor(kind, part = 'node') {
+  const colors = getMemoryColors();
+  const item = colors[kind] || colors.memory_topic;
+  if (part === 'halo' && item.linkedHalo) return item.node;
+  return item[part] || item.node;
+}
+
+export function saveMemoryColors() {
+  try { localStorage.setItem(MEMORY_COLOR_KEY, JSON.stringify(getMemoryColors())); } catch (_) { /* storage opcional */ }
+}
+
+export function updateMemoryColor(kind, part, value) {
+  const colors = getMemoryColors();
+  if (!colors[kind] || !HEX_COLOR.test(value || '')) return;
+  colors[kind][part] = value;
+  if (part === 'node' && colors[kind].linkedHalo) colors[kind].halo = value;
+  saveMemoryColors();
+}
+
+export function resetMemoryColor(kind) {
+  const colors = getMemoryColors();
+  if (!MEMORY_COLOR_DEFAULTS[kind]) return;
+  colors[kind] = { ...MEMORY_COLOR_DEFAULTS[kind] };
+  saveMemoryColors();
+}
+
+export function resetMemoryColors() {
+  state.memoryColors = cloneMemoryColors(MEMORY_COLOR_DEFAULTS);
+  saveMemoryColors();
+}
 
     export const PALETTES = {
       obsidian  : { file:'#38bdf8', class:'#f59e0b', func:'#a78bfa', agent:'#a855f7', asset:'#10b981', link:'rgba(148,163,184,0.30)', linkW:1.4, particle:'rgba(56,189,248,0.8)' },

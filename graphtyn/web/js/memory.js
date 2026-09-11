@@ -1,12 +1,30 @@
-import { state } from './state.js';
+import { state, getMemoryColor } from './state.js';
 import { setView } from './controls.js';
-import { focusNode } from './graph.js';
+import { destroyGraph, focusNode, loadGraph, refreshStyleInPlace, updateMemoryFocusBanner } from './graph.js';
+import { buildPulseSim } from './sim.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const arg = value => encodeURIComponent(String(value ?? '')).replace(/'/g, '%27');
 const AGENT_COLORS = ['#22d3ee','#f59e0b','#a78bfa','#34d399','#fb7185','#60a5fa','#f97316','#c084fc','#2dd4bf','#e879f9','#84cc16','#facc15'];
 const agentColor = value => AGENT_COLORS[Array.from(String(value || '')).reduce((sum, char, index) => sum + (index + 1) * char.codePointAt(0), 0) % AGENT_COLORS.length];
 let historicalDiscovery = null;
+let sessionOffset = 0;
+
+function renderMemorySessions(data, append = false) {
+  const box = document.getElementById('memory-sessions');
+  if (!box) return;
+  const items = (data.sessions || []).map(item => `
+    <article class="memory-card memory-session-card" data-session-id="${esc(item.id)}" onclick="openSessionDetail(this.dataset.sessionId)">
+      <div class="memory-card-head"><span>${esc(item.agent_id)}</span><span class="memory-pill">${item.id.startsWith('ses_ext_') ? 'histórica · ' : ''}${esc(item.status)}</span></div>
+      <div class="memory-card-content">${esc(item.task || 'Sesión de conversación')}</div>
+      <div class="memory-card-meta">${esc(item.branch || 'sin rama')} · ${item.message_count || 0} mensajes · ${item.topic_count || 0} temas · <code>${esc(item.reference || '')}</code> · ver detalle →</div></article>`).join('');
+  if (!append) box.innerHTML = '';
+  box.insertAdjacentHTML('beforeend', items || (!append ? '<div class="memory-empty">Sin sesiones registradas.</div>' : ''));
+  const more = document.getElementById('memory-sessions-more');
+  if (more) { more.hidden = data.next_offset === null || data.next_offset === undefined; more.dataset.offset = data.next_offset ?? ''; }
+  const count = document.getElementById('memory-sessions-count');
+  if (count) count.textContent = `${Math.min((data.offset || 0) + (data.sessions || []).length, data.total || 0)} de ${data.total || 0}`;
+}
 
 function headers() {
   const token = document.getElementById('memory-token')?.value.trim() || localStorage.getItem('graphtyn-memory-token') || '';
@@ -123,14 +141,17 @@ export async function applyHistoricalMemory() {
   } catch (error) { output.textContent = `No se pudo importar: ${error.message}`; }
 }
 
-export async function loadMemoryOverview() {
+export async function loadMemoryOverview(append = false) {
   const status = document.getElementById('memory-status');
   if (!state.activePath) { status.textContent = 'Selecciona un proyecto.'; return; }
+    if (!append) sessionOffset = 0;
     status.textContent = 'Consultando memoria…';
     try {
       const path = encodeURIComponent(state.activePath);
+      const query = document.getElementById('memory-session-query')?.value.trim() || '';
+      const requester = document.getElementById('memory-agent')?.value.trim() || 'dashboard';
       const [info, sessions] = await Promise.all([
-        request(`/api/memory/status?path=${path}`), request(`/api/memory/sessions?path=${path}&limit=100`)
+        request(`/api/memory/status?path=${path}`), request(`/api/memory/sessions?path=${path}&limit=100&offset=${sessionOffset}&query=${encodeURIComponent(query)}&requester_agent=${encodeURIComponent(requester)}`)
       ]);
       let freshness = '';
       if (info.last_capture_at) {
@@ -143,12 +164,20 @@ export async function loadMemoryOverview() {
       status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness} · ${topicAi}`;
     const legend = document.getElementById('memory-agent-legend');
     if (legend) legend.innerHTML = '<div class="memory-empty">Abre el mapa para ver la atribución por agente.</div>';
-    document.getElementById('memory-sessions').innerHTML = sessions.sessions.length ? sessions.sessions.map(item => `
-      <article class="memory-card memory-session-card" data-session-id="${esc(item.id)}" onclick="openSessionDetail(this.dataset.sessionId)">
-        <div class="memory-card-head"><span>${esc(item.agent_id)}</span><span class="memory-pill">${item.id.startsWith('ses_ext_') ? 'histórica · ' : ''}${esc(item.status)}</span></div>
-        <div class="memory-card-content">${esc(item.task)}</div>
-        <div class="memory-card-meta">${esc(item.branch || 'sin rama')} · ${item.memories} memorias · ver detalle →</div></article>`).join('') : '<div class="memory-empty">Sin sesiones registradas.</div>';
+    renderMemorySessions(sessions, append);
   } catch (error) { status.textContent = `No se pudo cargar: ${error.message}`; }
+}
+
+export function searchMemorySessions() {
+  sessionOffset = 0;
+  loadMemoryOverview(false);
+}
+
+export function loadMoreMemorySessions() {
+  const more = document.getElementById('memory-sessions-more');
+  if (!more || more.hidden || more.dataset.offset === '') return;
+  sessionOffset = Number(more.dataset.offset) || 0;
+  loadMemoryOverview(true);
 }
 
 export async function showSharedMemoryGraph() {
@@ -157,23 +186,30 @@ export async function showSharedMemoryGraph() {
   status.textContent = 'Construyendo mapa de autoría y recuperación…';
   try {
     const agent = document.getElementById('memory-agent').value.trim() || 'dashboard';
-    const data = await request(`/api/memory/graph?path=${encodeURIComponent(state.activePath)}&requester_agent=${encodeURIComponent(agent)}&view=topics&detail=${state.memoryGraphMode === 'detailed'}&limit=400`);
+    const sessionParam = state.memoryFocusSession ? `&session_id=${encodeURIComponent(state.memoryFocusSession)}` : '';
+    const data = await request(`/api/memory/graph?path=${encodeURIComponent(state.activePath)}&requester_agent=${encodeURIComponent(agent)}&view=topics&detail=${state.memoryGraphMode === 'detailed'}&limit=400&session_limit=100${sessionParam}`);
     state.activeView = 'memory';
     state.fullData = {nodes:data.nodes || [], links:data.links || []};
+    state.memoryGraphMeta = data.metadata || null;
     state.selectedNode = null; state.selectedNeighbors = null;
     state.graphInst.graphData(state.fullData);
+    refreshStyleInPlace();
+    window.refreshMemoryColorControls?.();
+    updateMemoryFocusBanner(data);
     setTimeout(() => state.graphInst?.zoomToFit?.(700, 55), 80);
     const legend = document.getElementById('memory-agent-legend');
     if (legend) {
-      const keyHtml = item => `<span class="memory-agent-key"><i style="background:${esc(item.color)}"></i>${esc(item.id)}</span>`;
-      const html = '<span class="memory-agent-key"><i style="background:#38bdf8"></i>tema</span>' +
-        '<span class="memory-agent-key"><i style="background:#f97316"></i>sesión</span>' +
+      const keyHtml = item => `<span class="memory-agent-key"><i data-memory-legend-kind="memory_agent" style="background:${esc(getMemoryColor('memory_agent', 'node'))}"></i>${esc(item.id)}</span>`;
+      const html = '<span class="memory-agent-key"><i data-memory-legend-kind="memory_topic" style="background:' + esc(getMemoryColor('memory_topic', 'node')) + '"></i>tema</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_session" style="background:' + esc(getMemoryColor('memory_session', 'node')) + '"></i>sesión</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_episode" style="background:' + esc(getMemoryColor('memory_episode', 'node')) + '"></i>episodio</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_entity" style="background:' + esc(getMemoryColor('memory_entity', 'node')) + '"></i>entidad</span>' +
         (data.agents || []).map(keyHtml).join('')
         + ((data.consulters || []).length ? '<span class="memory-agent-key">· sólo consulta:</span>'
           + data.consulters.map(keyHtml).join('') : '');
       legend.innerHTML = html || '<div class="memory-empty">No hay agentes atribuidos.</div>';
     }
-    status.textContent = `${data.metadata?.mode === 'detailed' ? 'Vista detallada' : 'Vista simplificada'} · ${data.metadata?.topic_count || 0} temas · ${data.nodes.length} nodos conectados · ${data.links.length} relaciones`;
+    status.textContent = `${data.metadata?.mode === 'detailed' ? 'Vista detallada' : 'Vista simplificada'} · ${(data.metadata?.topic_returned ?? data.metadata?.topic_count) || 0}/${(data.metadata?.topic_total ?? data.metadata?.topic_count) || 0} temas · ${(data.metadata?.session_returned ?? 0) || 0}/${(data.metadata?.session_total ?? 0) || 0} sesiones · ${data.nodes.length} nodos · ${data.links.length} relaciones`;
     closeMemoryPanel();
   } catch (error) { status.textContent = `No se pudo generar el mapa: ${error.message}`; }
 }
@@ -210,7 +246,8 @@ export async function openSessionDetail(sessionId) {
   if (!box) return;
   box.innerHTML = '<div class="memory-empty">Cargando sesión…</div>';
   try {
-    const data = await request(`/api/memory/session?path=${encodeURIComponent(state.activePath)}&session_id=${arg(sessionId)}`);
+    const requester = document.getElementById('memory-agent')?.value.trim() || 'dashboard';
+    const data = await request(`/api/memory/session?path=${encodeURIComponent(state.activePath)}&session_id=${arg(sessionId)}&requester_agent=${encodeURIComponent(requester)}`);
     const s = data.session || {};
     const msgs = (data.messages || []).map(m => `
       <article class="memory-card memory-msg"><span class="memory-msg-role">${esc(m.role)}</span>
@@ -221,7 +258,8 @@ export async function openSessionDetail(sessionId) {
       <button class="btn-link" onclick="loadMemoryOverview()">← Volver a sesiones</button>
       <article class="memory-card"><div class="memory-card-head"><span>${esc(s.agent_id)}</span><span class="memory-pill">${esc(s.status)}</span></div>
         <div class="memory-card-content">${esc(s.task)}</div>
-        <div class="memory-card-meta">${esc(s.branch || 'sin rama')} · ${(data.messages || []).length} mensajes · ${(data.memories || []).length} memorias</div></article>
+        <div class="memory-card-meta">${esc(s.branch || 'sin rama')} · ${(data.messages || []).length} mensajes · ${(data.memories || []).length} memorias</div>
+        <div class="memory-card-actions"><button class="btn-action btn-primary" data-session-id="${esc(sessionId)}" onclick="event.stopPropagation();focusMemorySession(this.dataset.sessionId)">Explorar en el grafo</button></div></article>
       ${mems ? `<h4 class="memory-section-title">Memorias de la sesión</h4>${mems}` : ''}
       ${msgs ? `<h4 class="memory-section-title">Conversación</h4>${msgs}` : ''}`;
   } catch (error) {
@@ -297,6 +335,63 @@ export async function focusMemoryNode(memoryId) {
     }
   }
   focusNode(nodeId);
+}
+
+export function focusMemorySession(sessionId) {
+  state.memoryFocusSession = decodeURIComponent(String(sessionId || '')).replace(/^session:/, '');
+  closeMemoryPanel();
+  setView('memory');
+}
+
+export function clearMemorySessionFocus() {
+  state.memoryFocusSession = null;
+  state.memoryGraphMeta = null;
+  setView('memory');
+}
+
+function mergeMemoryGraphPage(data) {
+  const nodes = new Map((state.fullData?.nodes || []).map(node => [node.id, node]));
+  for (const node of (data.nodes || [])) nodes.set(node.id, {...nodes.get(node.id), ...node});
+  const links = new Map();
+  const linkKey = link => {
+    const source = typeof link.source === 'object' ? link.source.id : link.source;
+    const target = typeof link.target === 'object' ? link.target.id : link.target;
+    return `${source}|${target}|${link.label || ''}`;
+  };
+  for (const link of [...(state.fullData?.links || []), ...(data.links || [])]) links.set(linkKey(link), link);
+  state.fullData = {nodes:[...nodes.values()], links:[...links.values()]};
+  const incoming = data.metadata || {};
+  const previous = state.memoryGraphMeta || {};
+  const incomingLoaded = Number(incoming.topic_offset || 0) + Number(incoming.topic_returned || incoming.topic_count || 0);
+  const previousLoaded = Number(previous.topic_returned || previous.topic_count || 0);
+  const topicCount = [...nodes.values()].filter(node => node.kind === 'memory_topic').length;
+  state.memoryGraphMeta = {...incoming,
+    topic_returned: Math.max(previousLoaded, incomingLoaded),
+    topic_count: Math.max(Number(previous.topic_count || 0), topicCount),
+  };
+  state.pulseSim = buildPulseSim(state.fullData);
+  if (state.graphInst) {
+    state.graphInst.graphData(state.fullData);
+    state.graphInst.d3ReheatSimulation?.();
+  }
+  updateMemoryFocusBanner({metadata: state.memoryGraphMeta});
+}
+
+export async function loadMoreMemoryTopics() {
+  if (state.activeView !== 'memory' || !state.memoryGraphMeta || !state.activePath) return;
+  const next = state.memoryGraphMeta.next_topic_offset;
+  if (next === null || next === undefined) return;
+  const status = document.getElementById('memory-status');
+  if (status) status.textContent = state.memoryFocusSession ? 'Cargando más temas de la sesión…' : 'Cargando más temas del proyecto…';
+  try {
+    const agent = document.getElementById('memory-agent')?.value.trim() || 'dashboard';
+    const focusParam = state.memoryFocusSession ? `&session_limit=1&session_id=${encodeURIComponent(state.memoryFocusSession)}` : '&session_limit=100';
+    const data = await request(`/api/memory/graph?path=${encodeURIComponent(state.activePath)}&requester_agent=${encodeURIComponent(agent)}&view=topics&detail=${state.memoryGraphMode === 'detailed'}&limit=400${focusParam}&topic_offset=${next}`);
+    mergeMemoryGraphPage(data);
+    if (status) status.textContent = `${state.memoryFocusSession ? 'Sesión enfocada' : 'Proyecto'} · ${(state.memoryGraphMeta?.topic_returned ?? 0)}/${(state.memoryGraphMeta?.topic_total ?? 0)} temas · ${state.fullData.nodes.length} nodos · ${state.fullData.links.length} relaciones`;
+  } catch (error) {
+    if (status) status.textContent = `No se pudieron cargar más temas: ${error.message}`;
+  }
 }
 
 let topicRequest;

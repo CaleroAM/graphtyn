@@ -1,4 +1,5 @@
-import { state, PALETTES } from './state.js';
+import { state, PALETTES, getMemoryColors, getMemoryColor, updateMemoryColor,
+         resetMemoryColor, resetMemoryColors, saveMemoryColors } from './state.js';
 import { destroyGraph, loadGraph, refreshStyleInPlace, toggleRotate } from './graph.js';
 
 export function setView(v) {
@@ -18,6 +19,7 @@ export function setView(v) {
       if (bCh) bCh.classList.toggle('active', v === 'changes');
       const memoryGraphControl = document.getElementById('memory-graph-view-control');
       if (memoryGraphControl) memoryGraphControl.hidden = v !== 'memory';
+      refreshMemoryColorControls();
       const explore = document.getElementById('dd-explore');
       if (explore) {
         explore.classList.remove('open');
@@ -57,7 +59,76 @@ export function changePalette() {
       state.activePalette = document.getElementById('palette-sel').value;
       state.nodeColorHex = null;
       refreshStyleInPlace();
-    }
+}
+
+export function refreshMemoryColorControls() {
+      const panel = document.getElementById('memory-color-controls');
+      if (!panel) return;
+      const visible = state.activeView === 'memory';
+      panel.hidden = !visible;
+      const general = document.getElementById('general-style-colors');
+      if (general) general.hidden = visible;
+      if (!visible) return;
+      const select = document.getElementById('memory-color-kind');
+      const kind = select?.value || 'memory_topic';
+      const colors = getMemoryColors()[kind];
+      if (!colors) return;
+      const node = document.getElementById('memory-node-color');
+      const halo = document.getElementById('memory-halo-color');
+      const linked = document.getElementById('memory-halo-linked');
+      if (node) node.value = colors.node;
+      if (halo) { halo.value = colors.halo; halo.disabled = colors.linkedHalo; }
+      if (linked) linked.checked = colors.linkedHalo;
+}
+
+export function selectMemoryColorKind() {
+      refreshMemoryColorControls();
+}
+
+function refreshMemoryLegendColors() {
+      document.querySelectorAll('[data-memory-legend-kind]').forEach(el => {
+        el.style.background = getMemoryColor(el.dataset.memoryLegendKind, 'node');
+      });
+      document.querySelectorAll('[data-memory-legend-halo]').forEach(el => {
+        el.style.background = getMemoryColor(el.dataset.memoryLegendHalo, 'halo');
+      });
+}
+
+export function changeMemoryColor(part) {
+      if (state.activeView !== 'memory') return;
+      const kind = document.getElementById('memory-color-kind')?.value || 'memory_topic';
+      const input = document.getElementById(part === 'halo' ? 'memory-halo-color' : 'memory-node-color');
+      if (!input) return;
+      updateMemoryColor(kind, part, input.value);
+      refreshMemoryColorControls();
+      refreshMemoryLegendColors();
+      refreshStyleInPlace();
+}
+
+export function toggleMemoryHaloLink(linked) {
+      if (state.activeView !== 'memory') return;
+      const kind = document.getElementById('memory-color-kind')?.value || 'memory_topic';
+      const colors = getMemoryColors()[kind];
+      if (!colors) return;
+      colors.linkedHalo = Boolean(linked);
+      if (colors.linkedHalo) colors.halo = colors.node;
+      saveMemoryColors();
+      refreshMemoryColorControls();
+      refreshMemoryLegendColors();
+      refreshStyleInPlace();
+}
+
+export function resetMemoryColorType() {
+      if (state.activeView !== 'memory') return;
+      resetMemoryColor(document.getElementById('memory-color-kind')?.value || 'memory_topic');
+      refreshMemoryColorControls(); refreshMemoryLegendColors(); refreshStyleInPlace();
+}
+
+export function resetMemoryColorSettings() {
+      if (state.activeView !== 'memory') return;
+      resetMemoryColors();
+      refreshMemoryColorControls(); refreshMemoryLegendColors(); refreshStyleInPlace();
+}
 
 export function updateLinkStyles() {
       const p = PALETTES[state.activePalette] || PALETTES.obsidian;

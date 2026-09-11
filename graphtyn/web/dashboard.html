@@ -196,24 +196,27 @@
               <select id="style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changeGraphStyle()">
                 <option value="standard" selected>Estándar</option>
                 <option value="neural">Neuronal (tejido orgánico)</option>
+                <option value="holo">Holográfico (halo proyectado)</option>
               </select>
               <label class="section-label" style="margin-top:8px;">Forma de Nodos</label>
               <select id="shape-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changeNodeShape()">
                 <option value="circles" selected>Círculos · Esferas</option>
                 <option value="squares">Cuadrados · Cubos</option>
               </select>
-              <label class="section-label" style="margin-top:8px;">Colores (Estilo Neuronal)</label>
-              <div class="filter-row">
-                <span>Color de Nodos</span>
-                <input type="color" id="node-color" value="#ff9ed2" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeNodeColor()" title="Si eliges un color aquí, deja de usar la paleta">
-              </div>
-              <div class="filter-row">
-                <span>Color de Ráfaga</span>
-                <input type="color" id="pulse-color" value="#ff5aaf" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
-              </div>
-              <div class="filter-row">
-                <span>Color de Vértices</span>
-                <input type="color" id="link-color" value="#8c96eb" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
+              <div id="general-style-colors">
+                <label class="section-label" style="margin-top:8px;">Colores (Estilo Neuronal)</label>
+                <div class="filter-row">
+                  <span>Color de Nodos</span>
+                  <input type="color" id="node-color" value="#ff9ed2" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeNodeColor()" title="Si eliges un color aquí, deja de usar la paleta">
+                </div>
+                <div class="filter-row">
+                  <span>Color de Ráfaga</span>
+                  <input type="color" id="pulse-color" value="#ff5aaf" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
+                </div>
+                <div class="filter-row">
+                  <span>Color de Vértices</span>
+                  <input type="color" id="link-color" value="#8c96eb" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
+                </div>
               </div>
               <div class="filter-row">
                 <span title="Activa/desactiva la animación de parpadeo de los enlaces en el estilo Neuronal (2D y 3D)">Parpadeo de Vértices</span>
@@ -222,6 +225,22 @@
               <div class="filter-row">
                 <span title="En 3D, dibuja el estilo Neuronal orgánico (halos, enlaces curvos, botones y cometas) proyectado sobre el grafo, como en 2D">Dibujo orgánico 2D en 3D</span>
                 <label class="chk-wrap"><input type="checkbox" id="chk-organic3d" checked onchange="toggleOrganic3d(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+              </div>
+              <div id="memory-color-controls" class="memory-color-controls" hidden>
+                <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
+                <label class="section-label">Colores de memoria del proyecto</label>
+                <p class="settings-help">Personaliza el núcleo y la burbuja de cada tipo. Sólo afecta a «Memoria del proyecto».</p>
+                <select id="memory-color-kind" class="control-select" onchange="selectMemoryColorKind()" aria-label="Tipo de nodo de memoria">
+                  <option value="memory_topic">Tema</option>
+                  <option value="memory_session">Sesión</option>
+                  <option value="memory_agent">Agente</option>
+                  <option value="memory_episode">Episodio</option>
+                  <option value="memory_entity">Entidad</option>
+                </select>
+                <div class="filter-row"><span>Color del nodo</span><input type="color" id="memory-node-color" onchange="changeMemoryColor('node')" aria-label="Color del nodo de memoria"></div>
+                <div class="filter-row"><span>Color de burbuja / halo</span><input type="color" id="memory-halo-color" onchange="changeMemoryColor('halo')" aria-label="Color del halo de memoria"></div>
+                <div class="filter-row"><span>Burbuja sigue al nodo</span><label class="chk-wrap"><input type="checkbox" id="memory-halo-linked" checked onchange="toggleMemoryHaloLink(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label></div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap;"><button class="btn-link" onclick="resetMemoryColorType()">Restablecer tipo</button><button class="btn-link" onclick="resetMemoryColorSettings()">Restablecer colores de memoria</button></div>
               </div>
               <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
               <label class="section-label">Físicas del Grafo</label>
@@ -366,7 +385,7 @@
       <div id="memory-agent-legend" class="memory-agent-legend" aria-label="Colores de agentes"></div>
       <div class="memory-layout">
         <section><div class="section-label">RESULTADOS ATRIBUIDOS</div><div id="memory-results" class="memory-results" aria-live="polite"></div></section>
-        <section><div class="section-label">SESIONES RECIENTES</div><div id="memory-sessions" class="memory-sessions"></div></section>
+        <section><div class="section-label" style="display:flex;justify-content:space-between;align-items:center;"><span>SESIONES DEL PROYECTO</span><span id="memory-sessions-count" style="color:#64748b;font-size:9px;"></span></div><div class="memory-session-toolbar"><input id="memory-session-query" class="text-inp" placeholder="Buscar sesión, agente o identificador" onkeydown="if(event.key==='Enter') searchMemorySessions()"><button class="btn-link" onclick="searchMemorySessions()">Buscar</button></div><div id="memory-sessions" class="memory-sessions"></div><button id="memory-sessions-more" class="btn-link" data-offset="" hidden onclick="loadMoreMemorySessions()">Cargar más sesiones</button></section>
       </div>
     </div>
   </div>

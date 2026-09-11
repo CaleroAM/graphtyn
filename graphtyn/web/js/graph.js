@@ -1,4 +1,4 @@
-import { state, PALETTES, COMM_COLORS, getCommKey, safePaint } from './state.js';
+import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, safePaint } from './state.js';
 import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
 import { apply2DStyle, apply3DStyle, paintNodePointerArea } from './styles.js';
@@ -358,6 +358,7 @@ export function onNodeClick(node) {
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
         '</div>' +
         '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;"><button class="btn-action btn-primary" style="justify-content:center;" data-node-id="' + safeId + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
+        (node.kind === 'memory_session' ? '<button class="btn-action" data-session-id="' + escapeHtml(node.session_id || String(node.id || '').replace(/^session:/, '')) + '" onclick="focusMemorySession(this.dataset.sessionId)">Explorar esta sesión</button>' : '') +
         (!isMemoryNode ? '<button class="btn-action" data-node-id="' + safeId + '" onclick="addNodeToContext(this.dataset.nodeId);openQualityPanel()">Añadir al contexto</button>' : '') +
         (hasWebFlow ? '<button class="btn-action" data-node-id="' + safeId + '" onclick="focusWebFlow(this.dataset.nodeId)">Ver flujo web</button>' : '') + '</div>' +
         '<hr style="border:none;border-top:1px solid #1e293b;margin:4px 0;">' +
@@ -627,13 +628,13 @@ export function loadGraph() {
       const url = state.activeView === 'agents'
         ? '/api/graph?view=agents'
         : state.activeView === 'memory'
-        ? '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&view=topics&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400'
+        ? '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&view=topics&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400&session_limit=100' + (state.memoryFocusSession ? '&session_id=' + encodeURIComponent(state.memoryFocusSession) : '')
         : state.activeView === 'semantic'
         ? '/api/graph?view=semantic&path=' + encodeURIComponent(state.activePath)
         : '/api/graph?path=' + encodeURIComponent(state.activePath);
 
       const loadingMessage = state.activeView === 'agents' ? 'Cargando topología de agentes...'
-        : state.activeView === 'memory' ? 'Cargando temas y episodios del proyecto...'
+        : state.activeView === 'memory' ? (state.memoryFocusSession ? 'Cargando sesión y sus temas...' : 'Cargando sesiones, temas y episodios...')
         : 'Escaneando proyecto...';
       showGraphSpinner(loadingMessage);
       document.getElementById('stats').textContent = 'Cargando...';
@@ -661,6 +662,7 @@ export function loadGraph() {
           return;
         }
         state.fullData = data;
+        state.memoryGraphMeta = state.activeView === 'memory' ? (data.metadata || null) : null;
         state.pulseSim = buildPulseSim(data);
         const p = PALETTES[state.activePalette];
         document.getElementById('stats').textContent =
@@ -669,7 +671,7 @@ export function loadGraph() {
         const badge = document.getElementById('model-badge');
         if (badge) {
           badge.textContent = state.activeView === 'memory'
-            ? `Memoria ${((data.metadata || {}).mode === 'detailed') ? 'detallada' : 'simplificada'} · ${(data.metadata || {}).topic_count || 0} temas · ${(data.agents || []).length} agentes`
+            ? `Memoria ${((data.metadata || {}).mode === 'detailed') ? 'detallada' : 'simplificada'} · ${(((data.metadata || {}).topic_returned ?? (data.metadata || {}).topic_count) || 0)}/${(((data.metadata || {}).topic_total ?? (data.metadata || {}).topic_count) || 0)} temas · ${(((data.metadata || {}).session_returned ?? 0) || 0)}/${(((data.metadata || {}).session_total ?? 0) || 0)} sesiones`
             : (meta.ai_model ? meta.ai_model : '') + (meta.reindex_mode ? ' · ' + meta.reindex_mode : '');
         }
 
@@ -679,7 +681,7 @@ export function loadGraph() {
 
         buildCommunities(data); updateEstTime();
 
-        requestAnimationFrame(() => updateMemoryLegend(data));
+        requestAnimationFrame(() => { updateMemoryLegend(data); updateMemoryFocusBanner(data); });
 
         const container = document.getElementById('graph-container');
 
@@ -804,10 +806,12 @@ function updateMemoryLegend(data) {
       const old = document.getElementById('memory-legend-overlay');
       if (old) old.remove();
       if (state.activeView !== 'memory') return;
-      const key = a => '<span class="memory-agent-key"><i style="background:' + escapeHtml(a.color) + '"></i>' + escapeHtml(a.id) + '</span>';
+      const key = a => '<span class="memory-agent-key"><i data-memory-legend-kind="memory_agent" style="background:' + escapeHtml(getMemoryColor('memory_agent', 'node')) + '"></i>' + escapeHtml(a.id) + '</span>';
       let html = '<div class="memory-legend-title">Tipos de memoria</div>' +
-        '<span class="memory-agent-key"><i style="background:#38bdf8"></i>tema</span>' +
-        '<span class="memory-agent-key"><i style="background:#f97316"></i>sesión</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_topic" style="background:' + escapeHtml(getMemoryColor('memory_topic', 'node')) + '"></i>tema</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_session" data-memory-legend-halo="memory_session" style="background:' + escapeHtml(getMemoryColor('memory_session', 'node')) + '"></i>sesión</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_episode" style="background:' + escapeHtml(getMemoryColor('memory_episode', 'node')) + '"></i>episodio</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_entity" style="background:' + escapeHtml(getMemoryColor('memory_entity', 'node')) + '"></i>entidad</span>' +
         '<div class="memory-legend-title">Agentes del proyecto</div>' +
         (data.agents || []).map(key).join('');
       if ((data.consulters || []).length) {
@@ -819,6 +823,25 @@ function updateMemoryLegend(data) {
       document.getElementById('graph-container').appendChild(overlay);
     }
 
+export function updateMemoryFocusBanner(data) {
+      const old = document.getElementById('memory-focus-banner');
+      if (old) old.remove();
+      if (state.activeView !== 'memory') return;
+      const meta = data.metadata || {};
+      const focused = Boolean(state.memoryFocusSession);
+      const hasMore = meta.next_topic_offset !== null && meta.next_topic_offset !== undefined;
+      if (!focused && !hasMore) return;
+      const banner = document.createElement('div');
+      banner.id = 'memory-focus-banner';
+      banner.className = 'memory-focus-banner';
+      banner.innerHTML = '<span id="memory-focus-topic-count">' + (focused ? 'Sesión enfocada · ' + escapeHtml(state.memoryFocusSession) : 'Proyecto') + ' · ' +
+        escapeHtml(String(meta.topic_returned ?? meta.topic_count ?? 0)) + '/' +
+        escapeHtml(String(meta.topic_total ?? meta.topic_count ?? 0)) + ' temas</span>' +
+        (hasMore ? '<button class="btn-link" onclick="loadMoreMemoryTopics()">Cargar más temas</button>' : '') +
+        (focused ? '<button class="btn-link" onclick="clearMemorySessionFocus()">Volver al proyecto</button>' : '');
+      document.getElementById('graph-container').appendChild(banner);
+    }
+
 export function refreshStyleInPlace() {
       if (!state.graphInst) return;
       if (state.activeDim === '2d') {
@@ -826,7 +849,7 @@ export function refreshStyleInPlace() {
         return;
       }
       if (state.graphStyle === 'standard') {
-        if (state.nodeShape === 'squares') {
+        if (state.activeView === 'memory' || state.nodeShape === 'squares') {
           apply3DStyle();
         } else {
           state.graphInst.nodeColor(n => nodeColor(n));
