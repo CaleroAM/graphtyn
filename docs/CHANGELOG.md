@@ -3,6 +3,15 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [Unreleased]
+
+- Referencias estables `N-xxxxxx` para nodos de memoria, resolución por CLI,
+  MCP y API, y copia directa desde el dashboard.
+- Candidatas léxicas separadas de las aristas del grafo, con aceptación o
+  rechazo auditables y permisos validados para ambos temas.
+- Enriquecimiento opcional con Ollama local en segundo plano y resaltado de
+  sólo el nodo seleccionado, sus vecinos y sus conexiones.
+
 ## [0.7.0] - 2026-09-10
 
 Memoria temática multiagente con captura incremental y soporte para el

@@ -171,9 +171,9 @@ La captura histórica se procesa por lotes con `memory stream` o `POST /api/memo
 
 Interfaces equivalentes:
 
-- CLI `memory entities [consulta]`, `memory entity <id>`, `memory topics`, `memory topic`, `memory window` y `memory topic-update`.
-- MCP `memory_entities`, `memory_entity`, `memory_topics`, `memory_topic`, `memory_message_window` y `memory_topic_update`.
-- API `/api/memory/entities`, `/api/memory/entity`, `/api/memory/topics`, `/api/memory/topic`, `/api/memory/window` y `/api/memory/topic/update`.
+- CLI `memory entities [consulta]`, `memory entity <id>`, `memory topics`, `memory topic`, `memory node N-000001`, `memory window`, `memory relation-candidates` y `memory relation-review`.
+- MCP `memory_entities`, `memory_entity`, `memory_topics`, `memory_topic`, `memory_message_window`, `memory_topic_update`, `memory_node`, `memory_relation_candidates` y `memory_relation_review`.
+- API `/api/memory/entities`, `/api/memory/entity`, `/api/memory/topics`, `/api/memory/topic`, `/api/memory/node`, `/api/memory/relation-candidates`, `/api/memory/relation-review`, `/api/memory/window` y `/api/memory/topic/update`.
 
 Las ventanas usan 10 mensajes anteriores y 10 posteriores en la misma sesión, con presupuesto predeterminado de 3.000 tokens y cursores. `memory_context` mantiene 1.800 tokens por defecto, informa cobertura, pendientes, truncamiento y referencias; una respuesta encontrada no marca `do_not_expand` como completa.
 
