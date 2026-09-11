@@ -15,6 +15,8 @@ function memoryLinkColor(link, base) {
       if (link.confidence === 'INFERRED') return 'rgba(148,163,184,0.22)';
       return base;
     }
+function activePalette() { return PALETTES[state.activePalette] || PALETTES.obsidian; }
+function activeLinkColor() { return activePalette().link || PALETTES.obsidian.link; }
 
 export function destroyGraph() {
       stop3DRotation();
@@ -376,13 +378,14 @@ export function onNodeClick(node) {
 
       // Highlight neighbors by dimming others in standard 2D and 3D
       if (state.graphInst) {
+        const linkBase = activeLinkColor();
         state.graphInst.nodeColor(n => {
           if (n.id === node.id) return '#ff007f';
           if (neighbors.has(n.id)) return nodeColor(n);
           return 'rgba(255,255,255,0.22)';
         });
         if (typeof state.graphInst.linkColor === 'function') {
-          state.graphInst.linkColor(l => selectedLink(l) ? (l.confidence === 'AMBIGUOUS' ? 'rgba(245,158,11,0.62)' : l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : '#8c96eb') : 'rgba(255,255,255,0.06)');
+          state.graphInst.linkColor(l => memoryLinkColor(l, linkBase));
         }
         if (typeof state.graphInst.linkWidth === 'function') {
           state.graphInst.linkWidth(l => selectedLink(l) ? 1.8 : 0.25);
@@ -510,9 +513,11 @@ export function closeBlastPanel() {
       const panel = document.getElementById('blast-panel');
       if (panel) panel.style.display = 'none';
       if (state.graphInst) {
+        const palette = activePalette();
+        const linkBase = palette.link || PALETTES.obsidian.link;
         state.graphInst.nodeColor(n => nodeColor(n));
-        if (typeof state.graphInst.linkColor === 'function') state.graphInst.linkColor(l => l.confidence === 'AMBIGUOUS' ? 'rgba(245,158,11,0.62)' : l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : '#8c96eb');
-        if (typeof state.graphInst.linkWidth === 'function') state.graphInst.linkWidth(l => l.confidence === 'AMBIGUOUS' ? 1.8 : l.confidence === 'INFERRED' ? 0.9 : 1.4);
+        if (typeof state.graphInst.linkColor === 'function') state.graphInst.linkColor(l => memoryLinkColor(l, linkBase));
+        if (typeof state.graphInst.linkWidth === 'function') state.graphInst.linkWidth(l => l.confidence === 'AMBIGUOUS' ? (palette.linkW || 1.4) * 1.15 : l.confidence === 'INFERRED' ? (palette.linkW || 1.4) * 0.7 : (palette.linkW || 1.4));
       }
     }
 
