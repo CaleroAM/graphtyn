@@ -738,7 +738,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
             if tool_profile == "intent":
                 response["result"]["tools"] = [
                     tool for tool in response["result"]["tools"]
-                    if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
+                    if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}
                 ]
             elif tool_profile == "memory":
                 response["result"]["tools"] = [
@@ -919,7 +919,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     str(args.get("query") or ""), requester_agent=args.get("requester_agent"),
                     limit=int(args.get("limit") or 8), branch=args.get("branch"))}
                 return _mcp_text(req_id, result)
-            elif name in {"memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}:
+            elif name in {"memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}:
                 from .core.topic_contracts import dispatch_topic
                 return _mcp_text(req_id, dispatch_topic(memory, name, args))
             elif name == "memory_context":

@@ -324,7 +324,7 @@ def main():
     stream_p.add_argument("--consent", action="store_true")
     stream_p.add_argument("--select-project", action="store_true")
     stream_p.add_argument("--watch", action="store_true")
-    for action in ("entities", "entity", "topics", "topic", "window", "topic-update", "node", "relation-candidates", "relation-review"):
+    for action in ("entities", "entity", "topics", "topic", "window", "topic-update", "node", "relation-candidates", "relation-review", "topics-enrich"):
         topic_p = memory_sub.add_parser(action)
         topic_p.add_argument("--path", default=".")
         topic_p.add_argument("--agent", default="cli")
@@ -357,6 +357,10 @@ def main():
             topic_p.add_argument("relation_id")
             topic_p.add_argument("--status", choices=["accepted", "rejected"], required=True)
             topic_p.add_argument("--reason", required=True)
+        elif action == "topics-enrich":
+            topic_p.add_argument("--session", default=None)
+            topic_p.add_argument("--provider", choices=["auto", "ollama", "deterministic", "api"], default="auto")
+            topic_p.add_argument("--force", action="store_true", help="Reprocesa explícitamente aunque la fuente no haya cambiado")
         else:
             topic_p.add_argument("topic_id")
             if action == "topic-update":
@@ -1056,6 +1060,8 @@ def main():
                 result = memory.relation_candidates(requester_agent=args.agent, status=args.status, limit=args.limit)
             elif args.memory_action == "relation-review":
                 result = memory.relation_review(args.relation_id, status=args.status, actor=args.agent, reason=args.reason)
+            elif args.memory_action == "topics-enrich":
+                result = memory.enrich_topics(args.session, provider=args.provider, force=args.force)
             elif args.memory_action == "topic-update":
                 result = memory.topic_update(args.topic_id, requester_agent=args.agent, reason=args.reason,
                     state=args.state, title=args.title, verification=args.verification,

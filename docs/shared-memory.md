@@ -165,6 +165,8 @@ El almacén aplica permisos privados y soporta cifrado autenticado opcional con
 se copia contenido cifrado a FTS; la búsqueda semántica continúa por embeddings.
 # Memoria temática y captura incremental
 
+El enriquecimiento local es incremental: cada tema conserva la huella de sus mensajes fuente, el modelo y la versión del prompt. Una segunda ejecución sin cambios hace cero llamadas; sólo los temas nuevos o modificados entran en la cola persistente. Los cambios de modelo o prompt se marcan `stale` y requieren `--force`. Un fallo transitorio se reintenta una vez y después queda `failed` para reintento manual. Las correcciones humanas quedan protegidas y cualquier propuesta posterior queda registrada sin sobrescribirlas.
+
 El almacén conserva asuntos (`topics`), episodios (`topic_episodes`), referencias a mensajes (`topic_messages`) y cambios auditables (`topic_events`). También registra entidades concretas (`entities`) y sus vínculos con asuntos (`topic_entities`). La extracción determinista crea episodios con procedencia explícita; un modelo local puede enriquecer títulos y resúmenes si `GRAPHTYN_MEMORY_SUMMARY_MODEL` o `OLLAMA_MODEL` está configurado. La API externa sólo se usa con `provider=api` y sus variables de autorización.
 
 La identidad se separa del asunto. Por ejemplo, `botón de Jugar`, `botón de Fichas`, `botón de Ajustes` y `botón de Volver` son cuatro entidades distintas. También se reconocen funcionalidades, módulos, reportes, pantallas, plataformas, referencias de archivo y símbolos Python explícitos como `reports.py`, `función calcular_reporte`, `clase ReportService` y `método listar_operadores`. En un CRM, `botón del reporte` y `funcionalidad del botón de operadores` quedan como asuntos independientes; una conversación posterior sobre `funcionalidad de operadores` puede continuar el segundo asunto aunque ya no mencione el botón. En un proyecto Python, una conversación sobre corregir `calcular_reporte` y otra sobre probarlo quedan vinculadas por `mismo símbolo`, aunque representen episodios de trabajo distintos. Los asuntos relacionados se conectan mediante relaciones explicadas como `mismo elemento`, `mismo símbolo`, `mismo concepto`, `mismo tipo`, `misma plataforma` o `tema de diseño`. Compartir una categoría general no fusiona trabajos.
@@ -172,6 +174,8 @@ La identidad se separa del asunto. Por ejemplo, `botón de Jugar`, `botón de Fi
 La captura histórica se procesa por lotes con `memory stream` o `POST /api/memory/history/stream`. Cada lote confirma un cursor por fuente, sesión y posición; los IDs nativos evitan duplicados y una rotación sin IDs queda pendiente. `--watch` ejecuta el sincronizador persistente y registra heartbeat en `history_watchers`; mostrar un comando no activa captura. El contenido histórico se trata como datos no confiables.
 
 Interfaces equivalentes:
+
+`memory topics-enrich [--session ID] [--force]` y `POST /api/memory/topics/enrich` permiten ejecutar o reprocesar explícitamente la cola. El detalle de cada tema expone `ai_status`, modelo, revisión de fuente, versión del prompt, fecha, error y referencias de mensajes; `memory status` agrega cobertura única y el estado de la cola.
 
 - CLI `memory entities [consulta]`, `memory entity <id>`, `memory topics`, `memory topic`, `memory node N-000001`, `memory window`, `memory relation-candidates` y `memory relation-review`.
 - MCP `memory_entities`, `memory_entity`, `memory_topics`, `memory_topic`, `memory_message_window`, `memory_topic_update`, `memory_node`, `memory_relation_candidates` y `memory_relation_review`.

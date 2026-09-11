@@ -17,6 +17,8 @@ TOPIC_TOOLS = [{"name": name, "description": "Memoria temática con procedencia;
 
 
 def dispatch_topic(store, name, args):
+    if name == "memory_topics_enrich":
+        return store.enrich_topics(args.get("session_id"), provider=str(args.get("provider") or "auto"), force=bool(args.get("force", False)))
     fields, required = SPECS[name]
     if any(not args.get(k) for k in required): raise ValueError("faltan campos obligatorios")
     kwargs = {k: v for k, v in args.items() if k in fields or k == "requester_agent"}

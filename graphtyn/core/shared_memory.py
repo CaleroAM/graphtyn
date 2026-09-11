@@ -1168,6 +1168,10 @@ class SharedMemoryStore(TopicMemoryMixin):
             topic_event = conn.execute("SELECT details_json FROM topic_events WHERE action='enriched' ORDER BY id DESC LIMIT 1").fetchone()
             relation_event_count = conn.execute("SELECT COUNT(*) FROM topic_relation_reviews WHERE evidence_json LIKE '%model_provider%'").fetchone()[0]
             relation_event = conn.execute("SELECT evidence_json FROM topic_relation_reviews WHERE evidence_json LIKE '%model_provider%' ORDER BY updated_at DESC LIMIT 1").fetchone()
+            topic_total = conn.execute("SELECT COUNT(*) FROM topics WHERE state!='archivado'").fetchone()[0]
+            state_counts = {row["status"]: row["count"] for row in conn.execute("SELECT status,COUNT(*) AS count FROM topic_enrichment_state GROUP BY status")}
+            queue_counts = {row["status"]: row["count"] for row in conn.execute("SELECT status,COUNT(*) AS count FROM topic_enrichment_queue GROUP BY status")}
+            current_enriched = conn.execute("SELECT COUNT(*) FROM topic_enrichment_state WHERE status='enriched' AND model=? AND prompt_version='topic-enrichment-v2'", (summary_model,)).fetchone()[0] if summary_model else 0
             last_capture = conn.execute(
                 "SELECT MAX(ts) FROM (SELECT MAX(created_at) AS ts FROM messages "
                 "UNION ALL SELECT MAX(created_at) FROM memories)").fetchone()[0]
@@ -1188,15 +1192,24 @@ class SharedMemoryStore(TopicMemoryMixin):
                 last_relation_provider = str(json.loads(relation_event["evidence_json"] or "{}").get("model_provider") or "")
             except (TypeError, ValueError):
                 pass
+        enrichment = {"configured": bool(summary_model), "model": summary_model or None,
+                      "enriched_events": topic_event_count, "reviewed_candidates": relation_event_count,
+                      "last_provider": last_relation_provider or last_topic_provider or None}
+        # Keep the compact legacy status shape for an empty store while exposing
+        # detailed unique coverage as soon as thematic data exists.
+        if topic_total or state_counts or queue_counts:
+            known_topics = sum(state_counts.values())
+            enrichment.update({"coverage": {"discovered": topic_total, "enriched": current_enriched,
+                                              "pending": max(0, topic_total - known_topics) + state_counts.get("pending", 0) + queue_counts.get("queued", 0),
+                                              "processing": state_counts.get("processing", 0) + queue_counts.get("processing", 0),
+                                              "stale": state_counts.get("stale", 0), "failed": state_counts.get("failed", 0),
+                                              "not_applicable": state_counts.get("not_applicable", 0)}, "queue": queue_counts})
         return {"ok": True, "version": 2, "db": str(self.db_path), "sessions": sessions,
                 "memories": memories, "agents": agents, "embeddings": embeddings,
                 "last_capture_at": last_capture, "topic_coverage": self.topic_coverage(),
                 "capture_watchers": watchers, "continuous_capture_active": any(w["active"] for w in watchers),
                 "embedding_provider": self._provider(), "telemetry_events": telemetry_events,
-                "topic_enrichment": {"configured": bool(summary_model), "model": summary_model or None,
-                                     "enriched_events": topic_event_count,
-                                     "reviewed_candidates": relation_event_count,
-                                     "last_provider": last_relation_provider or last_topic_provider or None},
+                "topic_enrichment": enrichment,
                 "telemetry": self.telemetry_summary()}
 
     def attribution_graph(self, requester_agent: str | None = None, limit: int = 300) -> dict[str, Any]:

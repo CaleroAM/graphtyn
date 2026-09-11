@@ -1001,7 +1001,9 @@ def memory_topics_enrich(payload: dict = Body(...), authorization: str | None = 
         return JSONResponse({"ok": False, "error": "path y consent requeridos"}, status_code=400)
     from ..core.memory_jobs import memory_jobs
     job = memory_jobs.create("topics-enrich", payload)
-    memory_jobs.run(job["id"], lambda update: SharedMemoryStore(Path(payload["path"])).enrich_topics(payload.get("session_id")))
+    memory_jobs.run(job["id"], lambda update: SharedMemoryStore(Path(payload["path"])).enrich_topics(
+        payload.get("session_id"), provider=str(payload.get("provider") or "auto"),
+        force=bool(payload.get("force", False)), progress=update))
     return {"ok": True, "job": job}
 
 
@@ -1420,7 +1422,7 @@ _HTTP_MCP_TOOLS.extend(TOPIC_TOOLS)
 def _http_mcp_tools() -> list[dict]:
     profile = os.environ.get("GRAPHTYN_HTTP_TOOL_PROFILE", "full").lower()
     if profile == "intent":
-        return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}]
+        return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}]
     if profile == "memory":
         return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] == "graph_query_intent" or tool["name"].startswith("memory_")]
     return _HTTP_MCP_TOOLS
@@ -1450,8 +1452,8 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
         if not root.is_dir():
             return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Ruta de proyecto inválida"}})
         if name.startswith("memory_"):
-            if name in TOPIC_SPECS:
-                _, denied = _require_role(authorization, "writer" if name in {"memory_topic_update", "memory_relation_review"} else "reader", str(root))
+            if name in TOPIC_SPECS or name == "memory_topics_enrich":
+                _, denied = _require_role(authorization, "writer" if name in {"memory_topic_update", "memory_relation_review", "memory_topics_enrich"} else "reader", str(root))
                 if denied: return denied
             memory = SharedMemoryStore(root)
             try:
@@ -1460,7 +1462,7 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
                 elif name == "memory_ingest_turn": data = memory.ingest_turn(str(args.get("agent_id") or ""), str(args.get("external_session_id") or ""), str(args.get("task") or ""), args.get("messages") or [], consent=bool(args.get("consent", False)), branch=args.get("branch"), compact=bool(args.get("compact", True)), close=bool(args.get("close", False)), provider=str(args.get("provider") or "auto"))
                 elif name == "memory_checkpoint": data = memory.checkpoint(str(args.get("session_id") or ""), str(args.get("kind") or ""), str(args.get("title") or ""), str(args.get("content") or ""), files=args.get("files") or [], node_ids=args.get("node_ids") or [], tests=args.get("tests") or [])
                 elif name == "memory_search": data = {"query": args.get("query", ""), "results": memory.search(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), limit=int(args.get("limit") or 8))}
-                elif name in TOPIC_SPECS: data = dispatch_topic(memory, name, args)
+                elif name in TOPIC_SPECS or name == "memory_topics_enrich": data = dispatch_topic(memory, name, args)
                 elif name == "memory_context": data = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), token_budget=int(args.get("token_budget") or 1800))
                 elif name == "memory_ingest_evidence": data = memory.ingest_benchmark_evidence(args.get("files") or None)
                 elif name == "memory_session_end": data = memory.end_session(str(args.get("session_id") or ""), args.get("summary"), args.get("observed_commit"))

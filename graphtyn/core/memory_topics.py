@@ -105,10 +105,29 @@ class TopicMemoryMixin:
               UNIQUE(source_topic_id, target_topic_id, relation)
             );
             CREATE INDEX IF NOT EXISTS topic_relation_reviews_status ON topic_relation_reviews(status, updated_at);
+            CREATE TABLE IF NOT EXISTS topic_enrichment_state (
+              topic_id TEXT PRIMARY KEY REFERENCES topics(id) ON DELETE CASCADE,
+              source_fingerprint TEXT NOT NULL DEFAULT '', source_revision INTEGER NOT NULL DEFAULT 0,
+              model TEXT NOT NULL DEFAULT '', prompt_version TEXT NOT NULL DEFAULT '',
+              status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','processing','enriched','stale','failed','not_applicable')),
+              attempt_count INTEGER NOT NULL DEFAULT 0, manual_protected INTEGER NOT NULL DEFAULT 0,
+              last_error TEXT NOT NULL DEFAULT '', processed_at REAL, created_at REAL NOT NULL, updated_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS topic_enrichment_state_status ON topic_enrichment_state(status, updated_at);
+            CREATE TABLE IF NOT EXISTS topic_enrichment_queue (
+              id TEXT PRIMARY KEY, topic_id TEXT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+              source_fingerprint TEXT NOT NULL, model TEXT NOT NULL DEFAULT '', prompt_version TEXT NOT NULL DEFAULT '',
+              status TEXT NOT NULL DEFAULT 'queued' CHECK(status IN ('queued','processing','completed','failed')),
+              attempts INTEGER NOT NULL DEFAULT 0, next_attempt_at REAL NOT NULL DEFAULT 0,
+              last_error TEXT NOT NULL DEFAULT '', created_at REAL NOT NULL, updated_at REAL NOT NULL,
+              UNIQUE(topic_id,source_fingerprint,model,prompt_version)
+            );
+            CREATE INDEX IF NOT EXISTS topic_enrichment_queue_ready ON topic_enrichment_queue(status,next_attempt_at);
             """)
             db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(3,?)", (time.time(),))
             db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(4,?)", (time.time(),))
             db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(5,?)", (time.time(),))
+            db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(6,?)", (time.time(),))
 
     def _node_reference(self, db, kind: str, node_id: str) -> str:
         """Return a stable human-facing reference for any memory graph node."""
@@ -307,11 +326,16 @@ class TopicMemoryMixin:
         with self._connect() as db:
             rows = db.execute("""
               SELECT DISTINCT t.id, t.title, t.summary, t.state, t.verification,
-                     t.updated_at, e.session_id, e.agent_id
+                     t.updated_at, e.session_id, e.agent_id,
+                     COALESCE(ai.status, CASE WHEN ?!='' THEN 'pending' ELSE 'not_applicable' END) AS ai_status,
+                     ai.model AS ai_model, ai.source_revision AS ai_source_revision,
+                     ai.prompt_version AS ai_prompt_version, ai.last_error AS ai_error,
+                     ai.processed_at AS ai_processed_at
               FROM topics t JOIN topic_episodes e ON e.topic_id=t.id
               JOIN sessions s ON s.id=e.session_id
+              LEFT JOIN topic_enrichment_state ai ON ai.topic_id=t.id
               WHERE (s.capture_enabled=1 OR s.agent_id=?)
-              ORDER BY t.updated_at DESC, t.id LIMIT ?""", (requester_agent or "", limit)).fetchall()
+              ORDER BY t.updated_at DESC, t.id LIMIT ?""", (os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL") or os.environ.get("OLLAMA_MODEL") or "", requester_agent or "", limit)).fetchall()
         nodes, links, agents, sessions = {}, [], set(), set()
         topic_rows = []
         for row in rows:
@@ -322,7 +346,10 @@ class TopicMemoryMixin:
             nodes.setdefault(topic_id, {"id": topic_id, "kind": "memory_topic", "name": title,
                 "details": self._unprotect(row["summary"]), "topic_id": row["id"],
                 "state": row["state"], "verification": row["verification"],
-                "session_id": row["session_id"], "agent_id": row["agent_id"]})
+                "session_id": row["session_id"], "agent_id": row["agent_id"],
+                "ai_status": row["ai_status"], "ai_model": row["ai_model"],
+                "ai_source_revision": row["ai_source_revision"], "ai_prompt_version": row["ai_prompt_version"],
+                "ai_error": row["ai_error"], "ai_processed_at": row["ai_processed_at"]})
             nodes.setdefault(session_id, {"id": session_id, "kind": "memory_session",
                 "name": row["session_id"], "details": "Sesión de conversación"})
             nodes.setdefault(agent_id, {"id": agent_id, "kind": "memory_agent",
@@ -429,11 +456,18 @@ class TopicMemoryMixin:
                 left = db.execute("SELECT id,title,summary FROM topics WHERE id=?", (row["source_topic_id"],)).fetchone()
                 right = db.execute("SELECT id,title,summary FROM topics WHERE id=?", (row["target_topic_id"],)).fetchone()
             evidence = json.loads(row["evidence_json"] or "{}")
+            if not isinstance(evidence, dict):
+                evidence = {"raw_evidence": evidence}
+            base_evidence = {key: value for key, value in evidence.items() if not str(key).startswith("model_")}
+            candidate_fingerprint = hashlib.sha256(json.dumps(base_evidence, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+            if evidence.get("model_source_fingerprint") == candidate_fingerprint and evidence.get("model_classification"):
+                continue
             review, provider = assisted_relation_review(
                 {"id": left["id"], "title": self._unprotect(left["title"]), "summary": self._unprotect(left["summary"])},
                 {"id": right["id"], "title": self._unprotect(right["title"]), "summary": self._unprotect(right["summary"])}, evidence)
             if review:
-                evidence.update({"model_classification": review["classification"], "model_reason": review["reason"], "model_provider": provider})
+                evidence.update({"model_classification": review["classification"], "model_reason": review["reason"], "model_provider": provider,
+                                 "model_source_fingerprint": candidate_fingerprint, "model_prompt_version": "relation-review-v1"})
                 with self._connect() as db:
                     db.execute("UPDATE topic_relation_reviews SET reason=?,evidence_json=?,updated_at=? WHERE id=?",
                                (review["reason"] or row["reason"], json.dumps(evidence, ensure_ascii=False), time.time(), row["id"]))
@@ -467,9 +501,12 @@ class TopicMemoryMixin:
                     evidence = {"shared_terms": shared_terms[:12], "shared_entity_ids": shared_entities[:12],
                                 "method": "lexical_candidate", "requires_review": True}
                     relation_id = "rel_" + hashlib.sha256((source + "\0" + target + "\0possible").encode()).hexdigest()[:24]
-                    db.execute("""INSERT OR IGNORE INTO topic_relation_reviews
+                    db.execute("""INSERT INTO topic_relation_reviews
                         (id,source_topic_id,target_topic_id,relation,status,reason,evidence_json,actor,created_at,updated_at)
-                        VALUES(?,?,?,?,?,?,?,?,?,?)""", (relation_id, source, target, "posible relación", "pending",
+                        VALUES(?,?,?,?,?,?,?,?,?,?)
+                        ON CONFLICT(source_topic_id,target_topic_id,relation) DO UPDATE SET
+                          evidence_json=excluded.evidence_json, updated_at=excluded.updated_at
+                        WHERE topic_relation_reviews.status='pending'""", (relation_id, source, target, "posible relación", "pending",
                         "coincidencia candidata; requiere evidencia humana o de IA", json.dumps(evidence, ensure_ascii=False), "system", now, now))
 
     def relation_review(self, relation_id, *, status, actor, reason):
@@ -574,56 +611,136 @@ class TopicMemoryMixin:
                 total += len(batch)
         return {"ok": True, "processed": total, "coverage": self.topic_coverage(), "extraction": "deterministic-limited"}
 
-    def enrich_topics(self, session_id=None, provider="auto"):
-        """Attach entities and optionally ask the configured local model for labels."""
-        topic_ids = set()
-        ai_inputs = []
-        ai_enriched = 0
+    def _topic_source_snapshot(self, db, topic_id):
+        """Hash every source message while retaining a bounded, useful context."""
+        digest = hashlib.sha256()
+        cursor = db.execute("""SELECT m.rowid AS seq,m.id,m.role,m.content,m.created_at
+            FROM topic_messages tm JOIN messages m ON m.id=tm.message_id
+            WHERE tm.episode_id IN (SELECT id FROM topic_episodes WHERE topic_id=?) ORDER BY m.rowid""", (topic_id,))
+        first_user = None; latest = []
+        count = 0; revision = 0
+        for row in cursor:
+            content = self._unprotect(row["content"])
+            digest.update(json.dumps([row["id"], row["role"], row["created_at"], content], ensure_ascii=False, separators=(",", ":")).encode())
+            count += 1; revision = max(revision, int(row["seq"]))
+            item = {"id": row["id"], "role": row["role"], "content": content, "created_at": row["created_at"], "seq": row["seq"]}
+            if first_user is None and row["role"] == "user": first_user = item
+            latest.append(item)
+            if len(latest) > 18: latest.pop(0)
+        selected = ([] if first_user is None else [first_user]) + [item for item in latest if not first_user or item["id"] != first_user["id"]]
+        # Reserve a bounded prompt budget even for very long topics.
+        while selected and encoded_tokens(selected) > 9000:
+            selected.pop(1 if len(selected) > 1 else 0)
+        return digest.hexdigest(), revision, count, selected
+
+    def _queue_topic_enrichment(self, db, topic_id, fingerprint, model, prompt_version, now, force=False, source_revision=0):
+        state = db.execute("SELECT * FROM topic_enrichment_state WHERE topic_id=?", (topic_id,)).fetchone()
+        # Upgrade stores enriched by Graphtyn <=0.7 without invoking the model
+        # again: the old event is evidence that the current source was already
+        # handled when no newer topic message exists.
+        if state is None and not force:
+            topic_row = db.execute("SELECT updated_at FROM topics WHERE id=?", (topic_id,)).fetchone()
+            old = db.execute("SELECT details_json,created_at FROM topic_events WHERE topic_id=? AND action='enriched' ORDER BY id DESC LIMIT 1", (topic_id,)).fetchone()
+            if old and topic_row and float(old["created_at"] or 0) >= float(topic_row["updated_at"] or 0) - 1e-6:
+                try: details = json.loads(old["details_json"] or "{}")
+                except (TypeError, ValueError): details = {}
+                old_provider = str(details.get("provider") or "")
+                old_model = str(details.get("model") or (old_provider.split(":", 1)[1] if ":" in old_provider else model))
+                db.execute("""INSERT INTO topic_enrichment_state(topic_id,source_fingerprint,source_revision,model,prompt_version,status,processed_at,created_at,updated_at)
+                    VALUES(?,?,?,?,?,'enriched',?,?,?)""", (topic_id, fingerprint, source_revision, old_model, prompt_version, old["created_at"], now, now))
+                state = db.execute("SELECT * FROM topic_enrichment_state WHERE topic_id=?", (topic_id,)).fetchone()
+        if state and state["manual_protected"] and not force:
+            db.execute("""INSERT INTO topic_enrichment_state(topic_id,source_fingerprint,source_revision,model,prompt_version,status,manual_protected,last_error,created_at,updated_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(topic_id) DO UPDATE SET source_fingerprint=excluded.source_fingerprint,status='not_applicable',last_error='manual_edit_protected',updated_at=excluded.updated_at""",
+                       (topic_id, fingerprint, source_revision, model, prompt_version, "not_applicable", 1, "manual_edit_protected", now, now))
+            return False, "manual_protected"
+        if state and not force and state["status"] == "enriched" and state["source_fingerprint"] == fingerprint and (state["model"] != model or state["prompt_version"] != prompt_version):
+            db.execute("UPDATE topic_enrichment_state SET status='stale',last_error='model_or_prompt_changed; use force',updated_at=? WHERE topic_id=?", (now, topic_id))
+            return False, "model_changed"
+        if state and not force and state["status"] == "enriched" and state["source_fingerprint"] == fingerprint and state["model"] == model and state["prompt_version"] == prompt_version:
+            return False, "unchanged"
+        queue_id = "enq_" + hashlib.sha256((topic_id + fingerprint + model + prompt_version).encode()).hexdigest()[:28]
+        prior_queue = db.execute("SELECT attempts,status FROM topic_enrichment_queue WHERE topic_id=? AND source_fingerprint=? AND model=? AND prompt_version=?", (topic_id, fingerprint, model, prompt_version)).fetchone()
+        if prior_queue and prior_queue["status"] == "failed" and prior_queue["attempts"] >= 2 and not force:
+            return False, "failed_retry_required"
+        db.execute("""INSERT INTO topic_enrichment_queue(id,topic_id,source_fingerprint,model,prompt_version,status,attempts,next_attempt_at,last_error,created_at,updated_at)
+            VALUES(?,?,?,?,?,'queued',0,0,'',?,?) ON CONFLICT(topic_id,source_fingerprint,model,prompt_version) DO UPDATE SET status='queued',next_attempt_at=0,last_error='',updated_at=excluded.updated_at""",
+                   (queue_id, topic_id, fingerprint, model, prompt_version, now, now))
+        db.execute("""INSERT INTO topic_enrichment_state(topic_id,source_fingerprint,source_revision,model,prompt_version,status,attempt_count,last_error,created_at,updated_at)
+            VALUES(?,?,?,?,?,'pending',0,'',?,?) ON CONFLICT(topic_id) DO UPDATE SET source_fingerprint=excluded.source_fingerprint,model=excluded.model,prompt_version=excluded.prompt_version,status='pending',last_error='',updated_at=excluded.updated_at""",
+                   (topic_id, fingerprint, source_revision, model, prompt_version, now, now))
+        return True, "queued"
+
+    def enrich_topics(self, session_id=None, provider="auto", force=False, progress=None):
+        """Index deterministic evidence and enrich only new or changed topics."""
+        topic_ids, processed = set(), 0
         with self._connect() as db:
             where = "" if session_id is None else "WHERE e.session_id=?"
             args = [] if session_id is None else [session_id]
-            rows = db.execute(f"""SELECT DISTINCT e.id,e.topic_id,m.id AS message_id,m.content,m.created_at
-                FROM topic_episodes e JOIN topic_messages tm ON tm.episode_id=e.id
-                JOIN messages m ON m.id=tm.message_id {where} AND m.role='user'
-                ORDER BY m.rowid""" if where else """SELECT DISTINCT e.id,e.topic_id,m.id AS message_id,m.content,m.created_at
-                FROM topic_episodes e JOIN topic_messages tm ON tm.episode_id=e.id
-                JOIN messages m ON m.id=tm.message_id WHERE m.role='user'
-                ORDER BY m.rowid""", args).fetchall()
-            processed = 0
+            rows = db.execute(f"""SELECT DISTINCT e.topic_id,m.id AS message_id,m.content,m.created_at
+                FROM topic_episodes e JOIN topic_messages tm ON tm.episode_id=e.id JOIN messages m ON m.id=tm.message_id
+                {where} {('AND' if where else 'WHERE')} m.role='user' ORDER BY m.rowid""", args).fetchall()
             for row in rows:
+                topic_ids.add(row["topic_id"])
                 entities, terms = self._subject_terms(self._unprotect(row["content"]))
                 entity_ids = self._entity_ids(db, entities, row["message_id"], row["created_at"])
                 if entity_ids or terms:
-                    self._link_topic_entities(db, row["topic_id"], entity_ids, terms, row["message_id"], row["created_at"])
-                    processed += 1
-                topic_ids.add(row["topic_id"])
-            ai_provider = "deterministic"
-            from .memory_extraction import configured_summary_model
-            if configured_summary_model():
-                for topic_id in sorted(topic_ids):
-                    topic = db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone()
-                    message_rows = db.execute("""SELECT m.id,m.role,m.content FROM topic_messages tm
-                        JOIN messages m ON m.id=tm.message_id WHERE tm.episode_id IN
-                        (SELECT id FROM topic_episodes WHERE topic_id=?) ORDER BY m.rowid LIMIT 24""", (topic_id,)).fetchall()
-                    ai_inputs.append((topic_id, dict(topic), [dict(m) for m in message_rows]))
-        if ai_inputs:
-            from .memory_extraction import assisted_topic_enrichment
-            for topic_id, topic, message_rows in ai_inputs:
-                proposal, used = assisted_topic_enrichment(topic, message_rows, provider)
-                ai_provider = used
-                if proposal:
-                    ai_enriched += 1
-                    with self._connect() as db:
-                        db.execute("UPDATE topics SET title=?,summary=?,category=?,updated_at=? WHERE id=?",
-                                   (self._protect(proposal["title"]), self._protect(proposal["summary"]), proposal["category"], time.time(), topic_id))
-                        db.execute("INSERT INTO topic_events(topic_id,actor,action,details_json,created_at) VALUES(?,?,?,?,?)",
-                                   (topic_id, "local-model", "enriched", json.dumps({"provider": used}, ensure_ascii=False), time.time()))
+                    self._link_topic_entities(db, row["topic_id"], entity_ids, terms, row["message_id"], row["created_at"]); processed += 1
+        from .memory_extraction import configured_summary_model, TOPIC_PROMPT_VERSION, assisted_topic_enrichment
+        model = configured_summary_model(); ai_provider = "deterministic"; work = []; skipped = 0; protected = 0
+        now = time.time()
+        with self._connect() as db:
+            for topic_id in sorted(topic_ids):
+                fingerprint, revision, count, context = self._topic_source_snapshot(db, topic_id)
+                topic = db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone()
+                if not model or provider == "deterministic":
+                    db.execute("""INSERT INTO topic_enrichment_state(topic_id,source_fingerprint,source_revision,status,last_error,created_at,updated_at)
+                        VALUES(?,?,?,?,?,?,?) ON CONFLICT(topic_id) DO UPDATE SET source_fingerprint=excluded.source_fingerprint,source_revision=excluded.source_revision,status='not_applicable',last_error='',updated_at=excluded.updated_at""",
+                               (topic_id, fingerprint, revision, "not_applicable", "", now, now)); continue
+                queued, reason = self._queue_topic_enrichment(db, topic_id, fingerprint, model, TOPIC_PROMPT_VERSION, now, force=force, source_revision=revision)
+                if queued: work.append((topic_id, dict(topic), context, fingerprint, revision, count))
+                elif reason == "manual_protected": protected += 1
+                else: skipped += 1
+        total = len(work); ai_enriched = 0; failed = 0; model_calls = 0
+        for index, (topic_id, topic, context, fingerprint, revision, count) in enumerate(work, 1):
+            with self._connect() as db:
+                db.execute("UPDATE topic_enrichment_queue SET status='processing',attempts=attempts+1,updated_at=? WHERE topic_id=? AND source_fingerprint=?", (time.time(), topic_id, fingerprint))
+                db.execute("UPDATE topic_enrichment_state SET status='processing',attempt_count=attempt_count+1,source_revision=?,updated_at=? WHERE topic_id=?", (revision, time.time(), topic_id))
+            proposal, used = assisted_topic_enrichment(topic, context, provider); model_calls += 1; ai_provider = used
+            # A transient local-model timeout/invalid response gets one
+            # immediate retry. Further attempts require an explicit rerun.
+            for _ in range(1):
+                if proposal or used not in {"ollama-unavailable", "ollama-invalid"}:
+                    break
+                with self._connect() as db:
+                    db.execute("UPDATE topic_enrichment_queue SET attempts=attempts+1,updated_at=? WHERE topic_id=? AND source_fingerprint=?", (time.time(), topic_id, fingerprint))
+                proposal, used = assisted_topic_enrichment(topic, context, provider); model_calls += 1; ai_provider = used
+            success = bool(proposal and proposal.get("title"))
+            with self._connect() as db:
+                state = db.execute("SELECT manual_protected FROM topic_enrichment_state WHERE topic_id=?", (topic_id,)).fetchone()
+                current_fingerprint, current_revision, _, _ = self._topic_source_snapshot(db, topic_id)
+                source_changed = current_fingerprint != fingerprint
+                details = {"provider": used, "model": model, "prompt_version": TOPIC_PROMPT_VERSION, "source_fingerprint": fingerprint,
+                           "source_revision": revision, "source_message_ids": proposal.get("source_message_ids") if proposal else [m["id"] for m in context],
+                           "fields": [key for key in ("title", "summary", "category", "decisions", "result") if proposal and proposal.get(key)],
+                           "source_changed_during_generation": source_changed, "current_source_revision": current_revision}
+                if success and not source_changed and not (state and state["manual_protected"]):
+                    db.execute("UPDATE topics SET title=?,summary=?,category=?,updated_at=? WHERE id=?", (self._protect(proposal["title"]), self._protect(proposal["summary"]), proposal.get("category") or topic.get("category") or "asunto", time.time(), topic_id))
+                    db.execute("INSERT INTO topic_events(topic_id,actor,action,details_json,created_at) VALUES(?,?,?,?,?)", (topic_id, "local-model", "enriched", json.dumps(details, ensure_ascii=False), time.time()))
+                    db.execute("UPDATE topic_enrichment_state SET status='enriched',last_error='',processed_at=?,updated_at=? WHERE topic_id=?", (time.time(), time.time(), topic_id))
+                    db.execute("UPDATE topic_enrichment_queue SET status='completed',last_error='',updated_at=? WHERE topic_id=? AND source_fingerprint=?", (time.time(), topic_id, fingerprint)); ai_enriched += 1
+                else:
+                    error = used if not success else ("source_changed_during_generation" if source_changed else "manual_edit_protected")
+                    db.execute("INSERT INTO topic_events(topic_id,actor,action,details_json,created_at) VALUES(?,?,?,?,?)", (topic_id, "local-model", "ai_proposal" if success else "enrichment_failed", json.dumps({**details, "error": error}, ensure_ascii=False), time.time()))
+                    db.execute("UPDATE topic_enrichment_state SET status=?,source_revision=?,last_error=?,updated_at=? WHERE topic_id=?", ("stale" if success or source_changed else "failed", current_revision if source_changed else revision, error, time.time(), topic_id))
+                    db.execute("UPDATE topic_enrichment_queue SET status=?,last_error=?,updated_at=? WHERE topic_id=? AND source_fingerprint=?", ("failed", error, time.time(), topic_id, fingerprint)); failed += 1
+            if progress: progress(int(index * 100 / max(1, total)), json.dumps({"processed": index, "total": total, "topic_id": topic_id, "status": "enriched" if success else "failed"}))
         self._propose_relation_candidates(requester_agent=None)
         reviewed_candidates = self._ai_review_candidates(limit=20)
-        return {"ok": True, "processed": processed, "sessions": 1 if session_id else None,
-                "topics": len(topic_ids), "ai_enriched": ai_enriched,
-                "reviewed_candidates": reviewed_candidates,
-                "coverage": self.topic_coverage(), "extraction": ai_provider if 'ai_provider' in locals() else "deterministic-limited"}
+        return {"ok": True, "processed": processed, "sessions": 1 if session_id else None, "topics": len(topic_ids),
+                "queued": total, "ai_enriched": ai_enriched, "ai_skipped": skipped, "manual_protected": protected, "failed": failed,
+                "model_calls": model_calls, "reviewed_candidates": reviewed_candidates, "coverage": self.topic_coverage(),
+                "extraction": ai_provider if model else "deterministic-limited"}
 
     def topics(self, query="", *, requester_agent=None, state=None, agent_id=None,
                session_id=None, since=None, until=None, limit=20, offset=0):
@@ -648,6 +765,12 @@ class TopicMemoryMixin:
             for row in cursor:
                 item = dict(row)
                 item["title"], item["summary"] = self._unprotect(item["title"]), self._unprotect(item["summary"])
+                ai = db.execute("SELECT status,model,source_revision,prompt_version,last_error,processed_at FROM topic_enrichment_state WHERE topic_id=?", (item["id"],)).fetchone()
+                if ai:
+                    item.update({"ai_status": ai["status"], "ai_model": ai["model"] or None, "ai_source_revision": ai["source_revision"], "ai_prompt_version": ai["prompt_version"] or None, "ai_error": ai["last_error"] or None, "ai_processed_at": ai["processed_at"]})
+                else:
+                    configured = os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL") or os.environ.get("OLLAMA_MODEL") or ""
+                    item.update({"ai_status": "pending" if configured else "not_applicable", "ai_model": configured or None, "ai_source_revision": None, "ai_prompt_version": None, "ai_error": None, "ai_processed_at": None})
                 entity_rows = db.execute("""SELECT e.kind,e.entity_key,e.name,te.relation,te.confidence
                     FROM topic_entities te JOIN entities e ON e.id=te.entity_id
                     WHERE te.topic_id=?""", (item["id"],)).fetchall()
@@ -694,6 +817,9 @@ class TopicMemoryMixin:
         with self._connect() as db:
             item["reference"] = self._node_reference(db, "memory_topic", item["id"])
             item["public_id"] = item["reference"]
+            ai = db.execute("SELECT status,model,source_revision,prompt_version,last_error,processed_at FROM topic_enrichment_state WHERE topic_id=?", (item["id"],)).fetchone()
+            if ai:
+                item.update({"ai_status": ai["status"], "ai_model": ai["model"] or None, "ai_source_revision": ai["source_revision"], "ai_prompt_version": ai["prompt_version"] or None, "ai_error": ai["last_error"] or None, "ai_processed_at": ai["processed_at"]})
             for episode in episodes:
                 episode["reference"] = self._node_reference(db, "memory_episode", episode["id"])
                 episode["public_id"] = episode["reference"]
@@ -797,6 +923,11 @@ class TopicMemoryMixin:
             details, _ = self._sanitize_json({"reason": reason, "before": old, "changes": updates, "message_ids": message_ids or [], "merge_into": merge_into, "split_topic": new_id, "split_episode": split_episode})
             for target in {topic_id, merge_into, new_id} - {None}:
                 db.execute("INSERT INTO topic_events(topic_id,actor,action,details_json,created_at) VALUES(?,?,?,?,?)", (target, requester_agent, "update", json.dumps(details), time.time()))
+            if title is not None:
+                now = time.time()
+                db.execute("""INSERT INTO topic_enrichment_state(topic_id,status,manual_protected,last_error,created_at,updated_at)
+                    VALUES(?,'not_applicable',1,'manual_edit_protected',?,?)
+                    ON CONFLICT(topic_id) DO UPDATE SET manual_protected=1,status='not_applicable',last_error='manual_edit_protected',updated_at=excluded.updated_at""", (topic_id, now, now))
         return {"ok": True, "topic_id": topic_id, "merge_into": merge_into, "split_topic": new_id}
 
     def message_window(self, message_id, *, requester_agent=None, before=10, after=10, token_budget=3000):
