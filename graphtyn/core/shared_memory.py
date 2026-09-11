@@ -1165,6 +1165,7 @@ class SharedMemoryStore(TopicMemoryMixin):
             embeddings = conn.execute("SELECT COUNT(*) FROM memory_embeddings").fetchone()[0]
             telemetry_events = conn.execute("SELECT COUNT(*) FROM memory_telemetry").fetchone()[0]
             topic_events = conn.execute("SELECT details_json FROM topic_events WHERE action='enriched' ORDER BY id DESC LIMIT 100").fetchall()
+            relation_events = conn.execute("SELECT evidence_json FROM topic_relation_reviews WHERE evidence_json LIKE '%model_provider%' ORDER BY updated_at DESC LIMIT 100").fetchall()
             last_capture = conn.execute(
                 "SELECT MAX(ts) FROM (SELECT MAX(created_at) AS ts FROM messages "
                 "UNION ALL SELECT MAX(created_at) FROM memories)").fetchone()[0]
@@ -1182,13 +1183,25 @@ class SharedMemoryStore(TopicMemoryMixin):
                     enrichment_providers.append(provider)
             except (TypeError, ValueError):
                 continue
+        enriched_events = len(enrichment_providers)
+        reviewed_candidates = 0
+        for event in relation_events:
+            try:
+                details = json.loads(event["evidence_json"] or "{}")
+                provider = str(details.get("model_provider") or "")
+                if provider:
+                    enrichment_providers.append(provider)
+                    reviewed_candidates += 1
+            except (TypeError, ValueError):
+                continue
         return {"ok": True, "version": 2, "db": str(self.db_path), "sessions": sessions,
                 "memories": memories, "agents": agents, "embeddings": embeddings,
                 "last_capture_at": last_capture, "topic_coverage": self.topic_coverage(),
                 "capture_watchers": watchers, "continuous_capture_active": any(w["active"] for w in watchers),
                 "embedding_provider": self._provider(), "telemetry_events": telemetry_events,
                 "topic_enrichment": {"configured": bool(summary_model), "model": summary_model or None,
-                                     "enriched_events": len(enrichment_providers),
+                                     "enriched_events": enriched_events,
+                                     "reviewed_candidates": reviewed_candidates,
                                      "last_provider": enrichment_providers[0] if enrichment_providers else None},
                 "telemetry": self.telemetry_summary()}
 

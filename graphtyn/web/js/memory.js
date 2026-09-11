@@ -138,7 +138,7 @@ export async function loadMemoryOverview() {
         freshness = days < 1 ? ' · capturado hoy' : ` · última captura: hace ${Math.floor(days)} día${days >= 2 ? 's' : ''}`;
       }
       const topicAi = info.topic_enrichment?.configured
-        ? `IA temática local: ${info.topic_enrichment.model}${info.topic_enrichment.enriched_events ? ` · ${info.topic_enrichment.enriched_events} enriquecimientos` : ' · pendiente de ejecutar'}`
+        ? `IA temática local: ${info.topic_enrichment.model}${info.topic_enrichment.enriched_events ? ` · ${info.topic_enrichment.enriched_events} enriquecimientos` : ''}${info.topic_enrichment.reviewed_candidates ? ` · ${info.topic_enrichment.reviewed_candidates} candidatas revisadas` : ''}${!info.topic_enrichment.enriched_events && !info.topic_enrichment.reviewed_candidates ? ' · pendiente de ejecutar' : ''}`
         : 'IA temática: determinista';
       status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness} · ${topicAi}`;
     const legend = document.getElementById('memory-agent-legend');

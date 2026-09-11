@@ -612,7 +612,7 @@ def test_thematic_enrichment_uses_ollama_model_fallback_and_reports_configuratio
     project = tmp_path / "project"
     project.mkdir()
     status = SharedMemoryStore(project).status()["topic_enrichment"]
-    assert status == {"configured": True, "model": "qwen2.5-coder:3b", "enriched_events": 0, "last_provider": None}
+    assert status == {"configured": True, "model": "qwen2.5-coder:3b", "enriched_events": 0, "reviewed_candidates": 0, "last_provider": None}
 
 
 def test_stability_suite_has_30x3x3_design_and_meets_v1_guardrails():
