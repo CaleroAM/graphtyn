@@ -192,8 +192,9 @@ export function selectAgent(agentId) {
 export function openBrainRegister() {
       const name = document.getElementById('agent-reg-name');
       const path = document.getElementById('agent-reg-path');
-      if (name && !name.value && state.activePath) name.value = `Cerebro · ${state.activePath.split('/').pop()}`;
-      if (path && state.activePath) path.value = state.activePath;
+      const currentBrain = state.activeSpaceType === 'agent_brain' && state.activePath;
+      if (name && !name.value && currentBrain) name.value = `Cerebro · ${state.activePath.split('/').pop()}`;
+      if (path && currentBrain) path.value = state.activePath;
       const status = document.getElementById('agent-reg-status');
       if (status) status.textContent = '';
       document.getElementById('modal-agent-reg')?.classList.add('show');
