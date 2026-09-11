@@ -126,19 +126,30 @@ defecto `~/.graphtyn/`— usando una identidad canónica derivada del proyecto.
 el índice atómicamente. La reindexación reutiliza fragmentos y enriquecimiento de
 nodos intactos; los embeddings sólo se recalculan al cambiar su contenido.
 
-## Dos grafos relacionados, no intercambiables
+## Tres perspectivas relacionadas y una topología operativa
+
+La sección histórica «Dos grafos relacionados, no intercambiables» se amplía
+ahora con la perspectiva semántica y la topología operativa, conservando la
+separación entre evidencia estructural y conversación.
 
 ```mermaid
 flowchart LR
-  CODE[Code AST / Semántico<br/>archivos · símbolos · llamadas]
+  CODE[Code AST<br/>archivos · símbolos · llamadas]
+  SEM[Semántico del código<br/>funcionalidad · similitud · comunidades]
   LINK[IDs estables y evidencia<br/>archivo · símbolo · commit]
   MEM[Memoria del proyecto<br/>sesiones · decisiones · resultados]
+  TOPO[Topología de agentes<br/>identidades · fuentes · espacios]
   CODE <-->|referencias explícitas| LINK <-->|procedencia| MEM
+  SEM <-->|candidatas explicadas| LINK
+  TOPO <-->|participación observada| MEM
 ```
 
-El grafo de código representa artefactos y dependencias. El grafo de memoria
-representa qué agente observó, decidió o modificó algo. Una conversación no se
-convierte en dependencia y una similitud semántica no se convierte en llamada.
+El grafo AST representa artefactos y dependencias estructurales. El semántico
+propone agrupaciones y relaciones de funcionalidad con texto y embeddings. La
+memoria representa qué agente observó, decidió o modificó algo. La topología
+se alimenta del registro de identidades, fuentes y sesiones observadas. Una
+conversación no se convierte en dependencia y una similitud semántica no se
+convierte en llamada.
 
 ## Flujos principales
 

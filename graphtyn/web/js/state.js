@@ -1,6 +1,8 @@
 // Estado compartido del dashboard (mutable por todos los módulos)
 export const state = {
   activePath: null,
+  activeAgentId: null,
+  activeSpaceType: 'project',
   activeView: 'code',
   memoryGraphMode: 'simplified',
   activeDim: '2d',

@@ -812,6 +812,8 @@ class ASTParser:
             except OSError:
                 pass
 
+        confidence_counts = {level: sum(1 for link in links if link.get("confidence") == level)
+                             for level in ("EXTRACTED", "INFERRED", "AMBIGUOUS")}
         graph = {
             "nodes": nodes,
             "links": links,
@@ -826,6 +828,11 @@ class ASTParser:
                     "cache_version": PARSER_VERSION,
                 },
                 "laravel_routes": laravel_stats["routes"],
+                "relation_coverage": {
+                    "total_links": len(links),
+                    "by_confidence": confidence_counts,
+                    "unresolved_or_ambiguous": confidence_counts["AMBIGUOUS"] + confidence_counts["INFERRED"],
+                },
                 "project_evidence": collect_project_evidence(root_dir),
             },
         }

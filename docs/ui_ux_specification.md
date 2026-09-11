@@ -74,7 +74,8 @@ Graphtyn es un motor de contexto determinista basado en AST y topología de agen
      indexado; no representa conversaciones.
   3. **`Memoria del proyecto`:** sesiones, agentes, decisiones, resultados y
      vínculos con código. Se carga automáticamente al seleccionar el proyecto.
-  4. **`Harness Topology`:** arquitectura del arnés multiagente.
+  4. **`Topología de agentes`:** identidades, fuentes, espacios y delegaciones
+     observadas o configuradas, siempre con procedencia.
   5. **`Cambios`:** impacto Git y estado del trabajo.
 * **Estilo de Pestaña Activa:** Borde inferior brillante `#00f0ff` (Cyan) o `#8b5cf6` (Violeta), fondo semitransparente `rgba(56, 189, 248, 0.12)` e icono resaltado.
 

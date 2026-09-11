@@ -2,6 +2,7 @@ import json
 import os
 import re
 import ast
+import sqlite3
 import subprocess
 import hmac
 import hashlib
@@ -59,6 +60,101 @@ INDEX_STORE.mkdir(parents=True, exist_ok=True)
 
 REGISTRATION_FILE = INDEX_STORE / "registered_projects.json"
 DEFAULT_MASTER_DIR = Path.cwd()
+
+
+def _agent_registry_path() -> Path:
+    """Central registry for agent identities, independent from project paths."""
+    return INDEX_STORE / "registered_agents.json"
+
+
+def _read_agent_registry() -> list[dict]:
+    try:
+        payload = json.loads(_agent_registry_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return []
+    rows = payload.get("agents", []) if isinstance(payload, dict) else payload
+    return [row for row in rows if isinstance(row, dict) and str(row.get("id") or "").strip()]
+
+
+def _write_agent_registry(rows: list[dict]) -> None:
+    path = _agent_registry_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"version": 1, "agents": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
+
+
+def _project_memory_db(path: Path) -> Path | None:
+    """Resolve an existing store without creating one or depending on cwd."""
+    candidates = [project_store_dir(INDEX_STORE, path, create=False) / "memory-v2.db",
+                  path / ".graphtyn" / "memory-v2.db"]
+    return next((candidate for candidate in candidates if candidate.is_file()), None)
+
+
+def _load_registered_agents() -> list[dict]:
+    """Return configured identities enriched with observed memory/source links."""
+    agents: dict[str, dict] = {}
+
+    def ensure(raw_id: str, *, name: str = "", provider: str = "", configured: bool = False) -> dict | None:
+        aid = str(raw_id or "").strip().casefold()
+        if not aid:
+            return None
+        item = agents.setdefault(aid, {"id": aid, "name": aid, "provider": "", "description": "",
+                                      "paths": [], "projects": [], "sources": [], "sessions": 0,
+                                      "configured": False, "observed": False})
+        if name.strip(): item["name"] = name.strip()
+        if provider.strip() and not item.get("provider"): item["provider"] = provider.strip().casefold()
+        item["configured"] |= configured
+        return item
+
+    for row in _read_agent_registry():
+        item = ensure(str(row.get("id") or ""), name=str(row.get("name") or ""),
+                      provider=str(row.get("provider") or ""), configured=True)
+        if not item:
+            continue
+        item["description"] = str(row.get("description") or "")[:500]
+        for raw_path in row.get("paths") or row.get("workspaces") or []:
+            path = str(raw_path).strip()
+            if path and path not in item["paths"]: item["paths"].append(path)
+
+    for source in configured_sources():
+        item = ensure(str(source.get("agent_id") or ""), provider=str(source.get("provider") or ""))
+        if not item:
+            continue
+        item["sources"].append({"provider": source["provider"], "source": source["source"],
+                                "project_path": source.get("project_path")})
+        project_path = str(source.get("project_path") or "")
+        if project_path and project_path not in item["paths"]: item["paths"].append(project_path)
+
+    for project in _load_registered_projects():
+        project_path = Path(str(project.get("path") or "")).expanduser().resolve()
+        db_path = _project_memory_db(project_path)
+        if not db_path:
+            continue
+        try:
+            with sqlite3.connect(db_path) as conn:
+                rows = conn.execute("""SELECT s.agent_id, COUNT(*), COALESCE(a.display_name, '')
+                    FROM sessions s LEFT JOIN agents a ON a.id=s.agent_id
+                    GROUP BY s.agent_id, a.display_name""").fetchall()
+        except sqlite3.Error:
+            continue
+        for raw_id, count, display_name in rows:
+            item = ensure(str(raw_id or ""), name=str(display_name or ""))
+            if not item:
+                continue
+            item["observed"] = True
+            item["sessions"] += int(count or 0)
+            if str(project_path) not in item["paths"]: item["paths"].append(str(project_path))
+            if str(project_path) not in item["projects"]: item["projects"].append(str(project_path))
+
+    result = []
+    for item in agents.values():
+        item["status"] = "observed" if item["observed"] else ("configured" if item["configured"] else "unattributed")
+        item["source_count"] = len(item["sources"])
+        result.append(item)
+    return sorted(result, key=lambda row: (str(row.get("name") or "").casefold(), row["id"]))
 
 
 def _index_dir(project_path: Path) -> Path:
@@ -269,6 +365,7 @@ def _load_registered_projects() -> list[dict]:
         "name": cwd.name,
         "path": str(cwd),
         "mode": "single_folder",
+        "space_type": "project",
         "indexed": _is_indexed(cwd)
     })
     parent = cwd.parent
@@ -280,6 +377,7 @@ def _load_registered_projects() -> list[dict]:
                     "name": d.name,
                     "path": str(d),
                     "mode": "master_folder",
+                    "space_type": "container",
                     "indexed": _is_indexed(d)
                 })
                 try:
@@ -293,6 +391,7 @@ def _load_registered_projects() -> list[dict]:
                                 "name": f"{d.name}/{sub.name}",
                                 "path": str(sub),
                                 "mode": "subfolder",
+                                "space_type": "project",
                                 "indexed": _is_indexed(sub)
                             })
                 except Exception:
@@ -309,6 +408,7 @@ def _load_registered_projects() -> list[dict]:
                     "name": cp.get("name", p_path.name),
                     "path": str(p_path),
                     "mode": cp.get("mode", "single_folder"),
+                    "space_type": cp.get("space_type", "project"),
                     "indexed": _is_indexed(p_path),
                 }
                 existing = next((p for p in projects if p["path"] == str(p_path)), None)
@@ -338,6 +438,41 @@ def list_projects():
         p["respect_git"] = bool(_load_project_config(Path(p["path"])).get("respect_git", True))
     return JSONResponse(projects)
 
+
+@app.get("/api/agents")
+def list_agents():
+    """List configured and observed agent identities across registered spaces."""
+    return JSONResponse(_load_registered_agents())
+
+
+@app.post("/api/agents/register")
+def register_agent(payload: dict = Body(...)):
+    """Register an agent identity without tying it to a particular provider name."""
+    raw_id = str(payload.get("id") or payload.get("agent_id") or "").strip().casefold()
+    if not raw_id or not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]{1,127}", raw_id):
+        return JSONResponse({"ok": False, "error": "id de agente inválido"}, status_code=400)
+    paths = []
+    for raw_path in payload.get("paths") or payload.get("workspaces") or []:
+        value = str(raw_path or "").strip()
+        if not value:
+            continue
+        try:
+            value = str(Path(value).expanduser().resolve())
+        except (OSError, RuntimeError, ValueError):
+            return JSONResponse({"ok": False, "error": "ruta de agente inválida"}, status_code=400)
+        if value not in paths: paths.append(value)
+    rows = _read_agent_registry()
+    entry = {"id": raw_id, "name": str(payload.get("name") or raw_id).strip()[:160],
+             "provider": str(payload.get("provider") or "").strip().casefold()[:80],
+             "description": str(payload.get("description") or "").strip()[:500],
+             "paths": paths}
+    existing = next((row for row in rows if str(row.get("id") or "").casefold() == raw_id), None)
+    if existing is None: rows.append(entry)
+    else: existing.update(entry)
+    _write_agent_registry(rows)
+    registered = next(row for row in rows if row.get("id") == raw_id)
+    return JSONResponse({"ok": True, "agent": registered})
+
 @app.post("/api/projects/register")
 def register_project(payload: dict = Body(...)):
     """
@@ -347,6 +482,9 @@ def register_project(payload: dict = Body(...)):
     3. agent_discovered: Invocado autónomamente por agentes de IA.
     """
     mode = payload.get("mode", "single_folder")
+    space_type = str(payload.get("space_type") or "project").strip().casefold()
+    if space_type not in {"project", "agent_brain", "container"}:
+        return JSONResponse({"ok": False, "error": "space_type debe ser project, agent_brain o container"}, status_code=400)
     path_str = payload.get("path")
     name = payload.get("name")
 
@@ -371,7 +509,8 @@ def register_project(payload: dict = Body(...)):
         "id": target_path.name,
         "name": name or target_path.name,
         "path": str(target_path),
-        "mode": mode
+        "mode": mode,
+        "space_type": space_type
     }
 
     existing = next((cp for cp in custom_projects if cp["path"] == str(target_path)), None)
@@ -520,10 +659,14 @@ def generate_semantic_graph(data: dict) -> dict:
     communities = {}
     real_nodes = []
     semantic_content = []
+    # The semantic view is about functionality, so code symbols participate
+    # alongside documentation and media. Structural ownership still comes from
+    # the AST; semantic edges are explicitly marked as inferred below.
     content_kinds = {"image", "media", "doc"}
+    semantic_kinds = {"file", "class", "module", "function", "method", "route", *content_kinds}
     for n in data.get("nodes", []):
         kind = n.get("kind", "")
-        if kind not in {"file", "class", "module", *content_kinds}:
+        if kind not in semantic_kinds:
             continue
         nid = n.get("id", "")
         if nid.startswith("file:"):
@@ -538,7 +681,7 @@ def generate_semantic_graph(data: dict) -> dict:
             key = "raiz"
         communities.setdefault(key, []).append(n)
         real_nodes.append(n)
-        if kind in content_kinds:
+        if kind in semantic_kinds:
             semantic_content.append(n)
 
     for key, members in communities.items():
@@ -663,7 +806,13 @@ def generate_semantic_graph(data: dict) -> dict:
             })
 
     parser = ASTParser()
-    return parser._enrich_graph_with_degree({"nodes": nodes, "links": links})
+    result = parser._enrich_graph_with_degree({"nodes": nodes, "links": links})
+    result["metadata"] = {"view": "semantic-code", "semantic_scope": "code+documentation+media",
+                           "relationship_policy": "bounded-token-overlap+structural-links",
+                           "inferred_edges": sum(1 for link in links if link.get("confidence") == "INFERRED"),
+                           "structural_edges": sum(1 for link in links if link.get("confidence") == "EXTRACTED"),
+                           "note": "La similitud propone relación; la dependencia estructural conserva su evidencia AST."}
+    return result
 
 
 @app.get("/health")
@@ -810,10 +959,89 @@ def ollama_models():
     return JSONResponse({"host": None, "models": [], "code_models": [], "vision_models": []})
 
 
+def _agent_topology_graph() -> dict:
+    """Build the agent view from registered sources and observed memory sessions."""
+    agents = _load_registered_agents()
+    nodes: dict[str, dict] = {}
+    links: list[dict] = []
+    root_id = "topology:graphtyn"
+    nodes[root_id] = {"id": root_id, "name": "Graphtyn · Registro de agentes", "kind": "orchestrator_agent",
+                      "val": 22, "color": "#38bdf8", "details": "Catálogo de identidades, espacios y fuentes observadas",
+                      "status": "active"}
+    project_by_path = {str(Path(row.get("path") or "").expanduser().resolve()): row
+                       for row in _load_registered_projects() if row.get("path")}
+    source_rows = configured_sources()
+
+    def key(prefix: str, value: str) -> str:
+        return f"{prefix}:{hashlib.sha256(value.encode('utf-8')).hexdigest()[:14]}"
+
+    def add_project(path: str) -> str:
+        pid = key("project", path)
+        if pid not in nodes:
+            row = project_by_path.get(path, {})
+            nodes[pid] = {"id": pid, "name": row.get("name") or Path(path).name,
+                          "kind": "topology_project", "reference": path,
+                          "details": f"Espacio de proyecto: {path}", "val": 9,
+                          "color": "#10b981", "indexed": bool(row.get("indexed"))}
+        return pid
+
+    for item in agents:
+        aid = str(item["id"])
+        aid_node = f"agent:{aid}"
+        nodes[aid_node] = {"id": aid_node, "name": item.get("name") or aid,
+                           "kind": "registered_agent", "agent_id": aid,
+                           "provider": item.get("provider") or "", "status": item.get("status"),
+                           "details": item.get("description") or f"Agente {aid}",
+                           "paths": item.get("paths") or [], "sessions": item.get("sessions", 0),
+                           "val": 14, "color": "#a78bfa"}
+        links.append({"source": root_id, "target": aid_node, "label": item.get("status") or "registrado",
+                      "confidence": "EXTRACTED", "color": "rgba(167,139,250,.5)"})
+        for path in item.get("paths") or []:
+            resolved = str(Path(path).expanduser().resolve())
+            project_node = add_project(resolved)
+            links.append({"source": aid_node, "target": project_node, "label": "vinculado",
+                          "confidence": "EXTRACTED", "color": "rgba(16,185,129,.45)"})
+
+    for source in source_rows:
+        source_key = str(source.get("provider") or "") + ":" + str(source.get("source") or "")
+        sid = key("source", source_key)
+        nodes[sid] = {"id": sid, "name": source.get("label") or source.get("provider") or "Fuente",
+                      "kind": "topology_source", "provider": source.get("provider"),
+                      "reference": source.get("source"), "status": "configured", "val": 7,
+                      "color": "#f59e0b", "details": "Fuente configurada; la actividad se confirma al observar sesiones"}
+        agent_id = str(source.get("agent_id") or "").casefold()
+        if agent_id:
+            aid_node = f"agent:{agent_id}"
+            if aid_node not in nodes:
+                nodes[aid_node] = {"id": aid_node, "name": agent_id, "kind": "registered_agent",
+                                   "agent_id": agent_id, "status": "configured", "val": 12, "color": "#a78bfa",
+                                   "details": "Identidad indicada por la fuente"}
+                links.append({"source": root_id, "target": aid_node, "label": "configurado",
+                              "confidence": "EXTRACTED", "color": "rgba(167,139,250,.45)"})
+            links.append({"source": aid_node, "target": sid, "label": "captura",
+                          "confidence": "EXTRACTED", "color": "rgba(245,158,11,.5)"})
+        project_path = str(source.get("project_path") or "").strip()
+        if project_path:
+            project_node = add_project(str(Path(project_path).expanduser().resolve()))
+            links.append({"source": project_node, "target": sid, "label": "fuente asociada",
+                          "confidence": "EXTRACTED", "color": "rgba(245,158,11,.4)"})
+        elif not agent_id:
+            links.append({"source": root_id, "target": sid, "label": "fuente sin identidad",
+                          "confidence": "AMBIGUOUS", "color": "rgba(245,158,11,.45)"})
+
+    graph = {"nodes": list(nodes.values()), "links": links,
+             "metadata": {"view": "agent-topology", "dynamic": True,
+                          "source": "registered_agents+history_sources+memory_sessions",
+                          "empty": not agents and not source_rows,
+                          "legend": {"registered_agent": "Identidad configurada u observada",
+                                     "topology_project": "Espacio vinculado", "topology_source": "Fuente configurada"}}}
+    return parser._enrich_graph_with_degree(graph)
+
+
 @app.get("/api/graph")
 def get_graph(path: str = ".", view: str = "code"):
     if view == "agents":
-        return JSONResponse(parser.get_agent_topology_graph())
+        return JSONResponse(_agent_topology_graph())
     root = Path(path).resolve()
     if unsafe_project_root(root) and os.environ.get("GRAPHTYN_ALLOW_HOME_SCAN") != "1":
         return JSONResponse({"ok": False,
@@ -1229,6 +1457,65 @@ def memory_graph(path: str = Query(...), requester_agent: str = Query("dashboard
     return store.attribution_graph(requester_agent, limit)
 
 
+@app.get("/api/memory/agent-graph")
+def memory_agent_graph(agent_id: str = Query(...), limit: int = Query(400), detail: bool = Query(False),
+                       authorization: str | None = Header(default=None)):
+    """Federated memory graph for one identity across its explicitly linked spaces."""
+    if denied := _memory_auth(authorization): return denied
+    requested = str(agent_id or "").strip().casefold()
+    record = next((row for row in _load_registered_agents() if row.get("id") == requested), None)
+    if not record:
+        return JSONResponse({"ok": False, "error": "agente no registrado"}, status_code=404)
+    nodes, links, spaces = {}, [], []
+    for raw_path in record.get("paths") or []:
+        path = Path(str(raw_path)).expanduser().resolve()
+        db_path = _project_memory_db(path)
+        if not db_path:
+            continue
+        try:
+            memory_store = SharedMemoryStore(path, db_path=db_path)
+            graphs = [memory_store.topic_graph(requester_agent=requested,
+                limit=max(1, min(1000, int(limit))), detail=detail, session_limit=100),
+                      memory_store.attribution_graph(requested, max(1, min(1000, int(limit))))]
+        except (OSError, sqlite3.Error, ValueError):
+            continue
+        prefix = hashlib.sha256(str(path).encode("utf-8")).hexdigest()[:10]
+        space_id = f"agent-space:{prefix}"
+        spaces.append(str(path))
+        nodes[space_id] = {"id": space_id, "kind": "memory_space", "name": path.name,
+                           "reference": str(path), "details": f"Espacio asociado: {path}", "val": 9}
+        for graph in graphs:
+            allowed = {str(node.get("id")) for node in graph.get("nodes", [])
+                       if not node.get("agent_id") or str(node.get("agent_id")).casefold() == requested}
+            for raw_node in graph.get("nodes", []):
+                node_id = str(raw_node.get("id") or "")
+                if node_id not in allowed:
+                    continue
+                node = dict(raw_node)
+                node["id"] = f"{prefix}:{node_id}"
+                node["space"] = str(path)
+                nodes[node["id"]] = node
+                links.append({"source": space_id, "target": node["id"], "label": "pertenece al espacio",
+                              "confidence": "EXTRACTED", "color": "rgba(56,189,248,.35)"})
+            for raw_link in graph.get("links", []):
+                source, target = f"{prefix}:{raw_link.get('source')}", f"{prefix}:{raw_link.get('target')}"
+                if source in nodes and target in nodes:
+                    links.append({**raw_link, "source": source, "target": target})
+    agent_node = {"id": f"agent:{requested}", "kind": "memory_agent", "name": record.get("name") or requested,
+                  "agent_id": requested, "details": record.get("description") or "Memoria del agente",
+                  "status": record.get("status"), "val": 16, "color": "#a78bfa"}
+    nodes[agent_node["id"]] = agent_node
+    for node_id, node in list(nodes.items()):
+        if node_id == agent_node["id"] or node.get("kind") == "memory_space":
+            continue
+        if node.get("agent_id") and str(node.get("agent_id")).casefold() == requested:
+            links.append({"source": agent_node["id"], "target": node_id, "label": "participa",
+                          "confidence": "EXTRACTED", "color": "rgba(167,139,250,.4)"})
+    return JSONResponse({"ok": True, "view": "agent-memory", "nodes": list(nodes.values()), "links": links,
+                         "metadata": {"mode": "agent", "agent_id": requested, "spaces": spaces,
+                                      "space_count": len(spaces), "detail": bool(detail)}})
+
+
 @app.post("/api/memory/search")
 def memory_search(payload: dict = Body(...), authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
@@ -1444,7 +1731,8 @@ def import_source_save(payload: dict = Body(...), authorization: str | None = He
     if denied: return denied
     try: return {"ok": True, "source": save_source(str(payload.get("provider") or ""),
         str(payload.get("source") or ""), label=str(payload.get("label") or ""),
-        project_path=payload.get("path") or payload.get("project_path"))}
+        project_path=payload.get("path") or payload.get("project_path"),
+        agent_id=payload.get("agent_id") or payload.get("agent"))}
     except (ValueError, OSError) as exc: return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
 

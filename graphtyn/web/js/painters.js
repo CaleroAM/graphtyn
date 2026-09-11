@@ -34,6 +34,8 @@ export function nodeColor(n) {
       const p = PALETTES[state.activePalette] || PALETTES.obsidian;
       if (k.includes('orchestrator')) return '#a855f7';
       if (k.includes('agent'))        return '#7c3aed';
+      if (k === 'topology_source')    return '#f59e0b';
+      if (k === 'topology_project')   return '#10b981';
       if (k.includes('hermes'))       return '#06b6d4';
       if (k === 'community')          return '#10b981';
       if (k === 'semantic_concept')   return '#ec4899';

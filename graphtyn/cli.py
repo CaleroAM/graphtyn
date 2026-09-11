@@ -477,6 +477,14 @@ def main():
                            help="Ruta local, ssh://, docker:// o ssh+docker://host:contenedor/ruta")
     sources_p.add_argument("--label", default="")
     sources_p.add_argument("--workspace", default=None, help="Cerebro/proyecto al que pertenece la fuente")
+    sources_p.add_argument("--agent-id", default=None, help="Identidad estable del agente que produce la fuente")
+    agents_p = memory_sub.add_parser("agents", help="Lista o registra identidades de agentes")
+    agents_p.add_argument("action", choices=["list", "register"])
+    agents_p.add_argument("--id", dest="agent_id", default=None)
+    agents_p.add_argument("--name", default=None)
+    agents_p.add_argument("--provider", default=None)
+    agents_p.add_argument("--path", dest="agent_path", action="append", default=[])
+    agents_p.add_argument("--description", default="")
 
     install_p = subparsers.add_parser("agent-install", help="Instala instrucciones Graphtyn para asistentes")
     install_p.add_argument("platform", choices=["all", "codex", "opencode", "openclaw", "hermes", "claude", "cursor", "gemini", "antigravity", "copilot"])
@@ -1004,7 +1012,8 @@ def main():
             if args.action == "add":
                 if not args.provider or not args.source:
                     raise SystemExit("sources add requiere --provider y --source")
-                saved = save_source(args.provider, args.source, label=args.label, project_path=args.workspace)
+                saved = save_source(args.provider, args.source, label=args.label, project_path=args.workspace,
+                                    agent_id=args.agent_id)
                 print(json.dumps({"ok": True, "saved": saved}, ensure_ascii=False, indent=2))
             elif args.action == "remove":
                 if not args.provider or not args.source: raise SystemExit("sources remove requiere --provider y --source")
@@ -1014,6 +1023,32 @@ def main():
                 print(json.dumps(test_source(args.provider, args.source), ensure_ascii=False, indent=2))
             else:
                 print(json.dumps({"ok": True, "sources": configured_sources()}, ensure_ascii=False, indent=2))
+        elif args.memory_action == "agents":
+            registry = data_home() / "registered_agents.json"
+            try:
+                payload = json.loads(registry.read_text(encoding="utf-8"))
+                rows = payload.get("agents", []) if isinstance(payload, dict) else payload
+            except (OSError, ValueError, TypeError):
+                rows = []
+            if args.action == "list":
+                print(json.dumps({"ok": True, "agents": rows}, ensure_ascii=False, indent=2))
+            else:
+                aid = str(args.agent_id or "").strip().casefold()
+                if not aid:
+                    raise SystemExit("agents register requiere --id")
+                if not all(ch.isalnum() or ch in "._:/-" for ch in aid) or not aid[0].isalnum():
+                    raise SystemExit("id de agente inválido")
+                entry = {"id": aid, "name": args.name or aid, "provider": args.provider or "",
+                         "description": args.description[:500],
+                         "paths": [str(Path(value).expanduser().resolve()) for value in args.agent_path if str(value).strip()]}
+                existing = next((row for row in rows if str(row.get("id") or "").casefold() == aid), None)
+                if existing is None: rows.append(entry)
+                else: existing.update(entry)
+                registry.parent.mkdir(parents=True, exist_ok=True)
+                registry.write_text(json.dumps({"version": 1, "agents": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
+                try: registry.chmod(0o600)
+                except OSError: pass
+                print(json.dumps({"ok": True, "agent": entry}, ensure_ascii=False, indent=2))
         elif args.memory_action == "save":
             output = save_result(root, args.question, args.answer, args.nodes, args.outcome, args.files, args.correction)
             print(json.dumps({"ok": True, "saved": str(output)}, ensure_ascii=False))

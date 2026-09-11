@@ -1,7 +1,8 @@
 export { toggleDD, openRegister, closeRegister, selMode, submitRegister, openTutorial,
          closeTutorial, loadProjects, selectProject, doReindex, toggleGitignore,
          onFolderPicked, loadHistoryUI, toggleLeftSidebar, toggleRightSidebar, updateModelEstimate,
-         initWatchPolling } from './ui.js';
+         initWatchPolling, loadAgents, selectAgent, openAgentRegister, closeAgentRegister,
+         submitAgentRegister } from './ui.js';
 export { setView, setDim, setMemoryGraphMode, changePalette, updateLinkStyles,
          exportGraphData, exportGraphPNG, refreshMemoryColorControls,
          selectMemoryColorKind, selectMemoryPalette, changeMemoryColor, toggleMemoryHaloLink,

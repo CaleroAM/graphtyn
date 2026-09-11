@@ -268,6 +268,24 @@ afirmación universal de superioridad frente a otras herramientas. Esos límites
 se mantienen explícitos para que cada adopción pueda evaluar el producto con su
 propio repositorio y ground truth.
 
+### Espacios de código y agentes
+
+El dashboard separa `PROYECTOS REGISTRADOS` (repositorios y workspaces con
+grafo AST, semántico y memoria del proyecto) de `AGENTES REGISTRADOS` (Evi,
+Eve, Junio, Friday, Nex u otra identidad configurada). Un agente puede estar
+vinculado a varios espacios. Registra una identidad desde CLI con
+`graphtyn memory agents register --id friday --name Friday --provider openclaw`
+o desde `/api/agents/register`; consulta el catálogo con
+`graphtyn memory agents list` o `GET /api/agents`. Las fuentes de historial
+pueden asociarse a esa identidad con `memory sources add --agent-id friday
+--workspace /ruta/al/espacio`.
+
+`Topología de agentes` representa únicamente identidades, fuentes y vínculos
+observados o configurados. Una integración configurada no se presenta como
+actividad ejecutada. La memoria del agente se consulta de forma federada en
+los espacios asociados; la memoria del proyecto mantiene la perspectiva de un
+repositorio y atribuye la participación de todos sus agentes.
+
 ## Licencia
 
 [MIT](LICENSE)

@@ -51,6 +51,7 @@ export function closeTutorial() { document.getElementById('modal-tutorial').clas
 
 export function loadProjects(thenLoadGraph) {
       console.log("Fetching /api/projects...");
+      loadAgents();
       fetch('/api/projects').then(r => r.json()).then(projects => {
         console.log("Projects received:", projects);
         projects.forEach(p => { if (p.path) state.respectMap[p.path] = p.respect_git !== false; });
@@ -102,6 +103,8 @@ export function selectProject(path) {
         return;
       }
       state.activePath = path;
+      state.activeAgentId = null;
+      state.activeSpaceType = 'project';
       state.memoryFocusSession = null;
       state.webFlowNodeIds = null;
       const resetFlow = document.getElementById('reset-web-flow');
@@ -112,6 +115,66 @@ export function selectProject(path) {
       if (gi) gi.checked = state.respectMap[path] !== false;
       if (state.activeView === 'agents' || state.activeView === 'changes') setView('code'); // project-scoped views reload below
       else { loadProjects(); loadGraph(); }
+    }
+
+export function loadAgents() {
+      const el = document.getElementById('agent-list');
+      if (!el) return;
+      fetch('/api/agents').then(r => r.json()).then(agents => {
+        if (!Array.isArray(agents) || !agents.length) {
+          el.innerHTML = '<div style="color:#64748b;font-size:10px;padding:6px 2px;line-height:1.4;">Sin agentes registrados. Asocia una fuente de memoria o registra una identidad.</div>';
+          return;
+        }
+        el.innerHTML = agents.map(agent => {
+          const id = String(agent.id || '').replace(/"/g, '&quot;');
+          const name = String(agent.name || agent.id || 'Agente').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+          const active = state.activeAgentId === agent.id;
+          const status = agent.status === 'observed' ? 'ACTIVO' : (agent.status === 'configured' ? 'CONFIG' : 'PEND');
+          return `<div class="project-item agent-item ${active ? 'active' : ''}" data-agent-id="${id}" onclick="selectAgent(this.dataset.agentId)">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">⌁ ${name}</span>
+            <span class="proj-badge ${agent.status === 'observed' ? 'ok' : 'pend'}" title="${agent.sessions || 0} sesiones">${status}</span>
+          </div>`;
+        }).join('');
+      }).catch(() => { el.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:4px;">No se pudo cargar agentes.</div>'; });
+    }
+
+export function selectAgent(agentId) {
+      state.activeAgentId = String(agentId || '').trim().toLowerCase();
+      state.activeSpaceType = 'agent';
+      state.memoryFocusSession = null;
+      state.activePath = null;
+      setView('memory');
+      loadAgents();
+    }
+
+export function openAgentRegister() {
+      ['agent-reg-id', 'agent-reg-name', 'agent-reg-provider', 'agent-reg-path'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input && id === 'agent-reg-path' && state.activePath) input.value = state.activePath;
+      });
+      const status = document.getElementById('agent-reg-status');
+      if (status) status.textContent = '';
+      document.getElementById('modal-agent-reg')?.classList.add('show');
+    }
+
+export function closeAgentRegister() { document.getElementById('modal-agent-reg')?.classList.remove('show'); }
+
+export async function submitAgentRegister() {
+      const id = document.getElementById('agent-reg-id')?.value.trim();
+      const name = document.getElementById('agent-reg-name')?.value.trim();
+      const provider = document.getElementById('agent-reg-provider')?.value.trim();
+      const path = document.getElementById('agent-reg-path')?.value.trim();
+      const status = document.getElementById('agent-reg-status');
+      if (!id) { if (status) status.textContent = 'El identificador es obligatorio.'; return; }
+      if (status) status.textContent = 'Guardando…';
+      try {
+        const response = await fetch('/api/agents/register', {method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({id, name:name || id, provider, paths:path ? [path] : []})});
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        closeAgentRegister();
+        loadAgents();
+      } catch (error) { if (status) status.textContent = `No se pudo guardar: ${error.message}`; }
     }
 
 export function initWatchPolling() {

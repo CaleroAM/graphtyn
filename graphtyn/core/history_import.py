@@ -90,6 +90,9 @@ def configured_sources(path: Path | None = None) -> list[dict[str, Any]]:
         provider, source = str(row.get("provider") or "").strip().casefold(), str(row.get("source") or "").strip()
         if provider and source and row.get("enabled", True):
             item = {"provider": provider, "source": source, "label": str(row.get("label") or "")}
+            agent_id = str(row.get("agent_id") or row.get("agent") or "").strip().casefold()
+            if agent_id:
+                item["agent_id"] = agent_id
             # A source may belong to one brain/project.  Older entries without
             # this field remain visible but are intentionally not auto-routed.
             project_path = str(row.get("project_path") or row.get("workspace") or "").strip()
@@ -100,6 +103,7 @@ def configured_sources(path: Path | None = None) -> list[dict[str, Any]]:
 
 
 def save_source(provider: str, source: str, *, label: str = "", project_path: str | Path | None = None,
+                agent_id: str | None = None,
                 path: Path | None = None) -> dict[str, Any]:
     """Persist a host/container/VPS history source with restrictive permissions."""
     provider, source = provider.strip().casefold(), source.strip()
@@ -115,6 +119,11 @@ def save_source(provider: str, source: str, *, label: str = "", project_path: st
     if associated:
         associated = str(Path(associated).expanduser().resolve())
     item = {"provider": provider, "source": source, "label": safe_label, "enabled": True}
+    normalized_agent = str(agent_id or "").strip().casefold()
+    if normalized_agent:
+        if not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]{1,127}", normalized_agent):
+            raise ValueError("identidad de agente inválida")
+        item["agent_id"] = normalized_agent
     if associated:
         item["project_path"] = associated
     # A physical transcript source has one owner. Re-saving it for a brain

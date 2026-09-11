@@ -6,7 +6,8 @@ import {
   onFolderPicked, selectProject, toggleAllComm, toggleComm, toggleDD, toggleGitignore,
   toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, loadHistoryUI, toggleNodeDesc,
   openRegister, closeRegister, selMode, submitRegister, openTutorial, closeTutorial,
-  loadProjects, updateModelEstimate, initWatchPolling, openQualityPanel, closeQualityPanel,
+  loadProjects, loadAgents, selectAgent, openAgentRegister, closeAgentRegister, submitAgentRegister,
+  updateModelEstimate, initWatchPolling, openQualityPanel, closeQualityPanel,
   addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle,
   copyContextBundle, focusWebFlow, clearWebFlow, loadIndexUpdate, loadAmbiguities,
   reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel,
@@ -42,6 +43,7 @@ import { state } from './js/state.js';
         closeQualityPanel();
         closeMemoryPanel();
         closeRegister();
+        closeAgentRegister();
         closeTutorial();
         closeBlastPanel();
       }
@@ -130,4 +132,4 @@ function openFromChanges(nodeId) {
   setTimeout(() => focusNode(nodeId), 500);
 }
 
-Object.assign(window, {applyFilter, renderCommunityNodes, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, refreshMemoryColorControls, selectMemoryColorKind, selectMemoryPalette, changeMemoryColor, toggleMemoryHaloLink, toggleRadiance, resetMemoryColorType, resetMemoryColorSettings, closeBlastPanel, closeRegister, closeTutorial, closeWelcome, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setMemoryGraphMode, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, copyNodeReference, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, searchMemorySessions, loadMoreMemorySessions, loadMoreMemoryTopics, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory, syncMemorySpace, syncAllMemorySpaces, retryMemoryEnrichment, toggleMemoryWatch});
+Object.assign(window, {applyFilter, renderCommunityNodes, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, refreshMemoryColorControls, selectMemoryColorKind, selectMemoryPalette, changeMemoryColor, toggleMemoryHaloLink, toggleRadiance, resetMemoryColorType, resetMemoryColorSettings, closeBlastPanel, closeRegister, closeAgentRegister, closeTutorial, closeWelcome, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openAgentRegister, openTutorial, selMode, setDim, setView, setMemoryGraphMode, setPRBase, submitRegister, submitAgentRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, copyNodeReference, openFromChanges, selectProject, loadAgents, selectAgent, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, searchMemorySessions, loadMoreMemorySessions, loadMoreMemoryTopics, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory, syncMemorySpace, syncAllMemorySpaces, retryMemoryEnrichment, toggleMemoryWatch});

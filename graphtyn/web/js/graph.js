@@ -661,7 +661,7 @@ export function loadGraph() {
       state.graphRequestController = new AbortController();
       const requestSignal = state.graphRequestController.signal;
       if (state.activeView === 'changes') { loadChangesView(); return; }
-      if (!state.activePath && state.activeView !== 'agents') {
+      if (!state.activePath && state.activeView !== 'agents' && !(state.activeView === 'memory' && state.activeAgentId)) {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
         document.getElementById('graph-container').innerHTML =
           '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda</div>';
@@ -670,7 +670,9 @@ export function loadGraph() {
       const url = state.activeView === 'agents'
         ? '/api/graph?view=agents'
         : state.activeView === 'memory'
-        ? '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&view=topics&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400&session_limit=100' + (state.memoryFocusSession ? '&session_id=' + encodeURIComponent(state.memoryFocusSession) : '')
+        ? (state.activeAgentId
+          ? '/api/memory/agent-graph?agent_id=' + encodeURIComponent(state.activeAgentId) + '&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400'
+          : '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&view=topics&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400&session_limit=100' + (state.memoryFocusSession ? '&session_id=' + encodeURIComponent(state.memoryFocusSession) : ''))
         : state.activeView === 'semantic'
         ? '/api/graph?view=semantic&path=' + encodeURIComponent(state.activePath)
         : '/api/graph?path=' + encodeURIComponent(state.activePath);
@@ -692,7 +694,7 @@ export function loadGraph() {
         if (loadId !== state.graphLoadId) return;
         if (!data.nodes || data.nodes.length === 0) {
           const emptyMessage = state.activeView === 'memory'
-            ? 'Sin memorias capturadas para este proyecto. No hay temas temáticos todavía; abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.'
+            ? (state.activeAgentId ? 'Sin memorias asociadas a este agente en sus espacios registrados.' : 'Sin memorias capturadas para este proyecto. No hay temas temáticos todavía; abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.')
             : 'Sin nodos de código. Haz clic en Reindexar para escanear el proyecto.';
           document.getElementById('graph-container').innerHTML =
             '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;padding:24px;text-align:center;">' + emptyMessage + '</div>';
@@ -713,7 +715,9 @@ export function loadGraph() {
         const badge = document.getElementById('model-badge');
         if (badge) {
           badge.textContent = state.activeView === 'memory'
-            ? `Memoria ${((data.metadata || {}).mode === 'detailed') ? 'detallada' : 'simplificada'} · ${(((data.metadata || {}).topic_returned ?? (data.metadata || {}).topic_count) || 0)}/${(((data.metadata || {}).topic_total ?? (data.metadata || {}).topic_count) || 0)} temas · ${(((data.metadata || {}).session_returned ?? 0) || 0)}/${(((data.metadata || {}).session_total ?? 0) || 0)} sesiones`
+            ? (state.activeAgentId
+              ? `Memoria del agente · ${(data.metadata || {}).space_count || 0} espacios · ${data.nodes.length} nodos`
+              : `Memoria ${((data.metadata || {}).mode === 'detailed') ? 'detallada' : 'simplificada'} · ${(((data.metadata || {}).topic_returned ?? (data.metadata || {}).topic_count) || 0)}/${(((data.metadata || {}).topic_total ?? (data.metadata || {}).topic_count) || 0)} temas · ${(((data.metadata || {}).session_returned ?? 0) || 0)}/${(((data.metadata || {}).session_total ?? 0) || 0)} sesiones`)
             : (meta.ai_model ? meta.ai_model : '') + (meta.reindex_mode ? ' · ' + meta.reindex_mode : '');
         }
 

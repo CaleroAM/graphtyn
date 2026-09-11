@@ -32,6 +32,13 @@
 
     /* Left: project list */
     .project-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:3px; }
+    .project-registry-list { flex:1.25; min-height:120px; }
+    .agent-registry-list { flex:0.9; min-height:90px; border-top:1px solid #1e293b; padding-top:8px; }
+    .agent-section-label { margin-top:12px; padding-top:10px; border-top:1px solid #1e293b; }
+    .registry-heading { display:flex; align-items:center; justify-content:space-between; }
+    .registry-heading .section-label { margin-bottom:8px; }
+    .registry-add { border:1px solid #334155; background:#111827; color:#38bdf8; border-radius:4px; width:20px; height:20px; line-height:16px; cursor:pointer; font-size:15px; }
+    .registry-add:hover { border-color:#38bdf8; background:#0c2538; }
     .project-item {
       padding:7px 9px; border-radius:6px; font-size:11px; color:#94a3b8; cursor:pointer;
       display:flex; justify-content:space-between; align-items:center;
