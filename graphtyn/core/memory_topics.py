@@ -1,0 +1,653 @@
+"""Auditable conversation episodes. Historical text is data, never authority."""
+from __future__ import annotations
+
+import hashlib
+import heapq
+import json
+import re
+import sqlite3
+import time
+from pathlib import Path
+
+STATES = {"abierto", "en investigación", "resuelto", "reabierto", "archivado"}
+VERIFICATIONS = {"sin verificar", "declarado", "prueba superada", "prueba fallida", "confirmado por usuario"}
+
+_ENTITY_PATTERNS = (
+    ("button", re.compile(r"\b(?:bot[oó]n|button|btn)\s*#?\s*([0-9]+)\b", re.I), "botón {}"),
+    ("button", re.compile(r"\b(?:bot[oó]n(?:es)?|button|btn)\s+(?:de\s+|del\s+|the\s+)?([a-záéíóúñ][\wáéíóúñ.-]{1,30})\b", re.I), "botón de {}"),
+    ("screen", re.compile(r"\b(?:pantalla|screen|vista|view)\s+[\"']?([\w.-]+)", re.I), "pantalla {}"),
+)
+
+_CONTEXT_PATTERNS = (
+    ("feature", re.compile(r"\b(?:funcionalidad|feature|caracter[ií]stica)\s+(?:de|del|para)\s+(?:(?:el|la|los|las)\s+)?(?:(?:bot[oó]n(?:es)?)\s+(?:de|del)\s+)?([a-záéíóúñ][\wáéíóúñ.-]{1,30})\b", re.I), "funcionalidad {}"),
+    ("module", re.compile(r"\b(?:m[oó]dulo|secci[oó]n|area|área)\s+(?:de|del|para)\s+(?:(?:el|la|los|las)\s+)?([a-záéíóúñ][\wáéíóúñ.-]{1,30})\b", re.I), "módulo {}"),
+    ("report", re.compile(r"\b(reporte|report|informe)\b", re.I), "reporte"),
+    ("report", re.compile(r"\b(?:reporte|report|informe)\s+(?:de|del|para)\s+([a-záéíóúñ][\wáéíóúñ.-]{1,30})\b", re.I), "reporte {}"),
+    ("platform", re.compile(r"\b(android|ios|apk|unity|web|m[oó]vil)\b", re.I), "plataforma {}"),
+    ("python_function", re.compile(r"\b(?:funci[oó]n|function|def)\s+(?:de\s+)?([A-Za-z_]\w*)", re.I), "función {}"),
+    ("python_class", re.compile(r"\b(?:clase|class)\s+(?:de\s+)?([A-Za-z_]\w*)", re.I), "clase {}"),
+    ("python_method", re.compile(r"\b(?:m[eé]todo|method)\s+(?:de\s+)?([A-Za-z_]\w*)", re.I), "método {}"),
+)
+
+
+def encoded_tokens(value):
+    # Same UTF-8/4 estimate as existing telemetry, now including the full
+    # response. This is not a model-specific tokenizer or a billing measure.
+    return (len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()) + 3) // 4
+
+
+class TopicMemoryMixin:
+    def _init_topics(self):
+        with self._connect() as db:
+            db.executescript("""
+            CREATE TABLE IF NOT EXISTS topics (
+              id TEXT PRIMARY KEY, title TEXT NOT NULL, summary TEXT NOT NULL,
+              category TEXT NOT NULL DEFAULT 'asunto', state TEXT NOT NULL DEFAULT 'abierto',
+              verification TEXT NOT NULL DEFAULT 'sin verificar', created_at REAL NOT NULL,
+              updated_at REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS topic_episodes (
+              id TEXT PRIMARY KEY, topic_id TEXT NOT NULL REFERENCES topics(id),
+              session_id TEXT NOT NULL REFERENCES sessions(id), agent_id TEXT NOT NULL,
+              problem TEXT NOT NULL, decisions TEXT NOT NULL DEFAULT '',
+              result TEXT NOT NULL DEFAULT '', extraction TEXT NOT NULL,
+              created_at REAL NOT NULL);
+            CREATE INDEX IF NOT EXISTS topic_episodes_topic ON topic_episodes(topic_id, created_at, id);
+            CREATE TABLE IF NOT EXISTS topic_messages (
+              episode_id TEXT NOT NULL REFERENCES topic_episodes(id),
+              message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+              PRIMARY KEY(episode_id,message_id));
+            CREATE TABLE IF NOT EXISTS topic_events (
+              id INTEGER PRIMARY KEY, topic_id TEXT NOT NULL REFERENCES topics(id),
+              actor TEXT NOT NULL, action TEXT NOT NULL, details_json TEXT NOT NULL,
+              created_at REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS topic_progress (
+              session_id TEXT PRIMARY KEY REFERENCES sessions(id), cursor INTEGER NOT NULL DEFAULT 0,
+              processed INTEGER NOT NULL DEFAULT 0, updated_at REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS topic_memory_links (
+              topic_id TEXT NOT NULL REFERENCES topics(id), memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+              PRIMARY KEY(topic_id,memory_id));
+            CREATE TABLE IF NOT EXISTS entities (
+              id TEXT PRIMARY KEY, kind TEXT NOT NULL, entity_key TEXT NOT NULL,
+              name TEXT NOT NULL, metadata_json TEXT NOT NULL DEFAULT '{}',
+              created_at REAL NOT NULL, updated_at REAL NOT NULL,
+              UNIQUE(kind, entity_key));
+            CREATE TABLE IF NOT EXISTS topic_entities (
+              topic_id TEXT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+              entity_id TEXT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+              relation TEXT NOT NULL DEFAULT 'afecta_a',
+              confidence TEXT NOT NULL DEFAULT 'EXTRACTED',
+              source_message_id TEXT REFERENCES messages(id), created_at REAL NOT NULL,
+              PRIMARY KEY(topic_id, entity_id));
+            CREATE INDEX IF NOT EXISTS topic_entities_entity ON topic_entities(entity_id, topic_id);
+            CREATE TABLE IF NOT EXISTS topic_work_terms (
+              topic_id TEXT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+              term TEXT NOT NULL, PRIMARY KEY(topic_id, term));
+            CREATE TABLE IF NOT EXISTS topic_relations (
+              source_topic_id TEXT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+              target_topic_id TEXT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+              relation TEXT NOT NULL, confidence TEXT NOT NULL,
+              reason TEXT NOT NULL DEFAULT '', source_message_id TEXT REFERENCES messages(id),
+              created_at REAL NOT NULL,
+              PRIMARY KEY(source_topic_id, target_topic_id, relation));
+            CREATE INDEX IF NOT EXISTS topic_relations_target ON topic_relations(target_topic_id);
+            """)
+            db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(3,?)", (time.time(),))
+            db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(4,?)", (time.time(),))
+
+    @staticmethod
+    def _subject_terms(content):
+        """Extract stable entity keys and work terms without treating words as identity."""
+        text = str(content or "")
+        entities = []
+        for kind, pattern, name_template in _ENTITY_PATTERNS:
+            for match in pattern.finditer(text):
+                raw_value = match.group(1)
+                value = raw_value.casefold()
+                if value in {"de", "del", "the", "el", "la", "los", "las", "button", "boton", "botón", "color", "tamaño", "tamano", "diseño", "diseno", "estilo"}:
+                    continue
+                # A bare plural such as "botones textura" is a category or
+                # description, not a named control. Accept a name after an
+                # explicit "de" or a deliberately capitalized/known label.
+                if kind == "button" and not raw_value.isdigit() and not re.search(r"\b(?:de|del|the)\s+", match.group(0), re.I):
+                    known = {"jugar", "fichas", "ajustes", "volver"}
+                    if value not in known and not raw_value[:1].isupper():
+                        continue
+                if kind == "screen" and value in {"debe", "para", "sale", "se", "tan", "todavía", "todavia"}:
+                    continue
+                entities.append({"kind": kind, "key": value,
+                                 "name": name_template.format(value)})
+        for kind, pattern, name_template in _CONTEXT_PATTERNS:
+            for match in pattern.finditer(text):
+                value = match.group(1).casefold()
+                if value in {"de", "del", "para", "el", "la", "los", "las", "botón", "boton", "button", "color", "tamaño", "tamano", "diseño", "diseno", "estilo"}:
+                    continue
+                entities.append({"kind": kind, "key": value,
+                                 "name": name_template.format(value)})
+        # A shared design subject gives named controls a meaningful hub while
+        # preserving an independent topic for each control.
+        button_entities = {entity["key"] for entity in entities if entity["kind"] == "button"}
+        design_context = re.search(
+            r"\b(?:diseñ[oa]|estilo|apariencia|color(?:es)?|tema)\b.{0,35}\bbot[oó]n(?:es)?\b|"
+            r"\bbot[oó]n(?:es)?\b.{0,35}\b(?:diseñ[oa]|estilo|apariencia|color(?:es)?|tema)\b",
+            text, re.I | re.S)
+        if button_entities:
+            entities.append({"kind": "component_type", "key": "button", "name": "botones"})
+        if design_context or button_entities:
+            entities.append({"kind": "design_group", "key": "buttons", "name": "diseño de botones"})
+        # Explicit source references make useful entities while remaining
+        # deterministic when no local model is configured.
+        for match in re.finditer(r"(?<![\w/.-])([\w./-]+\.(?:cs|js|ts|tsx|py|java|go|rs|php|prefab|unity))\b", text, re.I):
+            value = match.group(1).casefold()
+            entities.append({"kind": "file", "key": value, "name": value})
+        stopwords = {"cambia", "cambiar", "change", "el", "la", "los", "las", "un", "una", "por", "para", "del", "de", "que", "ahora", "también", "tambien", "debe", "deben", "quiero", "botón", "botones", "boton", "button", "btn", "pantalla", "screen"}
+        terms = {term for term in re.findall(r"[\wáéíóúñ]{4,}", text.casefold())
+                 if term not in stopwords and not term.isdigit()}
+        terms -= {entity["key"] for entity in entities}
+        action_terms = {
+            "cambia": "change", "cambiar": "change", "cambié": "change", "change": "change",
+            "ajusta": "adjust", "ajustar": "adjust", "mejora": "improve", "mejorar": "improve",
+            "corrige": "correct", "corregir": "correct", "revisa": "review", "revisar": "review",
+            "verifica": "verify", "verificar": "verify", "prueba": "test", "probar": "test",
+            "usa": "set", "usar": "set",
+        }
+        for word, action in action_terms.items():
+            if re.search(rf"\b{re.escape(word)}\b", text, re.I):
+                terms.add("__action_" + action + "__")
+        if re.search(r"\b(?:ahora|también|tambien|sigue|continuar|retoma|retomar)\b", text, re.I):
+            terms.add("__continuation__")
+        return entities, terms
+
+    def _entity_ids(self, db, entities, source_message_id, now):
+        ids = []
+        for entity in entities:
+            row = db.execute("SELECT id FROM entities WHERE kind=? AND entity_key=?",
+                             (entity["kind"], entity["key"])).fetchone()
+            if row:
+                entity_id = row[0]
+                db.execute("UPDATE entities SET name=?,updated_at=? WHERE id=?",
+                           (entity["name"], now, entity_id))
+            else:
+                entity_id = "ent_" + hashlib.sha256((entity["kind"] + "\0" + entity["key"]).encode()).hexdigest()[:24]
+                db.execute("INSERT INTO entities(id,kind,entity_key,name,created_at,updated_at) VALUES(?,?,?,?,?,?)",
+                           (entity_id, entity["kind"], entity["key"], entity["name"], now, now))
+            ids.append(entity_id)
+        return ids
+
+    def _find_topic_match(self, db, session_id, entity_ids, terms):
+        if not entity_ids:
+            return None
+        candidates = db.execute("""SELECT DISTINCT t.id,t.state,t.updated_at
+            FROM topics t JOIN topic_entities te ON te.topic_id=t.id
+            JOIN entities candidate_entity ON candidate_entity.id=te.entity_id
+            WHERE te.entity_id IN ({})
+              AND candidate_entity.kind NOT IN ('component_type','design_group','platform')
+              AND t.state IN ('abierto','en investigación','reabierto')
+            ORDER BY t.updated_at DESC""".format(",".join("?" for _ in entity_ids)),
+            entity_ids).fetchall()
+        best = None
+        for row in candidates:
+            existing = {r[0] for r in db.execute("SELECT term FROM topic_work_terms WHERE topic_id=?", (row[0],))}
+            overlap = len(existing & terms)
+            score = 3 + min(3, overlap)
+            # Same entity alone is insufficient for separate work items. A
+            # repeated request with at least one stable work term continues it.
+            if overlap < 2 and "__continuation__" not in terms:
+                continue
+            candidate = (score, row[2], row[0])
+            if best is None or candidate > best:
+                best = candidate
+        return best[2] if best else None
+
+    def _link_topic_entities(self, db, topic_id, entity_ids, terms, source_message_id, now):
+        for entity_id in entity_ids:
+            kind = db.execute("SELECT kind FROM entities WHERE id=?", (entity_id,)).fetchone()[0]
+            relation = {"component_type": "mismo tipo", "design_group": "tema de diseño",
+                        "feature": "implementa", "module": "afecta_a", "report": "afecta_a",
+                        "platform": "usa"}.get(kind, "afecta_a")
+            db.execute("INSERT OR IGNORE INTO topic_entities(topic_id,entity_id,relation,confidence,source_message_id,created_at) VALUES(?,?,?,?,?,?)",
+                       (topic_id, entity_id, relation, "EXTRACTED", source_message_id, now))
+            prior = db.execute("SELECT topic_id FROM topic_entities WHERE entity_id=? AND topic_id!=?",
+                               (entity_id, topic_id)).fetchall()
+            for (other_id,) in prior:
+                other_kind = db.execute("SELECT kind FROM entities WHERE id=?", (entity_id,)).fetchone()[0]
+                relation = {"component_type": "mismo tipo", "design_group": "tema de diseño",
+                            "feature": "mismo concepto", "module": "mismo concepto",
+                            "report": "mismo concepto", "platform": "misma plataforma",
+                            "python_function": "mismo símbolo", "python_class": "mismo símbolo",
+                            "python_method": "mismo símbolo"}.get(other_kind, "mismo elemento")
+                db.execute("""INSERT OR IGNORE INTO topic_relations
+                    (source_topic_id,target_topic_id,relation,confidence,reason,source_message_id,created_at)
+                    VALUES(?,?,?,?,?,?,?)""", (topic_id, other_id, relation, "EXTRACTED",
+                    "comparten una entidad identificada explícitamente", source_message_id, now))
+        for term in terms:
+            db.execute("INSERT OR IGNORE INTO topic_work_terms(topic_id,term) VALUES(?,?)", (topic_id, term))
+
+    def backup(self, destination):
+        target = Path(destination).expanduser().resolve()
+        if target == self.db_path.resolve() or target.exists():
+            raise ValueError("backup requiere un archivo nuevo")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with self._connect() as source, sqlite3.connect(target) as dest:
+            source.backup(dest)
+        target.chmod(0o600)
+        return {"ok": True, "source": str(self.db_path.resolve()), "backup": str(target)}
+
+    def topic_graph(self, *, requester_agent="dashboard", limit=400, detail=False):
+        """Return a bounded topic/session/agent graph for the dashboard.
+
+        Messages remain references opened from an episode; they are deliberately
+        not rendered as thousands of force-layout nodes.
+        """
+        limit = max(1, min(1000, int(limit)))
+        with self._connect() as db:
+            rows = db.execute("""
+              SELECT DISTINCT t.id, t.title, t.summary, t.state, t.verification,
+                     t.updated_at, e.session_id, e.agent_id
+              FROM topics t JOIN topic_episodes e ON e.topic_id=t.id
+              JOIN sessions s ON s.id=e.session_id
+              WHERE (s.capture_enabled=1 OR s.agent_id=?)
+              ORDER BY t.updated_at DESC, t.id LIMIT ?""", (requester_agent or "", limit)).fetchall()
+        nodes, links, agents, sessions = {}, [], set(), set()
+        topic_rows = []
+        for row in rows:
+            topic_id = "topic:" + row["id"]
+            session_id = "session:" + row["session_id"]
+            agent_id = "agent:" + row["agent_id"]
+            title = self._unprotect(row["title"])
+            nodes.setdefault(topic_id, {"id": topic_id, "kind": "memory_topic", "name": title,
+                "details": self._unprotect(row["summary"]), "topic_id": row["id"],
+                "state": row["state"], "verification": row["verification"],
+                "session_id": row["session_id"], "agent_id": row["agent_id"]})
+            nodes.setdefault(session_id, {"id": session_id, "kind": "memory_session",
+                "name": row["session_id"], "details": "Sesión de conversación"})
+            nodes.setdefault(agent_id, {"id": agent_id, "kind": "memory_agent",
+                "name": row["agent_id"], "details": "Agente participante"})
+            sessions.add(session_id); agents.add(agent_id)
+            links.append({"source": topic_id, "target": session_id, "label": "episodio", "confidence": "EXTRACTED"})
+            links.append({"source": topic_id, "target": agent_id, "label": "participó", "confidence": "EXTRACTED"})
+            topic_rows.append(row)
+        # A session is a timeline, so adjacent topics are connected as
+        # continuations. Similarity links remain explicitly ambiguous: they
+        # help exploration but never merge or assert that two issues are one.
+        by_session = {}
+        for row in topic_rows:
+            by_session.setdefault(row["session_id"], []).append(row)
+        seen_topic_links = set()
+        topic_ids = {row["id"] for row in topic_rows}
+        if topic_ids:
+            placeholders = ",".join("?" for _ in topic_ids)
+            with self._connect() as db:
+                relations = db.execute(f"""SELECT source_topic_id,target_topic_id,relation,confidence,reason
+                    FROM topic_relations WHERE source_topic_id IN ({placeholders})
+                    AND target_topic_id IN ({placeholders})""", [*topic_ids, *topic_ids]).fetchall()
+            for relation in relations:
+                source, target = "topic:" + relation[0], "topic:" + relation[1]
+                links.append({"source": source, "target": target, "label": relation[2],
+                              "confidence": relation[3], "reason": relation[4]})
+                if relation[2] not in {"misma plataforma"}:
+                    seen_topic_links.add(tuple(sorted((source, target))))
+        for session_rows in by_session.values():
+            ordered = sorted(session_rows, key=lambda row: (row["updated_at"], row["id"]))
+            for previous, current in zip(ordered, ordered[1:]):
+                source, target = "topic:" + previous["id"], "topic:" + current["id"]
+                pair = tuple(sorted((source, target)))
+                if pair not in seen_topic_links:
+                    links.append({"source": source, "target": target, "label": "continuación", "confidence": "EXTRACTED"})
+                    seen_topic_links.add(pair)
+        stopwords = {"para", "como", "esta", "este", "desde", "ahora", "porque", "tiene", "hacer", "quiero", "sobre", "con", "del", "los", "las", "una", "uno", "que"}
+        topic_terms = []
+        for row in topic_rows:
+            text = (self._unprotect(row["title"]) + " " + self._unprotect(row["summary"])).casefold()
+            terms = {term for term in re.findall(r"[\wáéíóúñ]{4,}", text) if term not in stopwords}
+            topic_terms.append((row, terms))
+        for index, (left, left_terms) in enumerate(topic_terms):
+            if not left_terms: continue
+            candidates = []
+            for right, right_terms in topic_terms[index + 1:]:
+                overlap = left_terms & right_terms
+                if len(overlap) >= 2:
+                    candidates.append((len(overlap), right, overlap))
+            for _, right, overlap in sorted(candidates, key=lambda item: (-item[0], item[1]["id"]))[:3]:
+                source, target = "topic:" + left["id"], "topic:" + right["id"]
+                pair = tuple(sorted((source, target)))
+                if pair not in seen_topic_links:
+                    links.append({"source": source, "target": target, "label": "posible relación", "confidence": "AMBIGUOUS", "shared_terms": sorted(overlap)})
+                    seen_topic_links.add(pair)
+        if detail and nodes:
+            topic_ids = [node["topic_id"] for node in nodes.values() if node["kind"] == "memory_topic"]
+            placeholders = ",".join("?" for _ in topic_ids)
+            with self._connect() as db:
+                entities = db.execute(f"""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name
+                    FROM entities e JOIN topic_entities te ON te.entity_id=e.id
+                    WHERE te.topic_id IN ({placeholders})""", topic_ids).fetchall()
+                episodes = db.execute(f"""SELECT e.id,e.topic_id,e.session_id,e.agent_id,e.problem,e.result,
+                    (SELECT COUNT(*) FROM topic_messages tm WHERE tm.episode_id=e.id) AS message_count
+                    FROM topic_episodes e WHERE e.topic_id IN ({placeholders}) ORDER BY e.created_at,e.id""", topic_ids).fetchall()
+            for entity in entities:
+                entity_id = "entity:" + entity["id"]
+                nodes[entity_id] = {"id": entity_id, "kind": "memory_entity", "name": entity["name"],
+                                    "details": f"{entity['kind']}:{entity['entity_key']}",
+                                    "entity_id": entity["id"], "entity_kind": entity["kind"],
+                                    "entity_key": entity["entity_key"]}
+                for topic_id in topic_ids:
+                    with self._connect() as db:
+                        linked = db.execute("SELECT relation,confidence FROM topic_entities WHERE topic_id=? AND entity_id=?",
+                                            (topic_id, entity["id"])).fetchone()
+                    if linked:
+                        links.append({"source": "topic:" + topic_id, "target": entity_id,
+                                      "label": linked[0], "confidence": linked[1]})
+            for episode in episodes[: max(1, min(1200, limit * 4))]:
+                episode_id = "episode:" + episode["id"]
+                topic_id = "topic:" + episode["topic_id"]
+                nodes[episode_id] = {"id": episode_id, "kind": "memory_episode",
+                    "name": self._unprotect(episode["problem"])[:160],
+                    "details": self._unprotect(episode["result"] or ""),
+                    "episode_id": episode["id"], "topic_id": episode["topic_id"],
+                    "session_id": episode["session_id"], "agent_id": episode["agent_id"],
+                    "message_count": episode["message_count"]}
+                links.append({"source": topic_id, "target": episode_id, "label": "episodio", "confidence": "EXTRACTED"})
+                links.append({"source": episode_id, "target": "session:" + episode["session_id"], "label": "ocurrió en", "confidence": "EXTRACTED"})
+        return {"ok": True, "view": "topics", "nodes": list(nodes.values()), "links": links,
+                "agents": [{"id": node.removeprefix("agent:"), "color": "#22d3ee"} for node in sorted(agents)],
+                "consulters": [], "metadata": {"topic_count": len([n for n in nodes.values() if n["kind"] == "memory_topic"]),
+                    "episode_count": len([n for n in nodes.values() if n["kind"] == "memory_episode"]),
+                    "entity_count": len([n for n in nodes.values() if n["kind"] == "memory_entity"]),
+                    "mode": "detailed" if detail else "simplified",
+                    "message_rendering": "panel_on_demand", "coverage": self.topic_coverage(requester_agent)}}
+
+    def topic_coverage(self, requester_agent=None):
+        with self._connect() as db:
+            row = db.execute("""SELECT COUNT(*) AS discovered,
+                COALESCE(SUM(CASE WHEN m.rowid<=COALESCE(p.cursor,0) THEN 1 ELSE 0 END),0) AS processed
+                FROM messages m JOIN sessions s ON s.id=m.session_id
+                LEFT JOIN topic_progress p ON p.session_id=s.id
+                WHERE s.capture_enabled=1 OR s.agent_id=?""", (requester_agent or "",)).fetchone()
+        return {**dict(row), "pending": row["discovered"] - row["processed"],
+                "scope": "persisted_messages", "extraction_quality": "limited; processing is not recall",
+                "source_exclusions": "not measured"}
+
+    def process_topics(self, session_id, *, batch_messages=30, batch_tokens=6000):
+        session = self.get_session(session_id)
+        if not session or not session["capture_enabled"]:
+            raise PermissionError("sesión sin autorización de captura")
+        total = 0
+        while True:
+            with self._connect() as db:
+                # Cursor, episodes and references commit atomically. Concurrent
+                # ingest/compaction cannot consume the same batch twice.
+                db.execute("BEGIN IMMEDIATE")
+                progress = db.execute("SELECT cursor FROM topic_progress WHERE session_id=?", (session_id,)).fetchone()
+                cursor = progress[0] if progress else 0
+                rows = db.execute("SELECT rowid AS seq,* FROM messages WHERE session_id=? AND rowid>? ORDER BY rowid LIMIT ?",
+                                  (session_id, cursor, max(1, min(100, batch_messages)))).fetchall()
+                if not rows:
+                    break
+                batch, cost = [], 0
+                for row in rows:
+                    msg = self._message_row(row)
+                    size = encoded_tokens(msg)
+                    if batch and cost + size > batch_tokens:
+                        break
+                    batch.append(msg)
+                    cost += size
+                # Deterministic mode associates a new turn only when an
+                # explicit entity and stable work term support continuation.
+                # A shared category such as "button" alone never merges work.
+                prior = db.execute("SELECT e.* FROM topic_episodes e JOIN topic_messages r ON r.episode_id=e.id JOIN messages m ON m.id=r.message_id WHERE e.session_id=? ORDER BY m.rowid DESC LIMIT 1", (session_id,)).fetchone()
+                episode = dict(prior) if prior else None
+                for msg in batch:
+                    if msg["role"] == "user":
+                        entities, terms = self._subject_terms(msg["content"])
+                        entity_ids = self._entity_ids(db, entities, msg["id"], msg["created_at"])
+                        matched_topic = self._find_topic_match(db, session_id, entity_ids, terms)
+                        key = hashlib.sha256((session_id + msg["id"]).encode()).hexdigest()[:24]
+                        topic_id, episode_id = matched_topic or "top_" + key, "epi_" + key
+                        title = re.sub(r"\s+", " ", msg["content"]).strip()[:180] or "Asunto sin texto"
+                        now = msg["created_at"]
+                        db.execute("INSERT OR IGNORE INTO topics(id,title,summary,created_at,updated_at) VALUES(?,?,?,?,?)",
+                                   (topic_id, self._protect(title), self._protect(msg["content"][:1200]), now, now))
+                        db.execute("UPDATE topics SET updated_at=? WHERE id=?", (now, topic_id))
+                        db.execute("INSERT OR IGNORE INTO topic_episodes(id,topic_id,session_id,agent_id,problem,extraction,created_at) VALUES(?,?,?,?,?,?,?)",
+                                   (episode_id, topic_id, session_id, msg["agent_id"], self._protect(msg["content"][:2400]), "deterministic-limited", now))
+                        episode = {"id": episode_id, "topic_id": topic_id}
+                        db.execute("INSERT INTO topic_events(topic_id,actor,action,details_json,created_at) VALUES(?,?,?,?,?)",
+                                   (topic_id, msg["agent_id"], "continued" if matched_topic else "created",
+                                    json.dumps({"message_id": msg["id"], "extraction": "deterministic-limited",
+                                                "matched_existing": bool(matched_topic), "entity_ids": entity_ids}), time.time()))
+                        self._link_topic_entities(db, topic_id, entity_ids, terms, msg["id"], now)
+                    elif episode is None:
+                        key = hashlib.sha256((session_id + msg["id"]).encode()).hexdigest()[:24]
+                        topic_id, episode_id = "top_" + key, "epi_" + key
+                        now = msg["created_at"]
+                        title = re.sub(r"\s+", " ", msg["content"]).strip()[:180] or "Asunto sin texto"
+                        db.execute("INSERT OR IGNORE INTO topics(id,title,summary,created_at,updated_at) VALUES(?,?,?,?,?)",
+                                   (topic_id, self._protect(title), self._protect(msg["content"][:1200]), now, now))
+                        db.execute("INSERT OR IGNORE INTO topic_episodes(id,topic_id,session_id,agent_id,problem,extraction,created_at) VALUES(?,?,?,?,?,?,?)",
+                                   (episode_id, topic_id, session_id, msg["agent_id"], self._protect(msg["content"][:2400]), "deterministic-limited", now))
+                        episode = {"id": episode_id, "topic_id": topic_id}
+                        db.execute("INSERT INTO topic_events(topic_id,actor,action,details_json,created_at) VALUES(?,?,?,?,?)",
+                                   (topic_id, msg["agent_id"], "created", json.dumps({"message_id": msg["id"], "extraction": "deterministic-limited"}), time.time()))
+                    db.execute("INSERT OR IGNORE INTO topic_messages VALUES(?,?)", (episode["id"], msg["id"]))
+                    if msg["role"] == "assistant":
+                        db.execute("UPDATE topic_episodes SET result=? WHERE id=?", (self._protect(msg["content"][:2400]), episode["id"]))
+                last = batch[-1]["seq"]
+                db.execute("INSERT INTO topic_progress VALUES(?,?,?,?) ON CONFLICT(session_id) DO UPDATE SET cursor=excluded.cursor,processed=topic_progress.processed+excluded.processed,updated_at=excluded.updated_at",
+                           (session_id, last, len(batch), time.time()))
+                total += len(batch)
+        return {"ok": True, "processed": total, "coverage": self.topic_coverage(), "extraction": "deterministic-limited"}
+
+    def enrich_topics(self, session_id=None):
+        """Attach entity identity to already processed episodes without rewriting them."""
+        with self._connect() as db:
+            where = "" if session_id is None else "WHERE e.session_id=?"
+            args = [] if session_id is None else [session_id]
+            rows = db.execute(f"""SELECT DISTINCT e.id,e.topic_id,m.id AS message_id,m.content,m.created_at
+                FROM topic_episodes e JOIN topic_messages tm ON tm.episode_id=e.id
+                JOIN messages m ON m.id=tm.message_id {where} AND m.role='user'
+                ORDER BY m.rowid""" if where else """SELECT DISTINCT e.id,e.topic_id,m.id AS message_id,m.content,m.created_at
+                FROM topic_episodes e JOIN topic_messages tm ON tm.episode_id=e.id
+                JOIN messages m ON m.id=tm.message_id WHERE m.role='user'
+                ORDER BY m.rowid""", args).fetchall()
+            processed = 0
+            for row in rows:
+                entities, terms = self._subject_terms(self._unprotect(row["content"]))
+                entity_ids = self._entity_ids(db, entities, row["message_id"], row["created_at"])
+                if entity_ids or terms:
+                    self._link_topic_entities(db, row["topic_id"], entity_ids, terms, row["message_id"], row["created_at"])
+                    processed += 1
+        return {"ok": True, "processed": processed, "sessions": 1 if session_id else None,
+                "coverage": self.topic_coverage(), "extraction": "deterministic-limited"}
+
+    def topics(self, query="", *, requester_agent=None, state=None, agent_id=None,
+               session_id=None, since=None, until=None, limit=20, offset=0):
+        where, args = ["(s.capture_enabled=1 OR s.agent_id=?)", "NOT EXISTS (SELECT 1 FROM topic_episodes hidden JOIN sessions hs ON hs.id=hidden.session_id WHERE hidden.topic_id=t.id AND hs.capture_enabled=0 AND hs.agent_id!=?)"], [requester_agent or "", requester_agent or ""]
+        for clause, value in (("t.state=?", state), ("e.agent_id=?", agent_id), ("e.session_id=?", session_id),
+                              ("e.created_at>=?", since), ("e.created_at<=?", until)):
+            if value is not None:
+                where.append(clause); args.append(value)
+        # Content may be encrypted, so lexical matching takes place after
+        # decryption. This bounded page scan reports that it is not semantic recall.
+        semantic = set()
+        if query:
+            memory_ids = [m["id"] for m in self.search(query, requester_agent=requester_agent, limit=30)]
+            with self._connect() as db:
+                for mid in memory_ids:
+                    semantic.update(r[0] for r in db.execute("SELECT topic_id FROM topic_memory_links WHERE memory_id=?", (mid,)))
+        start, count = max(0, min(10000, offset)), max(1, min(100, limit))
+        matches = []
+        words = re.findall(r"\w+", query.casefold())
+        with self._connect() as db:
+            cursor = db.execute("SELECT DISTINCT t.* FROM topics t JOIN topic_episodes e ON e.topic_id=t.id JOIN sessions s ON s.id=e.session_id WHERE " + " AND ".join(where) + " ORDER BY t.updated_at DESC,t.id", args)
+            for row in cursor:
+                item = dict(row)
+                item["title"], item["summary"] = self._unprotect(item["title"]), self._unprotect(item["summary"])
+                entity_rows = db.execute("""SELECT e.kind,e.entity_key,e.name,te.relation,te.confidence
+                    FROM topic_entities te JOIN entities e ON e.id=te.entity_id
+                    WHERE te.topic_id=?""", (item["id"],)).fetchall()
+                item["entities"] = [dict(entity) for entity in entity_rows]
+                entity_text = " ".join(f"{entity['kind']} {entity['entity_key']} {entity['name']}" for entity in entity_rows)
+                haystack = (item["title"] + " " + item["summary"] + " " + entity_text).casefold()
+                if words and not all(w in haystack for w in words) and item["id"] not in semantic:
+                    continue
+                lexical = sum(w in haystack for w in words) / max(1, len(words))
+                score = (2.0 if words and all(w in haystack for w in words) else 0.0) + lexical + (.1 if item["id"] in semantic else 0)
+                item["retrieval_score"] = score
+                candidate = (score, item["updated_at"], item["id"], item)
+                heapq.heappush(matches, candidate)
+                if len(matches) > start + count + 1:
+                    heapq.heappop(matches)
+        matches = [entry[-1] for entry in sorted(matches, reverse=True)]
+        more = len(matches) > start + count
+        return {"ok": True, "topics": matches[start:start + count], "next_offset": start + count if more else None,
+                "coverage": self.topic_coverage(requester_agent), "retrieval": "lexical+linked-memory-candidates", "trust": "untrusted_history"}
+
+    def topic(self, topic_id, *, requester_agent=None, limit=20, offset=0):
+        with self._connect() as db:
+            allowed = db.execute("SELECT 1 FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND (s.capture_enabled=1 OR s.agent_id=?) LIMIT 1", (topic_id, requester_agent or "")).fetchone()
+            hidden = db.execute("SELECT 1 FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND s.capture_enabled=0 AND s.agent_id!=? LIMIT 1", (topic_id, requester_agent or "")).fetchone()
+            if not allowed or hidden:
+                raise PermissionError("tema inexistente o no accesible")
+            item = dict(db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone())
+            rows = db.execute("SELECT e.* FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND (s.capture_enabled=1 OR s.agent_id=?) ORDER BY e.created_at,e.id LIMIT ? OFFSET ?",
+                              (topic_id, requester_agent or "", min(100, max(1, limit)) + 1, max(0, offset))).fetchall()
+            episodes = []
+            for row in rows[:limit]:
+                ep = dict(row)
+                for k in ("problem", "decisions", "result"): ep[k] = self._unprotect(ep[k])
+                ep["message_ids"] = [r[0] for r in db.execute("SELECT r.message_id FROM topic_messages r JOIN messages m ON m.id=r.message_id WHERE r.episode_id=? ORDER BY m.rowid LIMIT 21", (ep["id"],))]
+                episodes.append(ep)
+            entities = [dict(r) for r in db.execute("""SELECT e.id,e.kind,e.entity_key,e.name,te.relation,te.confidence,te.source_message_id
+                FROM topic_entities te JOIN entities e ON e.id=te.entity_id WHERE te.topic_id=?""", (topic_id,))]
+            relations = [dict(r) for r in db.execute("""SELECT source_topic_id,target_topic_id,relation,confidence,reason,source_message_id
+                FROM topic_relations WHERE source_topic_id=? OR target_topic_id=? ORDER BY created_at DESC LIMIT 100""", (topic_id, topic_id))]
+            events = [dict(r) for r in db.execute("SELECT * FROM topic_events WHERE topic_id=? ORDER BY id DESC LIMIT 100", (topic_id,))]
+        for k in ("title", "summary"): item[k] = self._unprotect(item[k])
+        return {"ok": True, "topic": item, "entities": entities, "relations": relations, "episodes": episodes, "events": events,
+                "next_offset": offset + limit if len(rows) > limit else None, "trust": "untrusted_history"}
+
+    def entities(self, query="", *, requester_agent=None, kind=None, limit=50, offset=0):
+        """List concrete project elements and the topics attached to them."""
+        limit, offset = max(1, min(100, int(limit))), max(0, min(10000, int(offset)))
+        words = [word for word in re.findall(r"[\wáéíóúñ.-]+", str(query).casefold()) if word]
+        with self._connect() as db:
+            where = ["(s.capture_enabled=1 OR s.agent_id=?)"]
+            args = [requester_agent or ""]
+            if kind:
+                where.append("e.kind=?"); args.append(kind)
+            rows = db.execute("""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name,e.metadata_json,
+                    e.created_at,e.updated_at
+                FROM entities e JOIN topic_entities te ON te.entity_id=e.id
+                JOIN topic_episodes ep ON ep.topic_id=te.topic_id
+                JOIN sessions s ON s.id=ep.session_id
+                WHERE """ + " AND ".join(where) + " ORDER BY e.updated_at DESC,e.id", args).fetchall()
+            result = []
+            for row in rows:
+                item = dict(row)
+                haystack = f"{item['kind']} {item['entity_key']} {item['name']}".casefold()
+                if words and not all(word in haystack for word in words):
+                    continue
+                item["metadata"] = json.loads(item.pop("metadata_json") or "{}")
+                item["topic_ids"] = [r[0] for r in db.execute("SELECT topic_id FROM topic_entities WHERE entity_id=?", (item["id"],))]
+                result.append(item)
+        page = result[offset:offset + limit]
+        return {"ok": True, "entities": page, "next_offset": offset + limit if len(result) > offset + limit else None,
+                "retrieval": "lexical-entity-index", "trust": "untrusted_history"}
+
+    def entity(self, entity_id, *, requester_agent=None, limit=50):
+        with self._connect() as db:
+            row = db.execute("SELECT * FROM entities WHERE id=?", (entity_id,)).fetchone()
+            if not row:
+                raise ValueError("entidad inexistente")
+            allowed = db.execute("""SELECT 1 FROM topic_entities te JOIN topic_episodes ep ON ep.topic_id=te.topic_id
+                JOIN sessions s ON s.id=ep.session_id WHERE te.entity_id=? AND (s.capture_enabled=1 OR s.agent_id=?) LIMIT 1""",
+                                (entity_id, requester_agent or "")).fetchone()
+            if not allowed:
+                raise PermissionError("entidad no accesible")
+            item = dict(row)
+            item["metadata"] = json.loads(item.pop("metadata_json") or "{}")
+            topics = [dict(r) for r in db.execute("""SELECT t.id,t.title,t.summary,t.state,t.verification,te.relation,te.confidence
+                FROM topic_entities te JOIN topics t ON t.id=te.topic_id
+                WHERE te.entity_id=? ORDER BY t.updated_at DESC LIMIT ?""", (entity_id, max(1, min(100, limit)))).fetchall()]
+            for topic in topics:
+                topic["title"], topic["summary"] = self._unprotect(topic["title"]), self._unprotect(topic["summary"])
+        return {"ok": True, "entity": item, "topics": topics, "trust": "untrusted_history"}
+
+    def topic_update(self, topic_id, *, requester_agent, reason, state=None, title=None,
+                     verification=None, message_ids=None, merge_into=None, split_episode=None):
+        if not str(requester_agent).strip() or not str(reason).strip():
+            raise ValueError("actor y motivo son obligatorios")
+        self.topic(topic_id, requester_agent=requester_agent)
+        if state is not None and state not in STATES: raise ValueError("estado inválido")
+        if verification is not None and verification not in VERIFICATIONS: raise ValueError("verificación inválida")
+        if verification in {"prueba superada", "prueba fallida", "confirmado por usuario"} and not message_ids:
+            raise ValueError("verificación requiere mensajes fuente")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            for mid in message_ids or []:
+                row = db.execute("SELECT m.role FROM topic_messages r JOIN topic_episodes e ON e.id=r.episode_id JOIN messages m ON m.id=r.message_id WHERE e.topic_id=? AND m.id=?", (topic_id, mid)).fetchone()
+                if not row or not self.get_message(mid, requester_agent): raise ValueError("referencia ajena al tema")
+                if verification == "confirmado por usuario" and row[0] != "user": raise ValueError("confirmación requiere mensaje del usuario")
+                if verification in {"prueba superada", "prueba fallida"} and row[0] != "tool": raise ValueError("prueba requiere evidencia de herramienta")
+            old = dict(db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone())
+            updates = {k: v for k, v in (("state", state), ("verification", verification), ("title", title)) if v is not None}
+            if title is not None:
+                safe, _ = self._sanitize(title, 180)
+                if not safe.strip(): raise ValueError("título vacío")
+                updates["title"] = self._protect(safe)
+            for k, v in updates.items(): db.execute(f"UPDATE topics SET {k}=?,updated_at=? WHERE id=?", (v, time.time(), topic_id))
+            if merge_into:
+                if merge_into == topic_id: raise ValueError("no se puede fusionar consigo mismo")
+                self.topic(merge_into, requester_agent=requester_agent)
+                db.execute("UPDATE topic_episodes SET topic_id=? WHERE topic_id=?", (merge_into, topic_id))
+                db.execute("UPDATE topics SET state='archivado' WHERE id=?", (topic_id,))
+            new_id = None
+            if split_episode:
+                ep = db.execute("SELECT * FROM topic_episodes WHERE id=? AND topic_id=?", (split_episode, topic_id)).fetchone()
+                if not ep: raise ValueError("episodio ajeno al tema")
+                new_id = "top_" + hashlib.sha256((split_episode + str(time.time_ns())).encode()).hexdigest()[:24]
+                db.execute("INSERT INTO topics VALUES(?,?,?,?,?,?,?,?)", (new_id, old["title"], ep["problem"], old["category"], "abierto", "sin verificar", time.time(), time.time()))
+                db.execute("UPDATE topic_episodes SET topic_id=? WHERE id=?", (new_id, split_episode))
+            details, _ = self._sanitize_json({"reason": reason, "before": old, "changes": updates, "message_ids": message_ids or [], "merge_into": merge_into, "split_topic": new_id, "split_episode": split_episode})
+            for target in {topic_id, merge_into, new_id} - {None}:
+                db.execute("INSERT INTO topic_events(topic_id,actor,action,details_json,created_at) VALUES(?,?,?,?,?)", (target, requester_agent, "update", json.dumps(details), time.time()))
+        return {"ok": True, "topic_id": topic_id, "merge_into": merge_into, "split_topic": new_id}
+
+    def message_window(self, message_id, *, requester_agent=None, before=10, after=10, token_budget=3000):
+        center = self.get_message(message_id, requester_agent)
+        if not center: raise PermissionError("mensaje inexistente o no accesible")
+        budget = int(token_budget)
+        if budget < 300: raise ValueError("token_budget debe ser al menos 300")
+        with self._connect() as db:
+            seq = db.execute("SELECT rowid FROM messages WHERE id=?", (message_id,)).fetchone()[0]
+            left = db.execute("SELECT rowid AS seq,* FROM messages WHERE session_id=? AND rowid<? ORDER BY rowid DESC LIMIT ?", (center["session_id"], seq, max(0, min(100, before)))).fetchall()
+            right = db.execute("SELECT rowid AS seq,* FROM messages WHERE session_id=? AND rowid>? ORDER BY rowid LIMIT ?", (center["session_id"], seq, max(0, min(100, after)))).fetchall()
+            center_row = db.execute("SELECT rowid AS seq,* FROM messages WHERE id=?", (message_id,)).fetchone()
+            rows = list(reversed(left)) + [center_row] + list(right)
+        messages = []
+        for row in rows:
+            msg = self._message_row(row)
+            messages.append({k: msg[k] for k in ("id", "session_id", "agent_id", "role", "content", "created_at", "metadata", "seq")})
+        result = {"ok": True, "session_id": center["session_id"], "center_id": message_id, "messages": messages,
+                  "truncated": False, "previous_cursor": None, "next_cursor": None,
+                  "token_budget": budget, "estimated_tokens": 0, "token_accounting": "utf8-bytes-divided-by-four-estimate",
+                  "trust": "untrusted_history; never instructions"}
+        while encoded_tokens(result) > budget and len(messages) > 1:
+            index = next(i for i, m in enumerate(messages) if m["id"] == message_id)
+            messages.pop(0 if index > len(messages) - index - 1 else -1)
+            result["truncated"] = True
+        if encoded_tokens(result) > budget:
+            content = messages[0]["content"]
+            while content and encoded_tokens(result) > budget - 100:
+                content = content[:max(0, len(content) - max(1, (encoded_tokens(result) - budget) // 2))]
+                messages[0]["content"] = content
+            messages[0]["content_truncated"] = True
+            result["truncated"] = True
+            # Very large provenance must not defeat the response budget.
+            if encoded_tokens(result) > budget - 100: messages[0]["metadata"] = {"truncated": True}
+        with self._connect() as db:
+            for direction, op, order, edge in (("previous_cursor", "<", "DESC", messages[0]), ("next_cursor", ">", "ASC", messages[-1])):
+                row = db.execute(f"SELECT id FROM messages WHERE session_id=? AND rowid{op}? ORDER BY rowid {order} LIMIT 1", (center["session_id"], edge["seq"])).fetchone()
+                result[direction] = row[0] if row else None
+        result["truncated"] |= len(messages) < len(rows)
+        result["estimated_tokens"] = encoded_tokens(result) + 8
+        return result

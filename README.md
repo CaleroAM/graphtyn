@@ -116,6 +116,23 @@ graphtyn export-md --path .
 graphtyn report --path . --output GRAPHTYN_REPORT.md
 ```
 
+Configuración y memoria conversacional:
+
+```bash
+# Configurar el proyecto y preguntar si se activa memoria
+graphtyn setup --apply --memory ask
+# Activar memoria sin interacción (instaladores y CI)
+graphtyn setup --apply --memory on --memory-watch
+# Importar o sincronizar historiales autorizados
+graphtyn memory bootstrap --path .
+graphtyn memory sync --path . --watch --interval 5 --consent
+graphtyn memory status --path .
+```
+
+`--memory off` instala Graphtyn sin captura conversacional. `bootstrap` siempre
+ofrece primero una vista previa; la importación histórica requiere repetirla con
+`--apply --consent`.
+
 Modos de reindexación:
 
 | Modo | Uso |
@@ -173,7 +190,20 @@ graphtyn memory session-end --agent-id opencode --summary "Cambio verificado" --
 Las conversaciones anteriores pueden importarse mediante autodetección,
 manifiestos adaptadores o archivos exportados. Graphtyn sanea secretos,
 deduplica eventos y conserva procedencia; no intercepta conversaciones sin una
-integración explícita. Configuración, recuperación, backups y ejemplos están en
+integración explícita. Durante la instalación puedes activar la captura guiada:
+
+```bash
+# Pregunta en una terminal (predeterminado)
+graphtyn setup --apply --memory ask
+# Automatización sin interacción
+graphtyn setup --apply --memory on --memory-watch
+graphtyn memory sync --path . --watch --interval 5 --consent
+```
+
+Al activar la memoria, Graphtyn detecta fuentes de Codex/AGY/OpenClaw/Hermes,
+importa historiales compatibles con el proyecto y genera embeddings locales.
+La opción `--memory off` conserva la instalación sin memoria conversacional.
+Configuración, recuperación, bootstrap histórico, backups y ejemplos están en
 [docs/shared-memory.md](docs/shared-memory.md).
 
 ## Dashboard y API
@@ -240,3 +270,11 @@ propio repositorio y ground truth.
 ## Licencia
 
 [MIT](LICENSE)
+# Memoria temática
+
+Graphtyn puede recuperar asuntos de conversaciones completas y asociarlos a elementos concretos del proyecto. Usa `graphtyn memory topics`, `graphtyn memory topic <id>` y `graphtyn memory window <message_id>` para explorar títulos, episodios y el contexto acotado de un mensaje; las interfaces MCP/API `memory_entities` y `memory_entity` permiten localizar controles, pantallas, archivos y símbolos Python relacionados. En un proyecto Python, conversaciones sobre `reports.py`, `función calcular_reporte` o `clase ReportService` se enlazan por símbolo cuando representan trabajos distintos, mientras funciones diferentes permanecen separadas. Una petición sobre `botón de Jugar` se mantiene independiente de otra sobre `botón de Fichas`, aunque ambas compartan el tema de diseño. La captura continua sólo está activa cuando se inicia `memory stream --watch` con consentimiento, una fuente y selección explícita del proyecto; el estado real aparece en `memory status` y en el dashboard.
+
+Para OpenClaw, Graphtyn reconoce tanto sesiones JSONL como el almacén SQLite
+`agent/openclaw-agent.sqlite` (`transcript_events`). Si el agente vive en otra
+máquina, publica `/mcp` con `GRAPHTYN_MCP_TOKEN`, comprueba desde ese runtime que
+`tools/list` incluye `memory_ingest_turn` y usa el MCP al cerrar cada turno.

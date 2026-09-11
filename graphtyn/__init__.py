@@ -1,4 +1,4 @@
 """
 Graphtyn — Zero-Token AST Deterministic + Hybrid Semantic RAG Graph for AI Coding Agents.
 """
-__version__ = "0.6.1"
+__version__ = "0.7.0"

@@ -22,6 +22,7 @@ async function request(url, options={}) {
 }
 
 export function openMemoryPanel() {
+  initializeTopics();
   document.getElementById('modal-memory').classList.add('show');
   const saved = localStorage.getItem('graphtyn-memory-token');
   if (saved) document.getElementById('memory-token').value = saved;
@@ -153,7 +154,7 @@ export async function showSharedMemoryGraph() {
   status.textContent = 'Construyendo mapa de autoría y recuperación…';
   try {
     const agent = document.getElementById('memory-agent').value.trim() || 'dashboard';
-    const data = await request(`/api/memory/graph?path=${encodeURIComponent(state.activePath)}&requester_agent=${encodeURIComponent(agent)}&limit=400`);
+    const data = await request(`/api/memory/graph?path=${encodeURIComponent(state.activePath)}&requester_agent=${encodeURIComponent(agent)}&view=topics&detail=${state.memoryGraphMode === 'detailed'}&limit=400`);
     state.activeView = 'memory';
     state.fullData = {nodes:data.nodes || [], links:data.links || []};
     state.selectedNode = null; state.selectedNeighbors = null;
@@ -167,7 +168,7 @@ export async function showSharedMemoryGraph() {
           + data.consulters.map(keyHtml).join('') : '');
       legend.innerHTML = html || '<div class="memory-empty">No hay agentes atribuidos.</div>';
     }
-    status.textContent = `${data.nodes.length} nodos de memoria · ${data.links.length} relaciones · colores por agente`;
+    status.textContent = `${data.metadata?.mode === 'detailed' ? 'Vista detallada' : 'Vista simplificada'} · ${data.metadata?.topic_count || 0} temas · ${data.nodes.length} nodos conectados · ${data.links.length} relaciones`;
     closeMemoryPanel();
   } catch (error) { status.textContent = `No se pudo generar el mapa: ${error.message}`; }
 }
@@ -291,4 +292,109 @@ export async function focusMemoryNode(memoryId) {
     }
   }
   focusNode(nodeId);
+}
+
+let topicRequest;
+let conversationRequest;
+async function loadTopics(offset = 0) {
+  topicRequest?.abort();
+  topicRequest = new AbortController();
+  const host = document.getElementById('memory-topic-list');
+  if (!host || !state.activePath) return;
+  const params = new URLSearchParams({path: state.activePath, offset, limit: 20});
+  for (const [id, key] of [['memory-topic-query','query'], ['memory-topic-state','state'], ['memory-topic-agent','agent_id'], ['memory-topic-session','session_id']]) {
+    const value = document.getElementById(id)?.value.trim();
+    if (value) params.set(key, value);
+  }
+  for (const [id, key] of [['memory-topic-since','since'], ['memory-topic-until','until']]) {
+    const value = document.getElementById(id)?.value;
+    if (value) params.set(key, Date.parse(value) / 1000 + (key === 'until' ? 86399 : 0));
+  }
+  host.textContent = 'Cargando asuntos…';
+  try {
+    const data = await request(`/api/memory/topics?${params}`, {signal: topicRequest.signal});
+    host.replaceChildren();
+    const coverage = document.createElement('p');
+    coverage.textContent = `${data.coverage.processed}/${data.coverage.discovered} mensajes guardados procesados · ${data.coverage.pending} pendientes · extracción limitada · exclusiones de fuente sin medir`;
+    host.append(coverage);
+    for (const topic of data.topics) {
+      const card = document.createElement('details');
+      card.className = 'memory-card';
+      const title = document.createElement('summary');
+      title.textContent = `${topic.title} · ${topic.state} · ${topic.verification}`;
+      card.append(title);
+      const body = document.createElement('div');
+      card.append(body);
+      const loadEpisodes = async (page = 0) => {
+        body.textContent = 'Cargando episodios…';
+        try {
+          const p = new URLSearchParams({path: state.activePath, topic_id: topic.id, offset: page});
+          const detail = await request(`/api/memory/topic?${p}`, {signal: topicRequest.signal});
+          body.replaceChildren();
+          for (const episode of detail.episodes) {
+            const text = document.createElement('p');
+            text.style.whiteSpace = 'pre-wrap';
+            text.textContent = `Participante: ${episode.agent_id}\nSesión: ${episode.session_id}\nPetición: ${episode.problem}\nDecisiones: ${episode.decisions || 'Sin extraer'}\nResultado declarado: ${episode.result || 'Sin resultado registrado'}`;
+            body.append(text);
+            if (episode.message_ids.length) {
+              const view = document.createElement('button');
+              view.textContent = 'Ver conversación';
+              view.onclick = () => showTopicConversation(episode.message_ids[0]);
+              body.append(view);
+            }
+          }
+          if (detail.next_offset !== null) {
+            const next = document.createElement('button'); next.textContent = 'Más episodios';
+            next.onclick = () => loadEpisodes(detail.next_offset); body.append(next);
+          }
+        } catch (error) { if (error.name !== 'AbortError') retry(body, error, () => loadEpisodes(page)); }
+      };
+      card.addEventListener('toggle', () => { if (card.open && !body.childNodes.length) loadEpisodes(); });
+      host.append(card);
+    }
+    if (!data.topics.length) host.append(document.createTextNode('Sin temas para estos filtros.'));
+    if (offset) { const prev = document.createElement('button'); prev.textContent = 'Anterior'; prev.onclick = () => loadTopics(Math.max(0, offset - 20)); host.append(prev); }
+    if (data.next_offset !== null) { const next = document.createElement('button'); next.textContent = 'Más temas'; next.onclick = () => loadTopics(data.next_offset); host.append(next); }
+  } catch (error) { if (error.name !== 'AbortError') retry(host, error, () => loadTopics(offset)); }
+}
+function retry(host, error, action) {
+  host.textContent = `No se pudo cargar: ${error.message} `;
+  const button = document.createElement('button'); button.textContent = 'Reintentar'; button.onclick = action; host.append(button);
+}
+async function showTopicConversation(messageId) {
+  conversationRequest?.abort(); conversationRequest = new AbortController();
+  const panel = document.getElementById('memory-conversation-panel');
+  panel.hidden = false; panel.textContent = 'Cargando conversación…';
+  try {
+    const params = new URLSearchParams({path: state.activePath, message_id: messageId});
+    const data = await request(`/api/memory/window?${params}`, {signal: conversationRequest.signal});
+    panel.replaceChildren();
+    const close = document.createElement('button'); close.textContent = 'Cerrar conversación'; close.onclick = () => { conversationRequest?.abort(); panel.hidden = true; }; panel.append(close);
+    for (const msg of data.messages) {
+      const block = document.createElement('p'); block.style.whiteSpace = 'pre-wrap';
+      block.textContent = `${msg.role} · ${msg.agent_id}\n${msg.content}${msg.content_truncated ? '\n[Texto recortado por presupuesto]' : ''}`; panel.append(block);
+    }
+    const note = document.createElement('p'); note.textContent = `${data.estimated_tokens}/${data.token_budget} presupuesto conservador${data.truncated ? ' · ventana recortada' : ''}`; panel.append(note);
+    for (const [key, label] of [['previous_cursor','10 antes'], ['next_cursor','10 después']]) {
+      if (data[key]) { const btn = document.createElement('button'); btn.textContent = label; btn.onclick = () => showTopicConversation(data[key]); panel.append(btn); }
+    }
+  } catch (error) { if (error.name !== 'AbortError') retry(panel, error, () => showTopicConversation(messageId)); }
+}
+function initializeTopics() {
+  if (document.getElementById('memory-topic-list')) { loadTopics(); return; }
+  const host = document.getElementById('memory-results')?.parentElement?.parentElement;
+  if (!host) return;
+  const section = document.createElement('section');
+  section.style.gridColumn = '1 / -1';
+  section.innerHTML = `<h3>Memoria del proyecto</h3><div class="memory-options">
+    <input id="memory-topic-query" aria-label="Buscar asunto" placeholder="Buscar asunto">
+    <select id="memory-topic-state" aria-label="Estado"><option value="">Todos los estados</option>${['abierto','en investigación','resuelto','reabierto','archivado'].map(x => `<option>${x}</option>`).join('')}</select>
+    <input id="memory-topic-agent" aria-label="Agente participante" placeholder="Agente participante">
+    <input id="memory-topic-session" aria-label="Sesión" placeholder="Sesión">
+    <label>Desde <input id="memory-topic-since" type="date"></label><label>Hasta <input id="memory-topic-until" type="date"></label>
+    <button id="memory-topic-filter">Filtrar</button></div><div id="memory-topic-list" aria-live="polite"></div>
+    <aside id="memory-conversation-panel" aria-label="Conversación histórica" hidden></aside>`;
+  host.prepend(section);
+  document.getElementById('memory-topic-filter').onclick = () => loadTopics();
+  loadTopics();
 }

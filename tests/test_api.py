@@ -83,6 +83,15 @@ def test_memory_http_search_context_sessions_and_auth(tmp_path, monkeypatch):
     assert any(node.get("kind") == "memory_agent" for node in graph["nodes"])
 
 
+def test_mcp_token_does_not_lock_local_dashboard_memory_api(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "remote-only")
+    project = tmp_path / "project"
+    project.mkdir()
+    status = api_main.memory_status(str(project), authorization=None)
+    assert status["ok"] is True
+
+
 def test_memory_http_correct_and_forget_enforce_author(tmp_path, monkeypatch):
     monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
     monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)

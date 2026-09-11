@@ -2,6 +2,7 @@
 export const state = {
   activePath: null,
   activeView: 'code',
+  memoryGraphMode: 'simplified',
   activeDim: '2d',
   isRotating: false,
   rotateRaf: null,
@@ -16,6 +17,7 @@ export const state = {
   graphRequestController: null,
   fullData: { nodes: [], links: [] },
   respectMap: {},
+  nonAutoloadPaths: new Set(),
   graphStyle: 'standard',
   nodeShape: 'circles',
   neuralPhase: 0,

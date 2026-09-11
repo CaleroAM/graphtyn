@@ -474,7 +474,7 @@ def test_versioned_memory_benchmark_meets_quality_and_token_guardrails(tmp_path)
     assert result["metrics"]["recall_at_5"] == 1.0
     assert result["metrics"]["mrr"] == 1.0
     assert result["metrics"]["attribution_accuracy"] == 1.0
-    assert result["metrics"]["estimated_tokens_total"] <= 1400
+    assert result["metrics"]["estimated_tokens_total"] <= 4000  # Full envelopes, including provenance/telemetry.
     assert result["failures"] == []
 
 
@@ -605,7 +605,7 @@ def test_stability_suite_has_30x3x3_design_and_meets_v1_guardrails():
     assert metrics["mrr"] >= .98
     assert metrics["attribution_accuracy"] == 1.0
     assert metrics["negative_accuracy"] == 1.0
-    assert metrics["estimated_tokens_mean"] <= 350
+    assert metrics["estimated_tokens_mean"] <= 750  # Previously counted memory bodies only.
     assert set(metrics["by_requester_agent"]) == {"agy", "codex", "openclaw"}
     assert all(item["recall_at_5"] >= .98 for item in metrics["by_requester_agent"].values())
     assert result["failures"] == []

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 from .history_import import default_sources, save_source
-from .storage import data_home, secure_private_file
+from .storage import data_home, secure_private_file, unsafe_project_root
 
 DASHBOARD_URL = "http://127.0.0.1:9210"
 
@@ -18,6 +18,8 @@ DASHBOARD_URL = "http://127.0.0.1:9210"
 def initialize_project(project: Path) -> dict[str, Any]:
     """Create project metadata and an idempotent gitignore entry."""
     project = project.expanduser().resolve()
+    if reason := unsafe_project_root(project):
+        raise ValueError(reason + "; indica la ruta del repositorio concreto")
     project.mkdir(parents=True, exist_ok=True)
     dot = project / ".graphtyn"
     dot.mkdir(exist_ok=True)
@@ -83,6 +85,8 @@ def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str
                 create_token: bool = True, tool_profile: str = "intent") -> dict[str, Any]:
     from .agent_installer import install_agent
     project = project.expanduser().resolve(); project.mkdir(parents=True, exist_ok=True)
+    if reason := unsafe_project_root(project):
+        raise ValueError(reason + "; indica la ruta del repositorio concreto")
     dot = project / ".graphtyn"; dot.mkdir(exist_ok=True)
     (dot / "graphtyn.json").write_text(json.dumps({"version": 1, "name": project.name}, indent=2), encoding="utf-8")
     installed = install_agent(project, agents, tool_profile=tool_profile) if agents else []

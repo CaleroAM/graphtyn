@@ -16,6 +16,8 @@ export function setView(v) {
       if (bMem) bMem.classList.toggle('active', v === 'memory');
       if (bAg) bAg.classList.toggle('active', v === 'agents');
       if (bCh) bCh.classList.toggle('active', v === 'changes');
+      const memoryGraphControl = document.getElementById('memory-graph-view-control');
+      if (memoryGraphControl) memoryGraphControl.hidden = v !== 'memory';
       const explore = document.getElementById('dd-explore');
       if (explore) {
         explore.classList.remove('open');
@@ -25,6 +27,17 @@ export function setView(v) {
       destroyGraph();
       loadGraph();
     }
+
+export function setMemoryGraphMode(mode) {
+      if (!['simplified', 'detailed'].includes(mode)) return;
+      state.memoryGraphMode = mode;
+      const selector = document.getElementById('memory-graph-mode');
+      if (selector && selector.value !== mode) selector.value = mode;
+      if (state.activeView === 'memory') {
+        destroyGraph();
+        loadGraph();
+      }
+}
 
 export function setDim(d) {
       if (state.activeDim === d) return;
