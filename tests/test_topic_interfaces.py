@@ -18,9 +18,11 @@ def test_topic_contracts_api_cli_and_mcp(tmp_path, monkeypatch):
     store = SharedMemoryStore(tmp_path / 'project')
     result = store.ingest_turn('codex','native','Textures',[{'role':'user','content':'Texturas del museo'},{'role':'assistant','content':'Se corrigió el material'}],consent=True,provider='deterministic')
     topic = store.topics()['topics'][0]['id']
-    assert len(TOPIC_TOOLS) == 6
+    assert len(TOPIC_TOOLS) == 9
     assert dispatch_topic(store,'memory_topic',{'topic_id':topic})['episodes']
     assert api.memory_topics(str(store.workspace), authorization=None)['topics'][0]['id'] == topic
+    reference = store.topics()['topics'][0]['reference']
+    assert api.memory_node(str(store.workspace), reference=reference, authorization=None)['node_id'] == topic
     args = [sys.executable,'-m','graphtyn.cli','memory','topics','Texturas','--path',str(store.workspace)]
     cli = subprocess.run(args, capture_output=True, text=True, check=True)
     assert json.loads(cli.stdout)['topics'][0]['id'] == topic
@@ -30,6 +32,19 @@ def test_topic_contracts_api_cli_and_mcp(tmp_path, monkeypatch):
     body = json.loads(mcp.stdout)['result']
     assert not body.get('isError')
     assert json.loads(body['content'][0]['text'])['topic']['id'] == topic
+
+
+def test_relation_review_http_contract(tmp_path, monkeypatch):
+    monkeypatch.delenv('GRAPHTYN_MEMORY_HTTP_TOKEN', raising=False)
+    store = SharedMemoryStore(tmp_path / 'project')
+    a = store.start_session('agy', 'a', capture_enabled=True)['id']
+    b = store.start_session('agy', 'b', capture_enabled=True)['id']
+    store.append_message(a, 'user', 'Android botones textura interfaz')
+    store.append_message(b, 'user', 'Android botones textura navegación')
+    store.process_topics(a); store.process_topics(b)
+    candidate = store.relation_candidates(requester_agent='agy')['candidates'][0]
+    response = api.memory_relation_review({'path': str(store.workspace), 'relation_id': candidate['id'], 'status': 'rejected', 'requester_agent': 'agy', 'reason': 'Son asuntos distintos'}, authorization=None)
+    assert response['status'] == 'rejected'
 
 
 def test_topic_api_project_scope_and_writer_role(tmp_path, monkeypatch):

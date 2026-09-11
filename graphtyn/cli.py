@@ -324,7 +324,7 @@ def main():
     stream_p.add_argument("--consent", action="store_true")
     stream_p.add_argument("--select-project", action="store_true")
     stream_p.add_argument("--watch", action="store_true")
-    for action in ("entities", "entity", "topics", "topic", "window", "topic-update"):
+    for action in ("entities", "entity", "topics", "topic", "window", "topic-update", "node", "relation-candidates", "relation-review"):
         topic_p = memory_sub.add_parser(action)
         topic_p.add_argument("--path", default=".")
         topic_p.add_argument("--agent", default="cli")
@@ -347,6 +347,16 @@ def main():
             topic_p.add_argument("--before", type=int, default=10)
             topic_p.add_argument("--after", type=int, default=10)
             topic_p.add_argument("--token-budget", type=int, default=3000)
+        elif action == "node":
+            topic_p.add_argument("reference")
+            topic_p.add_argument("--limit", type=int, default=20)
+        elif action == "relation-candidates":
+            topic_p.add_argument("--status", default="pending")
+            topic_p.add_argument("--limit", type=int, default=50)
+        elif action == "relation-review":
+            topic_p.add_argument("relation_id")
+            topic_p.add_argument("--status", choices=["accepted", "rejected"], required=True)
+            topic_p.add_argument("--reason", required=True)
         else:
             topic_p.add_argument("topic_id")
             if action == "topic-update":
@@ -1040,6 +1050,12 @@ def main():
             elif args.memory_action == "window":
                 result = memory.message_window(args.message_id, requester_agent=args.agent,
                     before=args.before, after=args.after, token_budget=args.token_budget)
+            elif args.memory_action == "node":
+                result = memory.resolve_node_reference(args.reference, requester_agent=args.agent, limit=args.limit)
+            elif args.memory_action == "relation-candidates":
+                result = memory.relation_candidates(requester_agent=args.agent, status=args.status, limit=args.limit)
+            elif args.memory_action == "relation-review":
+                result = memory.relation_review(args.relation_id, status=args.status, actor=args.agent, reason=args.reason)
             elif args.memory_action == "topic-update":
                 result = memory.topic_update(args.topic_id, requester_agent=args.agent, reason=args.reason,
                     state=args.state, title=args.title, verification=args.verification,

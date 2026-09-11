@@ -102,6 +102,21 @@ Las conversaciones importadas aparecen en **Memoria de proyecto** como nodos
 `memory_session` marcados como históricos. Cada nodo se conecta con el agente
 que participó y con las memorias compactadas que produjo; el panel muestra hasta
 100 sesiones recientes, incluidas las anteriores a Graphtyn.
+Cada nodo de memoria recibe una referencia pública persistente (`N-000001`) que
+el dashboard muestra y permite copiar. `memory_node` o `memory node` resuelve
+esa referencia dentro del almacén seleccionado.
+
+Las coincidencias léxicas no crean aristas temáticas automáticamente. Las
+candidatas se consultan con `memory_relation_candidates` o `memory relation-candidates`
+y se aceptan o rechazan con trazabilidad mediante `memory_relation_review` o
+`memory relation-review`. La vista de memoria sólo dibuja relaciones extraídas
+o revisadas; el orden temporal permanece en los episodios.
+
+Cuando `GRAPHTYN_MEMORY_SUMMARY_MODEL` apunta a un modelo Ollama local, la
+captura termina rápido y un trabajador en segundo plano propone títulos,
+resúmenes y clasificaciones de candidatas. La IA no fusiona temas ni marca
+pruebas como superadas: sus propuestas conservan proveedor, evidencia y estado
+pendiente de revisión. `GRAPHTYN_MEMORY_AUTO_ENRICH=0` desactiva ese trabajador.
 Las fuentes admiten ruta local, `docker://contenedor/ruta`,
 `ssh://usuario@host/ruta` y `ssh+docker://usuario@host:contenedor/ruta`. Se
 registran con `graphtyn memory sources add`; Graphtyn transfiere por SSH/Docker

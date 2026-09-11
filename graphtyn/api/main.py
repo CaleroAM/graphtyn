@@ -928,6 +928,40 @@ def memory_topic_update(payload: dict = Body(...), authorization: str | None = H
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
 
+@app.get("/api/memory/node")
+def memory_node(path: str, reference: str, limit: int = 20,
+                requester_agent: str = "dashboard", authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(path)).resolve_node_reference(reference, requester_agent=requester_agent, limit=limit)
+    except (ValueError, PermissionError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+
+
+@app.get("/api/memory/relation-candidates")
+def memory_relation_candidates(path: str, status: str = "pending", limit: int = 50,
+                               requester_agent: str = "dashboard", authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "reader", path)
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(path)).relation_candidates(requester_agent=requester_agent, status=status, limit=limit)
+    except (ValueError, PermissionError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+
+@app.post("/api/memory/relation-review")
+def memory_relation_review(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "writer", payload.get("path"))
+    if denied: return denied
+    try:
+        return SharedMemoryStore(Path(payload["path"])).relation_review(
+            payload["relation_id"], status=payload["status"], actor=payload.get("requester_agent", "dashboard"),
+            reason=payload["reason"])
+    except (ValueError, PermissionError, KeyError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+
 @app.post("/api/memory/history/stream")
 def memory_history_stream(payload: dict = Body(...), authorization: str | None = Header(default=None)):
     _, denied = _require_role(authorization, "admin", payload.get("path"))
@@ -1386,7 +1420,7 @@ _HTTP_MCP_TOOLS.extend(TOPIC_TOOLS)
 def _http_mcp_tools() -> list[dict]:
     profile = os.environ.get("GRAPHTYN_HTTP_TOOL_PROFILE", "full").lower()
     if profile == "intent":
-        return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update"}]
+        return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}]
     if profile == "memory":
         return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] == "graph_query_intent" or tool["name"].startswith("memory_")]
     return _HTTP_MCP_TOOLS
@@ -1417,7 +1451,7 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
             return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Ruta de proyecto inválida"}})
         if name.startswith("memory_"):
             if name in TOPIC_SPECS:
-                _, denied = _require_role(authorization, "writer" if name == "memory_topic_update" else "reader", str(root))
+                _, denied = _require_role(authorization, "writer" if name in {"memory_topic_update", "memory_relation_review"} else "reader", str(root))
                 if denied: return denied
             memory = SharedMemoryStore(root)
             try:

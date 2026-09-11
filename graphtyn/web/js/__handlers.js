@@ -7,7 +7,7 @@ export { setView, setDim, setMemoryGraphMode, changePalette, updateLinkStyles,
 export { focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape,
          changeStyleColors, closeBlastPanel, toggleAllComm, toggleComm, toggleNodeDesc,
          toggleVertexBlink, toggleOrganic3d, toggleRotate, setPRBase, focusWebFlow,
-         clearWebFlow } from './graph.js';
+         clearWebFlow, copyNodeReference } from './graph.js';
 export { openQualityPanel, closeQualityPanel, loadIndexQuality, addNodeToContext,
          removeNodeFromContext, clearContextSelection, generateContextBundle,
          copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity,

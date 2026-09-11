@@ -296,6 +296,7 @@ export async function focusMemoryNode(memoryId) {
 
 let topicRequest;
 let conversationRequest;
+let relationRequest;
 async function loadTopics(offset = 0) {
   topicRequest?.abort();
   topicRequest = new AbortController();
@@ -321,7 +322,7 @@ async function loadTopics(offset = 0) {
       const card = document.createElement('details');
       card.className = 'memory-card';
       const title = document.createElement('summary');
-      title.textContent = `${topic.title} · ${topic.state} · ${topic.verification}`;
+      title.textContent = `${topic.reference || topic.public_id || topic.id} · ${topic.title} · ${topic.state} · ${topic.verification}`;
       card.append(title);
       const body = document.createElement('div');
       card.append(body);
@@ -334,7 +335,7 @@ async function loadTopics(offset = 0) {
           for (const episode of detail.episodes) {
             const text = document.createElement('p');
             text.style.whiteSpace = 'pre-wrap';
-            text.textContent = `Participante: ${episode.agent_id}\nSesión: ${episode.session_id}\nPetición: ${episode.problem}\nDecisiones: ${episode.decisions || 'Sin extraer'}\nResultado declarado: ${episode.result || 'Sin resultado registrado'}`;
+            text.textContent = `${episode.reference || episode.public_id || episode.id}\nParticipante: ${episode.agent_id}\nSesión: ${episode.session_id}\nPetición: ${episode.problem}\nDecisiones: ${episode.decisions || 'Sin extraer'}\nResultado declarado: ${episode.result || 'Sin resultado registrado'}`;
             body.append(text);
             if (episode.message_ids.length) {
               const view = document.createElement('button');
@@ -356,6 +357,34 @@ async function loadTopics(offset = 0) {
     if (offset) { const prev = document.createElement('button'); prev.textContent = 'Anterior'; prev.onclick = () => loadTopics(Math.max(0, offset - 20)); host.append(prev); }
     if (data.next_offset !== null) { const next = document.createElement('button'); next.textContent = 'Más temas'; next.onclick = () => loadTopics(data.next_offset); host.append(next); }
   } catch (error) { if (error.name !== 'AbortError') retry(host, error, () => loadTopics(offset)); }
+}
+async function loadRelationCandidates() {
+  relationRequest?.abort(); relationRequest = new AbortController();
+  const host = document.getElementById('memory-relation-review');
+  if (!host || !state.activePath) return;
+  host.textContent = 'Buscando candidatas…';
+  try {
+    const params = new URLSearchParams({path: state.activePath, status: 'pending', limit: 20});
+    const data = await request(`/api/memory/relation-candidates?${params}`, {signal: relationRequest.signal});
+    host.replaceChildren();
+    if (!data.candidates?.length) { host.textContent = 'No hay relaciones pendientes de revisión.'; return; }
+    data.candidates.forEach(candidate => {
+      const card = document.createElement('div'); card.className = 'memory-card';
+      const evidence = candidate.evidence?.shared_terms?.join(', ') || 'evidencia textual limitada';
+      card.innerHTML = `<strong>${esc(candidate.source_reference)} · ${esc(candidate.source_title)}</strong><br><strong>${esc(candidate.target_reference)} · ${esc(candidate.target_title)}</strong><br><small>${esc(candidate.reason)} · términos: ${esc(evidence)}</small>`;
+      const actions = document.createElement('div'); actions.style.cssText = 'display:flex;gap:6px;margin-top:5px;';
+      for (const [status, label] of [['accepted','Aceptar relación'],['rejected','Rechazar']]) {
+        const button = document.createElement('button'); button.className = status === 'accepted' ? 'btn-action btn-primary' : 'btn-action'; button.textContent = label;
+        button.onclick = async () => {
+          button.disabled = true;
+          try { await request('/api/memory/relation-review', {method:'POST', body:JSON.stringify({path:state.activePath, relation_id:candidate.id, status, requester_agent:'dashboard', reason: status === 'accepted' ? 'Revisada en el dashboard' : 'No representa el mismo asunto'})}); loadRelationCandidates(); if (state.activeView === 'memory') window.dispatchEvent(new Event('graphtyn-memory-refresh')); }
+          catch (error) { button.disabled = false; retry(card, error, loadRelationCandidates); }
+        };
+        actions.append(button);
+      }
+      card.append(actions); host.append(card);
+    });
+  } catch (error) { if (error.name !== 'AbortError') retry(host, error, loadRelationCandidates); }
 }
 function retry(host, error, action) {
   host.textContent = `No se pudo cargar: ${error.message} `;
@@ -393,8 +422,11 @@ function initializeTopics() {
     <input id="memory-topic-session" aria-label="Sesión" placeholder="Sesión">
     <label>Desde <input id="memory-topic-since" type="date"></label><label>Hasta <input id="memory-topic-until" type="date"></label>
     <button id="memory-topic-filter">Filtrar</button></div><div id="memory-topic-list" aria-live="polite"></div>
+    <div class="memory-review-block"><div style="display:flex;justify-content:space-between;align-items:center;"><strong>Relaciones candidatas</strong><button id="memory-relation-refresh" class="btn-link">Recargar</button></div><div id="memory-relation-review" aria-live="polite"></div></div>
     <aside id="memory-conversation-panel" aria-label="Conversación histórica" hidden></aside>`;
   host.prepend(section);
   document.getElementById('memory-topic-filter').onclick = () => loadTopics();
+  document.getElementById('memory-relation-refresh').onclick = loadRelationCandidates;
   loadTopics();
+  loadRelationCandidates();
 }

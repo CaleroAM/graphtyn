@@ -103,7 +103,8 @@ def test_topic_graph_connects_topics_sessions_and_agents(store):
     assert graph['links']
     assert graph['metadata']['coverage']['pending'] == 0
     labels = {link['label'] for link in graph['links']}
-    assert 'continuación' in labels
+    assert 'continuación' not in labels
+    assert all(node.get('reference', '').startswith('N-') for node in graph['nodes'])
 
 
 def test_topic_graph_marks_possible_relations_ambiguous(store):
@@ -116,9 +117,26 @@ def test_topic_graph_marks_possible_relations_ambiguous(store):
         store.append_message(sid, 'user', text)
     store.process_topics(sid)
     graph = store.topic_graph(limit=100)
-    possible = [link for link in graph['links'] if link['label'] == 'posible relación']
+    possible = store.relation_candidates(requester_agent='agy')['candidates']
     assert possible
-    assert all(link['confidence'] == 'AMBIGUOUS' for link in possible)
+    assert all(item['status'] == 'pending' for item in possible)
+    assert not [link for link in graph['links'] if link['label'] == 'posible relación']
+
+
+def test_node_references_and_relation_review_are_stable(store):
+    sid = store.start_session('agy', 'Review one', capture_enabled=True)['id']
+    sid2 = store.start_session('agy', 'Review two', capture_enabled=True)['id']
+    store.append_message(sid, 'user', 'Android botones textura interfaz')
+    store.append_message(sid2, 'user', 'Android botones textura navegación')
+    store.process_topics(sid); store.process_topics(sid2)
+    topics = store.topics(requester_agent='agy')['topics']
+    assert topics[0]['reference'].startswith('N-')
+    assert store.resolve_node_reference(topics[0]['reference'], requester_agent='agy')['topic']['id'] == topics[0]['id']
+    candidate = store.relation_candidates(requester_agent='agy')['candidates'][0]
+    reviewed = store.relation_review(candidate['id'], status='accepted', actor='agy', reason='Comparten la misma textura de navegación')
+    assert reviewed['status'] == 'accepted'
+    links = store.topic_graph(requester_agent='agy')['links']
+    assert any(link['confidence'] == 'REVIEWED' for link in links)
 
 
 def test_topics_keep_button_work_items_separate_and_continue_same_item(store):

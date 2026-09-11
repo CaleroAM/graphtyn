@@ -495,9 +495,24 @@ class SharedMemoryStore(TopicMemoryMixin):
             latency_ms=(time.perf_counter() - started) * 1000,
             metadata={"messages": len(messages), "proposals": len((compaction or {}).get("proposals") or []),
                       "remote_billed_tokens": 0})
+        # Capture stays fast; optional local-model enrichment runs after the
+        # turn in a daemon worker and never blocks the MCP response.
+        if os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip() and \
+                os.environ.get("GRAPHTYN_MEMORY_AUTO_ENRICH", "1").lower() in {"1", "true", "yes"}:
+            threading.Thread(target=self._background_topic_enrichment,
+                             args=(session_id, "auto"), daemon=True,
+                             name=f"graphtyn-topic-enrich-{session_id}").start()
         return {"ok": True, "session_id": session_id, "external_session_id": external,
                 "agent_id": agent, "appended": appended, "compaction": compaction,
                 "session": closed or self.get_session(session_id), "telemetry": telemetry}
+
+    def _background_topic_enrichment(self, session_id: str, provider: str = "auto") -> None:
+        try:
+            self.enrich_topics(session_id=session_id, provider=provider)
+        except Exception:
+            # The captured messages and deterministic topics remain valid; a
+            # later job or explicit retry can attempt enrichment again.
+            return
 
     def ensure_external_session(self, agent_id: str, external_session_id: str, task: str, *,
                                 consent: bool, branch: str | None = None,
