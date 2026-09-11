@@ -5,7 +5,7 @@ import { destroyGraph, loadGraph, refreshStyleInPlace, toggleRotate } from './gr
 
 export function setView(v) {
       state.activeView = v;
-      const labels = { code: 'Code AST', semantic: 'Semántico', memory: state.activeSpaceType === 'agent' ? 'Memoria del agente' : 'Memoria del proyecto', agents: 'Topología', changes: 'Cambios' };
+      const labels = { code: 'Code AST', semantic: 'Semántico', memory: state.activeSpaceType === 'agent_brain' || state.activeSpaceType === 'agent' ? 'Memoria del cerebro' : 'Memoria del proyecto', agents: 'Topología', changes: 'Cambios' };
       const activeLabel = document.getElementById('active-view-label');
       if (activeLabel) activeLabel.textContent = labels[v] || v;
       const bCode = document.getElementById('btn-code');

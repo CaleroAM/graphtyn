@@ -358,6 +358,16 @@ def _has_project_marker(d: Path) -> bool:
         return False
     return bool(names & _PROJECT_MARKERS)
 
+
+def _space_type_for_record(record: dict, path: Path) -> str:
+    """Classify old registrations without silently treating personal brains as code."""
+    explicit = str(record.get("space_type") or "").strip().casefold()
+    if explicit in {"project", "agent_brain", "container"}:
+        return explicit
+    hint = f"{record.get('name', '')} {path}".casefold()
+    return "agent_brain" if ("cerebro" in hint or "brain" in hint
+                               or "/memoria-personal/" in hint) else "project"
+
 def _load_registered_projects() -> list[dict]:
     projects = []
     cwd = Path.cwd()
@@ -409,7 +419,7 @@ def _load_registered_projects() -> list[dict]:
                     "name": cp.get("name", p_path.name),
                     "path": str(p_path),
                     "mode": cp.get("mode", "single_folder"),
-                    "space_type": cp.get("space_type", "project"),
+                    "space_type": _space_type_for_record(cp, p_path),
                     "indexed": _is_indexed(p_path),
                 }
                 existing = next((p for p in projects if p["path"] == str(p_path)), None)
@@ -438,6 +448,52 @@ def list_projects():
         p["status"] = "🟢 Indexado" if p["indexed"] else "🔴 No Indexado"
         p["respect_git"] = bool(_load_project_config(Path(p["path"])).get("respect_git", True))
     return JSONResponse(projects)
+
+
+def _load_registered_brains() -> list[dict]:
+    """List memory spaces separately from code repositories."""
+    rows: dict[str, dict] = {}
+    for project in _load_registered_projects():
+        if project.get("space_type") != "agent_brain":
+            continue
+        path = str(Path(project["path"]).expanduser().resolve())
+        rows[path] = {"id": project.get("id") or Path(path).name, "name": project.get("name") or Path(path).name,
+                      "path": path, "space_type": "agent_brain", "indexed": bool(project.get("indexed")),
+                      "autoload": bool(project.get("autoload", False)), "sessions": 0, "agents": [], "sources": []}
+    for source in configured_sources():
+        raw_path = str(source.get("project_path") or "").strip()
+        if not raw_path:
+            continue
+        path_obj = Path(raw_path).expanduser().resolve()
+        path = str(path_obj)
+        if path not in rows and ("cerebro" in path.casefold() or "brain" in path.casefold()):
+            rows[path] = {"id": path_obj.name, "name": path_obj.name, "path": path,
+                          "space_type": "agent_brain", "indexed": False, "autoload": False,
+                          "sessions": 0, "agents": [], "sources": []}
+        if path in rows:
+            rows[path]["sources"].append({"provider": source.get("provider"), "source": source.get("source"),
+                                           "agent_id": source.get("agent_id")})
+    for path, brain in rows.items():
+        db_path = _project_memory_db(Path(path))
+        if not db_path:
+            continue
+        try:
+            with sqlite3.connect(db_path) as conn:
+                session_rows = conn.execute("""SELECT s.agent_id, COUNT(*), COALESCE(a.display_name, '')
+                    FROM sessions s LEFT JOIN agents a ON a.id=s.agent_id
+                    GROUP BY s.agent_id, a.display_name ORDER BY s.agent_id""").fetchall()
+            brain["sessions"] = sum(int(row[1] or 0) for row in session_rows)
+            brain["agents"] = [{"id": str(row[0]), "name": str(row[2] or row[0]), "sessions": int(row[1] or 0)}
+                               for row in session_rows]
+            brain["memory_exists"] = True
+        except sqlite3.Error:
+            continue
+    return sorted(rows.values(), key=lambda row: (str(row.get("name") or "").casefold(), row["path"]))
+
+
+@app.get("/api/brains")
+def list_brains():
+    return JSONResponse(_load_registered_brains())
 
 
 @app.get("/api/agents")

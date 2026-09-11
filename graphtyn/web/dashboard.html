@@ -13,7 +13,7 @@
 <body>
 
   <!-- ===== SIDEBAR TOGGLE BUTTONS ===== -->
-  <button class="sidebar-toggle left-toggle" id="btn-toggle-left" onclick="toggleLeftSidebar()" title="Ocultar/Mostrar proyectos y agentes">◀</button>
+  <button class="sidebar-toggle left-toggle" id="btn-toggle-left" onclick="toggleLeftSidebar()" title="Ocultar/Mostrar proyectos y cerebros">◀</button>
   <button class="sidebar-toggle right-toggle" id="btn-toggle-right" onclick="toggleRightSidebar()" title="Ocultar/Mostrar Comunidades">▶</button>
 
   <!-- ===== LEFT SIDEBAR ===== -->
@@ -26,11 +26,11 @@
     <div class="project-list project-registry-list" id="project-list">
       <div style="color:#475569;font-size:11px;">Cargando...</div>
     </div>
-    <div class="registry-heading agent-section-label">
-      <div class="section-label">AGENTES REGISTRADOS</div>
-      <button class="registry-add" type="button" onclick="openAgentRegister()" title="Registrar agente">+</button>
+    <div class="registry-heading brain-section-label">
+      <div class="section-label">CEREBROS REGISTRADOS</div>
+      <button class="registry-add" type="button" onclick="openBrainRegister()" title="Registrar cerebro">+</button>
     </div>
-    <div class="project-list agent-registry-list" id="agent-list">
+    <div class="project-list brain-registry-list" id="brain-list">
       <div style="color:#475569;font-size:11px;">Cargando...</div>
     </div>
   </aside>
@@ -454,7 +454,7 @@
           <div class="icon">-</div><div>Carpeta Maestra</div>
         </div>
         <div class="reg-card" id="mc-agent" onclick="selMode('agent_discovered')">
-          <div class="icon">-</div><div>Por Agente</div>
+          <div class="icon">-</div><div>Cerebro de agentes</div>
         </div>
       </div>
       <div style="font-size:11px;color:#64748b;margin-bottom:5px;">Ruta del proyecto:</div>
@@ -474,20 +474,16 @@
 
   <div class="modal-bg" id="modal-agent-reg">
     <div class="modal-box">
-      <div class="modal-hdr">Registrar agente <button class="modal-close" onclick="closeAgentRegister()">✕</button></div>
-      <div class="settings-help" style="margin-bottom:10px;">La identidad se conserva separada del proveedor y puede enlazarse a varios espacios.</div>
-      <label class="section-label">Identificador estable</label>
-      <input class="text-inp" id="agent-reg-id" placeholder="friday">
-      <label class="section-label" style="margin-top:10px;">Nombre visible</label>
-      <input class="text-inp" id="agent-reg-name" placeholder="Friday">
-      <label class="section-label" style="margin-top:10px;">Proveedor / harness (opcional)</label>
-      <input class="text-inp" id="agent-reg-provider" placeholder="openclaw, codex, hermes…">
-      <label class="section-label" style="margin-top:10px;">Espacio asociado (opcional)</label>
-      <input class="text-inp" id="agent-reg-path" placeholder="/ruta/al/cerebro-o-proyecto">
+      <div class="modal-hdr">Registrar cerebro <button class="modal-close" onclick="closeAgentRegister()">✕</button></div>
+      <div class="settings-help" style="margin-bottom:10px;">Un cerebro es un espacio de memoria. Sus agentes se muestran dentro del cerebro y en la topología.</div>
+      <label class="section-label">Nombre visible</label>
+      <input class="text-inp" id="agent-reg-name" placeholder="Cerebro de Evi">
+      <label class="section-label" style="margin-top:10px;">Ruta del cerebro</label>
+      <input class="text-inp" id="agent-reg-path" placeholder="/ruta/al/cerebro">
       <div id="agent-reg-status" class="settings-help" style="margin-top:8px;"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
         <button class="btn-action" onclick="closeAgentRegister()">Cancelar</button>
-        <button class="btn-action btn-primary" onclick="submitAgentRegister()">Guardar agente</button>
+        <button class="btn-action btn-primary" onclick="submitBrainRegister()">Guardar cerebro</button>
       </div>
     </div>
   </div>

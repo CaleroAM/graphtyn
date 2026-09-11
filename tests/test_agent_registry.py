@@ -68,3 +68,38 @@ def test_agent_memory_graph_is_scoped_to_registered_identity(tmp_path, monkeypat
     names = {node.get("name") for node in result["nodes"]}
     assert "Dato propio" in names
     assert "Dato ajeno" not in names
+
+
+def test_brain_registry_is_separate_from_agent_identity_catalog(tmp_path, monkeypatch):
+    state = tmp_path / "state"
+    brain = tmp_path / "memoria-evi"
+    project = tmp_path / "crm"
+    brain.mkdir()
+    project.mkdir()
+    monkeypatch.setattr(api_main, "INDEX_STORE", state)
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", state / "registered_projects.json")
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+    api_main.REGISTRATION_FILE.parent.mkdir(parents=True, exist_ok=True)
+    api_main.REGISTRATION_FILE.write_text(json.dumps([
+        {"id": "memoria-evi", "name": "Cerebro Evi", "path": str(brain), "space_type": "agent_brain"},
+        {"id": "legacy-brain", "name": "Legacy memory", "path": str(tmp_path / "legacy-brain"), "mode": "agent_discovered"},
+        {"id": "crm", "name": "CRM", "path": str(project), "space_type": "project"},
+    ]))
+    (tmp_path / "legacy-brain").mkdir()
+
+    db_path = project_store_dir(state, brain) / "memory-v2.db"
+    store = SharedMemoryStore(brain, db_path=db_path)
+    session = store.start_session("evi", "Diseño", capture_enabled=True)
+    store.checkpoint(session["id"], "decision", "Botón de reporte", "Usar azul")
+
+    brains = _json_response(api_main.list_brains())
+    assert len(brains) == 2
+    evi_brain = next(row for row in brains if row["name"] == "Cerebro Evi")
+    assert evi_brain["space_type"] == "agent_brain"
+    assert evi_brain["sessions"] == 1
+    assert evi_brain["agents"][0]["id"] == "evi"
+    assert any(row["name"] == "Legacy memory" and row["space_type"] == "agent_brain" for row in brains)
+
+    projects = _json_response(api_main.list_projects())
+    assert any(row["path"] == str(project.resolve()) and row["space_type"] == "project" for row in projects)
+    assert not any(row["path"] == str(brain.resolve()) and row["space_type"] == "project" for row in projects)

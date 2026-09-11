@@ -65,12 +65,17 @@ sesiones, recuerdos y relaciones con código. El color atribuye autoría o
 participación; no implica propiedad exclusiva del archivo. `Buscar en memoria`
 filtra o recupera contexto dentro de esa vista.
 
-El panel izquierdo mantiene catálogos separados para proyectos y agentes. Los
-proyectos tienen memoria temática ligada a su repositorio; la memoria de un
-agente es una consulta federada sobre los espacios que ese agente tiene
-asociados. El registro no supone que todos los agentes se llamen Evi ni que el
-proveedor sea la identidad: ambos datos se conservan por separado. Usa
+El panel izquierdo mantiene catálogos separados para proyectos y cerebros.
+Los proyectos tienen memoria temática ligada a su repositorio; cada cerebro es
+un espacio de memoria que puede contener sesiones de varios agentes. La
+memoria de un agente sigue disponible como consulta federada sobre los
+cerebros y proyectos que tiene asociados, pero los agentes son participantes,
+no el segundo catálogo principal. El registro no supone que todos los agentes
+se llamen Evi ni que el proveedor sea la identidad: ambos datos se conservan por separado. Usa
 `GET /api/agents` y `POST /api/agents/register` para administrar identidades.
+Usa `GET /api/brains` o `POST /api/projects/register` con
+`space_type: "agent_brain"` para administrar los espacios que aparecen bajo
+`CEREBROS REGISTRADOS`.
 La vista `Topología de agentes` sólo dibuja fuentes, espacios y relaciones que
 están configuradas u observadas, con procedencia en sus metadatos.
 

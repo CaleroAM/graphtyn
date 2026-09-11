@@ -36,11 +36,17 @@ export function selMode(m) {
 export function submitRegister() {
       const path = document.getElementById('reg-path').value.trim();
       if (!path) return;
+      const spaceType = state.regMode === 'agent_discovered' ? 'agent_brain'
+        : state.regMode === 'master_folder' ? 'container' : 'project';
       fetch('/api/projects/register', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ path, mode: state.regMode })
+        body: JSON.stringify({ path, mode: state.regMode, space_type: spaceType })
       }).then(r => r.json()).then(res => {
-        if (res.ok) { closeRegister(); loadProjects(); selectProject(path); }
+        if (res.ok) {
+          closeRegister();
+          if (spaceType === 'agent_brain') selectBrain(path);
+          else { loadProjects(); selectProject(path); }
+        }
         else alert('Error: ' + res.error);
       });
     }
@@ -51,13 +57,14 @@ export function closeTutorial() { document.getElementById('modal-tutorial').clas
 
 export function loadProjects(thenLoadGraph) {
       console.log("Fetching /api/projects...");
-      loadAgents();
+      loadBrains();
       fetch('/api/projects').then(r => r.json()).then(projects => {
         console.log("Projects received:", projects);
         projects.forEach(p => { if (p.path) state.respectMap[p.path] = p.respect_git !== false; });
         state.nonAutoloadPaths = new Set(projects.filter(p => p && p.autoload === false).map(p => p.path));
+        const projectRows = Array.isArray(projects) ? projects.filter(p => p && (p.space_type === 'project' || p.space_type === 'container')) : [];
         const el = document.getElementById('project-list');
-        if (!Array.isArray(projects) || !projects.length) {
+        if (!projectRows.length) {
           el.innerHTML = `
             <div style="padding:14px 10px;text-align:center;background:#111827;border:1px dashed #374151;border-radius:8px;margin-top:6px;">
               <div style="font-size:22px;margin-bottom:6px;">[...]</div>
@@ -73,13 +80,13 @@ export function loadProjects(thenLoadGraph) {
         // A master/home folder is only a project container. Never select it
         // automatically: indexing it can traverse an entire user profile and
         // exhaust memory. Users may still open it explicitly when needed.
-        const selectable = projects.filter(p => p && p.autoload !== false && p.mode !== 'master_folder');
+        const selectable = projectRows.filter(p => p && p.autoload !== false && p.mode !== 'master_folder');
         if (!state.activePath && selectable.length) state.activePath = selectable[0].path;
         if (!state.activePath && thenLoadGraph) {
           const status = document.getElementById('graph-status');
           if (status) status.textContent = 'Selecciona un repositorio para cargar el grafo.';
         }
-        el.innerHTML = projects.map(p => {
+        el.innerHTML = projectRows.map(p => {
           const pPath = (p.path || '').replace(/"/g, '&quot;');
           const pName = p.name || p.id || 'Sin nombre';
           const isActive = state.activePath && (p.path === state.activePath || pPath === state.activePath);
@@ -138,6 +145,41 @@ export function loadAgents() {
       }).catch(() => { el.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:4px;">No se pudo cargar agentes.</div>'; });
     }
 
+export function loadBrains() {
+      const el = document.getElementById('brain-list');
+      if (!el) return;
+      fetch('/api/brains').then(r => r.json()).then(brains => {
+        if (!Array.isArray(brains) || !brains.length) {
+          el.innerHTML = '<div style="color:#64748b;font-size:10px;padding:6px 2px;line-height:1.4;">Sin cerebros registrados. Registra un espacio de memoria para comenzar.</div>';
+          return;
+        }
+        el.innerHTML = brains.map(brain => {
+          const path = String(brain.path || '').replace(/"/g, '&quot;');
+          const name = String(brain.name || brain.id || 'Cerebro').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+          const active = state.activeSpaceType === 'agent_brain' && state.activePath === brain.path;
+          const sessions = Number(brain.sessions || 0);
+          const agents = Array.isArray(brain.agents) ? brain.agents.length : 0;
+          const status = brain.memory_exists || brain.indexed ? 'OK' : 'PEND';
+          return `<div class="project-item brain-item ${active ? 'active' : ''}" data-path="${path}" onclick="selectBrain(this.dataset.path)" title="${sessions} sesiones · ${agents} agentes">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">◈ ${name}</span>
+            <span class="proj-badge ${status === 'OK' ? 'ok' : 'pend'}">${status}</span>
+          </div>`;
+        }).join('');
+      }).catch(() => { el.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:4px;">No se pudieron cargar los cerebros.</div>'; });
+    }
+
+export function selectBrain(path) {
+      state.activePath = String(path || '');
+      state.activeAgentId = null;
+      state.activeSpaceType = 'agent_brain';
+      state.memoryFocusSession = null;
+      state.webFlowNodeIds = null;
+      state.contextSelection = [];
+      state.lastContextBundle = null;
+      setView('memory');
+      loadBrains();
+    }
+
 export function selectAgent(agentId) {
       state.activeAgentId = String(agentId || '').trim().toLowerCase();
       state.activeSpaceType = 'agent';
@@ -145,37 +187,41 @@ export function selectAgent(agentId) {
       state.activePath = null;
       setView('memory');
       loadAgents();
-    }
+}
 
-export function openAgentRegister() {
-      ['agent-reg-id', 'agent-reg-name', 'agent-reg-provider', 'agent-reg-path'].forEach(id => {
-        const input = document.getElementById(id);
-        if (input && id === 'agent-reg-path' && state.activePath) input.value = state.activePath;
-      });
+export function openBrainRegister() {
+      const name = document.getElementById('agent-reg-name');
+      const path = document.getElementById('agent-reg-path');
+      if (name && !name.value && state.activePath) name.value = `Cerebro · ${state.activePath.split('/').pop()}`;
+      if (path && state.activePath) path.value = state.activePath;
       const status = document.getElementById('agent-reg-status');
       if (status) status.textContent = '';
       document.getElementById('modal-agent-reg')?.classList.add('show');
     }
 
-export function closeAgentRegister() { document.getElementById('modal-agent-reg')?.classList.remove('show'); }
+export function closeBrainRegister() { document.getElementById('modal-agent-reg')?.classList.remove('show'); }
 
-export async function submitAgentRegister() {
-      const id = document.getElementById('agent-reg-id')?.value.trim();
+export async function submitBrainRegister() {
       const name = document.getElementById('agent-reg-name')?.value.trim();
-      const provider = document.getElementById('agent-reg-provider')?.value.trim();
       const path = document.getElementById('agent-reg-path')?.value.trim();
       const status = document.getElementById('agent-reg-status');
-      if (!id) { if (status) status.textContent = 'El identificador es obligatorio.'; return; }
+      if (!path) { if (status) status.textContent = 'La ruta del cerebro es obligatoria.'; return; }
       if (status) status.textContent = 'Guardando…';
       try {
-        const response = await fetch('/api/agents/register', {method:'POST', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({id, name:name || id, provider, paths:path ? [path] : []})});
+        const response = await fetch('/api/projects/register', {method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({path, name:name || path.split('/').pop() || 'Cerebro', mode:'single_folder', space_type:'agent_brain'})});
         const data = await response.json();
         if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
-        closeAgentRegister();
-        loadAgents();
+        closeBrainRegister();
+        loadBrains();
+        loadProjects();
       } catch (error) { if (status) status.textContent = `No se pudo guardar: ${error.message}`; }
     }
+
+// Compatibility aliases for integrations that used the old identity modal.
+export const openAgentRegister = openBrainRegister;
+export const closeAgentRegister = closeBrainRegister;
+export const submitAgentRegister = submitBrainRegister;
 
 export function initWatchPolling() {
       if (state.watchTimer) clearInterval(state.watchTimer);
