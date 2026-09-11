@@ -259,7 +259,7 @@
                 <div class="filter-row"><span>Color del nodo</span><input type="color" id="memory-node-color" onchange="changeMemoryColor('node')" aria-label="Color del nodo de memoria"></div>
                 <div class="filter-row"><span>Color de burbuja / halo</span><input type="color" id="memory-halo-color" onchange="changeMemoryColor('halo')" aria-label="Color del halo de memoria"></div>
                 <div class="filter-row"><span>Burbuja sigue al nodo</span><label class="chk-wrap"><input type="checkbox" id="memory-halo-linked" checked onchange="toggleMemoryHaloLink(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label></div>
-                <div style="display:flex;gap:5px;flex-wrap:wrap;"><button class="btn-link" onclick="resetMemoryColorType()">Restablecer tipo</button><button class="btn-link" onclick="resetMemoryColorSettings()">Restablecer colores de memoria</button></div>
+                <div class="memory-color-actions"><button class="btn-link" onclick="resetMemoryColorType()">Restablecer tipo</button><button class="btn-link" onclick="resetMemoryColorSettings()">Restablecer colores de memoria</button></div>
               </div>
               <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
               <label class="section-label">Físicas del Grafo</label>

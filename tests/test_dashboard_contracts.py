@@ -132,6 +132,7 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
     assert 'id="memory-graph-btn"' in html and 'id="memory-agent-legend"' in html
     assert "showSharedMemoryGraph" in handlers and "agent_color" in (WEB / "js" / "painters.js").read_text()
     assert 'id="memory-color-controls"' in html and 'id="memory-halo-color"' in html
+    assert 'class="memory-color-actions"' in html and ".memory-color-actions" in css
     assert 'id="memory-palette-sel"' in html and 'value="custom">Personalizada' in html
     assert html.count('value="custom">Personalizada') == 2
     assert 'id="chk-radiance"' in html and 'toggleRadiance' in dashboard
