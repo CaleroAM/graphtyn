@@ -123,10 +123,10 @@ async function loadMemoryNodeDetails(node, body) {
             '<strong>Agente</strong><span>' + escapeHtml(session.agent_id || '') + '</span>' +
             '<strong>Tarea</strong><span style="white-space:pre-wrap;">' + escapeHtml(session.task || '') + '</span>' +
             '<strong>Mensajes</strong><span>' + escapeHtml(payload.message_count || 0) + '</span>' +
-            '<strong>Temas</strong><span>' + escapeHtml(payload.topic_count || 0) + '</span>' +
+            '<strong>Temas</strong><span>' + escapeHtml(payload.topic_count || 0) + (payload.topics_returned && payload.topics_returned < payload.topic_count ? ' (mostrando ' + escapeHtml(payload.topics_returned) + ')' : '') + '</span>' +
             '<strong>Estado</strong><span>' + escapeHtml(session.status || '') + '</span>' +
             '</div>' +
-            '<div style="font-weight:700;color:#64748b;font-size:10px;margin-top:6px;">TEMAS DE ESTA SESIÓN</div>' +
+            '<div style="font-weight:700;color:#64748b;font-size:10px;margin-top:6px;">TEMAS DE ESTA SESIÓN' + (payload.topics_returned && payload.topics_returned < payload.topic_count ? ' · primeros ' + escapeHtml(payload.topics_returned) : '') + '</div>' +
             '<div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">' +
             (topics.length ? topics.map(topic => '<div style="background:#1a2234;padding:5px 6px;border-radius:4px;cursor:pointer;" data-node-id="topic:' + escapeHtml(topic.id) + '" onclick="focusNode(this.dataset.nodeId)">' +
               '<span style="color:#e2e8f0;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(topic.title || topic.id) + '</span>' +

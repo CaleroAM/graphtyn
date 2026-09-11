@@ -177,6 +177,7 @@ class TopicMemoryMixin:
                 session = db.execute("SELECT * FROM sessions WHERE id=?", (session_id,)).fetchone()
                 if not session or (not session["capture_enabled"] and session["agent_id"] != (requester_agent or "")):
                     raise PermissionError("sesión inexistente o no accesible")
+                total_topics = db.execute("SELECT COUNT(DISTINCT topic_id) FROM topic_episodes WHERE session_id=?", (session_id,)).fetchone()[0]
                 topics = db.execute("""SELECT DISTINCT t.id,t.title,t.summary,t.state,t.verification,t.updated_at
                     FROM topics t JOIN topic_episodes e ON e.topic_id=t.id WHERE e.session_id=?
                     ORDER BY t.updated_at DESC,t.id LIMIT ?""", (session_id, max(1, min(200, int(limit))))).fetchall()
@@ -190,7 +191,7 @@ class TopicMemoryMixin:
                 message_count = db.execute("SELECT COUNT(*) FROM messages WHERE session_id=?", (session_id,)).fetchone()[0]
             result = {"ok": True, "node": {"kind": kind, "id": node_id, "reference": row["reference"]},
                       "session": dict(session), "message_count": message_count,
-                      "topic_count": len(topic_items), "topics": topic_items,
+                      "topic_count": total_topics, "topics_returned": len(topic_items), "topics": topic_items,
                       "trust": "untrusted_history"}
         elif kind == "memory_episode":
             with self._connect() as db:
@@ -358,6 +359,12 @@ class TopicMemoryMixin:
         limit = max(1, min(1000, int(limit)))
         with self._connect() as db:
             rows = db.execute("""
+              WITH selected_topics AS (
+                SELECT t0.id FROM topics t0 JOIN topic_episodes e0 ON e0.topic_id=t0.id
+                JOIN sessions s0 ON s0.id=e0.session_id
+                WHERE (s0.capture_enabled=1 OR s0.agent_id=?)
+                GROUP BY t0.id ORDER BY t0.updated_at DESC, t0.id LIMIT ?
+              )
               SELECT DISTINCT t.id, t.title, t.summary, t.state, t.verification,
                      t.updated_at, e.session_id, e.agent_id,
                      COALESCE(ai.status, CASE WHEN ?!='' THEN 'pending' ELSE 'not_applicable' END) AS ai_status,
@@ -367,8 +374,11 @@ class TopicMemoryMixin:
               FROM topics t JOIN topic_episodes e ON e.topic_id=t.id
               JOIN sessions s ON s.id=e.session_id
               LEFT JOIN topic_enrichment_state ai ON ai.topic_id=t.id
+              JOIN selected_topics st ON st.id=t.id
               WHERE (s.capture_enabled=1 OR s.agent_id=?)
-              ORDER BY t.updated_at DESC, t.id LIMIT ?""", (os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL") or os.environ.get("OLLAMA_MODEL") or "", requester_agent or "", limit)).fetchall()
+              ORDER BY t.updated_at DESC, t.id""", (requester_agent or "", limit,
+                os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL") or os.environ.get("OLLAMA_MODEL") or "",
+                requester_agent or "")).fetchall()
         nodes, links, agents, sessions = {}, [], set(), set()
         topic_rows = []
         for row in rows:
