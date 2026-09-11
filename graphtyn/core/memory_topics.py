@@ -171,6 +171,39 @@ class TopicMemoryMixin:
             result = self.topic(node_id, requester_agent=requester_agent, limit=limit)
         elif kind == "memory_entity":
             result = self.entity(node_id, requester_agent=requester_agent, limit=limit)
+        elif kind == "memory_session":
+            session_id = str(node_id).removeprefix("session:")
+            with self._connect() as db:
+                session = db.execute("SELECT * FROM sessions WHERE id=?", (session_id,)).fetchone()
+                if not session or (not session["capture_enabled"] and session["agent_id"] != (requester_agent or "")):
+                    raise PermissionError("sesión inexistente o no accesible")
+                topics = db.execute("""SELECT DISTINCT t.id,t.title,t.summary,t.state,t.verification,t.updated_at
+                    FROM topics t JOIN topic_episodes e ON e.topic_id=t.id WHERE e.session_id=?
+                    ORDER BY t.updated_at DESC,t.id LIMIT ?""", (session_id, max(1, min(200, int(limit))))).fetchall()
+                topic_items = []
+                for topic in topics:
+                    item = dict(topic)
+                    item["title"], item["summary"] = self._unprotect(item["title"]), self._unprotect(item["summary"])
+                    item["reference"] = self._node_reference(db, "memory_topic", item["id"])
+                    item["public_id"] = item["reference"]
+                    topic_items.append(item)
+                message_count = db.execute("SELECT COUNT(*) FROM messages WHERE session_id=?", (session_id,)).fetchone()[0]
+            result = {"ok": True, "node": {"kind": kind, "id": node_id, "reference": row["reference"]},
+                      "session": dict(session), "message_count": message_count,
+                      "topic_count": len(topic_items), "topics": topic_items,
+                      "trust": "untrusted_history"}
+        elif kind == "memory_episode":
+            with self._connect() as db:
+                episode = db.execute("""SELECT e.*,s.capture_enabled FROM topic_episodes e
+                    JOIN sessions s ON s.id=e.session_id WHERE e.id=?""", (node_id,)).fetchone()
+                if not episode or (not episode["capture_enabled"] and episode["agent_id"] != (requester_agent or "")):
+                    raise PermissionError("episodio inexistente o no accesible")
+                item = dict(episode); item.pop("capture_enabled", None)
+                for key in ("problem", "decisions", "result"): item[key] = self._unprotect(item[key])
+                item["message_ids"] = [r[0] for r in db.execute("SELECT message_id FROM topic_messages WHERE episode_id=? ORDER BY message_id LIMIT ?", (node_id, max(1, min(200, int(limit)))))]
+                item["topic_reference"] = self._node_reference(db, "memory_topic", item["topic_id"])
+            result = {"ok": True, "node": {"kind": kind, "id": node_id, "reference": row["reference"]},
+                      "episode": item, "trust": "untrusted_history"}
         else:
             result = {"ok": True, "node": {"kind": kind, "id": node_id, "reference": row["reference"]}}
         result["reference"] = row["reference"]
