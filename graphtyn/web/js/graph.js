@@ -1,7 +1,7 @@
 import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
 import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
-import { apply2DStyle, apply3DStyle, paintNodePointerArea } from './styles.js';
+import { apply2DStyle, apply3DStyle, standard2DLinkColor, paintNodePointerArea } from './styles.js';
 
 function endpointId(value) { return value && typeof value === 'object' ? value.id : value; }
 function selectedLink(link) {
@@ -385,7 +385,9 @@ export function onNodeClick(node) {
           return 'rgba(255,255,255,0.22)';
         });
         if (typeof state.graphInst.linkColor === 'function') {
-          state.graphInst.linkColor(l => memoryLinkColor(l, linkBase));
+          state.graphInst.linkColor(state.activeDim === '2d' && state.graphStyle === 'standard'
+            ? standard2DLinkColor
+            : l => memoryLinkColor(l, linkBase));
         }
         if (typeof state.graphInst.linkWidth === 'function') {
           state.graphInst.linkWidth(l => selectedLink(l) ? 1.8 : 0.25);
@@ -516,7 +518,11 @@ export function closeBlastPanel() {
         const palette = activePalette();
         const linkBase = palette.link || PALETTES.obsidian.link;
         state.graphInst.nodeColor(n => nodeColor(n));
-        if (typeof state.graphInst.linkColor === 'function') state.graphInst.linkColor(l => memoryLinkColor(l, linkBase));
+        if (typeof state.graphInst.linkColor === 'function') state.graphInst.linkColor(
+          state.activeDim === '2d' && state.graphStyle === 'standard'
+            ? standard2DLinkColor
+            : l => memoryLinkColor(l, linkBase)
+        );
         if (typeof state.graphInst.linkWidth === 'function') state.graphInst.linkWidth(l => l.confidence === 'AMBIGUOUS' ? (palette.linkW || 1.4) * 1.15 : l.confidence === 'INFERRED' ? (palette.linkW || 1.4) * 0.7 : (palette.linkW || 1.4));
       }
     }

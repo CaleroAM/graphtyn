@@ -1,6 +1,38 @@
-import { state, hexRgb, mixColor, getMemoryColor, MEMORY_COLOR_DEFAULTS, particleProfile, showStyleErr, safePaint } from './state.js';
+import { state, PALETTES, hexRgb, mixColor, getMemoryColor, MEMORY_COLOR_DEFAULTS, particleProfile, showStyleErr, safePaint } from './state.js';
 import { nodeColor, nodeVal, isDocOrMedia, squareNodePainter, memoryStandardNodePainter, neuralNodePainter, neuralLinkPainter, holoNodePainter, holoLinkPainter } from './painters.js';
 import { buildPulseSim } from './sim.js';
+
+function linkEndpoint(value) { return value && typeof value === 'object' ? value.id : value; }
+
+function scaleLinkAlpha(color, factor) {
+      const match = /^rgba?\(([^)]+)\)$/i.exec(String(color || ''));
+      if (!match) return color;
+      const parts = match[1].split(',').map(part => part.trim());
+      if (parts.length < 3) return color;
+      const alpha = parts.length > 3 ? Number.parseFloat(parts[3]) : 1;
+      if (!Number.isFinite(alpha)) return color;
+      return `rgba(${parts[0]},${parts[1]},${parts[2]},${Math.max(0, Math.min(1, alpha * factor)).toFixed(3)})`;
+    }
+
+// Native ForceGraph links are otherwise static in the standard 2D renderer.
+// Keep the selection semantics and palette while giving every link a stable
+// phase so its opacity does not pulse in lockstep with its neighbors.
+export function standard2DLinkColor(link) {
+      const selected = state.selectedNode?.id;
+      const source = linkEndpoint(link?.source);
+      const target = linkEndpoint(link?.target);
+      if (selected && source !== selected && target !== selected) return 'rgba(255,255,255,0.06)';
+      const palette = PALETTES[state.activePalette] || PALETTES.obsidian;
+      const base = link?.confidence === 'AMBIGUOUS'
+        ? 'rgba(245,158,11,0.62)'
+        : link?.confidence === 'INFERRED'
+          ? 'rgba(148,163,184,0.22)'
+          : (palette.link || PALETTES.obsidian.link);
+      if (!state.vertexBlinkOn || !link) return base;
+      const phase = particleProfile(link, 0.006).offset * Math.PI * 2;
+      const blink = 0.72 + 0.28 * Math.sin(state.neuralPhase * 1.2 + phase);
+      return scaleLinkAlpha(base, blink);
+    }
 
 export function holoBgEnsure() {
       const container = document.getElementById('graph-container');
@@ -95,12 +127,6 @@ export function apply2DStyle() {
           state.graphInst
             .nodeCanvasObjectMode(() => 'replace')
             .nodeCanvasObject(safePaint(memoryStandardNodePainter, 'memoria'));
-          if (state.vertexBlinkOn) {
-            state.neuralTimer = setInterval(() => {
-              state.neuralPhase += 0.5;
-              if (state.graphInst && typeof state.graphInst.refresh === 'function') state.graphInst.refresh();
-            }, 100);
-          }
         } else if (state.nodeShape === 'squares') {
           state.graphInst
             .nodeCanvasObjectMode(() => 'replace')
@@ -110,8 +136,15 @@ export function apply2DStyle() {
             .nodeCanvasObjectMode(() => 'replace')
             .nodeCanvasObject(null);
         }
+        state.graphInst.linkColor(standard2DLinkColor);
         state.graphInst.linkCanvasObject(null);
         applyHitArea(state.graphInst);
+        if (state.vertexBlinkOn) {
+          state.neuralTimer = setInterval(() => {
+            state.neuralPhase += 0.5;
+            if (state.graphInst && typeof state.graphInst.refresh === 'function') state.graphInst.refresh();
+          }, 100);
+        }
         return;
       }
       if (state.graphStyle === 'holo') {

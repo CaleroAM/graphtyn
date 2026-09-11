@@ -148,6 +148,7 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
     assert "particleProfile" in state and "particleProfile" in graph and "particleProfile" in styles
     assert "linkDirectionalParticleOffset" in graph and "linkDirectionalParticleOffset" in styles
     assert "activeLinkColor" in graph and "memoryLinkColor(l, linkBase)" in graph
+    assert "standard2DLinkColor" in graph and "standard2DLinkColor" in styles
     assert 'loadMoreMemoryTopics' in dashboard and 'focusMemorySession' in dashboard
     assert 'memoryFocusSession' in (WEB / "js" / "graph.js").read_text()
     assert 'f97316' in (WEB / "js" / "state.js").read_text()
