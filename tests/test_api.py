@@ -10,6 +10,7 @@ import uvicorn
 
 from graphtyn.api import main as api_main
 from graphtyn.core.shared_memory import SharedMemoryStore
+from graphtyn.core.memory_jobs import MemoryJobManager
 
 
 class _LiveClient:
@@ -371,3 +372,31 @@ def test_memory_search_all_federated(tmp_path, monkeypatch):
 
     r2 = client.post("/api/memory/search-all", json={"paths": ["/ruta/inexistente"], "query": "x"})
     assert r2.status_code == 200 and r2.json()["results"] == []
+
+
+def test_memory_sync_job_runs_each_registered_space(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    first, second = tmp_path / "brain-one", tmp_path / "brain-two"
+    first.mkdir(); second.mkdir()
+    manager = MemoryJobManager(tmp_path / "jobs")
+    monkeypatch.setattr(api_main, "memory_jobs", manager)
+    monkeypatch.setattr(api_main, "_registered_memory_paths", lambda: [first, second])
+    calls = []
+
+    def fake_sync(path, **kwargs):
+        calls.append(str(path))
+        return {"ok": True, "path": str(path), "errors": [], "import": {},
+                "enrichment": {"ai_enriched": 1}}
+
+    monkeypatch.setattr(api_main, "sync_memory_workspace", fake_sync)
+    response = api_main.memory_sync({"all_spaces": True, "consent": True, "provider_model": "auto"}, authorization=None)
+    job_id = response["job"]["id"]
+    deadline = time.time() + 2
+    while time.time() < deadline and manager.get(job_id)["status"] in {"pending", "running"}:
+        time.sleep(.01)
+    job = manager.get(job_id)
+
+    assert response["paths"] == [str(first), str(second)]
+    assert job["status"] == "completed"
+    assert job["result"]["space_count"] == 2
+    assert calls == [str(first), str(second)]

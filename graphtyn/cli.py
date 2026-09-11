@@ -27,7 +27,7 @@ from .core.shared_memory import SharedMemoryStore
 from .core.memory_benchmark import build_stability_dataset, run_memory_benchmark
 from .core.history_import import (discover_histories, import_histories, ProjectIdentityRegistry,
                                   configured_sources, save_source, import_history_archive,
-                                  delete_source, test_source)
+                                  delete_source, test_source, sync_memory_workspace)
 from .core.verification import verification_plan, verify_python_edits
 from .core.agent_installer import install_agent, install_ci
 from .core.answer_validation import validate_answer
@@ -457,6 +457,7 @@ def main():
     sync_p.add_argument("--consent", action="store_true", required=True)
     sync_p.add_argument("--provider-model", choices=["deterministic", "auto", "ollama", "api"], default="deterministic")
     sync_p.add_argument("--watch", action="store_true", help="Continuar observando cambios")
+    sync_p.add_argument("--all-spaces", action="store_true", help="Sincronizar todos los espacios registrados con fuente asociada")
     sync_p.add_argument("--interval", type=float, default=5.0)
     sync_p.add_argument("--path", default=".")
     export_p = memory_sub.add_parser("export", help="Exporta memoria saneada sin vectores")
@@ -474,6 +475,7 @@ def main():
     sources_p.add_argument("--source", default=None,
                            help="Ruta local, ssh://, docker:// o ssh+docker://host:contenedor/ruta")
     sources_p.add_argument("--label", default="")
+    sources_p.add_argument("--workspace", default=None, help="Cerebro/proyecto al que pertenece la fuente")
 
     install_p = subparsers.add_parser("agent-install", help="Instala instrucciones Graphtyn para asistentes")
     install_p.add_argument("platform", choices=["all", "codex", "opencode", "openclaw", "hermes", "claude", "cursor", "gemini", "antigravity", "copilot"])
@@ -980,11 +982,14 @@ def main():
                               "projects": ProjectIdentityRegistry().list()}, ensure_ascii=False, indent=2))
         elif args.memory_action == "sync":
             def sync_once():
-                discovered = discover_histories(args.provider, args.source or None)
-                result = import_histories(Path(args.path), discovered["sessions"], consent=args.consent,
-                                          provider=args.provider_model)
-                result["discovered"] = discovered["count"]
-                return result
+                if args.all_spaces:
+                    registry = ProjectIdentityRegistry()
+                    paths = [Path(item).expanduser().resolve() for project in registry.list()
+                             for item in project.get("paths", [])]
+                    return {"ok": True, "spaces": [sync_memory_workspace(path, provider=args.provider,
+                        source=args.source or None, provider_model=args.provider_model) for path in dict.fromkeys(paths)]}
+                return sync_memory_workspace(Path(args.path), provider=args.provider,
+                    source=args.source or None, provider_model=args.provider_model)
             if not args.watch:
                 print(json.dumps(sync_once(), ensure_ascii=False, indent=2))
             else:
@@ -998,7 +1003,7 @@ def main():
             if args.action == "add":
                 if not args.provider or not args.source:
                     raise SystemExit("sources add requiere --provider y --source")
-                saved = save_source(args.provider, args.source, label=args.label)
+                saved = save_source(args.provider, args.source, label=args.label, project_path=args.workspace)
                 print(json.dumps({"ok": True, "saved": saved}, ensure_ascii=False, indent=2))
             elif args.action == "remove":
                 if not args.provider or not args.source: raise SystemExit("sources remove requiere --provider y --source")

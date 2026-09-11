@@ -66,8 +66,8 @@ function historicalInput() {
 export async function saveHistoricalSource() {
   const output = document.getElementById('memory-import-status'), value = historicalInput();
   if (!value.provider || !value.source) { output.textContent = 'Proveedor y fuente son obligatorios.'; return; }
-  try { await request('/api/v1/imports/sources', {method:'POST', body:JSON.stringify(value)});
-    output.textContent = 'Fuente guardada.'; await loadHistoricalSources();
+  try { await request('/api/v1/imports/sources', {method:'POST', body:JSON.stringify({...value, path:state.activePath})});
+    output.textContent = 'Fuente guardada para este espacio.'; await loadHistoricalSources();
   } catch (error) { output.textContent = `No se pudo guardar: ${error.message}`; }
 }
 
@@ -161,11 +161,52 @@ export async function loadMemoryOverview(append = false) {
       const topicAi = info.topic_enrichment?.configured
         ? `IA temática local: ${info.topic_enrichment.model}${info.topic_enrichment.coverage ? ` · ${info.topic_enrichment.coverage.enriched}/${info.topic_enrichment.coverage.discovered} temas enriquecidos · ${info.topic_enrichment.coverage.pending || 0} pendientes` : ''}${info.topic_enrichment.enriched_events ? ` · ${info.topic_enrichment.enriched_events} enriquecimientos` : ''}${info.topic_enrichment.reviewed_candidates ? ` · ${info.topic_enrichment.reviewed_candidates} candidatas revisadas` : ''}${!info.topic_enrichment.enriched_events && !info.topic_enrichment.reviewed_candidates ? ' · pendiente de ejecutar' : ''}`
         : 'IA temática: determinista';
-      status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness} · ${topicAi}`;
+      const watcher = (info.sync_watchers || []).find(item => item.active);
+      const watchButton = document.getElementById('memory-watch-btn');
+      if (watchButton) {
+        watchButton.textContent = watcher ? 'Desactivar captura continua' : 'Activar captura continua';
+        watchButton.dataset.enabled = watcher ? 'true' : 'false';
+        watchButton.title = watcher ? `Activa · intervalo ${watcher.interval || 30}s` : 'La captura queda asociada a este espacio';
+      }
+      const capture = info.continuous_capture_active ? ' · captura continua activa' : ' · captura continua inactiva';
+      status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness}${capture} · ${topicAi}`;
     const legend = document.getElementById('memory-agent-legend');
     if (legend) legend.innerHTML = '<div class="memory-empty">Abre el mapa para ver la atribución por agente.</div>';
     renderMemorySessions(sessions, append);
   } catch (error) { status.textContent = `No se pudo cargar: ${error.message}`; }
+}
+
+async function runMemorySync(allSpaces) {
+  const output = document.getElementById('memory-status');
+  if (!state.activePath && !allSpaces) { output.textContent = 'Selecciona un espacio de memoria.'; return; }
+  const button = document.getElementById(allSpaces ? 'memory-sync-all-btn' : 'memory-sync-btn');
+  if (button) { button.disabled = true; button.textContent = allSpaces ? 'Actualizando espacios…' : 'Actualizando memoria…'; }
+  try {
+    const response = await request('/api/memory/sync', {method:'POST', body:JSON.stringify({
+      path:state.activePath, all_spaces:allSpaces, consent:true, provider_model:'auto', enrich:true})});
+    const job = await waitImportJob(response.job.id);
+    if (job.status !== 'completed') throw new Error(job.error || job.status);
+    const results = (job.result || {}).spaces || [];
+    const errors = results.reduce((total, item) => total + (item.errors || []).length, 0);
+    output.textContent = `${results.length || 1} espacio${results.length === 1 ? '' : 's'} actualizado${results.length === 1 ? '' : 's'} · ${errors} errores · IA incremental aplicada`;
+    await loadMemoryOverview();
+  } catch (error) { output.textContent = `No se pudo actualizar: ${error.message}`; }
+  finally { if (button) { button.disabled = false; button.textContent = allSpaces ? 'Actualizar todos los espacios' : 'Actualizar memoria'; } }
+}
+
+export function syncMemorySpace() { return runMemorySync(false); }
+export function syncAllMemorySpaces() { return runMemorySync(true); }
+
+export async function toggleMemoryWatch() {
+  if (!state.activePath) { document.getElementById('memory-status').textContent = 'Selecciona un espacio de memoria.'; return; }
+  const button = document.getElementById('memory-watch-btn');
+  const enabled = button?.dataset.enabled !== 'true';
+  if (button) { button.disabled = true; button.textContent = enabled ? 'Activando…' : 'Desactivando…'; }
+  try {
+    await request('/api/memory/watch', {method:'POST', body:JSON.stringify({path:state.activePath, enabled, consent:true, interval:30, provider_model:'auto'})});
+    await loadMemoryOverview();
+  } catch (error) { document.getElementById('memory-status').textContent = `No se pudo cambiar la captura: ${error.message}`; }
+  finally { if (button) button.disabled = false; }
 }
 
 export function searchMemorySessions() {

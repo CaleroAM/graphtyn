@@ -30,12 +30,15 @@ from ..core.source_evidence import attach_source_evidence
 from ..core.shared_memory import SharedMemoryStore, existing_store_db
 from ..core.history_import import (ProjectIdentityRegistry, discover_histories, import_histories,
                                    configured_sources, BUILTIN_PROVIDERS, save_source,
-                                   delete_source, test_source)
+                                   delete_source, test_source, sync_memory_workspace)
 from ..core.memory_jobs import memory_jobs
 from ..mcp_server import blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node
 
 parser = ASTParser()
 watch_manager = WatchManager()
+_memory_watchers: dict[str, dict] = {}
+_memory_watch_lock = threading.Lock()
+_memory_watch_config = data_home() / "memory-watchers.json"
 
 
 @asynccontextmanager
@@ -43,6 +46,7 @@ async def lifespan(_app: FastAPI):
     if _watch_enabled():
         root = Path(os.environ.get("GRAPHTYN_WATCH_PATH", str(DEFAULT_MASTER_DIR))).resolve()
         watch_manager.ensure(root, _index_dir(root))
+    _restore_memory_watchers()
     yield
     watch_manager.stop_all()
 
@@ -64,6 +68,102 @@ def _index_dir(project_path: Path) -> Path:
 
 def _watch_enabled() -> bool:
     return os.environ.get("GRAPHTYN_WATCH", "0").lower() in ("1", "true", "yes", "on")
+
+
+def _registered_memory_paths() -> list[Path]:
+    paths = []
+    associated = []
+    for row in configured_sources():
+        raw = row.get("project_path")
+        if raw:
+            try: associated.append(Path(raw).expanduser().resolve())
+            except (OSError, RuntimeError, ValueError): pass
+    for project in _load_registered_projects():
+        path = Path(project.get("path", "")).expanduser().resolve()
+        has_source = path in associated
+        has_store = bool(existing_store_db(path))
+        if path.exists() and project.get("mode") != "master_folder" and (has_source or has_store) and path not in paths:
+            paths.append(path)
+    return paths
+
+
+def _watch_config_read() -> list[dict]:
+    try:
+        payload = json.loads(_memory_watch_config.read_text(encoding="utf-8"))
+        rows = payload.get("watchers", []) if isinstance(payload, dict) else payload
+        return [row for row in rows if isinstance(row, dict) and row.get("path")]
+    except (OSError, ValueError):
+        return []
+
+
+def _watch_config_write() -> None:
+    _memory_watch_config.parent.mkdir(parents=True, exist_ok=True)
+    rows = [{"path": key, "interval": max(5, float(value.get("interval", 30)))}
+            for key, value in _memory_watchers.items() if value.get("persist", True)]
+    _memory_watch_config.write_text(json.dumps({"version": 1, "watchers": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _watcher_public(key: str, entry: dict) -> dict:
+    return {"path": key, "status": entry.get("status"),
+            "active": bool(entry.get("thread") and entry["thread"].is_alive()),
+            "heartbeat": entry.get("heartbeat"), "interval": entry.get("interval"),
+            "error": entry.get("error")}
+
+
+def _memory_watch_loop(path: str, options: dict, stop: threading.Event) -> None:
+    key = str(Path(path).expanduser().resolve())
+    while not stop.is_set():
+        with _memory_watch_lock:
+            current = _memory_watchers.get(key)
+            if current: current.update(status="processing", heartbeat=time.time())
+        try:
+            result = sync_memory_workspace(key, provider=options.get("provider"),
+                                           provider_model=options.get("provider_model", "auto"), enrich=True)
+            with _memory_watch_lock:
+                current = _memory_watchers.get(key)
+                if current: current.update(status="watching", heartbeat=time.time(), last_result=result, error=None)
+        except Exception as exc:
+            with _memory_watch_lock:
+                current = _memory_watchers.get(key)
+                if current: current.update(status="error", heartbeat=time.time(), error=str(exc))
+        stop.wait(max(5, float(options.get("interval", 30))))
+    with _memory_watch_lock:
+        _memory_watchers.pop(key, None)
+
+
+def _start_memory_watcher(path: str | Path, *, interval: float = 30, provider: str | None = None,
+                          provider_model: str = "auto", persist: bool = True) -> dict:
+    key = str(Path(path).expanduser().resolve())
+    with _memory_watch_lock:
+        old = _memory_watchers.get(key)
+        if old and old.get("thread") and old["thread"].is_alive():
+            old["interval"] = max(5, float(interval)); old["persist"] = persist
+            _watch_config_write(); return _watcher_public(key, old)
+        stop = threading.Event()
+        options = {"interval": max(5, float(interval)), "provider": provider, "provider_model": provider_model}
+        entry = {**options, "status": "starting", "heartbeat": time.time(), "stop": stop,
+                 "persist": persist, "last_result": None, "error": None}
+        thread = threading.Thread(target=_memory_watch_loop, args=(key, options, stop),
+                                  name=f"graphtyn-memory-watch-{Path(key).name}", daemon=True)
+        entry["thread"] = thread; _memory_watchers[key] = entry
+        _watch_config_write(); thread.start()
+    return _watcher_public(key, entry)
+
+
+def _stop_memory_watcher(path: str | Path) -> bool:
+    key = str(Path(path).expanduser().resolve())
+    with _memory_watch_lock:
+        entry = _memory_watchers.get(key)
+        if not entry: return False
+        entry["stop"].set(); entry["persist"] = False; _memory_watchers.pop(key, None)
+        _watch_config_write()
+    return True
+
+
+def _restore_memory_watchers() -> None:
+    for row in _watch_config_read():
+        try: _start_memory_watcher(row["path"], interval=float(row.get("interval", 30)), persist=True)
+        except (OSError, ValueError): continue
 
 
 def _memory_auth(authorization: str | None) -> JSONResponse | None:
@@ -1010,7 +1110,72 @@ def memory_topics_enrich(payload: dict = Body(...), authorization: str | None = 
 @app.get("/api/memory/status")
 def memory_status(path: str = Query(...), authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
-    return SharedMemoryStore(Path(path).expanduser().resolve()).status()
+    result = SharedMemoryStore(Path(path).expanduser().resolve()).status()
+    key = str(Path(path).expanduser().resolve())
+    with _memory_watch_lock:
+        result["sync_watchers"] = [_watcher_public(item, value) for item, value in _memory_watchers.items()
+                                    if item == key]
+    result["continuous_capture_active"] = bool(result.get("continuous_capture_active") or result["sync_watchers"])
+    return result
+
+
+@app.post("/api/memory/sync")
+def memory_sync(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    """Run incremental conversation capture and topic enrichment in a job."""
+    _, denied = _require_role(authorization, "writer", payload.get("path"))
+    if denied: return denied
+    all_spaces = bool(payload.get("all_spaces"))
+    requested = payload.get("path")
+    if not payload.get("consent"):
+        return JSONResponse({"ok": False, "error": "consent requerido para sincronizar memoria"}, status_code=400)
+    if not all_spaces and not requested:
+        return JSONResponse({"ok": False, "error": "path requerido o all_spaces=true"}, status_code=400)
+    paths = _registered_memory_paths() if all_spaces else [Path(str(requested)).expanduser().resolve()]
+    paths = [path for path in paths if path.exists()]
+    if not paths:
+        return JSONResponse({"ok": False, "error": "no hay espacios de memoria registrados"}, status_code=404)
+    for path in paths:
+        _, denied = _require_role(authorization, "writer", str(path))
+        if denied: return denied
+    job = memory_jobs.create("memory-sync", {**payload, "paths": [str(path) for path in paths]})
+    def run(update):
+        results = []
+        for index, path in enumerate(paths):
+            base = int(index * 100 / len(paths))
+            result = sync_memory_workspace(path, provider=payload.get("provider"),
+                source=payload.get("sources") or ([payload["source"]] if payload.get("source") else None),
+                provider_model=str(payload.get("provider_model") or "auto"),
+                enrich=payload.get("enrich", True), force=bool(payload.get("force", False)),
+                progress=lambda pct, msg="": update(base + int(pct / len(paths)), f"{path.name}: {msg}"))
+            results.append(result)
+        return {"ok": all(item.get("ok", False) for item in results), "spaces": results,
+                "space_count": len(results)}
+    memory_jobs.run(job["id"], run)
+    return {"ok": True, "job": job, "paths": [str(path) for path in paths]}
+
+
+@app.post("/api/memory/watch")
+def memory_watch(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "writer", payload.get("path"))
+    if denied: return denied
+    if not payload.get("consent"):
+        return JSONResponse({"ok": False, "error": "consent requerido para captura continua"}, status_code=400)
+    enabled = bool(payload.get("enabled", True))
+    paths = _registered_memory_paths() if payload.get("all_spaces") else ([Path(str(payload["path"])).expanduser().resolve()] if payload.get("path") else [])
+    if not paths:
+        return JSONResponse({"ok": False, "error": "path requerido o no hay espacios registrados"}, status_code=400)
+    for path in paths:
+        _, denied = _require_role(authorization, "writer", str(path))
+        if denied: return denied
+    rows = []
+    for path in paths:
+        if enabled:
+            rows.append(_start_memory_watcher(path, interval=float(payload.get("interval", 30)),
+                provider=payload.get("provider"), provider_model=str(payload.get("provider_model") or "auto")))
+        else:
+            _stop_memory_watcher(path)
+    return {"ok": True, "enabled": enabled, "watchers": rows,
+            "all_spaces": bool(payload.get("all_spaces"))}
 
 
 @app.get("/api/memory/sessions")
@@ -1278,7 +1443,8 @@ def import_source_save(payload: dict = Body(...), authorization: str | None = He
     _, denied = _require_role(authorization, "admin")
     if denied: return denied
     try: return {"ok": True, "source": save_source(str(payload.get("provider") or ""),
-        str(payload.get("source") or ""), label=str(payload.get("label") or ""))}
+        str(payload.get("source") or ""), label=str(payload.get("label") or ""),
+        project_path=payload.get("path") or payload.get("project_path"))}
     except (ValueError, OSError) as exc: return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
 

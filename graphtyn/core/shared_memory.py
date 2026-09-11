@@ -498,7 +498,7 @@ class SharedMemoryStore(TopicMemoryMixin):
                     messages: list[dict[str, Any]], *, consent: bool,
                     branch: str | None = None, compact: bool = True,
                     close: bool = False, provider: str = "auto",
-                    reopen_closed: bool = False) -> dict[str, Any]:
+                    reopen_closed: bool = False, background_enrich: bool = True) -> dict[str, Any]:
         """Idempotently ingest one client turn and optionally distill memories.
 
         Client session identifiers never become raw database keys.  Their hash,
@@ -543,7 +543,7 @@ class SharedMemoryStore(TopicMemoryMixin):
                       "remote_billed_tokens": 0})
         # Capture stays fast; optional local-model enrichment runs after the
         # turn in a daemon worker and never blocks the MCP response.
-        if (os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip() or os.environ.get("OLLAMA_MODEL", "").strip()) and \
+        if background_enrich and (os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL", "").strip() or os.environ.get("OLLAMA_MODEL", "").strip()) and \
                 os.environ.get("GRAPHTYN_MEMORY_AUTO_ENRICH", "1").lower() in {"1", "true", "yes"}:
             threading.Thread(target=self._background_topic_enrichment,
                              args=(session_id, "auto"), daemon=True,

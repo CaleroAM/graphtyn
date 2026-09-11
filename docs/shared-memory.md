@@ -134,16 +134,27 @@ campos `role` y `content`, son recursos auxiliares y no conversaciones. La regla
 es independiente del proveedor y funciona igual con una instalación que sólo
 use OpenClaw, sólo Hermes o adaptadores adicionales.
 
-Para sincronizar nuevas conversaciones sin depender de una llamada MCP manual:
+Para sincronizar nuevas conversaciones por cerebro (la fuente debe estar
+asociada explícitamente con `--workspace`):
 
 ```bash
 graphtyn memory sync --path . --consent
 graphtyn memory sync --path . --watch --interval 5 --consent
+graphtyn memory sync --all-spaces --consent
 ```
 
-El modo `--watch` conserva cursores y vuelve a procesar sólo datos nuevos; MCP
-`memory_ingest_turn` continúa disponible para checkpoints explícitos. Ambos
+El modo `--watch` conserva cursores y vuelve a procesar sólo datos nuevos. La
+misma operación está disponible en el dashboard como “Actualizar memoria” o
+“Actualizar todos los espacios”; “Activar captura continua” mantiene un
+watcher persistente y su heartbeat aparece en `memory status`. MCP
+`memory_ingest_turn` continúa disponible para checkpoints explícitos. Todos los
 caminos deduplican, sanean secretos y generan embeddings locales.
+
+Asocia una fuente a un cerebro con `graphtyn memory sources add --workspace
+/ruta/al/cerebro`. Las fuentes sin asociación se pueden previsualizar, pero no
+se enrutan automáticamente a ningún espacio. CLI y dashboard deben usar el
+mismo `GRAPHTYN_HOME`; compruébalo con `memory status` y verifica que el campo
+`db` sea idéntico antes de modificar datos.
 
 Para un agente remoto, el servicio debe publicar MCP con
 `GRAPHTYN_MCP_TOKEN` y una interfaz alcanzable por el contenedor o VM. Ese token
@@ -175,7 +186,7 @@ El almacén conserva asuntos (`topics`), episodios (`topic_episodes`), referenci
 
 La identidad se separa del asunto. Por ejemplo, `botón de Jugar`, `botón de Fichas`, `botón de Ajustes` y `botón de Volver` son cuatro entidades distintas. También se reconocen funcionalidades, módulos, reportes, pantallas, plataformas, referencias de archivo y símbolos Python explícitos como `reports.py`, `función calcular_reporte`, `clase ReportService` y `método listar_operadores`. En un CRM, `botón del reporte` y `funcionalidad del botón de operadores` quedan como asuntos independientes; una conversación posterior sobre `funcionalidad de operadores` puede continuar el segundo asunto aunque ya no mencione el botón. En un proyecto Python, una conversación sobre corregir `calcular_reporte` y otra sobre probarlo quedan vinculadas por `mismo símbolo`, aunque representen episodios de trabajo distintos. Los asuntos relacionados se conectan mediante relaciones explicadas como `mismo elemento`, `mismo símbolo`, `mismo concepto`, `mismo tipo`, `misma plataforma` o `tema de diseño`. Compartir una categoría general no fusiona trabajos.
 
-La captura histórica se procesa por lotes con `memory stream` o `POST /api/memory/history/stream`. Cada lote confirma un cursor por fuente, sesión y posición; los IDs nativos evitan duplicados y una rotación sin IDs queda pendiente. `--watch` ejecuta el sincronizador persistente y registra heartbeat en `history_watchers`; mostrar un comando no activa captura. El contenido histórico se trata como datos no confiables.
+La captura histórica se procesa por lotes con `memory stream` o `POST /api/memory/history/stream`. Cada lote confirma un cursor por fuente, sesión y posición; los IDs nativos evitan duplicados y una rotación sin IDs queda pendiente. `memory sync --watch` y el botón de captura continua ejecutan el sincronizador persistente y registran heartbeat; mostrar un comando no activa captura. El contenido histórico se trata como datos no confiables.
 
 Interfaces equivalentes:
 

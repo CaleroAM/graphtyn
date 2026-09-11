@@ -89,11 +89,18 @@ def configured_sources(path: Path | None = None) -> list[dict[str, Any]]:
         if not isinstance(row, dict): continue
         provider, source = str(row.get("provider") or "").strip().casefold(), str(row.get("source") or "").strip()
         if provider and source and row.get("enabled", True):
-            result.append({"provider": provider, "source": source, "label": str(row.get("label") or "")})
+            item = {"provider": provider, "source": source, "label": str(row.get("label") or "")}
+            # A source may belong to one brain/project.  Older entries without
+            # this field remain visible but are intentionally not auto-routed.
+            project_path = str(row.get("project_path") or row.get("workspace") or "").strip()
+            if project_path:
+                item["project_path"] = project_path
+            result.append(item)
     return result
 
 
-def save_source(provider: str, source: str, *, label: str = "", path: Path | None = None) -> dict[str, Any]:
+def save_source(provider: str, source: str, *, label: str = "", project_path: str | Path | None = None,
+                path: Path | None = None) -> dict[str, Any]:
     """Persist a host/container/VPS history source with restrictive permissions."""
     provider, source = provider.strip().casefold(), source.strip()
     if not re.fullmatch(r"[a-z0-9][a-z0-9._-]{1,63}", provider): raise ValueError("proveedor inválido")
@@ -104,7 +111,14 @@ def save_source(provider: str, source: str, *, label: str = "", path: Path | Non
     target = path or sources_config_file()
     target.parent.mkdir(parents=True, exist_ok=True)
     rows = configured_sources(target)
+    associated = str(project_path or "").strip()
+    if associated:
+        associated = str(Path(associated).expanduser().resolve())
     item = {"provider": provider, "source": source, "label": safe_label, "enabled": True}
+    if associated:
+        item["project_path"] = associated
+    # A physical transcript source has one owner. Re-saving it for a brain
+    # moves the association instead of leaving an unscoped duplicate behind.
     rows = [row for row in rows if not (row["provider"] == item["provider"] and row["source"] == item["source"])]
     rows.append(item)
     target.write_text(json.dumps({"version": 1, "sources": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -426,15 +440,50 @@ def parse_history_file(path: Path, provider: str, agent_hint: str | None = None)
     return sessions
 
 
-def discover_histories(provider: str | None = None, sources: list[str] | None = None) -> dict[str, Any]:
+def _same_project_path(left: str | Path | None, right: str | Path | None) -> bool:
+    if not left or not right:
+        return False
+    try:
+        return Path(str(left)).expanduser().resolve() == Path(str(right)).expanduser().resolve()
+    except (OSError, RuntimeError, ValueError):
+        return str(left).rstrip("/").casefold() == str(right).rstrip("/").casefold()
+
+
+def _source_matches_root(path: str | Path, roots: set[str]) -> bool:
+    """Match a discovered file to its configured file or containing directory."""
+    try:
+        candidate = Path(path).expanduser().resolve()
+        for raw in roots:
+            root = Path(raw).expanduser().resolve()
+            if candidate == root or root.is_dir() and root in candidate.parents:
+                return True
+    except (OSError, RuntimeError, ValueError):
+        return str(path) in roots
+    return False
+
+
+def discover_histories(provider: str | None = None, sources: list[str] | None = None,
+                       project_path: str | Path | None = None) -> dict[str, Any]:
     configured = configured_sources()
     from .adapters import list_adapters
     known = {row["name"] for row in list_adapters()}
     providers = [provider.casefold()] if provider else sorted(known | {row["provider"] for row in configured})
     found, errors = [], []
     for name in providers:
-        roots = sources if sources else [row["source"] for row in configured if row["provider"] == name]
-        if not roots: roots = default_sources().get(name, [])
+        if sources:
+            roots = sources
+            associated_sources = set(roots)
+        elif project_path:
+            # Per-space synchronization only consumes explicitly associated
+            # sources. This prevents one user's brains from being mixed.
+            selected = [row for row in configured if row["provider"] == name and
+                        _same_project_path(row.get("project_path"), project_path)]
+            roots = [row["source"] for row in selected]
+            associated_sources = set(roots)
+        else:
+            roots = [row["source"] for row in configured if row["provider"] == name]
+            associated_sources = set()
+            if not roots: roots = default_sources().get(name, [])
         for source in roots:
             temp = None
             try:
@@ -460,7 +509,10 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                     if path.suffix.casefold() == ".jsonl" and not temp:
                         from .history_stream import preview_jsonl
                         preview = preview_jsonl(path, name)
-                        found.extend(preview["sessions"])
+                        for item in preview["sessions"]:
+                            if project_path and _source_matches_root(path, associated_sources):
+                                item["explicit_project_selection"] = True
+                            found.append(item)
                         if preview["errors"]:
                             errors.append({"source": str(path), "error": f"{preview['errors']} registros JSON inválidos"})
                         continue
@@ -469,8 +521,11 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                         if str(source).startswith(("ssh://", "docker://", "ssh+docker://")):
                             try: session.source = f"{source_label}/{path.relative_to(root).as_posix()}"
                             except ValueError: session.source = source_label
-                        found.append({**asdict(session), "fingerprint": session.fingerprint,
-                                      "message_count": len(session.messages)})
+                        item = {**asdict(session), "fingerprint": session.fingerprint,
+                                "message_count": len(session.messages)}
+                        if project_path and _source_matches_root(source, associated_sources):
+                            item["explicit_project_selection"] = True
+                        found.append(item)
             except (OSError, ValueError, subprocess.SubprocessError) as exc:
                 errors.append({"source": str(source), "error": str(exc)})
             finally:
@@ -484,6 +539,39 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                  "confidence": 1.0 if Path(workspace).is_absolute() else .7}
                 for workspace, count in sorted(project_counts.items(), key=lambda pair: (-pair[1], pair[0]))]
     return {"ok": not errors, "sessions": found, "count": len(found), "projects": projects, "errors": errors}
+
+
+def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
+                          source: list[str] | None = None, provider_model: str = "auto",
+                          enrich: bool = True, force: bool = False,
+                          progress=None) -> dict[str, Any]:
+    """Synchronize one explicitly associated memory space incrementally.
+
+    Discovery, idempotent import and topic enrichment share this entry point so
+    CLI, REST and the background watcher cannot drift apart.
+    """
+    root = Path(workspace).expanduser().resolve()
+    discovered = discover_histories(provider, source or None, project_path=None if source else root)
+    # A source supplied directly is an explicit user selection for this space.
+    if source:
+        for item in discovered["sessions"]:
+            item["explicit_project_selection"] = True
+    if progress:
+        progress(20, f"{discovered['count']} sesiones descubiertas")
+    imported = import_histories(root, discovered["sessions"], consent=True, provider=provider_model,
+                                background_enrich=False)
+    result: dict[str, Any] = {"ok": bool(imported.get("ok", True)), "path": str(root),
+                              "discovered": discovered["count"], "import": imported,
+                              "errors": list(discovered.get("errors") or [])}
+    result["errors"].extend(imported.get("errors") or [])
+    if enrich:
+        if progress:
+            progress(45, "Enriqueciendo temas nuevos o modificados")
+        enrichment = SharedMemoryStore(root).enrich_topics(None, provider=provider_model,
+                                                            force=force, progress=progress)
+        result["enrichment"] = enrichment
+    result["ok"] = not result["errors"] and bool(imported.get("ok", True))
+    return result
 
 
 class ProjectIdentityRegistry:
@@ -537,7 +625,8 @@ class ProjectIdentityRegistry:
 
 
 def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, consent: bool,
-                     provider: str = "deterministic", dry_run: bool = False) -> dict[str, Any]:
+                     provider: str = "deterministic", dry_run: bool = False,
+                     background_enrich: bool = True) -> dict[str, Any]:
     if not consent: raise PermissionError("la importación histórica requiere consentimiento explícito")
     root = Path(workspace).expanduser().resolve()
     registry = ProjectIdentityRegistry()
@@ -604,7 +693,7 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
             result = store.ingest_turn(agent_id, external_id,
                 str(raw.get("task") or "Historical conversation"), historical_messages,
                 consent=True, branch=raw.get("branch"), compact=True, close=True, provider=provider,
-                reopen_closed=True)
+                reopen_closed=True, background_enrich=background_enrich)
             imported.append({"source": raw.get("source"), "session_id": result["session_id"],
                              "external_session_id": raw.get("external_session_id")})
             with store._connect() as conn:

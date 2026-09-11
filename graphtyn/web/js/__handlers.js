@@ -20,4 +20,5 @@ export { openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemo
          openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus,
          loadMoreMemoryTopics, searchMemorySessions, loadMoreMemorySessions, linkAgentProfile, discoverHistoricalMemory,
          applyHistoricalMemory, saveHistoricalSource, testHistoricalSource,
-         removeHistoricalSource, saveMemoryAlias } from './memory.js';
+         removeHistoricalSource, saveMemoryAlias, syncMemorySpace, syncAllMemorySpaces,
+         toggleMemoryWatch } from './memory.js';

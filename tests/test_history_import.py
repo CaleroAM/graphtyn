@@ -80,6 +80,23 @@ def test_history_sources_are_deployment_configuration(tmp_path):
     if os.name != "nt": assert config.stat().st_mode & 0o777 == 0o600
 
 
+def test_history_source_is_scoped_to_one_memory_space(tmp_path, monkeypatch):
+    config = tmp_path / "history-sources.json"
+    source = tmp_path / "openclaw"
+    path = _openclaw_history(source)
+    first = tmp_path / "brain-one"; second = tmp_path / "brain-two"
+    first.mkdir(); second.mkdir()
+    save_source("openclaw", str(source), project_path=first, path=config)
+    save_source("openclaw", str(tmp_path / "unrelated"), project_path=second, path=config)
+    monkeypatch.setattr("graphtyn.core.history_import.sources_config_file", lambda: config)
+
+    selected = discover_histories("openclaw", project_path=first)
+
+    assert selected["count"] == 1
+    assert selected["sessions"][0]["source"].endswith(str(path.relative_to(source)))
+    assert selected["sessions"][0]["explicit_project_selection"] is True
+
+
 def test_docker_history_source_uses_read_only_archive(tmp_path, monkeypatch):
     calls = []
     class Result:
