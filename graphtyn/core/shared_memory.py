@@ -1164,8 +1164,10 @@ class SharedMemoryStore(TopicMemoryMixin):
             agents = conn.execute("SELECT COUNT(*) FROM agents").fetchone()[0]
             embeddings = conn.execute("SELECT COUNT(*) FROM memory_embeddings").fetchone()[0]
             telemetry_events = conn.execute("SELECT COUNT(*) FROM memory_telemetry").fetchone()[0]
-            topic_events = conn.execute("SELECT details_json FROM topic_events WHERE action='enriched' ORDER BY id DESC LIMIT 100").fetchall()
-            relation_events = conn.execute("SELECT evidence_json FROM topic_relation_reviews WHERE evidence_json LIKE '%model_provider%' ORDER BY updated_at DESC LIMIT 100").fetchall()
+            topic_event_count = conn.execute("SELECT COUNT(*) FROM topic_events WHERE action='enriched'").fetchone()[0]
+            topic_event = conn.execute("SELECT details_json FROM topic_events WHERE action='enriched' ORDER BY id DESC LIMIT 1").fetchone()
+            relation_event_count = conn.execute("SELECT COUNT(*) FROM topic_relation_reviews WHERE evidence_json LIKE '%model_provider%'").fetchone()[0]
+            relation_event = conn.execute("SELECT evidence_json FROM topic_relation_reviews WHERE evidence_json LIKE '%model_provider%' ORDER BY updated_at DESC LIMIT 1").fetchone()
             last_capture = conn.execute(
                 "SELECT MAX(ts) FROM (SELECT MAX(created_at) AS ts FROM messages "
                 "UNION ALL SELECT MAX(created_at) FROM memories)").fetchone()[0]
@@ -1174,35 +1176,27 @@ class SharedMemoryStore(TopicMemoryMixin):
             watchers = [dict(r) for r in conn.execute("SELECT * FROM history_watchers")] if exists else []
         for watcher in watchers:
             watcher["active"] = watcher["status"] in {"processing", "watching"} and time.time() - watcher["heartbeat"] < 90
-        enrichment_providers = []
-        for event in topic_events:
+        last_topic_provider = ""
+        last_relation_provider = ""
+        if topic_event:
             try:
-                details = json.loads(event["details_json"] or "{}")
-                provider = str(details.get("provider") or "")
-                if provider:
-                    enrichment_providers.append(provider)
+                last_topic_provider = str(json.loads(topic_event["details_json"] or "{}").get("provider") or "")
             except (TypeError, ValueError):
-                continue
-        enriched_events = len(enrichment_providers)
-        reviewed_candidates = 0
-        for event in relation_events:
+                pass
+        if relation_event:
             try:
-                details = json.loads(event["evidence_json"] or "{}")
-                provider = str(details.get("model_provider") or "")
-                if provider:
-                    enrichment_providers.append(provider)
-                    reviewed_candidates += 1
+                last_relation_provider = str(json.loads(relation_event["evidence_json"] or "{}").get("model_provider") or "")
             except (TypeError, ValueError):
-                continue
+                pass
         return {"ok": True, "version": 2, "db": str(self.db_path), "sessions": sessions,
                 "memories": memories, "agents": agents, "embeddings": embeddings,
                 "last_capture_at": last_capture, "topic_coverage": self.topic_coverage(),
                 "capture_watchers": watchers, "continuous_capture_active": any(w["active"] for w in watchers),
                 "embedding_provider": self._provider(), "telemetry_events": telemetry_events,
                 "topic_enrichment": {"configured": bool(summary_model), "model": summary_model or None,
-                                     "enriched_events": enriched_events,
-                                     "reviewed_candidates": reviewed_candidates,
-                                     "last_provider": enrichment_providers[0] if enrichment_providers else None},
+                                     "enriched_events": topic_event_count,
+                                     "reviewed_candidates": relation_event_count,
+                                     "last_provider": last_relation_provider or last_topic_provider or None},
                 "telemetry": self.telemetry_summary()}
 
     def attribution_graph(self, requester_agent: str | None = None, limit: int = 300) -> dict[str, Any]:

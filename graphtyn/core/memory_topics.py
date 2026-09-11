@@ -419,8 +419,9 @@ class TopicMemoryMixin:
     def _ai_review_candidates(self, limit=20):
         from .memory_extraction import configured_summary_model
         if not configured_summary_model():
-            return
+            return 0
         from .memory_extraction import assisted_relation_review
+        reviewed = 0
         with self._connect() as db:
             rows = db.execute("SELECT * FROM topic_relation_reviews WHERE status='pending' ORDER BY updated_at DESC LIMIT ?", (max(1, min(20, limit)),)).fetchall()
         for row in rows:
@@ -436,6 +437,8 @@ class TopicMemoryMixin:
                 with self._connect() as db:
                     db.execute("UPDATE topic_relation_reviews SET reason=?,evidence_json=?,updated_at=? WHERE id=?",
                                (review["reason"] or row["reason"], json.dumps(evidence, ensure_ascii=False), time.time(), row["id"]))
+                reviewed += 1
+        return reviewed
 
     def _propose_relation_candidates(self, requester_agent=None):
         stopwords = {"para", "como", "esta", "este", "desde", "ahora", "porque", "tiene", "hacer", "quiero", "sobre", "con", "del", "los", "las", "una", "uno", "que", "aplicación", "aplicacion", "tema", "asunto"}
@@ -575,6 +578,7 @@ class TopicMemoryMixin:
         """Attach entities and optionally ask the configured local model for labels."""
         topic_ids = set()
         ai_inputs = []
+        ai_enriched = 0
         with self._connect() as db:
             where = "" if session_id is None else "WHERE e.session_id=?"
             args = [] if session_id is None else [session_id]
@@ -608,14 +612,17 @@ class TopicMemoryMixin:
                 proposal, used = assisted_topic_enrichment(topic, message_rows, provider)
                 ai_provider = used
                 if proposal:
+                    ai_enriched += 1
                     with self._connect() as db:
                         db.execute("UPDATE topics SET title=?,summary=?,category=?,updated_at=? WHERE id=?",
                                    (self._protect(proposal["title"]), self._protect(proposal["summary"]), proposal["category"], time.time(), topic_id))
                         db.execute("INSERT INTO topic_events(topic_id,actor,action,details_json,created_at) VALUES(?,?,?,?,?)",
                                    (topic_id, "local-model", "enriched", json.dumps({"provider": used}, ensure_ascii=False), time.time()))
         self._propose_relation_candidates(requester_agent=None)
-        self._ai_review_candidates(limit=20)
+        reviewed_candidates = self._ai_review_candidates(limit=20)
         return {"ok": True, "processed": processed, "sessions": 1 if session_id else None,
+                "topics": len(topic_ids), "ai_enriched": ai_enriched,
+                "reviewed_candidates": reviewed_candidates,
                 "coverage": self.topic_coverage(), "extraction": ai_provider if 'ai_provider' in locals() else "deterministic-limited"}
 
     def topics(self, query="", *, requester_agent=None, state=None, agent_id=None,
