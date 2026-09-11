@@ -3,6 +3,7 @@ import os
 import re
 import ast
 import sqlite3
+import math
 import subprocess
 import hmac
 import hashlib
@@ -733,6 +734,23 @@ def generate_semantic_graph(data: dict) -> dict:
         }
 
     token_sets = [semantic_tokens(n) for n in semantic_content]
+    embedding_vectors = {}
+    semantic_index_path = _index_dir(Path(meta.get("path", "proyecto"))) / "semantic_index.json"
+    try:
+        cached_index = json.loads(semantic_index_path.read_text(encoding="utf-8"))
+        embedding_vectors = {str(row.get("id")): row.get("vector") for row in cached_index.get("rows", [])
+                             if row.get("id") and isinstance(row.get("vector"), list)}
+    except (OSError, ValueError, TypeError):
+        embedding_vectors = {}
+
+    def embedding_similarity(left: dict, right: dict) -> float:
+        a, b = embedding_vectors.get(str(left.get("id"))), embedding_vectors.get(str(right.get("id")))
+        if not a or not b:
+            return 0.0
+        dot = sum(float(x) * float(y) for x, y in zip(a, b))
+        norm_a = math.sqrt(sum(float(x) * float(x) for x in a)) or 1.0
+        norm_b = math.sqrt(sum(float(y) * float(y) for y in b)) or 1.0
+        return dot / (norm_a * norm_b)
     token_index = {}
     for idx, tokens in enumerate(token_sets):
         for token in tokens:
@@ -749,13 +767,17 @@ def generate_semantic_graph(data: dict) -> dict:
                 shared_counts[(left, right)] = shared_counts.get((left, right), 0) + 1
 
     candidates_by_node = {i: [] for i in range(len(semantic_content))}
+    embedding_pairs = 0
     for (left, right), common in shared_counts.items():
-        if common < 2:
+        embedded_score = embedding_similarity(semantic_content[left], semantic_content[right])
+        if common < 2 and embedded_score < 0.68:
             continue
         denom = (len(token_sets[left]) * len(token_sets[right])) ** 0.5 or 1
-        score = common / denom
+        score = max(common / denom, embedded_score)
         if score < 0.28:
             continue
+        if embedded_score >= 0.68:
+            embedding_pairs += 1
         candidates_by_node[left].append((score, right))
         candidates_by_node[right].append((score, left))
 
@@ -776,8 +798,9 @@ def generate_semantic_graph(data: dict) -> dict:
                 "color": "rgba(236, 72, 153, 0.4)",
                 "confidence": "INFERRED",
                 "evidence": {
-                    "method": "cached-description-token-overlap",
+                    "method": "cached-embedding+description-token-overlap" if embedding_vectors else "cached-description-token-overlap",
                     "shared_terms": shared_terms,
+                    "embedding_similarity": round(embedding_similarity(left_node, right_node), 4),
                     "source_excerpt": (left_node.get("details") or "")[:240],
                     "target_excerpt": (right_node.get("details") or "")[:240],
                 },
@@ -809,6 +832,7 @@ def generate_semantic_graph(data: dict) -> dict:
     result = parser._enrich_graph_with_degree({"nodes": nodes, "links": links})
     result["metadata"] = {"view": "semantic-code", "semantic_scope": "code+documentation+media",
                            "relationship_policy": "bounded-token-overlap+structural-links",
+                           "embedding_pairs": embedding_pairs,
                            "inferred_edges": sum(1 for link in links if link.get("confidence") == "INFERRED"),
                            "structural_edges": sum(1 for link in links if link.get("confidence") == "EXTRACTED"),
                            "note": "La similitud propone relación; la dependencia estructural conserva su evidencia AST."}
