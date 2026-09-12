@@ -37,6 +37,8 @@ from ..core.history_import import (ProjectIdentityRegistry, discover_histories, 
                                    delete_source, test_source, sync_memory_workspace,
                                    _agent_id_matches)
 from ..core.memory_jobs import memory_jobs
+from ..core.memory_consolidation import (consolidate_legacy_brain,
+                                         preview_legacy_consolidation)
 from ..mcp_server import (blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node,
                           _validate_memory_owner, _validate_memory_session_owner,
                           _validate_memory_reference_owner)
@@ -46,6 +48,10 @@ watch_manager = WatchManager()
 _memory_watchers: dict[str, dict] = {}
 _memory_watch_lock = threading.Lock()
 _memory_watch_config = data_home() / "memory-watchers.json"
+_openclaw_sync_jobs: dict[str, str] = {}
+_openclaw_sync_lock = threading.Lock()
+_legacy_consolidation_jobs: dict[str, str] = {}
+_legacy_consolidation_lock = threading.Lock()
 
 
 @asynccontextmanager
@@ -113,7 +119,10 @@ def _load_registered_agents() -> list[dict]:
         item = agents.setdefault(aid, {"id": aid, "name": aid, "provider": "", "description": "",
                                       "paths": [], "projects": [], "sources": [], "sessions": 0,
                                       "configured": False, "observed": False})
-        if name.strip(): item["name"] = name.strip()
+        # Keep the configured display label authoritative. Memory rows often
+        # contain a raw canonical id (or an older label) in display_name.
+        if name.strip() and (not item.get("configured") or not item.get("name")):
+            item["name"] = name.strip()
         if provider.strip() and not item.get("provider"): item["provider"] = provider.strip().casefold()
         item["configured"] |= configured
         return item
@@ -138,15 +147,33 @@ def _load_registered_agents() -> list[dict]:
         if project_path and project_path not in item["paths"]: item["paths"].append(project_path)
 
     for project in _load_registered_projects():
+        # Legacy mixed stores remain browsable as archives, but must not be
+        # treated as active memory spaces for an agent. Otherwise every owner
+        # of an old shared DB appears connected to every active brain again.
+        if project.get("legacy"):
+            continue
         project_path = Path(str(project.get("path") or "")).expanduser().resolve()
         db_path = _project_memory_db(project_path)
         if not db_path:
             continue
+        owners = sorted({str(value).strip().casefold() for value in project.get("agent_ids", [])
+                         if str(value).strip()})
+        # Brain registrations are scoped stores. Do not let sessions for
+        # unrelated owners in an old mixed database reappear under every
+        # agent in the dashboard's global identity list.
+        if project.get("space_type") == "agent_brain" and not owners:
+            continue
         try:
             with sqlite3.connect(db_path) as conn:
-                rows = conn.execute("""SELECT s.agent_id, COUNT(*), COALESCE(a.display_name, '')
+                query = """SELECT s.agent_id, COUNT(*), COALESCE(a.display_name, '')
                     FROM sessions s LEFT JOIN agents a ON a.id=s.agent_id
-                    GROUP BY s.agent_id, a.display_name""").fetchall()
+                    """
+                params: list[str] = []
+                if owners:
+                    query += "WHERE lower(s.agent_id) IN (" + ",".join("?" for _ in owners) + ") "
+                    params.extend(owners)
+                query += "GROUP BY s.agent_id, a.display_name"
+                rows = conn.execute(query, params).fetchall()
         except sqlite3.Error:
             continue
         for raw_id, count, display_name in rows:
@@ -184,12 +211,25 @@ def _registered_memory_paths() -> list[Path]:
             try: associated.append(Path(raw).expanduser().resolve())
             except (OSError, RuntimeError, ValueError): pass
     for project in _load_registered_projects():
+        if project.get("legacy"):
+            continue
         path = Path(project.get("path", "")).expanduser().resolve()
         has_source = path in associated
         has_store = bool(existing_store_db(path))
         if path.exists() and project.get("mode") != "master_folder" and (has_source or has_store) and path not in paths:
             paths.append(path)
     return paths
+
+
+def _legacy_memory_record(path: str | Path) -> dict | None:
+    """Resolve a registered archival memory space without opening its store."""
+    try:
+        target = Path(path).expanduser().resolve()
+    except (OSError, RuntimeError, ValueError):
+        return None
+    return next((project for project in _load_registered_projects()
+                 if project.get("legacy") and project.get("path") and
+                 Path(project["path"]).expanduser().resolve() == target), None)
 
 
 def _watch_config_read() -> list[dict]:
@@ -248,6 +288,8 @@ def _start_memory_watcher(path: str | Path, *, interval: float = 30, provider: s
                           provider_model: str = "auto", agent_id: str | None = None,
                           persist: bool = True) -> dict:
     key = str(Path(path).expanduser().resolve())
+    if _legacy_memory_record(key):
+        raise ValueError("un espacio marcado LEGADO se conserva como archivo y no admite captura continua")
     with _memory_watch_lock:
         old = _memory_watchers.get(key)
         if old and old.get("thread") and old["thread"].is_alive():
@@ -321,11 +363,16 @@ def _memory_principal(authorization: str | None) -> dict | None:
             else:
                 role, projects = str(config), []
             return {"role": role if role in _ROLE_LEVEL else "reader", "projects": projects,
+                    "agent_id": (str(config.get("agent_id") or "").strip().casefold() or None
+                                 if isinstance(config, dict) else None),
                     "key": hashlib.sha256(supplied.encode()).hexdigest()[:16]}
     legacy = os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN") or ""
     if legacy and supplied and hmac.compare_digest(supplied, legacy):
-        return {"role": "admin", "projects": [], "key": "legacy"}
-    if not tokens and not legacy: return {"role": "admin", "projects": [], "key": "local"}
+        return {"role": "admin", "projects": [], "agent_id": None, "key": "legacy"}
+    mcp_token = os.environ.get("GRAPHTYN_MCP_TOKEN") or ""
+    if mcp_token and supplied and hmac.compare_digest(supplied, mcp_token):
+        return {"role": "admin", "projects": [], "agent_id": None, "key": "mcp"}
+    if not tokens and not legacy: return {"role": "admin", "projects": [], "agent_id": None, "key": "local"}
     return None
 
 
@@ -348,6 +395,17 @@ def _require_role(authorization: str | None, required: str, path: str | None = N
     return role, None
 
 
+def _agent_scope_denial(authorization: str | None, agent_id: str) -> JSONResponse | None:
+    principal = _memory_principal(authorization) or {}
+    bound = str(principal.get("agent_id") or "").strip().casefold()
+    expected = str(agent_id or "").strip().casefold()
+    if bound and bound != expected:
+        return JSONResponse({"ok": False, "error": "El token pertenece a otro agente"}, status_code=403)
+    if os.environ.get("GRAPHTYN_OPENCLAW_REQUIRE_AGENT_TOKEN", "").casefold() in {"1", "true", "yes", "on"} and not bound:
+        return JSONResponse({"ok": False, "error": "Se requiere un token Graphtyn ligado a este agente"}, status_code=403)
+    return None
+
+
 @app.middleware("http")
 async def require_remote_memory_auth(request, call_next):
     """Reject unauthenticated network access to memory APIs."""
@@ -359,6 +417,7 @@ async def require_remote_memory_auth(request, call_next):
         remote = True
     path = request.url.path
     protected = (path.startswith("/api/memory") or path.startswith("/api/v1/")
+                 or path.startswith("/api/harness/")
                  or path in {"/api/projects/register", "/api/agents/register"})
     if remote and protected:
         configured = (os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN")
@@ -472,6 +531,8 @@ def _load_registered_projects() -> list[dict]:
                     "space_type": _space_type_for_record(cp, p_path),
                     "indexed": _is_indexed(p_path),
                     "agent_ids": [str(value).strip().casefold() for value in (cp.get("agent_ids") or []) if str(value).strip()],
+                    "legacy": bool(cp.get("legacy")),
+                    "legacy_reason": str(cp.get("legacy_reason") or ""),
                 }
                 existing = next((p for p in projects if p["path"] == str(p_path)), None)
                 if existing is None:
@@ -513,7 +574,9 @@ def _load_registered_brains() -> list[dict]:
         rows[path] = {"id": project.get("id") or Path(path).name, "name": project.get("name") or Path(path).name,
                       "path": path, "space_type": "agent_brain", "indexed": bool(project.get("indexed")),
                       "autoload": bool(project.get("autoload", False)), "sessions": 0, "agents": [],
-                      "agent_ids": sorted(set(configured_agents)), "sources": []}
+                      "agent_ids": sorted(set(configured_agents)), "sources": [],
+                      "legacy": bool(project.get("legacy")),
+                      "legacy_reason": str(project.get("legacy_reason") or "")}
     for source in configured_sources():
         raw_path = str(source.get("project_path") or "").strip()
         if not raw_path:
@@ -564,7 +627,35 @@ def _load_registered_brains() -> list[dict]:
             brain["memory_exists"] = True
         except sqlite3.Error:
             continue
-    return sorted(rows.values(), key=lambda row: (str(row.get("name") or "").casefold(), row["path"]))
+    registered = list(rows.values())
+    active_brains = [brain for brain in registered if not brain.get("legacy")]
+    for archive in (brain for brain in registered if brain.get("legacy")):
+        outcomes = {}
+        archive_id = str(archive.get("id") or Path(archive["path"]).name)
+        for target in active_brains:
+            db_path = _project_memory_db(Path(target["path"]))
+            if not db_path:
+                continue
+            try:
+                with sqlite3.connect(db_path) as conn:
+                    has_runs = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='legacy_consolidation_runs'").fetchone()
+                    if not has_runs:
+                        continue
+                    migrations = conn.execute("""SELECT agent_id,status,updated_at,source_backup,
+                        target_backup,report_json FROM legacy_consolidation_runs
+                        WHERE archive_id=? ORDER BY updated_at DESC""", (archive_id,)).fetchall()
+                for row in migrations:
+                    owner = str(row[0]).casefold()
+                    if owner not in set(archive.get("agent_ids") or []):
+                        continue
+                    outcomes.setdefault(owner, {"agent_id": owner, "target_name": target["name"],
+                        "target_path": target["path"], "status": row[1], "updated_at": row[2],
+                        "source_backup": row[3], "target_backup": row[4],
+                        "report": json.loads(row[5] or "{}")})
+            except (sqlite3.Error, ValueError, TypeError):
+                continue
+        archive["consolidated_agents"] = list(outcomes.values())
+    return sorted(registered, key=lambda row: (str(row.get("name") or "").casefold(), row["path"]))
 
 
 def _memory_space_agent_ids(path: str | Path) -> list[str]:
@@ -596,6 +687,177 @@ def list_brains():
 def list_agents():
     """List configured and observed agent identities across registered spaces."""
     return JSONResponse(_load_registered_agents())
+
+
+@app.get("/api/harness/openclaw")
+def openclaw_installations(authorization: str | None = Header(default=None)):
+    _, denied = _require_role(authorization, "admin")
+    if denied: return denied
+    from ..core.openclaw_integration import agent_status, list_installations, resolve_agent
+    installations = []
+    for installation in list_installations():
+        item = dict(installation)
+        agents = []
+        for agent in installation.get("agents", []):
+            enriched = dict(agent)
+            try:
+                route = resolve_agent(installation["id"], agent["id"])
+                for path in (route.get("brain_path"), route.get("family_path")):
+                    if path and existing_store_db(path) is None:
+                        raise FileNotFoundError(f"falta el almacén de memoria de {agent.get('agent_id') or agent['id']}")
+                enriched["memory_status"] = agent_status(installation["id"], agent["id"])
+            except Exception as exc:
+                # Keep the rest of the installation visible when one local
+                # brain is unavailable or has a damaged store.
+                enriched["memory_status_error"] = f"{type(exc).__name__}: {exc}"
+            agents.append(enriched)
+        item["agents"] = agents
+        installations.append(item)
+    return {"ok": True, "installations": installations}
+
+
+@app.post("/api/harness/openclaw/{installation_id}/sync")
+def openclaw_sync(installation_id: str,
+                  authorization: str | None = Header(default=None)):
+    """Queue an incremental sync for every isolated brain in one installation."""
+    _, denied = _require_role(authorization, "admin")
+    if denied: return denied
+    from ..core.openclaw_integration import get_installation
+    try:
+        installation = get_installation(installation_id)
+    except KeyError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+
+    agents = [agent for agent in installation.get("agents", []) if agent.get("brain_path")]
+    paths = sorted({str(Path(agent["brain_path"]).expanduser().resolve())
+                    for agent in agents if agent.get("brain_path")})
+    if not paths:
+        return JSONResponse({"ok": False, "error": "la instalación no tiene cerebros registrados"}, status_code=409)
+
+    with _openclaw_sync_lock:
+        existing_id = _openclaw_sync_jobs.get(installation_id)
+        if existing_id:
+            try:
+                existing = memory_jobs.get(existing_id)
+                if existing.get("status") in {"pending", "running"}:
+                    return {"ok": True, "job": existing, "already_running": True}
+            except ValueError:
+                pass
+            _openclaw_sync_jobs.pop(installation_id, None)
+        job = memory_jobs.create("openclaw-sync", {
+            "installation_id": installation_id,
+            "agent_ids": [str(agent.get("agent_id") or f"openclaw/{agent['id']}") for agent in agents],
+            "paths": paths,
+        })
+        _openclaw_sync_jobs[installation_id] = job["id"]
+
+    def run(update):
+        results = []
+        try:
+            total = max(1, len(agents))
+            for index, agent in enumerate(agents):
+                brain_path = str(Path(agent["brain_path"]).expanduser().resolve())
+                if update(int(index * 100 / total), f"Sincronizando {agent.get('display_name') or agent['id']}…") is False:
+                    break
+                result = sync_memory_workspace(
+                    brain_path, provider="openclaw", provider_model="auto", enrich=True,
+                    agent_id=str(agent.get("agent_id") or f"openclaw/{agent['id']}").casefold(),
+                    progress=lambda percent, message="", base=index: update(
+                        min(99, int((base + max(0, min(100, percent)) / 100) * 100 / total)),
+                        message or f"Sincronizando {agent.get('display_name') or agent['id']}…"))
+                results.append({"agent_id": agent.get("agent_id") or f"openclaw/{agent['id']}",
+                                "display_name": agent.get("display_name") or agent["id"],
+                                **result})
+            return {"ok": len(results) == len(agents) and all(row.get("ok") for row in results),
+                    "installation_id": installation_id, "agents": results,
+                    "agent_count": len(agents), "path_count": len(paths)}
+        finally:
+            with _openclaw_sync_lock:
+                if _openclaw_sync_jobs.get(installation_id) == job["id"]:
+                    _openclaw_sync_jobs.pop(installation_id, None)
+
+    memory_jobs.run(job["id"], run)
+    return {"ok": True, "job": job, "already_running": False}
+
+
+@app.get("/api/harness/openclaw/{installation_id}/agents/{agent_id}")
+def openclaw_agent(installation_id: str, agent_id: str,
+                   authorization: str | None = Header(default=None)):
+    from ..core.openclaw_integration import agent_status, resolve_agent
+    try:
+        route = resolve_agent(installation_id, agent_id)
+        if denied := _memory_auth(authorization, route["brain_path"]): return denied
+        if route.get("family_path"):
+            if denied := _memory_auth(authorization, route["family_path"]): return denied
+        if denied := _agent_scope_denial(authorization, route["agent_id"]): return denied
+        return agent_status(installation_id, agent_id)
+    except KeyError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+    except ValueError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+
+@app.post("/api/harness/openclaw/relations")
+def openclaw_relation(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    from ..core.openclaw_integration import resolve_agent, set_parent
+    try:
+        installation_id = str(payload.get("installation_id") or "")
+        child_id = str(payload.get("child_id") or "")
+        child = resolve_agent(installation_id, child_id)
+        role, denied = _require_role(authorization, "admin", child["brain_path"])
+        if denied: return denied
+        requested_parent = str(payload.get("parent_id") or "").strip()
+        if requested_parent:
+            parent = resolve_agent(installation_id, requested_parent)
+            if denied := _memory_auth(authorization, parent["brain_path"], "admin"): return denied
+        result = set_parent(installation_id, child_id, payload.get("parent_id"),
+                            confirm=bool(payload.get("confirm", False)))
+        return {"ok": True, "agent": result, "changed_by_role": role}
+    except KeyError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+    except PermissionError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=403)
+    except (ValueError, TypeError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+
+@app.post("/api/harness/openclaw/memory/publish")
+def openclaw_publish(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    from ..core.openclaw_integration import publish_agent_memory, resolve_agent
+    try:
+        installation_id = str(payload.get("installation_id") or "")
+        agent_id = str(payload.get("agent_id") or "")
+        route = resolve_agent(installation_id, agent_id)
+        if denied := _memory_auth(authorization, route["brain_path"], "writer"): return denied
+        if route.get("family_path"):
+            if denied := _memory_auth(authorization, route["family_path"], "writer"): return denied
+        if denied := _agent_scope_denial(authorization, route["agent_id"]): return denied
+        return publish_agent_memory(installation_id, agent_id, str(payload.get("memory_id") or ""))
+    except KeyError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+    except PermissionError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=403)
+    except (ValueError, TypeError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
+
+
+@app.post("/api/harness/openclaw/memory/revoke")
+def openclaw_revoke(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    from ..core.openclaw_integration import resolve_agent, revoke_agent_memory
+    try:
+        installation_id = str(payload.get("installation_id") or "")
+        agent_id = str(payload.get("agent_id") or "")
+        route = resolve_agent(installation_id, agent_id)
+        if denied := _memory_auth(authorization, route["family_path"], "writer"): return denied
+        if denied := _agent_scope_denial(authorization, route["agent_id"]): return denied
+        return revoke_agent_memory(installation_id, agent_id,
+                                  str(payload.get("shared_memory_id") or ""))
+    except KeyError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+    except PermissionError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=403)
+    except (ValueError, TypeError) as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
 
 @app.post("/api/agents/register")
@@ -1569,6 +1831,10 @@ def memory_sync(payload: dict = Body(...), authorization: str | None = Header(de
         return JSONResponse({"ok": False, "error": "consent requerido para sincronizar memoria"}, status_code=400)
     if not all_spaces and not requested:
         return JSONResponse({"ok": False, "error": "path requerido o all_spaces=true"}, status_code=400)
+    if not all_spaces and requested and (archive := _legacy_memory_record(requested)):
+        return JSONResponse({"ok": False,
+                             "error": f"{archive.get('name') or 'Este espacio'} está archivado como LEGADO y no se sincroniza",
+                             "code": "legacy_memory_archive"}, status_code=409)
     paths = _registered_memory_paths() if all_spaces else [Path(str(requested)).expanduser().resolve()]
     paths = [path for path in paths if path.exists()]
     if not paths:
@@ -1604,6 +1870,11 @@ def memory_watch(payload: dict = Body(...), authorization: str | None = Header(d
     if not payload.get("consent"):
         return JSONResponse({"ok": False, "error": "consent requerido para captura continua"}, status_code=400)
     enabled = bool(payload.get("enabled", True))
+    if enabled and not payload.get("all_spaces") and payload.get("path") and \
+            (archive := _legacy_memory_record(payload["path"])):
+        return JSONResponse({"ok": False,
+                             "error": f"{archive.get('name') or 'Este espacio'} está archivado como LEGADO y no admite captura continua",
+                             "code": "legacy_memory_archive"}, status_code=409)
     paths = _registered_memory_paths() if payload.get("all_spaces") else ([Path(str(payload["path"])).expanduser().resolve()] if payload.get("path") else [])
     if not paths:
         return JSONResponse({"ok": False, "error": "path requerido o no hay espacios registrados"}, status_code=400)
@@ -2010,6 +2281,90 @@ def memory_alias_save(payload: dict = Body(...), authorization: str | None = Hea
     except (KeyError, ValueError, OSError) as exc: return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
 
+@app.post("/api/v1/memory/consolidations")
+def memory_consolidate(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    """Preview or queue a verified, per-agent legacy-brain consolidation."""
+    try:
+        source_path = str(Path(payload.get("source_path") or "").expanduser().resolve())
+        target_path = str(Path(payload.get("target_path") or "").expanduser().resolve())
+    except (OSError, RuntimeError, ValueError):
+        return JSONResponse({"ok": False, "error": "rutas de memoria inválidas"}, status_code=400)
+    if not payload.get("source_path") or not payload.get("target_path"):
+        return JSONResponse({"ok": False, "error": "source_path y target_path son obligatorios"}, status_code=400)
+    for memory_path in (source_path, target_path):
+        _, denied = _require_role(authorization, "admin", memory_path)
+        if denied:
+            return denied
+
+    records = _load_registered_projects()
+    source_record = next((row for row in records if row.get("path") == source_path), None)
+    target_record = next((row for row in records if row.get("path") == target_path), None)
+    if not source_record or not source_record.get("legacy"):
+        return JSONResponse({"ok": False, "error": "source_path debe ser un archivo registrado como LEGADO"}, status_code=409)
+    agent_id = str(payload.get("agent_id") or "").strip().casefold()
+    target_owners = {str(value).strip().casefold() for value in (target_record or {}).get("agent_ids", [])
+                     if str(value).strip()}
+    if (not target_record or target_record.get("legacy")
+            or target_record.get("space_type") != "agent_brain"
+            or agent_id not in target_owners):
+        return JSONResponse({"ok": False, "error": "target_path debe ser el cerebro activo registrado para ese agente"}, status_code=409)
+    archive_id = str(source_record.get("id") or Path(source_path).name)
+    apply = bool(payload.get("apply"))
+    if not apply:
+        try:
+            return preview_legacy_consolidation(source_path, target_path, agent_id, archive_id)
+        except (ValueError, FileNotFoundError, PermissionError, OSError) as exc:
+            return JSONResponse({"ok": False, "error": str(exc)}, status_code=409)
+    if not payload.get("consent"):
+        return JSONResponse({"ok": False, "error": "apply=true requiere consent=true"}, status_code=400)
+
+    key = "|".join((source_path, target_path, agent_id))
+    with _legacy_consolidation_lock:
+        existing_id = _legacy_consolidation_jobs.get(key)
+        if existing_id:
+            try:
+                existing = memory_jobs.get(existing_id)
+                if existing.get("status") in {"pending", "running"}:
+                    return {"ok": True, "job": existing, "already_running": True}
+            except ValueError:
+                pass
+        job = memory_jobs.create("legacy-consolidation", {
+            "source_path": source_path, "target_path": target_path,
+            "archive_id": archive_id, "agent_id": agent_id,
+        })
+        _legacy_consolidation_jobs[key] = job["id"]
+
+    def operation(update):
+        try:
+            return consolidate_legacy_brain(source_path, target_path, agent_id=agent_id,
+                archive_id=archive_id, consent=True,
+                batch_size=int(payload.get("batch_size") or 100), progress=update)
+        finally:
+            with _legacy_consolidation_lock:
+                if _legacy_consolidation_jobs.get(key) == job["id"]:
+                    _legacy_consolidation_jobs.pop(key, None)
+
+    memory_jobs.run(job["id"], operation)
+    return {"ok": True, "job": job, "already_running": False}
+
+
+@app.get("/api/v1/memory/consolidations/{job_id}")
+def memory_consolidation_get(job_id: str, authorization: str | None = Header(default=None)):
+    try:
+        job = memory_jobs.get(job_id)
+    except ValueError as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
+    if job.get("kind") != "legacy-consolidation":
+        return JSONResponse({"ok": False, "error": "trabajo no encontrado"}, status_code=404)
+    payload = job.get("payload") or {}
+    for memory_path in (str(payload.get("source_path") or ""),
+                        str(payload.get("target_path") or "")):
+        _, denied = _require_role(authorization, "admin", memory_path)
+        if denied:
+            return denied
+    return {"ok": True, "job": job}
+
+
 @app.post("/api/v1/imports")
 def import_start(payload: dict = Body(...), authorization: str | None = Header(default=None)):
     _, denied = _require_role(authorization, "admin", payload.get("path"))
@@ -2151,6 +2506,12 @@ _HTTP_MCP_TOOLS = [
     {"name": "memory_checkpoint", "description": "Guarda decisión/resultado atribuido.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "session_id": {"type": "string"}, "kind": {"type": "string"}, "title": {"type": "string"}, "content": {"type": "string"}, "files": {"type": "array", "items": {"type": "string"}}, "node_ids": {"type": "array", "items": {"type": "string"}}}, "required": ["session_id", "kind", "title", "content"]}},
     {"name": "memory_search", "description": "Busca recuerdos entre sesiones.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "query": {"type": "string"}, "requester_agent": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["query"]}},
     {"name": "memory_context", "description": "Contexto semántico compacto con política de afirmaciones, atribución y vigencia. Identifique siempre al cliente solicitante.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "query": {"type": "string"}, "requester_agent": {"type": "string", "description": "Identidad real del cliente o perfil, sin alias implícitos."}, "token_budget": {"type": "integer"}}, "required": ["query", "requester_agent"]}},
+    {"name": "memory_agent_context", "description": "Recupera contexto privado del agente OpenClaw y sólo recuerdos que su familia haya publicado explícitamente. installation_id se omite si sólo hay una instalación conectada.", "inputSchema": {"type": "object", "properties": {"installation_id": {"type": "string"}, "agent_id": {"type": "string"}, "query": {"type": "string"}, "token_budget": {"type": "integer"}}, "required": ["agent_id", "query"]}},
+    {"name": "memory_agent_status", "description": "Muestra el cerebro, relación padre/subagente y cobertura familiar de un agente OpenClaw. installation_id se omite si sólo hay una instalación conectada.", "inputSchema": {"type": "object", "properties": {"installation_id": {"type": "string"}, "agent_id": {"type": "string"}}, "required": ["agent_id"]}},
+    {"name": "memory_agent_publish", "description": "Publica explícitamente una memoria propia en la capa compartida de la familia. installation_id se omite si sólo hay una instalación conectada.", "inputSchema": {"type": "object", "properties": {"installation_id": {"type": "string"}, "agent_id": {"type": "string"}, "memory_id": {"type": "string"}}, "required": ["agent_id", "memory_id"]}},
+    {"name": "memory_agent_revoke", "description": "Revoca la copia familiar de una memoria publicada por este mismo agente. installation_id se omite si sólo hay una instalación conectada.", "inputSchema": {"type": "object", "properties": {"installation_id": {"type": "string"}, "agent_id": {"type": "string"}, "shared_memory_id": {"type": "string"}}, "required": ["agent_id", "shared_memory_id"]}},
+    {"name": "memory_agent_update", "description": "Confirma o corrige relación padre/subagente; requiere rol administrador y registra la confirmación.", "inputSchema": {"type": "object", "properties": {"installation_id": {"type": "string"}, "agent_id": {"type": "string"}, "parent_id": {"type": ["string", "null"]}, "confirm": {"type": "boolean"}}, "required": ["installation_id", "agent_id", "confirm"]}},
+    {"name": "memory_status", "description": "Estado de captura, cobertura temática, propietarios y ruta del almacén de este espacio.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string", "description": "Ruta explícita del proyecto o cerebro"}}, "required": ["path"]}},
     {"name": "memory_ingest_evidence", "description": "Ingiere artefactos de benchmark como evidencia verificada, hasheada y ligada a la revisión Git.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "files": {"type": "array", "items": {"type": "string"}}}}},
     {"name": "memory_session_end", "description": "Cierra sesión y crea handoff opcional.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "session_id": {"type": "string"}, "summary": {"type": "string"}}, "required": ["session_id"]}},
     {"name": "memory_compact", "description": "Extrae propuestas desde conversación saneada.", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}, "session_id": {"type": "string"}, "provider": {"type": "string"}}, "required": ["session_id"]}},
@@ -2164,7 +2525,7 @@ _HTTP_MCP_TOOLS.extend(TOPIC_TOOLS)
 def _http_mcp_tools() -> list[dict]:
     profile = os.environ.get("GRAPHTYN_HTTP_TOOL_PROFILE", "full").lower()
     if profile == "intent":
-        return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}]
+        return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] in {"graph_query_intent", "memory_context", "memory_agent_context", "memory_agent_status", "memory_agent_publish", "memory_agent_revoke", "memory_agent_update", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}]
     if profile == "memory":
         return [tool for tool in _HTTP_MCP_TOOLS if tool["name"] == "graph_query_intent" or tool["name"].startswith("memory_")]
     return _HTTP_MCP_TOOLS
@@ -2175,9 +2536,13 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
     """Authenticated JSON-RPC MCP transport for trusted team clients."""
     token = os.environ.get("GRAPHTYN_MCP_TOKEN", "")
     supplied = authorization.removeprefix("Bearer ") if authorization else ""
-    if not token:
-        return JSONResponse({"error": "MCP HTTP deshabilitado: configura GRAPHTYN_MCP_TOKEN"}, status_code=503)
-    if not hmac.compare_digest(token, supplied):
+    has_scoped_tokens = bool(os.environ.get("GRAPHTYN_MEMORY_TOKENS") or
+                             os.environ.get("GRAPHTYN_MEMORY_TOKENS_FILE"))
+    if not token and not has_scoped_tokens:
+        return JSONResponse({"error": "MCP HTTP deshabilitado: configura GRAPHTYN_MCP_TOKEN o tokens Graphtyn por agente"}, status_code=503)
+    global_token_ok = bool(token and hmac.compare_digest(token, supplied))
+    scoped_principal = _memory_principal(authorization)
+    if not global_token_ok and (not has_scoped_tokens or scoped_principal is None):
         return JSONResponse({"error": "No autorizado"}, status_code=401, headers={"WWW-Authenticate": "Bearer"})
     req_id = payload.get("id")
     method = payload.get("method")
@@ -2189,13 +2554,98 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
         params = payload.get("params", {})
         name = params.get("name")
         args = params.get("arguments", {})
+        if name in {"memory_agent_context", "memory_agent_status", "memory_agent_publish",
+                    "memory_agent_revoke", "memory_agent_update"}:
+            from ..core.openclaw_integration import (agent_context, agent_status,
+                installation_for_agent, publish_agent_memory, resolve_agent,
+                revoke_agent_memory, set_parent)
+            try:
+                agent_id = str(args.get("agent_id") or "")
+                installation_id = str(args.get("installation_id") or "").strip()
+                if not installation_id:
+                    installation_id = installation_for_agent(agent_id)
+                route = resolve_agent(installation_id, agent_id)
+                tool_is_error = False
+                if denied := _agent_scope_denial(authorization, route["agent_id"]):
+                    data = {"ok": False, "error": denied.body.decode("utf-8", "replace")}
+                    tool_is_error = True
+                else:
+                    required = "admin" if name == "memory_agent_update" else (
+                        "writer" if name in {"memory_agent_publish", "memory_agent_revoke"} else "reader")
+                    _, denied = _require_role(authorization, required,
+                        route.get("family_path") if name == "memory_agent_revoke" else route["brain_path"])
+                    if denied:
+                        data = {"ok": False, "error": denied.body.decode("utf-8", "replace")}
+                        tool_is_error = True
+                    elif name in {"memory_agent_context", "memory_agent_status"} and route.get("family_path"):
+                        _, denied = _require_role(authorization, "reader", route["family_path"])
+                        if denied:
+                            data = {"ok": False, "error": denied.body.decode("utf-8", "replace")}
+                            tool_is_error = True
+                        else:
+                            data = (agent_context(installation_id, agent_id,
+                                str(args.get("query") or ""),
+                                token_budget=max(300, min(3000, int(args.get("token_budget") or 1800))))
+                                if name == "memory_agent_context" else
+                                agent_status(installation_id, agent_id))
+                    elif name == "memory_agent_context":
+                        data = agent_context(installation_id, agent_id, str(args.get("query") or ""),
+                            token_budget=max(300, min(3000, int(args.get("token_budget") or 1800))))
+                    elif name == "memory_agent_status":
+                        data = agent_status(installation_id, agent_id)
+                    elif name == "memory_agent_publish":
+                        if not route.get("family_path"):
+                            raise PermissionError("el agente no tiene una familia confirmada")
+                        _, denied = _require_role(authorization, "writer", route["family_path"])
+                        if denied:
+                            data = {"ok": False, "error": denied.body.decode("utf-8", "replace")}
+                            tool_is_error = True
+                        else:
+                            data = publish_agent_memory(installation_id, agent_id,
+                                                        str(args.get("memory_id") or ""))
+                    elif name == "memory_agent_revoke":
+                        data = revoke_agent_memory(installation_id, agent_id,
+                                                   str(args.get("shared_memory_id") or ""))
+                    else:
+                        role, denied = _require_role(authorization, "admin", route["brain_path"])
+                        if denied:
+                            data = {"ok": False, "error": denied.body.decode("utf-8", "replace")}
+                            tool_is_error = True
+                        else:
+                            parent_id = str(args.get("parent_id") or "").strip() or None
+                            if parent_id:
+                                parent_route = resolve_agent(installation_id, parent_id)
+                                _, denied = _require_role(authorization, "admin", parent_route["brain_path"])
+                                if denied:
+                                    data = {"ok": False, "error": denied.body.decode("utf-8", "replace")}
+                                    tool_is_error = True
+                                else:
+                                    data = set_parent(installation_id, agent_id, parent_id,
+                                                      confirm=bool(args.get("confirm", False)))
+                            else:
+                                data = set_parent(installation_id, agent_id, None,
+                                                  confirm=bool(args.get("confirm", False)))
+            except (KeyError, ValueError, PermissionError, TypeError) as exc:
+                data = {"ok": False, "error": str(exc), "tool": name}
+                tool_is_error = True
+            result = {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}]}
+            if tool_is_error: result["isError"] = True
+            return JSONResponse({"jsonrpc": "2.0", "id": req_id, "result": result})
+        if name == "memory_status" and not str(args.get("path") or "").strip():
+            return JSONResponse({"jsonrpc": "2.0", "id": req_id,
+                                 "error": {"code": -32602, "message": "memory_status requiere una ruta explícita"}})
         tool_is_error = False
         root = Path(args.get("path") or os.environ.get("GRAPHTYN_MCP_PATH", str(DEFAULT_MASTER_DIR))).resolve()
         if not root.is_dir():
             return JSONResponse({"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": "Ruta de proyecto inválida"}})
         if name.startswith("memory_"):
-            if name in TOPIC_SPECS or name == "memory_topics_enrich":
-                _, denied = _require_role(authorization, "writer" if name in {"memory_topic_update", "memory_relation_review", "memory_topics_enrich"} else "reader", str(root))
+            write_tools = {"memory_session_start", "memory_append", "memory_ingest_turn",
+                "memory_checkpoint", "memory_ingest_evidence", "memory_session_end", "memory_compact",
+                "memory_correct", "memory_forget", "memory_topic_update", "memory_relation_review",
+                "memory_topics_enrich"}
+            if name in TOPIC_SPECS or name == "memory_topics_enrich" or scoped_principal is not None:
+                _, denied = _require_role(authorization,
+                    "writer" if name in write_tools else "reader", str(root))
                 if denied: return denied
             memory = SharedMemoryStore(root)
             try:
@@ -2215,6 +2665,15 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
                 elif name in TOPIC_SPECS or name == "memory_topics_enrich": data = dispatch_topic(
                     memory, name, args, agent_ids=_memory_space_agent_ids(root))
                 elif name == "memory_context": data = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), token_budget=int(args.get("token_budget") or 1800), agent_ids=_memory_space_agent_ids(root))
+                elif name == "memory_status":
+                    data = memory.status(agent_ids=_memory_space_agent_ids(root))
+                    data["path"] = str(root)
+                    with _memory_watch_lock:
+                        data["sync_watchers"] = [_watcher_public(item, value)
+                                                 for item, value in _memory_watchers.items()
+                                                 if item == str(root)]
+                    data["continuous_capture_active"] = bool(
+                        data.get("continuous_capture_active") or data["sync_watchers"])
                 elif name == "memory_ingest_evidence": data = memory.ingest_benchmark_evidence(args.get("files") or None)
                 elif name == "memory_session_end":
                     _validate_memory_session_owner(root, memory, args.get("session_id"))

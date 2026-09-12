@@ -275,3 +275,75 @@ irregular, sin sincronizar todo el grafo con un único ciclo.
 Los estados de asunto son `abierto`, `en investigación`, `resuelto`, `reabierto` y `archivado`. La verificación es independiente (`sin verificar`, `declarado`, `prueba superada`, `prueba fallida`, `confirmado por usuario`). Las verificaciones requieren mensajes fuente compatibles y cada corrección, fusión o separación conserva un evento auditable.
 
 Antes de migrar un almacén efectivo, compruébalo con `GET /api/memory/status` y crea un respaldo SQLite. La captura sólo se importa tras seleccionar explícitamente el proyecto y la sesión; sesiones ambiguas permanecen pendientes.
+
+## Incorporar un legado al cerebro activo
+
+`Legado histórico` y `Legado mixto` describen archivos de origen, no cerebros
+que los agentes deban consultar en paralelo. Histórico identifica una memoria
+anterior al flujo actual; mixto indica que el archivo puede incluir más de una
+identidad. El dashboard los muestra aparte de los cerebros activos. El archivo
+queda intacto como respaldo después de incorporar sus datos.
+
+La consolidación se ejecuta para una identidad exacta y un único cerebro activo.
+Primero valida en el dashboard que el destino pertenezca al agente y revisa la
+vista previa. Desde CLI, la vista previa es el comportamiento predeterminado:
+
+```bash
+graphtyn memory consolidate \
+  --source /ruta/al/archivo-legado \
+  --target /ruta/al/cerebro-evi \
+  --agent-id openclaw/nexus
+```
+
+Cuando los conteos y la atribución sean correctos, autoriza la copia:
+
+```bash
+graphtyn memory consolidate \
+  --source /ruta/al/archivo-legado \
+  --target /ruta/al/cerebro-evi \
+  --agent-id openclaw/nexus \
+  --apply --consent
+```
+
+`--source` debe estar registrado como `legacy`; `--target` debe ser un cerebro
+activo registrado para esa misma identidad. Para migrar un legado mixto a varias
+personas, repite el comando con el cerebro activo de cada persona. Graphtyn no
+adivina propietarios ni fusiona Eve con Evi. En el dashboard, el botón
+**Migrar/Reanudar** hace la vista previa, pide confirmación, inicia un trabajo
+de fondo y muestra el progreso.
+
+La API equivalente es `POST /api/v1/memory/consolidations`. Envía
+`source_path`, `target_path` y `agent_id` para obtener la vista previa. La
+ejecución requiere `apply: true` y `consent: true`; responde con un `job.id` que
+se consulta en `GET /api/v1/memory/consolidations/{job_id}`. Las dos rutas deben
+estar dentro del alcance del token administrativo configurado.
+
+Antes de escribir, Graphtyn crea una copia online de SQLite del legado y, si ya
+existe, otra del cerebro destino. Conserva esas copias con checksum bajo
+`legacy-backups/` dentro del almacén destino. Un ledger por conversación,
+mensaje, recuerdo y tema hace que la operación sea incremental e idempotente;
+si se interrumpe, vuelve a ejecutar el mismo comando o reanuda desde el
+dashboard. La base original no se modifica.
+
+Se copian mensajes de sesiones autorizadas, recuerdos explícitos y procedencia
+de varios mensajes/sesiones. Los historiales en cuarentena quedan fuera. De una
+sesión sin captura conversacional se conserva sólo el recuerdo explícito, sin
+importar su transcripción. Los recuerdos que figuraban como verificados en el
+archivo se incorporan como observaciones históricas: Graphtyn conserva su estado
+anterior en la procedencia, pero no los presenta como una verificación actual.
+Los temas y episodios consultables se reconstruyen desde los mensajes; el título,
+estado, verificación y eventos anteriores también se conservan como evidencia
+histórica. Las relaciones y revisiones se transfieren al grafo activo cuando
+cada tema de origen corresponde a un único tema reconstruido para ese agente.
+Si la correspondencia es ambigua, Graphtyn conserva la relación como un recuerdo
+histórico que requiere revisión, sin crear una arista dudosa. El detalle de cada
+elemento mantiene `capture_mode=historical_import` y referencias al archivo y a
+sus IDs originales.
+
+Al terminar, el agente consulta su cerebro activo junto con sus conversaciones
+nuevas. La sincronización continua sigue leyendo las fuentes actuales del agente;
+los archivos marcados LEGADO no entran a `memory sync --all-spaces` ni a captura
+automática. Si el archivo histórico recibe nuevos elementos después, vuelve a
+ejecutar la consolidación: sólo se incorporan los registros nuevos o cambiados.
+La publicación entre cerebros de una familia sigue siendo explícita y no forma
+parte de esta migración.
