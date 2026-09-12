@@ -7,6 +7,29 @@ compatibles con PEP 440.
 
 Sin cambios registrados.
 
+## [0.10.0] - 2026-09-12
+
+### Añadido
+
+- `memory scope show|set` permite gestionar la política de propietario de cada
+  espacio sin sobrescribir sus demás metadatos.
+- `memory sync --all-spaces` descubre espacios registrados y continúa con los
+  almacenes válidos cuando otro presenta un conflicto, dejando el error visible.
+- La importación OpenClaw reconoce raíces de runtime configuradas y sigue
+  `trajectory-path.json` hasta la transcripción canónica, comprobando que la ruta
+  permanezca dentro de la fuente seleccionada.
+- El índice de código incluye secciones Markdown y RST con referencias de archivo
+  y línea, y redacta patrones comunes de credenciales. La búsqueda semántica de
+  documentos usa una ruta de proyecto explícita.
+- MCP stdio incorpora `memory_status`; `memory_context` y `graph_search` exponen
+  límites de recuperación acotados.
+
+### Corregido
+
+- Las candidatas de relación conservan el alcance del propietario además de los
+  filtros de agentes autorizados.
+- Las respuestas de episodios incluyen identificadores de mensajes fuente.
+
 ## [0.9.0] - 2026-09-12
 
 ### Añadido

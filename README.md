@@ -10,7 +10,7 @@ contexto compacto a agentes mediante MCP. También conserva memoria semántica
 compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
 estructurales.
 
-> Última versión estable publicada: [`0.9.0`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.9.0).
+> Última versión estable publicada: [`0.10.0`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.10.0).
 > Graphtyn se distribuye por GitHub Releases; PyPI permanece deshabilitado. El
 > despliegue es self-hosted: los agentes pueden compartir memoria con permisos
 > por token y proyecto, pero no es un servicio SaaS multi-tenant.
@@ -62,7 +62,7 @@ Graphtyn aún no está publicado en PyPI. Instala el wheel de
 [GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/latest):
 
 ```bash
-python -m pip install "https://github.com/CaleroAM/graphtyn/releases/latest/download/graphtyn-0.9.0-py3-none-any.whl"
+python -m pip install "https://github.com/CaleroAM/graphtyn/releases/latest/download/graphtyn-0.10.0-py3-none-any.whl"
 ```
 
 También puedes instalarlo en modo desarrollo desde un checkout:
