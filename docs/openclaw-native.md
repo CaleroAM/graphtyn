@@ -68,6 +68,18 @@ graphtyn harness openclaw relate --installation <id> \
 
 La relación se registra como confirmación humana. En esta instalación, Evi aparece como `openclaw/nexus`; `main` es otra identidad. Usa los IDs de `agents.entries`, no los nombres visibles. Los agentes comparten recuerdos sólo cuando el autor publica el recuerdo concreto con `memory_agent_publish`. El autor puede revocar esa copia. `memory_agent_context` recupera el cerebro privado y las publicaciones explícitas de su familia; no fusiona los almacenes ni permite consultar rutas ajenas.
 
+Por eso **Familia · Eve** y **Familia · Evi** pueden estar vacías aunque sus
+cerebros privados tengan recuerdos. Esos nombres corresponden a las raíces de
+agente de esta instalación; no son espacios globales ni nombres fijos del
+producto. Cada instalación y cada agente raíz tiene su propia familia, nombrada
+con la etiqueta visible de esa raíz. Otros usuarios pueden tener familias
+distintas, con los nombres y miembros de sus propios agentes.
+
+El legado histórico y las conversaciones privadas no se copian automáticamente
+a la familia. El dashboard muestra los miembros de la familia seleccionada y
+explica que un recuerdo aparecerá allí después de publicarse con
+`memory_agent_publish`.
+
 ## Archivos `LEGADO`: histórico y mixto
 
 `LEGADO` es una marca explícita del registro de espacios; no es un agente nuevo
@@ -90,6 +102,11 @@ espacios** y de la captura continua global; pedir sincronización o captura
 continua sobre un archivo `LEGADO` devuelve `409`. Así se mantienen disponibles
 para consulta sin volver a introducir sus fuentes en el flujo actual. El nuevo
 OpenClaw nativo captura en los cerebros privados registrados para cada ID.
+Cuando una identidad de un archivo se integra, el dashboard la marca
+**RESPALDADA** en ese archivo concreto. Los chats nuevos se sincronizan con el
+cerebro privado activo de OpenClaw mientras la captura esté habilitada; no
+actualizan el archivo legado. **Revisar novedades** comprueba si ese archivo
+recibió datos nuevos y sólo vuelve a integrarlos después de confirmación.
 
 En OpenClaw, usa el MCP `memory_agent_context` con el ID real, por ejemplo `openclaw/devops`. Si hay una única instalación conectada, `installation_id` se resuelve automáticamente. Para varias instalaciones, pásalo explícitamente. `memory_agent_status` informa relación, cobertura y estado de captura.
 

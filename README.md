@@ -143,8 +143,11 @@ incorporar el historial al cerebro activo de cada agente, usa
 para revisar la vista previa; ejecuta con `--apply --consent` sólo después de
 comprobar el destino. La migración es incremental, conserva una copia SQLite del
 origen y del destino, y mantiene el archivo original intacto. El dashboard ofrece
-la misma acción con progreso. Consulta [`docs/shared-memory.md`](docs/shared-memory.md)
-para ver el contrato CLI/API y la procedencia que se conserva.
+la misma acción con progreso y marca **RESPALDADA** cada identidad ya integrada
+desde ese archivo. Los chats nuevos entran directamente al cerebro activo cuando
+la captura del agente está activa; no se escriben en el archivo histórico.
+Consulta [`docs/shared-memory.md`](docs/shared-memory.md) para ver el contrato
+CLI/API y la procedencia que se conserva.
 
 Modos de reindexación:
 

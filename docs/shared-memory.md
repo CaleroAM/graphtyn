@@ -308,9 +308,15 @@ graphtyn memory consolidate \
 `--source` debe estar registrado como `legacy`; `--target` debe ser un cerebro
 activo registrado para esa misma identidad. Para migrar un legado mixto a varias
 personas, repite el comando con el cerebro activo de cada persona. Graphtyn no
-adivina propietarios ni fusiona Eve con Evi. En el dashboard, el botón
-**Migrar/Reanudar** hace la vista previa, pide confirmación, inicia un trabajo
-de fondo y muestra el progreso.
+adivina propietarios ni fusiona Eve con Evi. En el dashboard, cada archivo e
+identidad muestra su estado; **RESPALDADA** sólo significa que esa identidad
+procedente de ese archivo ya se integró. No marca como integrados otros archivos
+del mismo agente. La etiqueta **FUENTE ORIGINAL** indica que el archivo se
+conserva para consulta y auditoría; por sí sola no significa que falte integrar
+su contenido. **Revisar novedades** vuelve a contar los cambios y solicita
+confirmación sólo si hay registros pendientes. Si ya existe una integración,
+el dashboard usa el destino exacto guardado en su auditoría aunque el agente
+tenga también un almacén familiar con la misma identidad.
 
 La API equivalente es `POST /api/v1/memory/consolidations`. Envía
 `source_path`, `target_path` y `agent_id` para obtener la vista previa. La
@@ -341,9 +347,10 @@ elemento mantiene `capture_mode=historical_import` y referencias al archivo y a
 sus IDs originales.
 
 Al terminar, el agente consulta su cerebro activo junto con sus conversaciones
-nuevas. La sincronización continua sigue leyendo las fuentes actuales del agente;
-los archivos marcados LEGADO no entran a `memory sync --all-spaces` ni a captura
-automática. Si el archivo histórico recibe nuevos elementos después, vuelve a
-ejecutar la consolidación: sólo se incorporan los registros nuevos o cambiados.
-La publicación entre cerebros de una familia sigue siendo explícita y no forma
-parte de esta migración.
+nuevas. Cuando la captura nativa está activa, los chats y sesiones nuevos se
+guardan directamente en ese cerebro; no se agregan al archivo histórico. Los
+archivos marcados LEGADO no entran a `memory sync --all-spaces` ni a captura
+automática. Si el propio archivo histórico recibe elementos nuevos, usa
+**Revisar novedades** o vuelve a ejecutar la consolidación: sólo se incorporan
+los registros nuevos o cambiados. La publicación entre cerebros de una familia
+sigue siendo explícita y no forma parte de esta migración.

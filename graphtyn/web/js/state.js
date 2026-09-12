@@ -3,6 +3,7 @@ export const state = {
   activePath: null,
   activeAgentId: null,
   activeSpaceType: 'project',
+  brainSpaces: {},
   activeView: 'code',
   memoryGraphMode: 'simplified',
   activeDim: '2d',
