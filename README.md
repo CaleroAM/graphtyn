@@ -1,6 +1,6 @@
 # 🌌 Graphtyn
 
-[![Release](https://img.shields.io/badge/release-0.6.1-blue.svg)](docs/CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-0.7.0-blue.svg)](docs/CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-10b981.svg)](https://modelcontextprotocol.io/)
@@ -10,9 +10,11 @@ contexto compacto a agentes mediante MCP. También conserva memoria semántica
 compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
 estructurales.
 
-> Versión estable `0.6.1`, orientada a uso local y single-user. TLS, SSO y
-> aislamiento multi-tenant no forman parte de esta versión. Graphtyn aún no está
-> publicado en PyPI.
+> Última versión estable publicada: `0.7.0`. La rama actual prepara `0.8.0`;
+> sus cambios no se publicarán hasta que pase la CI requerida. Graphtyn se
+> distribuye por GitHub Releases; PyPI permanece deshabilitado. El despliegue es
+> self-hosted: los agentes pueden compartir memoria con permisos por token y
+> proyecto, pero no es un servicio SaaS multi-tenant.
 
 **Documentación:** [índice completo](docs/index.md) ·
 [arquitectura](docs/ARCHITECTURE.md) · [memoria](docs/shared-memory.md) ·

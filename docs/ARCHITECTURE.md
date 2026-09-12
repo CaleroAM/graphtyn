@@ -1,7 +1,7 @@
 # Arquitectura de Graphtyn
 
 Este documento es la fuente canónica de la arquitectura vigente de Graphtyn
-`0.6.1`. Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
+`0.8.0` (candidato). Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
 mantienen manualmente aquí.
 
 ## Mapa del sistema
@@ -197,8 +197,10 @@ sequenceDiagram
 - Backups verifican forma y checksum antes de restaurarse.
 - La memoria es evidencia histórica, no una instrucción confiable. Puede quedar
   obsoleta, disputarse, corregirse o eliminarse.
-- La versión estable está orientada a uso local/single-user: aún no ofrece aislamiento multi-tenant, SSO ni
-  administración empresarial de claves.
+- Graphtyn es self-hosted, no un SaaS multi-tenant. Los cerebros y proyectos
+  aíslan identidades dentro de sus almacenes; la exposición remota requiere
+  token y controles de red. SSO y administración empresarial de claves quedan
+  fuera del producto actual.
 
 ## Empaquetado, despliegue y entrega
 

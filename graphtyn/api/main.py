@@ -4,6 +4,7 @@ import re
 import ast
 import sqlite3
 import math
+import ipaddress
 import subprocess
 import hmac
 import hashlib
@@ -13,6 +14,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Query, Body, Header
 from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
+from .. import __version__
 from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
 from ..core.watcher import WatchManager
@@ -26,10 +28,10 @@ from ..core.ambiguity_review import ambiguity_queue, apply_decisions, save_decis
 from ..core.change_report import render_change_report
 from ..core.incremental_status import build_update_status, save_update_status
 from ..core.verification import verification_plan
-from ..core.storage import data_home, project_store_dir, unsafe_project_root
+from ..core.storage import data_home, project_store_dir, unsafe_project_root, atomic_write_json
 from ..core.graph_scope import filter_graph_scope
 from ..core.source_evidence import attach_source_evidence
-from ..core.shared_memory import SharedMemoryStore, existing_store_db
+from ..core.shared_memory import SharedMemoryStore, existing_store_db, MemoryStoreConflictError
 from ..core.history_import import (ProjectIdentityRegistry, discover_histories, import_histories,
                                    configured_sources, BUILTIN_PROVIDERS, save_source,
                                    delete_source, test_source, sync_memory_workspace,
@@ -56,7 +58,17 @@ async def lifespan(_app: FastAPI):
     watch_manager.stop_all()
 
 
-app = FastAPI(title="Graphtyn API", version="0.7.0", lifespan=lifespan)
+app = FastAPI(title="Graphtyn API", version=__version__, lifespan=lifespan)
+
+
+@app.exception_handler(MemoryStoreConflictError)
+async def memory_store_conflict_handler(_request, exc: MemoryStoreConflictError):
+    return JSONResponse({"ok": False, "error": str(exc), "code": "memory_store_conflict"}, status_code=409)
+
+
+@app.exception_handler(PermissionError)
+async def memory_permission_handler(_request, exc: PermissionError):
+    return JSONResponse({"ok": False, "error": str(exc)}, status_code=403)
 
 # Central writable index store — user home ~/.graphtyn/
 INDEX_STORE = data_home()
@@ -82,19 +94,12 @@ def _read_agent_registry() -> list[dict]:
 
 def _write_agent_registry(rows: list[dict]) -> None:
     path = _agent_registry_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"version": 1, "agents": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
-    try:
-        path.chmod(0o600)
-    except OSError:
-        pass
+    atomic_write_json(path, {"version": 1, "agents": rows})
 
 
 def _project_memory_db(path: Path) -> Path | None:
     """Resolve an existing store without creating one or depending on cwd."""
-    candidates = [project_store_dir(INDEX_STORE, path, migrate_legacy=False, create=False) / "memory-v2.db",
-                  path / ".graphtyn" / "memory-v2.db"]
-    return next((candidate for candidate in candidates if candidate.is_file()), None)
+    return existing_store_db(path)
 
 
 def _load_registered_agents() -> list[dict]:
@@ -197,11 +202,10 @@ def _watch_config_read() -> list[dict]:
 
 
 def _watch_config_write() -> None:
-    _memory_watch_config.parent.mkdir(parents=True, exist_ok=True)
     rows = [{"path": key, "interval": max(5, float(value.get("interval", 30))),
              "agent_id": value.get("agent_id")}
             for key, value in _memory_watchers.items() if value.get("persist", True)]
-    _memory_watch_config.write_text(json.dumps({"version": 1, "watchers": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_json(_memory_watch_config, {"version": 1, "watchers": rows})
 
 
 def _watcher_public(key: str, entry: dict) -> dict:
@@ -217,21 +221,27 @@ def _memory_watch_loop(path: str, options: dict, stop: threading.Event) -> None:
     while not stop.is_set():
         with _memory_watch_lock:
             current = _memory_watchers.get(key)
-            if current: current.update(status="processing", heartbeat=time.time())
+            if current and current.get("stop") is stop:
+                current.update(status="processing", heartbeat=time.time())
         try:
             result = sync_memory_workspace(key, provider=options.get("provider"),
                                            provider_model=options.get("provider_model", "auto"), enrich=True,
                                            agent_id=options.get("agent_id"))
             with _memory_watch_lock:
                 current = _memory_watchers.get(key)
-                if current: current.update(status="watching", heartbeat=time.time(), last_result=result, error=None)
+                if current and current.get("stop") is stop:
+                    current.update(status="watching", heartbeat=time.time(), last_result=result, error=None)
         except Exception as exc:
             with _memory_watch_lock:
                 current = _memory_watchers.get(key)
-                if current: current.update(status="error", heartbeat=time.time(), error=str(exc))
+                if current and current.get("stop") is stop:
+                    current.update(status="error", heartbeat=time.time(),
+                                   error=f"{type(exc).__name__}: sincronización fallida")
         stop.wait(max(5, float(options.get("interval", 30))))
     with _memory_watch_lock:
-        _memory_watchers.pop(key, None)
+        current = _memory_watchers.get(key)
+        if current and current.get("stop") is stop:
+            _memory_watchers.pop(key, None)
 
 
 def _start_memory_watcher(path: str | Path, *, interval: float = 30, provider: str | None = None,
@@ -241,14 +251,16 @@ def _start_memory_watcher(path: str | Path, *, interval: float = 30, provider: s
     with _memory_watch_lock:
         old = _memory_watchers.get(key)
         if old and old.get("thread") and old["thread"].is_alive():
-            old["interval"] = max(5, float(interval)); old["persist"] = persist
-            if agent_id: old["agent_id"] = agent_id
+            options = old.get("options") or {}
+            options.update({"interval": max(5, float(interval)), "provider": provider,
+                            "provider_model": provider_model, "agent_id": agent_id})
+            old.update(options); old["persist"] = persist
             _watch_config_write(); return _watcher_public(key, old)
         stop = threading.Event()
         options = {"interval": max(5, float(interval)), "provider": provider,
                    "provider_model": provider_model, "agent_id": agent_id}
         entry = {**options, "status": "starting", "heartbeat": time.time(), "stop": stop,
-                 "persist": persist, "last_result": None, "error": None}
+                 "persist": persist, "last_result": None, "error": None, "options": options}
         thread = threading.Thread(target=_memory_watch_loop, args=(key, options, stop),
                                   name=f"graphtyn-memory-watch-{Path(key).name}", daemon=True)
         entry["thread"] = thread; _memory_watchers[key] = entry
@@ -273,14 +285,16 @@ def _restore_memory_watchers() -> None:
         except (OSError, ValueError): continue
 
 
-def _memory_auth(authorization: str | None) -> JSONResponse | None:
-    # MCP and the local dashboard have separate trust boundaries.  A remote
-    # MCP token must not make the browser dashboard require a token it cannot
-    # know; set GRAPHTYN_MEMORY_HTTP_TOKEN when REST memory endpoints need auth.
-    token = os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN") or ""
-    if token and (not authorization or not hmac.compare_digest(authorization, f"Bearer {token}")):
-        return JSONResponse({"ok": False, "error": "Token de memoria inválido"}, status_code=401)
-    return None
+def _memory_auth(authorization: str | None, path: str | None = None,
+                 required: str = "reader") -> JSONResponse | None:
+    """Apply configured token roles and project scopes to legacy memory routes."""
+    configured = (os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN")
+                  or os.environ.get("GRAPHTYN_MEMORY_TOKENS")
+                  or os.environ.get("GRAPHTYN_MEMORY_TOKENS_FILE"))
+    if not configured:
+        return None
+    _, denied = _require_role(authorization, required, path)
+    return denied
 
 
 _ROLE_LEVEL = {"reader": 1, "writer": 2, "admin": 3}
@@ -297,6 +311,7 @@ def _memory_principal(authorization: str | None) -> dict | None:
         except OSError: raw = ""
     try: tokens = json.loads(raw) if raw else {}
     except ValueError: tokens = {}
+    authorization = authorization if isinstance(authorization, str) else None
     supplied = authorization[7:] if authorization and authorization.startswith("Bearer ") else ""
     for token, config in tokens.items():
         if supplied and hmac.compare_digest(supplied, str(token)):
@@ -331,6 +346,31 @@ def _require_role(authorization: str | None, required: str, path: str | None = N
             return role, JSONResponse({"ok": False, "error": "Rate limit de memoria excedido"}, status_code=429)
         recent.append(now); _RATE_EVENTS[principal["key"]] = recent
     return role, None
+
+
+@app.middleware("http")
+async def require_remote_memory_auth(request, call_next):
+    """Reject unauthenticated network access to memory APIs."""
+    client = request.client
+    host = str(client.host if client else "")
+    try:
+        remote = not ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        remote = True
+    path = request.url.path
+    protected = (path.startswith("/api/memory") or path.startswith("/api/v1/")
+                 or path in {"/api/projects/register", "/api/agents/register"})
+    if remote and protected:
+        configured = (os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN")
+                      or os.environ.get("GRAPHTYN_MEMORY_TOKENS")
+                      or os.environ.get("GRAPHTYN_MEMORY_TOKENS_FILE"))
+        if not configured:
+            return JSONResponse({"ok": False, "error": "Configura autenticación de memoria antes de exponer la API"},
+                                status_code=503)
+        if _memory_principal(request.headers.get("authorization")) is None:
+            return JSONResponse({"ok": False, "error": "Token de memoria inválido"}, status_code=401,
+                                headers={"WWW-Authenticate": "Bearer"})
+    return await call_next(request)
 
 
 def _memory_store(payload: dict) -> SharedMemoryStore:
@@ -503,14 +543,18 @@ def _load_registered_brains() -> list[dict]:
                         FROM sessions s LEFT JOIN agents a ON a.id=s.agent_id
                         WHERE s.status != 'quarantined' AND lower(s.agent_id) IN ({marks})
                         GROUP BY s.agent_id, a.display_name ORDER BY s.agent_id""", owners).fetchall()
+                    owner_marks = ",".join("?" for _ in owners)
+                    all_sessions = conn.execute(
+                        f"SELECT COUNT(*) FROM sessions WHERE lower(agent_id) IN ({owner_marks})", owners).fetchone()[0]
+                    quarantined_sessions = conn.execute(
+                        f"SELECT COUNT(*) FROM sessions WHERE status='quarantined' AND lower(agent_id) IN ({owner_marks})", owners).fetchone()[0]
+                    quarantined_memories = conn.execute(
+                        f"SELECT COUNT(*) FROM memories WHERE status='quarantined' AND lower(agent_id) IN ({owner_marks})", owners).fetchone()[0]
                 else:
-                    session_rows = conn.execute("""SELECT s.agent_id, COUNT(*), COALESCE(a.display_name, '')
-                        FROM sessions s LEFT JOIN agents a ON a.id=s.agent_id
-                        WHERE s.status != 'quarantined'
-                        GROUP BY s.agent_id, a.display_name ORDER BY s.agent_id""").fetchall()
-                all_sessions = conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
-                quarantined_sessions = conn.execute("SELECT COUNT(*) FROM sessions WHERE status='quarantined'").fetchone()[0]
-                quarantined_memories = conn.execute("SELECT COUNT(*) FROM memories WHERE status='quarantined'").fetchone()[0]
+                    # An unassigned brain is pending owner review: do not expose
+                    # its legacy rows through the registry summary.
+                    session_rows = []
+                    all_sessions = quarantined_sessions = quarantined_memories = 0
             brain["sessions"] = sum(int(row[1] or 0) for row in session_rows)
             brain["quarantined_sessions"] = quarantined_sessions
             brain["quarantined_memories"] = quarantined_memories
@@ -555,8 +599,10 @@ def list_agents():
 
 
 @app.post("/api/agents/register")
-def register_agent(payload: dict = Body(...)):
+def register_agent(payload: dict = Body(...), authorization: str | None = Header(default=None)):
     """Register an agent identity without tying it to a particular provider name."""
+    _, denied = _require_role(authorization, "writer")
+    if denied: return denied
     raw_id = str(payload.get("id") or payload.get("agent_id") or "").strip().casefold()
     if not raw_id or not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]{1,127}", raw_id):
         return JSONResponse({"ok": False, "error": "id de agente inválido"}, status_code=400)
@@ -583,13 +629,15 @@ def register_agent(payload: dict = Body(...)):
     return JSONResponse({"ok": True, "agent": registered})
 
 @app.post("/api/projects/register")
-def register_project(payload: dict = Body(...)):
+def register_project(payload: dict = Body(...), authorization: str | None = Header(default=None)):
     """
     Soporta 3 modalidades de registro:
     1. master_folder: Establece la carpeta contenedora maestra.
     2. single_folder: Registra una carpeta específica como un proyecto individual.
     3. agent_discovered: Invocado autónomamente por agentes de IA.
     """
+    _, denied = _require_role(authorization, "writer", payload.get("path"))
+    if denied: return denied
     mode = payload.get("mode", "single_folder")
     space_type = str(payload.get("space_type") or "project").strip().casefold()
     if space_type not in {"project", "agent_brain", "container"}:
@@ -606,7 +654,6 @@ def register_project(payload: dict = Body(...)):
     if reason := unsafe_project_root(target_path):
         return JSONResponse({"ok": False, "error": reason + "; registra el repositorio concreto."}, status_code=400)
 
-    REGISTRATION_FILE.parent.mkdir(exist_ok=True)
     custom_projects = []
     if REGISTRATION_FILE.exists():
         try:
@@ -632,7 +679,7 @@ def register_project(payload: dict = Body(...)):
         custom_projects.append(new_entry)
     else:
         existing.update(new_entry)
-    REGISTRATION_FILE.write_text(json.dumps(custom_projects, indent=2), encoding="utf-8")
+    atomic_write_json(REGISTRATION_FILE, custom_projects)
 
     return JSONResponse({"ok": True, "registered": new_entry, "mode": mode})
 
@@ -954,7 +1001,7 @@ def generate_semantic_graph(data: dict) -> dict:
 
 @app.get("/health")
 def health_check():
-    return JSONResponse({"status": "ok", "service": "Graphtyn", "version": "0.7.0"})
+    return JSONResponse({"status": "ok", "service": "Graphtyn", "version": __version__})
 
 
 @app.get("/api/history")
@@ -1500,7 +1547,7 @@ def memory_topics_enrich(payload: dict = Body(...), authorization: str | None = 
 
 @app.get("/api/memory/status")
 def memory_status(path: str = Query(...), authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, path): return denied
     key = str(Path(path).expanduser().resolve())
     resolved_path = Path(key)
     result = SharedMemoryStore(resolved_path).status(agent_ids=_memory_space_agent_ids(resolved_path))
@@ -1582,7 +1629,7 @@ def memory_watch(payload: dict = Body(...), authorization: str | None = Header(d
 def memory_sessions(path: str = Query(...), limit: int = Query(50), offset: int = 0,
                     query: str = "", requester_agent: str | None = None,
                     authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, path): return denied
     resolved_path = Path(path).expanduser().resolve()
     return SharedMemoryStore(resolved_path).list_sessions_page(
         limit=limit, offset=offset, query=query, requester_agent=requester_agent,
@@ -1593,7 +1640,7 @@ def memory_sessions(path: str = Query(...), limit: int = Query(50), offset: int 
 def memory_session(path: str = Query(...), session_id: str = Query(...),
                    requester_agent: str = "dashboard",
                    authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, path): return denied
     try:
         resolved_path = Path(path).expanduser().resolve()
         return SharedMemoryStore(resolved_path).session_detail(
@@ -1605,7 +1652,7 @@ def memory_session(path: str = Query(...), session_id: str = Query(...),
 @app.post("/api/memory/agent-profile")
 def memory_agent_profile(payload: dict = Body(...), authorization: str | None = Header(default=None)):
     """Registra el perfil de un agente desde su workspace (IDENTITY.md/SOUL.md)."""
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, payload.get("path"), "writer"): return denied
     try:
         store = _memory_store(payload)
         workspace = str(payload.get("agent_workspace") or "").strip()
@@ -1623,7 +1670,7 @@ def memory_graph(path: str = Query(...), requester_agent: str = Query("dashboard
                  session_offset: int = 0, session_limit: int = 100,
                  session_query: str = "",
                  authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, path): return denied
     resolved_path = Path(path).expanduser().resolve()
     store = SharedMemoryStore(resolved_path)
     authorized_agents = _memory_space_agent_ids(resolved_path)
@@ -1646,6 +1693,8 @@ def memory_agent_graph(agent_id: str = Query(...), limit: int = Query(400), deta
     nodes, links, spaces = {}, [], []
     for raw_path in record.get("paths") or []:
         path = Path(str(raw_path)).expanduser().resolve()
+        _, denied = _require_role(authorization, "reader", str(path))
+        if denied: return denied
         db_path = _project_memory_db(path)
         if not db_path:
             continue
@@ -1695,7 +1744,7 @@ def memory_agent_graph(agent_id: str = Query(...), limit: int = Query(400), deta
 
 @app.post("/api/memory/search")
 def memory_search(payload: dict = Body(...), authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, payload.get("path")): return denied
     try:
         query = str(payload.get("query") or "").strip()
         if not query: raise ValueError("query es obligatorio")
@@ -1728,6 +1777,8 @@ def memory_search_all(payload: dict = Body(...), authorization: str | None = Hea
                 continue
             try:
                 resolved_store = Path(store_path).expanduser().resolve()
+                _, denied = _require_role(authorization, "reader", str(resolved_store))
+                if denied: return denied
                 found = SharedMemoryStore(resolved_store).search(
                     query, requester_agent=payload.get("requester_agent"), limit=limit,
                     include_stale=bool(payload.get("include_stale", False)),
@@ -1746,7 +1797,7 @@ def memory_search_all(payload: dict = Body(...), authorization: str | None = Hea
 
 @app.post("/api/memory/context")
 def memory_context(payload: dict = Body(...), authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, payload.get("path")): return denied
     try:
         query = str(payload.get("query") or "").strip()
         if not query: raise ValueError("query es obligatorio")
@@ -1763,7 +1814,7 @@ def memory_context(payload: dict = Body(...), authorization: str | None = Header
 
 @app.post("/api/memory/correct")
 def memory_correct(payload: dict = Body(...), authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, payload.get("path"), "writer"): return denied
     try:
         store = _memory_store(payload)
         _validate_memory_session_owner(store.workspace, store, payload.get("session_id"))
@@ -1776,7 +1827,7 @@ def memory_correct(payload: dict = Body(...), authorization: str | None = Header
 
 @app.post("/api/memory/compact")
 def memory_compact(payload: dict = Body(...), authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, payload.get("path"), "writer"): return denied
     try:
         store = _memory_store(payload)
         _validate_memory_session_owner(store.workspace, store, payload.get("session_id"))
@@ -1788,7 +1839,7 @@ def memory_compact(payload: dict = Body(...), authorization: str | None = Header
 
 @app.post("/api/memory/forget")
 def memory_forget(payload: dict = Body(...), authorization: str | None = Header(default=None)):
-    if denied := _memory_auth(authorization): return denied
+    if denied := _memory_auth(authorization, payload.get("path"), "writer"): return denied
     try:
         return _memory_store(payload).forget(str(payload.get("memory_id") or ""),
             requester_agent=str(payload.get("requester_agent") or ""), physical=bool(payload.get("physical", False)))
@@ -1833,6 +1884,8 @@ def memory_v1_context(payload: dict = Body(...), authorization: str | None = Hea
     for path in dict.fromkeys(paths):
         if not existing_store_db(path): continue
         resolved_path = Path(path).expanduser().resolve()
+        _, denied = _require_role(authorization, "reader", str(resolved_path))
+        if denied: return denied
         result = SharedMemoryStore(resolved_path).context(query, requester_agent=payload.get("requester_agent"),
             limit=limit, token_budget=max(300, budget // max(1, len(paths))), include_graph=False,
             agent_ids=_memory_space_agent_ids(resolved_path))
@@ -2129,7 +2182,7 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
     req_id = payload.get("id")
     method = payload.get("method")
     if method == "initialize":
-        result = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "graphtyn-http", "version": "0.7.0"}}
+        result = {"protocolVersion": "2024-11-05", "capabilities": {"tools": {}}, "serverInfo": {"name": "graphtyn-http", "version": __version__}}
     elif method == "tools/list":
         result = {"tools": _http_mcp_tools()}
     elif method == "tools/call":

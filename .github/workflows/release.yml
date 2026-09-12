@@ -5,14 +5,52 @@ on:
     tags: ["v*"]
 
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
 
 jobs:
+  ci-gate:
+    name: Require CI for the tagged commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Wait for the exact commit's CI run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          for attempt in $(seq 1 360); do
+            runs=$(gh run list --repo "$GH_REPO" --workflow ci.yml --commit "$EXPECTED_SHA" \
+              --event push --limit 10 --json status,conclusion,headSha,createdAt)
+            run=$(jq -c --arg sha "$EXPECTED_SHA" '[.[] | select(.headSha == $sha)] | sort_by(.createdAt) | last // empty' <<< "$runs")
+            if [ -n "$run" ]; then
+              status=$(jq -r '.status' <<< "$run")
+              conclusion=$(jq -r '.conclusion // ""' <<< "$run")
+              if [ "$status" = "completed" ]; then
+                if [ "$conclusion" = "success" ]; then
+                  echo "CI passed for $EXPECTED_SHA"
+                  exit 0
+                fi
+                echo "CI for $EXPECTED_SHA completed with conclusion: $conclusion" >&2
+                exit 1
+              fi
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for successful CI on $EXPECTED_SHA" >&2
+          exit 1
+
   build-and-release:
+    needs: ci-gate
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7

@@ -83,3 +83,10 @@ primero a nivel conversacional (cerebro) y baja a memoria de proyecto sólo si s
 requiere evidencia de código. Las identidades de agente se resuelven por alias
 almacenados (`memory alias-import`, autodescubiertos al vincular workspaces):
 nunca inventes variantes del id de un agente.
+En espacios `agent_brain`, comprueba los `agent_ids` registrados antes de
+capturar o sincronizar. Compara identidades completas; no infieras propietario
+por el nombre de la carpeta y no sustituyas `openclaw/main` por `main`.
+Cuando no haya propietario, conserva el espacio pendiente. CLI, dashboard y
+MCP deben resolver el mismo archivo `memory-v2.db`; compara la ruta de
+`memory status` antes de importar o restaurar. Para clientes remotos, MCP usa
+`GRAPHTYN_MCP_TOKEN` y la API REST usa sus propios tokens de memoria.

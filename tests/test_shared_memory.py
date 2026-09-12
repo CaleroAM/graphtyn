@@ -1,12 +1,15 @@
 import sqlite3
 import json
 import subprocess
+import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 
 from graphtyn.core.shared_memory import SharedMemoryStore
+from graphtyn.core import shared_memory as memory_store_module
 from graphtyn.core.memory_benchmark import build_stability_dataset, run_memory_benchmark
 from graphtyn.core import memory_extraction
 
@@ -97,6 +100,119 @@ def test_memory_scope_limits_search_and_graph_to_authorized_agents(tmp_path, mon
     assert [item["id"] for item in found] == [own_memory["id"]]
     assert {node.get("agent_id") for node in graph["nodes"] if node.get("agent_id")} == {"openclaw/main"}
     assert {node.get("agent_id") for node in attribution["nodes"] if node.get("agent_id")} == {"openclaw/main"}
+
+
+def test_registered_brain_scope_is_applied_inside_store_to_legacy_data(tmp_path, monkeypatch):
+    state = tmp_path / "state"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+    brain = tmp_path / "memoria-evi"
+    brain.mkdir()
+    store = SharedMemoryStore(brain)
+    owner = store.start_session("openclaw/main", "Diseño de Evi", capture_enabled=True)
+    store.append_message(owner["id"], "user", "Cambiar el botón de reportes a azul")
+    store.process_topics(owner["id"])
+    foreign = store.start_session("openclaw/career", "Career interview", capture_enabled=True)
+    store.append_message(foreign["id"], "user", "Preparar entrevista de Kubernetes")
+    foreign_memory = store.checkpoint(foreign["id"], "fact", "Career prep", "Review Kubernetes interview prompts")
+    store.process_topics(foreign["id"])
+    foreign_message = store.list_messages(foreign["id"])[0]
+    foreign_topic = store.topics("Kubernetes")["topics"][0]["id"]
+
+    registry = state / "registered_projects.json"
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(json.dumps([{"id": "memoria-evi", "path": str(brain),
+        "space_type": "agent_brain", "agent_ids": ["openclaw/main"]}]), encoding="utf-8")
+    isolated = SharedMemoryStore(brain)
+
+    assert isolated.memory_scope()["agent_ids"] == ["openclaw/main"]
+    assert {row["agent_id"] for row in isolated.list_sessions()} == {"openclaw/main"}
+    assert all("Kubernetes" not in row["title"] for row in isolated.topics()["topics"])
+    assert isolated.topics("Kubernetes")["topics"] == []
+    assert {node.get("agent_id") for node in isolated.topic_graph()["nodes"] if node.get("agent_id")} == {"openclaw/main"}
+    with pytest.raises(PermissionError):
+        isolated.topic(foreign_topic)
+    assert isolated.get(foreign_memory["id"]) == {}
+    assert isolated.get_message(foreign_message["id"]) == {}
+    assert isolated.status()["sessions"] == 1
+    assert {item["agent_id"] for item in isolated.export_snapshot(include_messages=True)["sessions"]} == {"openclaw/main"}
+    with pytest.raises(PermissionError):
+        isolated.start_session("openclaw/career", "no debe entrar")
+    assert isolated.topics(agent_ids=["openclaw/career"])["topics"] == []
+
+
+def test_agent_brain_does_not_continue_another_agents_topic(tmp_path, monkeypatch):
+    state = tmp_path / "state"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+    brain = tmp_path / "brain-evi"
+    brain.mkdir()
+    legacy = SharedMemoryStore(brain)
+    career = legacy.start_session("openclaw/career", "Career record", capture_enabled=True)
+    legacy.append_message(career["id"], "user", "Cambia el color del botón de Reportes del CRM")
+    legacy.process_topics(career["id"])
+    career_topic = legacy.topics()["topics"][0]
+    evi_legacy = legacy.start_session("openclaw/evi", "Evi legacy report button", capture_enabled=True)
+    legacy.append_message(evi_legacy["id"], "user", "También cambia el color del botón de Reportes del CRM")
+    legacy.process_topics(evi_legacy["id"])
+    assert legacy.topics()["topics"][0]["id"] == career_topic["id"]
+    assert {episode["agent_id"] for episode in legacy.topic(career_topic["id"])["episodes"]} == {
+        "openclaw/career", "openclaw/evi"}
+
+    registry = state / "registered_projects.json"
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(json.dumps([{"id": "brain-evi", "path": str(brain),
+        "space_type": "agent_brain", "agent_ids": ["openclaw/evi"]}]), encoding="utf-8")
+    isolated = SharedMemoryStore(brain)
+    assert isolated.topics()["topics"] == []
+    assert all(node.get("topic_id") != career_topic["id"]
+               for node in isolated.topic_graph()["nodes"])
+    with pytest.raises(PermissionError):
+        isolated.topic(career_topic["id"])
+    evi = isolated.start_session("openclaw/evi", "Evi report button", capture_enabled=True)
+    isolated.append_message(evi["id"], "user", "Ahora cambia el color del botón de Reportes del CRM")
+    isolated.process_topics(evi["id"])
+
+    evi_topics = isolated.topics()["topics"]
+    assert len(evi_topics) == 1
+    assert evi_topics[0]["id"] != career_topic["id"]
+    assert "Ahora cambia" in evi_topics[0]["title"]
+    assert [episode["agent_id"] for episode in isolated.topic(evi_topics[0]["id"])["episodes"]] == ["openclaw/evi"]
+    assert all(node.get("topic_id") != career_topic["id"]
+               for node in isolated.topic_graph()["nodes"])
+
+
+def test_unregistered_brain_init_persists_registration_and_exact_owner(tmp_path, monkeypatch):
+    state = tmp_path / "state"
+    brain = tmp_path / "cerebro-evi"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+    env = dict(os.environ, GRAPHTYN_HOME=str(state))
+    command = [sys.executable, "-m", "graphtyn.cli", "memory", "brain-init",
+               "--brain-path", str(brain), "--name", "Evi", "--agent-id", "openclaw/main", "--register"]
+    result = subprocess.run(command, env=env, capture_output=True, text=True, check=True)
+    registration = json.loads((state / "registered_projects.json").read_text(encoding="utf-8"))
+    assert json.loads(result.stdout)["registered_to"] == str(state / "registered_projects.json")
+    assert registration[0]["space_type"] == "agent_brain"
+    assert registration[0]["agent_ids"] == ["openclaw/main"]
+    store = SharedMemoryStore(brain)
+    store.start_session("openclaw/main", "autorizado")
+    with pytest.raises(PermissionError):
+        store.start_session("openclaw/career", "identidad distinta")
+
+
+def test_store_resolution_rejects_local_and_central_duplicates(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_HOME", raising=False)
+    state = tmp_path / "home"
+    monkeypatch.setattr(memory_store_module, "data_home", lambda: state)
+    project = tmp_path / "project"
+    project.mkdir()
+    local = project / ".graphtyn" / "memory-v2.db"
+    central = memory_store_module.project_store_dir(state, project, create=True) / "memory-v2.db"
+    SharedMemoryStore(project, db_path=local)
+    SharedMemoryStore(project, db_path=central)
+
+    with pytest.raises(memory_store_module.MemoryStoreConflictError, match="dos almacenes"):
+        SharedMemoryStore(project)
+    with pytest.raises(memory_store_module.MemoryStoreConflictError, match="dos almacenes"):
+        memory_store_module.existing_store_db(project)
 
 
 def test_checkpoint_is_idempotent_and_wal_enabled(tmp_path, monkeypatch):

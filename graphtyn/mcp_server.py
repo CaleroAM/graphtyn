@@ -4,6 +4,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Dict, Any
+from . import __version__
 
 from .core.ast_parser import ASTParser
 from .core.change_analyst import analyze_change, query_intent
@@ -559,7 +560,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "graphtyn-mcp", "version": "0.7.0"}
+                    "serverInfo": {"name": "graphtyn-mcp", "version": __version__}
                 }
             }
         elif method == "tools/list":

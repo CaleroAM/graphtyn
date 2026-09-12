@@ -19,7 +19,7 @@ from .core.external_benchmark import score_graphify
 from .core.impact import analyze_impact
 from .core.change_analyst import analyze_change, query_intent
 from .core.overview_report import render_report
-from .core.storage import data_home, project_store_dir
+from .core.storage import data_home, project_store_dir, atomic_write_json
 from .core.type_evidence import provider_status
 from .core.global_graph import default_registry, list_projects, query_global, register_project, remove_project
 from .core.work_memory import attach_learning, reflect, save_result
@@ -909,17 +909,18 @@ def main():
                 home = Path(os.environ.get("GRAPHTYN_HOME") or Path.home() / ".graphtyn")
                 reg_file = home / "registered_projects.json"
                 projects = json.loads(reg_file.read_text(encoding="utf-8")) if reg_file.is_file() else []
-                existing = next((p for p in projects if p.get("path") == str(brain_dir)), None)
+                existing = next((p for p in projects
+                                 if str(Path(str(p.get("path") or "")).expanduser().resolve()) == str(brain_dir)), None)
+                configured_agents = sorted({str(value).strip().casefold()
+                                            for value in args.agent_id if str(value).strip()})
                 if existing is None:
                     projects.append({"id": args.name, "name": args.name,
                                      "path": str(brain_dir), "mode": "single_folder",
-                                     "space_type": "agent_brain", "agent_ids": [str(value).strip().casefold()
-                                     for value in args.agent_id if str(value).strip()]})
-                elif args.agent_id:
-                    existing.update({"space_type": "agent_brain", "agent_ids": [str(value).strip().casefold()
-                                   for value in args.agent_id if str(value).strip()]})
-                    reg_file.parent.mkdir(parents=True, exist_ok=True)
-                    reg_file.write_text(json.dumps(projects, ensure_ascii=False, indent=2), encoding="utf-8")
+                                     "space_type": "agent_brain", "agent_ids": configured_agents})
+                else:
+                    existing.update({"space_type": "agent_brain", "agent_ids": configured_agents
+                                     if args.agent_id else existing.get("agent_ids", [])})
+                atomic_write_json(reg_file, projects)
                 registered_to = str(reg_file)
             result = {"ok": True, "brain": args.name, "path": str(brain_dir),
                       "agent_ids": [str(value).strip().casefold() for value in args.agent_id if str(value).strip()],

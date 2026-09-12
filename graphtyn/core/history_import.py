@@ -23,7 +23,7 @@ from typing import Any, Iterable
 from urllib.parse import unquote, urlparse
 
 from .shared_memory import SharedMemoryStore
-from .storage import data_home, secure_private_file
+from .storage import data_home, atomic_write_json
 
 
 BUILTIN_PROVIDERS = {"openclaw", "hermes", "codex", "antigravity", "opencode", "claude"}
@@ -130,8 +130,7 @@ def save_source(provider: str, source: str, *, label: str = "", project_path: st
     # moves the association instead of leaving an unscoped duplicate behind.
     rows = [row for row in rows if not (row["provider"] == item["provider"] and row["source"] == item["source"])]
     rows.append(item)
-    target.write_text(json.dumps({"version": 1, "sources": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
-    secure_private_file(target)
+    atomic_write_json(target, {"version": 1, "sources": rows})
     return item
 
 
@@ -140,8 +139,7 @@ def delete_source(provider: str, source: str, *, path: Path | None = None) -> bo
     kept = [row for row in rows if not (row["provider"] == provider.casefold() and row["source"] == source)]
     changed = len(kept) != len(rows)
     if changed:
-        target.write_text(json.dumps({"version": 1, "sources": kept}, ensure_ascii=False, indent=2), encoding="utf-8")
-        secure_private_file(target)
+        atomic_write_json(target, {"version": 1, "sources": kept})
     return changed
 
 
@@ -480,11 +478,7 @@ def _agent_id_matches(expected: str | None, observed: str | None) -> bool:
     actual = str(observed or "").strip().casefold()
     if not wanted or not actual:
         return False
-    if wanted == actual:
-        return True
-    # A short configured id is accepted only as the final component of the
-    # same provider-qualified id.  `career` never matches `other/career`.
-    return "/" not in wanted and actual.endswith("/" + wanted)
+    return bool(wanted and wanted == actual)
 
 
 def discover_histories(provider: str | None = None, sources: list[str] | None = None,
@@ -594,6 +588,8 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
     CLI, REST and the background watcher cannot drift apart.
     """
     root = Path(workspace).expanduser().resolve()
+    memory_scope = SharedMemoryStore(root).memory_scope()
+    authorized_agents = memory_scope["agent_ids"] if memory_scope["restricted"] else None
     discovered = discover_histories(provider, source or None, project_path=None if source else root,
                                     agent_id=agent_id)
     # A source supplied directly is an explicit user selection for this space.
@@ -603,7 +599,7 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
     if progress:
         progress(20, f"{discovered['count']} sesiones descubiertas")
     imported = import_histories(root, discovered["sessions"], consent=True, provider=provider_model,
-                                background_enrich=False)
+                                background_enrich=False, agent_ids=authorized_agents)
     result: dict[str, Any] = {"ok": bool(imported.get("ok", True)), "path": str(root),
                               "discovered": discovered["count"], "import": imported,
                               "excluded": discovered.get("excluded") or [],
@@ -674,7 +670,7 @@ class ProjectIdentityRegistry:
             item["paths"] = sorted(set(item.get("paths", [])) | {str(root)})
             item["aliases"] = sorted(set(item.get("aliases", [])) | set(aliases or []) | {root.name})
             item["updated_at"] = time.time()
-            self.path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+            atomic_write_json(self.path, data)
         return item
 
     def resolve(self, hint: str | None) -> dict[str, Any] | None:
@@ -700,6 +696,9 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                      agent_ids: list[str] | None = None) -> dict[str, Any]:
     if not consent: raise PermissionError("la importación histórica requiere consentimiento explícito")
     root = Path(workspace).expanduser().resolve()
+    policy = SharedMemoryStore(root).memory_scope()
+    if agent_ids is None and policy["restricted"]:
+        agent_ids = policy["agent_ids"]
     registry = ProjectIdentityRegistry()
     project = registry.register(root)
     selected, ambiguous, excluded = [], [], []
@@ -707,7 +706,8 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                                 if str(value).strip()})
     for raw in sessions:
         raw_agent = str(raw.get("agent_id") or "").strip().casefold()
-        if authorized_agents and not any(_agent_id_matches(owner, raw_agent) for owner in authorized_agents):
+        if (policy["restricted"] and not authorized_agents) or (
+                authorized_agents and not any(_agent_id_matches(owner, raw_agent) for owner in authorized_agents)):
             excluded.append({"session": raw.get("external_session_id"), "agent_id": raw.get("agent_id"),
                              "expected_agent_ids": authorized_agents,
                              "reason": "identidad de agente fuera del espacio de memoria"})

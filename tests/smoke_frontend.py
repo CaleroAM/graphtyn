@@ -41,6 +41,12 @@ CHROMIUM = os.environ.get(
     shutil.which("chromium") or shutil.which("chromium-browser") or "")
 
 
+def unavailable(message):
+    in_ci = os.environ.get("CI", "").strip().lower() in {"1", "true", "yes"}
+    print(f"{'FAIL' if in_ci else 'SKIP'}: {message}")
+    return 1 if in_ci else 0
+
+
 def wait_server(url, timeout=20):
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -61,11 +67,9 @@ def api(method, path, **kw):
 
 def main():
     if sync_playwright is None:
-        print(f"SKIP: Playwright no ejecutable ({PLAYWRIGHT_IMPORT_ERROR})")
-        return 0
+        return unavailable(f"Playwright no ejecutable ({PLAYWRIGHT_IMPORT_ERROR})")
     if shutil.which("curl") is None:
-        print("SKIP: dependencias ausentes")
-        return 0
+        return unavailable("dependencias ausentes")
 
     tmp = Path(tempfile.mkdtemp(prefix="graphtyn-smoke-"))
     proj = tmp / "proj"
@@ -128,14 +132,12 @@ def main():
             launch = {"args": ["--no-sandbox"]}
             if CHROMIUM:
                 if not Path(CHROMIUM).exists():
-                    print(f"SKIP: chromium no encontrado en {CHROMIUM}")
-                    return 0
+                    return unavailable(f"chromium no encontrado en {CHROMIUM}")
                 launch["executable_path"] = CHROMIUM
             try:
                 browser = pw.chromium.launch(**launch)
             except Exception as exc:
-                print(f"SKIP: Chromium no ejecutable ({exc})")
-                return 0
+                return unavailable(f"Chromium no ejecutable ({exc})")
             page = browser.new_page(viewport={"width": 1440, "height": 900})
             console_errors = []
             page.on("console", lambda m: console_errors.append(f"{m.type}:{m.text} @{m.location.get('url','')}") if m.type == "error" else None)
@@ -261,7 +263,8 @@ def main():
             page.wait_for_function(
                 "() => document.querySelector('#stats').innerText.includes('nodos') && !document.querySelector('#stats').innerText.includes('Cargando')",
                 timeout=15000)
-            assert "Memoria compartida" in page.locator("#model-badge").inner_text()
+            memory_badge = page.locator("#model-badge").inner_text()
+            assert any(mode in memory_badge for mode in ("Memoria simplificada", "Memoria detallada")), memory_badge
             page.wait_for_selector("#memory-legend-overlay", state="visible", timeout=5000)
             assert "smoke-agent" in page.locator("#memory-legend-overlay").inner_text()
             assert page.locator("#graph-container canvas").count() >= 1, "grafo visual de memoria no renderizado"

@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 _GENERIC_ROOT_NAMES = {
@@ -44,6 +45,28 @@ def secure_private_file(path: Path) -> None:
                             capture_output=True, text=True, check=False)
     if result.returncode:
         raise PermissionError(f"no se pudo restringir ACL de {target}: {result.stderr.strip()}")
+
+
+def atomic_write_json(path: Path, value: object, *, mode: int = 0o600) -> None:
+    """Replace a JSON state file atomically and keep it private."""
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(value, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        if os.name != "nt":
+            os.chmod(temporary, mode)
+        os.replace(temporary, target)
+        secure_private_file(target)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
 
 def project_store_dir(base: Path, project: Path, migrate_legacy: bool = True, create: bool = True) -> Path:
     resolved = project.resolve()

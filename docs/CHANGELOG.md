@@ -12,6 +12,31 @@ compatibles con PEP 440.
 - Enriquecimiento opcional con Ollama local en segundo plano y resaltado de
   sólo el nodo seleccionado, sus vecinos y sus conexiones.
 
+## [0.8.0] - Candidato sin publicar
+
+- Aislamiento de cerebros por identidad completa, aplicado dentro de SQLite a
+  sesiones, mensajes, temas, grafos, estadísticas, exportaciones y retención.
+- Temas mixtos heredados quedan fuera de la vista de un cerebro, y dos agentes
+  no continúan el mismo asunto dentro de espacios aislados.
+- Registro atómico de cerebros nuevos y bloqueo de captura en espacios aún sin
+  propietario. Las identidades cortas no coinciden con IDs cualificados.
+- Resolución común de SQLite para CLI, API y MCP; una pareja de almacenes local
+  y central produce un conflicto visible en vez de bifurcar datos.
+- Roles y rutas de proyectos se validan también en las API REST heredadas.
+  El API de memoria rechaza conexiones remotas sin autenticación y MCP conserva
+  su token independiente.
+- Backup/verificación por streaming y restauración con la API de backup SQLite,
+  copia de seguridad previa y bloqueo exclusivo mientras se protege un almacén.
+- El workflow de release espera CI satisfactoria para el SHA exacto etiquetado.
+- El watcher de memoria respeta el intervalo configurado; Chromium ausente hace
+  fallar el smoke en CI en vez de contar como validación aprobada.
+- Corregida la aserción del smoke del dashboard para distinguir los modos de
+  memoria simplificado y detallado que realmente muestra la interfaz.
+
+Esta versión no se publicará hasta que la matriz de CI esté verde en el commit
+de release; la lista de comprobaciones locales y límites está en
+[release-validation-0.8.0.md](release-validation-0.8.0.md).
+
 ## [0.7.0] - 2026-09-10
 
 Memoria temática multiagente con captura incremental y soporte para el

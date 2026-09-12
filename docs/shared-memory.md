@@ -48,6 +48,9 @@ Los tokens pueden residir en `GRAPHTYN_MEMORY_TOKENS_FILE` y rotarse por rol.
 
 `graphtyn backup` usa la API de backup SQLite; `backup-verify` comprueba SHA-256
 y `restore` previsualiza salvo `--apply`, conservando una copia recuperable.
+Las bases se copian y verifican por bloques de 1 MiB. La restauración obtiene
+un bloqueo exclusivo y se niega si hay operaciones activas de una instalación
+Graphtyn actualizada; nunca reemplaza el archivo mientras SQLite tiene WAL abierto.
 La compactación descarta intercambios casuales y la importación fusiona fragmentos
 crecientes sin perder proveedor, agente, fecha o fuente.
 
@@ -166,14 +169,30 @@ watcher persistente y su heartbeat aparece en `memory status`. MCP
 `memory_ingest_turn` continúa disponible para checkpoints explícitos. Todos los
 caminos deduplican, sanean secretos y generan embeddings locales.
 
+Inicializa y registra un cerebro con propietario explícito:
+
+```bash
+graphtyn memory brain-init --brain-path /ruta/al/cerebro --name Evi \
+  --agent-id openclaw/main --register
+```
+
+El registro se escribe atómicamente incluso cuando el cerebro es nuevo. Si aún
+no se conoce el propietario, se puede omitir `--agent-id`: el espacio queda
+pendiente y no acepta captura hasta asignarle una identidad. No uses un nombre
+corto como `main` para representar `openclaw/main`; las identidades coinciden
+completas y los alias deben registrarse explícitamente.
+
 Asocia una fuente a un cerebro con `graphtyn memory sources add --workspace
 /ruta/al/cerebro --agent-id openclaw/main`. `agent_id` es obligatorio para
 sincronizar un cerebro; una fuente raíz que contiene varios agentes debe
 apuntar a la subcarpeta de uno de ellos (por ejemplo `agents/main` o
 `agents/career`). Las fuentes sin asociación o sin propietario se pueden
 previsualizar, pero no se enrutan automáticamente a ningún espacio. CLI y dashboard deben usar el
-mismo `GRAPHTYN_HOME`; compruébalo con `memory status` y verifica que el campo
-`db` sea idéntico antes de modificar datos.
+mismo `GRAPHTYN_HOME`; compruébalo desde CLI con `graphtyn memory status
+--path /ruta/al/espacio` y desde `GET /api/memory/status?path=...`. El campo
+`db` debe ser idéntico. Sin `GRAPHTYN_HOME`, si aparecen una base local y otra
+central, la operación se detiene con conflicto en vez de escoger una
+silenciosamente. La variable explícita define el almacén central.
 
 El propietario también se aplica a `memory_context`, `memory_search`, `memory_topics`,
 `memory_topic`, `memory_node`, las ventanas de mensajes y ambos grafos. Una
@@ -185,9 +204,19 @@ antigua sin borrar datos, usa el script auditable
 
 Para un agente remoto, el servicio debe publicar MCP con
 `GRAPHTYN_MCP_TOKEN` y una interfaz alcanzable por el contenedor o VM. Ese token
-protege sólo `/mcp`; el dashboard local usa `GRAPHTYN_MEMORY_HTTP_TOKEN` si se
-quiere proteger también su API. Comprueba la conexión desde el runtime remoto
-con una llamada `tools/list` y confirma que aparece `memory_ingest_turn`.
+protege sólo `/mcp`. Las llamadas HTTP de memoria usan
+`GRAPHTYN_MEMORY_HTTP_TOKEN` (un token de administrador heredado) o
+`GRAPHTYN_MEMORY_TOKENS` para asignar roles y rutas:
+
+```bash
+export GRAPHTYN_MEMORY_TOKENS='{"token-secreto":{"role":"writer","projects":["/srv/cerebro-evi"]}}'
+```
+
+No reutilices el token MCP como token REST. Las peticiones remotas al API REST
+fallan cerradas si no hay autenticación de memoria; el dashboard de red debe
+quedar detrás de un proxy con TLS y autenticación. Comprueba la conexión MCP
+desde el runtime remoto con `tools/list` y confirma que aparece
+`memory_ingest_turn`.
 
 La identidad global combina remoto Git, rutas y alias para unir proyectos
 renombrados. Las asociaciones con otro proyecto conocido se marcan ambiguas en

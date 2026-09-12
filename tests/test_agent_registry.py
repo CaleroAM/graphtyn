@@ -81,7 +81,8 @@ def test_brain_registry_is_separate_from_agent_identity_catalog(tmp_path, monkey
     monkeypatch.setenv("GRAPHTYN_HOME", str(state))
     api_main.REGISTRATION_FILE.parent.mkdir(parents=True, exist_ok=True)
     api_main.REGISTRATION_FILE.write_text(json.dumps([
-        {"id": "memoria-evi", "name": "Cerebro Evi", "path": str(brain), "space_type": "agent_brain"},
+        {"id": "memoria-evi", "name": "Cerebro Evi", "path": str(brain), "space_type": "agent_brain",
+         "agent_ids": ["evi"]},
         {"id": "legacy-brain", "name": "Legacy memory", "path": str(tmp_path / "legacy-brain"), "mode": "agent_discovered"},
         {"id": "crm", "name": "CRM", "path": str(project), "space_type": "project"},
     ]))

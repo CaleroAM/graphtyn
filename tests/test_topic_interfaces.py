@@ -68,3 +68,19 @@ def test_entity_interfaces_return_named_controls(tmp_path, monkeypatch):
     assert detail['topics']
     assert dispatch_topic(store, 'memory_entities', {'query': 'jugar', 'requester_agent': 'dashboard'})['entities']
     assert api.memory_entity(str(store.workspace), entity_id=entity['id'], requester_agent='dashboard', authorization=None)['entity']['entity_key'] == 'jugar'
+
+
+def test_message_window_does_not_cross_agent_at_legacy_row_boundary(tmp_path):
+    store = SharedMemoryStore(tmp_path / 'project')
+    session = store.start_session('agy', 'Ventana de conversación', capture_enabled=True)
+    store.start_session('openclaw/career', 'Agente presente en el legado')
+    foreign = store.append_message(session['id'], 'user', 'Mensaje legado de otro agente')
+    center = store.append_message(session['id'], 'assistant', 'Respuesta central')
+    following = store.append_message(session['id'], 'user', 'Seguimiento del agente')
+    with store._connect() as db:
+        db.execute("UPDATE messages SET agent_id=? WHERE id=?", ('openclaw/career', foreign['id']))
+
+    result = store.message_window(center['id'], requester_agent='dashboard')
+
+    assert [message['id'] for message in result['messages']] == [center['id'], following['id']]
+    assert all(message['agent_id'] == 'agy' for message in result['messages'])

@@ -1,8 +1,10 @@
 import json
+import asyncio
 import socket
 import subprocess
 import threading
 import time
+from types import SimpleNamespace
 from pathlib import Path
 
 import httpx
@@ -45,7 +47,9 @@ class _LiveClient:
 
 
 def _client(tmp_path, monkeypatch):
-    monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / ".graphtyn-store")
+    state = tmp_path / ".graphtyn-store"
+    monkeypatch.setattr(api_main, "INDEX_STORE", state)
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
     return _LiveClient()
 
 
@@ -56,6 +60,46 @@ def test_health_endpoint(tmp_path, monkeypatch):
     data = res.json()
     assert data["status"] == "ok"
     assert data["service"] == "Graphtyn"
+
+
+def test_memory_watcher_waits_after_each_sync(tmp_path, monkeypatch):
+    path = tmp_path / "brain"
+    path.mkdir()
+    key = str(path.resolve())
+    calls = []
+
+    class StopAfterWait:
+        stopped = False
+        waits = []
+
+        def is_set(self):
+            return self.stopped
+
+        def wait(self, interval):
+            self.waits.append(interval)
+            self.stopped = True
+            return True
+
+        def set(self):
+            self.stopped = True
+
+    stop = StopAfterWait()
+
+    def sync(*_args, **_kwargs):
+        calls.append(True)
+        if len(calls) == 2:
+            stop.set()
+        return {"ok": True}
+
+    monkeypatch.setattr(api_main, "sync_memory_workspace", sync)
+    monkeypatch.setitem(api_main._memory_watchers, key,
+                        {"stop": stop, "status": "starting", "heartbeat": 0})
+
+    api_main._memory_watch_loop(key, {"interval": 7}, stop)
+
+    assert len(calls) == 1
+    assert stop.waits == [7]
+    assert key not in api_main._memory_watchers
 
 
 def test_memory_http_search_context_sessions_and_auth(tmp_path, monkeypatch):
@@ -372,6 +416,39 @@ def test_memory_search_all_federated(tmp_path, monkeypatch):
 
     r2 = client.post("/api/memory/search-all", json={"paths": ["/ruta/inexistente"], "query": "x"})
     assert r2.status_code == 200 and r2.json()["results"] == []
+
+
+def test_memory_search_all_enforces_token_project_scope(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    allowed, blocked = tmp_path / "allowed", tmp_path / "blocked"
+    allowed.mkdir(); blocked.mkdir()
+    SharedMemoryStore(allowed).start_session("agent-a", "allowed")
+    SharedMemoryStore(blocked).start_session("agent-b", "blocked")
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS", json.dumps({
+        "reader-token": {"role": "reader", "projects": [str(allowed.resolve())]}
+    }))
+    api_main._RATE_EVENTS.clear()
+    response = client.post("/api/memory/search-all", json={
+        "paths": [str(allowed), str(blocked)], "query": "memory"
+    }, headers={"Authorization": "Bearer reader-token"})
+    assert response.status_code == 403
+
+
+def test_remote_memory_api_requires_a_memory_token_even_if_mcp_is_enabled(monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS_FILE", raising=False)
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "mcp-secret")
+    request = SimpleNamespace(client=SimpleNamespace(host="203.0.113.9"),
+                              url=SimpleNamespace(path="/api/memory/status"), headers={})
+    response = asyncio.run(api_main.require_remote_memory_auth(request, lambda _request: None))
+    assert response.status_code == 503
+
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS", json.dumps({"reader-token": "reader"}))
+    response = asyncio.run(api_main.require_remote_memory_auth(request, lambda _request: None))
+    assert response.status_code == 401
+    request.headers = {"authorization": "Bearer reader-token"}
+    assert asyncio.run(api_main.require_remote_memory_auth(request, lambda _request: asyncio.sleep(0, result="ok"))) == "ok"
 
 
 def test_memory_sync_job_runs_each_registered_space(tmp_path, monkeypatch):
