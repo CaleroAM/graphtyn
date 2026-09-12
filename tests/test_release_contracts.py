@@ -1,4 +1,5 @@
 import re
+import importlib.util
 try:
     import tomllib
 except ModuleNotFoundError:  # Python 3.10
@@ -23,6 +24,7 @@ def test_release_documents_and_workflows_exist():
     required = ["LICENSE", "docs/CHANGELOG.md", "docs/SECURITY.md", "docs/CONTRIBUTING.md",
                 "docs/release-checklist.md", ".github/workflows/ci.yml",
                 ".github/workflows/release.yml", "docs/release-validation-0.6.1.md",
+                "docs/release-validation-0.8.0.md",
                 "install.ps1", "uninstall.ps1"]
     assert all((ROOT / item).is_file() for item in required)
 
@@ -32,7 +34,7 @@ def test_readme_does_not_advertise_unpublished_or_legacy_install_sources():
     assert "CaleroAM/openclaw" not in readme
     assert "pipx install graphtyn" not in readme
     assert "pip install graphtyn" not in readme
-    assert "aún no está publicado en PyPI" in readme
+    assert "PyPI permanece deshabilitado" in readme
 
 
 def test_ci_has_required_release_gates():
@@ -44,6 +46,20 @@ def test_ci_has_required_release_gates():
                  "./install.ps1", "Invoke-RestMethod", "graphtyn-unity-fixture",
                  "onboard --path"):
         assert gate in ci
+    release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    for gate in ("ci-gate", "GH_TOKEN", "EXPECTED_SHA", "--event push", "needs: ci-gate"):
+        assert gate in release
+
+
+def test_browser_smoke_does_not_silently_skip_in_ci(monkeypatch):
+    spec = importlib.util.spec_from_file_location("graphtyn_smoke_frontend", ROOT / "tests" / "smoke_frontend.py")
+    smoke = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(smoke)
+    monkeypatch.setenv("CI", "true")
+    monkeypatch.setattr(smoke, "sync_playwright", None)
+    monkeypatch.setattr(smoke, "PLAYWRIGHT_IMPORT_ERROR", "missing test dependency")
+
+    assert smoke.main() == 1
 
 
 def test_windows_installer_is_user_scoped_and_release_bundled():
@@ -68,7 +84,7 @@ def test_architecture_is_canonical_and_readme_has_compact_map():
     architecture = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for concept in ("FastAPI", "Starlette", "Uvicorn", "Dos grafos", "SQLite",
-                    "Empaquetado, despliegue y entrega", "0.6.1"):
+                    "Empaquetado, despliegue y entrega", "0.8.0"):
         assert concept in architecture
     assert architecture.count("```mermaid") >= 5
     assert "## Arquitectura en un minuto" in readme

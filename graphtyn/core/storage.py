@@ -7,7 +7,23 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
+
+_GENERIC_ROOT_NAMES = {
+    "documents", "documentos", "desktop", "escritorio", "downloads", "descargas",
+    "projects", "proyectos", "work", "workspace", "code", "dev", "repos", "repositorios"
+}
+
+
+def unsafe_project_root(project: str | Path) -> str | None:
+    """Return a reason when a path is a user/container root, not a repository."""
+    path = Path(project).expanduser().resolve()
+    if path == Path.home().resolve():
+        return "la carpeta personal no se puede registrar como proyecto"
+    if path.name.casefold() in _GENERIC_ROOT_NAMES and not (path / ".git").exists():
+        return "la carpeta contenedora/general no se puede registrar como proyecto"
+    return None
 
 
 def data_home() -> Path:
@@ -29,6 +45,28 @@ def secure_private_file(path: Path) -> None:
                             capture_output=True, text=True, check=False)
     if result.returncode:
         raise PermissionError(f"no se pudo restringir ACL de {target}: {result.stderr.strip()}")
+
+
+def atomic_write_json(path: Path, value: object, *, mode: int = 0o600) -> None:
+    """Replace a JSON state file atomically and keep it private."""
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(value, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        if os.name != "nt":
+            os.chmod(temporary, mode)
+        os.replace(temporary, target)
+        secure_private_file(target)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
 
 def project_store_dir(base: Path, project: Path, migrate_legacy: bool = True, create: bool = True) -> Path:
     resolved = project.resolve()

@@ -1,8 +1,10 @@
 import json
+import asyncio
 import socket
 import subprocess
 import threading
 import time
+from types import SimpleNamespace
 from pathlib import Path
 
 import httpx
@@ -10,6 +12,7 @@ import uvicorn
 
 from graphtyn.api import main as api_main
 from graphtyn.core.shared_memory import SharedMemoryStore
+from graphtyn.core.memory_jobs import MemoryJobManager
 
 
 class _LiveClient:
@@ -44,7 +47,9 @@ class _LiveClient:
 
 
 def _client(tmp_path, monkeypatch):
-    monkeypatch.setattr(api_main, "INDEX_STORE", tmp_path / ".graphtyn-store")
+    state = tmp_path / ".graphtyn-store"
+    monkeypatch.setattr(api_main, "INDEX_STORE", state)
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
     return _LiveClient()
 
 
@@ -55,6 +60,46 @@ def test_health_endpoint(tmp_path, monkeypatch):
     data = res.json()
     assert data["status"] == "ok"
     assert data["service"] == "Graphtyn"
+
+
+def test_memory_watcher_waits_after_each_sync(tmp_path, monkeypatch):
+    path = tmp_path / "brain"
+    path.mkdir()
+    key = str(path.resolve())
+    calls = []
+
+    class StopAfterWait:
+        stopped = False
+        waits = []
+
+        def is_set(self):
+            return self.stopped
+
+        def wait(self, interval):
+            self.waits.append(interval)
+            self.stopped = True
+            return True
+
+        def set(self):
+            self.stopped = True
+
+    stop = StopAfterWait()
+
+    def sync(*_args, **_kwargs):
+        calls.append(True)
+        if len(calls) == 2:
+            stop.set()
+        return {"ok": True}
+
+    monkeypatch.setattr(api_main, "sync_memory_workspace", sync)
+    monkeypatch.setitem(api_main._memory_watchers, key,
+                        {"stop": stop, "status": "starting", "heartbeat": 0})
+
+    api_main._memory_watch_loop(key, {"interval": 7}, stop)
+
+    assert len(calls) == 1
+    assert stop.waits == [7]
+    assert key not in api_main._memory_watchers
 
 
 def test_memory_http_search_context_sessions_and_auth(tmp_path, monkeypatch):
@@ -81,6 +126,15 @@ def test_memory_http_search_context_sessions_and_auth(tmp_path, monkeypatch):
     graph = api_main.memory_graph(str(project), requester_agent="opencode", limit=300, authorization=auth)
     assert graph["ok"] is True
     assert any(node.get("kind") == "memory_agent" for node in graph["nodes"])
+
+
+def test_mcp_token_does_not_lock_local_dashboard_memory_api(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "remote-only")
+    project = tmp_path / "project"
+    project.mkdir()
+    status = api_main.memory_status(str(project), authorization=None)
+    assert status["ok"] is True
 
 
 def test_memory_http_correct_and_forget_enforce_author(tmp_path, monkeypatch):
@@ -362,3 +416,64 @@ def test_memory_search_all_federated(tmp_path, monkeypatch):
 
     r2 = client.post("/api/memory/search-all", json={"paths": ["/ruta/inexistente"], "query": "x"})
     assert r2.status_code == 200 and r2.json()["results"] == []
+
+
+def test_memory_search_all_enforces_token_project_scope(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    allowed, blocked = tmp_path / "allowed", tmp_path / "blocked"
+    allowed.mkdir(); blocked.mkdir()
+    SharedMemoryStore(allowed).start_session("agent-a", "allowed")
+    SharedMemoryStore(blocked).start_session("agent-b", "blocked")
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS", json.dumps({
+        "reader-token": {"role": "reader", "projects": [str(allowed.resolve())]}
+    }))
+    api_main._RATE_EVENTS.clear()
+    response = client.post("/api/memory/search-all", json={
+        "paths": [str(allowed), str(blocked)], "query": "memory"
+    }, headers={"Authorization": "Bearer reader-token"})
+    assert response.status_code == 403
+
+
+def test_remote_memory_api_requires_a_memory_token_even_if_mcp_is_enabled(monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS_FILE", raising=False)
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "mcp-secret")
+    request = SimpleNamespace(client=SimpleNamespace(host="203.0.113.9"),
+                              url=SimpleNamespace(path="/api/memory/status"), headers={})
+    response = asyncio.run(api_main.require_remote_memory_auth(request, lambda _request: None))
+    assert response.status_code == 503
+
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS", json.dumps({"reader-token": "reader"}))
+    response = asyncio.run(api_main.require_remote_memory_auth(request, lambda _request: None))
+    assert response.status_code == 401
+    request.headers = {"authorization": "Bearer reader-token"}
+    assert asyncio.run(api_main.require_remote_memory_auth(request, lambda _request: asyncio.sleep(0, result="ok"))) == "ok"
+
+
+def test_memory_sync_job_runs_each_registered_space(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    first, second = tmp_path / "brain-one", tmp_path / "brain-two"
+    first.mkdir(); second.mkdir()
+    manager = MemoryJobManager(tmp_path / "jobs")
+    monkeypatch.setattr(api_main, "memory_jobs", manager)
+    monkeypatch.setattr(api_main, "_registered_memory_paths", lambda: [first, second])
+    calls = []
+
+    def fake_sync(path, **kwargs):
+        calls.append(str(path))
+        return {"ok": True, "path": str(path), "errors": [], "import": {},
+                "enrichment": {"ai_enriched": 1}}
+
+    monkeypatch.setattr(api_main, "sync_memory_workspace", fake_sync)
+    response = api_main.memory_sync({"all_spaces": True, "consent": True, "provider_model": "auto"}, authorization=None)
+    job_id = response["job"]["id"]
+    deadline = time.time() + 2
+    while time.time() < deadline and manager.get(job_id)["status"] in {"pending", "running"}:
+        time.sleep(.01)
+    job = manager.get(job_id)
+
+    assert response["paths"] == [str(first), str(second)]
+    assert job["status"] == "completed"
+    assert job["result"]["space_count"] == 2
+    assert calls == [str(first), str(second)]

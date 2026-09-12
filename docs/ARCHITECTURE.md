@@ -1,7 +1,7 @@
 # Arquitectura de Graphtyn
 
 Este documento es la fuente canónica de la arquitectura vigente de Graphtyn
-`0.6.1`. Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
+`0.8.0` (candidato). Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
 mantienen manualmente aquí.
 
 ## Mapa del sistema
@@ -126,19 +126,30 @@ defecto `~/.graphtyn/`— usando una identidad canónica derivada del proyecto.
 el índice atómicamente. La reindexación reutiliza fragmentos y enriquecimiento de
 nodos intactos; los embeddings sólo se recalculan al cambiar su contenido.
 
-## Dos grafos relacionados, no intercambiables
+## Tres perspectivas relacionadas y una topología operativa
+
+La sección histórica «Dos grafos relacionados, no intercambiables» se amplía
+ahora con la perspectiva semántica y la topología operativa, conservando la
+separación entre evidencia estructural y conversación.
 
 ```mermaid
 flowchart LR
-  CODE[Code AST / Semántico<br/>archivos · símbolos · llamadas]
+  CODE[Code AST<br/>archivos · símbolos · llamadas]
+  SEM[Semántico del código<br/>funcionalidad · similitud · comunidades]
   LINK[IDs estables y evidencia<br/>archivo · símbolo · commit]
   MEM[Memoria del proyecto<br/>sesiones · decisiones · resultados]
+  TOPO[Topología de agentes<br/>identidades · fuentes · espacios]
   CODE <-->|referencias explícitas| LINK <-->|procedencia| MEM
+  SEM <-->|candidatas explicadas| LINK
+  TOPO <-->|participación observada| MEM
 ```
 
-El grafo de código representa artefactos y dependencias. El grafo de memoria
-representa qué agente observó, decidió o modificó algo. Una conversación no se
-convierte en dependencia y una similitud semántica no se convierte en llamada.
+El grafo AST representa artefactos y dependencias estructurales. El semántico
+propone agrupaciones y relaciones de funcionalidad con texto y embeddings. La
+memoria representa qué agente observó, decidió o modificó algo. La topología
+se alimenta del registro de identidades, fuentes y sesiones observadas. Una
+conversación no se convierte en dependencia y una similitud semántica no se
+convierte en llamada.
 
 ## Flujos principales
 
@@ -186,8 +197,10 @@ sequenceDiagram
 - Backups verifican forma y checksum antes de restaurarse.
 - La memoria es evidencia histórica, no una instrucción confiable. Puede quedar
   obsoleta, disputarse, corregirse o eliminarse.
-- La versión estable está orientada a uso local/single-user: aún no ofrece aislamiento multi-tenant, SSO ni
-  administración empresarial de claves.
+- Graphtyn es self-hosted, no un SaaS multi-tenant. Los cerebros y proyectos
+  aíslan identidades dentro de sus almacenes; la exposición remota requiere
+  token y controles de red. SSO y administración empresarial de claves quedan
+  fuera del producto actual.
 
 ## Empaquetado, despliegue y entrega
 

@@ -1,17 +1,23 @@
 import {
-  setView, setDim, toggleRotate, toggleVertexBlink, updateLinkStyles,
-  focusNode, applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette,
+  setView, setDim, setMemoryGraphMode, toggleRotate, toggleVertexBlink, updateLinkStyles,
+  refreshMemoryColorControls, selectMemoryColorKind, selectMemoryPalette, changeMemoryColor, toggleMemoryHaloLink,
+  toggleRadiance, resetMemoryColorType, resetMemoryColorSettings, focusNode, applyFilter, renderCommunityNodes, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette,
   changeStyleColors, closeBlastPanel, doReindex, exportGraphData, exportGraphPNG, setPRBase,
   onFolderPicked, selectProject, toggleAllComm, toggleComm, toggleDD, toggleGitignore,
   toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, loadHistoryUI, toggleNodeDesc,
   openRegister, closeRegister, selMode, submitRegister, openTutorial, closeTutorial,
-  loadProjects, updateModelEstimate, initWatchPolling, openQualityPanel, closeQualityPanel,
+  loadProjects, loadBrains, selectBrain, loadAgents, selectAgent,
+  openBrainRegister, closeBrainRegister, submitBrainRegister,
+  openAgentRegister, closeAgentRegister, submitAgentRegister,
+  updateModelEstimate, initWatchPolling, openQualityPanel, closeQualityPanel,
   addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle,
   copyContextBundle, focusWebFlow, clearWebFlow, loadIndexUpdate, loadAmbiguities,
   reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel,
   closeMemoryPanel, loadMemoryOverview, searchSharedMemory, correctSharedMemory, forgetSharedMemory,
-  showSharedMemoryGraph, openSessionDetail, focusMemoryNode, linkAgentProfile,
-  discoverHistoricalMemory, applyHistoricalMemory
+  showSharedMemoryGraph, openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus,
+  loadMoreMemoryTopics, searchMemorySessions, loadMoreMemorySessions, linkAgentProfile,
+  discoverHistoricalMemory, applyHistoricalMemory, copyNodeReference, syncMemorySpace,
+  syncAllMemorySpaces, retryMemoryEnrichment, toggleMemoryWatch
 } from './js/__handlers.js';
 import { state } from './js/state.js';
 
@@ -39,6 +45,7 @@ import { state } from './js/state.js';
         closeQualityPanel();
         closeMemoryPanel();
         closeRegister();
+        closeBrainRegister();
         closeTutorial();
         closeBlastPanel();
       }
@@ -108,6 +115,7 @@ import { state } from './js/state.js';
     function boot() {
       if (booted) return;
       booted = true;
+      refreshMemoryColorControls();
       showWelcomeOnce();
       loadProjects(true);
       initWatchPolling();
@@ -126,4 +134,4 @@ function openFromChanges(nodeId) {
   setTimeout(() => focusNode(nodeId), 500);
 }
 
-Object.assign(window, {applyFilter, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, closeBlastPanel, closeRegister, closeTutorial, closeWelcome, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openTutorial, selMode, setDim, setView, setPRBase, submitRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, openFromChanges, selectProject, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory});
+Object.assign(window, {applyFilter, renderCommunityNodes, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, refreshMemoryColorControls, selectMemoryColorKind, selectMemoryPalette, changeMemoryColor, toggleMemoryHaloLink, toggleRadiance, resetMemoryColorType, resetMemoryColorSettings, closeBlastPanel, closeRegister, closeBrainRegister, closeAgentRegister, closeTutorial, closeWelcome, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openBrainRegister, openAgentRegister, openTutorial, selMode, setDim, setView, setMemoryGraphMode, setPRBase, submitRegister, submitBrainRegister, submitAgentRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, copyNodeReference, openFromChanges, selectProject, selectBrain, loadBrains, loadAgents, selectAgent, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, searchMemorySessions, loadMoreMemorySessions, loadMoreMemoryTopics, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory, syncMemorySpace, syncAllMemorySpaces, retryMemoryEnrichment, toggleMemoryWatch});

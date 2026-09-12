@@ -1,4 +1,4 @@
-import { state, PALETTES, getCommKey, hexRgb, mixColor } from './state.js';
+import { state, PALETTES, MEMORY_COLOR_DEFAULTS, getCommKey, hexRgb, mixColor, getMemoryColor } from './state.js';
 
 export function isDocOrMedia(n) {
       if (!n) return false;
@@ -18,15 +18,24 @@ export function isDocOrMedia(n) {
 export function nodeColor(n) {
       if (n.god) return '#f472b6';
       if (n.agent_color) return n.agent_color;
+      const k = (n.kind || '').toLowerCase();
+      if (state.activeView === 'memory' && MEMORY_COLOR_DEFAULTS[k]) {
+        return getMemoryColor(k, 'node');
+      }
+      // Memory sessions are provenance containers. Keep them visually
+      // distinct from blue topic nodes and purple agent nodes in every
+      // palette so a session can be identified at a glance.
+      if (k === 'memory_session') return '#f97316';
       if (isDocOrMedia(n)) return '#ffffff';
       if (state.activePalette === 'community') {
         const commKey = getCommKey(n);
         return state.commColorMap[commKey] || '#38bdf8';
       }
       const p = PALETTES[state.activePalette] || PALETTES.obsidian;
-      const k = n.kind || '';
       if (k.includes('orchestrator')) return '#a855f7';
       if (k.includes('agent'))        return '#7c3aed';
+      if (k === 'topology_source')    return '#f59e0b';
+      if (k === 'topology_project')   return '#10b981';
       if (k.includes('hermes'))       return '#06b6d4';
       if (k === 'community')          return '#10b981';
       if (k === 'semantic_concept')   return '#ec4899';
@@ -49,6 +58,44 @@ export function nodeVal(n) {
       if (k === 'file' || k === 'module') return state.activeDim === '2d' ? 8 : 10;
       if (isDocOrMedia(n)) return state.activeDim === '2d' ? 9 : 11;
       return state.activeDim === '2d' ? 7 : 9;
+    }
+
+export function memoryStandardNodePainter(node, ctx) {
+      const isSelected = state.selectedNode && state.selectedNode.id === node.id;
+      const isNeighbor = state.selectedNeighbors && state.selectedNeighbors.has(node.id);
+      const kind = (node.kind || '').toLowerCase();
+      const isMemory = Boolean(MEMORY_COLOR_DEFAULTS[kind]);
+      const core = isSelected ? '#ff007f' : nodeColor(node);
+      const halo = isMemory ? getMemoryColor(kind, 'halo') : core;
+      const [hr, hg, hb] = hexRgb(halo);
+      const nx = node.x || 0, ny = node.y || 0;
+      const radius = Math.max(3.5, Math.sqrt(Math.max(1, nodeVal(node) || 1)) * 2.35) * (isSelected ? 1.3 : 1);
+      const blink = state.vertexBlinkOn && !isSelected
+        ? 0.72 + 0.28 * Math.sin(state.neuralPhase * 1.2 + nx * 0.01 + ny * 0.006)
+        : 1;
+      ctx.save();
+      ctx.globalAlpha *= blink;
+      if (state.selectedNode && !isSelected && !isNeighbor) ctx.globalAlpha = 0.22;
+      if (state.radianceOn) {
+        const gradient = ctx.createRadialGradient(nx, ny, 0, nx, ny, radius * (isMemory ? 2.4 : 1.7));
+        gradient.addColorStop(0, `rgba(${hr},${hg},${hb},${isMemory ? 0.48 : 0.24})`);
+        gradient.addColorStop(1, `rgba(${hr},${hg},${hb},0)`);
+        ctx.fillStyle = gradient;
+        ctx.beginPath(); ctx.arc(nx, ny, radius * (isMemory ? 2.4 : 1.7), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = core;
+      if (state.nodeShape === 'squares') {
+        ctx.save(); ctx.translate(nx, ny); ctx.rotate(0.5 + nx * 0.002);
+        ctx.fillRect(-radius / 2, -radius / 2, radius, radius); ctx.restore();
+      } else {
+        ctx.beginPath(); ctx.arc(nx, ny, radius * 0.58, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.strokeStyle = isSelected ? '#ffffff' : (kind === 'memory_session' ? getMemoryColor(kind, 'halo') : 'rgba(255,255,255,0.3)');
+      ctx.lineWidth = isSelected ? 1.8 : 0.8;
+      if (kind === 'memory_session') ctx.setLineDash([3, 2]);
+      ctx.beginPath(); ctx.arc(nx, ny, radius * (kind === 'memory_session' ? 1.25 : 0.72), 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
     }
 
 export function squareNodePainter(node, ctx) {
@@ -87,29 +134,39 @@ export function neuralNodePainter(node, ctx) {
       const base = Math.max(3.0, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 2.8);
       const simE = state.pulseSim ? (state.pulseSim.energy.get(node.id) || 0) : 0;
       const glow = Math.min(1, (isSelected ? 1.0 : (node.god ? 0.9 : 0.18 + Math.min(0.6, (node.degree || 0) / 25))) + simE * 0.6);
-      const breathe = 0.5 + 0.5 * Math.sin(state.neuralPhase + nx * 0.008 + (node.degree || 0) * 0.4);
+      const breathe = state.vertexBlinkOn ? 0.5 + 0.5 * Math.sin(state.neuralPhase + nx * 0.008 + (node.degree || 0) * 0.4) : 0.5;
       const a = isSelected ? 1.0 : (glow * (0.55 + 0.45 * breathe));
       const halo = base * (isSelected ? 3.5 : (2.4 + 1.2 * breathe));
       const isWhite = isDocOrMedia(node);
+      const memoryKind = (node.kind || '').toLowerCase();
+      const isMemory = state.activeView === 'memory' && MEMORY_COLOR_DEFAULTS[memoryKind];
+      const isSession = memoryKind === 'memory_session';
+      const memoryHaloRgb = isMemory ? hexRgb(getMemoryColor(memoryKind, 'halo')) : null;
 
-      const g = ctx.createRadialGradient(nx, ny, 0, nx, ny, halo);
-      if (isSelected) {
-        g.addColorStop(0, `rgba(255,0,128,1)`);
-        g.addColorStop(0.5, `rgba(255,0,128,0.6)`);
-        g.addColorStop(1, 'rgba(255,0,128,0)');
-      } else if (isWhite) {
-        g.addColorStop(0, `rgba(255,255,255,${Math.min(0.95, a)})`);
-        g.addColorStop(0.4, `rgba(220,235,255,${Math.min(0.7, a * 0.7)})`);
-        g.addColorStop(1, 'rgba(200,225,255,0)');
-      } else {
-        g.addColorStop(0, `rgba(255,190,225,${Math.min(0.9, a)})`);
-        g.addColorStop(0.4, `rgba(255,90,175,${Math.min(0.6, a * 0.6)})`);
-        g.addColorStop(1, 'rgba(255,90,175,0)');
+      if (state.radianceOn) {
+        const g = ctx.createRadialGradient(nx, ny, 0, nx, ny, halo);
+        if (isSelected) {
+          g.addColorStop(0, `rgba(255,0,128,1)`);
+          g.addColorStop(0.5, `rgba(255,0,128,0.6)`);
+          g.addColorStop(1, 'rgba(255,0,128,0)');
+        } else if (isWhite) {
+          g.addColorStop(0, `rgba(255,255,255,${Math.min(0.95, a)})`);
+          g.addColorStop(0.4, `rgba(220,235,255,${Math.min(0.7, a * 0.7)})`);
+          g.addColorStop(1, 'rgba(200,225,255,0)');
+        } else if (isMemory) {
+          g.addColorStop(0, `rgba(${memoryHaloRgb[0]},${memoryHaloRgb[1]},${memoryHaloRgb[2]},${Math.min(0.95, a)})`);
+          g.addColorStop(0.4, `rgba(${memoryHaloRgb[0]},${memoryHaloRgb[1]},${memoryHaloRgb[2]},${Math.min(0.66, a * 0.66)})`);
+          g.addColorStop(1, `rgba(${memoryHaloRgb[0]},${memoryHaloRgb[1]},${memoryHaloRgb[2]},0)`);
+        } else {
+          g.addColorStop(0, `rgba(255,190,225,${Math.min(0.9, a)})`);
+          g.addColorStop(0.4, `rgba(255,90,175,${Math.min(0.6, a * 0.6)})`);
+          g.addColorStop(1, 'rgba(255,90,175,0)');
+        }
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(nx, ny, halo, 0, Math.PI * 2); ctx.fill();
       }
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(nx, ny, halo, 0, Math.PI * 2); ctx.fill();
 
-      const bc = hexRgb(isSelected ? '#ff007f' : (isWhite ? '#ffffff' : (state.nodeColorHex || nodeColor(node))));
+      const bc = hexRgb(isSelected ? '#ff007f' : (isWhite ? '#ffffff' : (isMemory ? getMemoryColor(memoryKind, 'node') : (state.nodeColorHex || nodeColor(node)))));
       const coreC = isSelected
         ? [255, 255, 255]
         : (node.god
@@ -136,6 +193,15 @@ export function neuralNodePainter(node, ctx) {
         ctx.beginPath();
         ctx.arc(nx, ny, halo * 0.8, 0, Math.PI * 2);
         ctx.stroke();
+      }
+      if (!isSelected && isSession) {
+        ctx.strokeStyle = getMemoryColor(memoryKind, 'halo');
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 2]);
+        ctx.beginPath();
+        ctx.arc(nx, ny, halo * 0.68, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
       }
 
       ctx.restore();
@@ -171,11 +237,16 @@ export function neuralLinkPainter(link, ctx) {
       };
       const lc = hexRgb(state.linkColorHex);
       const w = 0.7 + Math.min(2.6, ((s.degree || 0) + (t.degree || 0)) / 30) + (link.confidence === 'INFERRED' ? -0.2 : 0.2);
-      const grad = ctx.createLinearGradient(sx, sy, tx, ty);
-      grad.addColorStop(0, `rgba(${lc[0]},${lc[1]},${lc[2]},${(0.12 * tw).toFixed(3)})`);
-      grad.addColorStop(0.5, `rgba(${Math.min(255, lc[0] + 50)},${Math.min(255, lc[1] + 50)},${Math.min(255, lc[2] + 50)},${(0.38 * tw).toFixed(3)})`);
-      grad.addColorStop(1, `rgba(${lc[0]},${lc[1]},${lc[2]},${(0.30 * tw).toFixed(3)})`);
-      ctx.strokeStyle = grad; ctx.lineWidth = isConnected ? w * 1.6 : w; ctx.lineCap = 'round';
+      if (state.radianceOn) {
+        const grad = ctx.createLinearGradient(sx, sy, tx, ty);
+        grad.addColorStop(0, `rgba(${lc[0]},${lc[1]},${lc[2]},${(0.12 * tw).toFixed(3)})`);
+        grad.addColorStop(0.5, `rgba(${Math.min(255, lc[0] + 50)},${Math.min(255, lc[1] + 50)},${Math.min(255, lc[2] + 50)},${(0.38 * tw).toFixed(3)})`);
+        grad.addColorStop(1, `rgba(${lc[0]},${lc[1]},${lc[2]},${(0.30 * tw).toFixed(3)})`);
+        ctx.strokeStyle = grad;
+      } else {
+        ctx.strokeStyle = `rgba(${lc[0]},${lc[1]},${lc[2]},0.65)`;
+      }
+      ctx.lineWidth = isConnected ? w * 1.6 : w; ctx.lineCap = 'round';
       if (dashed) {
         ctx.setLineDash([4, 4]);
         ctx.lineDashOffset = -state.neuralPhase * 3;
@@ -195,10 +266,10 @@ export function neuralLinkPainter(link, ctx) {
       const bp = curved
         ? { x: mt * mt * sx + 2 * mt * bt * cx + bt * bt * tx, y: mt * mt * sy + 2 * mt * bt * cy + bt * bt * ty }
         : { x: sx + (tx - sx) * bt, y: sy + (ty - sy) * bt };
-      ctx.fillStyle = `rgba(${lc[0]},${lc[1]},${lc[2]},${(0.8 * tw).toFixed(3)})`;
+      ctx.fillStyle = `rgba(${lc[0]},${lc[1]},${lc[2]},${((state.radianceOn ? 0.8 : 0.45) * tw).toFixed(3)})`;
       ctx.beginPath(); ctx.arc(bp.x, bp.y, 1.7, 0, Math.PI * 2); ctx.fill();
       // PULSOS REALES de la simulacion (ráfagas viajando por la arista)
-      if (state.pulseSim && state.graphStyle === 'neural') {
+      if (state.radianceOn && state.pulseSim && state.graphStyle === 'neural') {
         const pc = hexRgb(state.pulseColorHex);
         for (const p of state.pulseSim.pulses) {
           if (p.link !== link) continue;
@@ -235,24 +306,31 @@ export function holoNodePainter(node, ctx) {
 
       const nx = node.x || 0, ny = node.y || 0;
       const base = Math.max(3.0, Math.sqrt(Math.max(0, nodeVal(node) || 1)) * 2.8);
-      const idle = 0.5 + 0.5 * Math.sin(state.neuralPhase * 0.9 + nx * 0.01 + (node.degree || 0) * 0.3);
+      const idle = state.vertexBlinkOn ? 0.5 + 0.5 * Math.sin(state.neuralPhase * 0.9 + nx * 0.01 + (node.degree || 0) * 0.3) : 0.5;
       const simE = state.pulseSim ? (state.pulseSim.energy.get(node.id) || 0) : 0;
       const glow = Math.min(1, (isSelected ? 1.0 : (node.god ? 0.85 : 0.12 + Math.min(0.5, (node.degree || 0) / 25))) + simE * 0.6);
       const r = base * (0.8 + 0.3 * idle) * (node.god || isSelected ? 1.35 : 1);
       const isWhite = isDocOrMedia(node);
+      const memoryKind = (node.kind || '').toLowerCase();
+      const isMemory = state.activeView === 'memory' && MEMORY_COLOR_DEFAULTS[memoryKind];
+      const isSession = memoryKind === 'memory_session';
+      const memoryNodeRgb = isMemory ? hexRgb(getMemoryColor(memoryKind, 'node')) : null;
 
-      const col = isSelected ? [255, 0, 128] : (isWhite ? [255, 255, 255] : (node.god ? [190, 240, 255] : [70, 210, 255]));
+      const col = isSelected ? [255, 0, 128] : (isWhite ? [255, 255, 255] : (isMemory ? memoryNodeRgb : (node.god ? [190, 240, 255] : [70, 210, 255])));
       const c = [
         Math.min(255, col[0] + (255 - col[0]) * glow),
         Math.min(255, col[1] + (255 - col[1]) * glow),
         Math.min(255, col[2] + (255 - col[2]) * glow)
       ];
+      const haloColor = isMemory ? hexRgb(getMemoryColor(memoryKind, 'halo')) : c;
       const haloR = r * (isSelected ? 3.8 : 3.2);
-      const halo = ctx.createRadialGradient(nx, ny, 0, nx, ny, haloR);
-      halo.addColorStop(0, `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${0.5 + glow * 0.3})`);
-      halo.addColorStop(1, `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},0)`);
-      ctx.fillStyle = halo;
-      ctx.beginPath(); ctx.arc(nx, ny, haloR, 0, Math.PI * 2); ctx.fill();
+      if (state.radianceOn) {
+        const halo = ctx.createRadialGradient(nx, ny, 0, nx, ny, haloR);
+        halo.addColorStop(0, `rgba(${haloColor[0] | 0},${haloColor[1] | 0},${haloColor[2] | 0},${0.5 + glow * 0.3})`);
+        halo.addColorStop(1, `rgba(${haloColor[0] | 0},${haloColor[1] | 0},${haloColor[2] | 0},0)`);
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(nx, ny, haloR, 0, Math.PI * 2); ctx.fill();
+      }
       const ang = state.neuralPhase * 0.5 + (nx * 0.01);
       const s2 = Math.max(0.8, r * 1.1);
       const bright = `rgba(${Math.min(255, c[0] + 60) | 0},${Math.min(255, c[1] + 60) | 0},${Math.min(255, c[2] + 60) | 0},0.95)`;
@@ -269,13 +347,13 @@ export function holoNodePainter(node, ctx) {
         ctx.fill();
       }
       ctx.restore();
-      if (node.god || isSelected) {
+      if (node.god || isSelected || isSession) {
         ctx.save();
         ctx.translate(nx, ny);
         ctx.rotate(-ang * 0.6);
-        ctx.strokeStyle = isSelected ? '#ffffff' : `rgba(190,240,255,${0.35 + glow * 0.4})`;
+        ctx.strokeStyle = isSelected ? '#ffffff' : (isSession ? getMemoryColor(memoryKind, 'halo') : `rgba(190,240,255,${0.35 + glow * 0.4})`);
         ctx.lineWidth = isSelected ? 1.5 : Math.max(0.4, 0.7);
-        ctx.setLineDash([5, 3]);
+        ctx.setLineDash(isSession ? [3, 2] : [5, 3]);
         ctx.beginPath();
         ctx.ellipse(0, 0, r * 3.2, r * 3.2 * 0.82, 0, 0, Math.PI * 2);
         ctx.stroke();
@@ -298,7 +376,7 @@ export function holoLinkPainter(link, ctx) {
       }
       const sx = s.x || 0, sy = s.y || 0, tx = t.x || 0, ty = t.y || 0;
       if (link._dash === undefined) link._dash = Math.random() < 0.18;
-      const act = 0.25 + 0.75 * Math.abs(Math.sin(state.neuralPhase * 0.6 + (link.index !== undefined ? link.index : 0) * 0.7));
+      const act = 0.25 + 0.75 * (state.vertexBlinkOn ? Math.abs(Math.sin(state.neuralPhase * 0.6 + (link.index !== undefined ? link.index : 0) * 0.7)) : 0.5);
       const w = (0.5 + Math.min(1.8, ((s.degree || 0) + (t.degree || 0)) / 30)) * (1 + 0.6 * act);
       const col = isConnected ? [255, 100, 200] : [30 + act * 200, 150 + act * 95, 220 + act * 35];
       ctx.strokeStyle = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${isConnected ? 0.9 : 0.25 + 0.4 * act})`;

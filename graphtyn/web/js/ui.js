@@ -36,11 +36,17 @@ export function selMode(m) {
 export function submitRegister() {
       const path = document.getElementById('reg-path').value.trim();
       if (!path) return;
+      const spaceType = state.regMode === 'agent_discovered' ? 'agent_brain'
+        : state.regMode === 'master_folder' ? 'container' : 'project';
       fetch('/api/projects/register', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ path, mode: state.regMode })
+        body: JSON.stringify({ path, mode: state.regMode, space_type: spaceType })
       }).then(r => r.json()).then(res => {
-        if (res.ok) { closeRegister(); loadProjects(); selectProject(path); }
+        if (res.ok) {
+          closeRegister();
+          if (spaceType === 'agent_brain') selectBrain(path);
+          else { loadProjects(); selectProject(path); }
+        }
         else alert('Error: ' + res.error);
       });
     }
@@ -51,11 +57,14 @@ export function closeTutorial() { document.getElementById('modal-tutorial').clas
 
 export function loadProjects(thenLoadGraph) {
       console.log("Fetching /api/projects...");
+      loadBrains();
       fetch('/api/projects').then(r => r.json()).then(projects => {
         console.log("Projects received:", projects);
         projects.forEach(p => { if (p.path) state.respectMap[p.path] = p.respect_git !== false; });
+        state.nonAutoloadPaths = new Set(projects.filter(p => p && p.autoload === false).map(p => p.path));
+        const projectRows = Array.isArray(projects) ? projects.filter(p => p && (p.space_type === 'project' || p.space_type === 'container')) : [];
         const el = document.getElementById('project-list');
-        if (!Array.isArray(projects) || !projects.length) {
+        if (!projectRows.length) {
           el.innerHTML = `
             <div style="padding:14px 10px;text-align:center;background:#111827;border:1px dashed #374151;border-radius:8px;margin-top:6px;">
               <div style="font-size:22px;margin-bottom:6px;">[...]</div>
@@ -68,8 +77,16 @@ export function loadProjects(thenLoadGraph) {
           `;
           return;
         }
-        if (!state.activePath && projects.length) state.activePath = projects[0].path;
-        el.innerHTML = projects.map(p => {
+        // A master/home folder is only a project container. Never select it
+        // automatically: indexing it can traverse an entire user profile and
+        // exhaust memory. Users may still open it explicitly when needed.
+        const selectable = projectRows.filter(p => p && p.autoload !== false && p.mode !== 'master_folder');
+        if (!state.activePath && selectable.length) state.activePath = selectable[0].path;
+        if (!state.activePath && thenLoadGraph) {
+          const status = document.getElementById('graph-status');
+          if (status) status.textContent = 'Selecciona un repositorio para cargar el grafo.';
+        }
+        el.innerHTML = projectRows.map(p => {
           const pPath = (p.path || '').replace(/"/g, '&quot;');
           const pName = p.name || p.id || 'Sin nombre';
           const isActive = state.activePath && (p.path === state.activePath || pPath === state.activePath);
@@ -78,7 +95,7 @@ export function loadProjects(thenLoadGraph) {
             '<span class="proj-badge ' + (p.indexed ? 'ok' : 'pend') + '">' + (p.indexed ? 'OK' : 'PEND') + '</span>' +
             '</div>';
         }).join('');
-        if (thenLoadGraph) loadGraph();
+        if (thenLoadGraph && state.activePath) loadGraph();
       }).catch(err => {
         console.error("Projects fetch error:", err);
         document.getElementById('project-list').innerHTML =
@@ -87,7 +104,15 @@ export function loadProjects(thenLoadGraph) {
     }
 
 export function selectProject(path) {
+      if (state.nonAutoloadPaths.has(path)) {
+        const status = document.getElementById('graph-status');
+        if (status) status.textContent = 'Selecciona un repositorio concreto; la carpeta personal no se indexa.';
+        return;
+      }
       state.activePath = path;
+      state.activeAgentId = null;
+      state.activeSpaceType = 'project';
+      state.memoryFocusSession = null;
       state.webFlowNodeIds = null;
       const resetFlow = document.getElementById('reset-web-flow');
       if (resetFlow) resetFlow.style.display = 'none';
@@ -98,6 +123,106 @@ export function selectProject(path) {
       if (state.activeView === 'agents' || state.activeView === 'changes') setView('code'); // project-scoped views reload below
       else { loadProjects(); loadGraph(); }
     }
+
+export function loadAgents() {
+      const el = document.getElementById('agent-list');
+      if (!el) return;
+      fetch('/api/agents').then(r => r.json()).then(agents => {
+        if (!Array.isArray(agents) || !agents.length) {
+          el.innerHTML = '<div style="color:#64748b;font-size:10px;padding:6px 2px;line-height:1.4;">Sin agentes registrados. Asocia una fuente de memoria o registra una identidad.</div>';
+          return;
+        }
+        el.innerHTML = agents.map(agent => {
+          const id = String(agent.id || '').replace(/"/g, '&quot;');
+          const name = String(agent.name || agent.id || 'Agente').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+          const active = state.activeAgentId === agent.id;
+          const status = agent.status === 'observed' ? 'ACTIVO' : (agent.status === 'configured' ? 'CONFIG' : 'PEND');
+          return `<div class="project-item agent-item ${active ? 'active' : ''}" data-agent-id="${id}" onclick="selectAgent(this.dataset.agentId)">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">⌁ ${name}</span>
+            <span class="proj-badge ${agent.status === 'observed' ? 'ok' : 'pend'}" title="${agent.sessions || 0} sesiones">${status}</span>
+          </div>`;
+        }).join('');
+      }).catch(() => { el.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:4px;">No se pudo cargar agentes.</div>'; });
+    }
+
+export function loadBrains() {
+      const el = document.getElementById('brain-list');
+      if (!el) return;
+      fetch('/api/brains').then(r => r.json()).then(brains => {
+        if (!Array.isArray(brains) || !brains.length) {
+          el.innerHTML = '<div style="color:#64748b;font-size:10px;padding:6px 2px;line-height:1.4;">Sin cerebros registrados. Registra un espacio de memoria para comenzar.</div>';
+          return;
+        }
+        el.innerHTML = brains.map(brain => {
+          const path = String(brain.path || '').replace(/"/g, '&quot;');
+          const name = String(brain.name || brain.id || 'Cerebro').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+          const active = state.activeSpaceType === 'agent_brain' && state.activePath === brain.path;
+          const sessions = Number(brain.sessions || 0);
+          const agents = Array.isArray(brain.agents) ? brain.agents.length : 0;
+          const status = brain.memory_exists || brain.indexed ? 'OK' : 'PEND';
+          return `<div class="project-item brain-item ${active ? 'active' : ''}" data-path="${path}" onclick="selectBrain(this.dataset.path)" title="${sessions} sesiones · ${agents} agentes">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:148px;">◈ ${name}</span>
+            <span class="proj-badge ${status === 'OK' ? 'ok' : 'pend'}">${status}</span>
+          </div>`;
+        }).join('');
+      }).catch(() => { el.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:4px;">No se pudieron cargar los cerebros.</div>'; });
+    }
+
+export function selectBrain(path) {
+      state.activePath = String(path || '');
+      state.activeAgentId = null;
+      state.activeSpaceType = 'agent_brain';
+      state.memoryFocusSession = null;
+      state.webFlowNodeIds = null;
+      state.contextSelection = [];
+      state.lastContextBundle = null;
+      setView('memory');
+      loadBrains();
+    }
+
+export function selectAgent(agentId) {
+      state.activeAgentId = String(agentId || '').trim().toLowerCase();
+      state.activeSpaceType = 'agent';
+      state.memoryFocusSession = null;
+      state.activePath = null;
+      setView('memory');
+      loadAgents();
+}
+
+export function openBrainRegister() {
+      const name = document.getElementById('agent-reg-name');
+      const path = document.getElementById('agent-reg-path');
+      const currentBrain = state.activeSpaceType === 'agent_brain' && state.activePath;
+      if (name && !name.value && currentBrain) name.value = `Cerebro · ${state.activePath.split('/').pop()}`;
+      if (path && currentBrain) path.value = state.activePath;
+      const status = document.getElementById('agent-reg-status');
+      if (status) status.textContent = '';
+      document.getElementById('modal-agent-reg')?.classList.add('show');
+    }
+
+export function closeBrainRegister() { document.getElementById('modal-agent-reg')?.classList.remove('show'); }
+
+export async function submitBrainRegister() {
+      const name = document.getElementById('agent-reg-name')?.value.trim();
+      const path = document.getElementById('agent-reg-path')?.value.trim();
+      const status = document.getElementById('agent-reg-status');
+      if (!path) { if (status) status.textContent = 'La ruta del cerebro es obligatoria.'; return; }
+      if (status) status.textContent = 'Guardando…';
+      try {
+        const response = await fetch('/api/projects/register', {method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({path, name:name || path.split('/').pop() || 'Cerebro', mode:'single_folder', space_type:'agent_brain'})});
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        closeBrainRegister();
+        loadBrains();
+        loadProjects();
+      } catch (error) { if (status) status.textContent = `No se pudo guardar: ${error.message}`; }
+    }
+
+// Compatibility aliases for integrations that used the old identity modal.
+export const openAgentRegister = openBrainRegister;
+export const closeAgentRegister = closeBrainRegister;
+export const submitAgentRegister = submitBrainRegister;
 
 export function initWatchPolling() {
       if (state.watchTimer) clearInterval(state.watchTimer);

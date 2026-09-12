@@ -19,7 +19,7 @@ from .core.external_benchmark import score_graphify
 from .core.impact import analyze_impact
 from .core.change_analyst import analyze_change, query_intent
 from .core.overview_report import render_report
-from .core.storage import data_home, project_store_dir
+from .core.storage import data_home, project_store_dir, atomic_write_json
 from .core.type_evidence import provider_status
 from .core.global_graph import default_registry, list_projects, query_global, register_project, remove_project
 from .core.work_memory import attach_learning, reflect, save_result
@@ -27,7 +27,7 @@ from .core.shared_memory import SharedMemoryStore
 from .core.memory_benchmark import build_stability_dataset, run_memory_benchmark
 from .core.history_import import (discover_histories, import_histories, ProjectIdentityRegistry,
                                   configured_sources, save_source, import_history_archive,
-                                  delete_source, test_source)
+                                  delete_source, test_source, sync_memory_workspace)
 from .core.verification import verification_plan, verify_python_edits
 from .core.agent_installer import install_agent, install_ci
 from .core.answer_validation import validate_answer
@@ -82,6 +82,10 @@ def main():
     setup_p.add_argument("--apply", action="store_true")
     setup_p.add_argument("--no-token", action="store_true")
     setup_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="intent")
+    setup_p.add_argument("--memory", choices=["ask", "on", "off"], default="ask",
+                         help="Memoria conversacional: preguntar, activar o desactivar")
+    setup_p.add_argument("--memory-watch", action="store_true",
+                         help="Dejar preparado el sincronizador continuo al activar memoria")
     onboard_p = subparsers.add_parser("onboard", help="Configura agentes, índice, MCP y dashboard en una sola orden")
     onboard_p.add_argument("--path", default=".")
     onboard_p.add_argument("--agent", action="append", default=[])
@@ -311,6 +315,63 @@ def main():
     ingest_p.add_argument("--close", action="store_true")
     ingest_p.add_argument("--provider", choices=["auto", "deterministic", "ollama", "api"], default="auto")
     ingest_p.add_argument("--path", default=".")
+    stream_p = memory_sub.add_parser("stream", help="Importación JSONL por lotes con cursor persistente")
+    stream_p.add_argument("source")
+    stream_p.add_argument("--path", required=True)
+    stream_p.add_argument("--agent", required=True)
+    stream_p.add_argument("--provider", required=True)
+    stream_p.add_argument("--external-session", required=True)
+    stream_p.add_argument("--consent", action="store_true")
+    stream_p.add_argument("--select-project", action="store_true")
+    stream_p.add_argument("--watch", action="store_true")
+    for action in ("entities", "entity", "topics", "topic", "window", "topic-update", "node", "relation-candidates", "relation-review", "topics-enrich"):
+        topic_p = memory_sub.add_parser(action)
+        topic_p.add_argument("--path", default=".")
+        topic_p.add_argument("--agent", default="cli")
+        if action == "entities":
+            topic_p.add_argument("query", nargs="?", default="")
+            topic_p.add_argument("--kind", default=None)
+            topic_p.add_argument("--limit", type=int, default=50)
+            topic_p.add_argument("--offset", type=int, default=0)
+        elif action == "entity":
+            topic_p.add_argument("entity_id")
+            topic_p.add_argument("--limit", type=int, default=50)
+        elif action == "topics":
+            topic_p.add_argument("query", nargs="?", default="")
+            topic_p.add_argument("--state", default=None)
+            topic_p.add_argument("--session", default=None)
+            topic_p.add_argument("--limit", type=int, default=20)
+            topic_p.add_argument("--offset", type=int, default=0)
+        elif action == "window":
+            topic_p.add_argument("message_id")
+            topic_p.add_argument("--before", type=int, default=10)
+            topic_p.add_argument("--after", type=int, default=10)
+            topic_p.add_argument("--token-budget", type=int, default=3000)
+        elif action == "node":
+            topic_p.add_argument("reference")
+            topic_p.add_argument("--limit", type=int, default=20)
+        elif action == "relation-candidates":
+            topic_p.add_argument("--status", default="pending")
+            topic_p.add_argument("--limit", type=int, default=50)
+        elif action == "relation-review":
+            topic_p.add_argument("relation_id")
+            topic_p.add_argument("--status", choices=["accepted", "rejected"], required=True)
+            topic_p.add_argument("--reason", required=True)
+        elif action == "topics-enrich":
+            topic_p.add_argument("--session", default=None)
+            topic_p.add_argument("--provider", choices=["auto", "ollama", "deterministic", "api"], default="auto")
+            topic_p.add_argument("--force", action="store_true", help="Reprocesa explícitamente aunque la fuente no haya cambiado")
+            topic_p.add_argument("--retry-failed", action="store_true", help="Reintenta sólo temas con enriquecimiento fallido")
+        else:
+            topic_p.add_argument("topic_id")
+            if action == "topic-update":
+                topic_p.add_argument("--reason", required=True)
+                topic_p.add_argument("--state", default=None)
+                topic_p.add_argument("--title", default=None)
+                topic_p.add_argument("--verification", default=None)
+                topic_p.add_argument("--message-ids", nargs="*", default=[])
+                topic_p.add_argument("--merge-into", default=None)
+                topic_p.add_argument("--split-episode", default=None)
     search_p = memory_sub.add_parser("search", help="Busca recuerdos de cualquier sesión del proyecto")
     search_p.add_argument("query")
     search_p.add_argument("--agent", default=None, help="Identidad solicitante; necesaria para memoria private")
@@ -361,6 +422,8 @@ def main():
     brain_p = memory_sub.add_parser("brain-init", help="Crea un cerebro (espacio de memoria de agentes)")
     brain_p.add_argument("--brain-path", required=True, help="Carpeta del cerebro (se crea si no existe)")
     brain_p.add_argument("--name", required=True, help="Nombre visible en el dashboard")
+    brain_p.add_argument("--agent-id", action="append", default=[],
+                         help="Identidad propietaria del cerebro (repetible para alias explícitos)")
     brain_p.add_argument("--agents-dir", default=None,
                          help="Directorio con workspaces de agentes (subcarpetas con IDENTITY.md/SOUL.md) a descubrir en bloque")
     brain_p.add_argument("--agent-workspace", action="append", default=[],
@@ -378,6 +441,8 @@ def main():
     bootstrap_p = memory_sub.add_parser("bootstrap", help="Descubre o importa conversaciones anteriores a Graphtyn")
     bootstrap_p.add_argument("--provider", default=None, help="Proveedor/adaptador (admite nombres personalizados)")
     bootstrap_p.add_argument("--source", action="append", default=[], help="Archivo/directorio histórico (repetible)")
+    bootstrap_p.add_argument("--session", action="append", default=[],
+                             help="ID de conversación exacto (repetible; limita la importación)")
     bootstrap_p.add_argument("--apply", action="store_true", help="Importar; sin esta opción sólo previsualiza")
     bootstrap_p.add_argument("--consent", action="store_true", help="Autoriza procesar los historiales seleccionados")
     bootstrap_p.add_argument("--provider-model", choices=["deterministic", "auto", "ollama", "api"], default="deterministic")
@@ -385,6 +450,8 @@ def main():
     bootstrap_p.add_argument("--archive-all", action="store_true",
                              help="Importar toda sesión en un cerebro histórico separado")
     bootstrap_p.add_argument("--path", default=".")
+    bootstrap_p.add_argument("--agent-id", default=None,
+                             help="Identidad propietaria; evita importar sesiones de otro agente")
     projects_p = memory_sub.add_parser("projects", help="Lista identidades globales de proyectos y alias")
     projects_p.add_argument("--path", default=".")
     projects_p.add_argument("--alias", action="append", default=[],
@@ -395,8 +462,11 @@ def main():
     sync_p.add_argument("--consent", action="store_true", required=True)
     sync_p.add_argument("--provider-model", choices=["deterministic", "auto", "ollama", "api"], default="deterministic")
     sync_p.add_argument("--watch", action="store_true", help="Continuar observando cambios")
+    sync_p.add_argument("--all-spaces", action="store_true", help="Sincronizar todos los espacios registrados con fuente asociada")
     sync_p.add_argument("--interval", type=float, default=5.0)
     sync_p.add_argument("--path", default=".")
+    sync_p.add_argument("--agent-id", default=None,
+                        help="Identidad propietaria de la fuente (requerida para una raíz compartida)")
     export_p = memory_sub.add_parser("export", help="Exporta memoria saneada sin vectores")
     export_p.add_argument("--output", required=True)
     export_p.add_argument("--include-messages", action="store_true")
@@ -412,6 +482,15 @@ def main():
     sources_p.add_argument("--source", default=None,
                            help="Ruta local, ssh://, docker:// o ssh+docker://host:contenedor/ruta")
     sources_p.add_argument("--label", default="")
+    sources_p.add_argument("--workspace", default=None, help="Cerebro/proyecto al que pertenece la fuente")
+    sources_p.add_argument("--agent-id", default=None, help="Identidad estable del agente que produce la fuente")
+    agents_p = memory_sub.add_parser("agents", help="Lista o registra identidades de agentes")
+    agents_p.add_argument("action", choices=["list", "register"])
+    agents_p.add_argument("--id", dest="agent_id", default=None)
+    agents_p.add_argument("--name", default=None)
+    agents_p.add_argument("--provider", default=None)
+    agents_p.add_argument("--path", dest="agent_path", action="append", default=[])
+    agents_p.add_argument("--description", default="")
 
     install_p = subparsers.add_parser("agent-install", help="Instala instrucciones Graphtyn para asistentes")
     install_p.add_argument("platform", choices=["all", "codex", "opencode", "openclaw", "hermes", "claude", "cursor", "gemini", "antigravity", "copilot"])
@@ -464,9 +543,33 @@ def main():
             from .core.agent_installer import TARGETS
             agents = args.agent or sorted({row["provider"] for row in plan["sources"]
                                             if row["provider"] in TARGETS})
-            print(json.dumps(apply_setup(root, agents=agents, sources=plan["sources"],
-                                         create_token=not args.no_token,
-                                         tool_profile=args.tool_profile), ensure_ascii=False, indent=2))
+            memory_choice = args.memory
+            if memory_choice == "ask" and sys.stdin.isatty():
+                answer = input("¿Activar memoria conversacional para este proyecto? [s/N]: ").strip().casefold()
+                memory_choice = "on" if answer in {"s", "si", "sí", "y", "yes"} else "off"
+            configured = apply_setup(root, agents=agents, sources=plan["sources"],
+                                     create_token=not args.no_token, tool_profile=args.tool_profile)
+            configured["memory"] = {"enabled": memory_choice == "on", "choice": memory_choice}
+            if memory_choice == "on":
+                from .core.history_import import discover_histories, import_histories
+                discovered_rows = []
+                discovery_errors = []
+                for provider in sorted({row["provider"] for row in plan["sources"]}):
+                    found = discover_histories(provider,
+                        [row["source"] for row in plan["sources"] if row["provider"] == provider])
+                    discovered_rows.extend(found["sessions"]); discovery_errors.extend(found["errors"])
+                discovered = {"sessions": discovered_rows, "errors": discovery_errors,
+                              "count": len(discovered_rows)}
+                imported = import_histories(root, discovered["sessions"], consent=True,
+                                            provider="deterministic")
+                configured["memory"].update({"discovered": discovered["count"],
+                                               "imported": len(imported.get("imported", [])),
+                                               "reused": len(imported.get("reused", [])),
+                                               "ambiguous": len(imported.get("ambiguous", [])),
+                                               "watch_command": (f"graphtyn memory sync --path {root} "
+                                                                 "--watch --interval 5 --consent"
+                                                                 if args.memory_watch else None)})
+            print(json.dumps(configured, ensure_ascii=False, indent=2))
         else:
             print(json.dumps({**plan, "dry_run": True, "message": "Repita con --apply"}, ensure_ascii=False, indent=2))
     elif args.command == "onboard":
@@ -806,13 +909,21 @@ def main():
                 home = Path(os.environ.get("GRAPHTYN_HOME") or Path.home() / ".graphtyn")
                 reg_file = home / "registered_projects.json"
                 projects = json.loads(reg_file.read_text(encoding="utf-8")) if reg_file.is_file() else []
-                if not any(p.get("path") == str(brain_dir) for p in projects):
+                existing = next((p for p in projects
+                                 if str(Path(str(p.get("path") or "")).expanduser().resolve()) == str(brain_dir)), None)
+                configured_agents = sorted({str(value).strip().casefold()
+                                            for value in args.agent_id if str(value).strip()})
+                if existing is None:
                     projects.append({"id": args.name, "name": args.name,
-                                     "path": str(brain_dir), "mode": "single_folder"})
-                    reg_file.parent.mkdir(parents=True, exist_ok=True)
-                    reg_file.write_text(json.dumps(projects, ensure_ascii=False, indent=2), encoding="utf-8")
+                                     "path": str(brain_dir), "mode": "single_folder",
+                                     "space_type": "agent_brain", "agent_ids": configured_agents})
+                else:
+                    existing.update({"space_type": "agent_brain", "agent_ids": configured_agents
+                                     if args.agent_id else existing.get("agent_ids", [])})
+                atomic_write_json(reg_file, projects)
                 registered_to = str(reg_file)
             result = {"ok": True, "brain": args.name, "path": str(brain_dir),
+                      "agent_ids": [str(value).strip().casefold() for value in args.agent_id if str(value).strip()],
                       "agents": [{"agent_id": d["agent_id"], "name": d["name"]} for d in discovered],
                       "errors": errors, "registered_to": registered_to}
             print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -867,14 +978,22 @@ def main():
             print(json.dumps({"ok": True, "home": str(home), "stores": found,
                               "removed_test_stores": removed}, ensure_ascii=False, indent=2))
         elif args.memory_action == "bootstrap":
-            discovered = discover_histories(args.provider, args.source or None)
+            discovered = discover_histories(args.provider, args.source or None,
+                                            project_path=None if args.source else Path(args.path),
+                                            agent_id=args.agent_id)
+            if args.session:
+                wanted = {str(value).strip() for value in args.session}
+                discovered["sessions"] = [row for row in discovered["sessions"]
+                                           if any(value in str(row.get("external_session_id") or "")
+                                                  or value in str(row.get("source") or "") for value in wanted)]
+                discovered["count"] = len(discovered["sessions"])
+                for selected in discovered["sessions"]: selected["explicit_project_selection"] = True
             if args.apply:
                 importer = import_history_archive if args.archive_all else import_histories
                 result = importer(Path(args.path), discovered["sessions"], consent=args.consent,
                                   provider=args.provider_model)
                 result["discovery"] = {"count": discovered["count"], "errors": discovered["errors"]}
             else:
-                ProjectIdentityRegistry().register(Path(args.path))
                 result = {**discovered, "dry_run": True,
                           "message": "Revise el plan y repita con --apply --consent"}
             if args.output:
@@ -888,11 +1007,16 @@ def main():
                               "projects": ProjectIdentityRegistry().list()}, ensure_ascii=False, indent=2))
         elif args.memory_action == "sync":
             def sync_once():
-                discovered = discover_histories(args.provider, args.source or None)
-                result = import_histories(Path(args.path), discovered["sessions"], consent=args.consent,
-                                          provider=args.provider_model)
-                result["discovered"] = discovered["count"]
-                return result
+                if args.all_spaces:
+                    registry = ProjectIdentityRegistry()
+                    paths = [Path(item).expanduser().resolve() for project in registry.list()
+                             for item in project.get("paths", [])]
+                    return {"ok": True, "spaces": [sync_memory_workspace(path, provider=args.provider,
+                        source=args.source or None, provider_model=args.provider_model,
+                        agent_id=args.agent_id) for path in dict.fromkeys(paths)]}
+                return sync_memory_workspace(Path(args.path), provider=args.provider,
+                    source=args.source or None, provider_model=args.provider_model,
+                    agent_id=args.agent_id)
             if not args.watch:
                 print(json.dumps(sync_once(), ensure_ascii=False, indent=2))
             else:
@@ -906,7 +1030,8 @@ def main():
             if args.action == "add":
                 if not args.provider or not args.source:
                     raise SystemExit("sources add requiere --provider y --source")
-                saved = save_source(args.provider, args.source, label=args.label)
+                saved = save_source(args.provider, args.source, label=args.label, project_path=args.workspace,
+                                    agent_id=args.agent_id)
                 print(json.dumps({"ok": True, "saved": saved}, ensure_ascii=False, indent=2))
             elif args.action == "remove":
                 if not args.provider or not args.source: raise SystemExit("sources remove requiere --provider y --source")
@@ -916,6 +1041,32 @@ def main():
                 print(json.dumps(test_source(args.provider, args.source), ensure_ascii=False, indent=2))
             else:
                 print(json.dumps({"ok": True, "sources": configured_sources()}, ensure_ascii=False, indent=2))
+        elif args.memory_action == "agents":
+            registry = data_home() / "registered_agents.json"
+            try:
+                payload = json.loads(registry.read_text(encoding="utf-8"))
+                rows = payload.get("agents", []) if isinstance(payload, dict) else payload
+            except (OSError, ValueError, TypeError):
+                rows = []
+            if args.action == "list":
+                print(json.dumps({"ok": True, "agents": rows}, ensure_ascii=False, indent=2))
+            else:
+                aid = str(args.agent_id or "").strip().casefold()
+                if not aid:
+                    raise SystemExit("agents register requiere --id")
+                if not all(ch.isalnum() or ch in "._:/-" for ch in aid) or not aid[0].isalnum():
+                    raise SystemExit("id de agente inválido")
+                entry = {"id": aid, "name": args.name or aid, "provider": args.provider or "",
+                         "description": args.description[:500],
+                         "paths": [str(Path(value).expanduser().resolve()) for value in args.agent_path if str(value).strip()]}
+                existing = next((row for row in rows if str(row.get("id") or "").casefold() == aid), None)
+                if existing is None: rows.append(entry)
+                else: existing.update(entry)
+                registry.parent.mkdir(parents=True, exist_ok=True)
+                registry.write_text(json.dumps({"version": 1, "agents": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
+                try: registry.chmod(0o600)
+                except OSError: pass
+                print(json.dumps({"ok": True, "agent": entry}, ensure_ascii=False, indent=2))
         elif args.memory_action == "save":
             output = save_result(root, args.question, args.answer, args.nodes, args.outcome, args.files, args.correction)
             print(json.dumps({"ok": True, "saved": str(output)}, ensure_ascii=False))
@@ -943,6 +1094,38 @@ def main():
             elif args.memory_action == "search":
                 result = {"query": args.query, "results": memory.search(
                     args.query, requester_agent=args.agent, limit=args.limit, branch=args.branch)}
+            elif args.memory_action == "stream":
+                from .core.history_stream import ingest_jsonl, watch_jsonl
+                stream_operation = watch_jsonl if args.watch else ingest_jsonl
+                result = stream_operation(memory, args.source, provider=args.provider, agent_id=args.agent,
+                    external_session_id=args.external_session, consent=args.consent,
+                    explicit_project_selection=args.select_project)
+            elif args.memory_action == "entities":
+                result = memory.entities(args.query, requester_agent=args.agent, kind=args.kind,
+                    limit=args.limit, offset=args.offset)
+            elif args.memory_action == "entity":
+                result = memory.entity(args.entity_id, requester_agent=args.agent, limit=args.limit)
+            elif args.memory_action == "topics":
+                result = memory.topics(args.query, requester_agent=args.agent, state=args.state,
+                    session_id=args.session, limit=args.limit, offset=args.offset)
+            elif args.memory_action == "topic":
+                result = memory.topic(args.topic_id, requester_agent=args.agent)
+            elif args.memory_action == "window":
+                result = memory.message_window(args.message_id, requester_agent=args.agent,
+                    before=args.before, after=args.after, token_budget=args.token_budget)
+            elif args.memory_action == "node":
+                result = memory.resolve_node_reference(args.reference, requester_agent=args.agent, limit=args.limit)
+            elif args.memory_action == "relation-candidates":
+                result = memory.relation_candidates(requester_agent=args.agent, status=args.status, limit=args.limit)
+            elif args.memory_action == "relation-review":
+                result = memory.relation_review(args.relation_id, status=args.status, actor=args.agent, reason=args.reason)
+            elif args.memory_action == "topics-enrich":
+                result = memory.enrich_topics(args.session, provider=args.provider, force=args.force,
+                                              retry_failed=args.retry_failed)
+            elif args.memory_action == "topic-update":
+                result = memory.topic_update(args.topic_id, requester_agent=args.agent, reason=args.reason,
+                    state=args.state, title=args.title, verification=args.verification,
+                    message_ids=args.message_ids, merge_into=args.merge_into, split_episode=args.split_episode)
             elif args.memory_action == "context":
                 result = memory.context(args.query, requester_agent=args.agent, limit=args.limit,
                                         token_budget=args.token_budget, branch=args.branch,

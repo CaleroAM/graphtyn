@@ -5,6 +5,7 @@
 - [Guía de contribución](CONTRIBUTING.md)
 - [Checklist de release](release-checklist.md)
 - [Validación local de 0.6.1](release-validation-0.6.1.md)
+- [Validación candidata de 0.8.0](release-validation-0.8.0.md)
 - [Validación local de 0.6.0](release-validation-0.6.0.md)
 
 Los documentos se organizan por propósito para no mezclar uso, diseño, resultados

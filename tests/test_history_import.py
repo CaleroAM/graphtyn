@@ -13,6 +13,7 @@ from graphtyn.core.history_import import (
 from graphtyn.core.memory_jobs import MemoryJobManager
 from graphtyn.core.shared_memory import SharedMemoryStore
 from graphtyn.api import main as api_main
+from graphtyn.mcp_server import _validate_memory_owner
 
 
 def _openclaw_history(root: Path) -> Path:
@@ -80,6 +81,37 @@ def test_history_sources_are_deployment_configuration(tmp_path):
     if os.name != "nt": assert config.stat().st_mode & 0o777 == 0o600
 
 
+def test_history_source_is_scoped_to_one_memory_space(tmp_path, monkeypatch):
+    config = tmp_path / "history-sources.json"
+    source = tmp_path / "openclaw"
+    path = _openclaw_history(source)
+    first = tmp_path / "brain-one"; second = tmp_path / "brain-two"
+    first.mkdir(); second.mkdir()
+    save_source("openclaw", str(source), project_path=first, path=config)
+    save_source("openclaw", str(tmp_path / "unrelated"), project_path=second, path=config)
+    monkeypatch.setattr("graphtyn.core.history_import.sources_config_file", lambda: config)
+
+    selected = discover_histories("openclaw", project_path=first)
+
+    assert selected["count"] == 1
+    assert selected["sessions"][0]["source"].endswith(str(path.relative_to(source)))
+    assert selected["sessions"][0]["explicit_project_selection"] is True
+
+
+def test_history_source_owner_filters_a_shared_agent_directory(tmp_path):
+    source = tmp_path / "openclaw"
+    path = _openclaw_history(source)
+
+    excluded = discover_histories("openclaw", [str(source)], agent_id="openclaw/career")
+    selected = discover_histories("openclaw", [str(source)], agent_id="openclaw/agent-beta")
+
+    assert excluded["count"] == 0
+    assert excluded["excluded_count"] == 1
+    assert excluded["excluded"][0]["expected_agent_id"] == "openclaw/career"
+    assert selected["count"] == 1
+    assert selected["sessions"][0]["agent_id"] == "openclaw/agent-beta"
+
+
 def test_docker_history_source_uses_read_only_archive(tmp_path, monkeypatch):
     calls = []
     class Result:
@@ -139,6 +171,57 @@ def test_codex_nested_payload_and_sqlite_histories(tmp_path):
     assert hermes_sessions[0].workspace == "/work/erp"
 
 
+def test_openclaw_sqlite_transcript_events_are_imported_with_roles(tmp_path):
+    db = tmp_path / "agents" / "career" / "agent" / "openclaw-agent.sqlite"
+    db.parent.mkdir(parents=True)
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE session_windows(session_id TEXT PRIMARY KEY, session_key TEXT, display_name TEXT, agent_harness_id TEXT, started_at INTEGER)")
+    conn.execute("CREATE TABLE transcript_events(session_id TEXT, seq INTEGER, event_json TEXT, created_at INTEGER, PRIMARY KEY(session_id,seq))")
+    conn.execute("INSERT INTO session_windows VALUES(?,?,?,?,?)", ("new-session", "main", "Asesorías", "career", 1789000000000))
+    conn.executemany("INSERT INTO transcript_events VALUES(?,?,?,?)", [
+        ("new-session", 1, json.dumps({"type": "message", "id": "u1", "message": {"role": "user", "content": "Diseña la aplicación"}}), 1789000000000),
+        ("new-session", 2, json.dumps({"type": "message", "id": "a1", "message": {"role": "assistant", "content": [{"type": "text", "text": "Primero definiremos el alcance."}]}}), 1789000001000),
+    ])
+    conn.commit(); conn.close()
+
+    sessions = parse_history_database(db, "openclaw")
+
+    assert len(sessions) == 1
+    assert sessions[0].agent_id == "openclaw/career"
+    assert sessions[0].external_session_id == "new-session"
+    assert [(item["role"], item["content"]) for item in sessions[0].messages] == [
+        ("user", "Diseña la aplicación"), ("assistant", "Primero definiremos el alcance.")]
+    assert sessions[0].messages[0]["metadata"]["source_message_id"] == "u1"
+
+
+def test_antigravity_transcript_schema_and_brain_id(tmp_path):
+    brain = tmp_path / "brain" / "8d7d6b91-6165-4f42-a275-7a79623c9ce9" / ".system_generated" / "logs"
+    brain.mkdir(parents=True)
+    path = brain / "transcript.jsonl"
+    path.write_text("\n".join(json.dumps(item) for item in [
+        {"source": "USER_EXPLICIT", "type": "USER_INPUT", "content": "Analiza el proyecto"},
+        {"source": "SYSTEM", "type": "CHECKPOINT", "content": "ruido"},
+        {"source": "MODEL", "type": "GENERIC", "content": "Resultado verificado"},
+        {"source": "MODEL", "type": "GENERIC", "content": "Resultado verificado"},
+    ]) + "\n", encoding="utf-8")
+    sessions = parse_history_file(path, "antigravity")
+    assert len(sessions) == 1
+    assert sessions[0].external_session_id == "8d7d6b91-6165-4f42-a275-7a79623c9ce9"
+    assert sessions[0].agent_id == "antigravity/agy"
+    assert sessions[0].agent_id != sessions[0].external_session_id
+    assert [m["role"] for m in sessions[0].messages] == ["user"]
+
+
+def test_jsonl_parser_skips_oversized_record_without_oom(tmp_path):
+    path = tmp_path / "large.jsonl"
+    path.write_text(json.dumps({"role": "user", "content": "ok"}) + "\n" +
+                    "{" + "x" * (8 * 1024 * 1024 + 100) + "}\n" +
+                    json.dumps({"role": "assistant", "content": "respuesta"}) + "\n", encoding="utf-8")
+    sessions = parse_history_file(path, "codex")
+    assert len(sessions) == 1
+    assert [m["content"] for m in sessions[0].messages] == ["ok", "respuesta"]
+
+
 def test_historical_import_is_idempotent_and_searchable(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
     project = tmp_path / "UnityCommerceDemo"
@@ -178,6 +261,37 @@ def test_import_does_not_mix_unknown_project_workspace(tmp_path, monkeypatch):
 
     assert result["selected"] == 0
     assert result["ambiguous"][0]["suggested_project"] == "UnityCommerceDemo"
+
+
+def test_historical_import_enforces_configured_agent_owner(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    brain = tmp_path / "cerebro-evi"; brain.mkdir()
+    sessions = [
+        {"provider": "openclaw", "agent_id": "openclaw/main", "external_session_id": "main-1",
+         "task": "Main", "source": "main.jsonl", "workspace": None, "explicit_project_selection": True,
+         "messages": [{"role": "user", "content": "Actualizar coordinador"}]},
+        {"provider": "openclaw", "agent_id": "openclaw/career", "external_session_id": "career-1",
+         "task": "Career", "source": "career.jsonl", "workspace": None, "explicit_project_selection": True,
+         "messages": [{"role": "user", "content": "Preparar CV"}]},
+    ]
+
+    result = import_histories(brain, sessions, consent=True, agent_ids=["openclaw/main"])
+    visible = SharedMemoryStore(brain).list_sessions_page(agent_ids=["openclaw/main"])
+
+    assert result["selected"] == 1 and len(result["imported"]) == 1
+    assert result["excluded"][0]["agent_id"] == "openclaw/career"
+    assert [row["agent_id"] for row in visible["sessions"]] == ["openclaw/main"]
+
+
+def test_mcp_memory_write_rejects_foreign_agent(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    brain = tmp_path / "cerebro-evi"; brain.mkdir()
+    save_source("openclaw", str(tmp_path / "agents" / "main"), project_path=brain,
+                agent_id="openclaw/main")
+
+    _validate_memory_owner(brain, "openclaw/main")
+    with pytest.raises(PermissionError, match="no está autorizado"):
+        _validate_memory_owner(brain, "openclaw/career")
 
 
 def test_explicit_archive_import_keeps_all_projects_separate(tmp_path, monkeypatch):

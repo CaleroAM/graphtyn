@@ -57,6 +57,10 @@ Graphtyn es un motor de contexto determinista basado en AST y topología de agen
 * **Ancho Fijo:** `260px` (plegable a `64px` en pantallas compactas).
 * **Fondo:** `rgba(15, 23, 42, 0.95)` con filtro `backdrop-filter: blur(16px)` y borde derecho `1px solid rgba(148, 163, 184, 0.12)`.
 * **Elementos:**
+  * **Catálogo de espacios:** dos secciones visibles, `PROYECTOS REGISTRADOS` y
+    `CEREBROS REGISTRADOS`. Los agentes son participantes de un cerebro y se
+    consultan en `Topología de agentes`, no una lista que reemplace a los
+    cerebros.
   * **Cabecera de Lista:** Título "Proyectos Indexados" con contador badge (ej. `4 Activos`).
   * **Lista de Proyectos (`ProjectListItem`):**
     * Muestra nombre del proyecto, indicador de estado (`🟢 Indexado`, `🟡 Indexando...`, `🔴 Error AST`).
@@ -74,7 +78,8 @@ Graphtyn es un motor de contexto determinista basado en AST y topología de agen
      indexado; no representa conversaciones.
   3. **`Memoria del proyecto`:** sesiones, agentes, decisiones, resultados y
      vínculos con código. Se carga automáticamente al seleccionar el proyecto.
-  4. **`Harness Topology`:** arquitectura del arnés multiagente.
+  4. **`Topología de agentes`:** identidades, fuentes, espacios y delegaciones
+     observadas o configuradas, siempre con procedencia.
   5. **`Cambios`:** impacto Git y estado del trabajo.
 * **Estilo de Pestaña Activa:** Borde inferior brillante `#00f0ff` (Cyan) o `#8b5cf6` (Violeta), fondo semitransparente `rgba(56, 189, 248, 0.12)` e icono resaltado.
 

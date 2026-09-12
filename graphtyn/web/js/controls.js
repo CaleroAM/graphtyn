@@ -1,9 +1,11 @@
-import { state, PALETTES } from './state.js';
+import { state, PALETTES, getMemoryColors, getMemoryColor, getMemoryPalette, particleProfile,
+         applyMemoryPalette, markMemoryColorsCustom, updateMemoryColor,
+         resetMemoryColor, resetMemoryColors, saveMemoryColors, saveVisualPreferences } from './state.js';
 import { destroyGraph, loadGraph, refreshStyleInPlace, toggleRotate } from './graph.js';
 
 export function setView(v) {
       state.activeView = v;
-      const labels = { code: 'Code AST', semantic: 'Semántico', memory: 'Memoria', agents: 'Harness', changes: 'Cambios' };
+      const labels = { code: 'Code AST', semantic: 'Semántico', memory: state.activeSpaceType === 'agent_brain' || state.activeSpaceType === 'agent' ? 'Memoria del cerebro' : 'Memoria del proyecto', agents: 'Topología', changes: 'Cambios' };
       const activeLabel = document.getElementById('active-view-label');
       if (activeLabel) activeLabel.textContent = labels[v] || v;
       const bCode = document.getElementById('btn-code');
@@ -16,6 +18,9 @@ export function setView(v) {
       if (bMem) bMem.classList.toggle('active', v === 'memory');
       if (bAg) bAg.classList.toggle('active', v === 'agents');
       if (bCh) bCh.classList.toggle('active', v === 'changes');
+      const memoryGraphControl = document.getElementById('memory-graph-view-control');
+      if (memoryGraphControl) memoryGraphControl.hidden = v !== 'memory';
+      refreshMemoryColorControls();
       const explore = document.getElementById('dd-explore');
       if (explore) {
         explore.classList.remove('open');
@@ -25,6 +30,17 @@ export function setView(v) {
       destroyGraph();
       loadGraph();
     }
+
+export function setMemoryGraphMode(mode) {
+      if (!['simplified', 'detailed'].includes(mode)) return;
+      state.memoryGraphMode = mode;
+      const selector = document.getElementById('memory-graph-mode');
+      if (selector && selector.value !== mode) selector.value = mode;
+      if (state.activeView === 'memory') {
+        destroyGraph();
+        loadGraph();
+      }
+}
 
 export function setDim(d) {
       if (state.activeDim === d) return;
@@ -42,9 +58,101 @@ export function setDim(d) {
 
 export function changePalette() {
       state.activePalette = document.getElementById('palette-sel').value;
-      state.nodeColorHex = null;
+      if (state.activePalette !== 'custom') state.nodeColorHex = null;
       refreshStyleInPlace();
-    }
+}
+
+export function refreshMemoryColorControls() {
+      const panel = document.getElementById('memory-color-controls');
+      if (!panel) return;
+      const visible = state.activeView === 'memory';
+      panel.hidden = !visible;
+      const general = document.getElementById('general-style-colors');
+      if (general) general.hidden = visible;
+      const radiance = document.getElementById('chk-radiance');
+      if (radiance) radiance.checked = state.radianceOn;
+      const blink = document.getElementById('chk-blink');
+      if (blink) blink.checked = state.vertexBlinkOn;
+      if (!visible) return;
+      const select = document.getElementById('memory-color-kind');
+      const kind = select?.value || 'memory_topic';
+      const colors = getMemoryColors()[kind];
+      if (!colors) return;
+      const palette = document.getElementById('memory-palette-sel');
+      if (palette) palette.value = getMemoryPalette();
+      const node = document.getElementById('memory-node-color');
+      const halo = document.getElementById('memory-halo-color');
+      const linked = document.getElementById('memory-halo-linked');
+      if (node) node.value = colors.node;
+      if (halo) { halo.value = colors.halo; halo.disabled = colors.linkedHalo; }
+      if (linked) linked.checked = colors.linkedHalo;
+}
+
+export function selectMemoryColorKind() {
+      refreshMemoryColorControls();
+}
+
+export function selectMemoryPalette() {
+      if (state.activeView !== 'memory') return;
+      const palette = document.getElementById('memory-palette-sel')?.value || 'custom';
+      applyMemoryPalette(palette);
+      refreshMemoryColorControls();
+      refreshMemoryLegendColors();
+      refreshStyleInPlace();
+}
+
+function refreshMemoryLegendColors() {
+      document.querySelectorAll('[data-memory-legend-kind]').forEach(el => {
+        el.style.background = getMemoryColor(el.dataset.memoryLegendKind, 'node');
+      });
+      document.querySelectorAll('[data-memory-legend-halo]').forEach(el => {
+        el.style.background = getMemoryColor(el.dataset.memoryLegendHalo, 'halo');
+      });
+}
+
+export function changeMemoryColor(part) {
+      if (state.activeView !== 'memory') return;
+      const kind = document.getElementById('memory-color-kind')?.value || 'memory_topic';
+      const input = document.getElementById(part === 'halo' ? 'memory-halo-color' : 'memory-node-color');
+      if (!input) return;
+      updateMemoryColor(kind, part, input.value);
+      refreshMemoryColorControls();
+      refreshMemoryLegendColors();
+      refreshStyleInPlace();
+}
+
+export function toggleMemoryHaloLink(linked) {
+      if (state.activeView !== 'memory') return;
+      const kind = document.getElementById('memory-color-kind')?.value || 'memory_topic';
+      const colors = getMemoryColors()[kind];
+      if (!colors) return;
+      colors.linkedHalo = Boolean(linked);
+      if (colors.linkedHalo) colors.halo = colors.node;
+      markMemoryColorsCustom();
+      saveMemoryColors();
+      refreshMemoryColorControls();
+      refreshMemoryLegendColors();
+      refreshStyleInPlace();
+}
+
+export function resetMemoryColorType() {
+      if (state.activeView !== 'memory') return;
+      resetMemoryColor(document.getElementById('memory-color-kind')?.value || 'memory_topic');
+      refreshMemoryColorControls(); refreshMemoryLegendColors(); refreshStyleInPlace();
+}
+
+export function resetMemoryColorSettings() {
+      if (state.activeView !== 'memory') return;
+      resetMemoryColors();
+      refreshMemoryColorControls(); refreshMemoryLegendColors(); refreshStyleInPlace();
+}
+
+export function toggleRadiance(on) {
+      state.radianceOn = Boolean(on);
+      saveVisualPreferences();
+      refreshMemoryColorControls();
+      refreshStyleInPlace();
+}
 
 export function updateLinkStyles() {
       const p = PALETTES[state.activePalette] || PALETTES.obsidian;
@@ -58,9 +166,11 @@ export function updateLinkStyles() {
 
       if (state.graphInst) {
         state.graphInst
-          .linkDirectionalParticles(state.showParticles ? 2 : 0)
+          .linkDirectionalParticles(l => (state.showParticles ? particleProfile(l, state.graphStyle === 'holo' ? 0.02 : 0.012).count : 0))
           .linkDirectionalArrowLength(state.showArrows ? 5 : 0)
           .linkCurvature(state.linkStyle === 'curved' ? 0.2 : 0.0)
+          .linkDirectionalParticleSpeed(l => particleProfile(l, state.graphStyle === 'holo' ? 0.02 : 0.012).speed)
+          .linkDirectionalParticleOffset(l => particleProfile(l, state.graphStyle === 'holo' ? 0.02 : 0.012).offset)
           .linkLineDash(l => ((state.linkStyle === 'dashed' || l.confidence === 'INFERRED') ? [4, 4] : null));
       }
     }

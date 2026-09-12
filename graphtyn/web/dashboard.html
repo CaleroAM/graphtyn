@@ -13,7 +13,7 @@
 <body>
 
   <!-- ===== SIDEBAR TOGGLE BUTTONS ===== -->
-  <button class="sidebar-toggle left-toggle" id="btn-toggle-left" onclick="toggleLeftSidebar()" title="Ocultar/Mostrar Proyectos">◀</button>
+  <button class="sidebar-toggle left-toggle" id="btn-toggle-left" onclick="toggleLeftSidebar()" title="Ocultar/Mostrar proyectos y cerebros">◀</button>
   <button class="sidebar-toggle right-toggle" id="btn-toggle-right" onclick="toggleRightSidebar()" title="Ocultar/Mostrar Comunidades">▶</button>
 
   <!-- ===== LEFT SIDEBAR ===== -->
@@ -23,7 +23,14 @@
       Graphtyn
     </div>
     <div class="section-label">PROYECTOS REGISTRADOS</div>
-    <div class="project-list" id="project-list">
+    <div class="project-list project-registry-list" id="project-list">
+      <div style="color:#475569;font-size:11px;">Cargando...</div>
+    </div>
+    <div class="registry-heading brain-section-label">
+      <div class="section-label">CEREBROS REGISTRADOS</div>
+      <button class="registry-add" type="button" onclick="openBrainRegister()" title="Registrar cerebro">+</button>
+    </div>
+    <div class="project-list brain-registry-list" id="brain-list">
       <div style="color:#475569;font-size:11px;">Cargando...</div>
     </div>
   </aside>
@@ -59,7 +66,7 @@
           <button class="menu-item" id="btn-semantic" onclick="setView('semantic')"><span class="menu-icon">◎</span><span><strong>Semántico del código</strong><small>Similitud y comunidades</small></span></button>
           <button class="menu-item" id="btn-memory-view" onclick="setView('memory')"><span class="menu-icon">◈</span><span><strong>Memoria del proyecto</strong><small>Decisiones y conversaciones por agente</small></span></button>
           <div class="menu-heading">Operación</div>
-          <button class="menu-item" id="btn-agents" onclick="setView('agents')"><span class="menu-icon">⌁</span><span><strong>Harness Topology</strong><small>Integraciones y agentes conectados</small></span></button>
+          <button class="menu-item" id="btn-agents" onclick="setView('agents')"><span class="menu-icon">⌁</span><span><strong>Topología de agentes</strong><small>Identidades, fuentes y espacios observados</small></span></button>
           <button class="menu-item" id="btn-changes" onclick="setView('changes')"><span class="menu-icon">Δ</span><span><strong>Cambios</strong><small>Impacto respecto a Git</small></span></button>
         </div>
       </div>
@@ -89,6 +96,14 @@
           <button class="menu-item compact" id="btn-rotate" style="display:none;" onclick="toggleRotate()"><span>⟳</span><strong>Rotar automáticamente</strong></button>
           <p class="settings-help">Los controles visuales no cambian el índice ni la memoria.</p>
         </div>
+      </div>
+
+      <div id="memory-graph-view-control" class="memory-graph-view-control" hidden>
+        <label for="memory-graph-mode">Memoria:</label>
+        <select id="memory-graph-mode" onchange="setMemoryGraphMode(this.value)" aria-label="Vista de memoria del proyecto">
+          <option value="simplified">Simplificada</option>
+          <option value="detailed">Detallada</option>
+        </select>
       </div>
 
       <!-- Node Filters dropdown -->
@@ -168,6 +183,7 @@
               <option value="mono">Monochrome Slate</option>
               <option value="matrix">Emerald Matrix</option>
               <option value="community">Por Comunidad (Carpetas)</option>
+              <option value="custom">Personalizada</option>
             </select>
             <label class="section-label">Estilo de Enlaces</label>
             <select id="link-style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="updateLinkStyles()">
@@ -188,32 +204,69 @@
               <select id="style-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changeGraphStyle()">
                 <option value="standard" selected>Estándar</option>
                 <option value="neural">Neuronal (tejido orgánico)</option>
+                <option value="holo">Holográfico (halo proyectado)</option>
               </select>
               <label class="section-label" style="margin-top:8px;">Forma de Nodos</label>
               <select id="shape-sel" style="background:#1a2234;border:1px solid #2d3748;color:#f8fafc;padding:5px 8px;border-radius:5px;font-size:11px;width:100%;" onchange="changeNodeShape()">
                 <option value="circles" selected>Círculos · Esferas</option>
                 <option value="squares">Cuadrados · Cubos</option>
               </select>
-              <label class="section-label" style="margin-top:8px;">Colores (Estilo Neuronal)</label>
+              <div id="general-style-colors">
+                <label class="section-label" style="margin-top:8px;">Colores (Estilo Neuronal)</label>
+                <div class="filter-row">
+                  <span>Color de Nodos</span>
+                  <input type="color" id="node-color" value="#ff9ed2" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeNodeColor()" title="Si eliges un color aquí, deja de usar la paleta">
+                </div>
+                <div class="filter-row">
+                  <span>Color de Ráfaga</span>
+                  <input type="color" id="pulse-color" value="#ff5aaf" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
+                </div>
+                <div class="filter-row">
+                  <span>Color de Vértices</span>
+                  <input type="color" id="link-color" value="#8c96eb" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
+                </div>
+              </div>
+              <label class="section-label" style="margin-top:8px;">Iluminación</label>
               <div class="filter-row">
-                <span>Color de Nodos</span>
-                <input type="color" id="node-color" value="#ff9ed2" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeNodeColor()" title="Si eliges un color aquí, deja de usar la paleta">
+                <span title="Activa o elimina los halos y la irradiación alrededor de nodos y enlaces">Halos / irradiación</span>
+                <label class="chk-wrap"><input type="checkbox" id="chk-radiance" checked onchange="toggleRadiance(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
               </div>
               <div class="filter-row">
-                <span>Color de Ráfaga</span>
-                <input type="color" id="pulse-color" value="#ff5aaf" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
-              </div>
-              <div class="filter-row">
-                <span>Color de Vértices</span>
-                <input type="color" id="link-color" value="#8c96eb" style="background:#1a2234;border:1px solid #2d3748;border-radius:4px;width:34px;height:20px;padding:0;cursor:pointer;" onchange="changeStyleColors()">
-              </div>
-              <div class="filter-row">
-                <span title="Activa/desactiva la animación de parpadeo de los enlaces en el estilo Neuronal (2D y 3D)">Parpadeo de Vértices</span>
+                <span title="Activa/desactiva la animación de parpadeo de enlaces y nodos en 2D y 3D">Parpadeo de Vértices</span>
                 <label class="chk-wrap"><input type="checkbox" id="chk-blink" checked onchange="toggleVertexBlink(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
               </div>
               <div class="filter-row">
-                <span title="En 3D, dibuja el estilo Neuronal orgánico (halos, enlaces curvos, botones y cometas) proyectado sobre el grafo, como en 2D">Dibujo orgánico 2D en 3D</span>
+                <span title="En 3D, proyecta el dibujo neuronal orgánico con halos, enlaces curvos, botones y cometas">Dibujo orgánico</span>
                 <label class="chk-wrap"><input type="checkbox" id="chk-organic3d" checked onchange="toggleOrganic3d(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+              </div>
+              <div id="memory-color-controls" class="memory-color-controls" hidden>
+                <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
+                <label class="section-label">Colores de memoria del proyecto</label>
+                <p class="settings-help">Personaliza el núcleo y la burbuja de cada tipo. Sólo afecta a «Memoria del proyecto».</p>
+                <label class="section-label" style="margin-top:5px;">Paleta de memoria</label>
+                <select id="memory-palette-sel" class="control-select" onchange="selectMemoryPalette()" aria-label="Paleta de colores de memoria">
+                  <option value="obsidian">Obsidian Dark</option>
+                  <option value="cyberpunk">Neon Cyberpunk</option>
+                  <option value="dracula">Dracula Synthwave</option>
+                  <option value="solarized">Solarized Dark</option>
+                  <option value="nordic">Nordic Aurora</option>
+                  <option value="vaporwave">Vaporwave Sunset</option>
+                  <option value="mono">Monochrome Slate</option>
+                  <option value="matrix">Emerald Matrix</option>
+                  <option value="community">Por Comunidad (Carpetas)</option>
+                  <option value="custom">Personalizada</option>
+                </select>
+                <select id="memory-color-kind" class="control-select" onchange="selectMemoryColorKind()" aria-label="Tipo de nodo de memoria">
+                  <option value="memory_topic">Tema</option>
+                  <option value="memory_session">Sesión</option>
+                  <option value="memory_agent">Agente</option>
+                  <option value="memory_episode">Episodio</option>
+                  <option value="memory_entity">Entidad</option>
+                </select>
+                <div class="filter-row"><span>Color del nodo</span><input type="color" id="memory-node-color" onchange="changeMemoryColor('node')" aria-label="Color del nodo de memoria"></div>
+                <div class="filter-row"><span>Color de burbuja / halo</span><input type="color" id="memory-halo-color" onchange="changeMemoryColor('halo')" aria-label="Color del halo de memoria"></div>
+                <div class="filter-row"><span>Burbuja sigue al nodo</span><label class="chk-wrap"><input type="checkbox" id="memory-halo-linked" checked onchange="toggleMemoryHaloLink(this.checked)"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label></div>
+                <div class="memory-color-actions"><button class="btn-link" onclick="resetMemoryColorType()">Restablecer tipo</button><button class="btn-link" onclick="resetMemoryColorSettings()">Restablecer colores de memoria</button></div>
               </div>
               <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
               <label class="section-label">Físicas del Grafo</label>
@@ -328,6 +381,10 @@
         <label><input id="memory-include-stale" type="checkbox"> Incluir obsoletos</label>
         <label><input id="memory-search-all" type="checkbox" title="Consulta también los demás espacios registrados (búsqueda federada)"> Todos los espacios</label>
         <button class="btn-link" onclick="loadMemoryOverview()">Actualizar estado</button>
+        <button class="btn-action btn-primary" id="memory-sync-btn" onclick="syncMemorySpace()">Actualizar memoria</button>
+        <button class="btn-action" id="memory-sync-all-btn" onclick="syncAllMemorySpaces()">Actualizar todos los espacios</button>
+        <button class="btn-action" id="memory-enrich-retry-btn" onclick="retryMemoryEnrichment()">Reintentar IA</button>
+        <button class="btn-action" id="memory-watch-btn" onclick="toggleMemoryWatch()">Activar captura continua</button>
         <button class="btn-action" id="memory-graph-btn" onclick="showSharedMemoryGraph()">Ver mapa por agente</button>
       </div>
       <div class="memory-options">
@@ -358,7 +415,7 @@
       <div id="memory-agent-legend" class="memory-agent-legend" aria-label="Colores de agentes"></div>
       <div class="memory-layout">
         <section><div class="section-label">RESULTADOS ATRIBUIDOS</div><div id="memory-results" class="memory-results" aria-live="polite"></div></section>
-        <section><div class="section-label">SESIONES RECIENTES</div><div id="memory-sessions" class="memory-sessions"></div></section>
+        <section><div class="section-label" style="display:flex;justify-content:space-between;align-items:center;"><span>SESIONES DEL PROYECTO</span><span id="memory-sessions-count" style="color:#64748b;font-size:9px;"></span></div><div class="memory-session-toolbar"><input id="memory-session-query" class="text-inp" placeholder="Buscar sesión, agente o identificador" onkeydown="if(event.key==='Enter') searchMemorySessions()"><button class="btn-link" onclick="searchMemorySessions()">Buscar</button></div><div id="memory-sessions" class="memory-sessions"></div><button id="memory-sessions-more" class="btn-link" data-offset="" hidden onclick="loadMoreMemorySessions()">Cargar más sesiones</button></section>
       </div>
     </div>
   </div>
@@ -397,7 +454,7 @@
           <div class="icon">-</div><div>Carpeta Maestra</div>
         </div>
         <div class="reg-card" id="mc-agent" onclick="selMode('agent_discovered')">
-          <div class="icon">-</div><div>Por Agente</div>
+          <div class="icon">-</div><div>Cerebro de agentes</div>
         </div>
       </div>
       <div style="font-size:11px;color:#64748b;margin-bottom:5px;">Ruta del proyecto:</div>
@@ -411,6 +468,22 @@
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
         <button class="btn-action" onclick="closeRegister()">Cancelar</button>
         <button class="btn-action btn-primary" onclick="submitRegister()">Registrar e Indexar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modal-agent-reg">
+    <div class="modal-box">
+      <div class="modal-hdr">Registrar cerebro <button class="modal-close" onclick="closeAgentRegister()">✕</button></div>
+      <div class="settings-help" style="margin-bottom:10px;">Un cerebro es un espacio de memoria. Sus agentes se muestran dentro del cerebro y en la topología.</div>
+      <label class="section-label">Nombre visible</label>
+      <input class="text-inp" id="agent-reg-name" placeholder="Cerebro de Evi">
+      <label class="section-label" style="margin-top:10px;">Ruta del cerebro</label>
+      <input class="text-inp" id="agent-reg-path" placeholder="/ruta/al/cerebro">
+      <div id="agent-reg-status" class="settings-help" style="margin-top:8px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+        <button class="btn-action" onclick="closeAgentRegister()">Cancelar</button>
+        <button class="btn-action btn-primary" onclick="submitBrainRegister()">Guardar cerebro</button>
       </div>
     </div>
   </div>

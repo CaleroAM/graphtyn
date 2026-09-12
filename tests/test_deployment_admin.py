@@ -137,6 +137,21 @@ def test_backup_verify_preview_restore_roundtrip(tmp_path, monkeypatch):
     assert restored["ok"] and SharedMemoryStore(target).status()["memories"] == 1
 
 
+def test_restore_refuses_an_active_store_and_preserves_it(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"; project.mkdir()
+    store = SharedMemoryStore(project)
+    session = store.start_session("agent", "active restore check")
+    original = store.checkpoint(session["id"], "fact", "Keep", "Do not overwrite an active store")
+    archive = tmp_path / "memory.zip"
+    backup_memory(project, archive)
+
+    with store._connect() as conn:
+        with pytest.raises(RuntimeError, match="almacén en uso"):
+            restore_memory(project, archive, apply=True)
+    assert store.get(original["id"])["content"] == "Do not overwrite an active store"
+
+
 def test_casual_conversation_is_not_promoted_to_durable_memory():
     assert deterministic_proposals([{"id": "1", "role": "assistant", "content": "Perfecto."}]) == []
     durable = deterministic_proposals([{"id": "2", "role": "assistant",

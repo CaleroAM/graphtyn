@@ -11,11 +11,17 @@ la misma memoria local aunque trabajen en sesiones diferentes.
 - embeddings por hash y procedencia para recuperación auditable.
 
 Una conversación no se vectoriza mágicamente: el cliente debe capturarla mediante
-las herramientas de memoria o importar un transcript. La compactación del cliente
+las herramientas de memoria, sincronización local o importar un transcript. La compactación del cliente
 no elimina lo persistido. El embedding sólo se repite si cambia el contenido o el
 modelo.
 
 ## Operación portable
+
+Durante la instalación, `graphtyn setup --apply` pregunta si se desea activar la
+memoria conversacional (`--memory on|off|ask`). Al activarla registra las fuentes
+detectadas e importa historiales compatibles con el proyecto; no requiere indicar
+el MCP en cada turno. Para instalaciones automatizadas usa `--memory on` o
+`--memory off` (el valor `ask` no bloquea procesos sin terminal).
 
 `graphtyn setup` detecta primero y sólo escribe con `--apply`. Los adaptadores se
 gestionan con `graphtyn adapter`; las fuentes con `memory sources
@@ -42,6 +48,9 @@ Los tokens pueden residir en `GRAPHTYN_MEMORY_TOKENS_FILE` y rotarse por rol.
 
 `graphtyn backup` usa la API de backup SQLite; `backup-verify` comprueba SHA-256
 y `restore` previsualiza salvo `--apply`, conservando una copia recuperable.
+Las bases se copian y verifican por bloques de 1 MiB. La restauración obtiene
+un bloqueo exclusivo y se niega si hay operaciones activas de una instalación
+Graphtyn actualizada; nunca reemplaza el archivo mientras SQLite tiene WAL abierto.
 La compactación descarta intercambios casuales y la importación fusiona fragmentos
 crecientes sin perder proveedor, agente, fecha o fuente.
 
@@ -59,6 +68,22 @@ sesiones, recuerdos y relaciones con código. El color atribuye autoría o
 participación; no implica propiedad exclusiva del archivo. `Buscar en memoria`
 filtra o recupera contexto dentro de esa vista.
 
+El panel izquierdo mantiene catálogos separados para proyectos y cerebros.
+Los proyectos tienen memoria temática ligada a su repositorio; cada cerebro es
+un espacio de memoria de una identidad propietaria y sus alias explícitos. Las
+sesiones de otros agentes se rechazan en descubrimiento y las filas importadas
+por error se marcan `quarantined`, conservando auditoría y backup. La memoria
+de un agente sigue disponible como consulta federada sobre los cerebros y
+proyectos que tiene asociados, pero cada almacén aplica su filtro de identidad.
+El registro no supone que todos los agentes se llamen Evi ni que el proveedor
+sea la identidad: ambos datos se conservan por separado. Usa
+`GET /api/agents` y `POST /api/agents/register` para administrar identidades.
+Usa `GET /api/brains` o `POST /api/projects/register` con
+`space_type: "agent_brain"` para administrar los espacios que aparecen bajo
+`CEREBROS REGISTRADOS`.
+La vista `Topología de agentes` sólo dibuja fuentes, espacios y relaciones que
+están configuradas u observadas, con procedencia en sus metadatos.
+
 ## Operación
 
 ```bash
@@ -75,9 +100,19 @@ El contrato MCP, seguridad y modelo de datos están en
 ## Bootstrap histórico y API v1
 
 `memory bootstrap` descubre primero y sólo importa con `--apply --consent`.
+La vista previa es inmutable y admite `--session ID` repetible para limitarse a
+conversaciones concretas. Los JSONL se procesan por streaming, con límite por
+registro, por lo que los historiales multi-GB no se cargan completos en memoria.
+Antigravity reconoce `USER_EXPLICIT`/`MODEL`, usa `brain/<id>` como identidad de
+sesión y toma sólo `logs/transcript.jsonl`, evitando copias compactadas y ruido.
 Admite historiales JSON/JSONL anidados y bases SQLite con columnas comunes de
 sesión, rol y contenido. Cada adaptador normaliza hacia el mismo `ingest_turn`,
 por lo que redacción, compactación, embeddings y deduplicación no se bifurcan.
+OpenClaw también puede guardar el transcript canónico en
+`agent/openclaw-agent.sqlite`; Graphtyn lee `transcript_events` (incluidos sus
+roles e IDs nativos) y no depende de la tabla FTS derivada. Esto permite importar
+sesiones creadas después de la migración de OpenClaw sin confundir el índice de
+búsqueda con la fuente de conversación.
 Las fechas originales se conservan separadas de la fecha de ingesta.
 Cuando cambió la ruta del proyecto, `memory projects --path . --alias
 /ruta/histórica` registra la equivalencia explícita antes de importar; una ruta
@@ -86,6 +121,27 @@ Las conversaciones importadas aparecen en **Memoria de proyecto** como nodos
 `memory_session` marcados como históricos. Cada nodo se conecta con el agente
 que participó y con las memorias compactadas que produjo; el panel muestra hasta
 100 sesiones recientes, incluidas las anteriores a Graphtyn.
+El catálogo se pagina con `GET /api/memory/sessions?limit=100&offset=N` y admite
+`query` por identificador, tarea o agente. Al seleccionar una sesión se puede
+abrir su detalle y enfocar el mapa; el foco mantiene la sesión aislada y permite
+cargar la siguiente página de temas sin cruzar conversaciones.
+Cada nodo de memoria recibe una referencia pública persistente (`N-000001`) que
+el dashboard muestra y permite copiar. `memory_node` o `memory node` resuelve
+esa referencia dentro del almacén seleccionado.
+
+Las coincidencias léxicas no crean aristas temáticas automáticamente. Las
+candidatas se consultan con `memory_relation_candidates` o `memory relation-candidates`
+y se aceptan o rechazan con trazabilidad mediante `memory_relation_review` o
+`memory relation-review`. La vista de memoria sólo dibuja relaciones extraídas
+o revisadas; el orden temporal permanece en los episodios.
+
+Cuando `GRAPHTYN_MEMORY_SUMMARY_MODEL` o `OLLAMA_MODEL` apunta a un modelo
+Ollama local, la captura termina rápido y un trabajador en segundo plano
+propone títulos, resúmenes y clasificaciones de candidatas. El estado del
+dashboard indica el modelo configurado y los enriquecimientos realizados. La
+IA no fusiona temas ni marca pruebas como superadas: sus propuestas conservan
+proveedor, evidencia y estado pendiente de revisión. `GRAPHTYN_MEMORY_AUTO_ENRICH=0`
+desactiva ese trabajador.
 Las fuentes admiten ruta local, `docker://contenedor/ruta`,
 `ssh://usuario@host/ruta` y `ssh+docker://usuario@host:contenedor/ruta`. Se
 registran con `graphtyn memory sources add`; Graphtyn transfiere por SSH/Docker
@@ -96,6 +152,71 @@ Durante el descubrimiento tampoco se recorren archivos dentro de `skills`,
 campos `role` y `content`, son recursos auxiliares y no conversaciones. La regla
 es independiente del proveedor y funciona igual con una instalación que sólo
 use OpenClaw, sólo Hermes o adaptadores adicionales.
+
+Para sincronizar nuevas conversaciones por cerebro (la fuente debe estar
+asociada explícitamente con `--workspace`):
+
+```bash
+graphtyn memory sync --path . --consent
+graphtyn memory sync --path . --watch --interval 5 --consent
+graphtyn memory sync --all-spaces --consent
+```
+
+El modo `--watch` conserva cursores y vuelve a procesar sólo datos nuevos. La
+misma operación está disponible en el dashboard como “Actualizar memoria” o
+“Actualizar todos los espacios”; “Activar captura continua” mantiene un
+watcher persistente y su heartbeat aparece en `memory status`. MCP
+`memory_ingest_turn` continúa disponible para checkpoints explícitos. Todos los
+caminos deduplican, sanean secretos y generan embeddings locales.
+
+Inicializa y registra un cerebro con propietario explícito:
+
+```bash
+graphtyn memory brain-init --brain-path /ruta/al/cerebro --name Evi \
+  --agent-id openclaw/main --register
+```
+
+El registro se escribe atómicamente incluso cuando el cerebro es nuevo. Si aún
+no se conoce el propietario, se puede omitir `--agent-id`: el espacio queda
+pendiente y no acepta captura hasta asignarle una identidad. No uses un nombre
+corto como `main` para representar `openclaw/main`; las identidades coinciden
+completas y los alias deben registrarse explícitamente.
+
+Asocia una fuente a un cerebro con `graphtyn memory sources add --workspace
+/ruta/al/cerebro --agent-id openclaw/main`. `agent_id` es obligatorio para
+sincronizar un cerebro; una fuente raíz que contiene varios agentes debe
+apuntar a la subcarpeta de uno de ellos (por ejemplo `agents/main` o
+`agents/career`). Las fuentes sin asociación o sin propietario se pueden
+previsualizar, pero no se enrutan automáticamente a ningún espacio. CLI y dashboard deben usar el
+mismo `GRAPHTYN_HOME`; compruébalo desde CLI con `graphtyn memory status
+--path /ruta/al/espacio` y desde `GET /api/memory/status?path=...`. El campo
+`db` debe ser idéntico. Sin `GRAPHTYN_HOME`, si aparecen una base local y otra
+central, la operación se detiene con conflicto en vez de escoger una
+silenciosamente. La variable explícita define el almacén central.
+
+El propietario también se aplica a `memory_context`, `memory_search`, `memory_topics`,
+`memory_topic`, `memory_node`, las ventanas de mensajes y ambos grafos. Una
+consulta con un `N-xxxxxx` de otra identidad devuelve acceso denegado aunque el
+identificador exista en el mismo archivo SQLite. Para reparar una importación
+antigua sin borrar datos, usa el script auditable
+`scripts/isolate_memory_agent.py`; marca sesiones y memorias como
+`quarantined` y registra `agent_scope_quarantine`.
+
+Para un agente remoto, el servicio debe publicar MCP con
+`GRAPHTYN_MCP_TOKEN` y una interfaz alcanzable por el contenedor o VM. Ese token
+protege sólo `/mcp`. Las llamadas HTTP de memoria usan
+`GRAPHTYN_MEMORY_HTTP_TOKEN` (un token de administrador heredado) o
+`GRAPHTYN_MEMORY_TOKENS` para asignar roles y rutas:
+
+```bash
+export GRAPHTYN_MEMORY_TOKENS='{"token-secreto":{"role":"writer","projects":["/srv/cerebro-evi"]}}'
+```
+
+No reutilices el token MCP como token REST. Las peticiones remotas al API REST
+fallan cerradas si no hay autenticación de memoria; el dashboard de red debe
+quedar detrás de un proxy con TLS y autenticación. Comprueba la conexión MCP
+desde el runtime remoto con `tools/list` y confirma que aparece
+`memory_ingest_turn`.
 
 La identidad global combina remoto Git, rutas y alias para unir proyectos
 renombrados. Las asociaciones con otro proyecto conocido se marcan ambiguas en
@@ -113,3 +234,44 @@ Los tokens pueden limitarse a rutas concretas y tienen rate limit por identidad.
 El almacén aplica permisos privados y soporta cifrado autenticado opcional con
 `graphtyn[security]` más `GRAPHTYN_MEMORY_ENCRYPTION_KEY`. Cuando está activo no
 se copia contenido cifrado a FTS; la búsqueda semántica continúa por embeddings.
+# Memoria temática y captura incremental
+
+El enriquecimiento local es incremental: cada tema conserva la huella de sus mensajes fuente, el modelo y la versión del prompt. Una segunda ejecución sin cambios hace cero llamadas; sólo los temas nuevos o modificados entran en la cola persistente. Los cambios de modelo o prompt se marcan `stale` y requieren `--force`. Un fallo transitorio se reintenta una vez y después queda `failed` para reintento manual. Las correcciones humanas quedan protegidas y cualquier propuesta posterior queda registrada sin sobrescribirlas.
+
+El almacén conserva asuntos (`topics`), episodios (`topic_episodes`), referencias a mensajes (`topic_messages`) y cambios auditables (`topic_events`). También registra entidades concretas (`entities`) y sus vínculos con asuntos (`topic_entities`). La extracción determinista crea episodios con procedencia explícita; un modelo local puede enriquecer títulos y resúmenes si `GRAPHTYN_MEMORY_SUMMARY_MODEL` o `OLLAMA_MODEL` está configurado. La API externa sólo se usa con `provider=api` y sus variables de autorización.
+
+La identidad se separa del asunto. Por ejemplo, `botón de Jugar`, `botón de Fichas`, `botón de Ajustes` y `botón de Volver` son cuatro entidades distintas. También se reconocen funcionalidades, módulos, reportes, pantallas, plataformas, referencias de archivo y símbolos Python explícitos como `reports.py`, `función calcular_reporte`, `clase ReportService` y `método listar_operadores`. En un CRM, `botón del reporte` y `funcionalidad del botón de operadores` quedan como asuntos independientes; una conversación posterior sobre `funcionalidad de operadores` puede continuar el segundo asunto aunque ya no mencione el botón. En un proyecto Python, una conversación sobre corregir `calcular_reporte` y otra sobre probarlo quedan vinculadas por `mismo símbolo`, aunque representen episodios de trabajo distintos. Los asuntos relacionados se conectan mediante relaciones explicadas como `mismo elemento`, `mismo símbolo`, `mismo concepto`, `mismo tipo`, `misma plataforma` o `tema de diseño`. Compartir una categoría general no fusiona trabajos.
+
+La captura histórica se procesa por lotes con `memory stream` o `POST /api/memory/history/stream`. Cada lote confirma un cursor por fuente, sesión y posición; los IDs nativos evitan duplicados y una rotación sin IDs queda pendiente. `memory sync --watch` y el botón de captura continua ejecutan el sincronizador persistente y registran heartbeat; mostrar un comando no activa captura. El contenido histórico se trata como datos no confiables.
+
+Interfaces equivalentes:
+
+`memory topics-enrich [--session ID] [--force]` y `POST /api/memory/topics/enrich` permiten ejecutar o reprocesar explícitamente la cola. El detalle de cada tema expone `ai_status`, modelo, revisión de fuente, versión del prompt, fecha, error y referencias de mensajes; `memory status` agrega cobertura única y el estado de la cola.
+
+- CLI `memory entities [consulta]`, `memory entity <id>`, `memory topics`, `memory topic`, `memory node N-000001`, `memory window`, `memory relation-candidates` y `memory relation-review`.
+- MCP `memory_entities`, `memory_entity`, `memory_topics`, `memory_topic`, `memory_message_window`, `memory_topic_update`, `memory_node`, `memory_relation_candidates` y `memory_relation_review`.
+- API `/api/memory/entities`, `/api/memory/entity`, `/api/memory/topics`, `/api/memory/topic`, `/api/memory/node`, `/api/memory/relation-candidates`, `/api/memory/relation-review`, `/api/memory/window` y `/api/memory/topic/update`.
+
+Las ventanas usan 10 mensajes anteriores y 10 posteriores en la misma sesión, con presupuesto predeterminado de 3.000 tokens y cursores. `memory_context` mantiene 1.800 tokens por defecto, informa cobertura, pendientes, truncamiento y referencias; una respuesta encontrada no marca `do_not_expand` como completa.
+
+El lienzo de “Memoria del proyecto” ofrece dos modos: `Simplificada` conecta temas, sesiones, agentes y relaciones temáticas; `Detallada` añade entidades y episodios de cada tema. El selector sólo aparece en esa vista y no altera Code AST, Semántico, Harness ni Cambios. Los mensajes se abren bajo demanda desde el episodio para conservar el rendimiento del navegador.
+El grafo inicia con una página acotada y muestra el total procesado; “Cargar más
+temas” amplía el proyecto o la sesión enfocada sin reemplazar lo ya visible.
+En **Diseño del grafo**, mientras está activa esta vista, “Colores de memoria del
+proyecto” permite editar por separado el núcleo y el halo de temas, sesiones,
+agentes, episodios y entidades. Los colores se guardan localmente, se aplican en
+2D/3D y en los estilos estándar, neuronal y holográfico, y no afectan las otras
+vistas. La opción “Burbuja sigue al nodo” vincula ambos colores cuando se desea.
+El selector de memoria incluye paletas listas para usar (Obsidian, Cyberpunk,
+Dracula, Solarized, Nordic, Vaporwave, monocroma, Matrix y por comunidad) y
+“Personalizada”, que conserva los colores elegidos manualmente. El apartado
+“Halos / irradiación” permite apagar o encender la iluminación alrededor de
+nodos, enlaces y pulsos. “Parpadeo de Vértices” se guarda junto con
+esas preferencias y actualiza también el lienzo 2D cuando la simulación ya se
+ha estabilizado. Las partículas direccionales usan un desfase, una velocidad y
+una cantidad estables por enlace para que las señales salgan y lleguen de forma
+irregular, sin sincronizar todo el grafo con un único ciclo.
+
+Los estados de asunto son `abierto`, `en investigación`, `resuelto`, `reabierto` y `archivado`. La verificación es independiente (`sin verificar`, `declarado`, `prueba superada`, `prueba fallida`, `confirmado por usuario`). Las verificaciones requieren mensajes fuente compatibles y cada corrección, fusión o separación conserva un evento auditable.
+
+Antes de migrar un almacén efectivo, compruébalo con `GET /api/memory/status` y crea un respaldo SQLite. La captura sólo se importa tras seleccionar explícitamente el proyecto y la sesión; sesiones ambiguas permanecen pendientes.

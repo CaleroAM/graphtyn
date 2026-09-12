@@ -1,6 +1,6 @@
 # 🌌 Graphtyn
 
-[![Release](https://img.shields.io/badge/release-0.6.1-blue.svg)](docs/CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-0.7.0-blue.svg)](docs/CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-10b981.svg)](https://modelcontextprotocol.io/)
@@ -10,9 +10,11 @@ contexto compacto a agentes mediante MCP. También conserva memoria semántica
 compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
 estructurales.
 
-> Versión estable `0.6.1`, orientada a uso local y single-user. TLS, SSO y
-> aislamiento multi-tenant no forman parte de esta versión. Graphtyn aún no está
-> publicado en PyPI.
+> Última versión estable publicada: `0.7.0`. La rama actual prepara `0.8.0`;
+> sus cambios no se publicarán hasta que pase la CI requerida. Graphtyn se
+> distribuye por GitHub Releases; PyPI permanece deshabilitado. El despliegue es
+> self-hosted: los agentes pueden compartir memoria con permisos por token y
+> proyecto, pero no es un servicio SaaS multi-tenant.
 
 **Documentación:** [índice completo](docs/index.md) ·
 [arquitectura](docs/ARCHITECTURE.md) · [memoria](docs/shared-memory.md) ·
@@ -116,6 +118,24 @@ graphtyn export-md --path .
 graphtyn report --path . --output GRAPHTYN_REPORT.md
 ```
 
+Configuración y memoria conversacional:
+
+```bash
+# Configurar el proyecto y preguntar si se activa memoria
+graphtyn setup --apply --memory ask
+# Activar memoria sin interacción (instaladores y CI)
+graphtyn setup --apply --memory on --memory-watch
+# Importar o sincronizar historiales autorizados
+graphtyn memory bootstrap --path .
+graphtyn memory sync --path . --watch --interval 5 --consent
+graphtyn memory sync --all-spaces --consent
+graphtyn memory status --path .
+```
+
+`--memory off` instala Graphtyn sin captura conversacional. `bootstrap` siempre
+ofrece primero una vista previa; la importación histórica requiere repetirla con
+`--apply --consent`.
+
 Modos de reindexación:
 
 | Modo | Uso |
@@ -173,7 +193,20 @@ graphtyn memory session-end --agent-id opencode --summary "Cambio verificado" --
 Las conversaciones anteriores pueden importarse mediante autodetección,
 manifiestos adaptadores o archivos exportados. Graphtyn sanea secretos,
 deduplica eventos y conserva procedencia; no intercepta conversaciones sin una
-integración explícita. Configuración, recuperación, backups y ejemplos están en
+integración explícita. Durante la instalación puedes activar la captura guiada:
+
+```bash
+# Pregunta en una terminal (predeterminado)
+graphtyn setup --apply --memory ask
+# Automatización sin interacción
+graphtyn setup --apply --memory on --memory-watch
+graphtyn memory sync --path . --watch --interval 5 --consent
+```
+
+Al activar la memoria, Graphtyn detecta fuentes de Codex/AGY/OpenClaw/Hermes,
+importa historiales compatibles con el proyecto y genera embeddings locales.
+La opción `--memory off` conserva la instalación sin memoria conversacional.
+Configuración, recuperación, bootstrap histórico, backups y ejemplos están en
 [docs/shared-memory.md](docs/shared-memory.md).
 
 ## Dashboard y API
@@ -237,6 +270,46 @@ afirmación universal de superioridad frente a otras herramientas. Esos límites
 se mantienen explícitos para que cada adopción pueda evaluar el producto con su
 propio repositorio y ground truth.
 
+### Espacios de código y agentes
+
+El dashboard separa `PROYECTOS REGISTRADOS` (repositorios y workspaces con
+grafo AST, semántico y memoria del proyecto) de `CEREBROS REGISTRADOS`
+(espacios de memoria de Evi, Eve, Junio, Friday, Nex u otra identidad). Cada
+cerebro se asocia a una identidad propietaria (puede declarar alias explícitos),
+por lo que las sesiones de otro agente quedan fuera de su recuperación. Un
+agente puede tener varios espacios asociados para una consulta federada. Los
+agentes no se asumen como una identidad fija: se descubren y atribuyen por sus
+metadatos de sesión. Registra una identidad desde CLI con
+`graphtyn memory agents register --id friday --name Friday --provider openclaw`
+o desde `/api/agents/register`; consulta el catálogo con
+`graphtyn memory agents list` o `GET /api/agents`. Las fuentes de historial
+pueden asociarse a esa identidad con `memory sources add --agent-id friday
+--workspace /ruta/al/espacio`.
+
+`CEREBROS REGISTRADOS` se administra con `GET /api/brains` y el botón `+` de la
+barra lateral; registra un espacio mediante `POST /api/projects/register` con
+`space_type: "agent_brain"`. `Topología de agentes` representa identidades,
+fuentes, cerebros y vínculos observados o configurados. Una integración
+configurada no se presenta como actividad ejecutada. La memoria del cerebro se
+consulta dentro del espacio seleccionado y sólo incorpora fuentes con
+`agent_id` explícito; la memoria del proyecto mantiene la perspectiva del
+repositorio. Una fuente compartida (por ejemplo, la raíz `agents` de OpenClaw)
+debe dividirse en rutas por agente o asociarse con un filtro de propietario;
+nunca se enruta a un cerebro por defecto.
+
 ## Licencia
 
 [MIT](LICENSE)
+# Memoria temática
+
+Graphtyn puede recuperar asuntos de conversaciones completas y asociarlos a elementos concretos del proyecto. Usa `graphtyn memory topics`, `graphtyn memory topic <id>`, `graphtyn memory node N-000001` y `graphtyn memory window <message_id>` para explorar títulos, episodios, referencias estables y el contexto acotado de un mensaje. Las candidatas léxicas se revisan con `graphtyn memory relation-candidates` y `graphtyn memory relation-review <id> --status accepted|rejected --reason "..."`; sólo las relaciones extraídas o aceptadas aparecen como aristas. Las interfaces MCP/API equivalentes exponen `memory_node`, `memory_relation_candidates` y `memory_relation_review`, además de `memory_entities` y `memory_entity` para localizar controles, pantallas, archivos y símbolos Python relacionados. En un proyecto Python, conversaciones sobre `reports.py`, `función calcular_reporte` o `clase ReportService` se enlazan por símbolo cuando representan trabajos distintos, mientras funciones diferentes permanecen separadas. Una petición sobre `botón de Jugar` se mantiene independiente de otra sobre `botón de Fichas`, aunque ambas compartan el tema de diseño. La captura continua sólo está activa cuando se inicia `memory sync --watch` o se activa el botón correspondiente, con consentimiento y una fuente asociada explícitamente al espacio; el estado real aparece en `memory status` y en el dashboard. “Actualizar memoria” sincroniza el espacio seleccionado y “Actualizar todos los espacios” recorre los espacios registrados que tienen una fuente asociada. Si se configura `GRAPHTYN_MEMORY_SUMMARY_MODEL` (o el `OLLAMA_MODEL` local ya usado por el índice), Ollama enriquece títulos y revisa candidatas en segundo plano; el estado del dashboard indica si está configurado y cuántos enriquecimientos se ejecutaron. `GRAPHTYN_MEMORY_AUTO_ENRICH=0` lo desactiva y no se usa una API externa como fallback silencioso.
+
+Para OpenClaw, Graphtyn reconoce tanto sesiones JSONL como el almacén SQLite
+`agent/openclaw-agent.sqlite` (`transcript_events`). Si el agente vive en otra
+máquina, publica `/mcp` con `GRAPHTYN_MCP_TOKEN`, comprueba desde ese runtime que
+`tools/list` incluye `memory_ingest_turn` y usa el MCP al cerrar cada turno.
+En el dashboard, “Memoria del proyecto” separa sesiones, temas, episodios y
+agentes: el catálogo de sesiones admite búsqueda y paginación, cada nodo muestra
+su referencia `N-xxxxxx` y el mapa puede enfocarse en una sesión o ampliarse por
+páginas. El panel “Diseño del grafo” ofrece colores de núcleo y halo exclusivos
+de esta vista; se conservan en el navegador y no cambian el grafo de código.

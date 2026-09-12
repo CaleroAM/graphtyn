@@ -1,7 +1,22 @@
-import { state, PALETTES, COMM_COLORS, getCommKey, safePaint } from './state.js';
+import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
 import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
-import { apply2DStyle, apply3DStyle, paintNodePointerArea } from './styles.js';
+import { apply2DStyle, apply3DStyle, standard2DLinkColor, paintNodePointerArea } from './styles.js';
+
+function endpointId(value) { return value && typeof value === 'object' ? value.id : value; }
+function selectedLink(link) {
+      const selected = state.selectedNode?.id;
+      if (!selected) return true;
+      return endpointId(link.source) === selected || endpointId(link.target) === selected;
+    }
+function memoryLinkColor(link, base) {
+      if (state.selectedNode && !selectedLink(link)) return 'rgba(255,255,255,0.06)';
+      if (link.confidence === 'AMBIGUOUS') return 'rgba(245,158,11,0.62)';
+      if (link.confidence === 'INFERRED') return 'rgba(148,163,184,0.22)';
+      return base;
+    }
+function activePalette() { return PALETTES[state.activePalette] || PALETTES.obsidian; }
+function activeLinkColor() { return activePalette().link || PALETTES.obsidian.link; }
 
 export function destroyGraph() {
       stop3DRotation();
@@ -28,41 +43,72 @@ export function showGraphSpinner(msg) {
 
 export function buildCommunities(data) {
       // Build community groups by folder
-      const groups = {};
+      const groups = Object.create(null);
       data.nodes.forEach(n => {
         const key = getCommKey(n);
-        if (!groups[key]) groups[key] = 0;
-        groups[key]++;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(n);
       });
 
-      const sorted = Object.entries(groups).sort((a,b) => b[1] - a[1]);
+      const sorted = Object.entries(groups).sort((a,b) => b[1].length - a[1].length);
 
       // Build stable color map: community key -> fixed color (not affected by palette)
       state.commColorMap = {};
+      state.communityNodes = Object.create(null);
       sorted.forEach(([name], idx) => {
         state.commColorMap[name] = COMM_COLORS[idx % COMM_COLORS.length];
       });
 
       const el = document.getElementById('community-list');
-      el.innerHTML = sorted.map(([name, count]) => {
+      el.innerHTML = sorted.map(([name, nodes]) => {
+        const count = nodes.length;
         const color = state.commColorMap[name];
+        const safeName = escapeHtml(name);
+        state.communityNodes[name] = nodes
+          .map(node => ({
+            id: String(node.id || ''),
+            reference: String(node.reference || node.public_id || node.id || ''),
+            name: String(node.name || node.id || 'Sin nombre')
+          }))
+          .sort((a, b) => a.reference.localeCompare(b.reference, undefined, {numeric: true, sensitivity: 'base'}));
         return `
-          <div class="community-item" onclick="toggleComm('${name}')">
-            <div class="comm-left">
+          <div class="community-item">
+            <div class="community-row" data-community="${safeName}" onclick="toggleComm(this.dataset.community)">
+              <div class="comm-left">
               <label class="chk-wrap" onclick="event.stopPropagation()">
-                <input type="checkbox" class="comm-chk" data-comm="${name}" checked onchange="applyFilter()">
+                <input type="checkbox" class="comm-chk" data-comm="${safeName}" checked onchange="applyFilter()">
                 <span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
               </label>
               <span class="comm-dot" style="background:${color};"></span>
-              <span class="comm-name" title="${name}">${name}</span>
+              <span class="comm-name" title="${safeName}">${safeName}</span>
+              </div>
+              <span class="comm-badge">${count}</span>
             </div>
-            <span class="comm-badge">${count}</span>
+            <details class="comm-node-details" data-community="${safeName}" ontoggle="renderCommunityNodes(this)">
+              <summary><span>IDs de nodos</span><span>${count}</span></summary>
+              <div class="comm-node-ids"><span class="comm-node-loading">Abre para cargar</span></div>
+            </details>
           </div>`;
       }).join('');
     }
 
+export function renderCommunityNodes(details) {
+      if (!details || !details.open) return;
+      const community = details.dataset.community || '';
+      const container = details.querySelector('.comm-node-ids');
+      if (!container || container.dataset.loaded === '1') return;
+      const nodes = state.communityNodes[community] || [];
+      container.innerHTML = nodes.length ? nodes.map(node => {
+        const safeId = escapeHtml(node.id);
+        const safeReference = escapeHtml(node.reference);
+        const safeName = escapeHtml(node.name);
+        return `<button type="button" class="comm-node-id" data-node-id="${safeId}" title="${safeName}" onclick="event.stopPropagation();focusNode(this.dataset.nodeId)"><code>${safeReference}</code><span>${safeName}</span></button>`;
+      }).join('') : '<span class="comm-node-loading">Sin nodos</span>';
+      container.dataset.loaded = '1';
+    }
+
 export function toggleComm(name) {
-      const chk = document.querySelector(`.comm-chk[data-comm="${name}"]`);
+      const chk = Array.from(document.querySelectorAll('.comm-chk')).find(input => input.dataset.comm === String(name));
       if (chk) { chk.checked = !chk.checked; applyFilter(); }
     }
 
@@ -77,6 +123,64 @@ export function escapeHtml(text) {
       div.textContent = String(text);
       return div.innerHTML;
     }
+
+export async function copyNodeReference(reference) {
+      if (!reference) return;
+      try {
+        await navigator.clipboard.writeText(String(reference));
+        const status = document.getElementById('blast-copy-status');
+        if (status) status.textContent = 'Referencia copiada';
+      } catch (error) {
+        window.prompt('Copia esta referencia:', String(reference));
+  }
+}
+
+async function loadMemoryNodeDetails(node, body) {
+      const kind = String(node?.kind || '');
+      if (!kind.startsWith('memory_') || !['memory_session', 'memory_episode'].includes(kind)) return;
+      const detail = document.getElementById('memory-node-detail');
+      if (!detail || !state.activePath) return;
+      const requestId = (state.memoryNodeDetailRequestId || 0) + 1;
+      state.memoryNodeDetailRequestId = requestId;
+      try {
+        const response = await fetch('/api/memory/node?path=' + encodeURIComponent(state.activePath) +
+          '&reference=' + encodeURIComponent(String(node.reference || node.public_id || '')) + '&limit=20');
+        const payload = await response.json();
+        if (requestId !== state.memoryNodeDetailRequestId || state.selectedNode?.id !== node.id) return;
+        if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo cargar el detalle');
+        if (payload.node_kind === 'memory_session' && payload.session) {
+          const session = payload.session;
+          const topics = Array.isArray(payload.topics) ? payload.topics : [];
+          detail.innerHTML = '<div style="font-weight:700;color:#38bdf8;margin-bottom:4px;">DETALLE DE SESIÓN</div>' +
+            '<div class="node-metadata">' +
+            '<strong>Agente</strong><span>' + escapeHtml(session.agent_id || '') + '</span>' +
+            '<strong>Tarea</strong><span style="white-space:pre-wrap;">' + escapeHtml(session.task || '') + '</span>' +
+            '<strong>Mensajes</strong><span>' + escapeHtml(payload.message_count || 0) + '</span>' +
+            '<strong>Temas</strong><span>' + escapeHtml(payload.topic_count || 0) + (payload.topics_returned && payload.topics_returned < payload.topic_count ? ' (mostrando ' + escapeHtml(payload.topics_returned) + ')' : '') + '</span>' +
+            '<strong>Estado</strong><span>' + escapeHtml(session.status || '') + '</span>' +
+            '</div>' +
+            '<div style="font-weight:700;color:#64748b;font-size:10px;margin-top:6px;">TEMAS DE ESTA SESIÓN' + (payload.topics_returned && payload.topics_returned < payload.topic_count ? ' · primeros ' + escapeHtml(payload.topics_returned) : '') + '</div>' +
+            '<div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">' +
+            (topics.length ? topics.map(topic => '<div style="background:#1a2234;padding:5px 6px;border-radius:4px;cursor:pointer;" data-node-id="topic:' + escapeHtml(topic.id) + '" onclick="focusNode(this.dataset.nodeId)">' +
+              '<span style="color:#e2e8f0;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(topic.title || topic.id) + '</span>' +
+              '<span style="color:#64748b;font-size:9px;">' + escapeHtml(topic.reference || '') + ' · ' + escapeHtml(topic.state || '') + ' · ' + escapeHtml(topic.verification || '') + '</span></div>').join('') :
+              '<div style="color:#64748b;">Sin temas asociados</div>') + '</div>';
+        } else if (payload.node_kind === 'memory_episode' && payload.episode) {
+          const episode = payload.episode;
+          detail.innerHTML = '<div style="font-weight:700;color:#38bdf8;margin-bottom:4px;">DETALLE DE EPISODIO</div>' +
+            '<div class="node-metadata"><strong>Tema</strong><span>' + escapeHtml(episode.topic_reference || '') + '</span>' +
+            '<strong>Agente</strong><span>' + escapeHtml(episode.agent_id || '') + '</span>' +
+            '<strong>Mensajes fuente</strong><span>' + escapeHtml((episode.message_ids || []).length) + '</span></div>' +
+            '<div style="color:#cbd5e1;white-space:pre-wrap;margin-top:5px;"><strong>Problema:</strong> ' + escapeHtml(episode.problem || '') + '</div>' +
+            (episode.decisions ? '<div style="color:#cbd5e1;white-space:pre-wrap;margin-top:4px;"><strong>Decisiones:</strong> ' + escapeHtml(episode.decisions) + '</div>' : '') +
+            (episode.result ? '<div style="color:#cbd5e1;white-space:pre-wrap;margin-top:4px;"><strong>Resultado:</strong> ' + escapeHtml(episode.result) + '</div>' : '');
+        }
+      } catch (error) {
+        if (requestId === state.memoryNodeDetailRequestId && state.selectedNode?.id === node.id) {
+          detail.innerHTML = '<span style="color:#fca5a5;">No se pudo cargar el detalle: ' + escapeHtml(error.message || error) + '</span>';
+        }
+      }
+}
 
 export function applyFilter() {
       const q        = (document.getElementById('search-box')?.value || '').toLowerCase();
@@ -216,6 +320,12 @@ export function onNodeClick(node) {
       const safeName = escapeHtml(node.name || node.id || 'Sin nombre');
       const safeKind = escapeHtml(node.kind || 'nodo');
       const safeId = escapeHtml(node.id || '');
+      // Every graph node has a stable technical id. Memory nodes additionally
+      // receive a short public reference (N-xxxxxx); old API responses still
+      // remain actionable through their technical id.
+      const nodeReference = String(node.reference || node.public_id || node.id || '');
+      const safeReference = escapeHtml(nodeReference);
+      const encodedReference = encodeURIComponent(nodeReference);
       const sourceBlock = node.file
         ? '<div><strong>Origen:</strong> <span style="color:#94a3b8;overflow-wrap:anywhere;">' +
           escapeHtml(node.file) + (node.line ? ':' + node.line : '') + '</span></div>'
@@ -227,9 +337,15 @@ export function onNodeClick(node) {
           '<code style="color:#cbd5e1;font-size:9px;white-space:pre-wrap;">' + escapeHtml(node.evidence) + '</code></div>'
         : '';
       const metadataRows = [
+        safeReference ? ['Identificador', nodeReference] : null,
         node.agent_id ? ['Agente', node.agent_id] : null,
         node.session_id ? ['Sesión', node.session_id] : null,
         node.status ? ['Estado memoria', node.status] : null,
+        node.ai_status ? ['IA temática', node.ai_status] : null,
+        node.ai_model ? ['Modelo IA', node.ai_model] : null,
+        node.ai_source_revision != null ? ['Revisión fuente', node.ai_source_revision] : null,
+        node.ai_processed_at ? ['IA procesado', new Date(node.ai_processed_at * 1000).toLocaleString()] : null,
+        node.ai_error ? ['Error IA', node.ai_error] : null,
         node.observed_commit ? ['Commit observado', node.observed_commit] : null,
         node.http_method ? ['Método', node.http_method] : null,
         node.path ? ['Endpoint', node.path] : null,
@@ -261,17 +377,21 @@ export function onNodeClick(node) {
       })();
 
       body.innerHTML =
-        '<div><strong>Símbolo:</strong> <span style="color:#38bdf8;">' + safeName + '</span></div>' +
+        '<div><strong>' + (isMemoryNode ? 'Nodo:' : 'Símbolo:') + '</strong> <span style="color:#38bdf8;">' + safeName + '</span></div>' +
         '<div><strong>Tipo:</strong> <span style="color:#f59e0b;">' + safeKind + '</span></div>' +
+        (safeReference ? '<div style="display:flex;align-items:center;gap:6px;margin-top:3px;"><strong>Identificador:</strong> <code style="color:#a7f3d0;">' + safeReference + '</code><button class="btn-action" style="padding:2px 6px;" onclick="copyNodeReference(decodeURIComponent(\'' + encodedReference + '\'))">Copiar</button><span id="blast-copy-status" style="color:#64748b;font-size:9px;"></span></div>' : '') +
         sourceBlock +
         metadataBlock +
         evidenceBlock +
         descBlock +
+        (isMemoryNode && (node.kind === 'memory_session' || node.kind === 'memory_episode')
+          ? '<div id="memory-node-detail" style="margin-top:6px;padding-top:6px;border-top:1px solid #1e293b;color:#cbd5e1;">Cargando detalle…</div>' : '') +
         '<div style="display:flex;gap:12px;margin-top:2px;">' +
           '<span>Grado Total: <strong style="color:#10b981;">' + (node.degree || 0) + '</strong></span>' +
           '<span>Impacto Directo: <strong style="color:#a78bfa;">' + neighborNodes.length + '</strong></span>' +
         '</div>' +
         '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;"><button class="btn-action btn-primary" style="justify-content:center;" data-node-id="' + safeId + '" onclick="focusNode(this.dataset.nodeId)">Centrar y Enfocar</button>' +
+        (node.kind === 'memory_session' ? '<button class="btn-action" data-session-id="' + escapeHtml(node.session_id || String(node.id || '').replace(/^session:/, '')) + '" onclick="focusMemorySession(this.dataset.sessionId)">Explorar esta sesión</button>' : '') +
         (!isMemoryNode ? '<button class="btn-action" data-node-id="' + safeId + '" onclick="addNodeToContext(this.dataset.nodeId);openQualityPanel()">Añadir al contexto</button>' : '') +
         (hasWebFlow ? '<button class="btn-action" data-node-id="' + safeId + '" onclick="focusWebFlow(this.dataset.nodeId)">Ver flujo web</button>' : '') + '</div>' +
         '<hr style="border:none;border-top:1px solid #1e293b;margin:4px 0;">' +
@@ -285,13 +405,24 @@ export function onNodeClick(node) {
         ).join('') : '<div style="color:#64748b;">Sin conexiones directas</div>') +
         '</div>';
 
+      loadMemoryNodeDetails(node, body);
+
       // Highlight neighbors by dimming others in standard 2D and 3D
       if (state.graphInst) {
+        const linkBase = activeLinkColor();
         state.graphInst.nodeColor(n => {
           if (n.id === node.id) return '#ff007f';
           if (neighbors.has(n.id)) return nodeColor(n);
           return 'rgba(255,255,255,0.22)';
         });
+        if (typeof state.graphInst.linkColor === 'function') {
+          state.graphInst.linkColor(state.activeDim === '2d' && state.graphStyle === 'standard'
+            ? standard2DLinkColor
+            : l => memoryLinkColor(l, linkBase));
+        }
+        if (typeof state.graphInst.linkWidth === 'function') {
+          state.graphInst.linkWidth(l => selectedLink(l) ? 1.8 : 0.25);
+        }
       }
     }
 
@@ -415,7 +546,15 @@ export function closeBlastPanel() {
       const panel = document.getElementById('blast-panel');
       if (panel) panel.style.display = 'none';
       if (state.graphInst) {
+        const palette = activePalette();
+        const linkBase = palette.link || PALETTES.obsidian.link;
         state.graphInst.nodeColor(n => nodeColor(n));
+        if (typeof state.graphInst.linkColor === 'function') state.graphInst.linkColor(
+          state.activeDim === '2d' && state.graphStyle === 'standard'
+            ? standard2DLinkColor
+            : l => memoryLinkColor(l, linkBase)
+        );
+        if (typeof state.graphInst.linkWidth === 'function') state.graphInst.linkWidth(l => l.confidence === 'AMBIGUOUS' ? (palette.linkW || 1.4) * 1.15 : l.confidence === 'INFERRED' ? (palette.linkW || 1.4) * 0.7 : (palette.linkW || 1.4));
       }
     }
 
@@ -522,7 +661,7 @@ export function loadGraph() {
       state.graphRequestController = new AbortController();
       const requestSignal = state.graphRequestController.signal;
       if (state.activeView === 'changes') { loadChangesView(); return; }
-      if (!state.activePath && state.activeView !== 'agents') {
+      if (!state.activePath && state.activeView !== 'agents' && !(state.activeView === 'memory' && state.activeAgentId)) {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
         document.getElementById('graph-container').innerHTML =
           '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda</div>';
@@ -531,13 +670,15 @@ export function loadGraph() {
       const url = state.activeView === 'agents'
         ? '/api/graph?view=agents'
         : state.activeView === 'memory'
-        ? '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&limit=400'
+        ? (state.activeAgentId
+          ? '/api/memory/agent-graph?agent_id=' + encodeURIComponent(state.activeAgentId) + '&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400'
+          : '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&view=topics&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400&session_limit=100' + (state.memoryFocusSession ? '&session_id=' + encodeURIComponent(state.memoryFocusSession) : ''))
         : state.activeView === 'semantic'
         ? '/api/graph?view=semantic&path=' + encodeURIComponent(state.activePath)
         : '/api/graph?path=' + encodeURIComponent(state.activePath);
 
       const loadingMessage = state.activeView === 'agents' ? 'Cargando topología de agentes...'
-        : state.activeView === 'memory' ? 'Cargando memoria compartida del proyecto...'
+        : state.activeView === 'memory' ? (state.memoryFocusSession ? 'Cargando sesión y sus temas...' : 'Cargando sesiones, temas y episodios...')
         : 'Escaneando proyecto...';
       showGraphSpinner(loadingMessage);
       document.getElementById('stats').textContent = 'Cargando...';
@@ -553,7 +694,7 @@ export function loadGraph() {
         if (loadId !== state.graphLoadId) return;
         if (!data.nodes || data.nodes.length === 0) {
           const emptyMessage = state.activeView === 'memory'
-            ? 'Sin memorias capturadas para este proyecto. Abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.'
+            ? (state.activeAgentId ? 'Sin memorias asociadas a este agente en sus espacios registrados.' : 'Sin memorias capturadas para este proyecto. No hay temas temáticos todavía; abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.')
             : 'Sin nodos de código. Haz clic en Reindexar para escanear el proyecto.';
           document.getElementById('graph-container').innerHTML =
             '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;padding:24px;text-align:center;">' + emptyMessage + '</div>';
@@ -565,6 +706,7 @@ export function loadGraph() {
           return;
         }
         state.fullData = data;
+        state.memoryGraphMeta = state.activeView === 'memory' ? (data.metadata || null) : null;
         state.pulseSim = buildPulseSim(data);
         const p = PALETTES[state.activePalette];
         document.getElementById('stats').textContent =
@@ -573,7 +715,9 @@ export function loadGraph() {
         const badge = document.getElementById('model-badge');
         if (badge) {
           badge.textContent = state.activeView === 'memory'
-            ? `Memoria compartida · ${(data.agents || []).length} agentes`
+            ? (state.activeAgentId
+              ? `Memoria del agente · ${(data.metadata || {}).space_count || 0} espacios · ${data.nodes.length} nodos`
+              : `Memoria ${((data.metadata || {}).mode === 'detailed') ? 'detallada' : 'simplificada'} · ${(((data.metadata || {}).topic_returned ?? (data.metadata || {}).topic_count) || 0)}/${(((data.metadata || {}).topic_total ?? (data.metadata || {}).topic_count) || 0)} temas · ${(((data.metadata || {}).session_returned ?? 0) || 0)}/${(((data.metadata || {}).session_total ?? 0) || 0)} sesiones`)
             : (meta.ai_model ? meta.ai_model : '') + (meta.reindex_mode ? ' · ' + meta.reindex_mode : '');
         }
 
@@ -583,7 +727,7 @@ export function loadGraph() {
 
         buildCommunities(data); updateEstTime();
 
-        requestAnimationFrame(() => updateMemoryLegend(data));
+        requestAnimationFrame(() => { updateMemoryLegend(data); updateMemoryFocusBanner(data); });
 
         const container = document.getElementById('graph-container');
 
@@ -592,9 +736,10 @@ export function loadGraph() {
           const safeName = escapeHtml(n.name || '');
           const safeKind = escapeHtml(n.kind || '');
           const safeDetails = hasDesc ? escapeHtml(n.details) : '';
+          const safeReference = escapeHtml(n.reference || n.public_id || n.id || '');
           const detailsHtml = hasDesc ? `<br/><span style="color:#38bdf8;font-size:11px;line-height:1.3;display:block;margin-top:3px;">${safeDetails}</span>` : '';
           return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;max-width:320px;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5);pointer-events:none;user-select:none;">` +
-            `<strong>${safeName}</strong> <span style="color:#64748b;font-size:10px;">(${safeKind})</span>` +
+            `<strong>${safeName}</strong> <span style="color:#64748b;font-size:10px;">(${safeKind}${safeReference ? ' · ' + safeReference : ''})</span>` +
             detailsHtml +
             `<div style="margin-top:5px;font-size:10px;"><span style="color:${nodeColor(n)};font-weight:600;">●</span> <span style="color:#94a3b8;">Conexiones: ${n.degree || 0}</span></div>` +
             `</div>`;
@@ -618,14 +763,16 @@ export function loadGraph() {
             })
             .linkHoverPrecision(0)
             .linkPointerAreaPaint(() => {})
+            .nodeColor(n => nodeColor(n))
             .nodeLabel(tooltip)
             .onNodeClick(handleGraphNodeClick)
             .onBackgroundClick(handleGraphBackgroundClick)
-            .linkColor(l => (l.confidence === 'AMBIGUOUS' ? 'rgba(245,158,11,0.62)' : l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : p.link))
-            .linkWidth(l => (l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW))
-            .linkDirectionalParticles(() => (state.showParticles ? 2 : 0))
+            .linkColor(l => memoryLinkColor(l, p.link))
+            .linkWidth(l => { const width = l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW; return state.selectedNode && !selectedLink(l) ? width * 0.2 : width; })
+            .linkDirectionalParticles(l => (state.showParticles ? particleProfile(l, 0.006).count : 0))
             .linkDirectionalParticleWidth(2.5)
-            .linkDirectionalParticleSpeed(0.006)
+            .linkDirectionalParticleSpeed(l => particleProfile(l, 0.006).speed)
+            .linkDirectionalParticleOffset(l => particleProfile(l, 0.006).offset)
             .linkDirectionalParticleColor(() => p.particle)
             .linkDirectionalArrowLength(() => (state.showArrows ? 5 : 0))
             .linkDirectionalArrowRelPos(0.95)
@@ -662,11 +809,12 @@ export function loadGraph() {
             })
             .linkHoverPrecision(0)
             .nodeLabel(tooltip).onNodeClick(handleGraphNodeClick).onBackgroundClick(handleGraphBackgroundClick)
-            .linkColor(l => (l.confidence === 'AMBIGUOUS' ? 'rgba(245,158,11,0.62)' : l.confidence === 'INFERRED' ? 'rgba(148,163,184,0.22)' : p.link))
-            .linkWidth(l => (l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW))
-            .linkDirectionalParticles(() => (state.showParticles ? 2 : (state.linkStyle === 'dashed' ? 3 : 0)))
+            .linkColor(l => memoryLinkColor(l, p.link))
+            .linkWidth(l => { const width = l.confidence === 'AMBIGUOUS' ? p.linkW * 1.15 : l.confidence === 'INFERRED' ? p.linkW * 0.7 : p.linkW; return state.selectedNode && !selectedLink(l) ? width * 0.2 : width; })
+            .linkDirectionalParticles(l => (state.showParticles ? Math.max(state.linkStyle === 'dashed' ? 3 : 1, particleProfile(l, 0.006).count) : 0))
             .linkDirectionalParticleWidth(() => (state.linkStyle === 'dashed' ? 1.8 : 2.5))
-            .linkDirectionalParticleSpeed(0.006)
+            .linkDirectionalParticleSpeed(l => particleProfile(l, 0.006).speed)
+            .linkDirectionalParticleOffset(l => particleProfile(l, 0.006).offset)
             .linkDirectionalArrowLength(() => (state.showArrows ? 5 : 0))
             .linkDirectionalArrowRelPos(0.95)
             .linkCurvature(() => (state.linkStyle === 'curved' ? 0.25 : (state.linkStyle === 'dashed' ? 0.15 : 0.0)))
@@ -706,8 +854,13 @@ function updateMemoryLegend(data) {
       const old = document.getElementById('memory-legend-overlay');
       if (old) old.remove();
       if (state.activeView !== 'memory') return;
-      const key = a => '<span class="memory-agent-key"><i style="background:' + escapeHtml(a.color) + '"></i>' + escapeHtml(a.id) + '</span>';
-      let html = '<div class="memory-legend-title">Agentes del proyecto</div>' +
+      const key = a => '<span class="memory-agent-key"><i data-memory-legend-kind="memory_agent" style="background:' + escapeHtml(getMemoryColor('memory_agent', 'node')) + '"></i>' + escapeHtml(a.id) + '</span>';
+      let html = '<div class="memory-legend-title">Tipos de memoria</div>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_topic" style="background:' + escapeHtml(getMemoryColor('memory_topic', 'node')) + '"></i>tema</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_session" data-memory-legend-halo="memory_session" style="background:' + escapeHtml(getMemoryColor('memory_session', 'node')) + '"></i>sesión</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_episode" style="background:' + escapeHtml(getMemoryColor('memory_episode', 'node')) + '"></i>episodio</span>' +
+        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_entity" style="background:' + escapeHtml(getMemoryColor('memory_entity', 'node')) + '"></i>entidad</span>' +
+        '<div class="memory-legend-title">Agentes del proyecto</div>' +
         (data.agents || []).map(key).join('');
       if ((data.consulters || []).length) {
         html += '<div class="memory-legend-title">Sólo consultaron</div>' + data.consulters.map(key).join('');
@@ -718,6 +871,25 @@ function updateMemoryLegend(data) {
       document.getElementById('graph-container').appendChild(overlay);
     }
 
+export function updateMemoryFocusBanner(data) {
+      const old = document.getElementById('memory-focus-banner');
+      if (old) old.remove();
+      if (state.activeView !== 'memory') return;
+      const meta = data.metadata || {};
+      const focused = Boolean(state.memoryFocusSession);
+      const hasMore = meta.next_topic_offset !== null && meta.next_topic_offset !== undefined;
+      if (!focused && !hasMore) return;
+      const banner = document.createElement('div');
+      banner.id = 'memory-focus-banner';
+      banner.className = 'memory-focus-banner';
+      banner.innerHTML = '<span id="memory-focus-topic-count">' + (focused ? 'Sesión enfocada · ' + escapeHtml(state.memoryFocusSession) : 'Proyecto') + ' · ' +
+        escapeHtml(String(meta.topic_returned ?? meta.topic_count ?? 0)) + '/' +
+        escapeHtml(String(meta.topic_total ?? meta.topic_count ?? 0)) + ' temas</span>' +
+        (hasMore ? '<button class="btn-link" onclick="loadMoreMemoryTopics()">Cargar más temas</button>' : '') +
+        (focused ? '<button class="btn-link" onclick="clearMemorySessionFocus()">Volver al proyecto</button>' : '');
+      document.getElementById('graph-container').appendChild(banner);
+    }
+
 export function refreshStyleInPlace() {
       if (!state.graphInst) return;
       if (state.activeDim === '2d') {
@@ -725,7 +897,7 @@ export function refreshStyleInPlace() {
         return;
       }
       if (state.graphStyle === 'standard') {
-        if (state.nodeShape === 'squares') {
+        if (state.activeView === 'memory' || state.nodeShape === 'squares') {
           apply3DStyle();
         } else {
           state.graphInst.nodeColor(n => nodeColor(n));
@@ -750,6 +922,11 @@ export function changeNodeShape() {
 export function changeNodeColor() {
       const nc = document.getElementById('node-color');
       state.nodeColorHex = nc ? nc.value : null;
+      if (state.activeView !== 'memory') {
+        state.activePalette = 'custom';
+        const palette = document.getElementById('palette-sel');
+        if (palette) palette.value = 'custom';
+      }
       refreshStyleInPlace();
     }
 
@@ -758,11 +935,17 @@ export function changeStyleColors() {
       const lc = document.getElementById('link-color');
       if (pc) state.pulseColorHex = pc.value;
       if (lc) state.linkColorHex = lc.value;
+      if (state.activeView !== 'memory') {
+        state.activePalette = 'custom';
+        const palette = document.getElementById('palette-sel');
+        if (palette) palette.value = 'custom';
+      }
       refreshStyleInPlace();
     }
 
 export function toggleVertexBlink(on) {
       state.vertexBlinkOn = on;
+      saveVisualPreferences();
       refreshStyleInPlace();
     }
 

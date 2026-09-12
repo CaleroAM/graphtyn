@@ -131,12 +131,44 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
         assert endpoint in memory
     assert 'id="memory-graph-btn"' in html and 'id="memory-agent-legend"' in html
     assert "showSharedMemoryGraph" in handlers and "agent_color" in (WEB / "js" / "painters.js").read_text()
+    assert 'id="memory-color-controls"' in html and 'id="memory-halo-color"' in html
+    assert 'class="memory-color-actions"' in html and ".memory-color-actions" in css
+    assert 'id="memory-palette-sel"' in html and 'value="custom">Personalizada' in html
+    assert html.count('value="custom">Personalizada') == 2
+    assert 'id="chk-radiance"' in html and 'toggleRadiance' in dashboard
+    assert 'Parpadeo de Vértices</span>' in html and 'Dibujo orgánico</span>' in html
+    assert "IDs de nodos" in (WEB / "js" / "graph.js").read_text()
+    assert "renderCommunityNodes" in dashboard and "renderCommunityNodes" in handlers
+    assert ".comm-node-id" in css and ".comm-node-details" in css
+    painters = (WEB / "js" / "painters.js").read_text()
+    styles = (WEB / "js" / "styles.js").read_text()
+    state = (WEB / "js" / "state.js").read_text()
+    graph = (WEB / "js" / "graph.js").read_text()
+    assert "state.radianceOn" in painters and "state.radianceOn" in styles
+    assert "state.vertexBlinkOn" in painters and "state.vertexBlinkOn" in styles
+    assert "graphInst.refresh" in styles
+    assert "linkHaloByDefault" in state and "MEMORY_CUSTOM_COLOR_KEY" in state
+    assert "particleProfile" in state and "particleProfile" in graph and "particleProfile" in styles
+    assert "linkDirectionalParticleOffset" in graph and "linkDirectionalParticleOffset" in styles
+    assert "activeLinkColor" in graph and "memoryLinkColor(l, linkBase)" in graph
+    assert "standard2DLinkColor" in graph and "standard2DLinkColor" in styles
+    assert 'loadMoreMemoryTopics' in dashboard and 'focusMemorySession' in dashboard
+    assert 'memoryFocusSession' in (WEB / "js" / "graph.js").read_text()
+    assert 'f97316' in (WEB / "js" / "state.js").read_text()
+    assert 'MEMORY_PALETTES' in (WEB / "js" / "state.js").read_text()
     assert 'id="btn-memory-view"' in html and "Memoria del proyecto" in html
     assert "state.activeView === 'memory'" in (WEB / "js" / "graph.js").read_text()
     assert "/api/memory/graph?path=" in (WEB / "js" / "graph.js").read_text()
     assert "textContent" in memory and "esc(" in memory
     assert ".memory-layout" in css and "grid-template-columns" in css
     assert 'id="memory-import-provider"' in html and 'id="memory-import-apply"' in html
+    for element_id in ("memory-sync-btn", "memory-sync-all-btn", "memory-enrich-retry-btn", "memory-watch-btn"):
+        assert f'id="{element_id}"' in html
+    for handler in ("syncMemorySpace", "syncAllMemorySpaces", "retryMemoryEnrichment", "toggleMemoryWatch"):
+        assert handler in memory and handler in dashboard and handler in handlers
+    for endpoint in ("/api/memory/sync", "/api/memory/watch"):
+        assert endpoint in memory
+    assert "retry_failed" in memory
     assert "/api/v1/imports/discover" in memory and "/api/v1/imports" in memory
     assert "discoverHistoricalMemory" in dashboard and "applyHistoricalMemory" in handlers
     assert "saveHistoricalSource" in memory and "testHistoricalSource" in handlers
