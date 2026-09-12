@@ -623,7 +623,7 @@ class TopicMemoryMixin:
             relation_args.extend(source_owner_args); relation_args.extend(target_owner_args)
             if authorized_agents is not None:
                 marks = ",".join("?" for _ in authorized_agents)
-                relation_scope = f" AND se.agent_id IN ({marks}) AND te.agent_id IN ({marks})"
+                relation_scope += f" AND se.agent_id IN ({marks}) AND te.agent_id IN ({marks})"
                 relation_args.extend(authorized_agents); relation_args.extend(authorized_agents)
             rows = db.execute("""SELECT DISTINCT r.*,s.title AS source_title,t.title AS target_title
                 FROM topic_relation_reviews r JOIN topics s ON s.id=r.source_topic_id

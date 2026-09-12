@@ -25,7 +25,8 @@ from .core.storage import data_home, project_store_dir, atomic_write_json
 from .core.type_evidence import provider_status
 from .core.global_graph import default_registry, list_projects, query_global, register_project, remove_project
 from .core.work_memory import attach_learning, reflect, save_result
-from .core.shared_memory import SharedMemoryStore
+from .core.shared_memory import (SharedMemoryStore, MemoryStoreConflictError,
+                                 existing_store_db)
 from .core.memory_benchmark import build_stability_dataset, run_memory_benchmark
 from .core.history_import import (discover_histories, import_histories, ProjectIdentityRegistry,
                                   configured_sources, save_source, import_history_archive,
@@ -520,6 +521,17 @@ def main():
     consolidate_p.add_argument("--apply", action="store_true", help="Ejecutar la migración; por defecto sólo previsualiza")
     consolidate_p.add_argument("--consent", action="store_true", help="Autoriza la copia al cerebro activo")
     consolidate_p.add_argument("--batch-size", type=int, default=100, help="Mensajes/recuerdos entre guardados de progreso")
+    scope_p = memory_sub.add_parser("scope", help="Consulta o administra la política de propietarios de un espacio")
+    scope_p.add_argument("action", choices=["show", "set"])
+    scope_p.add_argument("--path", required=True, help="Ruta del proyecto o cerebro registrado")
+    scope_p.add_argument("--space-type", choices=["project", "agent_brain", "container"], default=None)
+    scope_p.add_argument("--agent-id", action="append", default=[],
+                         help="Identidad canónica autorizada (repetible)")
+    scope_ids = scope_p.add_mutually_exclusive_group()
+    scope_ids.add_argument("--replace-agent-ids", action="store_true",
+                           help="Reemplaza la lista completa con los --agent-id proporcionados")
+    scope_ids.add_argument("--clear-agent-ids", action="store_true",
+                           help="Elimina explícitamente todos los propietarios autorizados")
     alias_imp_p = memory_sub.add_parser("alias-import", help="Importa alias de agentes en bloque")
     alias_imp_p.add_argument("--json-file", default=None, help='JSON {"alias":"canonico"}')
     alias_imp_p.add_argument("--pairs", default=None, help="Formato compacto: alias=identidad,otro=identidad")
@@ -1168,6 +1180,58 @@ def main():
             print(json.dumps(result, ensure_ascii=False, indent=2))
             if not result.get("ok", True):
                 raise SystemExit(1)
+        elif args.memory_action == "scope":
+            target = Path(args.path).expanduser().resolve()
+            registry = data_home() / "registered_projects.json"
+            try:
+                rows = json.loads(registry.read_text(encoding="utf-8")) if registry.is_file() else []
+            except (OSError, ValueError) as exc:
+                raise SystemExit(f"No se pudo leer el registro de espacios: {exc}")
+            if not isinstance(rows, list):
+                raise SystemExit("El registro registered_projects.json debe contener una lista")
+            current = next((row for row in rows if isinstance(row, dict) and row.get("path") and
+                            Path(str(row["path"])).expanduser().resolve() == target), None)
+            if args.action == "show":
+                if current is None:
+                    print(json.dumps({"ok": True, "registered": False, "path": str(target),
+                                      "message": "El espacio no tiene política registrada"},
+                                     ensure_ascii=False, indent=2))
+                else:
+                    raw_ids = current.get("agent_ids") or []
+                    agent_ids = raw_ids if isinstance(raw_ids, list) else []
+                    print(json.dumps({"ok": True, "registered": True, "id": current.get("id"),
+                                      "name": current.get("name"), "path": str(target),
+                                      "space_type": current.get("space_type") or "project",
+                                      "agent_ids": sorted({str(value).strip().casefold() for value in agent_ids
+                                                           if str(value).strip()})},
+                                     ensure_ascii=False, indent=2))
+            else:
+                if not target.is_dir():
+                    raise SystemExit(f"El espacio debe existir y ser un directorio: {target}")
+                if current is None and args.space_type is None:
+                    raise SystemExit("Un espacio nuevo requiere --space-type para registrar su alcance")
+                supplied = [str(value).strip().casefold() for value in args.agent_id if str(value).strip()]
+                if any(not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]{0,127}", value) for value in supplied):
+                    raise SystemExit("agent-id inválido; use la identidad canónica registrada")
+                raw_ids = (current or {}).get("agent_ids") or []
+                existing_ids = raw_ids if isinstance(raw_ids, list) else []
+                if args.clear_agent_ids:
+                    owners = []
+                elif args.replace_agent_ids:
+                    owners = sorted(set(supplied))
+                else:
+                    owners = sorted({str(value).strip().casefold() for value in existing_ids
+                                     if str(value).strip()} | set(supplied))
+                if current is None:
+                    current = {"id": target.name, "name": target.name, "path": str(target),
+                               "mode": "single_folder"}
+                    rows.append(current)
+                current.update({"path": str(target), "space_type": args.space_type or
+                                current.get("space_type") or "project", "agent_ids": owners})
+                atomic_write_json(registry, rows)
+                print(json.dumps({"ok": True, "registered": True, "path": str(target),
+                                  "space_type": current["space_type"], "agent_ids": owners,
+                                  "registry": str(registry)}, ensure_ascii=False, indent=2))
         elif args.memory_action == "alias-import":
             memory = SharedMemoryStore(Path(args.path).expanduser().resolve())
             pairs: dict[str, str] = {}
@@ -1248,25 +1312,106 @@ def main():
                               "projects": ProjectIdentityRegistry().list()}, ensure_ascii=False, indent=2))
         elif args.memory_action == "sync":
             from .core.openclaw_integration import paths_for_installation
+
+            def discover_all_space_targets():
+                candidates: list[Path] = []
+                conflicts: list[dict[str, str]] = []
+                for project in ProjectIdentityRegistry().list():
+                    if not isinstance(project, dict) or project.get("legacy"):
+                        continue
+                    for raw in project.get("paths", []):
+                        try:
+                            candidates.append(Path(str(raw)).expanduser().resolve())
+                        except (OSError, RuntimeError, ValueError) as exc:
+                            conflicts.append({"ok": False, "path": str(raw),
+                                              "code": "invalid_memory_path", "error": str(exc)})
+
+                registry = data_home() / "registered_projects.json"
+                try:
+                    registrations = json.loads(registry.read_text(encoding="utf-8")) if registry.is_file() else []
+                except (OSError, ValueError) as exc:
+                    registrations = []
+                    conflicts.append({"ok": False, "path": str(registry),
+                                      "code": "memory_registry_error", "error": str(exc)})
+                if not isinstance(registrations, list):
+                    registrations = []
+                    conflicts.append({"ok": False, "path": str(registry),
+                                      "code": "memory_registry_error",
+                                      "error": "registered_projects.json debe contener una lista"})
+                for row in registrations:
+                    if not isinstance(row, dict) or not row.get("path") or row.get("legacy") or                             row.get("mode") == "master_folder":
+                        continue
+                    try:
+                        candidates.append(Path(str(row["path"])).expanduser().resolve())
+                    except (OSError, RuntimeError, ValueError) as exc:
+                        conflicts.append({"ok": False, "path": str(row.get("path") or ""),
+                                          "code": "invalid_memory_path", "error": str(exc)})
+
+                associated: set[Path] = set()
+                for row in configured_sources():
+                    raw = row.get("project_path")
+                    if not raw:
+                        continue
+                    try:
+                        associated.add(Path(str(raw)).expanduser().resolve())
+                    except (OSError, RuntimeError, ValueError) as exc:
+                        conflicts.append({"ok": False, "path": str(raw),
+                                          "code": "invalid_memory_path", "error": str(exc)})
+                candidates.extend(associated)
+
+                targets: list[Path] = []
+                for path in dict.fromkeys(candidates):
+                    if not path.is_dir():
+                        continue
+                    try:
+                        has_store = bool(existing_store_db(path))
+                    except MemoryStoreConflictError as exc:
+                        conflicts.append({"ok": False, "path": str(path),
+                                          "code": "memory_store_conflict", "error": str(exc)})
+                        continue
+                    if path in associated or has_store:
+                        targets.append(path)
+                return targets, conflicts
+
             def sync_targets():
                 if args.installation:
                     return [Path(item).expanduser().resolve()
                             for item in paths_for_installation(args.installation)]
                 if args.all_spaces:
-                    registry = ProjectIdentityRegistry()
-                    paths = [Path(item).expanduser().resolve() for project in registry.list()
-                             for item in project.get("paths", [])]
-                    return list(dict.fromkeys(paths))
+                    return discover_all_space_targets()[0]
                 return [Path(args.path).expanduser().resolve()]
 
-            def sync_once():
-                if args.all_spaces or args.installation:
-                    return {"ok": True, "spaces": [sync_memory_workspace(path, provider=args.provider,
-                        source=args.source or None, provider_model=args.provider_model,
-                        agent_id=args.agent_id) for path in sync_targets()]}
-                return sync_memory_workspace(Path(args.path), provider=args.provider,
+            def sync_path(path: Path):
+                return sync_memory_workspace(path, provider=args.provider,
                     source=args.source or None, provider_model=args.provider_model,
                     agent_id=args.agent_id)
+
+            def sync_once():
+                if args.installation:
+                    results = []
+                    for path in sync_targets():
+                        try:
+                            results.append(sync_path(path))
+                        except MemoryStoreConflictError as exc:
+                            results.append({"ok": False, "path": str(path),
+                                            "code": "memory_store_conflict", "error": str(exc)})
+                    return {"ok": all(item.get("ok", False) for item in results),
+                            "spaces": results, "space_count": len(results),
+                            "failed_spaces": sum(not item.get("ok", False) for item in results)}
+                if args.all_spaces:
+                    paths, conflicts = discover_all_space_targets()
+                    results = [{"ok": False, **item} for item in conflicts]
+                    for path in paths:
+                        try:
+                            results.append(sync_path(path))
+                        except MemoryStoreConflictError as exc:
+                            results.append({"ok": False, "path": str(path),
+                                            "code": "memory_store_conflict", "error": str(exc)})
+                    return {"ok": all(item.get("ok", False) for item in results),
+                            "spaces": results, "space_count": len(results),
+                            "failed_spaces": sum(not item.get("ok", False) for item in results)}
+                return sync_path(Path(args.path).expanduser().resolve())
+
             if not args.watch:
                 print(json.dumps(sync_once(), ensure_ascii=False, indent=2))
             else:

@@ -13,6 +13,73 @@ from .type_evidence import apply_type_evidence
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
 _MEDIA_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg")
+_DOC_SECRET_RE = re.compile(
+    r"(?i)\b(api[_-]?key|secret|password|passwd|access[_-]?token)\b(\s*[:=]\s*)([^\s,;]+)"
+)
+_DOC_BEARER_RE = re.compile(r"(?i)(\bauthorization\s*:\s*bearer\s+)[A-Za-z0-9._~+/=-]+")
+
+
+def _documentation_sections(content: str, suffix: str, max_chars: int = 1800):
+    """Yield bounded, source-located documentation chunks for local retrieval."""
+    lines = content.splitlines()
+    sections: list[tuple[str, int, int, list[str]]] = []
+    title, start, body = "", 1, []
+    for index, line in enumerate(lines):
+        markdown = re.match(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$", line)
+        rst = (suffix == ".rst" and index + 1 < len(lines) and
+               bool(re.fullmatch(r"\s*[=~`:#*+\-^\"']{3,}\s*", lines[index + 1])) and line.strip())
+        is_heading = bool(markdown or rst)
+        if is_heading and body:
+            sections.append((title, start, index, body))
+            body = []
+        if markdown:
+            title = markdown.group(2).strip()
+            start = index + 1
+        elif rst:
+            title = line.strip()
+            start = index + 1
+        if not body and not is_heading:
+            start = index + 1
+        body.append(line)
+    if body:
+        sections.append((title, start, len(lines), body))
+
+    ordinal = 0
+    for section_title, section_start, _section_end, section_lines in sections:
+        text = "\n".join(section_lines).strip()
+        if not text:
+            continue
+        # Redact obvious inline credentials before graph persistence and embedding.
+        text = _DOC_SECRET_RE.sub(lambda match: f"{match.group(1)}{match.group(2)}[REDACTED]", text)
+        text = _DOC_BEARER_RE.sub(r"\1[REDACTED]", text)
+        chunks: list[tuple[str, int, int]] = []
+        current: list[str] = []
+        current_size = 0
+        current_start = section_start
+        for offset, line in enumerate(text.splitlines()):
+            line_number = section_start + offset
+            remaining = line
+            while len(remaining) > max_chars:
+                if current:
+                    chunks.append(("\n".join(current), current_start, line_number))
+                    current, current_size = [], 0
+                chunks.append((remaining[:max_chars], line_number, line_number))
+                remaining = remaining[max_chars:]
+            addition = len(remaining) + (1 if current else 0)
+            if current_size + addition > max_chars and current:
+                chunks.append(("\n".join(current), current_start, line_number - 1))
+                current, current_size = [], 0
+                current_start = line_number
+            elif not current:
+                current_start = line_number
+            current.append(remaining)
+            current_size += len(remaining) + (1 if current_size else 0)
+        if current:
+            chunks.append(("\n".join(current), current_start, section_start + len(section_lines) - 1))
+        for chunk_text, line_start, line_end in chunks:
+            ordinal += 1
+            heading = section_title or "Documento"
+            yield ordinal, heading, line_start, max(line_start, line_end), chunk_text
 
 VALID_EXTS = (
     ".py", ".cs", ".php", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".h", ".hpp",
@@ -504,6 +571,19 @@ class ASTParser:
             try:
                 content = path.read_text(encoding="utf-8", errors="ignore")
                 file_contents[rel_file] = content
+                for ordinal, heading, line_start, line_end, chunk_text in _documentation_sections(content, path.suffix.lower()):
+                    section_id = f"documentation:{rel_file}:{ordinal:04d}"
+                    if section_id in node_ids:
+                        continue
+                    nodes.append({
+                        "id": section_id, "name": heading[:180], "kind": "documentation_section",
+                        "file": rel_file, "line_start": line_start, "line_end": line_end,
+                        "val": 2, "color": "#22c55e",
+                        "details": f"{rel_file}:{line_start}-{line_end}\n{chunk_text}",
+                    })
+                    node_ids.add(section_id)
+                    links.append({"source": f_id, "target": section_id, "label": "contiene",
+                                  "color": "rgba(34, 197, 94, 0.28)", "confidence": "EXTRACTED"})
                 base = str(Path(rel_file).parent)
                 seen_targets: Set[str] = set()
                 for target in re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", content):

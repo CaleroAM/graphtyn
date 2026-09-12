@@ -558,7 +558,7 @@ def test_memory_sync_job_runs_each_registered_space(tmp_path, monkeypatch):
     first.mkdir(); second.mkdir()
     manager = MemoryJobManager(tmp_path / "jobs")
     monkeypatch.setattr(api_main, "memory_jobs", manager)
-    monkeypatch.setattr(api_main, "_registered_memory_paths", lambda: [first, second])
+    monkeypatch.setattr(api_main, "_registered_memory_paths_checked", lambda: ([first, second], []))
     calls = []
 
     def fake_sync(path, **kwargs):
@@ -656,3 +656,34 @@ def test_legacy_memory_archives_are_excluded_from_sync_and_watch(tmp_path, monke
     watch = api_main.memory_watch({"path": str(archive), "consent": True, "enabled": True})
     assert sync.status_code == 409 and sync.body
     assert watch.status_code == 409 and watch.body
+
+
+
+def test_registered_memory_sync_conflicts_are_reported_without_blocking_other_spaces(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    healthy, conflicted = tmp_path / "healthy-brain", tmp_path / "conflicted-brain"
+    healthy.mkdir(); conflicted.mkdir()
+    manager = MemoryJobManager(tmp_path / "jobs")
+    monkeypatch.setattr(api_main, "memory_jobs", manager)
+    monkeypatch.setattr(api_main, "_registered_memory_paths_checked", lambda: ([healthy], [{
+        "path": str(conflicted), "code": "memory_store_conflict", "error": "duplicate store"}]))
+    calls = []
+
+    def fake_sync(path, **_kwargs):
+        calls.append(str(path))
+        return {"ok": True, "path": str(path), "errors": []}
+
+    monkeypatch.setattr(api_main, "sync_memory_workspace", fake_sync)
+    response = api_main.memory_sync({"all_spaces": True, "consent": True}, authorization=None)
+    job_id = response["job"]["id"]
+    deadline = time.time() + 2
+    while time.time() < deadline and manager.get(job_id)["status"] in {"pending", "running"}:
+        time.sleep(.01)
+    job = manager.get(job_id)
+
+    assert calls == [str(healthy)]
+    assert job["status"] == "completed"
+    assert job["result"]["ok"] is False
+    assert len(job["result"]["spaces"]) == 2
+    assert job["result"]["spaces"][0]["code"] == "memory_store_conflict"
+    assert job["result"]["spaces"][1]["path"] == str(healthy)

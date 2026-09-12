@@ -38,6 +38,31 @@ def test_scan_directory():
         assert file_node["out_degree"] >= 2  # contains Core class and run method
         assert file_node["val"] > 5  # Base val 5 + degree * 0.4
 
+
+def test_markdown_sections_become_located_searchable_nodes_and_redact_credentials(tmp_path):
+    from graphtyn.core.semantic_index import semantic_search
+
+    readme = tmp_path / "README.md"
+    readme.write_text(
+        "# CRM\n\n## Reportes\nEl botón de reportes usa color turquesa y conserva el filtro mensual.\n\n"
+        "## Operadores\nLa pantalla de operadores valida permisos por rol.\n\n"
+        "api_key = super-secret-value\n",
+        encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    sections = [node for node in graph["nodes"] if node.get("kind") == "documentation_section"]
+    hits = semantic_search(graph, "color turquesa botón reportes")
+
+    assert len(sections) >= 3
+    report = next(node for node in sections if node["name"] == "Reportes")
+    assert report["file"] == "README.md"
+    assert report["line_start"] <= report["line_end"]
+    assert "conserva el filtro mensual" in report["details"]
+    assert any(hit["node"]["id"] == report["id"] for hit in hits)
+    assert "super-secret-value" not in " ".join(node["details"] for node in sections)
+    assert "[REDACTED]" in " ".join(node["details"] for node in sections)
+
 def test_agent_topology_graph_degrees():
     parser = ASTParser()
     graph = parser.get_agent_topology_graph()

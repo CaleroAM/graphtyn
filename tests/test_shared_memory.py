@@ -198,6 +198,72 @@ def test_unregistered_brain_init_persists_registration_and_exact_owner(tmp_path,
         store.start_session("openclaw/career", "identidad distinta")
 
 
+def test_memory_scope_cli_manages_owner_policy_without_overwriting_registration(tmp_path):
+    state, brain = tmp_path / "state", tmp_path / "evi-brain"
+    brain.mkdir()
+    state.mkdir()
+    registry = state / "registered_projects.json"
+    registry.write_text(json.dumps([{"id": "evi", "name": "Evi", "path": str(brain),
+        "mode": "single_folder", "space_type": "agent_brain",
+        "agent_ids": ["openclaw/main"], "custom_metadata": "preserve"}]), encoding="utf-8")
+    env = dict(os.environ, GRAPHTYN_HOME=str(state))
+
+    subprocess.run([sys.executable, "-m", "graphtyn.cli", "memory", "scope", "set",
+        "--path", str(brain), "--agent-id", "openclaw/eve"], env=env, capture_output=True, text=True, check=True)
+    current = json.loads(registry.read_text(encoding="utf-8"))[0]
+    assert current["agent_ids"] == ["openclaw/eve", "openclaw/main"]
+    assert current["custom_metadata"] == "preserve"
+
+    replaced = subprocess.run([sys.executable, "-m", "graphtyn.cli", "memory", "scope", "set",
+        "--path", str(brain), "--replace-agent-ids", "--agent-id", "openclaw/nex"],
+        env=env, capture_output=True, text=True, check=True)
+    assert json.loads(replaced.stdout)["agent_ids"] == ["openclaw/nex"]
+    shown = subprocess.run([sys.executable, "-m", "graphtyn.cli", "memory", "scope", "show",
+        "--path", str(brain)], env=env, capture_output=True, text=True, check=True)
+    assert json.loads(shown.stdout)["space_type"] == "agent_brain"
+
+    subprocess.run([sys.executable, "-m", "graphtyn.cli", "memory", "scope", "set",
+        "--path", str(brain), "--clear-agent-ids"], env=env, capture_output=True, text=True, check=True)
+    assert json.loads(registry.read_text(encoding="utf-8"))[0]["agent_ids"] == []
+
+
+def test_cli_sync_all_spaces_surfaces_store_conflict_and_continues(tmp_path, monkeypatch, capsys):
+    from graphtyn import cli
+
+    conflict, healthy = tmp_path / "conflict", tmp_path / "healthy"
+    conflict.mkdir(); healthy.mkdir()
+    state = tmp_path / "state"
+    state.mkdir()
+    (state / "registered_projects.json").write_text(json.dumps([
+        {"id": "brain-one", "path": str(conflict), "space_type": "agent_brain",
+         "agent_ids": ["openclaw/evi"]},
+        {"id": "brain-two", "path": str(healthy), "space_type": "agent_brain",
+         "agent_ids": ["openclaw/eve"]},
+    ]), encoding="utf-8")
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+
+    class Registry:
+        def list(self):
+            return []
+
+    monkeypatch.setattr(cli, "ProjectIdentityRegistry", Registry)
+    monkeypatch.setattr(cli, "existing_store_db", lambda path: Path(path) / "memory-v2.db")
+    def sync(path, **_kwargs):
+        if Path(path) == conflict:
+            raise memory_store_module.MemoryStoreConflictError("duplicate store")
+        return {"ok": True, "path": str(path)}
+    monkeypatch.setattr(cli, "sync_memory_workspace", sync)
+    monkeypatch.setattr(sys, "argv", ["graphtyn", "memory", "sync", "--all-spaces", "--consent"])
+
+    cli.main()
+    result = json.loads(capsys.readouterr().out)
+
+    assert result["ok"] is False
+    assert result["space_count"] == 2 and result["failed_spaces"] == 1
+    assert result["spaces"][0]["code"] == "memory_store_conflict"
+    assert result["spaces"][1]["ok"] is True
+
+
 def test_store_resolution_rejects_local_and_central_duplicates(tmp_path, monkeypatch):
     monkeypatch.delenv("GRAPHTYN_HOME", raising=False)
     state = tmp_path / "home"

@@ -8,7 +8,7 @@ import pytest
 from graphtyn.core.history_import import (
     ProjectIdentityRegistry, discover_histories, import_histories, parse_history_file,
     parse_history_database, configured_sources, save_source, _materialize_source,
-    import_history_archive,
+    import_history_archive, default_sources,
 )
 from graphtyn.core.memory_jobs import MemoryJobManager
 from graphtyn.core.shared_memory import SharedMemoryStore
@@ -42,6 +42,73 @@ def test_openclaw_history_discovery_preserves_attribution(tmp_path):
     assert sessions[0].workspace.endswith("UnityCommerceDemo")
     assert discovered["count"] == 1
     assert discovered["sessions"][0]["fingerprint"]
+
+
+def test_openclaw_trajectory_pointer_only_imports_canonical_transcript(tmp_path):
+    agents = tmp_path / "agents"
+    sessions = agents / "agent-z" / "sessions"
+    sessions.mkdir(parents=True)
+    transcript = sessions / "canonical.jsonl"
+    transcript.write_text(json.dumps({"sessionId": "session-z", "messages": [
+        {"id": "user-1", "role": "user", "content": "Cambiar el color del botón de Reportes"},
+        {"id": "assistant-1", "role": "assistant", "content": "Revisaré el componente del reporte."},
+    ]}) + "\n", encoding="utf-8")
+    trace = sessions / "runtime.trajectory.jsonl"
+    trace.write_text("\n".join([
+        json.dumps({"type": "prompt.submitted", "data": {"prompt": "TRACE_SECRET_PROMPT_COPY"}}),
+        json.dumps({"type": "session.started", "data": {"sessionFile": str(transcript)}}),
+        json.dumps({"type": "model.completed", "data": {"messages": [{"content": "TRACE_TOOL_COPY"}]}}),
+    ]) + "\n", encoding="utf-8")
+    (sessions / "session.trajectory-path.json").write_text(
+        json.dumps({"runtimeFile": str(trace), "sessionId": "session-z", "schemaVersion": 1}),
+        encoding="utf-8")
+
+    discovered = discover_histories("openclaw", [str(agents)])
+
+    assert discovered["count"] == 1
+    session = discovered["sessions"][0]
+    assert session["agent_id"] == "openclaw/agent-z"
+    assert session["external_session_id"] == "session-z"
+    assert session["source"] == str(transcript)
+    assert session["message_count"] == 2
+    # Discovery is streaming: content is reread from the canonical transcript
+    # only during import, rather than copied into the preview response.
+    parsed = parse_history_file(transcript, "openclaw")
+    assert [message["content"] for message in parsed[0].messages] == [
+        "Cambiar el color del botón de Reportes", "Revisaré el componente del reporte."]
+    assert all("TRACE_" not in message["content"] for message in session["messages"])
+    assert parsed[0].messages[0]["metadata"]["source_message_id"] == "user-1"
+
+
+def test_openclaw_pointer_cannot_escape_selected_source(tmp_path):
+    agents = tmp_path / "agents"
+    sessions = agents / "agent-z" / "sessions"
+    sessions.mkdir(parents=True)
+    outside = tmp_path / "outside.jsonl"
+    outside.write_text(json.dumps({"sessionId": "outside", "messages": [
+        {"role": "user", "content": "do not import"}]}), encoding="utf-8")
+    trace = sessions / "runtime.trajectory.jsonl"
+    trace.write_text(json.dumps({"type": "session.started", "data": {"sessionFile": str(outside)}}) + "\n",
+                      encoding="utf-8")
+    (sessions / "session.trajectory-path.json").write_text(json.dumps({"runtimeFile": str(trace)}),
+                                                           encoding="utf-8")
+
+    discovered = discover_histories("openclaw", [str(agents)])
+
+    assert discovered["count"] == 0
+    assert discovered["warnings"]
+
+
+def test_openclaw_default_sources_include_custom_runtime_roots(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENCLAW_STATE_DIR", str(tmp_path / "state"))
+    monkeypatch.setenv("OPENCLAW_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("OPENCLAW_CONFIG_PATH", str(tmp_path / "config" / "openclaw.json"))
+
+    sources = default_sources()["openclaw"]
+
+    assert tmp_path / "state" / "agents" in sources
+    assert tmp_path / "home" / "agents" in sources
+    assert tmp_path / "config" / "agents" in sources
 
 
 def test_discovery_ignores_skill_templates_that_look_like_conversations(tmp_path):
@@ -439,3 +506,24 @@ def test_optional_memory_encryption_hides_plaintext_at_rest(tmp_path, monkeypatc
     assert b"private implementation phrase" not in raw
     assert store.get_message(message["id"], "codex")["content"] == "private roadmap phrase"
     assert store.get(memory["id"], "codex")["content"] == "private implementation phrase"
+
+
+
+def test_memory_bootstrap_preview_uses_module_level_history_imports(tmp_path, monkeypatch, capsys):
+    from graphtyn import cli
+
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    source = tmp_path / "empty-openclaw-history"
+    workspace = tmp_path / "workspace"
+    source.mkdir()
+    workspace.mkdir()
+    monkeypatch.setattr("sys.argv", [
+        "graphtyn", "memory", "bootstrap", "--provider", "openclaw",
+        "--source", str(source), "--path", str(workspace),
+    ])
+
+    cli.main()
+
+    result = json.loads(capsys.readouterr().out)
+    assert result["dry_run"] is True
+    assert result["count"] == 0

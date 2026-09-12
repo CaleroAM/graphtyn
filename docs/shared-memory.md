@@ -15,6 +15,14 @@ las herramientas de memoria, sincronización local o importar un transcript. La 
 no elimina lo persistido. El embedding sólo se repite si cambia el contenido o el
 modelo.
 
+La memoria conversacional y el RAG documental son fuentes distintas. Para
+documentación del repositorio, el parser crea nodos `documentation_section` con
+archivo y líneas de origen; `graph_search_concepts` recupera sus fragmentos con
+búsqueda léxica y embeddings locales. Si Ollama está configurado, se usa ese
+modelo local; sin Ollama, el índice de características hash sigue funcionando,
+sin enviar documentos a una API externa. La búsqueda documental opera sobre el
+espacio indicado por `path`; no descubre ni combina otros proyectos por sí sola.
+
 ## Operación portable
 
 Durante la instalación, `graphtyn setup --apply` pregunta si se desea activar la
@@ -92,7 +100,16 @@ graphtyn memory doctor --path .
 graphtyn memory search --path . --query "decisión de autenticación"
 graphtyn memory context --path . --query "cambio de autenticación"
 graphtyn memory benchmark --path .
+graphtyn memory scope show --path /ruta/al/cerebro
+graphtyn memory scope set --path /ruta/al/cerebro --space-type agent_brain --agent-id openclaw/main
 ```
+
+`memory scope set` agrega propietarios explícitos por defecto; `--replace-agent-ids`
+reemplaza la lista y `--clear-agent-ids` la vacía de forma deliberada. MCP stdio
+y HTTP exponen `memory_status`; HTTP requiere pasar el path del espacio para que
+la consulta no caiga en un almacén por defecto. `memory sync --all-spaces`
+continúa con los demás espacios si detecta una base local/central duplicada y
+deja ese conflicto asociado sólo al espacio afectado.
 
 El contrato MCP, seguridad y modelo de datos están en
 [`shared_semantic_memory_plan.md`](shared_semantic_memory_plan.md).
@@ -113,6 +130,11 @@ OpenClaw también puede guardar el transcript canónico en
 roles e IDs nativos) y no depende de la tabla FTS derivada. Esto permite importar
 sesiones creadas después de la migración de OpenClaw sin confundir el índice de
 búsqueda con la fuente de conversación.
+En archivos JSONL, la detección revisa también `OPENCLAW_STATE_DIR`,
+`OPENCLAW_HOME`, `OPENCLAW_CONFIG_PATH` y `*.trajectory-path.json`. Los punteros
+se resuelven dentro de la fuente seleccionada; del trace sólo se lee
+`session.started.data.sessionFile`, nunca mensajes, prompts ni resultados de
+herramientas del registro técnico.
 Las fechas originales se conservan separadas de la fecha de ingesta.
 Cuando cambió la ruta del proyecto, `memory projects --path . --alias
 /ruta/histórica` registra la equivalencia explícita antes de importar; una ruta

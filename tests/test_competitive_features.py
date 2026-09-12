@@ -383,3 +383,110 @@ def test_intent_prioritizes_named_component_file_and_security_operations():
     selected = [node["id"] for node in result["nodes"]]
     assert "method:call" in selected and "method:send" in selected
     assert "method:delete" not in selected
+
+
+
+def test_http_mcp_memory_status_requires_explicit_path_and_reports_scope(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "status-secret")
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", tmp_path / "graphtyn-home" / "registered_projects.json")
+    brain = tmp_path / "brain-evi"
+    brain.mkdir()
+    api_main.REGISTRATION_FILE.parent.mkdir(parents=True)
+    api_main.REGISTRATION_FILE.write_text(json.dumps([{
+        "id": "evi", "path": str(brain), "space_type": "agent_brain",
+        "agent_ids": ["openclaw/main"],
+    }]), encoding="utf-8")
+    store = SharedMemoryStore(brain)
+    store.ingest_turn("openclaw/main", "status-session", "CRM reports", [
+        {"role": "user", "content": "Change the report button color"},
+        {"role": "assistant", "content": "I will update the report button."},
+    ], consent=True, provider="deterministic")
+
+    missing_path = api_main.mcp_http({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+        "params": {"name": "memory_status", "arguments": {}}}, authorization="Bearer status-secret")
+    response = api_main.mcp_http({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+        "params": {"name": "memory_status", "arguments": {"path": str(brain)}}},
+        authorization="Bearer status-secret")
+    status = json.loads(json.loads(response.body)["result"]["content"][0]["text"])
+
+    assert missing_path.status_code == 200
+    assert json.loads(missing_path.body)["error"]["code"] == -32602
+    assert response.status_code == 200
+    assert status["path"] == str(brain.resolve())
+    assert status["memory_space"]["agent_ids"] == ["openclaw/main"]
+    assert status["sessions"] == 1
+    assert "topic_coverage" in status
+
+
+def test_http_mcp_graph_search_retrieves_markdown_sections(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "docs-secret")
+    monkeypatch.setattr(api_main, "_index_dir", lambda root: tmp_path / "index" / root.name)
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "README.md").write_text(
+        "# CRM\n\n## Reportes\nEl botón de reportes mantiene el filtro mensual y usa color turquesa.\n\n"
+        "## Operadores\nLa pantalla de operadores valida permisos por rol.\n", encoding="utf-8")
+
+    response = api_main.mcp_http({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+        "params": {"name": "graph_search_concepts", "arguments": {
+            "path": str(project), "query": "color turquesa botón reportes", "limit": 5,
+        }}}, authorization="Bearer docs-secret")
+    data = json.loads(json.loads(response.body)["result"]["content"][0]["text"])
+
+    assert response.status_code == 200
+    assert data["retrieval"] == "lexical + local semantic embeddings"
+    section = next(match["node"] for match in data["matches"]
+                   if match["node"].get("kind") == "documentation_section")
+    assert section["name"] == "Reportes"
+    assert section["file"] == "README.md"
+
+
+def test_http_mcp_memory_context_returns_imported_topics_with_scope_and_limit(tmp_path, monkeypatch):
+    home = tmp_path / "graphtyn-home"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(home))
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "context-secret")
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", home / "registered_projects.json")
+    api_main._RATE_EVENTS.clear()
+    home.mkdir()
+    brain = tmp_path / "brain-evi"
+    brain.mkdir()
+    (home / "registered_projects.json").write_text(json.dumps([{
+        "id": "brain-evi", "path": str(brain), "space_type": "agent_brain",
+        "agent_ids": ["openclaw/main"],
+    }]), encoding="utf-8")
+    store = SharedMemoryStore(brain)
+    for external_id, content in (
+        ("session-report", "Cambiar el botón de reportes del CRM a color azul"),
+        ("session-operators", "Cambiar el botón de operadores del CRM a color verde"),
+    ):
+        store.ingest_turn("openclaw/main", external_id, "Cambios visuales CRM", [
+            {"role": "user", "content": content},
+            {"role": "assistant", "content": "La petición quedó registrada para implementación."},
+        ], consent=True, provider="deterministic")
+
+    response = api_main.mcp_http({"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+        "params": {"name": "memory_context", "arguments": {
+            "path": str(brain), "query": "botón CRM", "requester_agent": "openclaw/main",
+            "limit": 1, "token_budget": 1200, "include_graph": False,
+        }}}, authorization="Bearer context-secret")
+    body = json.loads(response.body)
+    context = json.loads(body["result"]["content"][0]["text"])
+
+    assert response.status_code == 200 and "error" not in body
+    assert len(context["topics"]) == 1
+    assert context["episodes"] and {episode["agent_id"] for episode in context["episodes"]} == {"openclaw/main"}
+    assert context["episodes"][0]["message_ids"]
+    assert context["message_references"]
+    assert context["coverage"]["processed"] >= 2
+    assert context["graph_neighbors"] == []
+
+
+
+def test_http_mcp_memory_context_schema_exposes_bounded_graph_controls(monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "schema-secret")
+    response = api_main.mcp_http({"jsonrpc": "2.0", "id": 9, "method": "tools/list"},
+                                 authorization="Bearer schema-secret")
+    body = json.loads(response.body)
+    context = next(tool for tool in body["result"]["tools"] if tool["name"] == "memory_context")
+    assert {"limit", "include_graph", "neighbor_limit"} <= set(context["inputSchema"]["properties"])
