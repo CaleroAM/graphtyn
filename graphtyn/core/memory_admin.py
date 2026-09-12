@@ -9,6 +9,7 @@ import sqlite3
 import tempfile
 import time
 import zipfile
+from contextlib import closing
 from pathlib import Path
 
 from .shared_memory import (SharedMemoryStore, _resolve_store_path,
@@ -82,18 +83,18 @@ def restore_memory(workspace: Path, backup: Path, *, apply: bool = False) -> dic
                 shutil.copyfileobj(source, target, length=1024 * 1024)
         if _sha256_file(incoming) != check["manifest"].get("database_sha256"):
             raise ValueError("checksum de backup inválido")
-        with sqlite3.connect(incoming) as source:
+        with closing(sqlite3.connect(incoming)) as source:
             integrity = source.execute("PRAGMA integrity_check").fetchone()[0]
             if integrity != "ok":
                 raise ValueError("la base de datos del backup no supera integrity_check")
         with exclusive_store_access(db_path):
             if db_path.is_file():
                 safety_tmp = safety.with_suffix(safety.suffix + ".tmp")
-                with sqlite3.connect(db_path) as source, sqlite3.connect(safety_tmp) as target:
+                with closing(sqlite3.connect(db_path)) as source, closing(sqlite3.connect(safety_tmp)) as target:
                     source.backup(target)
                 os.replace(safety_tmp, safety)
                 safety.chmod(0o600)
-            with sqlite3.connect(incoming) as source, sqlite3.connect(db_path) as target:
+            with closing(sqlite3.connect(incoming)) as source, closing(sqlite3.connect(db_path)) as target:
                 source.backup(target)
                 target.execute("PRAGMA wal_checkpoint(TRUNCATE)")
                 integrity = target.execute("PRAGMA integrity_check").fetchone()[0]
