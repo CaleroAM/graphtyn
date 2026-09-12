@@ -25,6 +25,11 @@
   pasó todos los trabajos CI, incluida la matriz Python 3.10–3.13, Windows,
   navegador, paquete, seguridad y Docker
   ([ejecución](https://github.com/CaleroAM/graphtyn/actions/runs/34720900070)).
+- La etiqueta `v0.10.0` apunta al commit `eef7142`; su CI y el workflow de
+  publicación pasaron ([CI del tag](https://github.com/CaleroAM/graphtyn/actions/runs/34722164040),
+  [release](https://github.com/CaleroAM/graphtyn/actions/runs/34722164037)).
+- Se corrigió el `SHA256SUMS` publicado para usar nombres de asset descargados;
+  la verificación pasó después de descargar los cuatro artefactos de nuevo.
 
 La publicación se distribuye por GitHub Releases. PyPI permanece deshabilitado.
 El workflow de release espera CI satisfactoria para el SHA exacto de la etiqueta

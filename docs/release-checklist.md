@@ -17,6 +17,7 @@
 - [ ] `docs/CHANGELOG.md` describe límites y cambios reales.
 - [ ] README no promete destinos de instalación aún inexistentes.
 - [ ] Artefactos y hashes se adjuntan a la release.
+- [ ] Descargar los assets de la release y verificar `SHA256SUMS` desde esa carpeta.
 - [ ] PyPI Trusted Publishing está configurado antes de habilitar publicación.
 - [ ] Se revisan vulnerabilidades y dependencias del artefacto final.
 

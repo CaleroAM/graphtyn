@@ -29,6 +29,8 @@ Sin cambios registrados.
 - Las candidatas de relación conservan el alcance del propietario además de los
   filtros de agentes autorizados.
 - Las respuestas de episodios incluyen identificadores de mensajes fuente.
+- `SHA256SUMS` usa nombres relativos a los assets descargados para que pueda
+  verificarse directamente desde la carpeta de descarga.
 
 ## [0.9.0] - 2026-09-12
 
