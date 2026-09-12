@@ -6,6 +6,8 @@ import argparse
 import subprocess
 import urllib.request
 import time
+import re
+import signal
 from pathlib import Path
 
 from . import __version__
@@ -67,6 +69,52 @@ def bfs_path(graph: dict, start_sym: str, end_sym: str):
                 queue.append(path + [nxt])
     return None
 
+
+def _install_openclaw_capture_service(installation_id: str, interval: float = 300) -> dict:
+    """Enable the per-install OpenClaw history watcher under systemd --user."""
+    if not re.fullmatch(r"openclaw-[a-f0-9]{16}", installation_id):
+        return {"ok": False, "active": False, "error": "id de instalación inválido"}
+    suffix = installation_id.removeprefix("openclaw-")
+    unit_name = f"graphtyn-openclaw-{suffix}.service"
+    unit_dir = Path.home() / ".config" / "systemd" / "user"
+    unit_dir.mkdir(parents=True, exist_ok=True)
+    home = str(data_home().resolve()).replace("\\", "\\\\").replace('"', '\\"')
+    # Keep the venv symlink path: resolving it may escape into a system Python
+    # that does not have Graphtyn installed (common with Nix).
+    python = str(Path(sys.executable)).replace("\\", "\\\\").replace('"', '\\"')
+    interval = max(30, min(3600, int(interval)))
+    content = "\n".join([
+        "[Unit]", "Description=Graphtyn OpenClaw conversation capture",
+        "After=network-online.target", "Wants=network-online.target", "",
+        "[Service]", "Type=simple", "Restart=on-failure", "RestartSec=15",
+        f'Environment="GRAPHTYN_HOME={home}"',
+        f'ExecStart="{python}" -m graphtyn.cli memory sync --installation {installation_id} '
+        f'--watch --interval {interval} --consent', "", "[Install]",
+        "WantedBy=default.target", "",
+    ])
+    unit_path = unit_dir / unit_name
+    unit_path.write_text(content, encoding="utf-8")
+    try:
+        unit_path.chmod(0o600)
+    except OSError:
+        pass
+    try:
+        reload_result = subprocess.run(["systemctl", "--user", "daemon-reload"],
+            capture_output=True, text=True, timeout=20)
+        if reload_result.returncode:
+            return {"ok": False, "active": False, "unit": str(unit_path),
+                    "error": (reload_result.stderr or reload_result.stdout).strip()[-500:]}
+        enabled = subprocess.run(["systemctl", "--user", "enable", "--now", unit_name],
+            capture_output=True, text=True, timeout=30)
+        active = subprocess.run(["systemctl", "--user", "is-active", "--quiet", unit_name],
+            capture_output=True, text=True, timeout=10).returncode == 0
+        return {"ok": enabled.returncode == 0 and active, "active": active,
+                "unit": str(unit_path), "error": "" if active else
+                (enabled.stderr or enabled.stdout).strip()[-500:]}
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"ok": False, "active": False, "unit": str(unit_path), "error": str(exc)}
+
+
 def main():
     configure_utf8_stdio()
     parser = argparse.ArgumentParser(
@@ -86,6 +134,38 @@ def main():
                          help="Memoria conversacional: preguntar, activar o desactivar")
     setup_p.add_argument("--memory-watch", action="store_true",
                          help="Dejar preparado el sincronizador continuo al activar memoria")
+    harness_p = subparsers.add_parser("harness", help="Detecta y conecta memorias de agentes")
+    harness_sub = harness_p.add_subparsers(dest="harness_name", required=True)
+    openclaw_p = harness_sub.add_parser("openclaw", help="Integración nativa con OpenClaw")
+    openclaw_sub = openclaw_p.add_subparsers(dest="openclaw_action", required=True)
+    discover_oc = openclaw_sub.add_parser("discover", help="Detecta OpenClaw local o en un destino SSH explícito")
+    discover_oc.add_argument("--config", default=None)
+    discover_oc.add_argument("--ssh-target", default=None, help="Host explícito usuario@host; no se escanea la red")
+    discover_oc.add_argument("--data-root", default=None, help="Directorio de datos OpenClaw remoto")
+    connect_oc = openclaw_sub.add_parser("connect", help="Registra agentes aislados y activa captura nueva")
+    connect_oc.add_argument("--installation", default=None)
+    connect_oc.add_argument("--config", default=None)
+    connect_oc.add_argument("--ssh-target", default=None)
+    connect_oc.add_argument("--data-root", default=None)
+    connect_oc.add_argument("--parent", action="append", default=[], metavar="HIJO=PADRE",
+                            help="Confirma una relación padre/subagente; repetible")
+    connect_oc.add_argument("--independent", action="append", default=[], metavar="AGENTE",
+                            help="Confirma un cerebro independiente; repetible")
+    connect_oc.add_argument("--brain", action="append", default=[], metavar="AGENTE=RUTA",
+                            help="Asigna explícitamente un almacén privado a un agente")
+    connect_oc.add_argument("--import-history", action="store_true",
+                            help="Importa historiales anteriores; sin esto sólo captura conversaciones nuevas")
+    connect_oc.add_argument("--mcp-url", default=None,
+                            help="URL /mcp accesible desde OpenClaw; también puede venir de GRAPHTYN_MCP_URL")
+    connect_oc.add_argument("--no-watch", action="store_true", help="No activa captura automática")
+    connect_oc.add_argument("--interval", type=float, default=300)
+    relate_oc = openclaw_sub.add_parser("relate", help="Confirma o separa una relación de agentes")
+    relate_oc.add_argument("--installation", required=True)
+    relate_oc.add_argument("--child", required=True)
+    relate_oc.add_argument("--parent", default=None)
+    relate_oc.add_argument("--independent", action="store_true")
+    relate_oc.add_argument("--confirm", action="store_true", help="Confirma que la relación es correcta")
+    openclaw_sub.add_parser("list", help="Muestra instalaciones y relaciones registradas")
     onboard_p = subparsers.add_parser("onboard", help="Configura agentes, índice, MCP y dashboard en una sola orden")
     onboard_p.add_argument("--path", default=".")
     onboard_p.add_argument("--agent", action="append", default=[])
@@ -93,6 +173,10 @@ def main():
     onboard_p.add_argument("--start-dashboard", action="store_true")
     onboard_p.add_argument("--watch", action="store_true")
     onboard_p.add_argument("--no-token", action="store_true")
+    onboard_p.add_argument("--no-harness-auto", action="store_true",
+                           help="No detectar ni conectar OpenClaw durante el onboarding")
+    onboard_p.add_argument("--harness-installation", default=None,
+                           help="Elegir una instalación OpenClaw cuando se detecten varias")
     adapter_p = subparsers.add_parser("adapter", help="Gestiona adaptadores de historiales")
     adapter_sub = adapter_p.add_subparsers(dest="adapter_action", required=True)
     adapter_sub.add_parser("list")
@@ -429,6 +513,13 @@ def main():
     brain_p.add_argument("--agent-workspace", action="append", default=[],
                          help="Workspace de agente individual a vincular (repetible)")
     brain_p.add_argument("--register", action="store_true", help="Registrar el cerebro en el dashboard")
+    consolidate_p = memory_sub.add_parser("consolidate", help="Migra un legado a un cerebro activo por agente")
+    consolidate_p.add_argument("--source", required=True, help="Ruta del archivo de memoria marcado LEGADO")
+    consolidate_p.add_argument("--target", required=True, help="Ruta del cerebro activo del agente")
+    consolidate_p.add_argument("--agent-id", required=True, help="Identidad canónica exacta, por ejemplo openclaw/nexus")
+    consolidate_p.add_argument("--apply", action="store_true", help="Ejecutar la migración; por defecto sólo previsualiza")
+    consolidate_p.add_argument("--consent", action="store_true", help="Autoriza la copia al cerebro activo")
+    consolidate_p.add_argument("--batch-size", type=int, default=100, help="Mensajes/recuerdos entre guardados de progreso")
     alias_imp_p = memory_sub.add_parser("alias-import", help="Importa alias de agentes en bloque")
     alias_imp_p.add_argument("--json-file", default=None, help='JSON {"alias":"canonico"}')
     alias_imp_p.add_argument("--pairs", default=None, help="Formato compacto: alias=identidad,otro=identidad")
@@ -463,6 +554,8 @@ def main():
     sync_p.add_argument("--provider-model", choices=["deterministic", "auto", "ollama", "api"], default="deterministic")
     sync_p.add_argument("--watch", action="store_true", help="Continuar observando cambios")
     sync_p.add_argument("--all-spaces", action="store_true", help="Sincronizar todos los espacios registrados con fuente asociada")
+    sync_p.add_argument("--installation", default=None,
+                        help="Sincronizar todos los cerebros privados de una instalación de harness")
     sync_p.add_argument("--interval", type=float, default=5.0)
     sync_p.add_argument("--path", default=".")
     sync_p.add_argument("--agent-id", default=None,
@@ -536,7 +629,78 @@ def main():
     args = parser.parse_args()
     root = Path(args.path if hasattr(args, 'path') else ".").resolve()
 
-    if args.command == "setup":
+    if args.command == "harness":
+        from .core.openclaw_integration import (connect_openclaw, discover_openclaw,
+            configure_openclaw_mcp, list_installations, set_parent, paths_for_installation)
+
+        def parse_pairs(values, option):
+            result = {}
+            for value in values:
+                if "=" not in value:
+                    parser.error(f"{option} espera AGENTE=VALOR")
+                key, val = value.split("=", 1)
+                if not key.strip() or not val.strip() or key.strip() in result:
+                    parser.error(f"par {option} inválido o duplicado: {value}")
+                result[key.strip()] = val.strip()
+            return result
+
+        if args.harness_name != "openclaw":
+            parser.error(f"harness no soportado: {args.harness_name}")
+        if args.openclaw_action == "discover":
+            result = {"ok": True, "installations": discover_openclaw(args.config,
+                ssh_target=args.ssh_target, data_root=args.data_root)}
+        elif args.openclaw_action == "list":
+            result = {"ok": True, "installations": list_installations()}
+        elif args.openclaw_action == "relate":
+            if args.independent and args.parent:
+                parser.error("use --parent o --independent, no ambos")
+            if not args.independent and not args.parent:
+                parser.error("indique --parent ID o --independent")
+            result = {"ok": True, "agent": set_parent(args.installation, args.child,
+                None if args.independent else args.parent, confirm=args.confirm)}
+        elif args.openclaw_action == "connect":
+            detected = discover_openclaw(args.config, ssh_target=args.ssh_target,
+                                         data_root=args.data_root)
+            usable = [item for item in detected if item.get("ok")]
+            if args.installation:
+                chosen = next((item for item in usable if item.get("id") == args.installation), None)
+                if chosen is None:
+                    parser.error(f"instalación no accesible o desconocida: {args.installation}")
+            elif len(usable) == 1:
+                chosen = usable[0]
+            elif not usable:
+                parser.error("no se detectó OpenClaw; especifique --config o --ssh-target y --data-root")
+            else:
+                parser.error("hay varias instalaciones; indique --installation " +
+                             ", ".join(item["id"] for item in usable))
+            installation = connect_openclaw(chosen,
+                parents=parse_pairs(args.parent, "--parent"),
+                independent=set(args.independent),
+                brain_paths=parse_pairs(args.brain, "--brain"),
+                import_history=args.import_history)
+            mcp_configuration = configure_openclaw_mcp(chosen, mcp_url=args.mcp_url)
+            historical = None
+            if args.import_history:
+                by_path = {}
+                for agent in installation["agents"]:
+                    by_path.setdefault(agent["brain_path"], agent["agent_id"])
+                historical = [sync_memory_workspace(Path(path), provider="openclaw",
+                    provider_model="deterministic", agent_id=by_path.get(path))
+                    for path in paths_for_installation(installation["id"])]
+            capture = ({"ok": True, "active": False, "enabled": False}
+                       if args.no_watch else _install_openclaw_capture_service(
+                           installation["id"], args.interval))
+            result = {"ok": bool((capture["ok"] or args.no_watch) and mcp_configuration["ok"]),
+                      "installation": installation, "historical_import": historical,
+                      "capture": capture, "mcp": mcp_configuration,
+                      "capture_mode": "historical_and_continuous" if args.import_history else
+                                      "new_and_modified_sessions_only",
+                      "note": ("Las relaciones no especificadas quedan privadas y pendientes de confirmar."
+                               " MCP publica recuerdos entre cerebros sólo con memory_agent_publish.")}
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if not result.get("ok", True):
+            raise SystemExit(1)
+    elif args.command == "setup":
         from .core.deployment import detect_environment, apply_setup
         plan = detect_environment(root)
         if args.apply:
@@ -551,7 +715,6 @@ def main():
                                      create_token=not args.no_token, tool_profile=args.tool_profile)
             configured["memory"] = {"enabled": memory_choice == "on", "choice": memory_choice}
             if memory_choice == "on":
-                from .core.history_import import discover_histories, import_histories
                 discovered_rows = []
                 discovery_errors = []
                 for provider in sorted({row["provider"] for row in plan["sources"]}):
@@ -591,11 +754,57 @@ def main():
                                         watch=args.watch)
             service = manage_user_service("enable", kind=kind,
                 unit=(artifact.name if kind == "systemd" else None), artifact=artifact)
+        harness_auto = {"status": "disabled", "ok": True}
+        if not args.no_harness_auto:
+            from .core.openclaw_integration import (connect_openclaw, configure_openclaw_mcp,
+                                                     discover_openclaw)
+            try:
+                discovered = [item for item in discover_openclaw() if item.get("ok")]
+                if args.harness_installation:
+                    chosen = next((item for item in discovered
+                                   if item.get("id") == args.harness_installation), None)
+                    if chosen is None:
+                        harness_auto = {"status": "selection_invalid", "ok": False,
+                                        "requested": args.harness_installation,
+                                        "candidates": [item.get("id") for item in discovered]}
+                elif len(discovered) == 1:
+                    chosen = discovered[0]
+                elif len(discovered) > 1:
+                    chosen = None
+                    harness_auto = {"status": "selection_required", "ok": True,
+                                    "candidates": [{"id": item.get("id"), "target": item.get("target"),
+                                                    "version": item.get("version")}
+                                                   for item in discovered]}
+                else:
+                    chosen = None
+                    harness_auto = {"status": "no_openclaw_detected", "ok": True}
+                if chosen:
+                    installation = connect_openclaw(chosen, import_history=False)
+                    mcp = configure_openclaw_mcp(chosen)
+                    capture = _install_openclaw_capture_service(installation["id"], 300)
+                    pending = sum(agent.get("relation_status") in {"pending", "proposed"}
+                                  for agent in installation.get("agents", []))
+                    harness_auto = {
+                        "status": ("configured_restart_required" if mcp.get("ok") and
+                                   mcp.get("changed") and capture.get("active") else
+                                   "connected" if mcp.get("ok") and capture.get("active") else
+                                   "capture_active_mcp_pending" if capture.get("active") else
+                                   "capture_pending"),
+                        "ok": bool(capture.get("ok")), "installation_id": installation["id"],
+                        "agent_count": len(installation.get("agents", [])),
+                        "relationships_pending_review": pending,
+                        "capture": capture, "mcp": mcp,
+                        "gateway_restart_required": bool(mcp.get("changed")),
+                        "history_imported": False,
+                    }
+            except Exception as exc:
+                harness_auto = {"status": "error", "ok": False, "error": str(exc)}
         result = {"ok": bool(indexed["nodes"]) and (service is None or service["ok"]),
                   "project": str(root), "agents": agents, "tool_profile": args.tool_profile,
                   "initialized": initialized, "setup": configured,
                   "index": {key: indexed[key] for key in ("ok", "nodes", "links", "index")},
-                  "dashboard": DASHBOARD_URL, "service": service}
+                  "dashboard": DASHBOARD_URL, "service": service,
+                  "harness_auto_connect": harness_auto}
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if not result["ok"]:
             raise SystemExit(1)
@@ -927,6 +1136,38 @@ def main():
                       "agents": [{"agent_id": d["agent_id"], "name": d["name"]} for d in discovered],
                       "errors": errors, "registered_to": registered_to}
             print(json.dumps(result, ensure_ascii=False, indent=2))
+        elif args.memory_action == "consolidate":
+            from .core.memory_consolidation import consolidate_legacy_brain, preview_legacy_consolidation
+            source_path = Path(args.source).expanduser().resolve()
+            target_path = Path(args.target).expanduser().resolve()
+            registry_path = data_home() / "registered_projects.json"
+            try:
+                registrations = json.loads(registry_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                registrations = []
+            registrations = registrations if isinstance(registrations, list) else []
+            source_row = next((row for row in registrations if isinstance(row, dict) and row.get("path")
+                               and Path(str(row["path"])).expanduser().resolve() == source_path), None)
+            target_row = next((row for row in registrations if isinstance(row, dict) and row.get("path")
+                               and Path(str(row["path"])).expanduser().resolve() == target_path), None)
+            agent_id = args.agent_id.strip().casefold()
+            if not source_row or not source_row.get("legacy"):
+                parser.error("--source debe estar registrado explícitamente como archivo LEGADO")
+            if (not target_row or target_row.get("legacy")
+                    or target_row.get("space_type") != "agent_brain"
+                    or agent_id not in {str(value).strip().casefold() for value in target_row.get("agent_ids", [])}):
+                parser.error("--target debe ser el cerebro activo registrado del agent_id exacto")
+            archive_id = str(source_row.get("id") or source_path.name)
+            if args.apply and not args.consent:
+                parser.error("--apply requiere --consent")
+            if args.apply:
+                result = consolidate_legacy_brain(source_path, target_path, agent_id=agent_id,
+                    archive_id=archive_id, consent=True, batch_size=args.batch_size)
+            else:
+                result = preview_legacy_consolidation(source_path, target_path, agent_id, archive_id)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            if not result.get("ok", True):
+                raise SystemExit(1)
         elif args.memory_action == "alias-import":
             memory = SharedMemoryStore(Path(args.path).expanduser().resolve())
             pairs: dict[str, str] = {}
@@ -1006,26 +1247,66 @@ def main():
             print(json.dumps({"ok": True, "current": current,
                               "projects": ProjectIdentityRegistry().list()}, ensure_ascii=False, indent=2))
         elif args.memory_action == "sync":
-            def sync_once():
+            from .core.openclaw_integration import paths_for_installation
+            def sync_targets():
+                if args.installation:
+                    return [Path(item).expanduser().resolve()
+                            for item in paths_for_installation(args.installation)]
                 if args.all_spaces:
                     registry = ProjectIdentityRegistry()
                     paths = [Path(item).expanduser().resolve() for project in registry.list()
                              for item in project.get("paths", [])]
+                    return list(dict.fromkeys(paths))
+                return [Path(args.path).expanduser().resolve()]
+
+            def sync_once():
+                if args.all_spaces or args.installation:
                     return {"ok": True, "spaces": [sync_memory_workspace(path, provider=args.provider,
                         source=args.source or None, provider_model=args.provider_model,
-                        agent_id=args.agent_id) for path in dict.fromkeys(paths)]}
+                        agent_id=args.agent_id) for path in sync_targets()]}
                 return sync_memory_workspace(Path(args.path), provider=args.provider,
                     source=args.source or None, provider_model=args.provider_model,
                     agent_id=args.agent_id)
             if not args.watch:
                 print(json.dumps(sync_once(), ensure_ascii=False, indent=2))
             else:
+                watcher_id = f"cli-sync:{os.getpid()}"
+                interval = max(1.0, float(args.interval))
+
+                def update_watchers(status, error=""):
+                    for path in sync_targets():
+                        SharedMemoryStore(path).update_sync_watcher(
+                            watcher_id, status, interval=interval, error=error)
+
+                def stop_watcher(_signum, _frame):
+                    raise KeyboardInterrupt
+
+                previous_sigterm = signal.signal(signal.SIGTERM, stop_watcher)
                 try:
                     while True:
-                        print(json.dumps(sync_once(), ensure_ascii=False), flush=True)
-                        time.sleep(max(1.0, args.interval))
+                        update_watchers("processing")
+                        try:
+                            result = sync_once()
+                        except Exception as exc:
+                            error = f"{type(exc).__name__}: {exc}"
+                            update_watchers("error", error)
+                            result = {"ok": False, "error": error}
+                        else:
+                            spaces = result.get("spaces") or []
+                            ok = bool(result.get("ok", True)) and all(
+                                bool(space.get("ok", True)) for space in spaces
+                            )
+                            update_watchers("watching" if ok else "error",
+                                            "" if ok else "una o más sincronizaciones fallaron")
+                        print(json.dumps(result, ensure_ascii=False), flush=True)
+                        time.sleep(interval)
                 except KeyboardInterrupt:
                     pass
+                finally:
+                    try:
+                        update_watchers("stopped")
+                    finally:
+                        signal.signal(signal.SIGTERM, previous_sigterm)
         elif args.memory_action == "sources":
             if args.action == "add":
                 if not args.provider or not args.source:

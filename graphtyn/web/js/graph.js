@@ -19,6 +19,11 @@ function activePalette() { return PALETTES[state.activePalette] || PALETTES.obsi
 function activeLinkColor() { return activePalette().link || PALETTES.obsidian.link; }
 
 export function destroyGraph() {
+      if (state.graphRequestController) {
+        state.graphRequestController.abort();
+        state.graphRequestController = null;
+      }
+      state.graphLoadId += 1;
       stop3DRotation();
       if (state.neuralTimer) { clearInterval(state.neuralTimer); state.neuralTimer = null; }
       if (state.pulse3dRaf) { cancelAnimationFrame(state.pulse3dRaf); state.pulse3dRaf = null; }

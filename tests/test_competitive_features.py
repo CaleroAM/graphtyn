@@ -259,6 +259,23 @@ def test_http_mcp_requires_token_and_serves_tools(monkeypatch):
     assert "graph_context_bundle" in {tool["name"] for tool in body["result"]["tools"]}
     assert "graph_analyze_change" in {tool["name"] for tool in body["result"]["tools"]}
     assert "memory_context" in {tool["name"] for tool in body["result"]["tools"]}
+    assert "memory_status" in {tool["name"] for tool in body["result"]["tools"]}
+
+
+def test_http_mcp_memory_status_requires_path_and_reports_scope(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "remote-secret")
+    auth = "Bearer remote-secret"
+    missing = api_main.mcp_http({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+        "params": {"name": "memory_status", "arguments": {}}}, authorization=auth)
+    assert json.loads(missing.body)["error"]["code"] == -32602
+
+    response = api_main.mcp_http({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+        "params": {"name": "memory_status", "arguments": {"path": str(tmp_path)}}}, authorization=auth)
+    result = json.loads(response.body)["result"]
+    status = json.loads(result["content"][0]["text"])
+    assert response.status_code == 200
+    assert status["path"] == str(tmp_path.resolve())
+    assert "continuous_capture_active" in status
 
 
 def test_http_mcp_memory_is_shared_across_remote_clients(tmp_path, monkeypatch):

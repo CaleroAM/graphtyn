@@ -282,6 +282,21 @@ class SharedMemoryStore(TopicMemoryMixin):
         try: return cipher.decrypt(value[7:].encode()).decode()
         except Exception: return "[encrypted: invalid key]"
 
+    def update_sync_watcher(self, watcher_id: str, status: str, *, interval: float = 5,
+                            error: str = "") -> None:
+        """Persist liveness for CLI sync --watch processes in this memory store."""
+        watcher_id = str(watcher_id or "").strip()
+        if not watcher_id:
+            raise ValueError("watcher_id requerido")
+        if status not in {"processing", "watching", "error", "stopped"}:
+            raise ValueError("estado de watcher inválido")
+        with self._connect() as conn:
+            conn.execute("""INSERT INTO memory_sync_watchers
+                (watcher_id,pid,status,heartbeat,interval,error) VALUES(?,?,?,?,?,?)
+                ON CONFLICT(watcher_id) DO UPDATE SET pid=excluded.pid,status=excluded.status,
+                    heartbeat=excluded.heartbeat,interval=excluded.interval,error=excluded.error""",
+                (watcher_id, os.getpid(), status, time.time(), max(1.0, float(interval)), str(error or "")[:1000]))
+
     def _init_db(self) -> None:
         with _SCHEMA_LOCK:
             self._init_db_locked()
@@ -345,6 +360,30 @@ class SharedMemoryStore(TopicMemoryMixin):
                     source_key TEXT PRIMARY KEY, memory_id TEXT NOT NULL,
                     imported_at REAL NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS legacy_consolidation_runs (
+                    id TEXT PRIMARY KEY, archive_id TEXT NOT NULL,
+                    archive_path TEXT NOT NULL, source_db TEXT NOT NULL,
+                    target_path TEXT NOT NULL, agent_id TEXT NOT NULL,
+                    status TEXT NOT NULL, source_backup TEXT NOT NULL DEFAULT '',
+                    target_backup TEXT NOT NULL DEFAULT '', report_json TEXT NOT NULL DEFAULT '{}',
+                    started_at REAL NOT NULL, updated_at REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS legacy_consolidation_runs_recent
+                    ON legacy_consolidation_runs(archive_id, agent_id, updated_at DESC);
+                CREATE TABLE IF NOT EXISTS legacy_consolidation_items (
+                    source_key TEXT PRIMARY KEY, run_id TEXT NOT NULL,
+                    archive_id TEXT NOT NULL, agent_id TEXT NOT NULL,
+                    record_kind TEXT NOT NULL, source_session_id TEXT NOT NULL DEFAULT '',
+                    source_record_id TEXT NOT NULL DEFAULT '', source_digest TEXT NOT NULL DEFAULT '',
+                    target_id TEXT NOT NULL, imported_at REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS legacy_consolidation_items_lookup
+                    ON legacy_consolidation_items(archive_id, agent_id, record_kind);
+                CREATE TABLE IF NOT EXISTS memory_sync_watchers (
+                    watcher_id TEXT PRIMARY KEY, pid INTEGER NOT NULL,
+                    status TEXT NOT NULL, heartbeat REAL NOT NULL,
+                    interval REAL NOT NULL DEFAULT 5, error TEXT NOT NULL DEFAULT ''
+                );
                 CREATE TABLE IF NOT EXISTS memory_provenance (
                     memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
                     session_id TEXT NOT NULL REFERENCES sessions(id),
@@ -384,6 +423,7 @@ class SharedMemoryStore(TopicMemoryMixin):
             conn.execute("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(1, ?)", (time.time(),))
             conn.execute("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(2, ?)", (time.time(),))
             conn.execute("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(3, ?)", (time.time(),))
+            conn.execute("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(7, ?)", (time.time(),))
             policy = resolve_memory_scope(self.workspace)
             conn.execute("""INSERT INTO memory_space_policy
                 (id,workspace_path,space_type,agent_ids_json,restricted,policy_version,updated_at)
@@ -1516,8 +1556,15 @@ class SharedMemoryStore(TopicMemoryMixin):
         with self._connect() as conn:
             exists = conn.execute("SELECT 1 FROM sqlite_master WHERE name='history_watchers'").fetchone()
             watchers = [dict(r) for r in conn.execute("SELECT * FROM history_watchers")] if exists else []
+            sync_watchers = [dict(r) for r in conn.execute("SELECT * FROM memory_sync_watchers")]
         for watcher in watchers:
             watcher["active"] = watcher["status"] in {"processing", "watching"} and time.time() - watcher["heartbeat"] < 90
+            watcher["kind"] = "history-stream"
+        for watcher in sync_watchers:
+            freshness = max(90.0, float(watcher.get("interval") or 5) * 3)
+            watcher["active"] = (watcher["status"] in {"processing", "watching"}
+                                  and time.time() - watcher["heartbeat"] < freshness)
+            watcher["kind"] = "memory-sync"
         last_topic_provider = ""
         last_relation_provider = ""
         if topic_event:
@@ -1548,7 +1595,8 @@ class SharedMemoryStore(TopicMemoryMixin):
                 "excluded_memories": excluded_memories, "embeddings": embeddings,
                 "last_capture_at": last_capture, "topic_coverage": self.topic_coverage(agent_ids=authorized_agents),
                 "memory_space": {key: self.memory_scope()[key] for key in ("space_type", "agent_ids", "restricted", "configured")},
-                "capture_watchers": watchers, "continuous_capture_active": any(w["active"] for w in watchers),
+                "capture_watchers": [*watchers, *sync_watchers], "sync_watchers": sync_watchers,
+                "continuous_capture_active": any(w["active"] for w in [*watchers, *sync_watchers]),
                 "embedding_provider": self._provider(), "telemetry_events": telemetry_events,
                 "topic_enrichment": enrichment,
                 "telemetry": self.telemetry_summary(agent_ids=authorized_agents)}

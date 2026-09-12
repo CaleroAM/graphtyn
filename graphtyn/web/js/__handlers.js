@@ -2,6 +2,7 @@ export { toggleDD, openRegister, closeRegister, selMode, submitRegister, openTut
          closeTutorial, loadProjects, selectProject, doReindex, toggleGitignore,
          onFolderPicked, loadHistoryUI, toggleLeftSidebar, toggleRightSidebar, updateModelEstimate,
          initWatchPolling, loadBrains, selectBrain, loadAgents, selectAgent,
+         startLegacyConsolidation,
          openBrainRegister, closeBrainRegister, submitBrainRegister,
          openAgentRegister, closeAgentRegister, submitAgentRegister } from './ui.js';
 export { setView, setDim, setMemoryGraphMode, changePalette, updateLinkStyles,
@@ -24,3 +25,4 @@ export { openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemo
          applyHistoricalMemory, saveHistoricalSource, testHistoricalSource,
          removeHistoricalSource, saveMemoryAlias, syncMemorySpace, syncAllMemorySpaces,
          retryMemoryEnrichment, toggleMemoryWatch } from './memory.js';
+export { loadOpenClawPanel, syncOpenClaw, openOpenClawBrain } from './openclaw.js';

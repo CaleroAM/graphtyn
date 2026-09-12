@@ -2,6 +2,9 @@ import { state } from './state.js';
 import { setView } from './controls.js';
 import { loadGraph, focusNode } from './graph.js';
 
+const html = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const attr = value => encodeURIComponent(String(value ?? ''));
+
 export function toggleDD(id) {
       const el = document.getElementById(id);
       const was = el.classList.contains('open');
@@ -121,6 +124,7 @@ export function selectProject(path) {
       const gi = document.getElementById('chk-gitignore');
       if (gi) gi.checked = state.respectMap[path] !== false;
       if (state.activeView === 'agents' || state.activeView === 'changes') setView('code'); // project-scoped views reload below
+      else if (state.activeView === 'openclaw') loadProjects(); // OpenClaw management is installation-scoped
       else { loadProjects(); loadGraph(); }
     }
 
@@ -147,15 +151,23 @@ export function loadAgents() {
 
 export function loadBrains() {
       const el = document.getElementById('brain-list');
-      if (!el) return;
+      const archiveEl = document.getElementById('legacy-brain-list');
+      if (!el || !archiveEl) return;
       fetch('/api/brains').then(r => r.json()).then(brains => {
-        if (!Array.isArray(brains) || !brains.length) {
-          el.innerHTML = '<div style="color:#64748b;font-size:10px;padding:6px 2px;line-height:1.4;">Sin cerebros registrados. Registra un espacio de memoria para comenzar.</div>';
-          return;
+        const rows = Array.isArray(brains) ? brains : [];
+        const activeBrains = rows.filter(brain => !brain.legacy);
+        const archives = rows.filter(brain => brain.legacy);
+        if (state.activeSpaceType === 'agent_brain' && archives.some(brain => brain.path === state.activePath)) {
+          state.activePath = null;
+          state.activeSpaceType = null;
+          const status = document.getElementById('memory-status');
+          if (status) status.textContent = 'El archivo histórico se conserva como respaldo; selecciona un cerebro activo para consultar la memoria consolidada.';
         }
-        el.innerHTML = brains.map(brain => {
-          const path = String(brain.path || '').replace(/"/g, '&quot;');
-          const name = String(brain.name || brain.id || 'Cerebro').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        if (!activeBrains.length) {
+          el.innerHTML = '<div style="color:#64748b;font-size:10px;padding:6px 2px;line-height:1.4;">Sin cerebros activos. Registra un cerebro de agente para comenzar.</div>';
+        } else el.innerHTML = activeBrains.map(brain => {
+          const path = html(brain.path || '');
+          const name = html(brain.name || brain.id || 'Cerebro');
           const active = state.activeSpaceType === 'agent_brain' && state.activePath === brain.path;
           const sessions = Number(brain.sessions || 0);
           const agents = Array.isArray(brain.agents) ? brain.agents.length : 0;
@@ -165,7 +177,82 @@ export function loadBrains() {
             <span class="proj-badge ${status === 'OK' ? 'ok' : 'pend'}">${status}</span>
           </div>`;
         }).join('');
+        if (!archives.length) {
+          archiveEl.innerHTML = '<div style="color:#475569;font-size:9px;padding:4px 2px;">Sin archivos históricos.</div>';
+          return;
+        }
+        archiveEl.innerHTML = archives.map(brain => {
+          const name = html(brain.name || brain.id || 'Archivo histórico');
+          const sessions = Number(brain.sessions || 0);
+          const agents = Array.isArray(brain.agent_ids) ? brain.agent_ids : [];
+          const outcomes = Array.isArray(brain.consolidated_agents) ? brain.consolidated_agents : [];
+          const agentRows = agents.length ? agents.map(agentId => {
+            const targets = activeBrains.filter(target => (target.agent_ids || []).some(owner => String(owner).toLowerCase() === String(agentId).toLowerCase()));
+            const outcome = outcomes.find(item => String(item.agent_id).toLowerCase() === String(agentId).toLowerCase());
+            const label = html(agentId);
+            const outcomeLabel = outcome ? `${html(outcome.status)} → ${html(outcome.target_name)}` : '';
+            if (targets.length !== 1) return `<div class="legacy-agent-migrate"><span>${label}</span><span>${targets.length ? 'Destino ambiguo' : 'Sin cerebro activo'}</span></div>`;
+            const target = targets[0];
+            const button = outcome?.status === 'completed' ? 'Revisar' : (outcome ? 'Reanudar' : 'Migrar');
+            const status = outcomeLabel ? `<span title="${html(outcome.updated_at ? new Date(outcome.updated_at * 1000).toLocaleString() : '')}">${outcomeLabel}</span>` : `<span>pendiente</span>`;
+            return `<div class="legacy-agent-migrate"><span title="${label}">${label}</span>${status}<button type="button" data-source="${attr(brain.path)}" data-target="${attr(target.path)}" data-agent="${attr(agentId)}" onclick="startLegacyConsolidation(decodeURIComponent(this.dataset.source),decodeURIComponent(this.dataset.target),decodeURIComponent(this.dataset.agent))">${button}</button></div>`;
+          }).join('') : '<div class="legacy-agent-migrate"><span>Identidad pendiente de asignación</span></div>';
+          return `<div class="legacy-archive-item"><div class="legacy-archive-title"><span>▣ ${name}</span><span class="proj-badge legacy">ARCHIVO</span></div>
+            <div class="legacy-archive-meta">${sessions} sesiones · ${agents.length} identidades · sólo lectura, separado de la memoria activa</div>
+            ${agentRows}<div class="legacy-migration-status" aria-live="polite"></div></div>`;
+        }).join('');
       }).catch(() => { el.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:4px;">No se pudieron cargar los cerebros.</div>'; });
+    }
+
+export async function startLegacyConsolidation(sourcePath, targetPath, agentId) {
+      const button = [...document.querySelectorAll('.legacy-agent-migrate button')].find(item =>
+        decodeURIComponent(item.dataset.source || '') === sourcePath &&
+        decodeURIComponent(item.dataset.target || '') === targetPath &&
+        decodeURIComponent(item.dataset.agent || '') === agentId);
+      const row = button?.closest('.legacy-archive-item');
+      const output = row?.querySelector('.legacy-migration-status');
+      const token = document.getElementById('memory-token')?.value.trim() || localStorage.getItem('graphtyn-memory-token') || '';
+      const headers = {'Content-Type':'application/json', ...(token ? {'Authorization':`Bearer ${token}`} : {})};
+      const post = async body => {
+        const response = await fetch('/api/v1/memory/consolidations', {method:'POST', headers, body:JSON.stringify(body)});
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        return data;
+      };
+      try {
+        if (output) output.textContent = 'Contando historial y validando destino…';
+        const preview = await post({source_path:sourcePath, target_path:targetPath, agent_id:agentId});
+        const counts = preview.eligible || {};
+        const pending = preview.will_import || {};
+        const confirmation = `${agentId}\n\nSe copiarán al cerebro activo ${pending.sessions || 0} sesiones, ${pending.messages || 0} mensajes, ${pending.memories || 0} recuerdos, ${pending.topics || 0} temas y ${pending.relations || 0} relaciones (${pending.reviews || 0} revisiones históricas).\n\nSe guardará un respaldo SQLite del archivo y del destino. El legado original permanecerá intacto. ¿Continuar?`;
+        if (output) output.textContent = `${counts.sessions || 0} sesiones · ${counts.messages || 0} mensajes disponibles; ${pending.messages || 0} pendientes.`;
+        if (!confirm(confirmation)) return;
+        const started = await post({source_path:sourcePath, target_path:targetPath, agent_id:agentId, apply:true, consent:true});
+        const jobId = started.job?.id;
+        if (!jobId) throw new Error('El servidor no devolvió el trabajo de migración.');
+        if (button) button.disabled = true;
+        let job;
+        for (let attempt = 0; attempt < 900; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const response = await fetch(`/api/v1/memory/consolidations/${encodeURIComponent(jobId)}`, {headers});
+          const data = await response.json();
+          if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+          job = data.job;
+          if (output) output.textContent = `${job.message || 'Migrando historial…'} ${job.progress || 0}%`;
+          if (['completed','failed','cancelled'].includes(job.status)) break;
+        }
+        if (!job || job.status === 'running' || job.status === 'pending') throw new Error('La migración sigue activa; vuelve a abrir el estado del trabajo más tarde.');
+        const result = job.result || {};
+        if (job.status === 'failed') throw new Error(job.error || 'La migración falló.');
+        if (output) output.textContent = result.ok
+          ? `Completado: ${result.imported?.sessions || 0} sesiones, ${result.imported?.messages || 0} mensajes, ${result.imported?.memories || 0} recuerdos. El cerebro activo ya incluye este historial.`
+          : `Migración parcial: ${result.imported?.messages || 0} mensajes procesados. Pulsa Reanudar para continuar.`;
+        loadBrains();
+      } catch (error) {
+        if (output) output.textContent = `No se pudo consolidar: ${error.message}`;
+      } finally {
+        if (button) button.disabled = false;
+      }
     }
 
 export function selectBrain(path) {

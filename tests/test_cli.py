@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+from graphtyn import cli as graphtyn_cli
+
 CLI = [sys.executable, "-m", "graphtyn.cli"]
 
 
@@ -267,11 +269,70 @@ def test_onboard_builds_index_and_full_antigravity_integration(git_repo, tmp_pat
     assert result.returncode == 0, result.stderr
     data = json.loads(result.stdout)
     assert data["ok"] is True
+    assert data["harness_auto_connect"]["status"] == "no_openclaw_detected"
     assert data["index"]["nodes"] >= 1
     assert Path(data["index"]["index"]).is_file()
     assert data["dashboard"] == "http://127.0.0.1:9210"
     mcp = json.loads((git_repo / ".agents/plugins/graphtyn/mcp_config.json").read_text())
     assert mcp["mcpServers"]["graphtyn"]["args"] == ["mcp", "--tool-profile", "full"]
+
+
+def test_onboard_auto_connects_a_single_openclaw_installation(git_repo, tmp_path, monkeypatch, capsys):
+    home = tmp_path / "home-auto-openclaw"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("GRAPHTYN_HOME", str(home / ".graphtyn"))
+    config = tmp_path / "openclaw.json"
+    config.write_text(json.dumps({
+        "meta": {"lastTouchedVersion": "2026.9.4"},
+        "agents": {"entries": {"main": {}, "devops": {"parentAgent": "main"}}},
+        "mcp": {"servers": {"graphtyn": {"url": "http://127.0.0.1:9210/mcp",
+            "headers": {"Authorization": "Bearer test-token"}}}},
+    }), encoding="utf-8")
+    monkeypatch.setenv("OPENCLAW_CONFIG_PATH", str(config))
+
+    from graphtyn.core import deployment
+    monkeypatch.setattr(deployment, "detect_environment", lambda root: {"sources": []})
+    monkeypatch.setattr(deployment, "initialize_project", lambda root: {"ok": True})
+    monkeypatch.setattr(deployment, "apply_setup", lambda *a, **k: {"ok": True})
+    monkeypatch.setattr(deployment, "build_local_index", lambda root: {
+        "ok": True, "nodes": 1, "links": 0, "index": str(tmp_path / "index.json")})
+    monkeypatch.setattr(graphtyn_cli, "_install_openclaw_capture_service", lambda *a, **k: {
+        "ok": True, "active": True, "unit": "test.service"})
+    monkeypatch.setattr(sys, "argv", ["graphtyn", "onboard", "--no-token", "--path", str(git_repo)])
+
+    graphtyn_cli.main()
+
+    data = json.loads(capsys.readouterr().out)
+    assert data["ok"] is True
+    assert data["harness_auto_connect"]["status"] == "connected"
+    assert data["harness_auto_connect"]["agent_count"] == 2
+    assert data["harness_auto_connect"]["relationships_pending_review"] == 1
+    assert data["harness_auto_connect"]["history_imported"] is False
+
+
+def test_openclaw_capture_service_keeps_current_python_path(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn"))
+    calls = []
+
+    class Completed:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_run(args, **kwargs):
+        calls.append(args)
+        return Completed()
+
+    monkeypatch.setattr(graphtyn_cli.subprocess, "run", fake_run)
+    result = graphtyn_cli._install_openclaw_capture_service("openclaw-0123456789abcdef", 7)
+
+    unit = Path(result["unit"]).read_text(encoding="utf-8")
+    assert result["ok"] is True
+    assert "--watch --interval 30 --consent" in unit
+    assert str(Path(sys.executable)) in unit
+    assert calls[0][:3] == ["systemctl", "--user", "daemon-reload"]
 
 
 def test_onboard_indexes_unicode_tracked_paths(git_repo, tmp_path):

@@ -17,6 +17,7 @@ estructurales.
 
 **Documentación:** [índice completo](docs/index.md) ·
 [arquitectura](docs/ARCHITECTURE.md) · [memoria](docs/shared-memory.md) ·
+[conexión OpenClaw](docs/openclaw-native.md) ·
 [pruebas](docs/testing.md) · [benchmarks](docs/BENCHMARKS.md) ·
 [seguridad](docs/SECURITY.md)
 
@@ -142,6 +143,15 @@ graphtyn memory status --path .
 ofrece primero una vista previa; la importación histórica requiere repetirla con
 `--apply --consent`.
 
+Los cerebros `LEGADO` se muestran separados como archivos históricos. Para
+incorporar el historial al cerebro activo de cada agente, usa
+`graphtyn memory consolidate --source <archivo> --target <cerebro> --agent-id <identidad>`
+para revisar la vista previa; ejecuta con `--apply --consent` sólo después de
+comprobar el destino. La migración es incremental, conserva una copia SQLite del
+origen y del destino, y mantiene el archivo original intacto. El dashboard ofrece
+la misma acción con progreso. Consulta [`docs/shared-memory.md`](docs/shared-memory.md)
+para ver el contrato CLI/API y la procedencia que se conserva.
+
 Modos de reindexación:
 
 | Modo | Uso |
@@ -260,6 +270,7 @@ Resultados, hardware, metodología y comparaciones anonimizadas:
 |---|---|
 | Arquitectura y despliegue | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Memoria multiagente | [docs/shared-memory.md](docs/shared-memory.md) |
+| Conexión nativa con OpenClaw | [docs/openclaw-native.md](docs/openclaw-native.md) |
 | Dashboard | [docs/ui_ux_specification.md](docs/ui_ux_specification.md) |
 | Pruebas | [docs/testing.md](docs/testing.md) |
 | Benchmarks | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) |

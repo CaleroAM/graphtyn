@@ -813,6 +813,27 @@ def test_ingest_agent_profile_requires_identity_file(tmp_path, monkeypatch):
         store.ingest_agent_profile(empty)
 
 
+def test_memory_sync_watcher_appears_in_status_and_expires(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+
+    store.update_sync_watcher("cli-sync:123", "watching", interval=300)
+    status = store.status()
+    assert status["continuous_capture_active"] is True
+    assert status["sync_watchers"][0]["kind"] == "memory-sync"
+    assert status["sync_watchers"][0]["active"] is True
+    assert status["capture_watchers"][0]["watcher_id"] == "cli-sync:123"
+
+    with store._connect() as conn:
+        conn.execute("UPDATE memory_sync_watchers SET heartbeat=0 WHERE watcher_id=?",
+                     ("cli-sync:123",))
+    status = store.status()
+    assert status["continuous_capture_active"] is False
+    assert status["sync_watchers"][0]["active"] is False
+
+
 def test_alias_persistence_and_config_fallback(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
     project = tmp_path / "project"

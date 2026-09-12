@@ -137,6 +137,56 @@ def test_mcp_token_does_not_lock_local_dashboard_memory_api(tmp_path, monkeypatc
     assert status["ok"] is True
 
 
+def test_agent_mcp_context_is_bound_to_token_identity_and_store(tmp_path, monkeypatch):
+    from graphtyn.core.history_import import save_source
+    from graphtyn.core.openclaw_integration import _agent_entries, connect_openclaw
+
+    client = _client(tmp_path, monkeypatch)
+    data_root = tmp_path / "openclaw"
+    (data_root / "agents" / "main").mkdir(parents=True)
+    (data_root / "agents" / "qa").mkdir(parents=True)
+    config = data_root / "openclaw.json"
+    config.write_text(json.dumps({"agents": {"entries": {"main": {}, "qa": {}}}}))
+    evi = tmp_path / "brains" / "evi"
+    evi.mkdir(parents=True)
+    source_config = tmp_path / "history-sources.json"
+    save_source("openclaw", str(data_root / "agents" / "main"), project_path=evi,
+                agent_id="openclaw/main", path=source_config)
+    registry = api_main.INDEX_STORE / "openclaw-installations.json"
+    installation = connect_openclaw({"ok": True, "id": "openclaw-0123456789abcdef",
+        "kind": "local", "target": "local", "config_path": str(config),
+        "data_root": str(data_root), "agents": _agent_entries(json.loads(config.read_text()))},
+        source_config=source_config, registry=registry)
+    qa_path = next(row["brain_path"] for row in installation["agents"] if row["id"] == "qa")
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS", json.dumps({
+        "qa-reader": {"role": "reader", "agent_id": "openclaw/qa", "projects": [qa_path]}}))
+
+    def call(agent_id):
+        response = api_main.mcp_http({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+            "params": {"name": "memory_agent_context", "arguments": {
+                "agent_id": agent_id, "query": "deployment"}}}, authorization="Bearer qa-reader")
+        return json.loads(response.body)
+
+    own = call("openclaw/qa")
+    other = call("openclaw/main")
+    own_text = own["result"]["content"][0]["text"]
+    denied_text = other["result"]["content"][0]["text"]
+    assert json.loads(own_text).get("agent_id") == "openclaw/qa", own_text
+    assert own["result"].get("isError") is None
+    assert other["result"]["isError"] is True
+    assert "otro agente" in json.loads(denied_text)["error"]
+
+
+def test_http_mcp_exposes_agent_memory_tools_in_intent_profile(monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "mcp-token")
+    monkeypatch.setenv("GRAPHTYN_HTTP_TOOL_PROFILE", "intent")
+    response = api_main.mcp_http({"jsonrpc": "2.0", "id": 4, "method": "tools/list"},
+                                 authorization="Bearer mcp-token")
+    names = {row["name"] for row in json.loads(response.body)["result"]["tools"]}
+    assert {"memory_agent_context", "memory_agent_status", "memory_agent_publish",
+            "memory_agent_revoke", "memory_agent_update"} <= names
+
+
 def test_memory_http_correct_and_forget_enforce_author(tmp_path, monkeypatch):
     monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
     monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)
@@ -176,12 +226,60 @@ def test_explicit_registration_overrides_auto_discovered_name(tmp_path, monkeypa
     assert projects[0]["name"] == "Graphtyn"
 
 
+def test_agent_directory_respects_registered_brain_owners(tmp_path, monkeypatch):
+    state = tmp_path / "store"
+    monkeypatch.setattr(api_main, "INDEX_STORE", state)
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+    brain = tmp_path / "legacy-mixed-brain"
+    brain.mkdir()
+    store = SharedMemoryStore(brain)
+    store.start_session("openclaw/architect", "Architect work")
+    store.start_session("openclaw/career", "Career work")
+
+    legacy = tmp_path / "archived-shared-brain"
+    legacy.mkdir()
+    legacy_store = SharedMemoryStore(legacy)
+    legacy_store.start_session("openclaw/architect", "Old architect work")
+    legacy_store.start_session("openclaw/career", "Old career work")
+
+    projects_file = state / "registered_projects.json"
+    projects_file.write_text(json.dumps([{
+        "id": "legacy-mixed-brain", "name": "Legacy mixed brain", "path": str(brain),
+        "mode": "single_folder", "space_type": "agent_brain",
+        "agent_ids": ["openclaw/architect"],
+    }, {
+        "id": "archived-shared-brain", "name": "Legacy archive", "path": str(legacy),
+        "mode": "single_folder", "space_type": "agent_brain", "legacy": True,
+        "agent_ids": ["openclaw/architect", "openclaw/career"],
+    }]))
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", projects_file)
+    (state / "registered_agents.json").write_text(json.dumps({"version": 1, "agents": [
+        {"id": "openclaw/architect", "name": "Architect", "provider": "openclaw"},
+        {"id": "openclaw/career", "name": "Career", "provider": "openclaw"},
+    ]}))
+
+    agents = {row["id"]: row for row in api_main._load_registered_agents()}
+
+    assert agents["openclaw/architect"]["sessions"] == 1
+    assert str(brain) in agents["openclaw/architect"]["projects"]
+    assert agents["openclaw/architect"]["name"] == "Architect"
+    assert str(legacy) not in agents["openclaw/architect"]["paths"]
+    assert agents["openclaw/career"]["sessions"] == 0
+    assert str(brain) not in agents["openclaw/career"]["paths"]
+    assert str(legacy) not in agents["openclaw/career"]["paths"]
+
+    archives = {row["path"]: row for row in api_main._load_registered_brains()}
+    assert archives[str(legacy)]["legacy"] is True
+    assert archives[str(legacy)]["sessions"] == 2
+
+
 def test_dashboard_assets_served(tmp_path, monkeypatch):
     client = _client(tmp_path, monkeypatch)
     html = client.get("/")
     assert html.status_code == 200
     assert "Graphtyn" in html.text
     assert "/dashboard.css" in html.text and "/dashboard.js" in html.text
+    assert 'id="btn-openclaw"' in html.text and "OpenClaw" in html.text
     assert 'id="blast-content"' in html.text and "overflow-wrap:anywhere" in html.text
     css = client.get("/dashboard.css")
     assert css.status_code == 200
@@ -189,7 +287,7 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     js = client.get("/dashboard.js")
     assert js.status_code == 200
     assert "Object.assign(window" in js.text
-    for module in ["state", "painters", "sim", "styles", "graph", "controls", "ui", "quality", "memory"]:
+    for module in ["state", "painters", "sim", "styles", "graph", "controls", "ui", "quality", "memory", "openclaw"]:
         r = client.get(f"/js/{module}.js")
         assert r.status_code == 200, module
         assert "export " in r.text, module
@@ -209,6 +307,9 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     assert "EVIDENCIA " in graph_js
     assert 'id="modal-quality"' in html.text
     assert "addNodeToContext" in graph_js
+    assert "loadOpenClawPanel" in client.get("/js/controls.js").text
+    assert "Sincronizar ahora" in client.get("/js/openclaw.js").text
+    assert "openclaw-manager" in css.text
     quality_js = client.get("/js/quality.js").text
     assert "/api/index-quality" in quality_js
     assert "/api/context-bundle" in quality_js
@@ -477,3 +578,81 @@ def test_memory_sync_job_runs_each_registered_space(tmp_path, monkeypatch):
     assert job["status"] == "completed"
     assert job["result"]["space_count"] == 2
     assert calls == [str(first), str(second)]
+
+
+def test_openclaw_dashboard_status_includes_each_agent_memory(monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS_FILE", raising=False)
+    from graphtyn.core import openclaw_integration
+    installation = {"id": "openclaw-test", "agents": [{"id": "main", "agent_id": "openclaw/main",
+                                                         "brain_path": "/tmp/brain"}]}
+    monkeypatch.setattr(openclaw_integration, "list_installations", lambda: [installation])
+    monkeypatch.setattr(openclaw_integration, "resolve_agent", lambda *_args: {"brain_path": "/tmp/brain"})
+    monkeypatch.setattr(openclaw_integration, "agent_status", lambda *_args: {"own": {"sessions": 2}})
+    monkeypatch.setattr(api_main, "existing_store_db", lambda _path: Path("/tmp/memory-v2.db"))
+
+    result = api_main.openclaw_installations()
+
+    assert result["installations"][0]["agents"][0]["memory_status"]["own"]["sessions"] == 2
+
+
+def test_openclaw_sync_job_runs_each_isolated_brain(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS_FILE", raising=False)
+    from graphtyn.core import openclaw_integration
+    first, second = tmp_path / "evi", tmp_path / "eve"
+    first.mkdir(); second.mkdir()
+    installation = {"id": "openclaw-test", "agents": [
+        {"id": "nexus", "agent_id": "openclaw/nexus", "display_name": "Evi", "brain_path": str(first)},
+        {"id": "career", "agent_id": "openclaw/career", "display_name": "Eve", "brain_path": str(second)},
+    ]}
+    monkeypatch.setattr(openclaw_integration, "get_installation", lambda _id: installation)
+    manager = MemoryJobManager(tmp_path / "jobs")
+    monkeypatch.setattr(api_main, "memory_jobs", manager)
+    calls = []
+
+    def fake_sync(path, **kwargs):
+        calls.append((str(path), kwargs["agent_id"]))
+        return {"ok": True, "path": str(path), "errors": []}
+
+    monkeypatch.setattr(api_main, "sync_memory_workspace", fake_sync)
+    response = api_main.openclaw_sync("openclaw-test")
+    job_id = response["job"]["id"]
+    deadline = time.time() + 2
+    while time.time() < deadline and manager.get(job_id)["status"] in {"pending", "running"}:
+        time.sleep(.01)
+    job = manager.get(job_id)
+
+    assert job["status"] == "completed"
+    assert job["result"]["ok"] is True
+    assert calls == [(str(first.resolve()), "openclaw/nexus"), (str(second.resolve()), "openclaw/career")]
+
+
+def test_legacy_memory_archives_are_excluded_from_sync_and_watch(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS_FILE", raising=False)
+    state = tmp_path / "store"
+    monkeypatch.setattr(api_main, "INDEX_STORE", state)
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+    registry = state / "registered_projects.json"
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", registry)
+    archive, active = tmp_path / "legacy-brain", tmp_path / "active-brain"
+    archive.mkdir(); active.mkdir()
+    SharedMemoryStore(archive).start_session("openclaw/old", "Archived conversation")
+    SharedMemoryStore(active).start_session("openclaw/current", "Current conversation")
+    registry.write_text(json.dumps([
+        {"id": "old", "name": "Legado mixto · Cerebro antiguo", "path": str(archive),
+         "mode": "single_folder", "space_type": "agent_brain", "legacy": True},
+        {"id": "current", "name": "Current brain", "path": str(active),
+         "mode": "single_folder", "space_type": "agent_brain", "agent_ids": ["openclaw/current"]},
+    ]), encoding="utf-8")
+
+    assert archive.resolve() not in api_main._registered_memory_paths()
+    assert active.resolve() in api_main._registered_memory_paths()
+    sync = api_main.memory_sync({"path": str(archive), "consent": True})
+    watch = api_main.memory_watch({"path": str(archive), "consent": True, "enabled": True})
+    assert sync.status_code == 409 and sync.body
+    assert watch.status_code == 409 and watch.body
