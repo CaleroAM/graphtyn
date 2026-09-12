@@ -26,7 +26,7 @@ publicado.
 
 ## Evidencia local
 
-- Suite completa: **312 pasaron, 2 omitidas**, Python 3.13.13, Linux. Las
+- Suite completa: **313 pasaron, 2 omitidas**, Python 3.13.13, Linux. Las
   omisiones corresponden a dependencias/entorno opcionales; no se ejecutó aquí
   la matriz remota de Python 3.10–3.12 ni Windows.
 - Wheel y sdist se construyeron. El wheel se instaló en un entorno virtual
@@ -36,16 +36,19 @@ publicado.
 - `pip-audit` no encontró vulnerabilidades conocidas en las dependencias
   auditables. Omitió el paquete Graphtyn porque esta versión candidata no está
   publicada en PyPI.
-- El smoke de Chromium **no se pudo ejecutar** en este host: Playwright requiere
-  `libstdc++.so.6` y Chromium requiere `libglib-2.0.so.0`, que no están
-  disponibles en el entorno. El script reporta `SKIP`; el job de navegador de
-  CI debe pasar en el SHA candidato antes de etiquetar.
+- El smoke local de Chromium reporta `SKIP` porque este host no tiene las
+  bibliotecas `libstdc++.so.6` y `libglib-2.0.so.0`. El job de navegador de CI
+  sí lo ejecutó y pasó.
 - Benchmark reproducible de memoria compartida, con 30 recuerdos sintéticos,
   270 consultas positivas y 15 negativas: Recall@5/10 **1.000**, MRR **0.9889**,
   atribución **1.000**, precisión negativa **1.000**, 643.24 tokens estimados
   por consulta en promedio, latencia media **49.081 ms** y p95 **61.391 ms**.
   La corrida tomó **16.195 s** y alcanzó **156,164 KiB (152.5 MiB)** de RSS
   máximo del proceso. Los tokens son una estimación por caracteres UTF-8/4.
+- La [CI de GitHub para `b24eb41`](https://github.com/CaleroAM/graphtyn/actions/runs/34668999345)
+  pasó sus nueve checks requeridos: Python 3.10–3.13, Windows, navegador,
+  paquete, seguridad y Docker. En Windows pasó también la restauración sin dejar
+  bloqueado el archivo temporal.
 - `git diff --check` y `py_compile` de los módulos modificados pasan.
 
 El benchmark mide recuperación de recuerdos estructurados, no la calidad de
@@ -57,9 +60,9 @@ La corrida sintética se reproduce con
 
 ## Pendiente antes de publicación estable
 
-- CI del SHA exacto en Linux/Python 3.10–3.13, Windows, navegador, auditoría de
-  dependencias y Docker.
-- Ejecutar Chromium en un entorno compatible y revisar sus resultados.
+- Ejecutar y aprobar CI para el SHA definitivo que se etiquete; el workflow de
+  release lo comprueba automáticamente, además de la ejecución verde en
+  `b24eb41`.
 - Validar actualización/restauración en instalaciones reales y carga sostenida
   con almacenes grandes; no se declara probado el uso multi-GB.
 - Revisar el artefacto final y sus hashes. El tag, la release y la publicación
