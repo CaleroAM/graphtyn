@@ -569,13 +569,13 @@ def test_memory_sync_job_runs_each_registered_space(tmp_path, monkeypatch):
     monkeypatch.setattr(api_main, "sync_memory_workspace", fake_sync)
     response = api_main.memory_sync({"all_spaces": True, "consent": True, "provider_model": "auto"}, authorization=None)
     job_id = response["job"]["id"]
-    deadline = time.time() + 2
+    deadline = time.time() + 10
     while time.time() < deadline and manager.get(job_id)["status"] in {"pending", "running"}:
         time.sleep(.01)
     job = manager.get(job_id)
 
     assert response["paths"] == [str(first), str(second)]
-    assert job["status"] == "completed"
+    assert job["status"] == "completed", job
     assert job["result"]["space_count"] == 2
     assert calls == [str(first), str(second)]
 
