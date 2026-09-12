@@ -5,7 +5,7 @@
 - [Guía de contribución](CONTRIBUTING.md)
 - [Checklist de release](release-checklist.md)
 - [Validación local de 0.6.1](release-validation-0.6.1.md)
-- [Validación candidata de 0.8.0](release-validation-0.8.0.md)
+- [Validación de release 0.8.0](release-validation-0.8.0.md)
 - [Validación local de 0.6.0](release-validation-0.6.0.md)
 
 Los documentos se organizan por propósito para no mezclar uso, diseño, resultados
@@ -29,6 +29,8 @@ experimentales y comparaciones comerciales.
 
 - [`testing.md`](testing.md): protocolo, estados y reproducción.
 - [`BENCHMARKS.md`](BENCHMARKS.md): resultados y artefactos medidos.
+- [`competitive-validation-0.8.0.md`](competitive-validation-0.8.0.md): comparación
+  limitada con Graphify para la release 0.8.0.
 - [`market-study.md`](market-study.md): estudio de mercado fechado.
 - [`shared_memory_benchmark.md`](shared_memory_benchmark.md): evaluación de memoria.
 - [`shared_memory_stability.md`](shared_memory_stability.md): estabilidad y costos.

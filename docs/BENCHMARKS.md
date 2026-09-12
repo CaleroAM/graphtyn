@@ -13,7 +13,13 @@
 | CleanArchitecture, .NET | PARTIAL; v8 no completó las tres condiciones |
 | ZERP, Laravel/React | PARTIAL; diagnóstico y una tarea dirigida |
 | Memoria compartida | PARTIAL; falta más escala y repetición |
+| Comparativa Graphtyn 0.8.0 vs Graphify 0.9.58 | PARTIAL; cuatro tareas, una repetición; sin afirmación de superioridad |
 | 36 tareas multilenguaje | PENDING |
+
+La medición de la release 0.8.0 está en
+[`competitive-validation-0.8.0.md`](competitive-validation-0.8.0.md). Separa
+conteos estructurales de cobertura factual y documenta que el piloto de cuatro
+tareas no permite declarar un ganador general.
 
 ## Validación de regresión — 25 ago 2026
 
