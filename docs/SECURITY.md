@@ -2,9 +2,10 @@
 
 ## Versiones soportadas
 
-La última serie estable publicada, `0.7.x`, recibe correcciones de seguridad.
-El trabajo para `0.8.0` permanece candidato hasta completar todas las barreras
-de CI y revisión del commit etiquetado.
+El soporte de seguridad se aplica a la versión estable más reciente publicada
+en [GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/latest).
+Actualiza Graphtyn antes de reportar un problema e incluye la salida de
+`graphtyn --version` para identificar la versión afectada.
 
 ## Reportar una vulnerabilidad
 

@@ -1,6 +1,6 @@
 # 🌌 Graphtyn
 
-[![Release](https://img.shields.io/badge/release-0.8.0-blue.svg)](docs/CHANGELOG.md)
+[![Release](https://img.shields.io/github/v/release/CaleroAM/graphtyn?label=release)](https://github.com/CaleroAM/graphtyn/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-10b981.svg)](https://modelcontextprotocol.io/)
@@ -10,7 +10,7 @@ contexto compacto a agentes mediante MCP. También conserva memoria semántica
 compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
 estructurales.
 
-> Última versión estable publicada: [`0.8.0`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.8.0).
+> Última versión estable publicada: [`0.9.0`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.9.0).
 > Graphtyn se distribuye por GitHub Releases; PyPI permanece deshabilitado. El
 > despliegue es self-hosted: los agentes pueden compartir memoria con permisos
 > por token y proyecto, pero no es un servicio SaaS multi-tenant.
@@ -59,10 +59,10 @@ procedencia. El diseño completo está en
 ## Instalación rápida
 
 Graphtyn aún no está publicado en PyPI. Instala el wheel de
-[GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/tag/v0.8.0):
+[GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/latest):
 
 ```bash
-python -m pip install "https://github.com/CaleroAM/graphtyn/releases/download/v0.8.0/graphtyn-0.8.0-py3-none-any.whl"
+python -m pip install "https://github.com/CaleroAM/graphtyn/releases/latest/download/graphtyn-0.9.0-py3-none-any.whl"
 ```
 
 También puedes instalarlo en modo desarrollo desde un checkout:

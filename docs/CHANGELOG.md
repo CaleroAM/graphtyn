@@ -5,6 +5,35 @@ compatibles con PEP 440.
 
 ## [Unreleased]
 
+Sin cambios registrados.
+
+## [0.9.0] - 2026-09-12
+
+### Añadido
+
+- Descubrimiento y conexión nativos con OpenClaw desde `onboard` y la CLI; cada
+  instalación y agente conserva su identidad y almacén privado.
+- Relaciones de familia confirmables entre cerebros y subagentes, captura
+  incremental de conversaciones nuevas y revisión explícita del historial
+  anterior.
+- Migración y consolidación revisable de memorias heredadas hacia el cerebro
+  activo, preservando el archivo de origen y distinguiendo datos respaldados de
+  datos nuevos.
+- Vista OpenClaw del dashboard para revisar instalaciones, cerebros, relaciones,
+  estado de captura y errores de sincronización.
+
+### Seguridad y compatibilidad
+
+- Los agentes sin relación confirmada permanecen aislados; la similitud de
+  nombres no asigna propiedad ni parentesco.
+- La integración remota usa un destino SSH explícito y no explora la red.
+- La conexión nativa es específica de OpenClaw; otros harness requieren su
+  propio adaptador.
+
+## [0.8.0] - 2026-09-11
+
+### Incluye
+
 - Referencias estables `N-xxxxxx` para nodos de memoria, resolución por CLI,
   MCP y API, y copia directa desde el dashboard.
 - Candidatas léxicas separadas de las aristas del grafo, con aceptación o
@@ -12,7 +41,7 @@ compatibles con PEP 440.
 - Enriquecimiento opcional con Ollama local en segundo plano y resaltado de
   sólo el nodo seleccionado, sus vecinos y sus conexiones.
 
-## [0.8.0] - 2026-09-11
+### Seguridad y estabilidad
 
 - Aislamiento de cerebros por identidad completa, aplicado dentro de SQLite a
   sesiones, mensajes, temas, grafos, estadísticas, exportaciones y retención.

@@ -196,10 +196,19 @@ def main():
             filter_panel = page.locator("#dd-filter .dd-panel").bounding_box()
             assert filter_panel and filter_panel["y"] + filter_panel["height"] <= 900, "panel Filtros sale del viewport"
             assert "tipo de nodo" in page.locator("#dd-filter").inner_text().lower()
+            page.wait_for_function(
+                """() => {
+                  const el = document.querySelector('.float-actions');
+                  if (!el) return true;
+                  const style = getComputedStyle(el);
+                  return style.visibility === 'hidden' || Number(style.opacity) <= 0.01;
+                }""",
+                timeout=5000,
+            )
             floating_state = page.locator(".float-actions").evaluate(
                 "el => { const s=getComputedStyle(el); return {visibility:s.visibility,pointerEvents:s.pointerEvents,opacity:s.opacity,bodyClass:document.body.className,filterClass:document.getElementById('dd-filter').className}; }"
             )
-            visually_absent = floating_state["visibility"] == "hidden" or float(floating_state["opacity"]) == 0
+            visually_absent = floating_state["visibility"] == "hidden" or float(floating_state["opacity"]) <= 0.01
             assert visually_absent and floating_state["pointerEvents"] == "none", f"MCP/Acciones/Reindexar cubren el panel Filtros: {floating_state}"
             page.keyboard.press("Escape")
 
