@@ -1,7 +1,7 @@
 # Validación de `0.8.0`
 
-Fecha: 2026-09-11. Estado: candidato preparado en la rama de trabajo; no
-publicado.
+Fecha: 2026-09-11. Estado: publicada como release estable `v0.8.0` desde el
+commit `346bc6b949b63cfcf459e576741b862bbff782c4`.
 
 ## Cobertura de cambios
 
@@ -51,6 +51,21 @@ publicado.
   bloqueado el archivo temporal.
 - `git diff --check` y `py_compile` de los módulos modificados pasan.
 
+## Verificación de la release pública
+
+- La [CI del commit de `main`](https://github.com/CaleroAM/graphtyn/actions/runs/34670377329)
+  y la [CI del tag `v0.8.0`](https://github.com/CaleroAM/graphtyn/actions/runs/34671697024)
+  pasaron Python 3.10–3.13, Windows, navegador, paquete, seguridad y Docker.
+- El workflow construyó wheel y sdist, instaló el wheel en un entorno limpio,
+  verificó la versión `0.8.0`, adjuntó `SHA256SUMS` y generó atestaciones.
+- El benchmark de memoria se repitió en un almacén temporal: 285 consultas,
+  Recall@5/10 **1.000**, MRR **0.9889**, atribución **1.000**, exactitud de
+  negativos **1.000**, media **643.17 tokens estimados**, latencia media
+  **30.739 ms**, p95 **36.984 ms**. El corpus es sintético.
+- La comparación estructural y el piloto pareado con Graphify están detallados
+  en [competitive-validation-0.8.0.md](competitive-validation-0.8.0.md). Sus
+  cuatro tareas no prueban superioridad general.
+
 El benchmark mide recuperación de recuerdos estructurados, no la calidad de
 segmentación/recall de temas conversacionales. Sus cifras no representan una
 medición con historiales reales ni corpus de varios GB.
@@ -58,15 +73,12 @@ medición con historiales reales ni corpus de varios GB.
 La corrida sintética se reproduce con
 `graphtyn memory benchmark --suite stability --output resultado.json --path .`.
 
-## Pendiente antes de publicación estable
+## Pendientes después de la publicación
 
-- Ejecutar y aprobar CI para el SHA definitivo que se etiquete; el workflow de
-  release lo comprueba automáticamente, además de la ejecución verde en
-  `b24eb41`.
+- Ejecutar las 108 celdas de la matriz competitiva de 36 tareas con repeticiones.
 - Validar actualización/restauración en instalaciones reales y carga sostenida
   con almacenes grandes; no se declara probado el uso multi-GB.
-- Revisar el artefacto final y sus hashes. El tag, la release y la publicación
-  no se crean hasta que todos los controles requeridos de CI estén verdes.
+- PyPI sigue deshabilitado; la distribución pública es por GitHub Releases.
 
 El benchmark generado durante esta validación se guardó en `/tmp` y no contiene
 datos de usuario; el repositorio no incluye conversaciones privadas.

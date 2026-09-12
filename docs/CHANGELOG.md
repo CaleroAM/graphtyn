@@ -12,7 +12,7 @@ compatibles con PEP 440.
 - Enriquecimiento opcional con Ollama local en segundo plano y resaltado de
   sólo el nodo seleccionado, sus vecinos y sus conexiones.
 
-## [0.8.0] - Candidato sin publicar
+## [0.8.0] - 2026-09-11
 
 - Aislamiento de cerebros por identidad completa, aplicado dentro de SQLite a
   sesiones, mensajes, temas, grafos, estadísticas, exportaciones y retención.
@@ -33,9 +33,11 @@ compatibles con PEP 440.
 - Corregida la aserción del smoke del dashboard para distinguir los modos de
   memoria simplificado y detallado que realmente muestra la interfaz.
 
-Esta versión no se publicará hasta que la matriz de CI esté verde en el commit
-de release; la lista de comprobaciones locales y límites está en
-[release-validation-0.8.0.md](release-validation-0.8.0.md).
+Publicada como versión estable desde el commit
+[`346bc6b`](https://github.com/CaleroAM/graphtyn/commit/346bc6b949b63cfcf459e576741b862bbff782c4).
+La validación de release y sus límites están en
+[release-validation-0.8.0.md](release-validation-0.8.0.md); la evaluación
+comparativa está en [competitive-validation-0.8.0.md](competitive-validation-0.8.0.md).
 
 ## [0.7.0] - 2026-09-10
 
