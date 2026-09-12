@@ -50,6 +50,8 @@ def test_ci_has_required_release_gates():
     release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
     for gate in ("ci-gate", "GH_TOKEN", "EXPECTED_SHA", "--event push", "needs: ci-gate"):
         assert gate in release
+    assert "cd dist" in release
+    assert "sha256sum graphtyn-*.whl graphtyn-*.tar.gz install.ps1 uninstall.ps1 > SHA256SUMS" in release
 
 
 def test_browser_smoke_does_not_silently_skip_in_ci(monkeypatch):
