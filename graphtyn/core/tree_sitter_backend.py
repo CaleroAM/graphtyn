@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v11-compact-signatures-imports"
+PARSER_VERSION = "treesitter-v12-doc-sections"
 
 
 def _language_for_extension(ext: str):

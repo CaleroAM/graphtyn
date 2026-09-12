@@ -137,6 +137,8 @@ graphtyn memory bootstrap --path .
 graphtyn memory sync --path . --watch --interval 5 --consent
 graphtyn memory sync --all-spaces --consent
 graphtyn memory status --path .
+graphtyn memory scope show --path /ruta/al/cerebro
+graphtyn memory scope set --path /ruta/al/cerebro --space-type agent_brain --agent-id openclaw/main
 ```
 
 `--memory off` instala Graphtyn sin captura conversacional. `bootstrap` siempre
@@ -154,6 +156,14 @@ desde ese archivo. Los chats nuevos entran directamente al cerebro activo cuando
 la captura del agente está activa; no se escriben en el archivo histórico.
 Consulta [`docs/shared-memory.md`](docs/shared-memory.md) para ver el contrato
 CLI/API y la procedencia que se conserva.
+
+`memory scope show|set` consulta y administra el tipo y los propietarios de un
+espacio registrado. `memory sync --all-spaces` incluye espacios con almacén o
+fuente asociada e informa conflictos sin detener la sincronización de los demás.
+OpenClaw puede descubrir rutas configuradas y seguir `trajectory-path.json` hasta
+el transcript canónico, limitado a la fuente seleccionada. `memory_status` está
+disponible por MCP; la búsqueda documental opera sobre el `path` indicado y no
+recorre automáticamente otros proyectos.
 
 Modos de reindexación:
 

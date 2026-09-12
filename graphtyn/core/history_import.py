@@ -61,8 +61,24 @@ class HistoricalSession:
 
 def default_sources() -> dict[str, list[Path]]:
     home = Path.home()
+    openclaw_roots = [
+        Path(os.environ.get("OPENCLAW_STATE_DIR", "")).expanduser() if os.environ.get("OPENCLAW_STATE_DIR") else None,
+        Path(os.environ.get("OPENCLAW_HOME", "")).expanduser() if os.environ.get("OPENCLAW_HOME") else None,
+        home / ".openclaw",
+        home / ".config" / "openclaw",
+    ]
+    config_path = os.environ.get("OPENCLAW_CONFIG_PATH", "").strip()
+    if config_path:
+        openclaw_roots.insert(0, Path(config_path).expanduser().parent)
+    openclaw_sources: list[Path] = []
+    for root in openclaw_roots:
+        if root is None:
+            continue
+        candidate = root / "agents" if root.name != "agents" else root
+        if candidate not in openclaw_sources:
+            openclaw_sources.append(candidate)
     return {
-        "openclaw": [home / ".openclaw" / "agents"],
+        "openclaw": openclaw_sources,
         "hermes": [home / ".hermes", home / ".config" / "hermes"],
         "codex": [home / ".codex" / "sessions"],
         "antigravity": [home / ".agy", home / ".config" / "antigravity",
@@ -489,6 +505,84 @@ def _source_matches_root(path: str | Path, roots: set[str]) -> bool:
     return False
 
 
+def _contained_path(root: Path, value: str | Path, base: Path) -> Path | None:
+    """Resolve a pointer only inside its explicitly selected history tree."""
+    raw = Path(str(value)).expanduser()
+    candidates = [raw] if raw.is_absolute() else [base / raw, root / raw]
+    # Runtime paths may have been written inside a container. Map only the
+    # suffix below its known OpenClaw ``agents`` root into the selected source.
+    if raw.is_absolute() and "agents" in raw.parts:
+        index = len(raw.parts) - 1 - tuple(reversed(raw.parts)).index("agents")
+        suffix = raw.parts[index + 1:]
+        if suffix:
+            candidates.append(root.joinpath(*suffix))
+    if raw.is_absolute() and root.name in raw.parts:
+        index = len(raw.parts) - 1 - tuple(reversed(raw.parts)).index(root.name)
+        suffix = raw.parts[index + 1:]
+        if suffix:
+            candidates.append(root.joinpath(*suffix))
+    resolved_root = root.resolve()
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve(strict=True)
+            resolved.relative_to(resolved_root)
+        except (OSError, RuntimeError, ValueError):
+            continue
+        if resolved.is_file():
+            return resolved
+    return None
+
+
+def _openclaw_pointer_transcripts(root: Path, pointer_files: Iterable[Path]) -> tuple[list[Path], list[dict[str, str]]]:
+    """Follow OpenClaw trajectory pointers to canonical chat transcripts only.
+
+    Trace events are inspected as metadata; their prompt, model, and tool payloads
+    are never emitted to the history importer.
+    """
+    transcripts: list[Path] = []
+    warnings: list[dict[str, str]] = []
+    for pointer in pointer_files:
+        try:
+            pointer_data = json.loads(pointer.read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            warnings.append({"source": str(pointer), "warning": "puntero de trayectoria ilegible"})
+            continue
+        if not isinstance(pointer_data, dict):
+            continue
+        runtime_value = pointer_data.get("runtimeFile")
+        trace = _contained_path(root, runtime_value, pointer.parent) if runtime_value else None
+        if not trace or ".trajectory." not in trace.name:
+            warnings.append({"source": str(pointer), "warning": "trace apuntado ausente o fuera de la fuente seleccionada"})
+            continue
+        try:
+            with trace.open("r", encoding="utf-8", errors="replace") as stream:
+                for line_number, line in enumerate(stream, 1):
+                    if len(line) > 1024 * 1024:
+                        continue
+                    try:
+                        event = json.loads(line)
+                    except (ValueError, TypeError):
+                        continue
+                    if not isinstance(event, dict):
+                        continue
+                    event_name = event.get("type") or event.get("event") or event.get("name")
+                    if event_name != "session.started":
+                        continue
+                    data = event.get("data")
+                    session_file = data.get("sessionFile") if isinstance(data, dict) else None
+                    if not isinstance(session_file, str) or not session_file.strip():
+                        continue
+                    transcript = _contained_path(root, session_file, trace.parent)
+                    if transcript and transcript.suffix.casefold() == ".jsonl":
+                        transcripts.append(transcript)
+                    else:
+                        warnings.append({"source": str(pointer),
+                                         "warning": f"transcripción canónica no disponible (evento {line_number})"})
+        except OSError:
+            warnings.append({"source": str(pointer), "warning": "no se pudo leer el trace apuntado"})
+    return list(dict.fromkeys(transcripts)), warnings
+
+
 def _agent_id_matches(expected: str | None, observed: str | None) -> bool:
     """Match a configured owner without collapsing identities across providers."""
     wanted = str(expected or "").strip().casefold()
@@ -505,7 +599,7 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
     from .adapters import list_adapters
     known = {row["name"] for row in list_adapters()}
     providers = [provider.casefold()] if provider else sorted(known | {row["provider"] for row in configured})
-    found, errors, excluded = [], [], []
+    found, errors, excluded, warnings = [], [], [], []
     for name in providers:
         source_owners: dict[str, str] = {}
         source_baselines: dict[str, float] = {}
@@ -537,6 +631,7 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
             try:
                 root, temp, source_label = _materialize_source(source)
                 if not root.exists(): continue
+                scan_root = root if root.is_dir() else root.parent
                 if root.is_file():
                     files = [root]
                 elif name == "antigravity":
@@ -548,11 +643,23 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                     files = ([p for p in root.rglob("*.jsonl") if ".trajectory." not in p.name]
                              + list(root.rglob("*.json"))
                              + list(root.rglob("*.db")) + list(root.rglob("*.sqlite")) + list(root.rglob("*.sqlite3")))
+                if name == "openclaw":
+                    pointer_files = ([root] if root.is_file() and "trajectory-path" in root.name
+                                     else list(scan_root.rglob("*trajectory-path.json")))
+                    pointer_files = [p for p in pointer_files if p.is_file()]
+                    transcripts, pointer_warnings = _openclaw_pointer_transcripts(scan_root, pointer_files)
+                    warnings.extend(pointer_warnings)
+                    # Pointer JSON and trajectory traces are technical metadata,
+                    # never candidate chat histories. Only canonical transcripts
+                    # resolved within the explicitly selected source are parsed.
+                    files = [p for p in files if "trajectory-path" not in p.name]
+                    files.extend(transcripts)
+                files = list(dict.fromkeys(files))
                 # Agent distributions often bundle prompts and skill fixtures that
                 # happen to use role/content fields. They are not conversations.
                 ignored_parts = {"skills", "templates", "examples", "fixtures", "node_modules", ".git"}
                 files = [path for path in files if not ignored_parts.intersection(
-                    part.casefold() for part in path.relative_to(root).parts[:-1])]
+                    part.casefold() for part in path.relative_to(scan_root).parts[:-1])]
                 for path in files:
                     if path.suffix.casefold() == ".jsonl" and not temp:
                         from .history_stream import preview_jsonl
@@ -608,7 +715,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                  "confidence": 1.0 if Path(workspace).is_absolute() else .7}
                 for workspace, count in sorted(project_counts.items(), key=lambda pair: (-pair[1], pair[0]))]
     return {"ok": not errors, "sessions": found, "count": len(found), "projects": projects,
-            "errors": errors, "excluded": excluded, "excluded_count": len(excluded)}
+            "errors": errors, "warnings": warnings,
+            "excluded": excluded, "excluded_count": len(excluded)}
 
 
 def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
@@ -635,6 +743,7 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
                                 background_enrich=False, agent_ids=authorized_agents)
     result: dict[str, Any] = {"ok": bool(imported.get("ok", True)), "path": str(root),
                               "discovered": discovered["count"], "import": imported,
+                              "warnings": list(discovered.get("warnings") or []),
                               "excluded": discovered.get("excluded") or [],
                               "excluded_count": int(discovered.get("excluded_count") or 0),
                               "errors": list(discovered.get("errors") or [])}

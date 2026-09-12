@@ -293,3 +293,36 @@ def test_agy_planner_and_generic_tool_preserve_roles():
     assert _role({'source':'MODEL','type':'GENERIC','content':'untyped'}) is None
     assert _role({'role':'assistant','channel':'analysis','content':'hidden'}) is None
     assert _content({'content':[{'type':'thinking','text':'hidden'},{'type':'text','text':'visible'}]}) == 'visible'
+
+
+
+def test_agent_brain_relation_candidates_keep_owner_scope_and_bindings(store, tmp_path):
+    cases = (
+        ("openclaw/main", "CRM report button color", "The CRM report button uses blue"),
+        ("openclaw/main", "CRM report button border", "The CRM report button keeps a border"),
+        ("openclaw/career", "CRM report button analytics", "The CRM report button tracks analytics"),
+        ("openclaw/career", "CRM report button export", "The CRM report button exports summaries"),
+    )
+    for agent_id, title, message in cases:
+        session = store.start_session(agent_id, title, capture_enabled=True)
+        store.append_message(session["id"], "user", message)
+        store.process_topics(session["id"])
+
+    registry = tmp_path / "state" / "registered_projects.json"
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(json.dumps([{
+        "id": "project", "path": str(store.workspace), "space_type": "agent_brain",
+        "agent_ids": ["openclaw/main"],
+    }]), encoding="utf-8")
+    scoped = SharedMemoryStore(store.workspace)
+
+    result = scoped.relation_candidates(
+        requester_agent="dashboard", agent_ids=["openclaw/main"]
+    )
+    main_topic_ids = {row["id"] for row in scoped.topics(agent_ids=["openclaw/main"])["topics"]}
+
+    assert result["candidates"]
+    assert all(
+        {item["source_topic_id"], item["target_topic_id"]} <= main_topic_ids
+        for item in result["candidates"]
+    )

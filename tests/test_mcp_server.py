@@ -47,7 +47,7 @@ def test_mcp_initialize_and_tools_list(workspace):
             "graph_history_search", "graph_history_timeline", "graph_history_get",
             "graph_register_project", "memory_session_start", "memory_checkpoint",
             "memory_append", "memory_search", "memory_context", "memory_session_end",
-            "memory_correct", "memory_forget", "memory_compact"} <= names
+            "memory_status", "memory_correct", "memory_forget", "memory_compact"} <= names
     intent_tool = next(t for t in tools["result"]["tools"] if t["name"] == "graph_query_intent")
     assert "overview" in intent_tool["inputSchema"]["properties"]["intent"]["enum"]
     assert intent_tool["inputSchema"]["properties"]["evidence_mode"]["enum"] == ["auto", "compact", "balanced", "precision"]
@@ -61,7 +61,7 @@ def test_mcp_intent_profile_exposes_context_and_topic_expansion(workspace):
         capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ),
     )
     response = json.loads(res.stdout.strip())
-    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
+    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "memory_context", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
 
 
 def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalog(workspace):
@@ -86,6 +86,17 @@ def test_mcp_memory_cross_session_attribution(workspace):
     ])
     result = json.loads(response[1]["result"]["content"][0]["text"])
     assert result["results"][0]["attribution"]["agent_id"] == "agy"
+
+
+def test_mcp_memory_status_reports_bound_workspace(workspace):
+    _, responses = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 108, "method": "tools/call",
+        "params": {"name": "memory_status", "arguments": {}}}])
+    status = json.loads(responses[0]["result"]["content"][0]["text"])
+
+    assert status["ok"] is True
+    assert status["path"] == str(workspace.resolve())
+    assert status["db"]
+    assert "topic_coverage" in status
 
 
 def test_mcp_change_analyst_is_compact_and_grounded(workspace):
@@ -275,6 +286,19 @@ def test_mcp_search_concepts_matches_individual_query_terms(workspace):
     result = json.loads(resp[0]["result"]["content"][0]["text"])
     assert any(entity["name"] == "helper" for entity in result["entities"].values())
     assert len(result["entities"]) <= 3
+
+
+def test_mcp_graph_search_concepts_finds_markdown_body(workspace):
+    (workspace / "README.md").write_text(
+        "# CRM\n\n## Reportes\nEl botón de reportes conserva el filtro mensual y usa color turquesa.\n",
+        encoding="utf-8")
+    _, responses = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 52, "method": "tools/call",
+        "params": {"name": "graph_search_concepts", "arguments": {
+            "query": "color turquesa botón reportes", "limit": 5}}}])
+    result = json.loads(responses[0]["result"]["content"][0]["text"])
+
+    assert any(node.get("kind") == "documentation_section" and node.get("name") == "Reportes"
+               for node in result["entities"].values())
 
 
 def test_evidence_format_deduplicates_paths_and_reduces_payload():

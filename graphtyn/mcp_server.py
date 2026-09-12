@@ -742,6 +742,12 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                 "neighbor_limit": {"type": "integer"}}, "required": ["query", "requester_agent"]}
                         },
                         {
+                            "name": "memory_status",
+                            "description": "Estado de captura, cobertura temática, propietarios y ruta del almacén MCP actual.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "requester_agent": {"type": "string", "description": "Identidad real que consulta el estado."}}}
+                        },
+                        {
                             "name": "memory_ingest_evidence",
                             "description": "Ingiere benchmarks como evidencia verificada, hasheada y ligada a la revisión Git.",
                             "inputSchema": {"type": "object", "properties": {
@@ -797,7 +803,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
             if tool_profile == "intent":
                 response["result"]["tools"] = [
                     tool for tool in response["result"]["tools"]
-                    if tool["name"] in {"graph_query_intent", "memory_context", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}
+                    if tool["name"] in {"graph_query_intent", "memory_context", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}
                 ]
             elif tool_profile == "memory":
                 response["result"]["tools"] = [
@@ -926,8 +932,10 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                         score = (100 if query and query in searchable else 0) + matched_terms * 10 + (30 if exact_name else 0) + min(10, int(node.get("degree") or 0))
                         ranked.append((score, node))
                         ranked_ids.add(node.get("id"))
-                from .core.semantic_index import semantic_search
-                semantic_hits = semantic_search(graph, query, limit=int(args.get("limit") or 12))
+                from .core.semantic_index import build_semantic_index, semantic_search
+                semantic_index = build_semantic_index(graph, _cached_index_dir(workspace) / "semantic_index.json")
+                semantic_hits = semantic_search(graph, query, limit=max(1, min(50, int(args.get("limit") or 12))),
+                                                 index=semantic_index)
                 for hit in semantic_hits:
                     if hit["node"].get("id") not in ranked_ids:
                         ranked.append((int(hit["score"] * 100), hit["node"]))
@@ -994,6 +1002,10 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                         include_graph=bool(args.get("include_graph", True)),
                                         neighbor_limit=int(args.get("neighbor_limit") or 12),
                                         agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))
+                return _mcp_text(req_id, result)
+            elif name == "memory_status":
+                result = memory.status(agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))
+                result["path"] = str(workspace.resolve())
                 return _mcp_text(req_id, result)
             elif name == "memory_ingest_evidence":
                 return _mcp_text(req_id, memory.ingest_benchmark_evidence(args.get("files") or None))

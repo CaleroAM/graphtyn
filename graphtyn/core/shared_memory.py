@@ -1281,8 +1281,10 @@ class SharedMemoryStore(TopicMemoryMixin):
                 if key not in relation_keys:
                     result["topic_relations"].append(relation); relation_keys.add(key)
             for ep in detail["episodes"]:
-                result["episodes"].append({k: ep[k] for k in ("id", "topic_id", "session_id", "agent_id", "extraction")})
-                result["message_references"].extend(ep["message_ids"][:1])
+                episode = {k: ep[k] for k in ("id", "topic_id", "session_id", "agent_id", "extraction")}
+                episode["message_ids"] = ep["message_ids"][:1]
+                result["episodes"].append(episode)
+                result["message_references"].extend(episode["message_ids"])
         result["do_not_expand"] = False
         result["complete"] = False
         result["coverage"]["retrieval_complete"] = False
