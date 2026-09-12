@@ -78,6 +78,27 @@ def test_private_memory_is_visible_only_to_its_agent(tmp_path, monkeypatch):
     assert store.search("credencial rotada", requester_agent="agy")
 
 
+def test_memory_scope_limits_search_and_graph_to_authorized_agents(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "brain"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+    own = store.start_session("openclaw/main", "Evi", capture_enabled=True)
+    other = store.start_session("openclaw/career", "Career", capture_enabled=True)
+    own_memory = store.checkpoint(own["id"], "fact", "Evi decision", "Evi only context")
+    store.checkpoint(other["id"], "fact", "Career decision", "Career only context")
+    store.process_topics(own["id"])
+    store.process_topics(other["id"])
+
+    found = store.search("decision context", requester_agent="dashboard", agent_ids=["openclaw/main"])
+    graph = store.topic_graph(requester_agent="dashboard", agent_ids=["openclaw/main"], limit=100)
+    attribution = store.attribution_graph("dashboard", 100, agent_ids=["openclaw/main"])
+
+    assert [item["id"] for item in found] == [own_memory["id"]]
+    assert {node.get("agent_id") for node in graph["nodes"] if node.get("agent_id")} == {"openclaw/main"}
+    assert {node.get("agent_id") for node in attribution["nodes"] if node.get("agent_id")} == {"openclaw/main"}
+
+
 def test_checkpoint_is_idempotent_and_wal_enabled(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
     project = tmp_path / "project"

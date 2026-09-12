@@ -16,13 +16,17 @@ TOPIC_TOOLS = [{"name": name, "description": "Memoria temática con procedencia;
     for name, (fields, required) in SPECS.items()]
 
 
-def dispatch_topic(store, name, args):
+def dispatch_topic(store, name, args, *, agent_ids=None):
     if name == "memory_topics_enrich":
-        return store.enrich_topics(args.get("session_id"), provider=str(args.get("provider") or "auto"), force=bool(args.get("force", False)))
+        return store.enrich_topics(args.get("session_id"), provider=str(args.get("provider") or "auto"),
+                                   force=bool(args.get("force", False)), agent_ids=agent_ids)
     fields, required = SPECS[name]
     if any(not args.get(k) for k in required): raise ValueError("faltan campos obligatorios")
     kwargs = {k: v for k, v in args.items() if k in fields or k == "requester_agent"}
     if name == "memory_relation_review":
         kwargs["actor"] = kwargs.pop("requester_agent")
     method = {"memory_entities": "entities", "memory_entity": "entity", "memory_topics": "topics", "memory_topic": "topic", "memory_message_window": "message_window", "memory_topic_update": "topic_update", "memory_node": "resolve_node_reference", "memory_relation_candidates": "relation_candidates", "memory_relation_review": "relation_review"}[name]
+    if agent_ids and method in {"entities", "entity", "topics", "topic", "message_window", "resolve_node_reference",
+                                "topic_update", "relation_candidates", "relation_review"}:
+        kwargs["agent_ids"] = agent_ids
     return getattr(store, method)(**kwargs)

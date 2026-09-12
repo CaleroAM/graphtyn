@@ -314,7 +314,8 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
                 index = parts.index("agents")
                 if index + 1 < len(parts) and parts[index + 1] not in {"agent", "sessions"}:
                     agent = parts[index + 1]
-            return [HistoricalSession(provider, f"{provider}/{agent}", sid,
+            canonical_agent = agent if "/" in str(agent) else f"{provider}/{agent}"
+            return [HistoricalSession(provider, canonical_agent, sid,
                 str(group.get("title") or next((m["content"] for m in group["messages"] if m["role"] == "user"), "Historical session"))[:180],
                 group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"], group.get("branch"))
                 for sid, group in grouped.items() if group["messages"]]
@@ -358,7 +359,8 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
     except sqlite3.Error:
         return []
     agent = agent_hint or (path.parent.name if path.parent.parent.name == "profiles" else provider)
-    return [HistoricalSession(provider, f"{provider}/{agent}", sid,
+    canonical_agent = agent if "/" in str(agent) else f"{provider}/{agent}"
+    return [HistoricalSession(provider, canonical_agent, sid,
         str(group.get("title") or next((m["content"] for m in group["messages"] if m["role"] == "user"), "Historical session"))[:180],
         group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"], group.get("branch"))
         for sid, group in grouped.items() if group["messages"]]
@@ -444,7 +446,8 @@ def parse_history_file(path: Path, provider: str, agent_hint: str | None = None)
     for sid, group in grouped.items():
         if not group["messages"]: continue
         first_user = next((m["content"] for m in group["messages"] if m["role"] == "user"), "Historical session")
-        sessions.append(HistoricalSession(provider, f"{provider}/{agent}", sid, first_user[:180],
+        canonical_agent = agent if "/" in str(agent) else f"{provider}/{agent}"
+        sessions.append(HistoricalSession(provider, canonical_agent, sid, first_user[:180],
             group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"]))
     return sessions
 
@@ -471,17 +474,34 @@ def _source_matches_root(path: str | Path, roots: set[str]) -> bool:
     return False
 
 
+def _agent_id_matches(expected: str | None, observed: str | None) -> bool:
+    """Match a configured owner without collapsing identities across providers."""
+    wanted = str(expected or "").strip().casefold()
+    actual = str(observed or "").strip().casefold()
+    if not wanted or not actual:
+        return False
+    if wanted == actual:
+        return True
+    # A short configured id is accepted only as the final component of the
+    # same provider-qualified id.  `career` never matches `other/career`.
+    return "/" not in wanted and actual.endswith("/" + wanted)
+
+
 def discover_histories(provider: str | None = None, sources: list[str] | None = None,
-                       project_path: str | Path | None = None) -> dict[str, Any]:
+                       project_path: str | Path | None = None,
+                       agent_id: str | None = None) -> dict[str, Any]:
     configured = configured_sources()
     from .adapters import list_adapters
     known = {row["name"] for row in list_adapters()}
     providers = [provider.casefold()] if provider else sorted(known | {row["provider"] for row in configured})
-    found, errors = [], []
+    found, errors, excluded = [], [], []
     for name in providers:
+        source_owners: dict[str, str] = {}
         if sources:
             roots = sources
             associated_sources = set(roots)
+            if agent_id:
+                source_owners.update({str(root): str(agent_id).strip().casefold() for root in roots})
         elif project_path:
             # Per-space synchronization only consumes explicitly associated
             # sources. This prevents one user's brains from being mixed.
@@ -489,6 +509,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                         _same_project_path(row.get("project_path"), project_path)]
             roots = [row["source"] for row in selected]
             associated_sources = set(roots)
+            source_owners.update({row["source"]: str(row.get("agent_id") or agent_id or "").strip().casefold()
+                                  for row in selected if row.get("agent_id") or agent_id})
         else:
             roots = [row["source"] for row in configured if row["provider"] == name]
             associated_sources = set()
@@ -519,6 +541,11 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                         from .history_stream import preview_jsonl
                         preview = preview_jsonl(path, name)
                         for item in preview["sessions"]:
+                            owner = source_owners.get(str(source)) or source_owners.get(str(path))
+                            if owner and not _agent_id_matches(owner, item.get("agent_id")):
+                                excluded.append({"source": str(source), "session": item.get("external_session_id"),
+                                                 "agent_id": item.get("agent_id"), "expected_agent_id": owner})
+                                continue
                             if project_path and _source_matches_root(path, associated_sources):
                                 item["explicit_project_selection"] = True
                             found.append(item)
@@ -526,12 +553,18 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                             errors.append({"source": str(path), "error": f"{preview['errors']} registros JSON inválidos"})
                         continue
                     parser = parse_history_database if path.suffix.casefold() in {".db", ".sqlite", ".sqlite3"} else parse_history_file
-                    for session in parser(path, name):
+                    owner_hint = source_owners.get(str(source)) or source_owners.get(str(path))
+                    for session in parser(path, name, owner_hint):
                         if str(source).startswith(("ssh://", "docker://", "ssh+docker://")):
                             try: session.source = f"{source_label}/{path.relative_to(root).as_posix()}"
                             except ValueError: session.source = source_label
                         item = {**asdict(session), "fingerprint": session.fingerprint,
                                 "message_count": len(session.messages)}
+                        owner = source_owners.get(str(source)) or source_owners.get(str(path))
+                        if owner and not _agent_id_matches(owner, item.get("agent_id")):
+                            excluded.append({"source": str(source), "session": item.get("external_session_id"),
+                                             "agent_id": item.get("agent_id"), "expected_agent_id": owner})
+                            continue
                         if project_path and _source_matches_root(source, associated_sources):
                             item["explicit_project_selection"] = True
                         found.append(item)
@@ -547,12 +580,13 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
     projects = [{"workspace": workspace, "name": Path(workspace).name, "sessions": count,
                  "confidence": 1.0 if Path(workspace).is_absolute() else .7}
                 for workspace, count in sorted(project_counts.items(), key=lambda pair: (-pair[1], pair[0]))]
-    return {"ok": not errors, "sessions": found, "count": len(found), "projects": projects, "errors": errors}
+    return {"ok": not errors, "sessions": found, "count": len(found), "projects": projects,
+            "errors": errors, "excluded": excluded, "excluded_count": len(excluded)}
 
 
 def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
                           source: list[str] | None = None, provider_model: str = "auto",
-                          enrich: bool = True, force: bool = False,
+                          enrich: bool = True, force: bool = False, agent_id: str | None = None,
                           progress=None) -> dict[str, Any]:
     """Synchronize one explicitly associated memory space incrementally.
 
@@ -560,7 +594,8 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
     CLI, REST and the background watcher cannot drift apart.
     """
     root = Path(workspace).expanduser().resolve()
-    discovered = discover_histories(provider, source or None, project_path=None if source else root)
+    discovered = discover_histories(provider, source or None, project_path=None if source else root,
+                                    agent_id=agent_id)
     # A source supplied directly is an explicit user selection for this space.
     if source:
         for item in discovered["sessions"]:
@@ -571,6 +606,8 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
                                 background_enrich=False)
     result: dict[str, Any] = {"ok": bool(imported.get("ok", True)), "path": str(root),
                               "discovered": discovered["count"], "import": imported,
+                              "excluded": discovered.get("excluded") or [],
+                              "excluded_count": int(discovered.get("excluded_count") or 0),
                               "errors": list(discovered.get("errors") or [])}
     result["errors"].extend(imported.get("errors") or [])
     # A brain may already contain captured sessions from MCP before a source
@@ -591,8 +628,17 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
     if enrich:
         if progress:
             progress(45, "Enriqueciendo temas nuevos o modificados")
+        enrichment_agents = [str(agent_id).strip().casefold()] if agent_id else []
+        if not source and not enrichment_agents:
+            enrichment_agents = sorted({str(item.get("agent_id") or "").strip().casefold()
+                                        for item in discovered.get("sessions") or [] if item.get("agent_id")})
+            if not enrichment_agents:
+                enrichment_agents = sorted({str(row.get("agent_id") or "").strip().casefold()
+                                            for row in configured_sources()
+                                            if row.get("agent_id") and _same_project_path(row.get("project_path"), root)})
         enrichment = store.enrich_topics(None, provider=provider_model,
-                                                            force=force, progress=progress)
+                                         force=force, progress=progress,
+                                         agent_ids=enrichment_agents or None)
         result["enrichment"] = enrichment
     result["ok"] = not result["errors"] and bool(imported.get("ok", True))
     return result
@@ -650,13 +696,22 @@ class ProjectIdentityRegistry:
 
 def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, consent: bool,
                      provider: str = "deterministic", dry_run: bool = False,
-                     background_enrich: bool = True) -> dict[str, Any]:
+                     background_enrich: bool = True,
+                     agent_ids: list[str] | None = None) -> dict[str, Any]:
     if not consent: raise PermissionError("la importación histórica requiere consentimiento explícito")
     root = Path(workspace).expanduser().resolve()
     registry = ProjectIdentityRegistry()
     project = registry.register(root)
-    selected, ambiguous = [], []
+    selected, ambiguous, excluded = [], [], []
+    authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or [])
+                                if str(value).strip()})
     for raw in sessions:
+        raw_agent = str(raw.get("agent_id") or "").strip().casefold()
+        if authorized_agents and not any(_agent_id_matches(owner, raw_agent) for owner in authorized_agents):
+            excluded.append({"session": raw.get("external_session_id"), "agent_id": raw.get("agent_id"),
+                             "expected_agent_ids": authorized_agents,
+                             "reason": "identidad de agente fuera del espacio de memoria"})
+            continue
         workspace_hint = str(raw.get("workspace") or "").strip()
         hinted = registry.resolve(workspace_hint)
         if hinted and hinted["id"] != project["id"]:
@@ -676,7 +731,7 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
         selected.append(raw)
     if dry_run:
         return {"ok": True, "dry_run": True, "project": project, "selected": len(selected),
-                "ambiguous": ambiguous, "sessions": selected}
+                "ambiguous": ambiguous, "excluded": excluded, "sessions": selected}
     store, imported, reused, errors = SharedMemoryStore(root), [], [], []
     for raw in selected:
         try:
@@ -736,7 +791,7 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
         except Exception as exc:
             errors.append({"source": raw.get("source"), "session": raw.get("external_session_id"), "error": str(exc)})
     return {"ok": not errors, "project": project, "selected": len(selected), "imported": imported, "reused": reused,
-            "ambiguous": ambiguous, "errors": errors}
+            "ambiguous": ambiguous, "excluded": excluded, "errors": errors}
 
 
 def import_history_archive(workspace: str | Path, sessions: list[dict[str, Any]], *, consent: bool,

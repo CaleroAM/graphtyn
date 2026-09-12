@@ -161,29 +161,34 @@ class TopicMemoryMixin:
                 node["public_id"] = node["reference"]
         return nodes
 
-    def resolve_node_reference(self, reference: str, *, requester_agent=None, limit=20, offset=0):
+    def resolve_node_reference(self, reference: str, *, requester_agent=None, limit=20, offset=0, agent_ids=None):
         with self._connect() as db:
             row = db.execute("SELECT kind,node_id,reference FROM memory_node_references WHERE reference=?",
                              (str(reference).strip().upper(),)).fetchone()
         if not row:
             raise ValueError("referencia de nodo inexistente")
         kind, node_id = row["kind"], row["node_id"]
+        authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
         if kind == "memory_topic":
-            result = self.topic(node_id, requester_agent=requester_agent, limit=limit)
+            result = self.topic(node_id, requester_agent=requester_agent, limit=limit, agent_ids=authorized_agents)
         elif kind == "memory_entity":
-            result = self.entity(node_id, requester_agent=requester_agent, limit=limit)
+            result = self.entity(node_id, requester_agent=requester_agent, limit=limit, agent_ids=authorized_agents)
         elif kind == "memory_session":
             session_id = str(node_id).removeprefix("session:")
             with self._connect() as db:
                 session = db.execute("SELECT * FROM sessions WHERE id=?", (session_id,)).fetchone()
+                if authorized_agents and session and str(session["agent_id"]).casefold() not in authorized_agents:
+                    session = None
                 if not session or (not session["capture_enabled"] and session["agent_id"] != (requester_agent or "")):
                     raise PermissionError("sesión inexistente o no accesible")
                 total_topics = db.execute("SELECT COUNT(DISTINCT topic_id) FROM topic_episodes WHERE session_id=?", (session_id,)).fetchone()[0]
                 offset = max(0, min(100000, int(offset)))
                 page_limit = max(1, min(200, int(limit)))
+                topic_scope = f" AND e.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents else ""
                 topics = db.execute("""SELECT DISTINCT t.id,t.title,t.summary,t.state,t.verification,t.updated_at
-                    FROM topics t JOIN topic_episodes e ON e.topic_id=t.id WHERE e.session_id=?
-                    ORDER BY t.updated_at DESC,t.id LIMIT ? OFFSET ?""", (session_id, page_limit, offset)).fetchall()
+                    FROM topics t JOIN topic_episodes e ON e.topic_id=t.id WHERE e.session_id=?""" + topic_scope +
+                    " ORDER BY t.updated_at DESC,t.id LIMIT ? OFFSET ?",
+                    [session_id, *authorized_agents, page_limit, offset]).fetchall()
                 topic_items = []
                 for topic in topics:
                     item = dict(topic)
@@ -357,7 +362,7 @@ class TopicMemoryMixin:
 
     def topic_graph(self, *, requester_agent="dashboard", limit=400, detail=False,
                     session_id=None, topic_offset=0, session_offset=0,
-                    session_limit=100, session_query=""):
+                    session_limit=100, session_query="", agent_ids=None):
         """Return a bounded topic/session/agent graph for the dashboard.
 
         Messages remain references opened from an episode; they are deliberately
@@ -368,16 +373,26 @@ class TopicMemoryMixin:
         session_offset = max(0, min(100000, int(session_offset)))
         session_limit = max(1, min(100, int(session_limit)))
         requester = requester_agent or ""
+        authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
+        scope_marks = ",".join("?" for _ in authorized_agents)
         focus_session_id = str(session_id or "").removeprefix("session:") or None
         with self._connect() as db:
             selected_where = ["(s0.capture_enabled=1 OR s0.agent_id=?)"]
             selected_args = [requester]
+            selected_where.append("NOT EXISTS (SELECT 1 FROM topic_episodes hidden JOIN sessions hs ON hs.id=hidden.session_id WHERE hidden.topic_id=t0.id AND hs.capture_enabled=0 AND hs.agent_id!=?)")
+            selected_args.append(requester)
+            if authorized_agents:
+                selected_where.append(f"s0.agent_id IN ({scope_marks})")
+                selected_args.extend(authorized_agents)
             if focus_session_id:
                 selected_where.append("e0.session_id=?")
                 selected_args.append(focus_session_id)
             selected_predicate = " AND ".join(selected_where)
             outer_where = ["(s.capture_enabled=1 OR s.agent_id=?)"]
             outer_args = []
+            if authorized_agents:
+                outer_where.append(f"s.agent_id IN ({scope_marks})")
+                outer_args.extend(authorized_agents)
             if focus_session_id:
                 outer_where.append("e.session_id=?")
                 outer_args.append(focus_session_id)
@@ -405,6 +420,11 @@ class TopicMemoryMixin:
                 requester, *outer_args)).fetchall()
             total_topic_where = ["(s.capture_enabled=1 OR s.agent_id=?)"]
             total_topic_args: list[Any] = [requester]
+            total_topic_where.append("NOT EXISTS (SELECT 1 FROM topic_episodes hidden JOIN sessions hs ON hs.id=hidden.session_id WHERE hidden.topic_id=e.topic_id AND hs.capture_enabled=0 AND hs.agent_id!=?)")
+            total_topic_args.append(requester)
+            if authorized_agents:
+                total_topic_where.append(f"s.agent_id IN ({scope_marks})")
+                total_topic_args.extend(authorized_agents)
             if focus_session_id:
                 total_topic_where.append("e.session_id=?")
                 total_topic_args.append(focus_session_id)
@@ -414,6 +434,9 @@ class TopicMemoryMixin:
 
             session_where = ["(s.capture_enabled=1 OR s.agent_id=?)"]
             session_args: list[Any] = [requester]
+            if authorized_agents:
+                session_where.append(f"s.agent_id IN ({scope_marks})")
+                session_args.extend(authorized_agents)
             if focus_session_id:
                 session_where.append("s.id=?")
                 session_args.append(focus_session_id)
@@ -492,12 +515,18 @@ class TopicMemoryMixin:
             topic_ids = [node["topic_id"] for node in nodes.values() if node["kind"] == "memory_topic"]
             placeholders = ",".join("?" for _ in topic_ids)
             with self._connect() as db:
+                entity_scope = f" AND ep.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents else ""
                 entities = db.execute(f"""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name
                     FROM entities e JOIN topic_entities te ON te.entity_id=e.id
-                    WHERE te.topic_id IN ({placeholders})""", topic_ids).fetchall()
+                    JOIN topic_episodes ep ON ep.topic_id=te.topic_id JOIN sessions es ON es.id=ep.session_id
+                    WHERE te.topic_id IN ({placeholders}) AND (es.capture_enabled=1 OR es.agent_id=?)
+                    {entity_scope}""", [*topic_ids, requester, *authorized_agents]).fetchall()
+                episode_scope = f" AND e.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents else ""
                 episodes = db.execute(f"""SELECT e.id,e.topic_id,e.session_id,e.agent_id,e.problem,e.result,
                     (SELECT COUNT(*) FROM topic_messages tm WHERE tm.episode_id=e.id) AS message_count
-                    FROM topic_episodes e WHERE e.topic_id IN ({placeholders}) ORDER BY e.created_at,e.id""", topic_ids).fetchall()
+                    FROM topic_episodes e JOIN sessions es ON es.id=e.session_id
+                    WHERE e.topic_id IN ({placeholders}) AND (es.capture_enabled=1 OR es.agent_id=?)
+                    {episode_scope} ORDER BY e.created_at,e.id""", [*topic_ids, requester, *authorized_agents]).fetchall()
             for entity in entities:
                 entity_id = "entity:" + entity["id"]
                 nodes[entity_id] = {"id": entity_id, "kind": "memory_entity", "name": entity["name"],
@@ -537,15 +566,23 @@ class TopicMemoryMixin:
                     "episode_count": len([n for n in node_list if n["kind"] == "memory_episode"]),
                     "entity_count": len([n for n in node_list if n["kind"] == "memory_entity"]),
                     "mode": "detailed" if detail else "simplified",
-                    "message_rendering": "panel_on_demand", "coverage": self.topic_coverage(requester_agent)}}
+                    "message_rendering": "panel_on_demand", "coverage": self.topic_coverage(requester_agent, authorized_agents)}}
 
-    def relation_candidates(self, *, requester_agent=None, status="pending", limit=50, propose=True):
+    def relation_candidates(self, *, requester_agent=None, status="pending", limit=50, propose=True,
+                            agent_ids=None):
         """List cautious thematic candidates; candidates never become graph edges by themselves."""
         limit = max(1, min(200, int(limit)))
+        authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
         if propose:
-            self._propose_relation_candidates(requester_agent=requester_agent)
+            self._propose_relation_candidates(requester_agent=requester_agent, agent_ids=authorized_agents)
         with self._connect() as db:
-            rows = db.execute("""SELECT r.*,s.title AS source_title,t.title AS target_title
+            relation_scope = ""
+            relation_args = [status, status, requester_agent or "", requester_agent or ""]
+            if authorized_agents:
+                marks = ",".join("?" for _ in authorized_agents)
+                relation_scope = f" AND se.agent_id IN ({marks}) AND te.agent_id IN ({marks})"
+                relation_args.extend(authorized_agents); relation_args.extend(authorized_agents)
+            rows = db.execute("""SELECT DISTINCT r.*,s.title AS source_title,t.title AS target_title
                 FROM topic_relation_reviews r JOIN topics s ON s.id=r.source_topic_id
                 JOIN topics t ON t.id=r.target_topic_id
                 JOIN topic_episodes se ON se.topic_id=s.id JOIN sessions ss ON ss.id=se.session_id
@@ -553,7 +590,8 @@ class TopicMemoryMixin:
                 WHERE (? IS NULL OR r.status=?)
                   AND (ss.capture_enabled=1 OR ss.agent_id=?)
                   AND (ts.capture_enabled=1 OR ts.agent_id=?)
-                ORDER BY r.updated_at DESC,r.id LIMIT ?""", (status, status, requester_agent or "", requester_agent or "", limit)).fetchall()
+                """ + relation_scope + " ORDER BY r.updated_at DESC,r.id LIMIT ?",
+                [*relation_args, limit]).fetchall()
             result = []
             for row in rows:
                 item = dict(row)
@@ -565,14 +603,24 @@ class TopicMemoryMixin:
                 result.append(item)
         return {"ok": True, "candidates": result, "status": status, "retrieval": "lexical-candidates-review"}
 
-    def _ai_review_candidates(self, limit=20):
+    def _ai_review_candidates(self, limit=20, agent_ids=None):
         from .memory_extraction import configured_summary_model
         if not configured_summary_model():
             return 0
         from .memory_extraction import assisted_relation_review
         reviewed = 0
+        authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
         with self._connect() as db:
-            rows = db.execute("SELECT * FROM topic_relation_reviews WHERE status='pending' ORDER BY updated_at DESC LIMIT ?", (max(1, min(20, limit)),)).fetchall()
+            if authorized_agents:
+                marks = ",".join("?" for _ in authorized_agents)
+                query = f"""SELECT DISTINCT r.* FROM topic_relation_reviews r
+                    JOIN topic_episodes e ON e.topic_id=r.source_topic_id JOIN sessions s ON s.id=e.session_id
+                    JOIN topic_episodes te ON te.topic_id=r.target_topic_id
+                    WHERE r.status='pending' AND e.agent_id IN ({marks}) AND te.agent_id IN ({marks})
+                    ORDER BY r.updated_at DESC LIMIT ?"""
+                rows = db.execute(query, [*authorized_agents, *authorized_agents, max(1, min(20, limit))]).fetchall()
+            else:
+                rows = db.execute("SELECT * FROM topic_relation_reviews WHERE status='pending' ORDER BY updated_at DESC LIMIT ?", (max(1, min(20, limit)),)).fetchall()
         for row in rows:
             with self._connect() as db:
                 left = db.execute("SELECT id,title,summary FROM topics WHERE id=?", (row["source_topic_id"],)).fetchone()
@@ -596,13 +644,20 @@ class TopicMemoryMixin:
                 reviewed += 1
         return reviewed
 
-    def _propose_relation_candidates(self, requester_agent=None):
+    def _propose_relation_candidates(self, requester_agent=None, agent_ids=None):
         stopwords = {"para", "como", "esta", "este", "desde", "ahora", "porque", "tiene", "hacer", "quiero", "sobre", "con", "del", "los", "las", "una", "uno", "que", "aplicación", "aplicacion", "tema", "asunto"}
+        authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
         with self._connect() as db:
+            scope = ""
+            args = [requester_agent or ""]
+            if authorized_agents:
+                marks = ",".join("?" for _ in authorized_agents)
+                scope = f" AND e.agent_id IN ({marks})"
+                args.extend(authorized_agents)
             rows = db.execute("""SELECT DISTINCT t.id,t.title,t.summary,e.session_id
                 FROM topics t JOIN topic_episodes e ON e.topic_id=t.id JOIN sessions s ON s.id=e.session_id
                 WHERE t.state!='archivado' AND (s.capture_enabled=1 OR s.agent_id=?)
-                ORDER BY t.updated_at DESC LIMIT 500""", (requester_agent or "",)).fetchall()
+                """ + scope + " ORDER BY t.updated_at DESC LIMIT 500", args).fetchall()
             items = []
             for row in rows:
                 text = (self._unprotect(row["title"]) + " " + self._unprotect(row["summary"])).casefold()
@@ -631,7 +686,7 @@ class TopicMemoryMixin:
                         WHERE topic_relation_reviews.status='pending'""", (relation_id, source, target, "posible relación", "pending",
                         "coincidencia candidata; requiere evidencia humana o de IA", json.dumps(evidence, ensure_ascii=False), "system", now, now))
 
-    def relation_review(self, relation_id, *, status, actor, reason):
+    def relation_review(self, relation_id, *, status, actor, reason, agent_ids=None):
         if status not in {"accepted", "rejected"}:
             raise ValueError("estado de revisión inválido")
         if not str(actor).strip() or not str(reason).strip():
@@ -640,6 +695,15 @@ class TopicMemoryMixin:
             db.execute("BEGIN IMMEDIATE")
             row = db.execute("SELECT * FROM topic_relation_reviews WHERE id=?", (relation_id,)).fetchone()
             if not row: raise ValueError("candidata inexistente")
+            authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
+            if authorized_agents:
+                marks = ",".join("?" for _ in authorized_agents)
+                visible = db.execute("""SELECT 1 FROM topic_episodes se JOIN topic_episodes te
+                    ON te.topic_id=? JOIN sessions ss ON ss.id=se.session_id JOIN sessions ts ON ts.id=te.session_id
+                    WHERE se.topic_id=? AND se.agent_id IN (""" + marks + ") AND te.agent_id IN (" + marks + ") LIMIT 1",
+                    [row["target_topic_id"], row["source_topic_id"], *authorized_agents, *authorized_agents]).fetchone()
+                if not visible:
+                    raise PermissionError("candidata inexistente o no accesible")
             db.execute("UPDATE topic_relation_reviews SET status=?,actor=?,reason=?,updated_at=? WHERE id=?",
                        (status, actor, reason, time.time(), relation_id))
             if status == "accepted":
@@ -652,13 +716,21 @@ class TopicMemoryMixin:
                            (row["source_topic_id"], row["target_topic_id"], row["relation"]))
         return {"ok": True, "relation_id": relation_id, "status": status, "actor": actor}
 
-    def topic_coverage(self, requester_agent=None):
+    def topic_coverage(self, requester_agent=None, agent_ids=None):
+        authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
+        scope_clause = ""
+        scope_args = []
+        if authorized_agents:
+            marks = ",".join("?" for _ in authorized_agents)
+            scope_clause = f" AND s.agent_id IN ({marks})"
+            scope_args = authorized_agents
         with self._connect() as db:
             row = db.execute("""SELECT COUNT(*) AS discovered,
                 COALESCE(SUM(CASE WHEN m.rowid<=COALESCE(p.cursor,0) THEN 1 ELSE 0 END),0) AS processed
                 FROM messages m JOIN sessions s ON s.id=m.session_id
                 LEFT JOIN topic_progress p ON p.session_id=s.id
-                WHERE s.capture_enabled=1 OR s.agent_id=?""", (requester_agent or "",)).fetchone()
+                WHERE s.status!='quarantined' AND (s.capture_enabled=1 OR s.agent_id=?)""" + scope_clause,
+                [requester_agent or "", *scope_args]).fetchone()
         return {**dict(row), "pending": row["discovered"] - row["processed"],
                 "scope": "persisted_messages", "extraction_quality": "limited; processing is not recall",
                 "source_exclusions": "not measured"}
@@ -794,14 +866,21 @@ class TopicMemoryMixin:
         return True, "queued"
 
     def enrich_topics(self, session_id=None, provider="auto", force=False, progress=None,
-                      retry_failed=False):
+                      retry_failed=False, agent_ids=None):
         """Index deterministic evidence and enrich only new or changed topics."""
         topic_ids, processed = set(), 0
         with self._connect() as db:
-            where = "" if session_id is None else "WHERE e.session_id=?"
-            args = [] if session_id is None else [session_id]
+            authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
+            clauses, args = [], []
+            if session_id is not None:
+                clauses.append("e.session_id=?"); args.append(session_id)
+            if authorized_agents:
+                marks = ",".join("?" for _ in authorized_agents)
+                clauses.append(f"e.agent_id IN ({marks})"); args.extend(authorized_agents)
+            where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
             rows = db.execute(f"""SELECT DISTINCT e.topic_id,m.id AS message_id,m.content,m.created_at
                 FROM topic_episodes e JOIN topic_messages tm ON tm.episode_id=e.id JOIN messages m ON m.id=tm.message_id
+                JOIN sessions s ON s.id=e.session_id AND s.status!='quarantined'
                 {where} {('AND' if where else 'WHERE')} m.role='user' ORDER BY m.rowid""", args).fetchall()
             for row in rows:
                 topic_ids.add(row["topic_id"])
@@ -861,16 +940,22 @@ class TopicMemoryMixin:
                     db.execute("UPDATE topic_enrichment_state SET status=?,source_revision=?,last_error=?,updated_at=? WHERE topic_id=?", ("stale" if success or source_changed else "failed", current_revision if source_changed else revision, error, time.time(), topic_id))
                     db.execute("UPDATE topic_enrichment_queue SET status=?,last_error=?,updated_at=? WHERE topic_id=? AND source_fingerprint=?", ("failed", error, time.time(), topic_id, fingerprint)); failed += 1
             if progress: progress(int(index * 100 / max(1, total)), json.dumps({"processed": index, "total": total, "topic_id": topic_id, "status": "enriched" if success else "failed"}))
-        self._propose_relation_candidates(requester_agent=None)
-        reviewed_candidates = self._ai_review_candidates(limit=20)
+        self._propose_relation_candidates(requester_agent=None, agent_ids=agent_ids)
+        reviewed_candidates = self._ai_review_candidates(limit=20, agent_ids=agent_ids)
         return {"ok": True, "processed": processed, "sessions": 1 if session_id else None, "topics": len(topic_ids),
                 "queued": total, "ai_enriched": ai_enriched, "ai_skipped": skipped, "manual_protected": protected, "failed": failed,
-                "model_calls": model_calls, "reviewed_candidates": reviewed_candidates, "coverage": self.topic_coverage(),
+                "model_calls": model_calls, "reviewed_candidates": reviewed_candidates,
+                "coverage": self.topic_coverage(agent_ids=authorized_agents),
                 "extraction": ai_provider if model else "deterministic-limited"}
 
     def topics(self, query="", *, requester_agent=None, state=None, agent_id=None,
-               session_id=None, since=None, until=None, limit=20, offset=0):
+               session_id=None, since=None, until=None, limit=20, offset=0, agent_ids=None):
         where, args = ["(s.capture_enabled=1 OR s.agent_id=?)", "NOT EXISTS (SELECT 1 FROM topic_episodes hidden JOIN sessions hs ON hs.id=hidden.session_id WHERE hidden.topic_id=t.id AND hs.capture_enabled=0 AND hs.agent_id!=?)"], [requester_agent or "", requester_agent or ""]
+        authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
+        if authorized_agents:
+            marks = ",".join("?" for _ in authorized_agents)
+            where.append(f"e.agent_id IN ({marks})")
+            args.extend(authorized_agents)
         for clause, value in (("t.state=?", state), ("e.agent_id=?", agent_id), ("e.session_id=?", session_id),
                               ("e.created_at>=?", since), ("e.created_at<=?", until)):
             if value is not None:
@@ -879,7 +964,8 @@ class TopicMemoryMixin:
         # decryption. This bounded page scan reports that it is not semantic recall.
         semantic = set()
         if query:
-            memory_ids = [m["id"] for m in self.search(query, requester_agent=requester_agent, limit=30)]
+            memory_ids = [m["id"] for m in self.search(query, requester_agent=requester_agent, limit=30,
+                                                         agent_ids=authorized_agents)]
             with self._connect() as db:
                 for mid in memory_ids:
                     semantic.update(r[0] for r in db.execute("SELECT topic_id FROM topic_memory_links WHERE memory_id=?", (mid,)))
@@ -897,9 +983,12 @@ class TopicMemoryMixin:
                 else:
                     configured = os.environ.get("GRAPHTYN_MEMORY_SUMMARY_MODEL") or os.environ.get("OLLAMA_MODEL") or ""
                     item.update({"ai_status": "pending" if configured else "not_applicable", "ai_model": configured or None, "ai_source_revision": None, "ai_prompt_version": None, "ai_error": None, "ai_processed_at": None})
-                entity_rows = db.execute("""SELECT e.kind,e.entity_key,e.name,te.relation,te.confidence
+                entity_scope = f" AND ep.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents else ""
+                entity_rows = db.execute("""SELECT DISTINCT e.kind,e.entity_key,e.name,te.relation,te.confidence
                     FROM topic_entities te JOIN entities e ON e.id=te.entity_id
-                    WHERE te.topic_id=?""", (item["id"],)).fetchall()
+                    JOIN topic_episodes ep ON ep.topic_id=te.topic_id JOIN sessions es ON es.id=ep.session_id
+                    WHERE te.topic_id=? AND (es.capture_enabled=1 OR es.agent_id=?)""" + entity_scope,
+                    [item["id"], requester_agent or "", *authorized_agents]).fetchall()
                 item["entities"] = [dict(entity) for entity in entity_rows]
                 entity_text = " ".join(f"{entity['kind']} {entity['entity_key']} {entity['name']}" for entity in entity_rows)
                 haystack = (item["title"] + " " + item["summary"] + " " + entity_text).casefold()
@@ -917,27 +1006,50 @@ class TopicMemoryMixin:
         matches = [entry[-1] for entry in sorted(matches, reverse=True)]
         more = len(matches) > start + count
         return {"ok": True, "topics": matches[start:start + count], "next_offset": start + count if more else None,
-                "coverage": self.topic_coverage(requester_agent), "retrieval": "lexical+linked-memory-candidates", "trust": "untrusted_history"}
+                "coverage": self.topic_coverage(requester_agent, authorized_agents),
+                "retrieval": "lexical+linked-memory-candidates", "trust": "untrusted_history"}
 
-    def topic(self, topic_id, *, requester_agent=None, limit=20, offset=0):
+    def topic(self, topic_id, *, requester_agent=None, limit=20, offset=0, agent_ids=None):
         with self._connect() as db:
-            allowed = db.execute("SELECT 1 FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND (s.capture_enabled=1 OR s.agent_id=?) LIMIT 1", (topic_id, requester_agent or "")).fetchone()
-            hidden = db.execute("SELECT 1 FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND s.capture_enabled=0 AND s.agent_id!=? LIMIT 1", (topic_id, requester_agent or "")).fetchone()
+            authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
+            scope = f" AND e.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents else ""
+            allowed = db.execute("SELECT 1 FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND (s.capture_enabled=1 OR s.agent_id=?)" + scope + " LIMIT 1",
+                                 [topic_id, requester_agent or "", *authorized_agents]).fetchone()
+            hidden = db.execute("SELECT 1 FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND s.capture_enabled=0 AND s.agent_id!=?" + scope + " LIMIT 1",
+                                [topic_id, requester_agent or "", *authorized_agents]).fetchone()
             if not allowed or hidden:
                 raise PermissionError("tema inexistente o no accesible")
             item = dict(db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone())
-            rows = db.execute("SELECT e.* FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND (s.capture_enabled=1 OR s.agent_id=?) ORDER BY e.created_at,e.id LIMIT ? OFFSET ?",
-                              (topic_id, requester_agent or "", min(100, max(1, limit)) + 1, max(0, offset))).fetchall()
+            rows = db.execute("SELECT e.* FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND (s.capture_enabled=1 OR s.agent_id=?)" + scope + " ORDER BY e.created_at,e.id LIMIT ? OFFSET ?",
+                              [topic_id, requester_agent or "", *authorized_agents, min(100, max(1, limit)) + 1, max(0, offset)]).fetchall()
             episodes = []
             for row in rows[:limit]:
                 ep = dict(row)
                 for k in ("problem", "decisions", "result"): ep[k] = self._unprotect(ep[k])
                 ep["message_ids"] = [r[0] for r in db.execute("SELECT r.message_id FROM topic_messages r JOIN messages m ON m.id=r.message_id WHERE r.episode_id=? ORDER BY m.rowid LIMIT 21", (ep["id"],))]
                 episodes.append(ep)
-            entities = [dict(r) for r in db.execute("""SELECT e.id,e.kind,e.entity_key,e.name,te.relation,te.confidence,te.source_message_id
-                FROM topic_entities te JOIN entities e ON e.id=te.entity_id WHERE te.topic_id=?""", (topic_id,))]
-            relations = [dict(r) for r in db.execute("""SELECT source_topic_id,target_topic_id,relation,confidence,reason,source_message_id
-                FROM topic_relations WHERE source_topic_id=? OR target_topic_id=? ORDER BY created_at DESC LIMIT 100""", (topic_id, topic_id))]
+            entity_scope = f" AND ep.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents else ""
+            entities = [dict(r) for r in db.execute("""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name,te.relation,te.confidence,te.source_message_id
+                FROM topic_entities te JOIN entities e ON e.id=te.entity_id
+                JOIN topic_episodes ep ON ep.topic_id=te.topic_id JOIN sessions es ON es.id=ep.session_id
+                WHERE te.topic_id=? AND (es.capture_enabled=1 OR es.agent_id=?)""" + entity_scope,
+                [topic_id, requester_agent or "", *authorized_agents])]
+            relation_scope = ""
+            relation_args = [topic_id, topic_id, requester_agent or "", requester_agent or ""]
+            if authorized_agents:
+                relation_marks = ",".join("?" for _ in authorized_agents)
+                relation_scope = f" AND se.agent_id IN ({relation_marks}) AND te.agent_id IN ({relation_marks})"
+                relation_args.extend(authorized_agents); relation_args.extend(authorized_agents)
+            else:
+                relation_scope = " AND (ss.agent_id=ts.agent_id OR ss.agent_id=? OR ts.agent_id=?)"
+                relation_args.extend([requester_agent or "", requester_agent or ""])
+            relations = [dict(r) for r in db.execute("""SELECT DISTINCT tr.source_topic_id,tr.target_topic_id,tr.relation,tr.confidence,tr.reason,tr.source_message_id
+                FROM topic_relations tr
+                JOIN topic_episodes se ON se.topic_id=tr.source_topic_id JOIN sessions ss ON ss.id=se.session_id
+                JOIN topic_episodes te ON te.topic_id=tr.target_topic_id JOIN sessions ts ON ts.id=te.session_id
+                WHERE (tr.source_topic_id=? OR tr.target_topic_id=?)
+                  AND (ss.capture_enabled=1 OR ss.agent_id=?) AND (ts.capture_enabled=1 OR ts.agent_id=?)
+                """ + relation_scope + " ORDER BY tr.created_at DESC LIMIT 100", relation_args)]
             events = [dict(r) for r in db.execute("SELECT * FROM topic_events WHERE topic_id=? ORDER BY id DESC LIMIT 100", (topic_id,))]
         for k in ("title", "summary"): item[k] = self._unprotect(item[k])
         with self._connect() as db:
@@ -958,13 +1070,18 @@ class TopicMemoryMixin:
         return {"ok": True, "topic": item, "entities": entities, "relations": relations, "episodes": episodes, "events": events,
                 "next_offset": offset + limit if len(rows) > limit else None, "trust": "untrusted_history"}
 
-    def entities(self, query="", *, requester_agent=None, kind=None, limit=50, offset=0):
+    def entities(self, query="", *, requester_agent=None, kind=None, limit=50, offset=0, agent_ids=None):
         """List concrete project elements and the topics attached to them."""
         limit, offset = max(1, min(100, int(limit))), max(0, min(10000, int(offset)))
         words = [word for word in re.findall(r"[\wáéíóúñ.-]+", str(query).casefold()) if word]
+        authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
         with self._connect() as db:
             where = ["(s.capture_enabled=1 OR s.agent_id=?)"]
             args = [requester_agent or ""]
+            if authorized_agents:
+                marks = ",".join("?" for _ in authorized_agents)
+                where.append(f"s.agent_id IN ({marks})")
+                args.extend(authorized_agents)
             if kind:
                 where.append("e.kind=?"); args.append(kind)
             rows = db.execute("""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name,e.metadata_json,
@@ -988,14 +1105,16 @@ class TopicMemoryMixin:
         return {"ok": True, "entities": page, "next_offset": offset + limit if len(result) > offset + limit else None,
                 "retrieval": "lexical-entity-index", "trust": "untrusted_history"}
 
-    def entity(self, entity_id, *, requester_agent=None, limit=50):
+    def entity(self, entity_id, *, requester_agent=None, limit=50, agent_ids=None):
         with self._connect() as db:
             row = db.execute("SELECT * FROM entities WHERE id=?", (entity_id,)).fetchone()
             if not row:
                 raise ValueError("entidad inexistente")
+            authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or []) if str(value).strip()})
+            scope = f" AND s.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents else ""
             allowed = db.execute("""SELECT 1 FROM topic_entities te JOIN topic_episodes ep ON ep.topic_id=te.topic_id
-                JOIN sessions s ON s.id=ep.session_id WHERE te.entity_id=? AND (s.capture_enabled=1 OR s.agent_id=?) LIMIT 1""",
-                                (entity_id, requester_agent or "")).fetchone()
+                JOIN sessions s ON s.id=ep.session_id WHERE te.entity_id=? AND (s.capture_enabled=1 OR s.agent_id=?)""" + scope + " LIMIT 1",
+                                [entity_id, requester_agent or "", *authorized_agents]).fetchone()
             if not allowed:
                 raise PermissionError("entidad no accesible")
             item = dict(row)
@@ -1004,29 +1123,32 @@ class TopicMemoryMixin:
             item["public_id"] = item["reference"]
             topics = [dict(r) for r in db.execute("""SELECT t.id,t.title,t.summary,t.state,t.verification,te.relation,te.confidence
                 FROM topic_entities te JOIN topics t ON t.id=te.topic_id
-                WHERE te.entity_id=? ORDER BY t.updated_at DESC LIMIT ?""", (entity_id, max(1, min(100, limit)))).fetchall()]
+                JOIN topic_episodes ep ON ep.topic_id=te.topic_id
+                JOIN sessions s ON s.id=ep.session_id
+                WHERE te.entity_id=?""" + scope + " ORDER BY t.updated_at DESC LIMIT ?",
+                [entity_id, *authorized_agents, max(1, min(100, limit))]).fetchall()]
             for topic in topics:
                 topic["title"], topic["summary"] = self._unprotect(topic["title"]), self._unprotect(topic["summary"])
                 topic["reference"] = self._node_reference(db, "memory_topic", topic["id"])
         return {"ok": True, "entity": item, "topics": topics, "trust": "untrusted_history"}
 
     def topic_update(self, topic_id, *, requester_agent, reason, state=None, title=None,
-                     verification=None, message_ids=None, merge_into=None, split_episode=None):
+                     verification=None, message_ids=None, merge_into=None, split_episode=None, agent_ids=None):
         if not str(requester_agent).strip() or not str(reason).strip():
             raise ValueError("actor y motivo son obligatorios")
-        self.topic(topic_id, requester_agent=requester_agent)
+        self.topic(topic_id, requester_agent=requester_agent, agent_ids=agent_ids)
         if state is not None and state not in STATES: raise ValueError("estado inválido")
         if verification is not None and verification not in VERIFICATIONS: raise ValueError("verificación inválida")
         if verification in {"prueba superada", "prueba fallida", "confirmado por usuario"} and not message_ids:
             raise ValueError("verificación requiere mensajes fuente")
         if merge_into:
             if merge_into == topic_id: raise ValueError("no se puede fusionar consigo mismo")
-            self.topic(merge_into, requester_agent=requester_agent)
+            self.topic(merge_into, requester_agent=requester_agent, agent_ids=agent_ids)
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
             for mid in message_ids or []:
                 row = db.execute("SELECT m.role FROM topic_messages r JOIN topic_episodes e ON e.id=r.episode_id JOIN messages m ON m.id=r.message_id WHERE e.topic_id=? AND m.id=?", (topic_id, mid)).fetchone()
-                if not row or not self.get_message(mid, requester_agent): raise ValueError("referencia ajena al tema")
+                if not row or not self.get_message(mid, requester_agent, agent_ids): raise ValueError("referencia ajena al tema")
                 if verification == "confirmado por usuario" and row[0] != "user": raise ValueError("confirmación requiere mensaje del usuario")
                 if verification in {"prueba superada", "prueba fallida"} and row[0] != "tool": raise ValueError("prueba requiere evidencia de herramienta")
             old = dict(db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone())
@@ -1056,8 +1178,9 @@ class TopicMemoryMixin:
                     ON CONFLICT(topic_id) DO UPDATE SET manual_protected=1,status='not_applicable',last_error='manual_edit_protected',updated_at=excluded.updated_at""", (topic_id, now, now))
         return {"ok": True, "topic_id": topic_id, "merge_into": merge_into, "split_topic": new_id}
 
-    def message_window(self, message_id, *, requester_agent=None, before=10, after=10, token_budget=3000):
-        center = self.get_message(message_id, requester_agent)
+    def message_window(self, message_id, *, requester_agent=None, before=10, after=10, token_budget=3000,
+                       agent_ids=None):
+        center = self.get_message(message_id, requester_agent, agent_ids=agent_ids)
         if not center: raise PermissionError("mensaje inexistente o no accesible")
         budget = int(token_budget)
         if budget < 300: raise ValueError("token_budget debe ser al menos 300")

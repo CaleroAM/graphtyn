@@ -67,11 +67,13 @@ filtra o recupera contexto dentro de esa vista.
 
 El panel izquierdo mantiene catálogos separados para proyectos y cerebros.
 Los proyectos tienen memoria temática ligada a su repositorio; cada cerebro es
-un espacio de memoria que puede contener sesiones de varios agentes. La
-memoria de un agente sigue disponible como consulta federada sobre los
-cerebros y proyectos que tiene asociados, pero los agentes son participantes,
-no el segundo catálogo principal. El registro no supone que todos los agentes
-se llamen Evi ni que el proveedor sea la identidad: ambos datos se conservan por separado. Usa
+un espacio de memoria de una identidad propietaria y sus alias explícitos. Las
+sesiones de otros agentes se rechazan en descubrimiento y las filas importadas
+por error se marcan `quarantined`, conservando auditoría y backup. La memoria
+de un agente sigue disponible como consulta federada sobre los cerebros y
+proyectos que tiene asociados, pero cada almacén aplica su filtro de identidad.
+El registro no supone que todos los agentes se llamen Evi ni que el proveedor
+sea la identidad: ambos datos se conservan por separado. Usa
 `GET /api/agents` y `POST /api/agents/register` para administrar identidades.
 Usa `GET /api/brains` o `POST /api/projects/register` con
 `space_type: "agent_brain"` para administrar los espacios que aparecen bajo
@@ -165,10 +167,21 @@ watcher persistente y su heartbeat aparece en `memory status`. MCP
 caminos deduplican, sanean secretos y generan embeddings locales.
 
 Asocia una fuente a un cerebro con `graphtyn memory sources add --workspace
-/ruta/al/cerebro`. Las fuentes sin asociación se pueden previsualizar, pero no
-se enrutan automáticamente a ningún espacio. CLI y dashboard deben usar el
+/ruta/al/cerebro --agent-id openclaw/main`. `agent_id` es obligatorio para
+sincronizar un cerebro; una fuente raíz que contiene varios agentes debe
+apuntar a la subcarpeta de uno de ellos (por ejemplo `agents/main` o
+`agents/career`). Las fuentes sin asociación o sin propietario se pueden
+previsualizar, pero no se enrutan automáticamente a ningún espacio. CLI y dashboard deben usar el
 mismo `GRAPHTYN_HOME`; compruébalo con `memory status` y verifica que el campo
 `db` sea idéntico antes de modificar datos.
+
+El propietario también se aplica a `memory_context`, `memory_search`, `memory_topics`,
+`memory_topic`, `memory_node`, las ventanas de mensajes y ambos grafos. Una
+consulta con un `N-xxxxxx` de otra identidad devuelve acceso denegado aunque el
+identificador exista en el mismo archivo SQLite. Para reparar una importación
+antigua sin borrar datos, usa el script auditable
+`scripts/isolate_memory_agent.py`; marca sesiones y memorias como
+`quarantined` y registra `agent_scope_quarantine`.
 
 Para un agente remoto, el servicio debe publicar MCP con
 `GRAPHTYN_MCP_TOKEN` y una interfaz alcanzable por el contenedor o VM. Ese token

@@ -422,6 +422,8 @@ def main():
     brain_p = memory_sub.add_parser("brain-init", help="Crea un cerebro (espacio de memoria de agentes)")
     brain_p.add_argument("--brain-path", required=True, help="Carpeta del cerebro (se crea si no existe)")
     brain_p.add_argument("--name", required=True, help="Nombre visible en el dashboard")
+    brain_p.add_argument("--agent-id", action="append", default=[],
+                         help="Identidad propietaria del cerebro (repetible para alias explícitos)")
     brain_p.add_argument("--agents-dir", default=None,
                          help="Directorio con workspaces de agentes (subcarpetas con IDENTITY.md/SOUL.md) a descubrir en bloque")
     brain_p.add_argument("--agent-workspace", action="append", default=[],
@@ -448,6 +450,8 @@ def main():
     bootstrap_p.add_argument("--archive-all", action="store_true",
                              help="Importar toda sesión en un cerebro histórico separado")
     bootstrap_p.add_argument("--path", default=".")
+    bootstrap_p.add_argument("--agent-id", default=None,
+                             help="Identidad propietaria; evita importar sesiones de otro agente")
     projects_p = memory_sub.add_parser("projects", help="Lista identidades globales de proyectos y alias")
     projects_p.add_argument("--path", default=".")
     projects_p.add_argument("--alias", action="append", default=[],
@@ -461,6 +465,8 @@ def main():
     sync_p.add_argument("--all-spaces", action="store_true", help="Sincronizar todos los espacios registrados con fuente asociada")
     sync_p.add_argument("--interval", type=float, default=5.0)
     sync_p.add_argument("--path", default=".")
+    sync_p.add_argument("--agent-id", default=None,
+                        help="Identidad propietaria de la fuente (requerida para una raíz compartida)")
     export_p = memory_sub.add_parser("export", help="Exporta memoria saneada sin vectores")
     export_p.add_argument("--output", required=True)
     export_p.add_argument("--include-messages", action="store_true")
@@ -903,13 +909,20 @@ def main():
                 home = Path(os.environ.get("GRAPHTYN_HOME") or Path.home() / ".graphtyn")
                 reg_file = home / "registered_projects.json"
                 projects = json.loads(reg_file.read_text(encoding="utf-8")) if reg_file.is_file() else []
-                if not any(p.get("path") == str(brain_dir) for p in projects):
+                existing = next((p for p in projects if p.get("path") == str(brain_dir)), None)
+                if existing is None:
                     projects.append({"id": args.name, "name": args.name,
-                                     "path": str(brain_dir), "mode": "single_folder"})
+                                     "path": str(brain_dir), "mode": "single_folder",
+                                     "space_type": "agent_brain", "agent_ids": [str(value).strip().casefold()
+                                     for value in args.agent_id if str(value).strip()]})
+                elif args.agent_id:
+                    existing.update({"space_type": "agent_brain", "agent_ids": [str(value).strip().casefold()
+                                   for value in args.agent_id if str(value).strip()]})
                     reg_file.parent.mkdir(parents=True, exist_ok=True)
                     reg_file.write_text(json.dumps(projects, ensure_ascii=False, indent=2), encoding="utf-8")
                 registered_to = str(reg_file)
             result = {"ok": True, "brain": args.name, "path": str(brain_dir),
+                      "agent_ids": [str(value).strip().casefold() for value in args.agent_id if str(value).strip()],
                       "agents": [{"agent_id": d["agent_id"], "name": d["name"]} for d in discovered],
                       "errors": errors, "registered_to": registered_to}
             print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -964,7 +977,9 @@ def main():
             print(json.dumps({"ok": True, "home": str(home), "stores": found,
                               "removed_test_stores": removed}, ensure_ascii=False, indent=2))
         elif args.memory_action == "bootstrap":
-            discovered = discover_histories(args.provider, args.source or None)
+            discovered = discover_histories(args.provider, args.source or None,
+                                            project_path=None if args.source else Path(args.path),
+                                            agent_id=args.agent_id)
             if args.session:
                 wanted = {str(value).strip() for value in args.session}
                 discovered["sessions"] = [row for row in discovered["sessions"]
@@ -996,9 +1011,11 @@ def main():
                     paths = [Path(item).expanduser().resolve() for project in registry.list()
                              for item in project.get("paths", [])]
                     return {"ok": True, "spaces": [sync_memory_workspace(path, provider=args.provider,
-                        source=args.source or None, provider_model=args.provider_model) for path in dict.fromkeys(paths)]}
+                        source=args.source or None, provider_model=args.provider_model,
+                        agent_id=args.agent_id) for path in dict.fromkeys(paths)]}
                 return sync_memory_workspace(Path(args.path), provider=args.provider,
-                    source=args.source or None, provider_model=args.provider_model)
+                    source=args.source or None, provider_model=args.provider_model,
+                    agent_id=args.agent_id)
             if not args.watch:
                 print(json.dumps(sync_once(), ensure_ascii=False, indent=2))
             else:

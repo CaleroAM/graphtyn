@@ -13,6 +13,7 @@ from graphtyn.core.history_import import (
 from graphtyn.core.memory_jobs import MemoryJobManager
 from graphtyn.core.shared_memory import SharedMemoryStore
 from graphtyn.api import main as api_main
+from graphtyn.mcp_server import _validate_memory_owner
 
 
 def _openclaw_history(root: Path) -> Path:
@@ -95,6 +96,20 @@ def test_history_source_is_scoped_to_one_memory_space(tmp_path, monkeypatch):
     assert selected["count"] == 1
     assert selected["sessions"][0]["source"].endswith(str(path.relative_to(source)))
     assert selected["sessions"][0]["explicit_project_selection"] is True
+
+
+def test_history_source_owner_filters_a_shared_agent_directory(tmp_path):
+    source = tmp_path / "openclaw"
+    path = _openclaw_history(source)
+
+    excluded = discover_histories("openclaw", [str(source)], agent_id="openclaw/career")
+    selected = discover_histories("openclaw", [str(source)], agent_id="openclaw/agent-beta")
+
+    assert excluded["count"] == 0
+    assert excluded["excluded_count"] == 1
+    assert excluded["excluded"][0]["expected_agent_id"] == "openclaw/career"
+    assert selected["count"] == 1
+    assert selected["sessions"][0]["agent_id"] == "openclaw/agent-beta"
 
 
 def test_docker_history_source_uses_read_only_archive(tmp_path, monkeypatch):
@@ -246,6 +261,37 @@ def test_import_does_not_mix_unknown_project_workspace(tmp_path, monkeypatch):
 
     assert result["selected"] == 0
     assert result["ambiguous"][0]["suggested_project"] == "UnityCommerceDemo"
+
+
+def test_historical_import_enforces_configured_agent_owner(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    brain = tmp_path / "cerebro-evi"; brain.mkdir()
+    sessions = [
+        {"provider": "openclaw", "agent_id": "openclaw/main", "external_session_id": "main-1",
+         "task": "Main", "source": "main.jsonl", "workspace": None, "explicit_project_selection": True,
+         "messages": [{"role": "user", "content": "Actualizar coordinador"}]},
+        {"provider": "openclaw", "agent_id": "openclaw/career", "external_session_id": "career-1",
+         "task": "Career", "source": "career.jsonl", "workspace": None, "explicit_project_selection": True,
+         "messages": [{"role": "user", "content": "Preparar CV"}]},
+    ]
+
+    result = import_histories(brain, sessions, consent=True, agent_ids=["openclaw/main"])
+    visible = SharedMemoryStore(brain).list_sessions_page(agent_ids=["openclaw/main"])
+
+    assert result["selected"] == 1 and len(result["imported"]) == 1
+    assert result["excluded"][0]["agent_id"] == "openclaw/career"
+    assert [row["agent_id"] for row in visible["sessions"]] == ["openclaw/main"]
+
+
+def test_mcp_memory_write_rejects_foreign_agent(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    brain = tmp_path / "cerebro-evi"; brain.mkdir()
+    save_source("openclaw", str(tmp_path / "agents" / "main"), project_path=brain,
+                agent_id="openclaw/main")
+
+    _validate_memory_owner(brain, "openclaw/main")
+    with pytest.raises(PermissionError, match="no está autorizado"):
+        _validate_memory_owner(brain, "openclaw/career")
 
 
 def test_explicit_archive_import_keeps_all_projects_separate(tmp_path, monkeypatch):

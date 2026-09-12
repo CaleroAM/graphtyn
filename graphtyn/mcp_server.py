@@ -11,6 +11,7 @@ from .core.work_memory import attach_learning
 from .core.history import HistoryTracker
 from .core.shared_memory import SharedMemoryStore
 from .core.storage import data_home, project_store_dir
+from .core.history_import import configured_sources, _agent_id_matches
 from .core.source_evidence import attach_source_evidence
 from .core.console import configure_utf8_stdio
 
@@ -22,6 +23,63 @@ def _mcp_text(req_id: Any, result: Any) -> Dict[str, Any]:
 
 def _cached_index_dir(workspace: Path) -> Path:
     return project_store_dir(data_home(), workspace)
+
+
+def _memory_scope_agents(workspace: Path, requester: str | None = None) -> list[str]:
+    """Resolve the owner configured for this MCP memory space."""
+    owners = set()
+    registration = data_home() / "registered_projects.json"
+    try:
+        payload = json.loads(registration.read_text(encoding="utf-8"))
+        rows = payload if isinstance(payload, list) else []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            try:
+                same_path = Path(str(row.get("path") or "")).expanduser().resolve() == workspace.resolve()
+            except (OSError, RuntimeError, ValueError):
+                same_path = False
+            if same_path:
+                owners.update(str(value).strip().casefold() for value in row.get("agent_ids", []) if str(value).strip())
+    except (OSError, ValueError, TypeError):
+        pass
+    for source in configured_sources():
+        project = str(source.get("project_path") or "").strip()
+        agent = str(source.get("agent_id") or "").strip().casefold()
+        if not project or not agent:
+            continue
+        try:
+            if Path(project).expanduser().resolve() == workspace.resolve():
+                owners.add(agent)
+        except (OSError, RuntimeError, ValueError):
+            continue
+    # A requester is a visibility principal, not the owner of the store.  Do
+    # not turn an unregistered workspace into a single-agent store merely
+    # because another agent is asking a question; private memories are still
+    # filtered by ``requester_agent`` inside the store.
+    return sorted(owners)
+
+
+def _validate_memory_owner(workspace: Path, agent_id: str | None) -> None:
+    owners = _memory_scope_agents(workspace)
+    observed = str(agent_id or "").strip().casefold()
+    if owners and not any(_agent_id_matches(owner, observed) for owner in owners):
+        raise PermissionError("el agente no está autorizado para este espacio de memoria")
+
+
+def _validate_memory_session_owner(workspace: Path, memory: SharedMemoryStore, session_id: str | None) -> None:
+    session = memory.get_session(str(session_id or ""))
+    if not session:
+        raise ValueError("sesión desconocida")
+    _validate_memory_owner(workspace, str(session.get("agent_id") or ""))
+
+
+def _validate_memory_reference_owner(workspace: Path, memory: SharedMemoryStore, memory_id: str | None) -> None:
+    with memory._connect() as db:
+        row = db.execute("SELECT agent_id FROM memories WHERE id=?", (str(memory_id or ""),)).fetchone()
+    if not row:
+        raise ValueError("memoria desconocida")
+    _validate_memory_owner(workspace, str(row["agent_id"] or ""))
 
 def get_workspace_graph(workspace: Path, parser: ASTParser) -> dict:
     try:
@@ -892,22 +950,26 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     "result": {"content": [{"type": "text", "text": json.dumps({"query": q, "results": events}, indent=2)}]}
                 }
             elif name == "memory_session_start":
+                _validate_memory_owner(workspace, str(args.get("agent_id") or ""))
                 result = memory.start_session(str(args.get("agent_id") or ""), str(args.get("task") or ""),
                                               branch=args.get("branch"), base_commit=args.get("base_commit"),
                                               capture_enabled=bool(args.get("capture_enabled", False)))
                 return _mcp_text(req_id, result)
             elif name == "memory_checkpoint":
+                _validate_memory_session_owner(workspace, memory, args.get("session_id"))
                 result = memory.checkpoint(str(args.get("session_id") or ""), str(args.get("kind") or ""),
                                            str(args.get("title") or ""), str(args.get("content") or ""),
                                            scope=str(args.get("scope") or "project"), files=args.get("files") or [],
                                            node_ids=args.get("node_ids") or [], tests=args.get("tests") or [])
                 return _mcp_text(req_id, result)
             elif name == "memory_append":
+                _validate_memory_session_owner(workspace, memory, args.get("session_id"))
                 result = memory.append_message(str(args.get("session_id") or ""), str(args.get("role") or ""),
                                                str(args.get("content") or ""), event_type=args.get("event_type"),
                                                metadata=args.get("metadata") or {})
                 return _mcp_text(req_id, result)
             elif name == "memory_ingest_turn":
+                _validate_memory_owner(workspace, str(args.get("agent_id") or ""))
                 result = memory.ingest_turn(str(args.get("agent_id") or ""),
                     str(args.get("external_session_id") or ""), str(args.get("task") or ""),
                     args.get("messages") or [], consent=bool(args.get("consent", False)),
@@ -917,34 +979,42 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
             elif name == "memory_search":
                 result = {"query": args.get("query", ""), "results": memory.search(
                     str(args.get("query") or ""), requester_agent=args.get("requester_agent"),
-                    limit=int(args.get("limit") or 8), branch=args.get("branch"))}
+                    limit=int(args.get("limit") or 8), branch=args.get("branch"),
+                    agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))}
                 return _mcp_text(req_id, result)
             elif name in {"memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}:
                 from .core.topic_contracts import dispatch_topic
-                return _mcp_text(req_id, dispatch_topic(memory, name, args))
+                return _mcp_text(req_id, dispatch_topic(memory, name, args,
+                    agent_ids=_memory_scope_agents(workspace, args.get("requester_agent"))))
             elif name == "memory_context":
                 result = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"),
                                         branch=args.get("branch"), limit=int(args.get("limit") or 8),
                                         token_budget=int(args.get("token_budget") or 1800),
                                         include_graph=bool(args.get("include_graph", True)),
-                                        neighbor_limit=int(args.get("neighbor_limit") or 12))
+                                        neighbor_limit=int(args.get("neighbor_limit") or 12),
+                                        agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))
                 return _mcp_text(req_id, result)
             elif name == "memory_ingest_evidence":
                 return _mcp_text(req_id, memory.ingest_benchmark_evidence(args.get("files") or None))
             elif name == "memory_session_end":
+                _validate_memory_session_owner(workspace, memory, args.get("session_id"))
                 result = memory.end_session(str(args.get("session_id") or ""), args.get("summary"),
                                             args.get("observed_commit"))
                 return _mcp_text(req_id, result)
             elif name == "memory_correct":
+                _validate_memory_session_owner(workspace, memory, args.get("session_id"))
+                _validate_memory_reference_owner(workspace, memory, args.get("memory_id"))
                 result = memory.correct(str(args.get("memory_id") or ""), str(args.get("session_id") or ""),
                                         str(args.get("title") or ""), str(args.get("content") or ""))
                 return _mcp_text(req_id, result)
             elif name == "memory_forget":
+                _validate_memory_reference_owner(workspace, memory, args.get("memory_id"))
                 result = memory.forget(str(args.get("memory_id") or ""),
                                        requester_agent=str(args.get("requester_agent") or ""),
                                        physical=bool(args.get("physical", False)))
                 return _mcp_text(req_id, result)
             elif name == "memory_compact":
+                _validate_memory_session_owner(workspace, memory, args.get("session_id"))
                 result = memory.compact_session(str(args.get("session_id") or ""),
                                                 str(args.get("provider") or "auto"))
                 return _mcp_text(req_id, result)

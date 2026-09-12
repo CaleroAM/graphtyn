@@ -32,9 +32,12 @@ from ..core.source_evidence import attach_source_evidence
 from ..core.shared_memory import SharedMemoryStore, existing_store_db
 from ..core.history_import import (ProjectIdentityRegistry, discover_histories, import_histories,
                                    configured_sources, BUILTIN_PROVIDERS, save_source,
-                                   delete_source, test_source, sync_memory_workspace)
+                                   delete_source, test_source, sync_memory_workspace,
+                                   _agent_id_matches)
 from ..core.memory_jobs import memory_jobs
-from ..mcp_server import blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node
+from ..mcp_server import (blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node,
+                          _validate_memory_owner, _validate_memory_session_owner,
+                          _validate_memory_reference_owner)
 
 parser = ASTParser()
 watch_manager = WatchManager()
@@ -195,7 +198,8 @@ def _watch_config_read() -> list[dict]:
 
 def _watch_config_write() -> None:
     _memory_watch_config.parent.mkdir(parents=True, exist_ok=True)
-    rows = [{"path": key, "interval": max(5, float(value.get("interval", 30)))}
+    rows = [{"path": key, "interval": max(5, float(value.get("interval", 30))),
+             "agent_id": value.get("agent_id")}
             for key, value in _memory_watchers.items() if value.get("persist", True)]
     _memory_watch_config.write_text(json.dumps({"version": 1, "watchers": rows}, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -204,6 +208,7 @@ def _watcher_public(key: str, entry: dict) -> dict:
     return {"path": key, "status": entry.get("status"),
             "active": bool(entry.get("thread") and entry["thread"].is_alive()),
             "heartbeat": entry.get("heartbeat"), "interval": entry.get("interval"),
+            "agent_id": entry.get("agent_id"),
             "error": entry.get("error")}
 
 
@@ -215,7 +220,8 @@ def _memory_watch_loop(path: str, options: dict, stop: threading.Event) -> None:
             if current: current.update(status="processing", heartbeat=time.time())
         try:
             result = sync_memory_workspace(key, provider=options.get("provider"),
-                                           provider_model=options.get("provider_model", "auto"), enrich=True)
+                                           provider_model=options.get("provider_model", "auto"), enrich=True,
+                                           agent_id=options.get("agent_id"))
             with _memory_watch_lock:
                 current = _memory_watchers.get(key)
                 if current: current.update(status="watching", heartbeat=time.time(), last_result=result, error=None)
@@ -229,15 +235,18 @@ def _memory_watch_loop(path: str, options: dict, stop: threading.Event) -> None:
 
 
 def _start_memory_watcher(path: str | Path, *, interval: float = 30, provider: str | None = None,
-                          provider_model: str = "auto", persist: bool = True) -> dict:
+                          provider_model: str = "auto", agent_id: str | None = None,
+                          persist: bool = True) -> dict:
     key = str(Path(path).expanduser().resolve())
     with _memory_watch_lock:
         old = _memory_watchers.get(key)
         if old and old.get("thread") and old["thread"].is_alive():
             old["interval"] = max(5, float(interval)); old["persist"] = persist
+            if agent_id: old["agent_id"] = agent_id
             _watch_config_write(); return _watcher_public(key, old)
         stop = threading.Event()
-        options = {"interval": max(5, float(interval)), "provider": provider, "provider_model": provider_model}
+        options = {"interval": max(5, float(interval)), "provider": provider,
+                   "provider_model": provider_model, "agent_id": agent_id}
         entry = {**options, "status": "starting", "heartbeat": time.time(), "stop": stop,
                  "persist": persist, "last_result": None, "error": None}
         thread = threading.Thread(target=_memory_watch_loop, args=(key, options, stop),
@@ -259,7 +268,8 @@ def _stop_memory_watcher(path: str | Path) -> bool:
 
 def _restore_memory_watchers() -> None:
     for row in _watch_config_read():
-        try: _start_memory_watcher(row["path"], interval=float(row.get("interval", 30)), persist=True)
+        try: _start_memory_watcher(row["path"], interval=float(row.get("interval", 30)),
+                                   agent_id=row.get("agent_id"), persist=True)
         except (OSError, ValueError): continue
 
 
@@ -421,6 +431,7 @@ def _load_registered_projects() -> list[dict]:
                     "mode": cp.get("mode", "single_folder"),
                     "space_type": _space_type_for_record(cp, p_path),
                     "indexed": _is_indexed(p_path),
+                    "agent_ids": [str(value).strip().casefold() for value in (cp.get("agent_ids") or []) if str(value).strip()],
                 }
                 existing = next((p for p in projects if p["path"] == str(p_path)), None)
                 if existing is None:
@@ -457,9 +468,12 @@ def _load_registered_brains() -> list[dict]:
         if project.get("space_type") != "agent_brain":
             continue
         path = str(Path(project["path"]).expanduser().resolve())
+        configured_agents = [str(value).strip().casefold() for value in project.get("agent_ids", [])
+                             if str(value).strip()]
         rows[path] = {"id": project.get("id") or Path(path).name, "name": project.get("name") or Path(path).name,
                       "path": path, "space_type": "agent_brain", "indexed": bool(project.get("indexed")),
-                      "autoload": bool(project.get("autoload", False)), "sessions": 0, "agents": [], "sources": []}
+                      "autoload": bool(project.get("autoload", False)), "sessions": 0, "agents": [],
+                      "agent_ids": sorted(set(configured_agents)), "sources": []}
     for source in configured_sources():
         raw_path = str(source.get("project_path") or "").strip()
         if not raw_path:
@@ -469,26 +483,64 @@ def _load_registered_brains() -> list[dict]:
         if path not in rows and ("cerebro" in path.casefold() or "brain" in path.casefold()):
             rows[path] = {"id": path_obj.name, "name": path_obj.name, "path": path,
                           "space_type": "agent_brain", "indexed": False, "autoload": False,
-                          "sessions": 0, "agents": [], "sources": []}
+                          "sessions": 0, "agents": [], "agent_ids": [], "sources": []}
         if path in rows:
             rows[path]["sources"].append({"provider": source.get("provider"), "source": source.get("source"),
                                            "agent_id": source.get("agent_id")})
+            source_agent = str(source.get("agent_id") or "").strip().casefold()
+            if source_agent and source_agent not in rows[path]["agent_ids"]:
+                rows[path]["agent_ids"].append(source_agent)
     for path, brain in rows.items():
         db_path = _project_memory_db(Path(path))
         if not db_path:
             continue
         try:
             with sqlite3.connect(db_path) as conn:
-                session_rows = conn.execute("""SELECT s.agent_id, COUNT(*), COALESCE(a.display_name, '')
-                    FROM sessions s LEFT JOIN agents a ON a.id=s.agent_id
-                    GROUP BY s.agent_id, a.display_name ORDER BY s.agent_id""").fetchall()
+                owners = [str(value).casefold() for value in brain.get("agent_ids") or [] if str(value).strip()]
+                if owners:
+                    marks = ",".join("?" for _ in owners)
+                    session_rows = conn.execute(f"""SELECT s.agent_id, COUNT(*), COALESCE(a.display_name, '')
+                        FROM sessions s LEFT JOIN agents a ON a.id=s.agent_id
+                        WHERE s.status != 'quarantined' AND lower(s.agent_id) IN ({marks})
+                        GROUP BY s.agent_id, a.display_name ORDER BY s.agent_id""", owners).fetchall()
+                else:
+                    session_rows = conn.execute("""SELECT s.agent_id, COUNT(*), COALESCE(a.display_name, '')
+                        FROM sessions s LEFT JOIN agents a ON a.id=s.agent_id
+                        WHERE s.status != 'quarantined'
+                        GROUP BY s.agent_id, a.display_name ORDER BY s.agent_id""").fetchall()
+                all_sessions = conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+                quarantined_sessions = conn.execute("SELECT COUNT(*) FROM sessions WHERE status='quarantined'").fetchone()[0]
+                quarantined_memories = conn.execute("SELECT COUNT(*) FROM memories WHERE status='quarantined'").fetchone()[0]
             brain["sessions"] = sum(int(row[1] or 0) for row in session_rows)
+            brain["quarantined_sessions"] = quarantined_sessions
+            brain["quarantined_memories"] = quarantined_memories
+            brain["discovered_sessions"] = all_sessions
             brain["agents"] = [{"id": str(row[0]), "name": str(row[2] or row[0]), "sessions": int(row[1] or 0)}
                                for row in session_rows]
             brain["memory_exists"] = True
         except sqlite3.Error:
             continue
     return sorted(rows.values(), key=lambda row: (str(row.get("name") or "").casefold(), row["path"]))
+
+
+def _memory_space_agent_ids(path: str | Path) -> list[str]:
+    """Return explicitly authorized identities for one memory space."""
+    target = Path(path).expanduser().resolve()
+    owners: set[str] = set()
+    for row in _load_registered_projects():
+        try: same_path = Path(str(row.get("path") or "")).expanduser().resolve() == target
+        except (OSError, RuntimeError, ValueError): same_path = False
+        if same_path:
+            owners.update(str(value).strip().casefold() for value in row.get("agent_ids", []) if str(value).strip())
+    for source in configured_sources():
+        raw_project = str(source.get("project_path") or "").strip()
+        if raw_project:
+            try: same_path = Path(raw_project).expanduser().resolve() == target
+            except (OSError, RuntimeError, ValueError): same_path = False
+            if same_path:
+                value = str(source.get("agent_id") or "").strip().casefold()
+                if value: owners.add(value)
+    return sorted(owners)
 
 
 @app.get("/api/brains")
@@ -562,12 +614,17 @@ def register_project(payload: dict = Body(...)):
         except Exception:
             pass
 
+    raw_agent_ids = payload.get("agent_ids") or ([payload.get("agent_id")] if payload.get("agent_id") else [])
+    agent_ids = [str(value).strip().casefold() for value in raw_agent_ids if str(value).strip()]
+    if any(not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]{1,127}", value) for value in agent_ids):
+        return JSONResponse({"ok": False, "error": "agent_ids contiene una identidad inválida"}, status_code=400)
     new_entry = {
         "id": target_path.name,
         "name": name or target_path.name,
         "path": str(target_path),
         "mode": mode,
-        "space_type": space_type
+        "space_type": space_type,
+        **({"agent_ids": sorted(set(agent_ids))} if agent_ids else {})
     }
 
     existing = next((cp for cp in custom_projects if cp["path"] == str(target_path)), None)
@@ -1277,8 +1334,10 @@ def memory_topics(path: str, query: str = "", state: str | None = None,
                   authorization: str | None = Header(default=None)):
     _, denied = _require_role(authorization, "reader", path)
     if denied: return denied
-    return SharedMemoryStore(Path(path)).topics(query, state=state, agent_id=agent_id,
-        session_id=session_id, since=since, until=until, limit=limit, offset=offset, requester_agent=requester_agent)
+    resolved_path = Path(path).expanduser().resolve()
+    return SharedMemoryStore(resolved_path).topics(query, state=state, agent_id=agent_id,
+        session_id=session_id, since=since, until=until, limit=limit, offset=offset,
+        requester_agent=requester_agent, agent_ids=_memory_space_agent_ids(resolved_path))
 
 
 @app.get("/api/memory/entities")
@@ -1287,8 +1346,9 @@ def memory_entities(path: str, query: str = "", kind: str | None = None,
                     authorization: str | None = Header(default=None)):
     _, denied = _require_role(authorization, "reader", path)
     if denied: return denied
-    return SharedMemoryStore(Path(path)).entities(query, kind=kind, limit=limit, offset=offset,
-        requester_agent=requester_agent)
+    resolved_path = Path(path).expanduser().resolve()
+    return SharedMemoryStore(resolved_path).entities(query, kind=kind, limit=limit, offset=offset,
+        requester_agent=requester_agent, agent_ids=_memory_space_agent_ids(resolved_path))
 
 
 @app.get("/api/memory/entity")
@@ -1297,7 +1357,9 @@ def memory_entity(path: str, entity_id: str, limit: int = 50,
     _, denied = _require_role(authorization, "reader", path)
     if denied: return denied
     try:
-        return SharedMemoryStore(Path(path)).entity(entity_id, limit=limit, requester_agent=requester_agent)
+        resolved_path = Path(path).expanduser().resolve()
+        return SharedMemoryStore(resolved_path).entity(entity_id, limit=limit, requester_agent=requester_agent,
+            agent_ids=_memory_space_agent_ids(resolved_path))
     except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
@@ -1308,7 +1370,9 @@ def memory_topic(path: str, topic_id: str, limit: int = 20, offset: int = 0,
     _, denied = _require_role(authorization, "reader", path)
     if denied: return denied
     try:
-        return SharedMemoryStore(Path(path)).topic(topic_id, limit=limit, offset=offset, requester_agent=requester_agent)
+        resolved_path = Path(path).expanduser().resolve()
+        return SharedMemoryStore(resolved_path).topic(topic_id, limit=limit, offset=offset,
+            requester_agent=requester_agent, agent_ids=_memory_space_agent_ids(resolved_path))
     except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
@@ -1320,8 +1384,10 @@ def memory_message_window(path: str, message_id: str, before: int = 10, after: i
     _, denied = _require_role(authorization, "reader", path)
     if denied: return denied
     try:
-        return SharedMemoryStore(Path(path)).message_window(message_id, before=before, after=after,
-            token_budget=token_budget, requester_agent=requester_agent)
+        resolved_path = Path(path).expanduser().resolve()
+        return SharedMemoryStore(resolved_path).message_window(message_id, before=before, after=after,
+            token_budget=token_budget, requester_agent=requester_agent,
+            agent_ids=_memory_space_agent_ids(resolved_path))
     except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
@@ -1331,7 +1397,12 @@ def memory_topic_update(payload: dict = Body(...), authorization: str | None = H
     _, denied = _require_role(authorization, "writer", payload.get("path"))
     if denied: return denied
     try:
-        return dispatch_topic(SharedMemoryStore(Path(payload["path"])), "memory_topic_update", payload)
+        resolved_path = Path(payload["path"]).expanduser().resolve()
+        store = SharedMemoryStore(resolved_path)
+        store.topic(str(payload.get("topic_id") or ""), requester_agent=payload.get("requester_agent"),
+                    agent_ids=_memory_space_agent_ids(resolved_path))
+        return dispatch_topic(store, "memory_topic_update", payload,
+                              agent_ids=_memory_space_agent_ids(resolved_path))
     except (ValueError, PermissionError, KeyError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
@@ -1342,7 +1413,9 @@ def memory_node(path: str, reference: str, limit: int = 20, offset: int = 0,
     _, denied = _require_role(authorization, "reader", path)
     if denied: return denied
     try:
-        return SharedMemoryStore(Path(path)).resolve_node_reference(reference, requester_agent=requester_agent, limit=limit, offset=offset)
+        resolved_path = Path(path).expanduser().resolve()
+        return SharedMemoryStore(resolved_path).resolve_node_reference(reference, requester_agent=requester_agent,
+            limit=limit, offset=offset, agent_ids=_memory_space_agent_ids(resolved_path))
     except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
@@ -1353,7 +1426,9 @@ def memory_relation_candidates(path: str, status: str = "pending", limit: int = 
     _, denied = _require_role(authorization, "reader", path)
     if denied: return denied
     try:
-        return SharedMemoryStore(Path(path)).relation_candidates(requester_agent=requester_agent, status=status, limit=limit)
+        resolved_path = Path(path).expanduser().resolve()
+        return SharedMemoryStore(resolved_path).relation_candidates(requester_agent=requester_agent, status=status,
+            limit=limit, agent_ids=_memory_space_agent_ids(resolved_path))
     except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
@@ -1363,9 +1438,10 @@ def memory_relation_review(payload: dict = Body(...), authorization: str | None 
     _, denied = _require_role(authorization, "writer", payload.get("path"))
     if denied: return denied
     try:
-        return SharedMemoryStore(Path(payload["path"])).relation_review(
+        resolved_path = Path(payload["path"]).expanduser().resolve()
+        return SharedMemoryStore(resolved_path).relation_review(
             payload["relation_id"], status=payload["status"], actor=payload.get("requester_agent", "dashboard"),
-            reason=payload["reason"])
+            reason=payload["reason"], agent_ids=_memory_space_agent_ids(resolved_path))
     except (ValueError, PermissionError, KeyError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
@@ -1377,6 +1453,8 @@ def memory_history_stream(payload: dict = Body(...), authorization: str | None =
     required = ("path", "source", "provider", "agent_id", "external_session_id", "consent", "explicit_project_selection")
     if any(not payload.get(k) for k in required):
         return JSONResponse({"ok": False, "error": "selección explícita de fuente, proyecto y sesión requerida"}, status_code=400)
+    try: _validate_memory_owner(Path(payload["path"]).expanduser().resolve(), str(payload["agent_id"]))
+    except PermissionError as exc: return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
     from ..core.history_stream import ingest_jsonl
     from ..core.memory_jobs import memory_jobs
     job = memory_jobs.create("history-stream", payload)
@@ -1395,6 +1473,9 @@ def memory_topics_process(payload: dict = Body(...), authorization: str | None =
     if denied: return denied
     if not payload.get("consent") or not payload.get("session_id") or not payload.get("path"):
         return JSONResponse({"ok": False, "error": "path, session_id y consent requeridos"}, status_code=400)
+    try: _validate_memory_session_owner(Path(payload["path"]).expanduser().resolve(),
+                                        SharedMemoryStore(Path(payload["path"])), payload["session_id"])
+    except (ValueError, PermissionError) as exc: return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
     from ..core.memory_jobs import memory_jobs
     job = memory_jobs.create("topics", payload)
     memory_jobs.run(job["id"], lambda update: SharedMemoryStore(Path(payload["path"])).compact_session(payload["session_id"], "deterministic"))
@@ -1409,17 +1490,20 @@ def memory_topics_enrich(payload: dict = Body(...), authorization: str | None = 
         return JSONResponse({"ok": False, "error": "path y consent requeridos"}, status_code=400)
     from ..core.memory_jobs import memory_jobs
     job = memory_jobs.create("topics-enrich", payload)
-    memory_jobs.run(job["id"], lambda update: SharedMemoryStore(Path(payload["path"])).enrich_topics(
+    resolved_path = Path(payload["path"]).expanduser().resolve()
+    memory_jobs.run(job["id"], lambda update: SharedMemoryStore(resolved_path).enrich_topics(
         payload.get("session_id"), provider=str(payload.get("provider") or "auto"),
-        force=bool(payload.get("force", False)), retry_failed=bool(payload.get("retry_failed", False)), progress=update))
+        force=bool(payload.get("force", False)), retry_failed=bool(payload.get("retry_failed", False)), progress=update,
+        agent_ids=_memory_space_agent_ids(resolved_path)))
     return {"ok": True, "job": job}
 
 
 @app.get("/api/memory/status")
 def memory_status(path: str = Query(...), authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
-    result = SharedMemoryStore(Path(path).expanduser().resolve()).status()
     key = str(Path(path).expanduser().resolve())
+    resolved_path = Path(key)
+    result = SharedMemoryStore(resolved_path).status(agent_ids=_memory_space_agent_ids(resolved_path))
     with _memory_watch_lock:
         result["sync_watchers"] = [_watcher_public(item, value) for item, value in _memory_watchers.items()
                                     if item == key]
@@ -1450,10 +1534,14 @@ def memory_sync(payload: dict = Body(...), authorization: str | None = Header(de
         results = []
         for index, path in enumerate(paths):
             base = int(index * 100 / len(paths))
+            configured_agents = _memory_space_agent_ids(path)
+            requested_agent = str(payload.get("agent_id") or "").strip().casefold() or None
+            owner = requested_agent or (configured_agents[0] if len(configured_agents) == 1 else None)
             result = sync_memory_workspace(path, provider=payload.get("provider"),
                 source=payload.get("sources") or ([payload["source"]] if payload.get("source") else None),
                 provider_model=str(payload.get("provider_model") or "auto"),
                 enrich=payload.get("enrich", True), force=bool(payload.get("force", False)),
+                agent_id=owner,
                 progress=lambda pct, msg="": update(base + int(pct / len(paths)), f"{path.name}: {msg}"))
             results.append(result)
         return {"ok": all(item.get("ok", False) for item in results), "spaces": results,
@@ -1478,8 +1566,12 @@ def memory_watch(payload: dict = Body(...), authorization: str | None = Header(d
     rows = []
     for path in paths:
         if enabled:
+            configured_agents = _memory_space_agent_ids(path)
+            requested_agent = str(payload.get("agent_id") or "").strip().casefold() or None
+            owner = requested_agent or (configured_agents[0] if len(configured_agents) == 1 else None)
             rows.append(_start_memory_watcher(path, interval=float(payload.get("interval", 30)),
-                provider=payload.get("provider"), provider_model=str(payload.get("provider_model") or "auto")))
+                provider=payload.get("provider"), provider_model=str(payload.get("provider_model") or "auto"),
+                agent_id=owner))
         else:
             _stop_memory_watcher(path)
     return {"ok": True, "enabled": enabled, "watchers": rows,
@@ -1491,8 +1583,10 @@ def memory_sessions(path: str = Query(...), limit: int = Query(50), offset: int 
                     query: str = "", requester_agent: str | None = None,
                     authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
-    return SharedMemoryStore(Path(path).expanduser().resolve()).list_sessions_page(
-        limit=limit, offset=offset, query=query, requester_agent=requester_agent)
+    resolved_path = Path(path).expanduser().resolve()
+    return SharedMemoryStore(resolved_path).list_sessions_page(
+        limit=limit, offset=offset, query=query, requester_agent=requester_agent,
+        agent_ids=_memory_space_agent_ids(resolved_path))
 
 
 @app.get("/api/memory/session")
@@ -1501,8 +1595,9 @@ def memory_session(path: str = Query(...), session_id: str = Query(...),
                    authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
     try:
-        return SharedMemoryStore(Path(path).expanduser().resolve()).session_detail(
-            session_id, requester_agent=requester_agent)
+        resolved_path = Path(path).expanduser().resolve()
+        return SharedMemoryStore(resolved_path).session_detail(
+            session_id, requester_agent=requester_agent, agent_ids=_memory_space_agent_ids(resolved_path))
     except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
@@ -1529,12 +1624,14 @@ def memory_graph(path: str = Query(...), requester_agent: str = Query("dashboard
                  session_query: str = "",
                  authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
-    store = SharedMemoryStore(Path(path).expanduser().resolve())
+    resolved_path = Path(path).expanduser().resolve()
+    store = SharedMemoryStore(resolved_path)
+    authorized_agents = _memory_space_agent_ids(resolved_path)
     if view in {"topics", "episodes"}:
         return store.topic_graph(requester_agent=requester_agent, limit=limit, detail=detail,
             session_id=session_id, topic_offset=topic_offset, session_offset=session_offset,
-            session_limit=session_limit, session_query=session_query)
-    return store.attribution_graph(requester_agent, limit)
+            session_limit=session_limit, session_query=session_query, agent_ids=authorized_agents)
+    return store.attribution_graph(requester_agent, limit, agent_ids=authorized_agents)
 
 
 @app.get("/api/memory/agent-graph")
@@ -1602,9 +1699,11 @@ def memory_search(payload: dict = Body(...), authorization: str | None = Header(
     try:
         query = str(payload.get("query") or "").strip()
         if not query: raise ValueError("query es obligatorio")
+        path = Path(str(payload.get("path") or ".")).expanduser().resolve()
         results = _memory_store(payload).search(query, requester_agent=payload.get("requester_agent"),
             limit=int(payload.get("limit") or 8), branch=payload.get("branch"),
-            include_stale=bool(payload.get("include_stale", False)))
+            include_stale=bool(payload.get("include_stale", False)),
+            agent_ids=_memory_space_agent_ids(path))
         return {"ok": True, "query": query, "results": results}
     except (ValueError, TypeError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
@@ -1628,9 +1727,11 @@ def memory_search_all(payload: dict = Body(...), authorization: str | None = Hea
             if not db:
                 continue
             try:
-                found = SharedMemoryStore(Path(store_path).expanduser().resolve()).search(
+                resolved_store = Path(store_path).expanduser().resolve()
+                found = SharedMemoryStore(resolved_store).search(
                     query, requester_agent=payload.get("requester_agent"), limit=limit,
-                    include_stale=bool(payload.get("include_stale", False)))
+                    include_stale=bool(payload.get("include_stale", False)),
+                    agent_ids=_memory_space_agent_ids(resolved_store))
             except Exception:
                 continue
             for item in found:
@@ -1649,11 +1750,13 @@ def memory_context(payload: dict = Body(...), authorization: str | None = Header
     try:
         query = str(payload.get("query") or "").strip()
         if not query: raise ValueError("query es obligatorio")
+        path = Path(str(payload.get("path") or ".")).expanduser().resolve()
         return _memory_store(payload).context(query, requester_agent=payload.get("requester_agent"),
             branch=payload.get("branch"), limit=int(payload.get("limit") or 8),
             token_budget=int(payload.get("token_budget") or 1800),
             include_graph=bool(payload.get("include_graph", True)),
-            neighbor_limit=int(payload.get("neighbor_limit") or 12))
+            neighbor_limit=int(payload.get("neighbor_limit") or 12),
+            agent_ids=_memory_space_agent_ids(path))
     except (ValueError, TypeError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
@@ -1662,7 +1765,9 @@ def memory_context(payload: dict = Body(...), authorization: str | None = Header
 def memory_correct(payload: dict = Body(...), authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
     try:
-        result = _memory_store(payload).correct(str(payload.get("memory_id") or ""),
+        store = _memory_store(payload)
+        _validate_memory_session_owner(store.workspace, store, payload.get("session_id"))
+        result = store.correct(str(payload.get("memory_id") or ""),
             str(payload.get("session_id") or ""), str(payload.get("title") or ""), str(payload.get("content") or ""))
         return {"ok": True, "memory": result}
     except (ValueError, PermissionError) as exc:
@@ -1673,7 +1778,9 @@ def memory_correct(payload: dict = Body(...), authorization: str | None = Header
 def memory_compact(payload: dict = Body(...), authorization: str | None = Header(default=None)):
     if denied := _memory_auth(authorization): return denied
     try:
-        return _memory_store(payload).compact_session(str(payload.get("session_id") or ""),
+        store = _memory_store(payload)
+        _validate_memory_session_owner(store.workspace, store, payload.get("session_id"))
+        return store.compact_session(str(payload.get("session_id") or ""),
                                                       str(payload.get("provider") or "auto"))
     except (ValueError, PermissionError) as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
@@ -1697,6 +1804,8 @@ def memory_v1_ingest(payload: dict = Body(...), authorization: str | None = Head
     _, denied = _require_role(authorization, "writer", payload.get("path"))
     if denied: return denied
     try:
+        root = Path(str(payload.get("path") or ".")).expanduser().resolve()
+        _validate_memory_owner(root, str(payload.get("agent_id") or payload.get("provider") or ""))
         return _memory_store(payload).ingest_turn(
             str(payload.get("agent_id") or payload.get("provider") or ""),
             str(payload.get("external_session_id") or ""), str(payload.get("task") or "Conversation"),
@@ -1723,8 +1832,10 @@ def memory_v1_context(payload: dict = Body(...), authorization: str | None = Hea
     merged, consulted = [], []
     for path in dict.fromkeys(paths):
         if not existing_store_db(path): continue
-        result = SharedMemoryStore(Path(path)).context(query, requester_agent=payload.get("requester_agent"),
-            limit=limit, token_budget=max(300, budget // max(1, len(paths))), include_graph=False)
+        resolved_path = Path(path).expanduser().resolve()
+        result = SharedMemoryStore(resolved_path).context(query, requester_agent=payload.get("requester_agent"),
+            limit=limit, token_budget=max(300, budget // max(1, len(paths))), include_graph=False,
+            agent_ids=_memory_space_agent_ids(resolved_path))
         consulted.append(path)
         merged.extend([{**item, "store": path} for item in result.get("memories", [])])
     merged.sort(key=lambda item: (-float(item.get("score") or 0), -float(item.get("created_at") or 0)))
@@ -1748,6 +1859,8 @@ def memory_v1_event(event_name: str, payload: dict = Body(...), authorization: s
         return JSONResponse({"ok": False, "error": "evento no soportado"}, status_code=404)
     if event_name == "session.started":
         try:
+            _validate_memory_owner(Path(str(payload.get("path") or ".")).expanduser().resolve(),
+                                   str(payload.get("agent_id") or ""))
             result = _memory_store(payload).ensure_external_session(str(payload.get("agent_id") or ""),
                 str(payload.get("external_session_id") or ""), str(payload.get("task") or "Conversation"),
                 branch=payload.get("branch"), consent=bool(payload.get("consent", False)))
@@ -1757,6 +1870,7 @@ def memory_v1_event(event_name: str, payload: dict = Body(...), authorization: s
     if event_name == "session.ended" and not (payload.get("content") or payload.get("message")):
         try:
             store = _memory_store(payload)
+            _validate_memory_owner(store.workspace, str(payload.get("agent_id") or ""))
             session = store.ensure_external_session(str(payload.get("agent_id") or ""),
                 str(payload.get("external_session_id") or ""), str(payload.get("task") or "Conversation"),
                 branch=payload.get("branch"), consent=bool(payload.get("consent", False)))
@@ -1791,8 +1905,13 @@ def import_discover(payload: dict = Body(default={}), authorization: str | None 
     _, denied = _require_role(authorization, "admin", payload.get("path"))
     if denied: return denied
     job = memory_jobs.create("discover", payload)
-    memory_jobs.run(job["id"], lambda update: (update(10, "Buscando historiales") and
-        discover_histories(payload.get("provider"), payload.get("sources"))))
+    def operation(update):
+        update(10, "Buscando historiales")
+        sources = payload.get("sources")
+        return discover_histories(payload.get("provider"), sources,
+                                  project_path=None if sources else payload.get("path"),
+                                  agent_id=payload.get("agent_id"))
+    memory_jobs.run(job["id"], operation)
     return {"ok": True, "job": job}
 
 
@@ -1849,12 +1968,38 @@ def import_start(payload: dict = Body(...), authorization: str | None = Header(d
         try: sessions = (memory_jobs.get(str(payload["discovery_job_id"])).get("result") or {}).get("sessions")
         except ValueError as exc: return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
     if not isinstance(sessions, list): return JSONResponse({"ok": False, "error": "sessions es obligatorio"}, status_code=400)
-    job = memory_jobs.create("historical_import", {**payload, "sessions": sessions})
+    import_path = payload.get("path")
+    authorized_agents = _memory_space_agent_ids(import_path) if import_path else []
+    requested_agent = str(payload.get("agent_id") or "").strip().casefold()
+    if requested_agent and authorized_agents and not any(_agent_id_matches(owner, requested_agent)
+                                                         for owner in authorized_agents):
+        return JSONResponse({"ok": False, "error": "el agente no está autorizado para este espacio de memoria"},
+                            status_code=400)
+    if requested_agent:
+        authorized_agents = [requested_agent]
+    selected_sessions = sessions
+    excluded_sessions = []
+    if authorized_agents:
+        selected_sessions = []
+        for session in sessions:
+            observed = str(session.get("agent_id") or "").strip().casefold()
+            if any(_agent_id_matches(owner, observed) for owner in authorized_agents):
+                selected_sessions.append(session)
+            else:
+                excluded_sessions.append({"session": session.get("external_session_id"),
+                                          "agent_id": session.get("agent_id"),
+                                          "expected_agent_ids": authorized_agents,
+                                          "reason": "identidad de agente fuera del espacio de memoria"})
+    job = memory_jobs.create("historical_import", {**payload, "sessions": selected_sessions,
+                                                    "excluded": excluded_sessions})
     def operation(update):
         update(10, "Validando proyectos y sesiones")
-        result = import_histories(payload.get("path") or "", sessions, consent=True,
+        result = import_histories(payload.get("path") or "", selected_sessions, consent=True,
                                   provider=str(payload.get("provider") or "deterministic"),
-                                  dry_run=bool(payload.get("dry_run", False)))
+                                  dry_run=bool(payload.get("dry_run", False)),
+                                  agent_ids=authorized_agents or None)
+        if excluded_sessions:
+            result["excluded"] = excluded_sessions + list(result.get("excluded") or [])
         update(95, "Finalizando reporte")
         return result
     memory_jobs.run(job["id"], operation)
@@ -2001,18 +2146,36 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
                 if denied: return denied
             memory = SharedMemoryStore(root)
             try:
-                if name == "memory_session_start": data = memory.start_session(str(args.get("agent_id") or ""), str(args.get("task") or ""), branch=args.get("branch"), capture_enabled=bool(args.get("capture_enabled", False)))
-                elif name == "memory_append": data = memory.append_message(str(args.get("session_id") or ""), str(args.get("role") or ""), str(args.get("content") or ""), event_type=args.get("event_type"))
-                elif name == "memory_ingest_turn": data = memory.ingest_turn(str(args.get("agent_id") or ""), str(args.get("external_session_id") or ""), str(args.get("task") or ""), args.get("messages") or [], consent=bool(args.get("consent", False)), branch=args.get("branch"), compact=bool(args.get("compact", True)), close=bool(args.get("close", False)), provider=str(args.get("provider") or "auto"))
-                elif name == "memory_checkpoint": data = memory.checkpoint(str(args.get("session_id") or ""), str(args.get("kind") or ""), str(args.get("title") or ""), str(args.get("content") or ""), files=args.get("files") or [], node_ids=args.get("node_ids") or [], tests=args.get("tests") or [])
-                elif name == "memory_search": data = {"query": args.get("query", ""), "results": memory.search(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), limit=int(args.get("limit") or 8))}
-                elif name in TOPIC_SPECS or name == "memory_topics_enrich": data = dispatch_topic(memory, name, args)
-                elif name == "memory_context": data = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), token_budget=int(args.get("token_budget") or 1800))
+                if name == "memory_session_start":
+                    _validate_memory_owner(root, str(args.get("agent_id") or ""))
+                    data = memory.start_session(str(args.get("agent_id") or ""), str(args.get("task") or ""), branch=args.get("branch"), capture_enabled=bool(args.get("capture_enabled", False)))
+                elif name == "memory_append":
+                    _validate_memory_session_owner(root, memory, args.get("session_id"))
+                    data = memory.append_message(str(args.get("session_id") or ""), str(args.get("role") or ""), str(args.get("content") or ""), event_type=args.get("event_type"))
+                elif name == "memory_ingest_turn":
+                    _validate_memory_owner(root, str(args.get("agent_id") or ""))
+                    data = memory.ingest_turn(str(args.get("agent_id") or ""), str(args.get("external_session_id") or ""), str(args.get("task") or ""), args.get("messages") or [], consent=bool(args.get("consent", False)), branch=args.get("branch"), compact=bool(args.get("compact", True)), close=bool(args.get("close", False)), provider=str(args.get("provider") or "auto"))
+                elif name == "memory_checkpoint":
+                    _validate_memory_session_owner(root, memory, args.get("session_id"))
+                    data = memory.checkpoint(str(args.get("session_id") or ""), str(args.get("kind") or ""), str(args.get("title") or ""), str(args.get("content") or ""), files=args.get("files") or [], node_ids=args.get("node_ids") or [], tests=args.get("tests") or [])
+                elif name == "memory_search": data = {"query": args.get("query", ""), "results": memory.search(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), limit=int(args.get("limit") or 8), agent_ids=_memory_space_agent_ids(root))}
+                elif name in TOPIC_SPECS or name == "memory_topics_enrich": data = dispatch_topic(
+                    memory, name, args, agent_ids=_memory_space_agent_ids(root))
+                elif name == "memory_context": data = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"), token_budget=int(args.get("token_budget") or 1800), agent_ids=_memory_space_agent_ids(root))
                 elif name == "memory_ingest_evidence": data = memory.ingest_benchmark_evidence(args.get("files") or None)
-                elif name == "memory_session_end": data = memory.end_session(str(args.get("session_id") or ""), args.get("summary"), args.get("observed_commit"))
-                elif name == "memory_compact": data = memory.compact_session(str(args.get("session_id") or ""), str(args.get("provider") or "auto"))
-                elif name == "memory_correct": data = memory.correct(str(args.get("memory_id") or ""), str(args.get("session_id") or ""), str(args.get("title") or ""), str(args.get("content") or ""))
-                elif name == "memory_forget": data = memory.forget(str(args.get("memory_id") or ""), requester_agent=str(args.get("requester_agent") or ""), physical=bool(args.get("physical", False)))
+                elif name == "memory_session_end":
+                    _validate_memory_session_owner(root, memory, args.get("session_id"))
+                    data = memory.end_session(str(args.get("session_id") or ""), args.get("summary"), args.get("observed_commit"))
+                elif name == "memory_compact":
+                    _validate_memory_session_owner(root, memory, args.get("session_id"))
+                    data = memory.compact_session(str(args.get("session_id") or ""), str(args.get("provider") or "auto"))
+                elif name == "memory_correct":
+                    _validate_memory_session_owner(root, memory, args.get("session_id"))
+                    _validate_memory_reference_owner(root, memory, args.get("memory_id"))
+                    data = memory.correct(str(args.get("memory_id") or ""), str(args.get("session_id") or ""), str(args.get("title") or ""), str(args.get("content") or ""))
+                elif name == "memory_forget":
+                    _validate_memory_reference_owner(root, memory, args.get("memory_id"))
+                    data = memory.forget(str(args.get("memory_id") or ""), requester_agent=str(args.get("requester_agent") or ""), physical=bool(args.get("physical", False)))
                 else: raise ValueError("Tool de memoria desconocida")
             except (ValueError, PermissionError, TypeError) as exc:
                 tool_is_error = True

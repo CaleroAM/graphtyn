@@ -272,10 +272,12 @@ propio repositorio y ground truth.
 
 El dashboard separa `PROYECTOS REGISTRADOS` (repositorios y workspaces con
 grafo AST, semántico y memoria del proyecto) de `CEREBROS REGISTRADOS`
-(espacios de memoria de Evi, Eve, Junio, Friday, Nex u otra identidad). Un
-cerebro puede contener sesiones de varios agentes y un agente puede participar
-en varios cerebros. Los agentes no se asumen como una identidad fija: se
-descubren y atribuyen por sus metadatos de sesión. Registra una identidad desde CLI con
+(espacios de memoria de Evi, Eve, Junio, Friday, Nex u otra identidad). Cada
+cerebro se asocia a una identidad propietaria (puede declarar alias explícitos),
+por lo que las sesiones de otro agente quedan fuera de su recuperación. Un
+agente puede tener varios espacios asociados para una consulta federada. Los
+agentes no se asumen como una identidad fija: se descubren y atribuyen por sus
+metadatos de sesión. Registra una identidad desde CLI con
 `graphtyn memory agents register --id friday --name Friday --provider openclaw`
 o desde `/api/agents/register`; consulta el catálogo con
 `graphtyn memory agents list` o `GET /api/agents`. Las fuentes de historial
@@ -287,8 +289,11 @@ barra lateral; registra un espacio mediante `POST /api/projects/register` con
 `space_type: "agent_brain"`. `Topología de agentes` representa identidades,
 fuentes, cerebros y vínculos observados o configurados. Una integración
 configurada no se presenta como actividad ejecutada. La memoria del cerebro se
-consulta dentro del espacio seleccionado y atribuye la participación de todos
-sus agentes; la memoria del proyecto mantiene la perspectiva del repositorio.
+consulta dentro del espacio seleccionado y sólo incorpora fuentes con
+`agent_id` explícito; la memoria del proyecto mantiene la perspectiva del
+repositorio. Una fuente compartida (por ejemplo, la raíz `agents` de OpenClaw)
+debe dividirse en rutas por agente o asociarse con un filtro de propietario;
+nunca se enruta a un cerebro por defecto.
 
 ## Licencia
 
