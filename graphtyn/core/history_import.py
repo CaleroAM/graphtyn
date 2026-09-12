@@ -45,6 +45,7 @@ class HistoricalSession:
     occurred_at: float | None = None
     workspace: str | None = None
     branch: str | None = None
+    updated_at: float | None = None
 
     @property
     def fingerprint(self) -> str:
@@ -98,12 +99,15 @@ def configured_sources(path: Path | None = None) -> list[dict[str, Any]]:
             project_path = str(row.get("project_path") or row.get("workspace") or "").strip()
             if project_path:
                 item["project_path"] = project_path
+            if isinstance(row.get("capture_from"), (int, float)):
+                item["capture_from"] = float(row["capture_from"])
             result.append(item)
     return result
 
 
 def save_source(provider: str, source: str, *, label: str = "", project_path: str | Path | None = None,
                 agent_id: str | None = None,
+                capture_from: float | None = None,
                 path: Path | None = None) -> dict[str, Any]:
     """Persist a host/container/VPS history source with restrictive permissions."""
     provider, source = provider.strip().casefold(), source.strip()
@@ -126,6 +130,12 @@ def save_source(provider: str, source: str, *, label: str = "", project_path: st
         item["agent_id"] = normalized_agent
     if associated:
         item["project_path"] = associated
+    if capture_from is not None:
+        item["capture_from"] = float(capture_from)
+    else:
+        old = next((row for row in rows if row.get("provider") == provider and row.get("source") == source), None)
+        if old and isinstance(old.get("capture_from"), (int, float)):
+            item["capture_from"] = float(old["capture_from"])
     # A physical transcript source has one owner. Re-saving it for a brain
     # moves the association instead of leaving an unscoped duplicate behind.
     rows = [row for row in rows if not (row["provider"] == item["provider"] and row["source"] == item["source"])]
@@ -315,7 +325,8 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
             canonical_agent = agent if "/" in str(agent) else f"{provider}/{agent}"
             return [HistoricalSession(provider, canonical_agent, sid,
                 str(group.get("title") or next((m["content"] for m in group["messages"] if m["role"] == "user"), "Historical session"))[:180],
-                group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"], group.get("branch"))
+                group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"], group.get("branch"),
+                max(group["timestamps"], default=None))
                 for sid, group in grouped.items() if group["messages"]]
 
         session_meta: dict[str, dict[str, Any]] = {}
@@ -360,7 +371,8 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
     canonical_agent = agent if "/" in str(agent) else f"{provider}/{agent}"
     return [HistoricalSession(provider, canonical_agent, sid,
         str(group.get("title") or next((m["content"] for m in group["messages"] if m["role"] == "user"), "Historical session"))[:180],
-        group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"], group.get("branch"))
+        group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"], group.get("branch"),
+        max(group["timestamps"], default=None))
         for sid, group in grouped.items() if group["messages"]]
 
 
@@ -445,8 +457,13 @@ def parse_history_file(path: Path, provider: str, agent_hint: str | None = None)
         if not group["messages"]: continue
         first_user = next((m["content"] for m in group["messages"] if m["role"] == "user"), "Historical session")
         canonical_agent = agent if "/" in str(agent) else f"{provider}/{agent}"
+        try:
+            file_updated_at = path.stat().st_mtime
+        except OSError:
+            file_updated_at = None
         sessions.append(HistoricalSession(provider, canonical_agent, sid, first_user[:180],
-            group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"]))
+            group["messages"], str(path), min(group["timestamps"], default=None), group["workspace"],
+            updated_at=max(group["timestamps"], default=file_updated_at)))
     return sessions
 
 
@@ -491,6 +508,7 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
     found, errors, excluded = [], [], []
     for name in providers:
         source_owners: dict[str, str] = {}
+        source_baselines: dict[str, float] = {}
         if sources:
             roots = sources
             associated_sources = set(roots)
@@ -505,9 +523,14 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
             associated_sources = set(roots)
             source_owners.update({row["source"]: str(row.get("agent_id") or agent_id or "").strip().casefold()
                                   for row in selected if row.get("agent_id") or agent_id})
+            source_baselines.update({row["source"]: float(row["capture_from"])
+                                     for row in selected if isinstance(row.get("capture_from"), (int, float))})
         else:
             roots = [row["source"] for row in configured if row["provider"] == name]
             associated_sources = set()
+            source_baselines.update({row["source"]: float(row["capture_from"])
+                                     for row in configured if row["provider"] == name
+                                     and isinstance(row.get("capture_from"), (int, float))})
             if not roots: roots = default_sources().get(name, [])
         for source in roots:
             temp = None
@@ -540,6 +563,11 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                                 excluded.append({"source": str(source), "session": item.get("external_session_id"),
                                                  "agent_id": item.get("agent_id"), "expected_agent_id": owner})
                                 continue
+                            baseline = source_baselines.get(str(source), source_baselines.get(str(path)))
+                            if baseline is not None and float(item.get("updated_at") or item.get("occurred_at") or 0) <= baseline:
+                                excluded.append({"source": str(source), "session": item.get("external_session_id"),
+                                                 "reason": "before_capture_baseline"})
+                                continue
                             if project_path and _source_matches_root(path, associated_sources):
                                 item["explicit_project_selection"] = True
                             found.append(item)
@@ -558,6 +586,11 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                         if owner and not _agent_id_matches(owner, item.get("agent_id")):
                             excluded.append({"source": str(source), "session": item.get("external_session_id"),
                                              "agent_id": item.get("agent_id"), "expected_agent_id": owner})
+                            continue
+                        baseline = source_baselines.get(str(source), source_baselines.get(str(path)))
+                        if baseline is not None and float(item.get("updated_at") or item.get("occurred_at") or 0) <= baseline:
+                            excluded.append({"source": str(source), "session": item.get("external_session_id"),
+                                             "reason": "before_capture_baseline"})
                             continue
                         if project_path and _source_matches_root(source, associated_sources):
                             item["explicit_project_selection"] = True

@@ -19,6 +19,11 @@ function activePalette() { return PALETTES[state.activePalette] || PALETTES.obsi
 function activeLinkColor() { return activePalette().link || PALETTES.obsidian.link; }
 
 export function destroyGraph() {
+      if (state.graphRequestController) {
+        state.graphRequestController.abort();
+        state.graphRequestController = null;
+      }
+      state.graphLoadId += 1;
       stop3DRotation();
       if (state.neuralTimer) { clearInterval(state.neuralTimer); state.neuralTimer = null; }
       if (state.pulse3dRaf) { cancelAnimationFrame(state.pulse3dRaf); state.pulse3dRaf = null; }
@@ -693,14 +698,24 @@ export function loadGraph() {
       }).then(data => {
         if (loadId !== state.graphLoadId) return;
         if (!data.nodes || data.nodes.length === 0) {
+          const selectedBrain = state.activeView === 'memory' && !state.activeAgentId
+            ? state.brainSpaces?.[state.activePath]
+            : null;
+          const familyMembers = (selectedBrain?.agentIds || []).map(escapeHtml).join(', ');
           const emptyMessage = state.activeView === 'memory'
-            ? (state.activeAgentId ? 'Sin memorias asociadas a este agente en sus espacios registrados.' : 'Sin memorias capturadas para este proyecto. No hay temas temáticos todavía; abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.')
+            ? (state.activeAgentId
+              ? 'Sin memorias asociadas a este agente en sus espacios registrados.'
+              : selectedBrain?.family
+                ? `<div class="memory-family-empty"><strong>${escapeHtml(selectedBrain.name)} todavía no tiene recuerdos compartidos.</strong><br>Este espacio sólo muestra recuerdos que sus miembros publican explícitamente. No copia los chats ni la memoria privada de cada agente.<br><span>Miembros: ${familyMembers || 'sin miembros registrados'}.</span><br><span>Cuando un agente publique un recuerdo con <code>memory_agent_publish</code>, aparecerá aquí.</span></div>`
+                : 'Sin memorias capturadas para este proyecto. No hay temas temáticos todavía; abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.')
             : 'Sin nodos de código. Haz clic en Reindexar para escanear el proyecto.';
           document.getElementById('graph-container').innerHTML =
             '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;padding:24px;text-align:center;">' + emptyMessage + '</div>';
           document.getElementById('stats').textContent = '0 nodos';
           const badge = document.getElementById('model-badge');
-          if (badge && state.activeView === 'memory') badge.textContent = 'Memoria compartida · 0 agentes';
+          if (badge && state.activeView === 'memory') badge.textContent = selectedBrain?.family
+            ? `${selectedBrain.name} · 0 recuerdos compartidos`
+            : 'Memoria compartida · 0 agentes';
           document.getElementById('memory-legend-overlay')?.remove();
           buildCommunities(data); updateEstTime();
           return;

@@ -174,7 +174,7 @@ def preview_jsonl(path, provider, max_record_bytes=8 * 1024 * 1024):
                 role,content=_role(record),_content(record)
                 if role not in {'user','assistant','tool'} or not content: continue
                 sid=str(record.get('sessionId') or record.get('session_id') or record.get('conversation_id') or file_session or path.stem)
-                group=groups.setdefault(sid,{'message_count':0,'task':'Historical session','workspace':workspace,'occurred_at':None})
+                group=groups.setdefault(sid,{'message_count':0,'task':'Historical session','workspace':workspace,'occurred_at':None,'updated_at':None})
                 if role=='user' and group['task']=='Historical session':
                     group['task']=content[:180]
                 group['workspace']=group['workspace'] or _workspace(record) or workspace
@@ -185,14 +185,21 @@ def preview_jsonl(path, provider, max_record_bytes=8 * 1024 * 1024):
                 if isinstance(stamp,(int,float)):
                     stamp=stamp/(1000 if stamp>1e11 else 1)
                     group['occurred_at']=min(group['occurred_at'] or stamp,stamp)
+                    group['updated_at']=max(group['updated_at'] or stamp,stamp)
                 group['message_count']+=1; accepted+=1
             if not accepted: excluded+=1
     agent='agy' if provider=='antigravity' else provider
     if provider=='openclaw' and path.parent.name=='sessions': agent=f'openclaw/{path.parent.parent.name}'
     from .shared_memory import SharedMemoryStore
     sessions=[]
+    try:
+        file_updated_at=path.stat().st_mtime
+    except OSError:
+        file_updated_at=None
     for sid,group in groups.items():
         group['task']=SharedMemoryStore._sanitize(group['task'],180)[0]
+        if group.get('updated_at') is None:
+            group['updated_at']=file_updated_at
         fingerprint=hashlib.sha256(f'{provider}:{sid}:{path.stat().st_size}:{path.stat().st_mtime_ns}'.encode()).hexdigest()
         sessions.append({**group,'provider':provider,'agent_id':agent,'external_session_id':sid,'source':str(path),
                          'streaming_source':True,'messages':[],'fingerprint':fingerprint})

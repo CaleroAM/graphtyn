@@ -703,7 +703,7 @@ class TopicMemoryMixin:
             args.extend(owner_args)
             if authorized_agents is not None:
                 marks = ",".join("?" for _ in authorized_agents)
-                scope = f" AND e.agent_id IN ({marks})"
+                scope += f" AND e.agent_id IN ({marks})"
                 args.extend(authorized_agents)
             rows = db.execute("""SELECT DISTINCT t.id,t.title,t.summary,e.session_id
                 FROM topics t JOIN topic_episodes e ON e.topic_id=t.id JOIN sessions s ON s.id=e.session_id

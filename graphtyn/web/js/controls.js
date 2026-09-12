@@ -2,10 +2,11 @@ import { state, PALETTES, getMemoryColors, getMemoryColor, getMemoryPalette, par
          applyMemoryPalette, markMemoryColorsCustom, updateMemoryColor,
          resetMemoryColor, resetMemoryColors, saveMemoryColors, saveVisualPreferences } from './state.js';
 import { destroyGraph, loadGraph, refreshStyleInPlace, toggleRotate } from './graph.js';
+import { loadOpenClawPanel } from './openclaw.js';
 
 export function setView(v) {
       state.activeView = v;
-      const labels = { code: 'Code AST', semantic: 'Semántico', memory: state.activeSpaceType === 'agent_brain' || state.activeSpaceType === 'agent' ? 'Memoria del cerebro' : 'Memoria del proyecto', agents: 'Topología', changes: 'Cambios' };
+      const labels = { code: 'Code AST', semantic: 'Semántico', memory: state.activeSpaceType === 'agent_brain' || state.activeSpaceType === 'agent' ? 'Memoria del cerebro' : 'Memoria del proyecto', agents: 'Topología', changes: 'Cambios', openclaw: 'OpenClaw' };
       const activeLabel = document.getElementById('active-view-label');
       if (activeLabel) activeLabel.textContent = labels[v] || v;
       const bCode = document.getElementById('btn-code');
@@ -13,11 +14,15 @@ export function setView(v) {
       const bMem = document.getElementById('btn-memory-view');
       const bAg = document.getElementById('btn-agents');
       const bCh = document.getElementById('btn-changes');
+      const bOpenClaw = document.getElementById('btn-openclaw');
       if (bCode) bCode.classList.toggle('active', v === 'code');
       if (bSem) bSem.classList.toggle('active', v === 'semantic');
       if (bMem) bMem.classList.toggle('active', v === 'memory');
       if (bAg) bAg.classList.toggle('active', v === 'agents');
       if (bCh) bCh.classList.toggle('active', v === 'changes');
+      if (bOpenClaw) bOpenClaw.classList.toggle('active', v === 'openclaw');
+      document.body.classList.toggle('openclaw-view', v === 'openclaw');
+      document.getElementById('graph-container')?.classList.toggle('openclaw-manager', v === 'openclaw');
       const memoryGraphControl = document.getElementById('memory-graph-view-control');
       if (memoryGraphControl) memoryGraphControl.hidden = v !== 'memory';
       refreshMemoryColorControls();
@@ -28,7 +33,8 @@ export function setView(v) {
         if (trigger) trigger.setAttribute('aria-expanded', 'false');
       }
       destroyGraph();
-      loadGraph();
+      if (v === 'openclaw') loadOpenClawPanel();
+      else loadGraph();
     }
 
 export function setMemoryGraphMode(mode) {
