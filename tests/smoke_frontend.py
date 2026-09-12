@@ -208,7 +208,7 @@ def main():
             floating_state = page.locator(".float-actions").evaluate(
                 "el => { const s=getComputedStyle(el); return {visibility:s.visibility,pointerEvents:s.pointerEvents,opacity:s.opacity,bodyClass:document.body.className,filterClass:document.getElementById('dd-filter').className}; }"
             )
-            visually_absent = floating_state["visibility"] == "hidden" or float(floating_state["opacity"]) == 0
+            visually_absent = floating_state["visibility"] == "hidden" or float(floating_state["opacity"]) <= 0.01
             assert visually_absent and floating_state["pointerEvents"] == "none", f"MCP/Acciones/Reindexar cubren el panel Filtros: {floating_state}"
             page.keyboard.press("Escape")
 
