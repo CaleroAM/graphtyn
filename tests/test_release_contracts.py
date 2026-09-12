@@ -24,7 +24,7 @@ def test_release_documents_and_workflows_exist():
     required = ["LICENSE", "docs/CHANGELOG.md", "docs/SECURITY.md", "docs/CONTRIBUTING.md",
                 "docs/release-checklist.md", ".github/workflows/ci.yml",
                 ".github/workflows/release.yml", "docs/release-validation-0.6.1.md",
-                "docs/release-validation-0.8.0.md",
+                "docs/release-validation-0.8.0.md", "docs/release-validation-0.9.0.md",
                 "install.ps1", "uninstall.ps1"]
     assert all((ROOT / item).is_file() for item in required)
 
@@ -84,7 +84,7 @@ def test_architecture_is_canonical_and_readme_has_compact_map():
     architecture = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for concept in ("FastAPI", "Starlette", "Uvicorn", "Dos grafos", "SQLite",
-                    "Empaquetado, despliegue y entrega", "0.8.0"):
+                    "Empaquetado, despliegue y entrega", "0.9.0"):
         assert concept in architecture
     assert architecture.count("```mermaid") >= 5
     assert "## Arquitectura en un minuto" in readme
