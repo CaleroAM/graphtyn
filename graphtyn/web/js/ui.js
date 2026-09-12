@@ -157,6 +157,14 @@ export function loadBrains() {
         const rows = Array.isArray(brains) ? brains : [];
         const activeBrains = rows.filter(brain => !brain.legacy);
         const archives = rows.filter(brain => brain.legacy);
+        state.brainSpaces = Object.fromEntries(activeBrains.map(brain => {
+          const name = String(brain.name || brain.id || 'Cerebro');
+          return [String(brain.path || ''), {
+            name,
+            family: name.startsWith('Familia ·'),
+            agentIds: Array.isArray(brain.agent_ids) ? brain.agent_ids : [],
+          }];
+        }));
         if (state.activeSpaceType === 'agent_brain' && archives.some(brain => brain.path === state.activePath)) {
           state.activePath = null;
           state.activeSpaceType = null;
@@ -186,19 +194,61 @@ export function loadBrains() {
           const sessions = Number(brain.sessions || 0);
           const agents = Array.isArray(brain.agent_ids) ? brain.agent_ids : [];
           const outcomes = Array.isArray(brain.consolidated_agents) ? brain.consolidated_agents : [];
+          const integratedSessions = outcomes
+            .filter(item => item.status === 'completed')
+            .reduce((total, item) => total + Number(item.report?.sessions || 0), 0);
           const agentRows = agents.length ? agents.map(agentId => {
             const targets = activeBrains.filter(target => (target.agent_ids || []).some(owner => String(owner).toLowerCase() === String(agentId).toLowerCase()));
             const outcome = outcomes.find(item => String(item.agent_id).toLowerCase() === String(agentId).toLowerCase());
             const label = html(agentId);
-            const outcomeLabel = outcome ? `${html(outcome.status)} → ${html(outcome.target_name)}` : '';
-            if (targets.length !== 1) return `<div class="legacy-agent-migrate"><span>${label}</span><span>${targets.length ? 'Destino ambiguo' : 'Sin cerebro activo'}</span></div>`;
-            const target = targets[0];
-            const button = outcome?.status === 'completed' ? 'Revisar' : (outcome ? 'Reanudar' : 'Migrar');
-            const status = outcomeLabel ? `<span title="${html(outcome.updated_at ? new Date(outcome.updated_at * 1000).toLocaleString() : '')}">${outcomeLabel}</span>` : `<span>pendiente</span>`;
-            return `<div class="legacy-agent-migrate"><span title="${label}">${label}</span>${status}<button type="button" data-source="${attr(brain.path)}" data-target="${attr(target.path)}" data-agent="${attr(agentId)}" onclick="startLegacyConsolidation(decodeURIComponent(this.dataset.source),decodeURIComponent(this.dataset.target),decodeURIComponent(this.dataset.agent))">${button}</button></div>`;
+            const sourceIdentity = (brain.agents || []).find(item => String(item.id).toLowerCase() === String(agentId).toLowerCase());
+            const sourceSessions = Number(sourceIdentity?.sessions || 0);
+            // A completed consolidation records its exact target. Prefer that
+            // audit link over identity matching, because family stores may
+            // share the same owner ID as the private agent brain.
+            const recordedTarget = outcome?.target_path
+              ? activeBrains.find(target => String(target.path) === String(outcome.target_path)) || null
+              : null;
+            const target = outcome?.target_path
+              ? recordedTarget
+              : (targets.length === 1 ? targets[0] : null);
+            if (!target) {
+              const routeStatus = targets.length > 1 ? 'DESTINO AMBIGUO'
+                : (outcome?.target_path ? 'DESTINO NO DISPONIBLE'
+                  : (sourceSessions ? 'IDENTIDAD SIN ASIGNAR' : 'SIN DESTINO ACTIVO'));
+              const routeClass = targets.length > 1 || outcome?.target_path ? 'incomplete' : 'pending';
+              const routeDetail = targets.length > 1
+                ? `${targets.length} espacios comparten esta identidad; falta elegir el cerebro.`
+                : `${sourceSessions} sesiones se conservan en el archivo bajo ${agentId}; no se asignaron a otro cerebro.`;
+              return `<div class="legacy-agent-migrate"><div class="legacy-agent-copy"><span class="legacy-agent-id" title="${label}">${label}</span><span class="legacy-status ${routeClass}">${routeStatus}</span><span class="legacy-agent-detail">${html(routeDetail)}</span></div></div>`;
+            }
+            const completed = outcome?.status === 'completed';
+            const report = outcome?.report || {};
+            const status = completed ? 'RESPALDADA'
+              : (outcome?.status === 'running' ? 'EN PROCESO'
+                : (outcome ? 'INCOMPLETA' : 'PENDIENTE'));
+            const statusClass = completed ? 'backed'
+              : (outcome?.status === 'running' ? 'processing' : (outcome ? 'incomplete' : 'pending'));
+            const detail = completed
+              ? `${Number(report.sessions || 0)} de ${sourceSessions || Number(report.sessions || 0)} sesiones · ${Number(report.messages || 0)} mensajes → ${html(target.name || target.id)}`
+              : `${sourceSessions} sesiones en este archivo · Destino: ${html(target.name || target.id)}`;
+            const action = completed ? 'Revisar novedades' : (outcome ? 'Reanudar' : 'Revisar');
+            const updated = outcome?.updated_at ? new Date(outcome.updated_at * 1000).toLocaleString() : '';
+            const backedTitle = completed
+              ? `Historial integrado en ${target.name || target.id}${updated ? ` · última integración: ${updated}` : ''}`
+              : '';
+            return `<div class="legacy-agent-migrate">
+              <div class="legacy-agent-copy">
+                <span class="legacy-agent-id" title="${label}">${label}</span>
+                <span class="legacy-status ${statusClass}" title="${html(backedTitle)}">${status}</span>
+                <span class="legacy-agent-detail">${detail}</span>
+              </div>
+              <button type="button" data-source="${attr(brain.path)}" data-target="${attr(target.path)}" data-agent="${attr(agentId)}" onclick="startLegacyConsolidation(decodeURIComponent(this.dataset.source),decodeURIComponent(this.dataset.target),decodeURIComponent(this.dataset.agent))">${action}</button>
+            </div>`;
           }).join('') : '<div class="legacy-agent-migrate"><span>Identidad pendiente de asignación</span></div>';
-          return `<div class="legacy-archive-item"><div class="legacy-archive-title"><span>▣ ${name}</span><span class="proj-badge legacy">ARCHIVO</span></div>
-            <div class="legacy-archive-meta">${sessions} sesiones · ${agents.length} identidades · sólo lectura, separado de la memoria activa</div>
+          return `<div class="legacy-archive-item"><div class="legacy-archive-title"><span>▣ ${name}</span><span class="proj-badge legacy">FUENTE ORIGINAL</span></div>
+            <div class="legacy-archive-meta">${sessions} sesiones · ${agents.length} identidades${integratedSessions ? ` · ${integratedSessions} integradas` : ''}${integratedSessions && sessions > integratedSessions ? ` · ${sessions - integratedSessions} conservadas aparte` : ''} · archivo original de sólo lectura.</div>
+            <div class="legacy-archive-note">Los chats nuevos se guardan en el cerebro activo cuando su captura está activa; no se añaden automáticamente a este archivo.</div>
             ${agentRows}<div class="legacy-migration-status" aria-live="polite"></div></div>`;
         }).join('');
       }).catch(() => { el.innerHTML = '<div style="color:#ef4444;font-size:10px;padding:4px;">No se pudieron cargar los cerebros.</div>'; });
@@ -220,16 +270,22 @@ export async function startLegacyConsolidation(sourcePath, targetPath, agentId) 
         return data;
       };
       try {
-        if (output) output.textContent = 'Contando historial y validando destino…';
+        if (output) output.textContent = 'Comprobando cambios en el archivo…';
         const preview = await post({source_path:sourcePath, target_path:targetPath, agent_id:agentId});
         const counts = preview.eligible || {};
         const pending = preview.will_import || {};
+        const pendingKeys = ['sessions', 'messages', 'memories', 'topics', 'relations', 'reviews'];
+        const pendingTotal = pendingKeys.reduce((total, key) => total + Number(pending[key] || 0), 0);
+        if (pendingTotal === 0) {
+          if (output) output.textContent = 'El respaldo está al día: no hay sesiones, mensajes ni recuerdos nuevos para integrar.';
+          return;
+        }
         const confirmation = `${agentId}\n\nSe copiarán al cerebro activo ${pending.sessions || 0} sesiones, ${pending.messages || 0} mensajes, ${pending.memories || 0} recuerdos, ${pending.topics || 0} temas y ${pending.relations || 0} relaciones (${pending.reviews || 0} revisiones históricas).\n\nSe guardará un respaldo SQLite del archivo y del destino. El legado original permanecerá intacto. ¿Continuar?`;
         if (output) output.textContent = `${counts.sessions || 0} sesiones · ${counts.messages || 0} mensajes disponibles; ${pending.messages || 0} pendientes.`;
         if (!confirm(confirmation)) return;
         const started = await post({source_path:sourcePath, target_path:targetPath, agent_id:agentId, apply:true, consent:true});
         const jobId = started.job?.id;
-        if (!jobId) throw new Error('El servidor no devolvió el trabajo de migración.');
+        if (!jobId) throw new Error('El servidor no devolvió el trabajo de integración.');
         if (button) button.disabled = true;
         let job;
         for (let attempt = 0; attempt < 900; attempt++) {
@@ -238,18 +294,18 @@ export async function startLegacyConsolidation(sourcePath, targetPath, agentId) 
           const data = await response.json();
           if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
           job = data.job;
-          if (output) output.textContent = `${job.message || 'Migrando historial…'} ${job.progress || 0}%`;
+          if (output) output.textContent = `${job.message || 'Integrando historial…'} ${job.progress || 0}%`;
           if (['completed','failed','cancelled'].includes(job.status)) break;
         }
-        if (!job || job.status === 'running' || job.status === 'pending') throw new Error('La migración sigue activa; vuelve a abrir el estado del trabajo más tarde.');
+        if (!job || job.status === 'running' || job.status === 'pending') throw new Error('La integración sigue activa; vuelve a revisar su estado más tarde.');
         const result = job.result || {};
-        if (job.status === 'failed') throw new Error(job.error || 'La migración falló.');
+        if (job.status === 'failed') throw new Error(job.error || 'La integración falló.');
         if (output) output.textContent = result.ok
-          ? `Completado: ${result.imported?.sessions || 0} sesiones, ${result.imported?.messages || 0} mensajes, ${result.imported?.memories || 0} recuerdos. El cerebro activo ya incluye este historial.`
-          : `Migración parcial: ${result.imported?.messages || 0} mensajes procesados. Pulsa Reanudar para continuar.`;
+          ? `Respaldada: ${result.imported?.sessions || 0} sesiones, ${result.imported?.messages || 0} mensajes y ${result.imported?.memories || 0} recuerdos integrados en el cerebro activo.`
+          : `Integración parcial: ${result.imported?.messages || 0} mensajes procesados. Pulsa Reanudar para continuar.`;
         loadBrains();
       } catch (error) {
-        if (output) output.textContent = `No se pudo consolidar: ${error.message}`;
+        if (output) output.textContent = `No se pudo actualizar el respaldo: ${error.message}`;
       } finally {
         if (button) button.disabled = false;
       }
