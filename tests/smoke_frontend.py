@@ -174,7 +174,8 @@ def main():
             page.wait_for_selector("#dd-explore.open .nav-menu", state="visible")
             explore = page.locator("#dd-explore .dd-panel").bounding_box()
             assert explore and explore["y"] + explore["height"] <= 900, "menú Explorar sale del viewport"
-            assert page.locator("#dd-explore .menu-item").count() == 5
+            assert page.locator("#dd-explore .menu-item").count() == 6
+            assert page.locator("#btn-openclaw").is_visible(), "vista de administración OpenClaw ausente"
             page.click("#btn-semantic")
             page.wait_for_timeout(800)
             assert page.locator("#active-view-label").inner_text() == "Semántico"
