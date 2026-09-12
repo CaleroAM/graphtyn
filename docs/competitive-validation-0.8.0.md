@@ -1,7 +1,7 @@
 # Graphtyn 0.8.0 — release and comparative validation
 
-**Release target:** `346bc6b949b63cfcf459e576741b862bbff782c4` (`main`, tag `v0.8.0`).  
-**Competitor tested:** `graphifyy 0.9.58`, installed in a separate Python environment.  
+**Release target:** `346bc6b949b63cfcf459e576741b862bbff782c4` (`main`, tag `v0.8.0`).
+**Competitor tested:** `graphifyy 0.9.58`, installed in a separate Python environment.
 **Test date:** 2026-09-11, America/Mexico_City.
 
 ## Release verification
