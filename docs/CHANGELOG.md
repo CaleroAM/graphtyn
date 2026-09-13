@@ -28,6 +28,8 @@ Sin cambios registrados.
 - La captura continua extrae y persiste conversaciones sin esperar al modelo
   local; el enriquecimiento de temas por IA queda separado y es opt-in en el
   watcher.
+- El aislamiento de importación reconoce rutas POSIX y Windows aunque Graphtyn
+  se ejecute en otra plataforma, y conserva la asociación exacta del proyecto.
 
 ## [0.10.0] - 2026-09-12
 

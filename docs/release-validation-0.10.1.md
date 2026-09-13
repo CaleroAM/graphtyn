@@ -18,6 +18,9 @@ complete satisfactoriamente la CI del commit exacto del tag.
 - Los trabajos de previsualización no persisten mensajes ni títulos derivados
   del prompt; la importación consentida vuelve a leer la fuente y valida el
   fingerprint revisado.
+- La comparación de workspace trata correctamente rutas POSIX/Windows cuando
+  el cliente y el origen usan plataformas distintas; el caso se incluye en la
+  prueba de aislamiento de sesiones.
 
 ## Validación local
 

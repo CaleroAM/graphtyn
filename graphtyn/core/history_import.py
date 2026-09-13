@@ -18,7 +18,7 @@ import threading
 import time
 from datetime import datetime
 from dataclasses import asdict, dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Iterable
 from urllib.parse import unquote, urlparse
 
@@ -994,7 +994,9 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
             # A filesystem path is strong project evidence only when it points
             # to a registered path. Matching just Path.name can silently mix
             # separate checkouts that happen to share a folder name.
-            path_hint = workspace_hint.startswith("~") or Path(workspace_hint).is_absolute()
+            path_hint = (workspace_hint.startswith("~") or Path(workspace_hint).is_absolute()
+                         or PurePosixPath(workspace_hint).is_absolute()
+                         or PureWindowsPath(workspace_hint).is_absolute())
             if path_hint:
                 try:
                     normalized_hint = str(Path(workspace_hint).expanduser().resolve())
@@ -1005,8 +1007,10 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                                     str(Path(value).expanduser().resolve())
                                     for value in item.get("paths", [])}), None)
                 if not matched or matched["id"] != project["id"]:
+                    windows_hint = PureWindowsPath(workspace_hint)
+                    suggested = windows_hint.name if windows_hint.is_absolute() else PurePosixPath(workspace_hint).name
                     ambiguous.append({"session": raw.get("external_session_id"), "workspace": workspace_hint,
-                                      "suggested_project": (matched or {}).get("canonical_name") or Path(workspace_hint).name,
+                                      "suggested_project": (matched or {}).get("canonical_name") or suggested,
                                       "reason": "ruta de proyecto no coincide exactamente"})
                     continue
             else:
