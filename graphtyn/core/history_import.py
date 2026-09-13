@@ -62,6 +62,12 @@ class HistoricalSession:
 
 def default_sources() -> dict[str, list[Path]]:
     home = Path.home()
+    opencode_root = home / ".local" / "share" / "opencode"
+    # Prefer the canonical database when present: scanning the entire OpenCode
+    # directory also walks caches and unrelated JSON files on every sync.
+    opencode_db = next((candidate for candidate in (
+        opencode_root / "opencode-stable.db", opencode_root / "opencode.db")
+        if candidate.is_file()), opencode_root)
     openclaw_roots = [
         Path(os.environ.get("OPENCLAW_STATE_DIR", "")).expanduser() if os.environ.get("OPENCLAW_STATE_DIR") else None,
         Path(os.environ.get("OPENCLAW_HOME", "")).expanduser() if os.environ.get("OPENCLAW_HOME") else None,
@@ -85,7 +91,7 @@ def default_sources() -> dict[str, list[Path]]:
         "antigravity": [home / ".agy", home / ".config" / "antigravity",
                         home / ".gemini" / "antigravity-cli",
                         home / ".gemini" / "antigravity-cli" / "brain"],
-        "opencode": [home / ".local" / "share" / "opencode"],
+        "opencode": [opencode_db],
         "claude": [home / ".claude" / "projects"],
     }
 
@@ -278,7 +284,8 @@ def _role(record: dict[str, Any]) -> str | None:
     return _ROLE_ALIASES.get(str(raw or "").casefold())
 
 
-def parse_history_database(path: Path, provider: str, agent_hint: str | None = None) -> list[HistoricalSession]:
+def parse_history_database(path: Path, provider: str, agent_hint: str | None = None,
+                           session_ids: set[str] | None = None) -> list[HistoricalSession]:
     """Read common role/content/session columns without modifying an agent DB."""
     uri = f"file:{path.resolve()}?mode=ro"
     grouped: dict[str, dict[str, Any]] = {}
@@ -287,6 +294,121 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
         conn.row_factory = sqlite3.Row
         tables = [row[0] for row in conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+
+        # Current OpenCode stores role/timing metadata and text parts as JSON
+        # blobs instead of the flat role/content columns handled below.
+        if provider.casefold() == "opencode" and {"session", "message", "part"}.issubset(tables):
+            session_columns = {row[1] for row in conn.execute("PRAGMA table_info(session)")}
+            message_columns = {row[1] for row in conn.execute("PRAGMA table_info(message)")}
+            part_columns = {row[1] for row in conn.execute("PRAGMA table_info(part)")}
+            if {"id", "session_id", "data"}.issubset(message_columns) and \
+                    {"message_id", "data"}.issubset(part_columns):
+                requested_sessions = {str(value) for value in session_ids or set()}
+                scoped = bool(requested_sessions)
+                session_fields = [name for name in ("id", "directory", "title", "time_created", "time_updated")
+                                  if name in session_columns]
+                session_sql = f"SELECT {','.join(session_fields)} FROM session"
+                session_args: list[str] = []
+                if scoped:
+                    marks = ",".join("?" for _ in requested_sessions)
+                    session_sql += f" WHERE id IN ({marks})"
+                    session_args.extend(sorted(requested_sessions))
+                session_rows = {str(row["id"]): dict(row) for row in conn.execute(
+                    session_sql, session_args) if "id" in session_fields}
+                parts_by_message: dict[str, list[dict[str, Any]]] = {}
+                part_order = "time_created,rowid" if "time_created" in part_columns else "rowid"
+                part_sql = "SELECT id,message_id,data FROM part"
+                part_args: list[str] = []
+                if scoped and "session_id" in part_columns:
+                    marks = ",".join("?" for _ in requested_sessions)
+                    part_sql += f" WHERE session_id IN ({marks})"
+                    part_args.extend(sorted(requested_sessions))
+                part_sql += f" ORDER BY {part_order}"
+                for row in conn.execute(part_sql, part_args):
+                    try:
+                        part = json.loads(row["data"])
+                    except (TypeError, ValueError):
+                        continue
+                    # Tool output and reasoning are not user-facing conversation
+                    # text. Only authored text parts enter project memory.
+                    if not isinstance(part, dict) or part.get("type") != "text":
+                        continue
+                    text = str(part.get("text") or "").strip()
+                    if not text:
+                        continue
+                    parts_by_message.setdefault(str(row["message_id"]), []).append(
+                        {"id": str(row["id"]), "text": text})
+
+                grouped_opencode: dict[str, dict[str, Any]] = {}
+                message_order = "session_id,time_created,rowid" if "time_created" in message_columns else "session_id,rowid"
+                message_fields = [name for name in ("id", "session_id", "time_created", "data")
+                                  if name in message_columns]
+                message_sql = f"SELECT {','.join(message_fields)} FROM message"
+                message_args: list[str] = []
+                if scoped:
+                    marks = ",".join("?" for _ in requested_sessions)
+                    message_sql += f" WHERE session_id IN ({marks})"
+                    message_args.extend(sorted(requested_sessions))
+                message_sql += f" ORDER BY {message_order}"
+                for row in conn.execute(message_sql, message_args):
+                    try:
+                        message_data = json.loads(row["data"])
+                    except (TypeError, ValueError):
+                        continue
+                    role = _ROLE_ALIASES.get(str(message_data.get("role") or "").casefold()) \
+                        if isinstance(message_data, dict) else None
+                    if role not in {"user", "assistant"}:
+                        continue
+                    message_id = str(row["id"])
+                    text_parts = parts_by_message.get(message_id) or []
+                    content = "\n".join(part["text"] for part in text_parts).strip()
+                    if not content:
+                        continue
+                    session_id = str(row["session_id"])
+                    meta = session_rows.get(session_id, {})
+                    stamp = row["time_created"] if "time_created" in message_fields else None
+                    try:
+                        occurred_at = float(stamp) if stamp is not None else None
+                        if occurred_at is not None and occurred_at > 1e11:
+                            occurred_at /= 1000
+                    except (TypeError, ValueError):
+                        occurred_at = None
+                    entry = grouped_opencode.setdefault(session_id, {
+                        "messages": [], "times": [], "title": meta.get("title"),
+                        "workspace": meta.get("directory"),
+                    })
+                    if occurred_at is not None:
+                        entry["times"].append(occurred_at)
+                    entry["messages"].append({"role": role, "content": content, "metadata": {
+                        "historical_source": str(path), "provider": provider,
+                        "source_message_id": message_id,
+                        "source_part_ids": [part["id"] for part in text_parts],
+                        "occurred_at": occurred_at,
+                    }})
+
+                result = []
+                for session_id, entry in grouped_opencode.items():
+                    meta = session_rows.get(session_id, {})
+                    start = meta.get("time_created")
+                    updated = meta.get("time_updated")
+                    try:
+                        start = float(start) if start is not None else min(entry["times"], default=None)
+                        if start is not None and start > 1e11: start /= 1000
+                    except (TypeError, ValueError):
+                        start = min(entry["times"], default=None)
+                    try:
+                        updated = float(updated) if updated is not None else max(entry["times"], default=start)
+                        if updated is not None and updated > 1e11: updated /= 1000
+                    except (TypeError, ValueError):
+                        updated = max(entry["times"], default=start)
+                    title = str(entry.get("title") or next(
+                        (item["content"] for item in entry["messages"] if item["role"] == "user"),
+                        "OpenCode conversation"))[:180]
+                    result.append(HistoricalSession(
+                        provider, agent_hint or "opencode", session_id, title,
+                        entry["messages"], str(path), start, entry.get("workspace"), None, updated))
+                conn.close()
+                return result
 
         # OpenClaw 2026 stores the canonical transcript as JSON events rather
         # than a role/content table.  The FTS table is only a derived index and
@@ -611,7 +733,9 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                 source_owners.update({str(root): str(agent_id).strip().casefold() for root in roots})
         elif project_path:
             # Per-space synchronization only consumes explicitly associated
-            # sources. This prevents one user's brains from being mixed.
+            # sources. OpenCode is the exception: its database stores many
+            # projects, and each session carries a workspace path. Scan the
+            # local database and rely on exact path routing below.
             selected = [row for row in configured if row["provider"] == name and
                         _same_project_path(row.get("project_path"), project_path)]
             roots = [row["source"] for row in selected]
@@ -620,6 +744,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                                   for row in selected if row.get("agent_id") or agent_id})
             source_baselines.update({row["source"]: float(row["capture_from"])
                                      for row in selected if isinstance(row.get("capture_from"), (int, float))})
+            if not roots and name == "opencode":
+                roots = [str(value) for value in default_sources().get(name, [])]
         else:
             roots = [row["source"] for row in configured if row["provider"] == name]
             associated_sources = set()
@@ -864,18 +990,38 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                              "reason": "identidad de agente fuera del espacio de memoria"})
             continue
         workspace_hint = str(raw.get("workspace") or "").strip()
-        hinted = registry.resolve(workspace_hint)
-        if hinted and hinted["id"] != project["id"]:
-            ambiguous.append({"session": raw.get("external_session_id"), "workspace": workspace_hint,
-                              "suggested_project": hinted["canonical_name"]})
-            continue
-        if workspace_hint and not hinted:
-            hint_name = Path(workspace_hint).name.casefold()
-            current_names = {project["canonical_name"].casefold(), *(a.casefold() for a in project.get("aliases", []))}
-            if hint_name not in current_names:
-                ambiguous.append({"session": raw.get("external_session_id"), "workspace": workspace_hint,
-                                  "suggested_project": Path(workspace_hint).name, "reason": "proyecto no registrado"})
-                continue
+        if workspace_hint:
+            # A filesystem path is strong project evidence only when it points
+            # to a registered path. Matching just Path.name can silently mix
+            # separate checkouts that happen to share a folder name.
+            path_hint = workspace_hint.startswith("~") or Path(workspace_hint).is_absolute()
+            if path_hint:
+                try:
+                    normalized_hint = str(Path(workspace_hint).expanduser().resolve())
+                except (OSError, RuntimeError, ValueError):
+                    normalized_hint = ""
+                matched = next((item for item in registry.list()
+                                if normalized_hint and normalized_hint in {
+                                    str(Path(value).expanduser().resolve())
+                                    for value in item.get("paths", [])}), None)
+                if not matched or matched["id"] != project["id"]:
+                    ambiguous.append({"session": raw.get("external_session_id"), "workspace": workspace_hint,
+                                      "suggested_project": (matched or {}).get("canonical_name") or Path(workspace_hint).name,
+                                      "reason": "ruta de proyecto no coincide exactamente"})
+                    continue
+            else:
+                hinted = registry.resolve(workspace_hint)
+                if hinted and hinted["id"] != project["id"]:
+                    ambiguous.append({"session": raw.get("external_session_id"), "workspace": workspace_hint,
+                                      "suggested_project": hinted["canonical_name"]})
+                    continue
+                if not hinted:
+                    current_names = {project["canonical_name"].casefold(),
+                                     *(a.casefold() for a in project.get("aliases", []))}
+                    if workspace_hint.casefold() not in current_names:
+                        ambiguous.append({"session": raw.get("external_session_id"), "workspace": workspace_hint,
+                                          "suggested_project": workspace_hint, "reason": "proyecto no registrado"})
+                        continue
         if not workspace_hint and not raw.get("explicit_project_selection"):
             ambiguous.append({"session": raw.get("external_session_id"), "reason": "sin metadatos de proyecto ni selección explícita"})
             continue

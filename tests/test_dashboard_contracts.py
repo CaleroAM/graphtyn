@@ -170,6 +170,8 @@ def test_dashboard_shared_memory_is_separate_and_wired_end_to_end():
         assert endpoint in memory
     assert "retry_failed" in memory
     assert "/api/v1/imports/discover" in memory and "/api/v1/imports" in memory
+    assert "data.providers.includes('opencode') ? 'opencode'" in memory
+    assert "state.activePath ? {path:state.activePath}" in memory
     assert "discoverHistoricalMemory" in dashboard and "applyHistoricalMemory" in handlers
     assert "saveHistoricalSource" in memory and "testHistoricalSource" in handlers
     assert "removeHistoricalSource" in memory and "saveMemoryAlias" in handlers

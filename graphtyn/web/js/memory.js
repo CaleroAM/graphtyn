@@ -54,7 +54,8 @@ async function loadHistoricalSources() {
     const list = document.getElementById('memory-import-providers');
     if (list) list.innerHTML = (data.providers || []).map(value => `<option value="${esc(value)}"></option>`).join('');
     const provider = document.getElementById('memory-import-provider');
-    if (provider && !provider.value && data.providers?.length) provider.value = data.providers[0];
+    if (provider && !provider.value && data.providers?.length)
+      provider.value = data.providers.includes('opencode') ? 'opencode' : data.providers[0];
   } catch (_) { /* El campo sigue aceptando adaptadores personalizados. */ }
 }
 
@@ -115,12 +116,17 @@ export async function discoverHistoricalMemory() {
   const source = document.getElementById('memory-import-source').value.trim();
   output.textContent = 'Descubriendo historiales sin modificar la memoria…';
   try {
-    const data = await request('/api/v1/imports/discover', {method:'POST', body:JSON.stringify({provider, sources:source ? [source] : []})});
+    const data = await request('/api/v1/imports/discover', {method:'POST', body:JSON.stringify({
+      provider, sources:source ? [source] : [], ...(!source && state.activePath ? {path:state.activePath} : {})})});
     const job = await waitImportJob(data.job.id);
     if (job.status !== 'completed') throw new Error(job.error || job.status);
     historicalDiscovery = job;
     const result = job.result || {};
-    output.textContent = `${result.count || 0} sesiones encontradas · ${(result.errors || []).length} errores · revise antes de importar`;
+    const sessions = result.sessions || [];
+    const exactProjectMatches = sessions.filter(item => item.workspace && state.activePath &&
+      String(item.workspace).replace(/\\/g, '/').replace(/\/$/, '') ===
+      String(state.activePath).replace(/\\/g, '/').replace(/\/$/, '')).length;
+    output.textContent = `${result.count || 0} sesiones encontradas · ${exactProjectMatches} con ruta exacta de este proyecto · ${(result.errors || []).length} errores · revise antes de importar`;
     document.getElementById('memory-import-apply').disabled = !(result.sessions || []).length;
   } catch (error) { output.textContent = `No se pudo descubrir: ${error.message}`; }
 }

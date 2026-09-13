@@ -7,6 +7,28 @@ compatibles con PEP 440.
 
 Sin cambios registrados.
 
+## [0.10.1] - 2026-09-12
+
+### Corregido
+
+- La captura de OpenClaw remoto reutiliza la configuración SSH explícita en el
+  servicio persistente. Al reconectar, actualiza y reinicia el watcher para que
+  aplique esa configuración, y devuelve errores si systemd no logra activarlo.
+- `harness openclaw discover` y `connect` aceptan `--ssh-config` y validan el
+  archivo antes de iniciar la conexión.
+- El adaptador de OpenCode lee `opencode-stable.db` con su esquema SQLite/JSON
+  actual y conserva los IDs nativos de mensaje. La sincronización de un proyecto
+  detecta esa base local si aún no hay una fuente configurada y enruta sesiones
+  sólo cuando su ruta de workspace coincide exactamente.
+- La previsualización de conversaciones envía el proyecto seleccionado y deja
+  visibles las sesiones ambiguas para que no se importen a otro proyecto.
+- Los trabajos de previsualización guardan sólo referencias y conteos; al
+  autorizar una importación vuelven a leer el origen y rechazan historiales que
+  cambiaron después de la revisión.
+- La captura continua extrae y persiste conversaciones sin esperar al modelo
+  local; el enriquecimiento de temas por IA queda separado y es opt-in en el
+  watcher.
+
 ## [0.10.0] - 2026-09-12
 
 ### Añadido

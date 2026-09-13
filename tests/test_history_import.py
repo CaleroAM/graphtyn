@@ -8,7 +8,7 @@ import pytest
 from graphtyn.core.history_import import (
     ProjectIdentityRegistry, discover_histories, import_histories, parse_history_file,
     parse_history_database, configured_sources, save_source, _materialize_source,
-    import_history_archive, default_sources,
+    import_history_archive, default_sources, sync_memory_workspace,
 )
 from graphtyn.core.memory_jobs import MemoryJobManager
 from graphtyn.core.shared_memory import SharedMemoryStore
@@ -258,6 +258,82 @@ def test_codex_nested_payload_and_sqlite_histories(tmp_path):
     assert hermes_sessions[0].workspace == "/work/erp"
 
 
+def test_opencode_json_sqlite_histories_keep_only_conversation_text_and_exact_project(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    project = tmp_path / "openclaw"
+    project.mkdir()
+    db = tmp_path / "opencode-stable.db"
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE session(id TEXT PRIMARY KEY, directory TEXT, title TEXT, time_created INTEGER, time_updated INTEGER)")
+    conn.execute("CREATE TABLE message(id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, data TEXT)")
+    conn.execute("CREATE TABLE part(id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, data TEXT)")
+    conn.executemany("INSERT INTO session VALUES(?,?,?,?,?)", [
+        ("opencode-project", str(project), "Cambio de UI", 1789000000000, 1789000002000),
+        ("opencode-other", str(tmp_path / "other" / "openclaw"), "Otro proyecto", 1789000000000, 1789000002000),
+    ])
+    conn.executemany("INSERT INTO message VALUES(?,?,?,?)", [
+        ("user-1", "opencode-project", 1789000000000, json.dumps({"role": "user"})),
+        ("assistant-1", "opencode-project", 1789000001000, json.dumps({"role": "assistant"})),
+        ("reasoning-1", "opencode-project", 1789000001500, json.dumps({"role": "assistant"})),
+        ("user-2", "opencode-other", 1789000000000, json.dumps({"role": "user"})),
+    ])
+    conn.executemany("INSERT INTO part VALUES(?,?,?,?,?)", [
+        ("part-user", "user-1", "opencode-project", 1789000000000,
+         json.dumps({"type": "text", "text": "Cambia el botón de reportes a verde"})),
+        ("part-assistant", "assistant-1", "opencode-project", 1789000001000,
+         json.dumps({"type": "text", "text": "Se actualizará el estilo y sus pruebas."})),
+        ("part-reasoning", "reasoning-1", "opencode-project", 1789000001500,
+         json.dumps({"type": "reasoning", "text": "PRIVATE_REASONING_SHOULD_NOT_IMPORT"})),
+        ("part-tool", "reasoning-1", "opencode-project", 1789000001600,
+         json.dumps({"type": "tool", "output": "PRIVATE_TOOL_OUTPUT_SHOULD_NOT_IMPORT"})),
+        ("part-other", "user-2", "opencode-other", 1789000000000,
+         json.dumps({"type": "text", "text": "Texto de otro proyecto"})),
+    ])
+    conn.commit(); conn.close()
+
+    monkeypatch.setattr("graphtyn.core.history_import.default_sources",
+                        lambda: {"opencode": [db]})
+    discovery = discover_histories("opencode", project_path=project)
+    parsed = parse_history_database(db, "opencode")
+    scoped_parse = parse_history_database(db, "opencode", session_ids={"opencode-project"})
+    preview = import_histories(project, discovery["sessions"], consent=True, dry_run=True)
+
+    project_session = next(item for item in parsed if item.external_session_id == "opencode-project")
+    assert [item.external_session_id for item in scoped_parse] == ["opencode-project"]
+    assert project_session.agent_id == "opencode"
+    assert project_session.workspace == str(project)
+    assert [(item["role"], item["content"]) for item in project_session.messages] == [
+        ("user", "Cambia el botón de reportes a verde"),
+        ("assistant", "Se actualizará el estilo y sus pruebas."),
+    ]
+    assert project_session.messages[0]["metadata"]["source_message_id"] == "user-1"
+    assert discovery["count"] == 2
+    assert preview["selected"] == 1
+    assert preview["sessions"][0]["external_session_id"] == "opencode-project"
+    assert len(preview["ambiguous"]) == 1
+    assert preview["ambiguous"][0]["reason"] == "ruta de proyecto no coincide exactamente"
+    applied = sync_memory_workspace(project, provider="opencode", provider_model="deterministic", enrich=False)
+    repeated = sync_memory_workspace(project, provider="opencode", provider_model="deterministic", enrich=False)
+    assert applied["ok"] and applied["import"]["selected"] == 1
+    assert len(applied["import"]["imported"]) == 1
+    assert len(applied["import"]["ambiguous"]) == 1
+    assert repeated["import"]["imported"] == [] and len(repeated["import"]["reused"]) == 1
+    stored = SharedMemoryStore(project).session_detail(applied["import"]["imported"][0]["session_id"])
+    assert [message["content"] for message in stored["messages"]] == [
+        "Cambia el botón de reportes a verde", "Se actualizará el estilo y sus pruebas."]
+    assert all("PRIVATE_" not in message["content"] for message in stored["messages"])
+
+
+def test_opencode_default_source_prefers_database_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    root = tmp_path / ".local" / "share" / "opencode"
+    root.mkdir(parents=True)
+    database = root / "opencode-stable.db"
+    database.touch()
+
+    assert default_sources()["opencode"] == [database]
+
+
 def test_openclaw_sqlite_transcript_events_are_imported_with_roles(tmp_path):
     db = tmp_path / "agents" / "career" / "agent" / "openclaw-agent.sqlite"
     db.parent.mkdir(parents=True)
@@ -316,6 +392,9 @@ def test_historical_import_is_idempotent_and_searchable(tmp_path, monkeypatch):
     source = tmp_path / "openclaw"
     _openclaw_history(source)
     sessions = discover_histories("openclaw", [str(source)])["sessions"]
+    # The importer routes path-based project evidence only by an exact
+    # registered workspace path; the test explicitly associates this session.
+    sessions[0]["workspace"] = str(project)
 
     first = import_histories(project, sessions, consent=True, provider="deterministic")
     second = import_histories(project, sessions, consent=True, provider="deterministic")

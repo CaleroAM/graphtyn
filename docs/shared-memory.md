@@ -50,8 +50,14 @@ graphtyn service uninstall
 
 El servicio escucha exclusivamente en `http://127.0.0.1:9210` y conserva la ruta
 absoluta del ejecutable instalado para funcionar con pipx, virtualenv y NixOS.
-El watch incremental es opcional mediante `--watch --interval 10`, evitando que
-una reindexación pesada retrase el grafo de memoria por defecto.
+La sincronización incremental se activa explícitamente con **Captura continua**
+o `memory sync --watch --interval 10`. Registrar un proyecto por sí solo no
+importa historiales: las conversaciones anteriores se previsualizan y requieren
+consentimiento para evitar asignar sesiones ambiguas. Una vez activo, el watch
+detecta sesiones nuevas y cambios de forma incremental; extrae temas en modo
+determinista para no esperar al modelo local. El enriquecimiento por IA se puede
+ejecutar aparte desde **Actualizar memoria** o pedir expresamente a la API del
+watch con `enrich: true`.
 Los tokens pueden residir en `GRAPHTYN_MEMORY_TOKENS_FILE` y rotarse por rol.
 
 `graphtyn backup` usa la API de backup SQLite; `backup-verify` comprueba SHA-256
@@ -125,6 +131,12 @@ sesión y toma sólo `logs/transcript.jsonl`, evitando copias compactadas y ruid
 Admite historiales JSON/JSONL anidados y bases SQLite con columnas comunes de
 sesión, rol y contenido. Cada adaptador normaliza hacia el mismo `ingest_turn`,
 por lo que redacción, compactación, embeddings y deduplicación no se bifurcan.
+OpenCode usa un esquema distinto: `session`, `message` y `part` almacenan los
+roles y fragmentos en JSON. Graphtyn reconoce `opencode-stable.db`, conserva IDs
+nativos y sólo toma partes de texto; reasoning, herramientas y salidas técnicas
+quedan fuera. En una sincronización por proyecto puede descubrir esta base local
+sin configurarla manualmente y sólo acepta sesiones cuyo `directory` coincide
+exactamente con la ruta registrada. Las demás quedan ambiguas.
 OpenClaw también puede guardar el transcript canónico en
 `agent/openclaw-agent.sqlite`; Graphtyn lee `transcript_events` (incluidos sus
 roles e IDs nativos) y no depende de la tabla FTS derivada. Esto permite importar
@@ -139,6 +151,13 @@ Las fechas originales se conservan separadas de la fecha de ingesta.
 Cuando cambió la ruta del proyecto, `memory projects --path . --alias
 /ruta/histórica` registra la equivalencia explícita antes de importar; una ruta
 desconocida permanece ambigua y nunca se mezcla automáticamente.
+Registrar una carpeta crea el espacio de memoria, pero no importa historiales
+antiguos sin consentimiento: usa **Previsualizar** y después **Importar con
+consentimiento**. Para sincronizar cambios nuevos, **Actualizar memoria** ejecuta
+una pasada; **Activar captura continua** deja el watcher activo para ese espacio.
+El estado del panel indica si la captura continua está activa. La previsualización
+persiste sólo IDs, rutas y conteos; al autorizar la importación, Graphtyn vuelve a
+leer la fuente y confirma que el historial no cambió desde la revisión.
 Las conversaciones importadas aparecen en **Memoria de proyecto** como nodos
 `memory_session` marcados como históricos. Cada nodo se conecta con el agente
 que participó y con las memorias compactadas que produjo; el panel muestra hasta

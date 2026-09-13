@@ -10,6 +10,7 @@ import hmac
 import hashlib
 import time
 import threading
+from dataclasses import asdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Query, Body, Header
@@ -35,7 +36,7 @@ from ..core.shared_memory import SharedMemoryStore, existing_store_db, MemorySto
 from ..core.history_import import (ProjectIdentityRegistry, discover_histories, import_histories,
                                    configured_sources, BUILTIN_PROVIDERS, save_source,
                                    delete_source, test_source, sync_memory_workspace,
-                                   _agent_id_matches)
+                                   parse_history_database, _agent_id_matches)
 from ..core.memory_jobs import memory_jobs
 from ..core.memory_consolidation import (consolidate_legacy_brain,
                                          preview_legacy_consolidation)
@@ -259,7 +260,7 @@ def _watch_config_read() -> list[dict]:
 
 def _watch_config_write() -> None:
     rows = [{"path": key, "interval": max(5, float(value.get("interval", 30))),
-             "agent_id": value.get("agent_id")}
+             "agent_id": value.get("agent_id"), "enrich": bool(value.get("enrich", False))}
             for key, value in _memory_watchers.items() if value.get("persist", True)]
     atomic_write_json(_memory_watch_config, {"version": 1, "watchers": rows})
 
@@ -268,7 +269,7 @@ def _watcher_public(key: str, entry: dict) -> dict:
     return {"path": key, "status": entry.get("status"),
             "active": bool(entry.get("thread") and entry["thread"].is_alive()),
             "heartbeat": entry.get("heartbeat"), "interval": entry.get("interval"),
-            "agent_id": entry.get("agent_id"),
+            "agent_id": entry.get("agent_id"), "enrich": bool(entry.get("enrich", False)),
             "error": entry.get("error")}
 
 
@@ -281,7 +282,8 @@ def _memory_watch_loop(path: str, options: dict, stop: threading.Event) -> None:
                 current.update(status="processing", heartbeat=time.time())
         try:
             result = sync_memory_workspace(key, provider=options.get("provider"),
-                                           provider_model=options.get("provider_model", "auto"), enrich=True,
+                                           provider_model=options.get("provider_model", "auto"),
+                                           enrich=bool(options.get("enrich", False)),
                                            agent_id=options.get("agent_id"))
             with _memory_watch_lock:
                 current = _memory_watchers.get(key)
@@ -302,6 +304,7 @@ def _memory_watch_loop(path: str, options: dict, stop: threading.Event) -> None:
 
 def _start_memory_watcher(path: str | Path, *, interval: float = 30, provider: str | None = None,
                           provider_model: str = "auto", agent_id: str | None = None,
+                          enrich: bool = False,
                           persist: bool = True) -> dict:
     key = str(Path(path).expanduser().resolve())
     if _legacy_memory_record(key):
@@ -311,12 +314,14 @@ def _start_memory_watcher(path: str | Path, *, interval: float = 30, provider: s
         if old and old.get("thread") and old["thread"].is_alive():
             options = old.get("options") or {}
             options.update({"interval": max(5, float(interval)), "provider": provider,
-                            "provider_model": provider_model, "agent_id": agent_id})
+                            "provider_model": provider_model, "agent_id": agent_id,
+                            "enrich": bool(enrich)})
             old.update(options); old["persist"] = persist
             _watch_config_write(); return _watcher_public(key, old)
         stop = threading.Event()
         options = {"interval": max(5, float(interval)), "provider": provider,
-                   "provider_model": provider_model, "agent_id": agent_id}
+                   "provider_model": provider_model, "agent_id": agent_id,
+                   "enrich": bool(enrich)}
         entry = {**options, "status": "starting", "heartbeat": time.time(), "stop": stop,
                  "persist": persist, "last_result": None, "error": None, "options": options}
         thread = threading.Thread(target=_memory_watch_loop, args=(key, options, stop),
@@ -339,7 +344,8 @@ def _stop_memory_watcher(path: str | Path) -> bool:
 def _restore_memory_watchers() -> None:
     for row in _watch_config_read():
         try: _start_memory_watcher(row["path"], interval=float(row.get("interval", 30)),
-                                   agent_id=row.get("agent_id"), persist=True)
+                                   agent_id=row.get("agent_id"),
+                                   enrich=row.get("enrich") is True, persist=True)
         except (OSError, ValueError): continue
 
 
@@ -1950,7 +1956,7 @@ def memory_watch(payload: dict = Body(...), authorization: str | None = Header(d
             owner = requested_agent or (configured_agents[0] if len(configured_agents) == 1 else None)
             rows.append(_start_memory_watcher(path, interval=float(payload.get("interval", 30)),
                 provider=payload.get("provider"), provider_model=str(payload.get("provider_model") or "auto"),
-                agent_id=owner))
+                agent_id=owner, enrich=payload.get("enrich") is True))
         else:
             _stop_memory_watcher(path)
     return {"ok": not preflight_errors, "enabled": enabled, "watchers": rows,
@@ -2284,6 +2290,78 @@ def project_identity_register(payload: dict = Body(...), authorization: str | No
     except (ValueError, OSError) as exc: return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
 
+def _history_discovery_metadata(result: dict) -> dict:
+    """Keep transcript text out of durable discovery-job JSON files."""
+    safe = {key: value for key, value in result.items() if key != "sessions"}
+    safe["sessions"] = [
+        {key: value for key, value in row.items() if key not in {"messages", "task"}}
+        for row in result.get("sessions", []) if isinstance(row, dict)
+    ]
+    return safe
+
+
+def _hydrate_history_previews(sessions: list[dict], discovery: dict | None) -> tuple[list[dict], list[dict]]:
+    """Re-read a consented discovery from its source and reject changed snapshots."""
+    if not discovery or not any(not isinstance(row.get("messages"), list) or not row.get("messages")
+                                for row in sessions):
+        return sessions, []
+    sources = discovery.get("sources") or []
+    provider = discovery.get("provider")
+    project_path = discovery.get("path")
+    by_identity = {}
+    local_opencode: dict[str, list[dict]] = {}
+    other_sessions = []
+    for row in sessions:
+        source = str(row.get("source") or "")
+        if (str(row.get("provider") or "").casefold() == "opencode"
+                and not source.startswith(("ssh://", "docker://", "ssh+docker://"))
+                and Path(source).suffix.casefold() in {".db", ".sqlite", ".sqlite3"}):
+            local_opencode.setdefault(source, []).append(row)
+        else:
+            other_sessions.append(row)
+    for source, rows in local_opencode.items():
+        requested = {str(row.get("external_session_id") or "") for row in rows}
+        for parsed in parse_history_database(Path(source), "opencode",
+                                             str(rows[0].get("agent_id") or "opencode"),
+                                             session_ids=requested):
+            candidate = {**asdict(parsed), "fingerprint": parsed.fingerprint,
+                         "message_count": len(parsed.messages)}
+            key = (str(candidate.get("provider") or "").casefold(),
+                   str(candidate.get("external_session_id") or ""),
+                   str(candidate.get("source") or ""))
+            by_identity[key] = candidate
+    if other_sessions:
+        current = discover_histories(provider, sources or None,
+                                     project_path=None if sources else project_path)
+        for candidate in current.get("sessions") or []:
+            key = (str(candidate.get("provider") or "").casefold(),
+                   str(candidate.get("external_session_id") or ""),
+                   str(candidate.get("source") or ""))
+            by_identity[key] = candidate
+    hydrated, errors = [], []
+    for preview in sessions:
+        if isinstance(preview.get("messages"), list) and preview.get("messages"):
+            hydrated.append(preview)
+            continue
+        key = (str(preview.get("provider") or "").casefold(),
+               str(preview.get("external_session_id") or ""),
+               str(preview.get("source") or ""))
+        candidate = by_identity.get(key)
+        if candidate is None:
+            errors.append({"session": preview.get("external_session_id"),
+                           "error": "la sesión ya no está disponible en su fuente; vuelve a previsualizar"})
+            hydrated.append(preview)
+            continue
+        if preview.get("fingerprint") and candidate.get("fingerprint") != preview.get("fingerprint"):
+            errors.append({"session": preview.get("external_session_id"),
+                           "error": "la sesión cambió después de la previsualización; vuelve a revisarla"})
+            hydrated.append(preview)
+            continue
+        hydrated.append({**candidate, **preview, "task": candidate.get("task") or "Historical conversation",
+                         "messages": candidate.get("messages") or []})
+    return hydrated, errors
+
+
 @app.post("/api/v1/imports/discover")
 def import_discover(payload: dict = Body(default={}), authorization: str | None = Header(default=None)):
     _, denied = _require_role(authorization, "admin", payload.get("path"))
@@ -2292,9 +2370,10 @@ def import_discover(payload: dict = Body(default={}), authorization: str | None 
     def operation(update):
         update(10, "Buscando historiales")
         sources = payload.get("sources")
-        return discover_histories(payload.get("provider"), sources,
-                                  project_path=None if sources else payload.get("path"),
-                                  agent_id=payload.get("agent_id"))
+        result = discover_histories(payload.get("provider"), sources,
+                                    project_path=None if sources else payload.get("path"),
+                                    agent_id=payload.get("agent_id"))
+        return _history_discovery_metadata(result)
     memory_jobs.run(job["id"], operation)
     return {"ok": True, "job": job}
 
@@ -2432,8 +2511,12 @@ def import_start(payload: dict = Body(...), authorization: str | None = Header(d
     if not payload.get("consent"):
         return JSONResponse({"ok": False, "error": "consent=true es obligatorio"}, status_code=400)
     sessions = payload.get("sessions")
+    discovery_context = None
     if sessions is None and payload.get("discovery_job_id"):
-        try: sessions = (memory_jobs.get(str(payload["discovery_job_id"])).get("result") or {}).get("sessions")
+        try:
+            discovery_job = memory_jobs.get(str(payload["discovery_job_id"]))
+            sessions = (discovery_job.get("result") or {}).get("sessions")
+            discovery_context = discovery_job.get("payload") or {}
         except ValueError as exc: return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
     if not isinstance(sessions, list): return JSONResponse({"ok": False, "error": "sessions es obligatorio"}, status_code=400)
     import_path = payload.get("path")
@@ -2458,16 +2541,35 @@ def import_start(payload: dict = Body(...), authorization: str | None = Header(d
                                           "agent_id": session.get("agent_id"),
                                           "expected_agent_ids": authorized_agents,
                                           "reason": "identidad de agente fuera del espacio de memoria"})
-    job = memory_jobs.create("historical_import", {**payload, "sessions": selected_sessions,
-                                                    "excluded": excluded_sessions})
+    scoped_ambiguous, scoped_excluded = [], []
+    if import_path:
+        # Route by verified project metadata before rereading transcript bodies.
+        # This keeps unrelated sessions out of the import job and its memory use.
+        scope_preview = import_histories(import_path, selected_sessions, consent=True,
+            provider="deterministic", dry_run=True, agent_ids=authorized_agents or None)
+        selected_sessions = scope_preview["sessions"]
+        scoped_ambiguous = scope_preview.get("ambiguous") or []
+        scoped_excluded = scope_preview.get("excluded") or []
+        excluded_sessions.extend(scoped_excluded)
+    safe_payload = {key: value for key, value in payload.items() if key != "sessions"}
+    safe_payload["session_refs"] = [{key: row.get(key) for key in
+                                     ("provider", "agent_id", "external_session_id", "source", "workspace")}
+                                    for row in selected_sessions]
+    job = memory_jobs.create("historical_import", {**safe_payload, "excluded": excluded_sessions})
     def operation(update):
         update(10, "Validando proyectos y sesiones")
-        result = import_histories(payload.get("path") or "", selected_sessions, consent=True,
+        hydrated_sessions, hydration_errors = _hydrate_history_previews(selected_sessions, discovery_context)
+        result = import_histories(payload.get("path") or "", hydrated_sessions, consent=True,
                                   provider=str(payload.get("provider") or "deterministic"),
                                   dry_run=bool(payload.get("dry_run", False)),
                                   agent_ids=authorized_agents or None)
+        result.setdefault("errors", []).extend(hydration_errors)
+        if scoped_ambiguous:
+            result["ambiguous"] = scoped_ambiguous + list(result.get("ambiguous") or [])
         if excluded_sessions:
             result["excluded"] = excluded_sessions + list(result.get("excluded") or [])
+        if payload.get("dry_run"):
+            result = _history_discovery_metadata(result)
         update(95, "Finalizando reporte")
         return result
     memory_jobs.run(job["id"], operation)

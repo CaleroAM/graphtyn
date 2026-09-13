@@ -12,6 +12,7 @@ import uvicorn
 
 from graphtyn.api import main as api_main
 from graphtyn.core.shared_memory import SharedMemoryStore
+from graphtyn.core.history_import import HistoricalSession
 from graphtyn.core.memory_jobs import MemoryJobManager
 
 
@@ -62,6 +63,86 @@ def test_health_endpoint(tmp_path, monkeypatch):
     assert data["service"] == "Graphtyn"
 
 
+def test_discovery_jobs_store_metadata_and_rehydrate_after_explicit_import(monkeypatch):
+    transcript = "SENSITIVE_CONVERSATION_CONTENT"
+    source = "/history/opencode-stable.db"
+    candidate = HistoricalSession("opencode", "opencode", "session-1",
+        "SENSITIVE_CONVERSATION_TITLE", [{"role": "user", "content": transcript}],
+        source, workspace="/work/project")
+    discovered = {"ok": True, "count": 1, "sessions": [{
+        "provider": "opencode", "agent_id": "opencode", "external_session_id": "session-1",
+        "task": "SENSITIVE_CONVERSATION_TITLE", "source": source,
+        "workspace": "/work/project", "fingerprint": candidate.fingerprint, "message_count": 1,
+        "messages": [{"role": "user", "content": transcript}],
+    }]}
+
+    preview = api_main._history_discovery_metadata(discovered)
+    serialized = json.dumps(preview)
+    assert "messages" not in preview["sessions"][0]
+    assert "task" not in preview["sessions"][0]
+    assert transcript not in serialized and "SENSITIVE_CONVERSATION_TITLE" not in serialized
+
+    def parse(_path, _provider, _agent_hint, *, session_ids):
+        assert session_ids == {"session-1"}
+        return [candidate]
+
+    monkeypatch.setattr(api_main, "parse_history_database", parse)
+    hydrated, errors = api_main._hydrate_history_previews(preview["sessions"], {
+        "provider": "opencode", "path": "/work/project", "sources": [],
+    })
+    assert errors == []
+    assert hydrated[0]["messages"][0]["content"] == transcript
+    assert hydrated[0]["workspace"] == "/work/project"
+
+
+def test_import_job_references_only_exact_project_sessions(tmp_path, monkeypatch):
+    for name in ("GRAPHTYN_MEMORY_TOKENS", "GRAPHTYN_MEMORY_TOKENS_FILE", "GRAPHTYN_MEMORY_HTTP_TOKEN"):
+        monkeypatch.delenv(name, raising=False)
+    manager = MemoryJobManager(tmp_path / "jobs")
+    monkeypatch.setattr(api_main, "memory_jobs", manager)
+    project = tmp_path / "openclaw"
+    project.mkdir()
+    sessions = [
+        {"provider": "opencode", "agent_id": "opencode", "external_session_id": "matched",
+         "task": "PRIVATE_MATCHED_TEXT", "source": "/history/opencode-stable.db",
+         "workspace": str(project), "messages": [{"role": "user", "content": "PRIVATE_MATCHED_TEXT"}]},
+        {"provider": "opencode", "agent_id": "opencode", "external_session_id": "other",
+         "task": "PRIVATE_OTHER_TEXT", "source": "/history/opencode-stable.db",
+         "workspace": "/other/openclaw", "messages": [{"role": "user", "content": "PRIVATE_OTHER_TEXT"}]},
+    ]
+    discovery = manager.create("discover", {"provider": "opencode", "path": str(project), "sources": []})
+    manager.run(discovery["id"], lambda _update: {"sessions": sessions})
+    deadline = time.monotonic() + 3
+    while manager.get(discovery["id"])["status"] not in {"completed", "failed"} and time.monotonic() < deadline:
+        time.sleep(.01)
+
+    monkeypatch.setattr(api_main, "_memory_space_agent_ids", lambda _path: [])
+    imported_inputs = []
+
+    def fake_import(_path, rows, *, consent, provider, dry_run, agent_ids):
+        if dry_run:
+            selected = [row for row in rows if row.get("workspace") == str(project)]
+            return {"sessions": selected, "ambiguous": [{"session": "other"}], "excluded": []}
+        imported_inputs.extend(rows)
+        return {"ok": True, "selected": len(rows), "imported": [], "reused": [],
+                "ambiguous": [], "excluded": [], "errors": []}
+
+    monkeypatch.setattr(api_main, "import_histories", fake_import)
+    response = api_main.import_start({"path": str(project), "discovery_job_id": discovery["id"],
+                                      "consent": True, "provider": "deterministic"})
+    job_id = response["job"]["id"]
+    stored = manager.get(job_id)
+    serialized = json.dumps(stored)
+    assert [row["external_session_id"] for row in stored["payload"]["session_refs"]] == ["matched"]
+    assert "PRIVATE_MATCHED_TEXT" not in serialized and "PRIVATE_OTHER_TEXT" not in serialized
+
+    deadline = time.monotonic() + 3
+    while manager.get(job_id)["status"] not in {"completed", "failed"} and time.monotonic() < deadline:
+        time.sleep(.01)
+    assert manager.get(job_id)["status"] == "completed"
+    assert [row["external_session_id"] for row in imported_inputs] == ["matched"]
+
+
 def test_memory_watcher_waits_after_each_sync(tmp_path, monkeypatch):
     path = tmp_path / "brain"
     path.mkdir()
@@ -85,8 +166,8 @@ def test_memory_watcher_waits_after_each_sync(tmp_path, monkeypatch):
 
     stop = StopAfterWait()
 
-    def sync(*_args, **_kwargs):
-        calls.append(True)
+    def sync(*_args, **kwargs):
+        calls.append(kwargs)
         if len(calls) == 2:
             stop.set()
         return {"ok": True}
@@ -98,8 +179,28 @@ def test_memory_watcher_waits_after_each_sync(tmp_path, monkeypatch):
     api_main._memory_watch_loop(key, {"interval": 7}, stop)
 
     assert len(calls) == 1
+    assert calls[0]["enrich"] is False
     assert stop.waits == [7]
     assert key not in api_main._memory_watchers
+
+
+def test_memory_watch_enrichment_is_opt_in(tmp_path, monkeypatch):
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS_FILE", raising=False)
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = []
+    monkeypatch.setattr(api_main, "_start_memory_watcher",
+                        lambda path, **kwargs: calls.append(kwargs) or {"path": str(path)})
+
+    default = api_main.memory_watch({"path": str(project), "consent": True, "enabled": True})
+    enriched = api_main.memory_watch({"path": str(project), "consent": True, "enabled": True,
+                                      "enrich": True})
+
+    assert default["ok"] is True and enriched["ok"] is True
+    assert calls[0]["enrich"] is False
+    assert calls[1]["enrich"] is True
 
 
 def test_memory_http_search_context_sessions_and_auth(tmp_path, monkeypatch):
@@ -409,6 +510,9 @@ def test_quality_and_context_bundle_validation(tmp_path, monkeypatch):
 
 def test_reindex_incremental_reuses_context(tmp_path, monkeypatch):
     client = _client(tmp_path, monkeypatch)
+    def ollama_unavailable(*args, **kwargs):
+        raise OSError("Ollama is disabled in this deterministic API test")
+    monkeypatch.setattr("graphtyn.api.enrich.urllib.request.urlopen", ollama_unavailable)
     proj = tmp_path / "proj"
     proj.mkdir()
     subprocess.run(["git", "init", "-q"], cwd=proj, check=True)
