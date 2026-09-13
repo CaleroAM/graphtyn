@@ -848,6 +848,14 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                                 if str(value).strip()})
     for raw in sessions:
         raw_agent = str(raw.get("agent_id") or "").strip().casefold()
+        try:
+            from .openclaw_integration import assert_agent_memory_enabled
+            assert_agent_memory_enabled(root, raw_agent)
+        except PermissionError as exc:
+            excluded.append({"session": raw.get("external_session_id"),
+                             "agent_id": raw.get("agent_id"),
+                             "reason": str(exc)})
+            continue
         if (policy["restricted"] and not authorized_agents) or (
                 authorized_agents and not any(_agent_id_matches(owner, raw_agent) for owner in authorized_agents)):
             excluded.append({"session": raw.get("external_session_id"), "agent_id": raw.get("agent_id"),

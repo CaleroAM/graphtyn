@@ -166,6 +166,12 @@ def main():
     relate_oc.add_argument("--parent", default=None)
     relate_oc.add_argument("--independent", action="store_true")
     relate_oc.add_argument("--confirm", action="store_true", help="Confirma que la relación es correcta")
+    memory_policy_oc = openclaw_sub.add_parser(
+        "memory-policy", help="Activa o desactiva la memoria de un agente sólo en esta instalación")
+    memory_policy_oc.add_argument("--installation", required=True)
+    memory_policy_oc.add_argument("--agent", required=True)
+    memory_policy_oc.add_argument("--state", choices=["enabled", "disabled"], required=True)
+    memory_policy_oc.add_argument("--reason", default="operator policy")
     openclaw_sub.add_parser("list", help="Muestra instalaciones y relaciones registradas")
     onboard_p = subparsers.add_parser("onboard", help="Configura agentes, índice, MCP y dashboard en una sola orden")
     onboard_p.add_argument("--path", default=".")
@@ -643,7 +649,8 @@ def main():
 
     if args.command == "harness":
         from .core.openclaw_integration import (connect_openclaw, discover_openclaw,
-            configure_openclaw_mcp, list_installations, set_parent, paths_for_installation)
+            configure_openclaw_mcp, list_installations, set_parent, paths_for_installation,
+            set_agent_memory_enabled)
 
         def parse_pairs(values, option):
             result = {}
@@ -670,6 +677,9 @@ def main():
                 parser.error("indique --parent ID o --independent")
             result = {"ok": True, "agent": set_parent(args.installation, args.child,
                 None if args.independent else args.parent, confirm=args.confirm)}
+        elif args.openclaw_action == "memory-policy":
+            result = set_agent_memory_enabled(args.installation, args.agent,
+                args.state == "enabled", reason=args.reason)
         elif args.openclaw_action == "connect":
             detected = discover_openclaw(args.config, ssh_target=args.ssh_target,
                                          data_root=args.data_root)
@@ -1500,6 +1510,16 @@ def main():
             print(json.dumps(reflect(root, args.half_life_days), ensure_ascii=False, indent=2))
         else:
             memory = SharedMemoryStore(root)
+            write_actions = {"session-start", "session-end", "checkpoint", "append", "ingest-turn",
+                "stream", "relation-review", "topics-enrich", "topic-update", "correct", "forget",
+                "compact", "migrate", "reindex", "ingest-evidence", "retention"}
+            if args.memory_action in write_actions:
+                from .core.openclaw_integration import assert_agent_memory_enabled
+                actor = getattr(args, "agent", None)
+                if args.memory_action in {"session-end", "checkpoint", "append", "compact", "correct"}:
+                    session = memory.get_session(str(getattr(args, "session", "") or ""))
+                    actor = (session or {}).get("agent_id") or actor
+                assert_agent_memory_enabled(root, actor)
             if args.memory_action == "session-start":
                 result = memory.start_session(args.agent, args.task, branch=args.branch,
                                               base_commit=args.base_commit, capture_enabled=args.capture)

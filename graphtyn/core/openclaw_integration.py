@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from .history_import import (_same_project_path, configured_sources, save_source,
+from .history_import import (_same_project_path, configured_sources, delete_source, save_source,
                              sources_config_file)
 from .storage import atomic_write_json, data_home
 
@@ -487,6 +487,10 @@ def connect_openclaw(discovered: dict[str, Any], *, parents: dict[str, str] | No
             root_evidence = "user-confirmed"
         row = {**spec, "brain_path": str(Path(brain_path).expanduser().resolve()),
                "parent_id": confirmed_parent.get(agent_id) or spec.get("parent_id"),
+               # Memory capture is opt-out per installation/agent. Existing
+               # local choices survive rediscovery; other installations keep
+               # the default enabled behavior, including an agent named main.
+               "memory_enabled": bool(old.get("memory_enabled", True)),
                "relation_status": status,
                "relation_evidence": (root_evidence if status in {"root", "confirmed"} else
                                      spec.get("relation_evidence") or old.get("relation_evidence"))}
@@ -502,7 +506,8 @@ def connect_openclaw(discovered: dict[str, Any], *, parents: dict[str, str] | No
     installation = {key: discovered[key] for key in ("id", "kind", "target", "config_path", "data_root", "version") if key in discovered}
     installation.update({"provider": "openclaw", "schema_version": REGISTRY_VERSION,
                          "agents": list(normalized.values()), "status": "configured",
-                         "relationship_events": list((prior or {}).get("relationship_events", []))})
+                         "relationship_events": list((prior or {}).get("relationship_events", [])),
+                         "memory_policy_events": list((prior or {}).get("memory_policy_events", []))})
     existing_events = {(event.get("agent_id"), event.get("parent_id"), event.get("relation_status"))
                        for event in installation["relationship_events"] if isinstance(event, dict)}
     for agent in installation["agents"]:
@@ -535,15 +540,18 @@ def connect_openclaw(discovered: dict[str, Any], *, parents: dict[str, str] | No
             canonical = agent["agent_id"]
             raw_source = _source_for_agent(discovered, agent["id"])
             if raw_source:
-                previous = next((row for row in previous_sources
-                                 if row.get("provider") == "openclaw" and
-                                 row.get("source") == raw_source), None)
-                baseline = (0 if import_history else
-                            float(previous["capture_from"]) if previous and
-                            isinstance(previous.get("capture_from"), (int, float)) else time.time())
-                save_source("openclaw", raw_source, label=f"OpenClaw · {agent['display_name']}",
-                            project_path=agent["brain_path"], agent_id=canonical,
-                            capture_from=baseline, path=source_file)
+                if not agent.get("memory_enabled", True):
+                    delete_source("openclaw", raw_source, path=source_file)
+                else:
+                    previous = next((row for row in previous_sources
+                                     if row.get("provider") == "openclaw" and
+                                     row.get("source") == raw_source), None)
+                    baseline = (0 if import_history else
+                                float(previous["capture_from"]) if previous and
+                                isinstance(previous.get("capture_from"), (int, float)) else time.time())
+                    save_source("openclaw", raw_source, label=f"OpenClaw · {agent['display_name']}",
+                                project_path=agent["brain_path"], agent_id=canonical,
+                                capture_from=baseline, path=source_file)
             _register_brain_path(agent["brain_path"], canonical, name=agent["display_name"])
             _register_agent_identity(agent, installation["id"])
         for agent in installation["agents"]:
@@ -640,6 +648,7 @@ def resolve_agent(installation_id: str, agent_id: str, *, registry: Path | None 
     return {"installation_id": installation_id, "provider": "openclaw",
             "agent_id": agent["agent_id"], "display_name": agent.get("display_name"),
             "brain_path": agent["brain_path"], "relation_status": agent["relation_status"],
+            "memory_enabled": bool(agent.get("memory_enabled", True)),
             "parent_id": agent.get("parent_id"), "family_id": agent.get("family_id"),
             "family_path": agent.get("family_path") if agent.get("relation_status") in {"root", "confirmed"} else None,
             "family_agent_ids": sorted(row["agent_id"] for row in family),
@@ -715,9 +724,100 @@ def set_parent(installation_id: str, child_id: str, parent_id: str | None,
     return resolve_agent(installation_id, child, registry=target)
 
 
-def paths_for_installation(installation_id: str) -> list[str]:
-    installation = get_installation(installation_id)
-    return sorted({row["brain_path"] for row in installation["agents"]})
+def paths_for_installation(installation_id: str, *, registry: Path | None = None) -> list[str]:
+    installation = get_installation(installation_id, registry)
+    return sorted({row["brain_path"] for row in installation["agents"]
+                   if row.get("memory_enabled", True)})
+
+
+def set_agent_memory_enabled(installation_id: str, agent_id: str, enabled: bool, *,
+                             reason: str = "operator policy", registry: Path | None = None,
+                             source_config: Path | None = None) -> dict[str, Any]:
+    """Set a per-installation memory policy and align its transcript source.
+
+    Disabling memory removes only this agent's configured OpenClaw source. The
+    OpenClaw identity and its private brain remain registered. Re-enabling
+    starts at the current time so old transcripts are not imported implicitly.
+    """
+    if not isinstance(enabled, bool):
+        raise ValueError("enabled debe ser booleano")
+    canonical = _canonical_agent_id(agent_id)
+    target_registry = registry or registry_path()
+    payload = _read_registry(target_registry)
+    installation = next((row for row in payload["installations"]
+                         if row.get("id") == str(installation_id)), None)
+    if installation is None:
+        raise KeyError(f"instalación OpenClaw desconocida: {installation_id}")
+    agent = next((row for row in installation.get("agents", []) if row.get("id") == canonical), None)
+    if agent is None:
+        raise KeyError(f"agente OpenClaw no registrado: {canonical}")
+    previous = bool(agent.get("memory_enabled", True))
+    changed = previous != enabled
+    event = None
+    if changed:
+        agent["memory_enabled"] = enabled
+        event = {"event_id": f"mem-{time.time_ns()}", "agent_id": agent["agent_id"],
+                 "previous_enabled": previous, "memory_enabled": enabled,
+                 "reason": str(reason or "operator policy")[:500], "changed_at": time.time()}
+        events = installation.setdefault("memory_policy_events", [])
+        events.append(event)
+        installation["memory_policy_events"] = events[-500:]
+        atomic_write_json(target_registry, payload)
+        try:
+            target_registry.chmod(0o600)
+        except OSError:
+            pass
+
+    source_file = source_config or sources_config_file()
+    raw_source = _source_for_agent(installation, canonical)
+    source_changed = False
+    if enabled:
+        has_source = any(row.get("provider") == "openclaw" and row.get("source") == raw_source
+                         for row in configured_sources(source_file)) if raw_source else False
+        if raw_source and (changed or not has_source):
+            save_source("openclaw", raw_source,
+                        label=f"OpenClaw · {agent.get('display_name') or canonical}",
+                        project_path=agent["brain_path"], agent_id=agent["agent_id"],
+                        capture_from=time.time(), path=source_file)
+            source_changed = True
+    else:
+        configured = configured_sources(source_file)
+        matching_sources = {row["source"] for row in configured
+            if row.get("provider") == "openclaw" and
+            row.get("agent_id") in {canonical, agent["agent_id"]} and
+            _same_project_path(row.get("project_path") or "", agent["brain_path"])}
+        if raw_source:
+            matching_sources.add(raw_source)
+        for source in matching_sources:
+            source_changed = delete_source("openclaw", source, path=source_file) or source_changed
+    return {"ok": True, "changed": changed, "installation_id": installation_id,
+            "agent_id": agent["agent_id"], "memory_enabled": enabled,
+            "source_changed": source_changed, "event": event}
+
+
+def assert_agent_memory_enabled(workspace: str | Path, agent_id: str | None, *,
+                                registry: Path | None = None) -> None:
+    """Reject writes to an OpenClaw brain disabled in its installation policy.
+
+    The policy belongs to the physical brain path, so a dashboard or other
+    authorized writer cannot bypass it by using a different requester label.
+    Other installations are unaffected because their brain paths differ.
+    """
+    try:
+        target_path = str(Path(workspace).expanduser().resolve())
+    except (OSError, RuntimeError, ValueError):
+        return
+    for installation in list_installations(registry):
+        for agent in installation.get("agents", []):
+            try:
+                same_path = str(Path(agent.get("brain_path") or "").expanduser().resolve()) == target_path
+            except (OSError, RuntimeError, ValueError):
+                continue
+            if same_path and not agent.get("memory_enabled", True):
+                raise PermissionError(
+                    f"la memoria de {agent.get('agent_id') or agent.get('id') or 'este agente'} está desactivada "
+                    f"para la instalación {installation.get('id')}"
+                )
 
 
 def agent_context(installation_id: str, agent_id: str, query: str, *, token_budget: int = 1800,
@@ -768,7 +868,7 @@ def agent_status(installation_id: str, agent_id: str, *,
             agent_ids=route["family_agent_ids"])
     return {"ok": True, **{key: route.get(key) for key in
             ("installation_id", "provider", "agent_id", "display_name", "brain_path",
-             "relation_status", "parent_id", "family_id", "family_path",
+             "relation_status", "memory_enabled", "parent_id", "family_id", "family_path",
              "family_agent_ids", "sources_pending_review")},
             "own": own, "family": shared}
 
@@ -778,6 +878,8 @@ def publish_agent_memory(installation_id: str, agent_id: str, memory_id: str, *,
     """Copy one owner-verified memory to the family's explicitly shared store."""
     from .shared_memory import SharedMemoryStore
     route = resolve_agent(installation_id, agent_id, registry=registry)
+    if not route.get("memory_enabled", True):
+        raise PermissionError(f"la memoria de {route['agent_id']} está desactivada para esta instalación")
     shared_path = route.get("family_path")
     if not shared_path or route.get("relation_status") not in {"root", "confirmed"}:
         raise PermissionError("este agente no pertenece a una familia confirmada")

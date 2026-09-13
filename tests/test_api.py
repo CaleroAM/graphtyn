@@ -607,6 +607,8 @@ def test_openclaw_sync_job_runs_each_isolated_brain(tmp_path, monkeypatch):
     installation = {"id": "openclaw-test", "agents": [
         {"id": "nexus", "agent_id": "openclaw/nexus", "display_name": "Evi", "brain_path": str(first)},
         {"id": "career", "agent_id": "openclaw/career", "display_name": "Eve", "brain_path": str(second)},
+        {"id": "main", "agent_id": "openclaw/main", "display_name": "main",
+         "brain_path": str(tmp_path / "main"), "memory_enabled": False},
     ]}
     monkeypatch.setattr(openclaw_integration, "get_installation", lambda _id: installation)
     manager = MemoryJobManager(tmp_path / "jobs")

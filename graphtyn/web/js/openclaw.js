@@ -44,11 +44,16 @@ function watcherSummary(memoryStatus) {
 function renderAgent(agent) {
   const status = agent.memory_status;
   const watcher = watcherSummary(status);
-  const capture = watcher.active.length
-    ? `<span class="oc-state ok">Sincronizador activo</span>`
-    : `<span class="oc-state muted">Sin sincronizador periódico</span>`;
-  const captureAt = status?.own?.last_capture_at ? when(status.own.last_capture_at) : 'Sin capturas registradas';
-  const watchAt = watcher.lastRun ? when(watcher.lastRun) : 'Sin actividad del sincronizador';
+  const memoryEnabled = agent.memory_enabled !== false;
+  const capture = !memoryEnabled
+    ? `<span class="oc-state disabled">Memoria desactivada en esta instalación</span>`
+    : watcher.active.length
+      ? `<span class="oc-state ok">Sincronizador activo</span>`
+      : `<span class="oc-state muted">Sin sincronizador periódico</span>`;
+  const captureAt = !memoryEnabled ? 'Desactivada por política local'
+    : status?.own?.last_capture_at ? when(status.own.last_capture_at) : 'Sin capturas registradas';
+  const watchAt = !memoryEnabled ? 'No participa en sincronización'
+    : watcher.lastRun ? when(watcher.lastRun) : 'Sin actividad del sincronizador';
   const statusError = agent.memory_status_error
     ? `<div class="oc-error">No se pudo consultar este cerebro: ${esc(agent.memory_status_error)}</div>` : '';
   const watcherErrors = watcher.errors.map(item => `<div class="oc-error">${esc(item.error || 'Falló el sincronizador')} · ${esc(item.kind || 'captura')}</div>`).join('');
