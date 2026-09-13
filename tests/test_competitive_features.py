@@ -464,7 +464,6 @@ def test_http_mcp_memory_context_returns_imported_topics_with_scope_and_limit(tm
             {"role": "user", "content": content},
             {"role": "assistant", "content": "La petición quedó registrada para implementación."},
         ], consent=True, provider="deterministic")
-
     response = api_main.mcp_http({"jsonrpc": "2.0", "id": 7, "method": "tools/call",
         "params": {"name": "memory_context", "arguments": {
             "path": str(brain), "query": "botón CRM", "requester_agent": "openclaw/main",
@@ -482,6 +481,32 @@ def test_http_mcp_memory_context_returns_imported_topics_with_scope_and_limit(tm
     assert context["graph_neighbors"] == []
 
 
+def test_http_mcp_memory_context_continuity_returns_recent_activity(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "continuity-secret")
+    project = tmp_path / "shared-project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+    session = store.ensure_external_session("opencode", "opencode-recent", "Panel de reportes", consent=True)
+    store.append_message(session["id"], "user", "Cambiar el color del reporte", metadata={
+        "provider": "opencode", "source_message_id": "recent-user", "occurred_at": 3000})
+    store.append_message(session["id"], "assistant", "OpenCode dejó azul el botón de reportes.", metadata={
+        "provider": "opencode", "source_message_id": "recent-assistant", "occurred_at": 3001})
+
+    response = api_main.mcp_http({"jsonrpc": "2.0", "id": 8, "method": "tools/call",
+        "params": {"name": "memory_context", "arguments": {
+            "path": str(project), "query": "¿qué se cambió?", "requester_agent": "codex",
+            "token_budget": 1000, "include_graph": False, "mode": "continuity",
+        }}}, authorization="Bearer continuity-secret")
+    body = json.loads(response.body)
+    context = json.loads(body["result"]["content"][0]["text"])
+
+    assert response.status_code == 200
+    assert context["retrieval_mode"] == "continuity"
+    assert context["recent_activity"][0]["agent_id"] == "opencode"
+    assert context["recent_activity"][0]["source_message_id"] == "recent-assistant"
+
+
 
 def test_http_mcp_memory_context_schema_exposes_bounded_graph_controls(monkeypatch):
     monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "schema-secret")
@@ -489,4 +514,5 @@ def test_http_mcp_memory_context_schema_exposes_bounded_graph_controls(monkeypat
                                  authorization="Bearer schema-secret")
     body = json.loads(response.body)
     context = next(tool for tool in body["result"]["tools"] if tool["name"] == "memory_context")
-    assert {"limit", "include_graph", "neighbor_limit"} <= set(context["inputSchema"]["properties"])
+    assert {"limit", "include_graph", "neighbor_limit", "mode", "activity_limit"} <= set(context["inputSchema"]["properties"])
+    assert context["inputSchema"]["properties"]["mode"]["enum"] == ["semantic", "continuity"]

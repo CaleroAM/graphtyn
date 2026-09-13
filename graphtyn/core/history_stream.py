@@ -44,7 +44,7 @@ def ingest_jsonl(store, source, *, provider, external_session_id, agent_id,
                 try: value = json.loads(line)
                 except ValueError: continue
                 for record in _walk_records(value):
-                    if _role(record) and _content(record) and not any(record.get(k) is not None for k in ('id','uuid','message_id','step_index')):
+                    if _role(record, provider) and _content(record) and not any(record.get(k) is not None for k in ('id','uuid','message_id','step_index')):
                         raise ValueError('rotación sin IDs nativos: revisión requerida; no se avanzó el cursor')
         state = dict(offset=0, record_index=0, discovered=0, processed=0, excluded=0, errors=0, session_id=state['session_id'])
     if not explicit_project_selection:
@@ -97,7 +97,7 @@ def ingest_jsonl(store, source, *, provider, external_session_id, agent_id,
                 continue
             accepted = 0
             for child_index, record in enumerate(_walk_records(root)):
-                role, content = _role(record), _content(record)
+                role, content = _role(record, provider), _content(record)
                 if role not in {'user', 'assistant', 'tool'} or not content: continue
                 sid = record.get('sessionId') or record.get('session_id') or record.get('conversation_id')
                 if sid and str(sid) != external_session_id: continue
@@ -173,7 +173,7 @@ def preview_jsonl(path, provider, max_record_bytes=8 * 1024 * 1024):
                 excluded+=1;continue
             accepted=0
             for record in _walk_records(root):
-                role,content=_role(record),_content(record)
+                role,content=_role(record,provider),_content(record)
                 if role not in {'user','assistant','tool'} or not content: continue
                 sid=str(record.get('sessionId') or record.get('session_id') or record.get('conversation_id') or file_session or path.stem)
                 group=groups.setdefault(sid,{'message_count':0,'task':'Historical session','workspace':workspace,'occurred_at':None,'updated_at':None})

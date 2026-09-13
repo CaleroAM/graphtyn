@@ -75,6 +75,62 @@ acotada por vecinos. El paquete respeta un presupuesto y explica la procedencia.
 Al cambiar de tema se ejecuta una recuperación nueva; no se arrastran todos los
 nodos de la consulta anterior.
 
+Al iniciar una sesión nueva en un proyecto, el agente debe llamar primero a
+`memory_context` con el trabajo solicitado, su identidad real y
+`mode: "continuity"`. Esto combina los recuerdos temáticos con hasta tres
+actualizaciones recientes de cualquier agente que haya escrito en la memoria
+compartida. Cada actualización incluye agente, proveedor, sesión, fecha, mensaje
+fuente y el último intercambio usuario/agente disponible. Así, Codex puede
+retomar lo que hizo OpenCode o AGY aunque su sesión no comparta el historial del
+otro cliente. Las actualizaciones son evidencia histórica; se comprueban contra
+el estado actual antes de afirmar que algo sigue vigente.
+
+El modo continuity sólo etiqueta como reciente una fecha observada en la fuente
+o una captura en vivo. Si una transcripción importada no trae fecha original,
+Graphtyn conserva el mensaje como historial pero lo omite de la lista de
+actividad reciente. Si hace falta detalle, el agente amplía una referencia con
+`memory_message_window` una vez; una cobertura incompleta indica que la búsqueda
+no garantiza recall total, no que haya que repetir la misma consulta.
+
+El modo predeterminado `semantic` conserva la respuesta anterior y no agrega
+actividad reciente. El modo `continuity` está disponible en MCP, API y CLI:
+
+```bash
+graphtyn memory context "¿qué se cambió recientemente en el panel?" \
+  --agent codex --mode continuity --activity-limit 3 --path .
+```
+
+Una respuesta de contexto informa `retrieval_mode`, referencias y contabilidad
+de tokens dentro del presupuesto. `memory status` y el Dashboard distinguen la
+captura continua de la última consulta de contexto. Ver captura activa no prueba
+por sí sola que un agente haya consultado la memoria.
+
+Codex, CLI y Dashboard deben apuntar al mismo espacio. En particular, define en
+`~/.codex/config.toml` `GRAPHTYN_HOME` con el directorio central ya configurado
+para Graphtyn; no crees una base local adicional dentro del checkout. Confirma
+la ruta efectiva mediante `memory status` antes de probar la recuperación.
+
+La sincronización de un proyecto busca las fuentes locales de OpenCode, Codex,
+Claude y Antigravity cuando existen. Importa automáticamente sólo sesiones cuya
+ruta registrada coincide exactamente con el proyecto; una sesión sin metadatos
+de workspace, como algunas transcripciones de AGY, permanece ambigua y debe
+revisarse. OpenClaw remoto se conecta por la configuración explícita de su
+instalación. El atributo de agente describe al autor y no vuelve privado un
+proyecto compartido; los cerebros personales sí mantienen su alcance de
+propietario.
+
+Para que agentes compatibles sigan este flujo al comenzar una sesión, instala o
+actualiza la política del proyecto conservando sus instrucciones existentes:
+
+```bash
+graphtyn agent-install codex --path .
+graphtyn agent-install opencode --path .
+```
+
+La política administrada solicita contexto antes de usar Git como único registro
+del trabajo anterior y evita volver a ingerir el transcript cuando el watcher ya
+lo captura.
+
 ## Dashboard
 
 `Memoria del proyecto` se carga al seleccionar el repositorio y muestra agentes,

@@ -210,7 +210,9 @@ Ejemplo de prompt:
 ## Memoria compartida
 
 La memoria es opt-in, se almacena por proyecto y puede compartirse entre Codex,
-OpenCode, Antigravity, OpenClaw, Hermes u otros clientes MCP:
+OpenCode, Antigravity, OpenClaw, Hermes u otros clientes MCP. `memory_context`
+puede recuperar trabajo reciente atribuido entre sesiones y agentes; las
+conversaciones ambiguas por proyecto permanecen pendientes:
 
 ```bash
 graphtyn memory session-start --agent-id opencode --path .
@@ -232,8 +234,13 @@ graphtyn setup --apply --memory on --memory-watch
 graphtyn memory sync --path . --watch --interval 5 --consent
 ```
 
-Al activar la memoria, Graphtyn detecta fuentes de Codex/AGY/OpenClaw/Hermes,
-importa historiales compatibles con el proyecto y genera embeddings locales.
+Al activar la memoria, Graphtyn detecta fuentes locales de Codex, OpenCode,
+Claude, AGY y OpenClaw, importa historiales compatibles con el proyecto y
+genera embeddings locales. La captura continua sólo se activa cuando se inicia
+el watcher; registrar un proyecto o instalar instrucciones de agente no lo
+enciende por sí solo. Todos los clientes que deban compartir memoria deben
+resolver el mismo almacén del proyecto. En Codex, configura el mismo
+`GRAPHTYN_HOME` que usa Graphtyn y compruébalo con `memory status`.
 La opción `--memory off` conserva la instalación sin memoria conversacional.
 Configuración, recuperación, bootstrap histórico, backups y ejemplos están en
 [docs/shared-memory.md](docs/shared-memory.md).

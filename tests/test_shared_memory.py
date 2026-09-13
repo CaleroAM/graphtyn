@@ -38,6 +38,45 @@ def test_new_session_recovers_another_agents_topic(tmp_path, monkeypatch):
     assert found[0]["session_id"] != opencode["id"]
 
 
+def test_continuity_context_returns_recent_project_activity_with_attribution(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+    for agent, external, stamp, prompt, update in (
+        ("opencode", "open-s1", 100, "Cambiar el color del reporte", "Actualicé el botón de reportes."),
+        ("codex", "codex-s1", 200, "Revisar lo último de OpenCode", "Encontré el cambio pendiente del panel."),
+        ("career", "private-s1", 300, "Plan personal", "Actualización privada"),
+    ):
+        session = store.ensure_external_session(agent, external, "Continuidad", consent=True)
+        store.append_message(session["id"], "user", prompt, metadata={
+            "provider": agent, "occurred_at": stamp, "source_message_id": f"{external}:u"})
+        store.append_message(session["id"], "assistant", update, metadata={
+            "provider": agent, "occurred_at": stamp + 1, "source_message_id": f"{external}:a"})
+    imported_without_source_time = store.ensure_external_session(
+        "claude", "claude-import", "Sin fecha fuente", consent=True)
+    store.append_message(imported_without_source_time["id"], "assistant", "Not logged in",
+                         metadata={"provider": "claude", "capture_mode": "historical_import",
+                                   "source_message_id": "claude-import:a"})
+
+    result = store.context("¿qué se hizo recientemente en el proyecto?", requester_agent="codex",
+                           mode="continuity", activity_limit=3, token_budget=1000,
+                           include_graph=False, agent_ids=["opencode", "codex", "claude"])
+    semantic = store.context("¿qué se hizo recientemente en el proyecto?", requester_agent="codex",
+                             mode="semantic", include_graph=False, token_budget=1000,
+                             agent_ids=["opencode", "codex", "claude"])
+
+    assert result["retrieval_mode"] == "continuity"
+    assert [item["agent_id"] for item in result["recent_activity"]] == ["codex", "opencode"]
+    assert result["recent_activity"][0]["assistant_update"] == "Encontré el cambio pendiente del panel."
+    assert result["recent_activity"][1]["user_prompt"] == "Cambiar el color del reporte"
+    assert result["recent_activity"][0]["source_message_id"] == "codex-s1:a"
+    assert [item["agent_id"] for item in result["recent_activity"]] == ["codex", "opencode"]
+    assert result["recent_activity"][0]["timestamp_basis"] == "source"
+    assert result["estimated_tokens"] <= result["token_budget"]
+    assert semantic["recent_activity"] == []
+
+
 def test_censored_vendor_alias_recovers_benchmark_memory(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
     project = tmp_path / "project"
@@ -138,6 +177,30 @@ def test_registered_brain_scope_is_applied_inside_store_to_legacy_data(tmp_path,
     with pytest.raises(PermissionError):
         isolated.start_session("openclaw/career", "no debe entrar")
     assert isolated.topics(agent_ids=["openclaw/career"])["topics"] == []
+
+
+def test_project_sources_preserve_shared_multi_agent_scope(tmp_path, monkeypatch):
+    state = tmp_path / "state"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+    project = tmp_path / "openclaw"
+    project.mkdir()
+    state.mkdir()
+    (state / "history-sources.json").write_text(json.dumps({"version": 1, "sources": [
+        {"provider": "codex", "source": str(tmp_path / "codex"),
+         "project_path": str(project), "agent_id": "codex"},
+        {"provider": "opencode", "source": str(tmp_path / "opencode.db"),
+         "project_path": str(project), "agent_id": "opencode"},
+    ]}), encoding="utf-8")
+
+    store = SharedMemoryStore(project)
+    scope = store.memory_scope()
+    assert scope["space_type"] == "project"
+    assert scope["restricted"] is False
+    assert scope["agent_ids"] == []
+    assert scope["source_count"] == 2
+    store.start_session("codex", "Codex session")
+    store.start_session("opencode", "OpenCode session")
+    assert {row["agent_id"] for row in store.list_sessions()} == {"codex", "opencode"}
 
 
 def test_agent_brain_does_not_continue_another_agents_topic(tmp_path, monkeypatch):

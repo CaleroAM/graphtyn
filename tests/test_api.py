@@ -229,6 +229,31 @@ def test_memory_http_search_context_sessions_and_auth(tmp_path, monkeypatch):
     assert any(node.get("kind") == "memory_agent" for node in graph["nodes"])
 
 
+def test_memory_context_api_exposes_attributed_recent_activity(tmp_path, monkeypatch):
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+    session = store.ensure_external_session("opencode", "open-code-session", "Panel de reportes", consent=True)
+    store.append_message(session["id"], "user", "Cambiar color del reporte", metadata={
+        "provider": "opencode", "source_message_id": "oc-u1", "occurred_at": 1000})
+    store.append_message(session["id"], "assistant", "Dejé el botón azul y el cambio pendiente en la rama.", metadata={
+        "provider": "opencode", "source_message_id": "oc-a1", "occurred_at": 1001})
+
+    result = api_main.memory_context({"path": str(project), "query": "¿qué quedó pendiente?",
+        "requester_agent": "codex", "mode": "continuity", "activity_limit": 2,
+        "token_budget": 1000, "include_graph": False}, authorization=None)
+
+    assert result["retrieval_mode"] == "continuity"
+    assert result["recent_activity"][0]["agent_id"] == "opencode"
+    assert result["recent_activity"][0]["session_id"] == session["id"]
+    assert result["recent_activity"][0]["source_message_id"] == "oc-a1"
+    assert result["recent_activity"][0]["assistant_update"].startswith("Dejé el botón azul")
+    retrieval = store.status()["last_context_retrieval"]
+    assert retrieval["agent_id"] == "codex"
+    assert retrieval["mode"] == "continuity"
+    assert retrieval["recent_message_ids"] == [result["recent_activity"][0]["message_id"]]
+
+
 def test_mcp_token_does_not_lock_local_dashboard_memory_api(tmp_path, monkeypatch):
     monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
     monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "remote-only")
@@ -325,6 +350,25 @@ def test_explicit_registration_overrides_auto_discovered_name(tmp_path, monkeypa
 
     assert projects[0]["id"] == "graphtyn"
     assert projects[0]["name"] == "Graphtyn"
+
+
+def test_project_source_attribution_does_not_filter_other_agents(tmp_path, monkeypatch):
+    project = tmp_path / "openclaw"
+    brain = tmp_path / "brain"
+    project.mkdir()
+    brain.mkdir()
+    source = {"provider": "codex", "source": str(tmp_path / "codex-sessions"),
+              "project_path": str(project), "agent_id": "codex"}
+    monkeypatch.setattr(api_main, "_load_registered_projects", lambda: [
+        {"path": str(project), "space_type": "project", "agent_ids": []},
+        {"path": str(brain), "space_type": "agent_brain", "agent_ids": ["openclaw/evi"]},
+    ])
+    monkeypatch.setattr(api_main, "configured_sources", lambda: [
+        source, {**source, "project_path": str(brain), "agent_id": "openclaw/evi"},
+    ])
+
+    assert api_main._memory_space_agent_ids(project) == []
+    assert api_main._memory_space_agent_ids(brain) == ["openclaw/evi"]
 
 
 def test_agent_directory_respects_registered_brain_owners(tmp_path, monkeypatch):
