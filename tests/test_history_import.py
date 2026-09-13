@@ -204,8 +204,28 @@ def test_remote_docker_source_does_not_assume_host_or_container(monkeypatch):
                         lambda command, **kwargs: (calls.append(command), Result())[1])
     with pytest.raises(OSError):
         _materialize_source("ssh+docker://deploy@example.test:runtime-7/var/lib/agent/history")
-    assert calls[0][:7] == ["ssh", "-o", "BatchMode=yes", "deploy@example.test",
-                            "docker", "exec", "runtime-7"]
+    assert calls[0][:9] == ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8",
+                            "deploy@example.test", "docker", "exec", "runtime-7"]
+
+
+def test_remote_history_uses_explicit_ssh_config(tmp_path, monkeypatch):
+    ssh_config = tmp_path / "graphtyn-ssh.conf"
+    ssh_config.write_text("Host *\n  BatchMode yes\n", encoding="utf-8")
+    calls = []
+
+    class Result:
+        returncode = 1
+        stderr = b"unavailable"
+
+    monkeypatch.setenv("GRAPHTYN_SSH_CONFIG", str(ssh_config))
+    monkeypatch.setattr("graphtyn.core.history_import.subprocess.run",
+                        lambda command, **kwargs: (calls.append(command), Result())[1])
+
+    with pytest.raises(OSError):
+        _materialize_source("ssh://deploy@example.test/var/lib/agent/history")
+
+    assert calls[0][:8] == ["ssh", "-F", str(ssh_config), "-o", "BatchMode=yes",
+                            "-o", "ConnectTimeout=8", "deploy@example.test"]
 
 
 def test_no_persona_or_machine_identity_is_hardcoded_in_runtime():

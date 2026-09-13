@@ -70,6 +70,31 @@ def test_discover_openclaw_requires_ssh_target_and_root_together(monkeypatch):
         discover_openclaw()
 
 
+def test_remote_openclaw_config_uses_explicit_ssh_config(tmp_path, monkeypatch):
+    import graphtyn.core.openclaw_integration as integration
+    ssh_config = tmp_path / "ssh.conf"
+    ssh_config.write_text("Host *\n", encoding="utf-8")
+    calls = []
+
+    class Completed:
+        returncode = 0
+        stdout = '{"agents":{"entries":{"main":{}}}}'
+        stderr = ""
+
+    monkeypatch.setenv("GRAPHTYN_SSH_CONFIG", str(ssh_config))
+    monkeypatch.setattr(integration.subprocess, "run",
+                        lambda command, **kwargs: (calls.append(command), Completed())[1])
+
+    config = integration._read_config("/srv/openclaw/data/openclaw.json",
+                                       ssh_target="root@192.0.2.10")
+
+    assert config["agents"]["entries"]["main"] == {}
+    assert calls[0][:7] == ["ssh", "-F", str(ssh_config), "-o", "BatchMode=yes",
+                            "-o", "ConnectTimeout=8"]
+    assert calls[0][7] == "root@192.0.2.10"
+    assert calls[0][8] == "cat -- /srv/openclaw/data/openclaw.json"
+
+
 def test_mcp_config_update_keeps_backup_and_does_not_return_token(tmp_path, monkeypatch):
     discovered = _installation(tmp_path)
     config_path = Path(discovered["config_path"])

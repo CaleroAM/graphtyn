@@ -31,10 +31,83 @@ graphtyn harness openclaw connect --installation openclaw-<id> \
   --parent devops=nexus --parent design=nexus --independent nexus --independent career
 ```
 
+### Host, VM, VPS y Docker
+
+La ubicación de OpenClaw determina cómo Graphtyn lee sus archivos:
+
+- **Mismo host que Graphtyn:** usa `--config` con la ruta local a `openclaw.json`.
+- **VM o VPS:** Graphtyn corre en el host y accede al sistema remoto por SSH. Indica
+  un destino conocido y el directorio de datos visible en ese sistema.
+- **Docker en el mismo host:** usa la ruta del bind mount que ve el host. Graphtyn
+  no necesita entrar al contenedor si el archivo de configuración y las sesiones
+  están montados en el host.
+- **Docker dentro de una VM/VPS:** indica por SSH la ruta del bind mount en el
+  sistema remoto. No uses una ruta interna del contenedor si el host remoto no la
+  puede leer.
+
+Un despliegue frecuente tiene esta forma:
+
+```text
+host: Graphtyn + Ollama
+  └─ SSH → VM: directorio de datos de OpenClaw
+               └─ bind mount → contenedor OpenClaw
+```
+
+Graphtyn no escanea la red ni descubre contenedores automáticamente. Si el
+directorio de datos del contenedor no está expuesto en el host remoto, primero
+hay que montar esos datos o proporcionar una ruta de lectura accesible.
+
+### SSH explícito para VM o VPS
+
+Si la configuración SSH global del host no es válida para OpenSSH o necesitas
+un puerto, una clave o un salto intermedio específicos, crea un archivo SSH
+propiedad del usuario que ejecuta Graphtyn. `-F` hace que OpenSSH lea este
+archivo explícito en lugar de la configuración global problemática:
+
+```sshconfig
+Host 192.0.2.10
+  HostName 192.0.2.10
+  User deploy
+  Port 22
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+```
+
+Ajusta `HostName`, `User`, `Port` y `IdentityFile` a tu instalación; para usar
+un bastion agrega `ProxyJump` en ese mismo bloque. Restringe el archivo a su
+propietario:
+
+```bash
+chmod 600 ~/.ssh/graphtyn-openclaw.conf
+ssh -F ~/.ssh/graphtyn-openclaw.conf deploy@192.0.2.10 \
+  'test -r /srv/openclaw/data/openclaw.json'
+```
+
+Usa el mismo archivo para descubrimiento y conexión:
+
+```bash
+graphtyn harness openclaw discover \
+  --ssh-target deploy@192.0.2.10 \
+  --data-root /srv/openclaw/data \
+  --ssh-config ~/.ssh/graphtyn-openclaw.conf
+
+graphtyn harness openclaw connect --installation openclaw-<id> \
+  --ssh-target deploy@192.0.2.10 \
+  --data-root /srv/openclaw/data \
+  --ssh-config ~/.ssh/graphtyn-openclaw.conf
+```
+
+`--ssh-config` se aplica al descubrimiento, a la edición remota de `openclaw.json`
+y a la sincronización del historial. `connect` guarda esa ruta en la unidad
+`systemd --user` de captura y reinicia la unidad para que recoja el cambio. Para
+el descubrimiento automático desde `graphtyn onboard`, establece
+`GRAPHTYN_SSH_CONFIG` en el entorno antes de ejecutarlo.
+
 El destino necesita una clave SSH no interactiva y permiso para leer `openclaw.json` y los directorios de agentes. `connect` sólo conserva un almacén anterior cuando todas sus fuentes lo atribuyen al mismo ID canónico; si el almacén heredado mezcla agentes, crea uno privado nuevo. Puedes fijar rutas con `--brain AGENTE=RUTA`. Las identidades nuevas reciben directorios aislados. Confirma las relaciones padre/hijo sólo cuando reflejen la jerarquía real.
 
 Para que `onboard` detecte una instalación remota desde el primer uso, configura
-`GRAPHTYN_OPENCLAW_SSH_TARGET` y `GRAPHTYN_OPENCLAW_DATA_ROOT` en el entorno,
+`GRAPHTYN_OPENCLAW_SSH_TARGET`, `GRAPHTYN_OPENCLAW_DATA_ROOT` y, cuando aplique,
+`GRAPHTYN_SSH_CONFIG` en el entorno,
 además de `GRAPHTYN_MCP_URL` y `GRAPHTYN_MCP_TOKEN` si OpenClaw aún no tiene
 registrado el servidor MCP. El autodetector nunca prueba hosts SSH arbitrarios.
 

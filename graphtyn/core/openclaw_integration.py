@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 
 from .history_import import (_same_project_path, configured_sources, delete_source, save_source,
                              sources_config_file)
+from .ssh import ssh_command
 from .storage import atomic_write_json, data_home
 
 
@@ -119,8 +120,8 @@ def _read_config(config_path: str, *, ssh_target: str | None = None) -> dict[str
         if not re.fullmatch(r"[A-Za-z0-9_.@-]+", ssh_target):
             raise ValueError("destino SSH inválido")
         command = f"cat -- {shlex.quote(config_path)}"
-        completed = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8",
-                                    ssh_target, command], capture_output=True, text=True, timeout=15)
+        completed = subprocess.run([*ssh_command(ssh_target), command], capture_output=True,
+                                   text=True, timeout=15)
         if completed.returncode:
             raise RuntimeError(completed.stderr.strip()[-500:] or "No se pudo leer openclaw.json por SSH")
         payload = completed.stdout
@@ -262,8 +263,8 @@ def configure_openclaw_mcp(discovered: dict[str, Any], *, mcp_url: str | None = 
             "f=os.fdopen(fd,'w',encoding='utf-8'); f.write(json.dumps(json.loads(data),ensure_ascii=False,indent=2)+'\\n'); f.flush(); os.fsync(f.fileno()); f.close(); os.replace(t,p)"
         )
         command = "python3 -c " + shlex.quote(script) + " " + shlex.quote(config_path) + " " + shlex.quote(backup)
-        completed = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8",
-                                    discovered["target"], command], input=payload, capture_output=True,
+        completed = subprocess.run([*ssh_command(discovered["target"]), command],
+                                   input=payload, capture_output=True,
                                    text=True, timeout=20)
         if completed.returncode:
             return {"ok": False, "configured": False,

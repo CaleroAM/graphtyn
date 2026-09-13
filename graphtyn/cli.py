@@ -80,6 +80,14 @@ def _install_openclaw_capture_service(installation_id: str, interval: float = 30
     unit_dir = Path.home() / ".config" / "systemd" / "user"
     unit_dir.mkdir(parents=True, exist_ok=True)
     home = str(data_home().resolve()).replace("\\", "\\\\").replace('"', '\\"')
+    ssh_config = os.environ.get("GRAPHTYN_SSH_CONFIG", "").strip()
+    ssh_config_env = []
+    if ssh_config:
+        escaped_ssh_config = str(Path(ssh_config).expanduser().resolve())
+        if "\n" in escaped_ssh_config or "\r" in escaped_ssh_config:
+            return {"ok": False, "active": False, "error": "la ruta GRAPHTYN_SSH_CONFIG no puede contener saltos de línea"}
+        escaped_ssh_config = escaped_ssh_config.replace("\\", "\\\\").replace('"', '\\"')
+        ssh_config_env = [f'Environment="GRAPHTYN_SSH_CONFIG={escaped_ssh_config}"']
     # Keep the venv symlink path: resolving it may escape into a system Python
     # that does not have Graphtyn installed (common with Nix).
     python = str(Path(sys.executable)).replace("\\", "\\\\").replace('"', '\\"')
@@ -89,6 +97,7 @@ def _install_openclaw_capture_service(installation_id: str, interval: float = 30
         "After=network-online.target", "Wants=network-online.target", "",
         "[Service]", "Type=simple", "Restart=on-failure", "RestartSec=15",
         f'Environment="GRAPHTYN_HOME={home}"',
+        *ssh_config_env,
         f'ExecStart="{python}" -m graphtyn.cli memory sync --installation {installation_id} '
         f'--watch --interval {interval} --consent', "", "[Install]",
         "WantedBy=default.target", "",
@@ -107,11 +116,19 @@ def _install_openclaw_capture_service(installation_id: str, interval: float = 30
                     "error": (reload_result.stderr or reload_result.stdout).strip()[-500:]}
         enabled = subprocess.run(["systemctl", "--user", "enable", "--now", unit_name],
             capture_output=True, text=True, timeout=30)
+        if enabled.returncode:
+            return {"ok": False, "active": False, "unit": str(unit_path),
+                    "error": (enabled.stderr or enabled.stdout).strip()[-500:]}
+        restarted = subprocess.run(["systemctl", "--user", "restart", unit_name],
+            capture_output=True, text=True, timeout=30)
+        if restarted.returncode:
+            return {"ok": False, "active": False, "unit": str(unit_path),
+                    "error": (restarted.stderr or restarted.stdout).strip()[-500:]}
         active = subprocess.run(["systemctl", "--user", "is-active", "--quiet", unit_name],
             capture_output=True, text=True, timeout=10).returncode == 0
         return {"ok": enabled.returncode == 0 and active, "active": active,
                 "unit": str(unit_path), "error": "" if active else
-                (enabled.stderr or enabled.stdout).strip()[-500:]}
+                (restarted.stderr or restarted.stdout).strip()[-500:]}
     except (OSError, subprocess.SubprocessError) as exc:
         return {"ok": False, "active": False, "unit": str(unit_path), "error": str(exc)}
 
@@ -143,11 +160,15 @@ def main():
     discover_oc.add_argument("--config", default=None)
     discover_oc.add_argument("--ssh-target", default=None, help="Host explícito usuario@host; no se escanea la red")
     discover_oc.add_argument("--data-root", default=None, help="Directorio de datos OpenClaw remoto")
+    discover_oc.add_argument("--ssh-config", default=None,
+                             help="Archivo SSH alternativo; también se guarda para la captura continua")
     connect_oc = openclaw_sub.add_parser("connect", help="Registra agentes aislados y activa captura nueva")
     connect_oc.add_argument("--installation", default=None)
     connect_oc.add_argument("--config", default=None)
     connect_oc.add_argument("--ssh-target", default=None)
     connect_oc.add_argument("--data-root", default=None)
+    connect_oc.add_argument("--ssh-config", default=None,
+                            help="Archivo SSH alternativo; se guarda para la captura continua")
     connect_oc.add_argument("--parent", action="append", default=[], metavar="HIJO=PADRE",
                             help="Confirma una relación padre/subagente; repetible")
     connect_oc.add_argument("--independent", action="append", default=[], metavar="AGENTE",
@@ -665,6 +686,11 @@ def main():
 
         if args.harness_name != "openclaw":
             parser.error(f"harness no soportado: {args.harness_name}")
+        if getattr(args, "ssh_config", None):
+            ssh_config_path = Path(args.ssh_config).expanduser()
+            if not ssh_config_path.is_file():
+                parser.error(f"el archivo SSH no existe o no es un archivo: {ssh_config_path}")
+            os.environ["GRAPHTYN_SSH_CONFIG"] = str(ssh_config_path.resolve())
         if args.openclaw_action == "discover":
             result = {"ok": True, "installations": discover_openclaw(args.config,
                 ssh_target=args.ssh_target, data_root=args.data_root)}

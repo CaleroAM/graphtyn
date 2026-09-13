@@ -314,6 +314,10 @@ def test_onboard_auto_connects_a_single_openclaw_installation(git_repo, tmp_path
 def test_openclaw_capture_service_keeps_current_python_path(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn"))
+    ssh_config = tmp_path / "ssh" / "graphtyn.conf"
+    ssh_config.parent.mkdir()
+    ssh_config.write_text("Host *\n", encoding="utf-8")
+    monkeypatch.setenv("GRAPHTYN_SSH_CONFIG", str(ssh_config))
     calls = []
 
     class Completed:
@@ -332,7 +336,9 @@ def test_openclaw_capture_service_keeps_current_python_path(tmp_path, monkeypatc
     assert result["ok"] is True
     assert "--watch --interval 30 --consent" in unit
     assert str(Path(sys.executable)) in unit
+    assert f'Environment="GRAPHTYN_SSH_CONFIG={ssh_config.resolve()}"' in unit
     assert calls[0][:3] == ["systemctl", "--user", "daemon-reload"]
+    assert calls[2][:3] == ["systemctl", "--user", "restart"]
 
 
 def test_onboard_indexes_unicode_tracked_paths(git_repo, tmp_path):

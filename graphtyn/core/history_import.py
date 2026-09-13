@@ -23,6 +23,7 @@ from typing import Any, Iterable
 from urllib.parse import unquote, urlparse
 
 from .shared_memory import SharedMemoryStore
+from .ssh import ssh_command
 from .storage import data_home, atomic_write_json
 
 
@@ -201,9 +202,9 @@ def _materialize_source(source: str | Path) -> tuple[Path, tempfile.TemporaryDir
     archive = destination / "history.tar.gz"
     tar_args = ["tar", "-C", str(Path(remote_path).parent), "--exclude=*.trajectory.jsonl",
                 "--exclude=*.png", "--exclude=*.jpg", "--exclude=*.log", "-czf", "-", Path(remote_path).name]
-    if parsed.scheme == "ssh": command = ["ssh", "-o", "BatchMode=yes", ssh_target, *tar_args]
+    if parsed.scheme == "ssh": command = [*ssh_command(ssh_target), *tar_args]
     elif parsed.scheme == "docker": command = ["docker", "exec", container, *tar_args]
-    else: command = ["ssh", "-o", "BatchMode=yes", ssh_target, "docker", "exec", container, *tar_args]
+    else: command = [*ssh_command(ssh_target), "docker", "exec", container, *tar_args]
     with archive.open("wb") as stream:
         result = subprocess.run(command, stdout=stream, stderr=subprocess.PIPE, timeout=600)
     if result.returncode:
