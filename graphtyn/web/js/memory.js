@@ -177,7 +177,11 @@ export async function loadMemoryOverview(append = false) {
       const failed = info.topic_enrichment?.coverage?.failed || 0;
       const failureText = failed ? ` · ${failed} fallos de IA` : '';
       const capture = info.continuous_capture_active ? ' · captura continua activa' : ' · captura continua inactiva';
-      status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness}${capture}${failureText} · ${topicAi}`;
+      const lastRetrieval = info.last_context_retrieval;
+      const retrieval = lastRetrieval
+        ? ` · último contexto consultado por ${lastRetrieval.agent_id || 'agente'} · ${lastRetrieval.recent_activity_count || 0} actualizaciones recientes`
+        : ' · ningún agente ha consultado el contexto todavía';
+      status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness}${capture}${retrieval}${failureText} · ${topicAi}`;
     const legend = document.getElementById('memory-agent-legend');
     if (legend) legend.innerHTML = '<div class="memory-empty">Abre el mapa para ver la atribución por agente.</div>';
     renderMemorySessions(sessions, append);

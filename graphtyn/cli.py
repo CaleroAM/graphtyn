@@ -496,6 +496,9 @@ def main():
     context_p.add_argument("--branch", default=None)
     context_p.add_argument("--limit", type=int, default=8)
     context_p.add_argument("--token-budget", type=int, default=1800)
+    context_p.add_argument("--mode", choices=["semantic", "continuity"], default="semantic",
+                           help="continuity incluye las últimas actualizaciones atribuidas")
+    context_p.add_argument("--activity-limit", type=int, default=3)
     context_p.add_argument("--neighbor-limit", type=int, default=12)
     context_p.add_argument("--no-graph", action="store_true")
     context_p.add_argument("--path", default=".")
@@ -1601,6 +1604,7 @@ def main():
             elif args.memory_action == "context":
                 result = memory.context(args.query, requester_agent=args.agent, limit=args.limit,
                                         token_budget=args.token_budget, branch=args.branch,
+                                        mode=args.mode, activity_limit=args.activity_limit,
                                         include_graph=not args.no_graph, neighbor_limit=args.neighbor_limit)
             elif args.memory_action == "status":
                 result = memory.status()

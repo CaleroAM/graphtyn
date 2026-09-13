@@ -1,7 +1,8 @@
 import json
 import subprocess
 
-from graphtyn.core.agent_installer import install_agent, install_ci
+from graphtyn.core.agent_installer import (MEMORY_POLICY_END, MEMORY_POLICY_START,
+                                           install_agent, install_ci)
 from graphtyn.core.global_graph import list_projects, query_global, register_project, remove_project
 from graphtyn.core.verification import verify_python_edits
 from graphtyn.core.work_memory import attach_learning, reflect, save_result
@@ -57,6 +58,28 @@ def test_agent_installer_is_idempotent(tmp_path):
     install_agent(tmp_path, "cursor")
     text = (tmp_path / ".cursor/rules/graphtyn.mdc").read_text(encoding="utf-8")
     assert text.count("# Graphtyn") == 1
+
+
+def test_agent_installer_updates_managed_memory_policy_without_losing_project_rules(tmp_path):
+    target = tmp_path / "AGENTS.md"
+    target.write_text(
+        "# Project rules\nKeep the existing lint command.\n\n"
+        "## Graphtyn memory\nThis stale policy will be replaced.\n",
+        encoding="utf-8")
+    with target.open("a", encoding="utf-8") as stream:
+        stream.write(f"\n{MEMORY_POLICY_START}\nold managed text\n{MEMORY_POLICY_END}\n")
+
+    install_agent(tmp_path, "codex")
+    updated = target.read_text(encoding="utf-8")
+    manifest = json.loads((tmp_path / ".graphtyn/agent-install.json").read_text(encoding="utf-8"))
+    install_agent(tmp_path, "codex")
+
+    assert target.read_text(encoding="utf-8") == updated
+    assert "Keep the existing lint command." in updated
+    assert "old managed text" not in updated
+    assert "At the start of" in updated and 'mode="continuity"' in updated
+    assert updated.count(MEMORY_POLICY_START) == updated.count(MEMORY_POLICY_END) == 1
+    assert manifest["memory_policy_version"] == 3
 
 
 def test_ci_installer_generates_auditable_github_workflow(tmp_path):

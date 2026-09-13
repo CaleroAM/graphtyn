@@ -119,6 +119,27 @@ def test_memory_projects_registers_remote_workspace_alias(git_repo, tmp_path):
     assert alias in current["aliases"]
 
 
+def test_memory_context_cli_continuity_includes_recent_other_agent(git_repo, tmp_path, monkeypatch):
+    from graphtyn.core.shared_memory import SharedMemoryStore
+
+    home = tmp_path / "home-context-continuity"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(home / ".graphtyn"))
+    store = SharedMemoryStore(git_repo)
+    session = store.ensure_external_session("opencode", "opencode-cli", "Button change", consent=True)
+    store.append_message(session["id"], "user", "Change the report button color")
+    store.append_message(session["id"], "assistant", "OpenCode left the report button blue.")
+
+    result = _run_cli(["memory", "context", "what did OpenCode change", "--path", str(git_repo),
+                       "--agent", "codex", "--mode", "continuity", "--activity-limit", "3",
+                       "--token-budget", "1000", "--no-graph"], git_repo, home)
+    data = json.loads(result.stdout)
+
+    assert result.returncode == 0, result.stderr
+    assert data["retrieval_mode"] == "continuity"
+    assert data["recent_activity"][0]["agent_id"] == "opencode"
+    assert "left the report button blue" in data["recent_activity"][0]["assistant_update"]
+
+
 def test_query_returns_matching_symbols(git_repo, tmp_path):
     home = tmp_path / "home"
     home.mkdir()

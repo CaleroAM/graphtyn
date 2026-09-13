@@ -12,6 +12,7 @@ from .core.work_memory import attach_learning
 from .core.history import HistoryTracker
 from .core.shared_memory import SharedMemoryStore
 from .core.storage import data_home, project_store_dir
+from .core.memory_scope import resolve_memory_scope
 from .core.history_import import configured_sources, _agent_id_matches
 from .core.source_evidence import attach_source_evidence
 from .core.console import configure_utf8_stdio
@@ -28,37 +29,12 @@ def _cached_index_dir(workspace: Path) -> Path:
 
 def _memory_scope_agents(workspace: Path, requester: str | None = None) -> list[str]:
     """Resolve the owner configured for this MCP memory space."""
-    owners = set()
-    registration = data_home() / "registered_projects.json"
-    try:
-        payload = json.loads(registration.read_text(encoding="utf-8"))
-        rows = payload if isinstance(payload, list) else []
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            try:
-                same_path = Path(str(row.get("path") or "")).expanduser().resolve() == workspace.resolve()
-            except (OSError, RuntimeError, ValueError):
-                same_path = False
-            if same_path:
-                owners.update(str(value).strip().casefold() for value in row.get("agent_ids", []) if str(value).strip())
-    except (OSError, ValueError, TypeError):
-        pass
-    for source in configured_sources():
-        project = str(source.get("project_path") or "").strip()
-        agent = str(source.get("agent_id") or "").strip().casefold()
-        if not project or not agent:
-            continue
-        try:
-            if Path(project).expanduser().resolve() == workspace.resolve():
-                owners.add(agent)
-        except (OSError, RuntimeError, ValueError):
-            continue
+    scope = resolve_memory_scope(workspace)
     # A requester is a visibility principal, not the owner of the store.  Do
     # not turn an unregistered workspace into a single-agent store merely
     # because another agent is asking a question; private memories are still
     # filtered by ``requester_agent`` inside the store.
-    return sorted(owners)
+    return scope["agent_ids"] if scope["restricted"] else []
 
 
 def _validate_memory_owner(workspace: Path, agent_id: str | None) -> None:
@@ -742,6 +718,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                 "query": {"type": "string"}, "requester_agent": {"type": "string", "description": "Identidad real del cliente o perfil, sin alias implícitos."},
                                 "branch": {"type": "string"}, "limit": {"type": "integer"},
                                 "token_budget": {"type": "integer"},
+                                "mode": {"type": "string", "enum": ["semantic", "continuity"], "description": "continuity agrega actividad reciente atribuida al proyecto."},
+                                "activity_limit": {"type": "integer", "minimum": 0, "maximum": 10},
                                 "include_graph": {"type": "boolean"},
                                 "neighbor_limit": {"type": "integer"}}, "required": ["query", "requester_agent"]}
                         },
@@ -1003,6 +981,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 result = memory.context(str(args.get("query") or ""), requester_agent=args.get("requester_agent"),
                                         branch=args.get("branch"), limit=int(args.get("limit") or 8),
                                         token_budget=int(args.get("token_budget") or 1800),
+                                        mode=str(args.get("mode") or "semantic"),
+                                        activity_limit=max(0, min(10, int(args.get("activity_limit") if args.get("activity_limit") is not None else 3))),
                                         include_graph=bool(args.get("include_graph", True)),
                                         neighbor_limit=int(args.get("neighbor_limit") or 12),
                                         agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))

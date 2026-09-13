@@ -258,6 +258,70 @@ def test_codex_nested_payload_and_sqlite_histories(tmp_path):
     assert hermes_sessions[0].workspace == "/work/erp"
 
 
+def test_codex_environment_context_is_not_imported_as_a_user_message(tmp_path):
+    path = tmp_path / "codex.jsonl"
+    path.write_text("\n".join(json.dumps(item) for item in [
+        {"type": "session_meta", "payload": {"id": "codex-session", "cwd": "/work/project"}},
+        {"type": "response_item", "payload": {"type": "message", "role": "user",
+            "content": [{"type": "input_text", "text": "<environment_context>\n<cwd>/work/project</cwd>\n</environment_context>"}]}},
+        {"type": "response_item", "payload": {"type": "message", "role": "user",
+            "content": [{"type": "input_text", "text": "¿Qué cambió en este proyecto?"}]}},
+        {"type": "response_item", "payload": {"type": "message", "role": "assistant",
+            "content": [{"type": "output_text", "text": "OpenCode dejó pendiente validar el color."}]}},
+    ]) + "\n", encoding="utf-8")
+
+    parsed = parse_history_file(path, "codex")
+    preview = discover_histories("codex", [str(path)])
+
+    assert len(parsed) == 1
+    assert [item["content"] for item in parsed[0].messages] == [
+        "¿Qué cambió en este proyecto?", "OpenCode dejó pendiente validar el color."]
+    assert preview["count"] == 1
+    assert preview["sessions"][0]["message_count"] == 2
+
+
+def test_project_sync_discovers_local_coding_histories_but_keeps_ambiguous_sessions_pending(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    project = tmp_path / "openclaw-project"
+    project.mkdir()
+    codex_root, claude_root, agy_root = (tmp_path / name for name in ("codex", "claude", "agy"))
+    for root in (codex_root, claude_root): root.mkdir()
+    (codex_root / "codex.jsonl").write_text("\n".join(json.dumps(row) for row in [
+        {"session_id": "codex-project", "cwd": str(project), "role": "user", "content": "Revisar OpenCode"},
+        {"session_id": "codex-project", "cwd": str(project), "role": "assistant", "content": "La memoria de OpenCode debe cargarse."},
+    ]), encoding="utf-8")
+    (claude_root / "claude.jsonl").write_text("\n".join(json.dumps(row) for row in [
+        {"session_id": "claude-project", "workspace": str(project), "role": "user", "content": "Continuar panel"},
+        {"session_id": "claude-project", "workspace": str(project), "role": "assistant", "content": "Retomo desde el historial."},
+    ]), encoding="utf-8")
+    transcript = agy_root / "brain" / "11111111-1111-4111-8111-111111111111" / ".system_generated" / "logs" / "transcript.jsonl"
+    transcript.parent.mkdir(parents=True)
+    transcript.write_text("\n".join(json.dumps(row) for row in [
+        {"source": "USER_EXPLICIT", "type": "USER_INPUT", "content": "Revisar este repo"},
+        {"source": "MODEL", "type": "GENERIC", "role": "assistant", "content": "AGY habló sin metadata de workspace."},
+        {"source": "MODEL", "type": "GENERIC", "toolName": "read_file", "content": "contenido técnico"},
+    ]), encoding="utf-8")
+    source_config = tmp_path / "history-sources.json"
+    monkeypatch.setattr("graphtyn.core.history_import.sources_config_file", lambda: source_config)
+    monkeypatch.setattr("graphtyn.core.history_import.default_sources", lambda: {
+        "codex": [codex_root], "claude": [claude_root], "antigravity": [agy_root]})
+
+    found = discover_histories(project_path=project)
+    routed = import_histories(project, found["sessions"], consent=True, dry_run=True)
+
+    assert {item["provider"] for item in found["sessions"]} == {"codex", "claude", "antigravity"}
+    agy = next(item for item in found["sessions"] if item["provider"] == "antigravity")
+    parsed_agy = parse_history_file(transcript, "antigravity")[0]
+    assert [(item["role"], item["content"]) for item in parsed_agy.messages] == [
+        ("user", "Revisar este repo"),
+        ("assistant", "AGY habló sin metadata de workspace."),
+        ("tool", "contenido técnico"),
+    ]
+    assert routed["selected"] == 2
+    assert len(routed["ambiguous"]) == 1
+    assert routed["ambiguous"][0]["session"] == "11111111-1111-4111-8111-111111111111"
+
+
 def test_opencode_json_sqlite_histories_keep_only_conversation_text_and_exact_project(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
     project = tmp_path / "openclaw"
@@ -405,6 +469,28 @@ def test_historical_import_is_idempotent_and_searchable(tmp_path, monkeypatch):
     assert found and found[0]["agent_id"] == "openclaw/agent-beta"
 
 
+def test_historical_import_does_not_invent_source_time_when_missing(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    project = tmp_path / "codex-project"
+    project.mkdir()
+    session = {"provider": "codex", "agent_id": "codex", "external_session_id": "no-source-time",
+               "task": "Imported without original timestamps", "source": "session.jsonl",
+               "workspace": None, "explicit_project_selection": True,
+               "messages": [{"role": "user", "content": "Resume the deployment work"},
+                            {"role": "assistant", "content": "The last deploy used blue green."}]}
+
+    result = import_histories(project, [session], consent=True)
+    store = SharedMemoryStore(project)
+    exported = store.export_snapshot(include_messages=True)
+    imported = [row for row in exported["messages"] if row["session_id"] in {
+        item["session_id"] for item in result["imported"]}]
+
+    assert result["ok"] and len(imported) == 2
+    assert all(message["metadata"]["capture_mode"] == "historical_import" for message in imported)
+    assert all("occurred_at" not in message["metadata"] for message in imported)
+    assert store.recent_activity() == []
+
+
 def test_project_identity_recognizes_renamed_alias(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
     project = tmp_path / "graphtyn"
@@ -454,6 +540,11 @@ def test_mcp_memory_write_rejects_foreign_agent(tmp_path, monkeypatch):
     brain = tmp_path / "cerebro-evi"; brain.mkdir()
     save_source("openclaw", str(tmp_path / "agents" / "main"), project_path=brain,
                 agent_id="openclaw/main")
+    from graphtyn.core.storage import data_home
+    registrations = data_home() / "registered_projects.json"
+    registrations.parent.mkdir(parents=True, exist_ok=True)
+    registrations.write_text(json.dumps([{"path": str(brain), "space_type": "agent_brain",
+                                          "agent_ids": []}]), encoding="utf-8")
 
     _validate_memory_owner(brain, "openclaw/main")
     with pytest.raises(PermissionError, match="no está autorizado"):

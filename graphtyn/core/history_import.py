@@ -254,10 +254,16 @@ def _content(record: dict[str, Any]) -> str:
     return str(value or "").strip()
 
 
-def _role(record: dict[str, Any]) -> str | None:
+def _role(record: dict[str, Any], provider: str | None = None) -> str | None:
     channel = str(record.get("channel") or record.get("type") or "").casefold()
     if channel in {"analysis", "reasoning", "thinking", "system", "developer"}:
         return None
+    # Codex transcripts serialize environment/system context as a user-shaped
+    # message. It is session metadata, not a prompt written by the user.
+    if str(provider or "").casefold() == "codex":
+        text = _content(record).lstrip().casefold()
+        if text.startswith("<environment_context>"):
+            return None
     source = str(record.get("source") or "").upper()
     record_type = str(record.get("type") or "").upper()
     if record.get("tool_call_id") or record.get("toolUseId") or record_type in {"TOOL_RESULT", "FUNCTION_CALL_OUTPUT", "TOOL", "TOOL_RESPONSE"}:
@@ -433,7 +439,7 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
                 group = grouped.setdefault(sid, {"messages": [], "timestamps": [],
                     "workspace": None, "branch": None, "title": meta.get("display_name")})
                 for child_index, record in enumerate(_walk_records(root)):
-                    role, content = _role(record), _content(record)
+                    role, content = _role(record, provider), _content(record)
                     if role not in {"user", "assistant", "tool"} or not content:
                         continue
                     native_id = (record.get("id") or record.get("messageId") or record.get("message_id")
@@ -566,7 +572,7 @@ def parse_history_file(path: Path, provider: str, agent_hint: str | None = None)
             file_session = file_session or root_session
             file_workspace = file_workspace or root_workspace
         for child_index, record in enumerate(_walk_records(root)):
-            role, content = _role(record), _content(record)
+            role, content = _role(record, provider), _content(record)
             if role not in {"user", "assistant", "tool"} or not content: continue
             sid = str(record.get("sessionId") or record.get("session_id") or record.get("conversation_id")
                       or root_session or path.stem)
@@ -732,10 +738,10 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
             if agent_id:
                 source_owners.update({str(root): str(agent_id).strip().casefold() for root in roots})
         elif project_path:
-            # Per-space synchronization only consumes explicitly associated
-            # sources. OpenCode is the exception: its database stores many
-            # projects, and each session carries a workspace path. Scan the
-            # local database and rely on exact path routing below.
+            # Per-space synchronization consumes configured sources. Local
+            # transcript providers may also be scanned because each session
+            # carries its workspace; import_histories routes only exact matches
+            # and leaves sessions without reliable workspace evidence pending.
             selected = [row for row in configured if row["provider"] == name and
                         _same_project_path(row.get("project_path"), project_path)]
             roots = [row["source"] for row in selected]
@@ -744,7 +750,7 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                                   for row in selected if row.get("agent_id") or agent_id})
             source_baselines.update({row["source"]: float(row["capture_from"])
                                      for row in selected if isinstance(row.get("capture_from"), (int, float))})
-            if not roots and name == "opencode":
+            if not roots and name in {"opencode", "codex", "claude", "antigravity"}:
                 roots = [str(value) for value in default_sources().get(name, [])]
         else:
             roots = [row["source"] for row in configured if row["provider"] == name]
@@ -1052,17 +1058,31 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                 reused.append({"source": raw.get("source"), "session_id": previous["memory_id"],
                                "external_session_id": raw.get("external_session_id")})
                 continue
-            occurred_at = float(raw.get("occurred_at") or time.time())
+            # Import time is not evidence of when a historical conversation
+            # happened. Preserve an unknown source timestamp as unknown.
+            raw_occurred_at = raw.get("occurred_at")
+            try:
+                occurred_at = float(raw_occurred_at) if raw_occurred_at is not None else None
+            except (TypeError, ValueError):
+                occurred_at = None
             agent_id = str(raw.get("agent_id") or raw.get("provider") or "unknown").strip().casefold()
             external_id = str(raw.get("external_session_id") or raw.get("fingerprint"))
             session_id = "ses_ext_" + hashlib.sha256(f"{agent_id}\0{external_id}".encode()).hexdigest()[:24]
             historical_messages = []
             for index, message in enumerate(raw.get("messages") or []):
                 metadata = message.get("metadata") or {}
-                historical_messages.append({**message, "metadata": {**metadata,
+                source_time = metadata.get("occurred_at")
+                if source_time is None:
+                    source_time = occurred_at
+                historical_metadata = {**metadata,
                     "source_message_id": metadata.get("source_message_id") or f"{raw.get('external_session_id')}:{index}",
-                    "capture_mode": "historical_import", "occurred_at": metadata.get("occurred_at", occurred_at),
-                    "provider": raw.get("provider"), "historical_source": raw.get("source")}})
+                    "capture_mode": "historical_import",
+                    "provider": raw.get("provider"), "historical_source": raw.get("source")}
+                if source_time is not None:
+                    historical_metadata["occurred_at"] = source_time
+                else:
+                    historical_metadata.pop("occurred_at", None)
+                historical_messages.append({**message, "metadata": historical_metadata})
             if not historical_messages and store.get_session(session_id):
                 reused.append({"source": raw.get("source"), "session_id": session_id,
                                "external_session_id": raw.get("external_session_id")})
@@ -1079,16 +1099,23 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
             with store._connect() as conn:
                 conn.execute("INSERT OR IGNORE INTO legacy_imports(source_key,memory_id,imported_at) VALUES(?,?,?)",
                              (source_key, result["session_id"], time.time()))
-                conn.execute("UPDATE sessions SET started_at=?,ended_at=? WHERE id=?",
-                             (occurred_at, occurred_at, result["session_id"]))
+                if occurred_at is not None:
+                    conn.execute("UPDATE sessions SET started_at=?,ended_at=? WHERE id=?",
+                                 (occurred_at, occurred_at, result["session_id"]))
                 rows = conn.execute("SELECT id,metadata_json FROM memories WHERE session_id=?",
                                     (result["session_id"],)).fetchall()
                 for row in rows:
                     metadata = json.loads(row["metadata_json"] or "{}")
-                    metadata.update({"capture_mode": "historical_import", "occurred_at": occurred_at,
+                    metadata.update({"capture_mode": "historical_import",
                                      "historical_source": raw.get("source"), "provider": raw.get("provider")})
-                    conn.execute("UPDATE memories SET metadata_json=?,created_at=?,updated_at=? WHERE id=?",
-                                 (json.dumps(metadata, ensure_ascii=False), occurred_at, occurred_at, row["id"]))
+                    if occurred_at is not None:
+                        metadata["occurred_at"] = occurred_at
+                        conn.execute("UPDATE memories SET metadata_json=?,created_at=?,updated_at=? WHERE id=?",
+                                     (json.dumps(metadata, ensure_ascii=False), occurred_at, occurred_at, row["id"]))
+                    else:
+                        metadata.pop("occurred_at", None)
+                        conn.execute("UPDATE memories SET metadata_json=? WHERE id=?",
+                                     (json.dumps(metadata, ensure_ascii=False), row["id"]))
         except Exception as exc:
             errors.append({"source": raw.get("source"), "session": raw.get("external_session_id"), "error": str(exc)})
     return {"ok": not errors, "project": project, "selected": len(selected), "imported": imported, "reused": reused,

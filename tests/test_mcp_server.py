@@ -51,6 +51,9 @@ def test_mcp_initialize_and_tools_list(workspace):
     intent_tool = next(t for t in tools["result"]["tools"] if t["name"] == "graph_query_intent")
     assert "overview" in intent_tool["inputSchema"]["properties"]["intent"]["enum"]
     assert intent_tool["inputSchema"]["properties"]["evidence_mode"]["enum"] == ["auto", "compact", "balanced", "precision"]
+    context_tool = next(t for t in tools["result"]["tools"] if t["name"] == "memory_context")
+    assert context_tool["inputSchema"]["properties"]["mode"]["enum"] == ["semantic", "continuity"]
+    assert context_tool["inputSchema"]["properties"]["activity_limit"]["maximum"] == 10
 
 
 def test_mcp_intent_profile_exposes_context_and_topic_expansion(workspace):
@@ -86,6 +89,30 @@ def test_mcp_memory_cross_session_attribution(workspace):
     ])
     result = json.loads(response[1]["result"]["content"][0]["text"])
     assert result["results"][0]["attribution"]["agent_id"] == "agy"
+
+
+def test_mcp_memory_context_continuity_returns_recent_other_agent(workspace):
+    _, response = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 120,
+        "method": "tools/call", "params": {"name": "memory_session_start", "arguments": {
+            "agent_id": "opencode", "task": "Panel", "capture_enabled": True}}}])
+    session = json.loads(response[0]["result"]["content"][0]["text"])
+    _, response = _mcp_call(workspace, [
+        {"jsonrpc": "2.0", "id": 121, "method": "tools/call", "params": {
+            "name": "memory_append", "arguments": {"session_id": session["id"],
+                "role": "user", "content": "Cambiar el botón del reporte"}}},
+        {"jsonrpc": "2.0", "id": 122, "method": "tools/call", "params": {
+            "name": "memory_append", "arguments": {"session_id": session["id"],
+                "role": "assistant", "content": "OpenCode dejó pendiente validar el color."}}},
+        {"jsonrpc": "2.0", "id": 123, "method": "tools/call", "params": {
+            "name": "memory_context", "arguments": {"query": "qué quedó pendiente",
+                "requester_agent": "codex", "mode": "continuity", "include_graph": False,
+                "token_budget": 1000}}},
+    ])
+    context = json.loads(response[2]["result"]["content"][0]["text"])
+
+    assert context["retrieval_mode"] == "continuity"
+    assert context["recent_activity"][0]["agent_id"] == "opencode"
+    assert "validar el color" in context["recent_activity"][0]["assistant_update"]
 
 
 def test_mcp_memory_status_reports_bound_workspace(workspace):

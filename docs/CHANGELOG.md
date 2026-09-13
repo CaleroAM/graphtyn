@@ -3,9 +3,38 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
-## [Unreleased]
+## [0.10.2] - 2026-09-13
 
-Sin cambios registrados.
+### Añadido
+
+- `memory_context` ofrece `mode=continuity` en MCP, API y CLI para combinar
+  recuerdos temáticos con actualizaciones recientes atribuidas a agente, sesión
+  y mensaje fuente. El presupuesto cuenta la respuesta completa.
+- El estado del almacén muestra la última recuperación de contexto sin guardar
+  ni exponer la consulta del agente.
+- La sincronización por proyecto descubre historiales locales de Codex y Claude,
+  además de OpenCode y Antigravity; sólo importa rutas de workspace exactas y
+  mantiene las sesiones ambiguas pendientes.
+- El instalador mantiene una política de memoria versionada e idempotente para
+  los agentes, preserva instrucciones propias y distingue cerebro privado,
+  memoria de proyecto, recuperación y captura automática.
+- La guía del agente evita repetir consultas cuando una ventana de evidencia no
+  está disponible; `memory_context` se consulta una vez y sólo se amplía una
+  referencia concreta cuando hace falta.
+
+### Corregido
+
+- MCP stdio y HTTP resuelven el alcance compartido de proyecto con la política
+  común del almacén: atribuir una fuente a un agente ya no oculta el contexto de
+  otros agentes del mismo proyecto.
+- Las importaciones Codex excluyen su envoltura `<environment_context>` aunque
+  el formato la represente con el rol `user`.
+- Una importación histórica sin fecha fuente ya no usa la hora de importación
+  como si fuera la fecha de actividad original; esas entradas no se anuncian
+  como actividad reciente.
+- Los registros `MODEL/GENERIC` de Antigravity sólo se clasifican como respuesta
+  si identifican explícitamente autoría del agente; resultados de herramientas
+  conservan el tipo `tool`.
 
 ## [0.10.1] - 2026-09-12
 
