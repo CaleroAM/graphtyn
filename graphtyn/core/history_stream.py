@@ -18,6 +18,8 @@ def ingest_jsonl(store, source, *, provider, external_session_id, agent_id,
                  consent, explicit_project_selection=False, batch_messages=30,
                  batch_tokens=12000, max_record_bytes=8 * 1024 * 1024, progress=None):
     if not consent: raise PermissionError('la captura requiere consentimiento')
+    from .openclaw_integration import assert_agent_memory_enabled
+    assert_agent_memory_enabled(store.workspace, agent_id)
     path = Path(source).expanduser().resolve()
     key = hashlib.sha256(f'{provider}\0{external_session_id}\0{path}'.encode()).hexdigest()
     with path.open('rb') as stream:

@@ -66,6 +66,10 @@ def _validate_memory_owner(workspace: Path, agent_id: str | None) -> None:
     observed = str(agent_id or "").strip().casefold()
     if owners and not any(_agent_id_matches(owner, observed) for owner in owners):
         raise PermissionError("el agente no está autorizado para este espacio de memoria")
+    # OpenClaw memory opt-outs are installation-scoped. Keep other providers
+    # and other users' agents with the same display/id unaffected.
+    from .core.openclaw_integration import assert_agent_memory_enabled
+    assert_agent_memory_enabled(workspace, observed)
 
 
 def _validate_memory_session_owner(workspace: Path, memory: SharedMemoryStore, session_id: str | None) -> None:

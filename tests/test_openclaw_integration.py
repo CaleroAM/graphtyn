@@ -8,7 +8,8 @@ import pytest
 from graphtyn.core.history_import import save_source, discover_histories
 from graphtyn.core.openclaw_integration import (
     _agent_entries, agent_context, configure_openclaw_mcp, connect_openclaw, discover_openclaw, publish_agent_memory,
-    resolve_agent, revoke_agent_memory, set_parent,
+    assert_agent_memory_enabled, paths_for_installation, resolve_agent, revoke_agent_memory,
+    set_agent_memory_enabled, set_parent,
 )
 from graphtyn.core.shared_memory import SharedMemoryStore, _resolve_store_path
 from graphtyn.core.storage import data_home
@@ -171,6 +172,69 @@ def test_connect_uses_the_same_central_store_as_its_watcher(tmp_path, monkeypatc
     assert os.environ["GRAPHTYN_HOME"] == str(Path.home() / ".graphtyn")
     assert _resolve_store_path(brain, create=False).is_file()
     assert not (brain / ".graphtyn" / "memory-v2.db").exists()
+
+
+def test_memory_policy_is_per_installation_persists_and_removes_only_its_source(tmp_path, monkeypatch):
+    from graphtyn.core.history_import import import_histories
+
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    source_config = tmp_path / "history-sources.json"
+    registry = data_home() / "openclaw-installations.json"
+    first = connect_openclaw(_installation(tmp_path), source_config=source_config, registry=registry)
+    first_agents = {item["id"]: item for item in first["agents"]}
+    assert first_agents["main"]["memory_enabled"] is True
+
+    disabled = set_agent_memory_enabled(first["id"], "main", False,
+        reason="default system agent; keep its brain empty", registry=registry,
+        source_config=source_config)
+
+    assert disabled["ok"] and disabled["changed"] and not disabled["memory_enabled"]
+    current = json.loads(registry.read_text())["installations"][0]
+    assert next(row for row in current["agents"] if row["id"] == "main")["memory_enabled"] is False
+    assert any(event["agent_id"] == "openclaw/main" and not event["memory_enabled"]
+               for event in current["memory_policy_events"])
+    sources = json.loads(source_config.read_text())["sources"]
+    assert not any(row.get("agent_id") == "openclaw/main" for row in sources)
+    assert any(row.get("agent_id") == "openclaw/career" for row in sources)
+    assert first_agents["main"]["brain_path"] not in paths_for_installation(first["id"], registry=registry)
+    with pytest.raises(PermissionError, match="memoria de openclaw/main está desactivada"):
+        assert_agent_memory_enabled(first_agents["main"]["brain_path"], "dashboard", registry=registry)
+    from graphtyn.mcp_server import _validate_memory_owner
+    with pytest.raises(PermissionError, match="memoria de openclaw/main está desactivada"):
+        _validate_memory_owner(Path(first_agents["main"]["brain_path"]), "openclaw/main")
+    with pytest.raises(PermissionError, match="memoria de openclaw/main está desactivada"):
+        publish_agent_memory(first["id"], "main", "any-memory-id", registry=registry)
+    blocked_import = import_histories(first_agents["main"]["brain_path"], [{
+        "provider": "openclaw", "agent_id": "openclaw/main", "external_session_id": "should-not-save",
+        "workspace": None, "explicit_project_selection": True,
+        "messages": [{"role": "user", "content": "Do not persist this transcript."}],
+    }], consent=True, agent_ids=["openclaw/main"])
+    assert blocked_import["selected"] == 0
+    assert blocked_import["excluded"][0]["reason"].startswith("la memoria de openclaw/main está desactivada")
+    from graphtyn.core.history_stream import ingest_jsonl
+    stream_source = tmp_path / "main-history.jsonl"
+    stream_source.write_text('{"id":"m1","role":"user","content":"blocked"}\n')
+    with pytest.raises(PermissionError, match="memoria de openclaw/main está desactivada"):
+        ingest_jsonl(SharedMemoryStore(Path(first_agents["main"]["brain_path"])), stream_source,
+            provider="openclaw", external_session_id="stream-should-not-save",
+            agent_id="openclaw/main", consent=True, explicit_project_selection=True)
+
+    reconnected = connect_openclaw(_installation(tmp_path), source_config=source_config, registry=registry)
+    assert next(row for row in reconnected["agents"] if row["id"] == "main")["memory_enabled"] is False
+    assert not any(row.get("agent_id") == "openclaw/main" for row in json.loads(source_config.read_text())["sources"])
+
+    second_discovery = _installation(tmp_path)
+    second_discovery["id"] = "openclaw-fedcba9876543210"
+    second = connect_openclaw(second_discovery, source_config=source_config, registry=registry)
+    second_main = next(row for row in second["agents"] if row["id"] == "main")
+    assert second_main["memory_enabled"] is True
+    assert second_main["brain_path"] != first_agents["main"]["brain_path"]
+    assert_agent_memory_enabled(second_main["brain_path"], "openclaw/main", registry=registry)
+    from graphtyn.api.main import _require_role
+    _, denied = _require_role(None, "writer", first_agents["main"]["brain_path"])
+    _, allowed = _require_role(None, "writer", second_main["brain_path"])
+    assert denied is not None and denied.status_code == 403
+    assert allowed is None
 
 
 def test_private_child_memory_requires_explicit_family_publication(tmp_path, monkeypatch):

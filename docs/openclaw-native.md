@@ -40,6 +40,25 @@ registrado el servidor MCP. El autodetector nunca prueba hosts SSH arbitrarios.
 
 `connect` asocia la fuente de historial a su agente, registra los cerebros y trata de iniciar un servicio `systemd --user` que sincroniza cada cinco minutos. Por defecto fija un cursor de inicio y procesa sólo conversaciones nuevas o modificadas después de conectarse. Para procesar historial anterior, activa esa decisión explícitamente con `--import-history`. La operación es incremental; volver a ejecutarla conserva los cursores y relaciones confirmadas.
 
+La política de memoria se guarda por agente y por instalación. Todos los agentes
+quedan habilitados por defecto, incluido uno llamado `main`; desactivar `main`
+para una instalación no cambia el comportamiento de otros usuarios o
+instalaciones. La identidad desactivada permanece registrada, pero Graphtyn
+retira su fuente de historial, la omite en el sincronizador nativo y rechaza
+escrituras al cerebro incluso si se intenta ingresar una conversación por MCP,
+API o CLI. No borra datos que ya existan. Al volver a habilitarla, captura desde
+ese momento y no importa historial anterior automáticamente.
+
+```bash
+graphtyn harness openclaw memory-policy --installation openclaw-<id> \
+  --agent main --state disabled --reason "agente predeterminado sin memoria"
+graphtyn harness openclaw list
+```
+
+El estado `memory_enabled` se muestra en el registro y su historial queda en
+`memory_policy_events`. Para reanudar la captura, usa `--state enabled`; la
+fuente se vuelve a registrar con un cursor nuevo.
+
 Para usar MCP, `connect` conserva una entrada Graphtyn válida que ya exista en `openclaw.json`. Si configuras `GRAPHTYN_MCP_URL` y `GRAPHTYN_MCP_TOKEN`, también escribe la entrada MCP, haciendo una copia `openclaw.json.graphtyn-backup-<timestamp>` antes. El token no se imprime. Si no hay URL/token, fuentes y watcher pueden quedar configurados, pero `connect` informa que la consulta MCP sigue pendiente y devuelve estado incompleto.
 
 ```bash

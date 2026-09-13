@@ -401,6 +401,13 @@ def _require_role(authorization: str | None, required: str, path: str | None = N
         return role, JSONResponse({"ok": False, "error": f"Se requiere rol {required}"}, status_code=403)
     if path and principal["projects"] and str(Path(path).expanduser().resolve()) not in principal["projects"]:
         return role, JSONResponse({"ok": False, "error": "El token no permite este proyecto"}, status_code=403)
+    if required == "writer" and path:
+        from ..core.openclaw_integration import assert_agent_memory_enabled
+        try:
+            assert_agent_memory_enabled(path, principal.get("agent_id"))
+        except PermissionError as exc:
+            return role, JSONResponse({"ok": False, "error": str(exc),
+                                       "code": "agent_memory_disabled"}, status_code=403)
     limit = max(1, int(os.environ.get("GRAPHTYN_MEMORY_RATE_LIMIT", "120")))
     now = time.time()
     with _RATE_LOCK:
@@ -744,11 +751,13 @@ def openclaw_sync(installation_id: str,
     except KeyError as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
-    agents = [agent for agent in installation.get("agents", []) if agent.get("brain_path")]
+    agents = [agent for agent in installation.get("agents", [])
+              if agent.get("brain_path") and agent.get("memory_enabled", True)]
     paths = sorted({str(Path(agent["brain_path"]).expanduser().resolve())
                     for agent in agents if agent.get("brain_path")})
     if not paths:
-        return JSONResponse({"ok": False, "error": "la instalación no tiene cerebros registrados"}, status_code=409)
+        return JSONResponse({"ok": False,
+                             "error": "la instalación no tiene agentes con memoria habilitada"}, status_code=409)
 
     with _openclaw_sync_lock:
         existing_id = _openclaw_sync_jobs.get(installation_id)
@@ -2698,6 +2707,13 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
                 _, denied = _require_role(authorization,
                     "writer" if name in write_tools else "reader", str(root))
                 if denied: return denied
+            if name in write_tools:
+                from ..core.openclaw_integration import assert_agent_memory_enabled
+                try:
+                    assert_agent_memory_enabled(root, args.get("agent_id"))
+                except PermissionError as exc:
+                    return JSONResponse({"jsonrpc": "2.0", "id": req_id,
+                                         "error": {"code": -32003, "message": str(exc)}})
             memory = SharedMemoryStore(root)
             try:
                 if name == "memory_session_start":
