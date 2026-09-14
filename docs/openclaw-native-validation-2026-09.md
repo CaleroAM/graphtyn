@@ -100,3 +100,47 @@ La llamada de red del navegador se sustituyó por una respuesta construida con
   historiales anteriores al cursor. Las conversaciones cuyo proyecto no está
   identificado con evidencia explícita continúan en el cerebro del agente o en
   revisión pendiente.
+
+## Cierre de aceptación en la instalación activa — 14 de septiembre de 2026
+
+Antes del backfill se creó otra copia con `sqlite3.Connection.backup()` de 19
+almacenes SQLite (19/19 con `integrity_check=ok`):
+
+`/home/calero/.graphtyn/backups/openclaw-pre-history-backfill-20260914-044014/manifest.json`
+
+La conciliación de las 11 fuentes habilitadas encontró 53 sesiones candidatas
+en total: 37 no estaban en los cerebros y 16 ya existían. Se ejecutó el mismo
+flujo de `sync_memory_workspace` con extracción determinista y cursor histórico
+temporal, sin modificar los cursores persistentes. Resultado final: 37 sesiones
+añadidas, 16 reutilizadas, 0 ambiguas y 0 errores. Se importaron además 16
+segmentos a memorias de proyecto; no hubo segmentos rechazados ni fallidos.
+
+La única sesión inicialmente ambigua pertenecía a `openclaw/nexus` y llevaba
+como workspace `/home/node/.openclaw/workspace/nexus`. Esa ruta identifica el
+workspace privado del agente, no un proyecto. Graphtyn ahora la conserva como
+procedencia, la guarda en el cerebro de Nexus y la deja sin asignación de
+proyecto hasta que un mensaje nombre uno. Una prueba de regresión cubre esta
+regla.
+
+Para probar captura automática se creó una conversación nueva de OpenClaw en
+`nexus`, con dos mensajes. El watcher la capturó en su ciclo normal, atribuyó
+ambos mensajes a `openclaw/nexus` y los enrutó al proyecto OpenClaw por su mención
+explícita. Después de reiniciar el watcher, el nuevo ciclo informó 0 sesiones
+nuevas, 12 reutilizadas y 0 errores. Los conteos de sesiones y mensajes del
+cerebro de Nexus y del proyecto OpenClaw no cambiaron; siguen existiendo una
+sola sesión de prueba y sus dos mensajes en cada almacén correspondiente.
+
+Los 63 archivos `trajectory-path.json` observados en Career apuntan a trazas que
+no están presentes en la fuente activa. La base canónica sí contiene 25 ventanas
+de sesión; 24 tienen mensajes conversacionales indexados, y las 24 fueron
+encontradas por Graphtyn: 23 importadas y una ya existente, con 1.189 mensajes
+de usuario/asistente contabilizados. La ventana restante no tiene mensajes
+conversacionales indexables. Los punteros ausentes no representaron sesiones
+perdidas de esa base; quedan como advertencias de metadatos sin traza.
+
+Validación posterior al ajuste: `.venv/bin/pytest -q` — **404 aprobadas, 2
+omitidas**; `compileall`, `git diff --check`, `/health` y ambos servicios
+systemd correctos. Esto cierra la aceptación de captura, recuperación histórica,
+atribución, enrutamiento e idempotencia para esta instalación host + VM Docker.
+No certifica automáticamente otras topologías de OpenClaw ni fuentes históricas
+que no estén presentes en la instalación conectada.

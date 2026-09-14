@@ -112,6 +112,51 @@ def test_route_ambiguous_turn_and_default_agent_workspace_stays_unassigned(tmp_p
     assert unassigned["sessions"][0]["status"] == "unassigned"
 
 
+def test_agent_brain_sync_captures_default_openclaw_workspace_without_project_guess(tmp_path, monkeypatch):
+    home = tmp_path / "graphtyn-home"
+    brain = tmp_path / "brain-nexus"
+    project = tmp_path / "OpenClaw"
+    brain.mkdir(); project.mkdir()
+    monkeypatch.setenv("GRAPHTYN_HOME", str(home))
+    _registrations(home,
+        {"id": "openclaw-project", "name": "OpenClaw", "path": str(project), "space_type": "project"},
+        {"id": "nexus", "name": "Nexus", "path": str(brain), "space_type": "agent_brain",
+         "agent_ids": ["openclaw/nexus"]})
+    source = tmp_path / "session.jsonl"
+    external_id = "native-default-workspace-session"
+    source.write_text("\n".join(json.dumps(row) for row in [
+        {"type": "session_meta", "payload": {"id": external_id,
+         "workspace": "/home/node/.openclaw/workspace/nexus"}},
+        {"sessionId": external_id, "id": "message-1", "role": "user", "content": "Consulta general."},
+        {"sessionId": external_id, "id": "message-2", "role": "assistant", "content": "Respuesta general."},
+    ]) + "\n", encoding="utf-8")
+    discovered = {"ok": True, "count": 1, "sessions": [{
+        "provider": "openclaw", "agent_id": "openclaw/nexus", "external_session_id": external_id,
+        "task": "Consulta general", "source": str(source),
+        "workspace": "/home/node/.openclaw/workspace/nexus", "streaming_source": True,
+        "messages": [], "fingerprint": "native-default-workspace-v1",
+    }], "errors": [], "warnings": [], "excluded": [], "excluded_count": 0}
+    monkeypatch.setattr(history_import, "discover_histories", lambda *args, **kwargs: discovered)
+
+    result = history_import.sync_memory_workspace(brain, provider="openclaw", agent_id="openclaw/nexus",
+        provider_model="deterministic", enrich=False)
+
+    assert result["ok"] is True
+    assert len(result["import"]["imported"]) == 1
+    assert result["import"]["ambiguous"] == []
+    assert result["project_routing"]["unassigned_sessions"] == 1
+    brain_store = SharedMemoryStore(brain)
+    with brain_store._connect() as db:
+        rows = db.execute("SELECT content,metadata_json FROM messages ORDER BY created_at,id").fetchall()
+    project_store = SharedMemoryStore(project)
+    with project_store._connect() as db:
+        project_sessions = db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+    assert [row["content"] for row in rows] == ["Consulta general.", "Respuesta general."]
+    assert all(json.loads(row["metadata_json"])["agent_workspace"] ==
+               "/home/node/.openclaw/workspace/nexus" for row in rows)
+    assert project_sessions == 0
+
+
 @pytest.mark.parametrize(("message", "expected_project"), [
     ("Revisa el proyecto TourMuseosPuebla usando Graphtyn.", "TourMuseosPuebla"),
     ("Cambiando al proyecto Graphtyn, no a TourMuseosPuebla.", "Graphtyn"),

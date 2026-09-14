@@ -15,7 +15,7 @@ from .memory_topics import encoded_tokens
 
 
 def ingest_jsonl(store, source, *, provider, external_session_id, agent_id,
-                 consent, explicit_project_selection=False, batch_messages=30,
+                 consent, explicit_project_selection=False, source_workspace=None, batch_messages=30,
                  batch_tokens=12000, max_record_bytes=8 * 1024 * 1024, progress=None):
     if not consent: raise PermissionError('la captura requiere consentimiento')
     from .openclaw_integration import assert_agent_memory_enabled
@@ -103,6 +103,8 @@ def ingest_jsonl(store, source, *, provider, external_session_id, agent_id,
                 if sid and str(sid) != external_session_id: continue
                 mid = str(record.get('id') or record.get('uuid') or record.get('message_id') or (str(record['step_index']) if 'step_index' in record else None) or f'{external_session_id}:{index - 1}:{child_index}')
                 metadata = {'source_message_id': mid, 'provider': provider, 'historical_source': str(path), 'source_sequence': [index - 1, child_index], 'capture_mode': 'historical_import'}
+                if source_workspace:
+                    metadata['agent_workspace'] = str(source_workspace)
                 stamp = record.get('timestamp') or record.get('created_at') or record.get('createdAt')
                 if isinstance(stamp, str):
                     try: stamp = datetime.fromisoformat(stamp.replace('Z', '+00:00')).timestamp()

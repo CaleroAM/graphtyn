@@ -140,6 +140,12 @@ queda ambiguo y no se asigna a ninguno. Los mensajes
 previos al cursor de conexión siguen fuera de la captura, salvo que se solicite
 explícitamente importar el historial.
 
+Las rutas del workspace interno del harness, como
+`~/.openclaw/workspace/nexus`, identifican el entorno privado del agente, no un
+checkout de proyecto. Graphtyn guarda esa conversación en el cerebro del agente,
+conserva la ruta como procedencia y sólo la copia a un proyecto cuando los
+mensajes aportan evidencia explícita del proyecto.
+
 Antes de analizar o cambiar un proyecto, el agente debe recuperar el contexto
 de ese proyecto con `memory_project_context`, usando el nombre o ID exactos y
 su identidad real, por ejemplo `openclaw/nexus`. Por defecto combina recuerdos

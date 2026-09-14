@@ -732,6 +732,26 @@ def _same_project_path(left: str | Path | None, right: str | Path | None) -> boo
         return str(left).rstrip("/").casefold() == str(right).rstrip("/").casefold()
 
 
+def _is_default_openclaw_agent_workspace(value: str | None, agent_id: str | None) -> bool:
+    """OpenClaw's per-agent workspace is not evidence of a project checkout."""
+    if not value or not agent_id:
+        return False
+    owner = str(agent_id).strip().casefold().removeprefix("openclaw/")
+    if not owner:
+        return False
+    for parts in (Path(value).parts, PurePosixPath(value).parts, PureWindowsPath(value).parts):
+        folded = tuple(str(part).casefold() for part in parts)
+        for index, part in enumerate(folded):
+            if part not in {".openclaw", "openclaw"}:
+                continue
+            tail = folded[index + 1:]
+            if tail == ("workspace", owner):
+                return True
+            if owner == "main" and tail == ("workspace",):
+                return True
+    return False
+
+
 def _source_matches_root(path: str | Path, roots: set[str]) -> bool:
     """Match a discovered file to its configured file or containing directory."""
     try:
@@ -1008,6 +1028,23 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
     authorized_agents = memory_scope["agent_ids"] if memory_scope["restricted"] else None
     discovered = discover_histories(provider, source or None, project_path=None if source else root,
                                     agent_id=agent_id)
+    # An OpenClaw agent's default workspace (for example
+    # ~/.openclaw/workspace/nexus) identifies the agent environment, not a
+    # project checkout. Keep it as provenance and let explicit project names
+    # in the conversation drive project routing. The turn still belongs in
+    # this agent's isolated brain.
+    if memory_scope.get("space_type") == "agent_brain":
+        allowed_owners = memory_scope.get("agent_ids") or ([agent_id] if agent_id else [])
+        for item in discovered.get("sessions") or []:
+            if str(item.get("provider") or "").casefold() != "openclaw":
+                continue
+            item_owner = str(item.get("agent_id") or "").strip().casefold()
+            if allowed_owners and not any(_agent_id_matches(owner, item_owner) for owner in allowed_owners):
+                continue
+            if _is_default_openclaw_agent_workspace(item.get("workspace"), item_owner):
+                item["agent_workspace"] = item["workspace"]
+                item["workspace"] = None
+                item["explicit_project_selection"] = True
     # A source supplied directly is an explicit user selection for this space.
     if source:
         for item in discovered["sessions"]:
@@ -1296,7 +1333,8 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                 from .history_stream import ingest_jsonl
                 result = ingest_jsonl(store, raw["source"], provider=raw["provider"],
                     external_session_id=raw["external_session_id"], agent_id=raw["agent_id"],
-                    consent=True, explicit_project_selection=True)
+                    consent=True, explicit_project_selection=True,
+                    source_workspace=raw.get("agent_workspace"))
                 (imported if result["processed_this_run"] else reused).append({"source": raw["source"], "session_id": result["session_id"],
                     "external_session_id": raw["external_session_id"], "progress": result})
                 continue
@@ -1328,6 +1366,8 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                     "source_message_id": metadata.get("source_message_id") or f"{raw.get('external_session_id')}:{index}",
                     "capture_mode": metadata.get("capture_mode") or raw.get("capture_mode") or "historical_import",
                     "provider": raw.get("provider"), "historical_source": raw.get("source")}
+                if raw.get("agent_workspace"):
+                    historical_metadata["agent_workspace"] = str(raw["agent_workspace"])
                 if source_time is not None:
                     historical_metadata["occurred_at"] = source_time
                 else:
