@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import heapq
 import json
+import math
 import os
 import re
 import sqlite3
@@ -30,6 +31,24 @@ _CONTEXT_PATTERNS = (
     ("python_class", re.compile(r"\b(?:clase|class)\s+(?:de\s+)?([A-Za-z_]\w*)", re.I), "clase {}"),
     ("python_method", re.compile(r"\b(?:m[eé]todo|method)\s+(?:de\s+)?([A-Za-z_]\w*)", re.I), "método {}"),
 )
+
+_FILE_REFERENCE_RE = re.compile(
+    r"(?<![\w./-])(?P<absolute>/(?:[A-Za-z0-9_@+.-]+/)*[A-Za-z0-9_@+.-]+\.(?:pyi?|js|jsx|ts|tsx|mjs|cjs|html|css|scss|jsonc?|ya?ml|toml|md|sql|sh|bash|cs|java|go|rs|php|rb|kt|swift|c|h|cpp|hpp|vue|svelte|xml|env|ini|cfg|txt|prefab|unity|asset|asmdef|shader|compute|mat|uxml|uss|meta|csproj|sln|gradle|dart|ipynb|properties))"
+    r"|(?<![\w./-])(?P<relative>(?:[A-Za-z0-9_@+.-]+/)*[A-Za-z0-9_@+.-]+\.(?:pyi?|js|jsx|ts|tsx|mjs|cjs|html|css|scss|jsonc?|ya?ml|toml|md|sql|sh|bash|cs|java|go|rs|php|rb|kt|swift|c|h|cpp|hpp|vue|svelte|xml|env|ini|cfg|txt|prefab|unity|asset|asmdef|shader|compute|mat|uxml|uss|meta|csproj|sln|gradle|dart|ipynb|properties))"
+    r"(?=$|[#:\s`'\"<>()\[\]{},;!?])",
+    re.IGNORECASE,
+)
+
+_RELATION_STOPWORDS = {
+    "about", "additional_metadata", "actualmente", "agente", "agentes", "ahora",
+    "assistant", "archivo", "archivos", "branch", "cambio", "cambios", "change",
+    "changed", "changes", "claude", "codex", "commit", "como", "conversation",
+    "conversacion", "context", "contexto", "current", "doesn", "entonces", "exact",
+    "file", "files", "flash", "gemini", "graphtyn", "human", "memoria", "memory",
+    "openclaw", "opencode", "porque", "project", "proyecto", "prueba", "pruebas",
+    "question", "repository", "respuesta", "result", "session", "sesion", "source",
+    "sigue", "todo", "todos", "tool", "tools", "user", "version",
+}
 
 
 def encoded_tokens(value):
@@ -65,6 +84,9 @@ class TopicMemoryMixin:
             CREATE TABLE IF NOT EXISTS topic_progress (
               session_id TEXT PRIMARY KEY REFERENCES sessions(id), cursor INTEGER NOT NULL DEFAULT 0,
               processed INTEGER NOT NULL DEFAULT 0, updated_at REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS topic_file_progress (
+              session_id TEXT PRIMARY KEY REFERENCES sessions(id), cursor INTEGER NOT NULL DEFAULT 0,
+              processed INTEGER NOT NULL DEFAULT 0, updated_at REAL NOT NULL);
             CREATE TABLE IF NOT EXISTS topic_memory_links (
               topic_id TEXT NOT NULL REFERENCES topics(id), memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
               PRIMARY KEY(topic_id,memory_id));
@@ -81,6 +103,13 @@ class TopicMemoryMixin:
               source_message_id TEXT REFERENCES messages(id), created_at REAL NOT NULL,
               PRIMARY KEY(topic_id, entity_id));
             CREATE INDEX IF NOT EXISTS topic_entities_entity ON topic_entities(entity_id, topic_id);
+            CREATE TABLE IF NOT EXISTS topic_entity_evidence (
+              topic_id TEXT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+              entity_id TEXT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+              source_message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+              created_at REAL NOT NULL,
+              PRIMARY KEY(topic_id,entity_id,source_message_id));
+            CREATE INDEX IF NOT EXISTS topic_entity_evidence_message ON topic_entity_evidence(source_message_id);
             CREATE TABLE IF NOT EXISTS topic_work_terms (
               topic_id TEXT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
               term TEXT NOT NULL, PRIMARY KEY(topic_id, term));
@@ -129,6 +158,7 @@ class TopicMemoryMixin:
             db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(4,?)", (time.time(),))
             db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(5,?)", (time.time(),))
             db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(6,?)", (time.time(),))
+            db.execute("INSERT OR IGNORE INTO schema_migrations VALUES(8,?)", (time.time(),))
 
     def _node_reference(self, db, kind: str, node_id: str) -> str:
         """Return a stable human-facing reference for any memory graph node."""
@@ -291,11 +321,6 @@ class TopicMemoryMixin:
             entities.append({"kind": "component_type", "key": "button", "name": "botones"})
         if design_context or button_entities:
             entities.append({"kind": "design_group", "key": "buttons", "name": "diseño de botones"})
-        # Explicit source references make useful entities while remaining
-        # deterministic when no local model is configured.
-        for match in re.finditer(r"(?<![\w/.-])([\w./-]+\.(?:cs|js|ts|tsx|py|java|go|rs|php|prefab|unity))\b", text, re.I):
-            value = match.group(1).casefold()
-            entities.append({"kind": "file", "key": value, "name": value})
         stopwords = {"cambia", "cambiar", "change", "el", "la", "los", "las", "un", "una", "por", "para", "del", "de", "que", "ahora", "también", "tambien", "debe", "deben", "quiero", "botón", "botones", "boton", "button", "btn", "pantalla", "screen"}
         terms = {term for term in re.findall(r"[\wáéíóúñ]{4,}", text.casefold())
                  if term not in stopwords and not term.isdigit()}
@@ -314,19 +339,69 @@ class TopicMemoryMixin:
             terms.add("__continuation__")
         return entities, terms
 
+    def _file_references(self, content, *, maximum=50):
+        """Extract safe, workspace-scoped file mentions from any visible message role."""
+        text = re.sub(r"https?://\S+", " ", str(content or ""), flags=re.I)
+        root = self.workspace.resolve()
+        found = {}
+        for match in _FILE_REFERENCE_RE.finditer(text):
+            raw = match.group("absolute") or match.group("relative") or ""
+            candidate = Path(raw)
+            if candidate.is_absolute():
+                try:
+                    relative = candidate.resolve(strict=False).relative_to(root)
+                except (OSError, ValueError):
+                    continue
+                key = relative.as_posix()
+                scope = "workspace_relative"
+            else:
+                candidate = Path(raw)
+                if any(part == ".." for part in candidate.parts):
+                    continue
+                normalized = candidate.as_posix().removeprefix("./")
+                if "/" in normalized:
+                    key, scope = normalized, "workspace_relative"
+                else:
+                    try:
+                        existing = (root / candidate).resolve(strict=False)
+                        existing.relative_to(root)
+                        is_workspace_file = existing.is_file()
+                    except (OSError, ValueError):
+                        is_workspace_file = False
+                    if is_workspace_file:
+                        key, scope = existing.relative_to(root).as_posix(), "workspace_relative"
+                    else:
+                        key, scope = candidate.name, "basename_only"
+            if not key or len(key) > 512 or key.startswith("../"):
+                continue
+            found[(key.casefold(), scope)] = {
+                "kind": "file", "key": key, "name": key,
+                "metadata": {"path_scope": scope, "evidence": "explicit_message_mention"},
+            }
+            if len(found) >= max(1, min(100, int(maximum))):
+                break
+        return list(found.values())
+
     def _entity_ids(self, db, entities, source_message_id, now):
         ids = []
         for entity in entities:
-            row = db.execute("SELECT id FROM entities WHERE kind=? AND entity_key=?",
+            metadata = entity.get("metadata") or {}
+            row = db.execute("SELECT id,metadata_json FROM entities WHERE kind=? AND entity_key=?",
                              (entity["kind"], entity["key"])).fetchone()
             if row:
                 entity_id = row[0]
-                db.execute("UPDATE entities SET name=?,updated_at=? WHERE id=?",
-                           (entity["name"], now, entity_id))
+                try:
+                    prior_metadata = json.loads(row["metadata_json"] or "{}")
+                except (TypeError, ValueError):
+                    prior_metadata = {}
+                merged_metadata = {**prior_metadata, **metadata}
+                db.execute("UPDATE entities SET name=?,metadata_json=?,updated_at=? WHERE id=?",
+                           (entity["name"], json.dumps(merged_metadata, ensure_ascii=False), now, entity_id))
             else:
                 entity_id = "ent_" + hashlib.sha256((entity["kind"] + "\0" + entity["key"]).encode()).hexdigest()[:24]
-                db.execute("INSERT INTO entities(id,kind,entity_key,name,created_at,updated_at) VALUES(?,?,?,?,?,?)",
-                           (entity_id, entity["kind"], entity["key"], entity["name"], now, now))
+                db.execute("INSERT INTO entities(id,kind,entity_key,name,metadata_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?)",
+                           (entity_id, entity["kind"], entity["key"], entity["name"],
+                            json.dumps(metadata, ensure_ascii=False), now, now))
             ids.append(entity_id)
         return ids
 
@@ -359,26 +434,49 @@ class TopicMemoryMixin:
                 best = candidate
         return best[2] if best else None
 
-    def _link_topic_entities(self, db, topic_id, entity_ids, terms, source_message_id, now):
+    def _link_topic_entities(self, db, topic_id, entity_ids, terms, source_message_id, now,
+                             owner_agent=None, allow_cross_agent=True):
         for entity_id in entity_ids:
-            kind = db.execute("SELECT kind FROM entities WHERE id=?", (entity_id,)).fetchone()[0]
+            entity = db.execute("SELECT kind,metadata_json FROM entities WHERE id=?", (entity_id,)).fetchone()
+            kind = entity["kind"]
+            try:
+                metadata = json.loads(entity["metadata_json"] or "{}")
+            except (TypeError, ValueError):
+                metadata = {}
+            exact_file = kind == "file" and metadata.get("path_scope") == "workspace_relative"
             relation = {"component_type": "mismo tipo", "design_group": "tema de diseño",
                         "feature": "implementa", "module": "afecta_a", "report": "afecta_a",
-                        "platform": "usa"}.get(kind, "afecta_a")
-            db.execute("INSERT OR IGNORE INTO topic_entities(topic_id,entity_id,relation,confidence,source_message_id,created_at) VALUES(?,?,?,?,?,?)",
-                       (topic_id, entity_id, relation, "EXTRACTED", source_message_id, now))
-            prior = db.execute("SELECT topic_id FROM topic_entities WHERE entity_id=? AND topic_id!=?",
-                               (entity_id, topic_id)).fetchall()
+                        "platform": "usa", "file": "archivo mencionado"}.get(kind, "afecta_a")
+            confidence = "EXTRACTED" if kind != "file" or exact_file else "AMBIGUOUS"
+            if kind == "file" and not exact_file:
+                relation = "nombre de archivo (ambiguo)"
+            db.execute("""INSERT INTO topic_entities(topic_id,entity_id,relation,confidence,source_message_id,created_at)
+                VALUES(?,?,?,?,?,?) ON CONFLICT(topic_id,entity_id) DO UPDATE SET
+                relation=excluded.relation,
+                confidence=CASE WHEN excluded.confidence='EXTRACTED' THEN excluded.confidence ELSE topic_entities.confidence END""",
+                (topic_id, entity_id, relation, confidence, source_message_id, now))
+            db.execute("INSERT OR IGNORE INTO topic_entity_evidence(topic_id,entity_id,source_message_id,created_at) VALUES(?,?,?,?)",
+                       (topic_id, entity_id, source_message_id, now))
+            prior_sql = "SELECT DISTINCT te.topic_id FROM topic_entities te WHERE te.entity_id=? AND te.topic_id!=?"
+            prior_args = [entity_id, topic_id]
+            if not allow_cross_agent:
+                prior_sql += " AND EXISTS (SELECT 1 FROM topic_episodes owned WHERE owned.topic_id=te.topic_id AND lower(owned.agent_id)=lower(?))"
+                prior_args.append(owner_agent or "")
+                prior_sql += " AND NOT EXISTS (SELECT 1 FROM topic_episodes foreign_ep WHERE foreign_ep.topic_id=te.topic_id AND lower(foreign_ep.agent_id)!=lower(?))"
+                prior_args.append(owner_agent or "")
+            prior = db.execute(prior_sql, prior_args).fetchall()
             for (other_id,) in prior:
-                other_kind = db.execute("SELECT kind FROM entities WHERE id=?", (entity_id,)).fetchone()[0]
+                if kind == "file" and not exact_file:
+                    continue
                 relation = {"component_type": "mismo tipo", "design_group": "tema de diseño",
                             "feature": "mismo concepto", "module": "mismo concepto",
                             "report": "mismo concepto", "platform": "misma plataforma",
                             "python_function": "mismo símbolo", "python_class": "mismo símbolo",
-                            "python_method": "mismo símbolo"}.get(other_kind, "mismo elemento")
+                            "python_method": "mismo símbolo", "file": "mismo archivo"}.get(kind, "mismo elemento")
                 db.execute("""INSERT OR IGNORE INTO topic_relations
                     (source_topic_id,target_topic_id,relation,confidence,reason,source_message_id,created_at)
                     VALUES(?,?,?,?,?,?,?)""", (topic_id, other_id, relation, "EXTRACTED",
+                    "comparten una referencia explícita y normalizada" if kind == "file" else
                     "comparten una entidad identificada explícitamente", source_message_id, now))
         for term in terms:
             db.execute("INSERT OR IGNORE INTO topic_work_terms(topic_id,term) VALUES(?,?)", (topic_id, term))
@@ -516,9 +614,14 @@ class TopicMemoryMixin:
                 "details": self._unprotect(row["summary"]), "topic_id": row["id"],
                 "state": row["state"], "verification": row["verification"],
                 "session_id": row["session_id"], "agent_id": row["agent_id"],
+                "agent_ids": [row["agent_id"]],
                 "ai_status": row["ai_status"], "ai_model": row["ai_model"],
                 "ai_source_revision": row["ai_source_revision"], "ai_prompt_version": row["ai_prompt_version"],
                 "ai_error": row["ai_error"], "ai_processed_at": row["ai_processed_at"]})
+            topic_node = nodes[topic_id]
+            if row["agent_id"] not in topic_node["agent_ids"]:
+                topic_node["agent_ids"].append(row["agent_id"])
+                topic_node["agent_ids"].sort()
             session_meta = session_catalog.get(str(row["session_id"]))
             nodes.setdefault(session_node_id, {"id": session_node_id, "kind": "memory_session",
                 "name": (session_meta["task"] if session_meta else None) or row["session_id"],
@@ -541,21 +644,48 @@ class TopicMemoryMixin:
         if topic_ids:
             placeholders = ",".join("?" for _ in topic_ids)
             with self._connect() as db:
-                relations = db.execute(f"""SELECT source_topic_id,target_topic_id,relation,confidence,reason
+                relations = db.execute(f"""SELECT source_topic_id,target_topic_id,relation,confidence,reason,source_message_id
                     FROM topic_relations WHERE source_topic_id IN ({placeholders})
                     AND target_topic_id IN ({placeholders})""", [*topic_ids, *topic_ids]).fetchall()
+                candidates = db.execute(f"""SELECT id,source_topic_id,target_topic_id,relation,reason,evidence_json
+                    FROM topic_relation_reviews WHERE status='pending'
+                    AND source_topic_id IN ({placeholders}) AND target_topic_id IN ({placeholders})
+                    ORDER BY updated_at DESC LIMIT 1000""", [*topic_ids, *topic_ids]).fetchall()
+                term_frequency, topic_count, agent_terms = self._topic_relation_term_stats(
+                    db, requester_agent=requester, agent_ids=authorized_agents)
             for relation in relations:
                 source, target = "topic:" + relation[0], "topic:" + relation[1]
                 links.append({"source": source, "target": target, "label": relation[2],
-                              "confidence": relation[3], "reason": relation[4]})
+                              "confidence": relation[3], "reason": relation[4],
+                              "source_message_id": relation[5]})
                 if relation[2] not in {"misma plataforma"}:
                     seen_topic_links.add(tuple(sorted((source, target))))
+            for candidate in candidates:
+                source, target = "topic:" + candidate["source_topic_id"], "topic:" + candidate["target_topic_id"]
+                if tuple(sorted((source, target))) in seen_topic_links:
+                    continue
+                try:
+                    evidence = json.loads(candidate["evidence_json"] or "[]")
+                except (TypeError, ValueError):
+                    evidence = []
+                if not isinstance(evidence, dict):
+                    evidence = {}
+                specific_terms = self._specific_shared_terms(
+                    evidence.get("shared_terms", []), term_frequency, topic_count, agent_terms)
+                shared_entities = evidence.get("shared_entity_ids", [])
+                if len(specific_terms) < 2 and not (shared_entities and specific_terms):
+                    continue
+                evidence["shared_terms"] = specific_terms[:12]
+                evidence["requires_review"] = True
+                links.append({"source": source, "target": target, "label": candidate["relation"],
+                              "confidence": "AMBIGUOUS", "status": "pending", "relation_id": candidate["id"],
+                              "reason": candidate["reason"], "evidence": evidence})
         if detail and nodes:
             topic_ids = [node["topic_id"] for node in nodes.values() if node["kind"] == "memory_topic"]
             placeholders = ",".join("?" for _ in topic_ids)
             with self._connect() as db:
                 entity_scope = f" AND ep.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents is not None else ""
-                entities = db.execute(f"""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name
+                entities = db.execute(f"""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name,e.metadata_json
                     FROM entities e JOIN topic_entities te ON te.entity_id=e.id
                     JOIN topic_episodes ep ON ep.topic_id=te.topic_id JOIN sessions es ON es.id=ep.session_id
                     WHERE te.topic_id IN ({placeholders}) AND (es.capture_enabled=1 OR es.agent_id=?)
@@ -568,17 +698,22 @@ class TopicMemoryMixin:
                     {episode_scope} ORDER BY e.created_at,e.id""", [*topic_ids, requester, *(authorized_agents or [])]).fetchall()
             for entity in entities:
                 entity_id = "entity:" + entity["id"]
+                try:
+                    entity_metadata = json.loads(entity["metadata_json"] or "{}")
+                except (TypeError, ValueError):
+                    entity_metadata = {}
                 nodes[entity_id] = {"id": entity_id, "kind": "memory_entity", "name": entity["name"],
                                     "details": f"{entity['kind']}:{entity['entity_key']}",
                                     "entity_id": entity["id"], "entity_kind": entity["kind"],
-                                    "entity_key": entity["entity_key"]}
+                                    "entity_key": entity["entity_key"], "metadata": entity_metadata}
                 for topic_id in topic_ids:
                     with self._connect() as db:
-                        linked = db.execute("SELECT relation,confidence FROM topic_entities WHERE topic_id=? AND entity_id=?",
+                        linked = db.execute("SELECT relation,confidence,source_message_id FROM topic_entities WHERE topic_id=? AND entity_id=?",
                                             (topic_id, entity["id"])).fetchone()
                     if linked:
                         links.append({"source": "topic:" + topic_id, "target": entity_id,
-                                      "label": linked[0], "confidence": linked[1]})
+                                      "label": linked[0], "confidence": linked[1],
+                                      "source_message_id": linked[2]})
             for episode in episodes[: max(1, min(1200, limit * 4))]:
                 episode_id = "episode:" + episode["id"]
                 topic_id = "topic:" + episode["topic_id"]
@@ -609,7 +744,7 @@ class TopicMemoryMixin:
 
     def relation_candidates(self, *, requester_agent=None, status="pending", limit=50, propose=True,
                             agent_ids=None):
-        """List cautious thematic candidates; candidates never become graph edges by themselves."""
+        """List cautious thematic candidates; graph edges stay marked ambiguous until reviewed."""
         limit = max(1, min(200, int(limit)))
         authorized_agents = self._effective_agent_ids(agent_ids)
         if propose:
@@ -625,6 +760,7 @@ class TopicMemoryMixin:
                 marks = ",".join("?" for _ in authorized_agents)
                 relation_scope += f" AND se.agent_id IN ({marks}) AND te.agent_id IN ({marks})"
                 relation_args.extend(authorized_agents); relation_args.extend(authorized_agents)
+            fetch_limit = 1000 if status == "pending" else limit
             rows = db.execute("""SELECT DISTINCT r.*,s.title AS source_title,t.title AS target_title
                 FROM topic_relation_reviews r JOIN topics s ON s.id=r.source_topic_id
                 JOIN topics t ON t.id=r.target_topic_id
@@ -634,17 +770,33 @@ class TopicMemoryMixin:
                   AND (ss.capture_enabled=1 OR ss.agent_id=?)
                   AND (ts.capture_enabled=1 OR ts.agent_id=?)
                 """ + relation_scope + " ORDER BY r.updated_at DESC,r.id LIMIT ?",
-                [*relation_args, limit]).fetchall()
-            result = []
+                [*relation_args, fetch_limit]).fetchall()
+            term_frequency, topic_count, agent_terms = self._topic_relation_term_stats(
+                db, requester_agent=requester_agent, agent_ids=authorized_agents)
+            result = []; suppressed = 0
             for row in rows:
                 item = dict(row)
                 item["source_title"] = self._unprotect(item["source_title"])
                 item["target_title"] = self._unprotect(item["target_title"])
                 item["evidence"] = json.loads(item.pop("evidence_json") or "[]")
+                if status == "pending":
+                    if not isinstance(item["evidence"], dict):
+                        item["evidence"] = {}
+                    specific_terms = self._specific_shared_terms(
+                        item["evidence"].get("shared_terms", []), term_frequency, topic_count, agent_terms)
+                    shared_entities = item["evidence"].get("shared_entity_ids", [])
+                    if len(specific_terms) < 2 and not (shared_entities and specific_terms):
+                        suppressed += 1
+                        continue
+                    item["evidence"]["shared_terms"] = specific_terms[:12]
+                    item["evidence"]["requires_review"] = True
                 item["source_reference"] = self._node_reference(db, "memory_topic", item["source_topic_id"])
                 item["target_reference"] = self._node_reference(db, "memory_topic", item["target_topic_id"])
                 result.append(item)
-        return {"ok": True, "candidates": result, "status": status, "retrieval": "lexical-candidates-review"}
+                if len(result) >= limit:
+                    break
+        return {"ok": True, "candidates": result, "status": status, "suppressed_low_specificity": suppressed,
+                "retrieval": "specific-lexical-candidates-review"}
 
     def _ai_review_candidates(self, limit=20, agent_ids=None):
         from .memory_extraction import configured_summary_model
@@ -693,7 +845,6 @@ class TopicMemoryMixin:
         return reviewed
 
     def _propose_relation_candidates(self, requester_agent=None, agent_ids=None):
-        stopwords = {"para", "como", "esta", "este", "desde", "ahora", "porque", "tiene", "hacer", "quiero", "sobre", "con", "del", "los", "las", "una", "uno", "que", "aplicación", "aplicacion", "tema", "asunto"}
         authorized_agents = self._effective_agent_ids(agent_ids)
         with self._connect() as db:
             scope = ""
@@ -705,28 +856,41 @@ class TopicMemoryMixin:
                 marks = ",".join("?" for _ in authorized_agents)
                 scope += f" AND e.agent_id IN ({marks})"
                 args.extend(authorized_agents)
-            rows = db.execute("""SELECT DISTINCT t.id,t.title,t.summary,e.session_id
+            rows = db.execute("""SELECT DISTINCT t.id,t.title,t.summary,e.session_id,e.agent_id
                 FROM topics t JOIN topic_episodes e ON e.topic_id=t.id JOIN sessions s ON s.id=e.session_id
                 WHERE t.state!='archivado' AND (s.capture_enabled=1 OR s.agent_id=?)
                 """ + scope + " ORDER BY t.updated_at DESC LIMIT 500", args).fetchall()
             items = []
             for row in rows:
                 text = (self._unprotect(row["title"]) + " " + self._unprotect(row["summary"])).casefold()
-                terms = {term for term in re.findall(r"[\wáéíóúñ]{5,}", text) if term not in stopwords}
+                terms = {term for term in re.findall(r"[\wáéíóúñ]{5,}", text)
+                         if term not in _RELATION_STOPWORDS}
                 entities = {r[0] for r in db.execute("SELECT entity_id FROM topic_entities WHERE topic_id=?", (row["id"],))}
                 items.append((row, terms, entities))
+            term_frequency = {}
+            for _, candidate_terms, _ in items:
+                for term in candidate_terms:
+                    term_frequency[term] = term_frequency.get(term, 0) + 1
+            specificity_threshold = max(4, math.ceil(len(items) * 0.015))
+            agent_terms = {token for row, _, _ in items
+                           for token in re.findall(r"[\wáéíóúñ]{5,}", str(row["agent_id"] if "agent_id" in row.keys() else "").casefold())}
             now = time.time()
             for index, (left, left_terms, left_entities) in enumerate(items):
                 for right, right_terms, right_entities in items[index + 1:]:
                     if left["id"] == right["id"]: continue
-                    shared_terms = sorted(left_terms & right_terms)
+                    shared_terms_all = sorted(left_terms & right_terms)
+                    shared_terms = [term for term in shared_terms_all
+                                    if term_frequency.get(term, 0) <= specificity_threshold
+                                    and term not in agent_terms]
                     shared_entities = sorted(left_entities & right_entities)
-                    # A generic term is never sufficient. Entities require a
-                    # second signal before entering the review queue.
+                    # Avoid connecting topics merely because both mention the
+                    # project, a provider, or another high-frequency term.
                     if len(shared_terms) < 2 and not (shared_entities and shared_terms):
                         continue
                     source, target = sorted((left["id"], right["id"]))
-                    evidence = {"shared_terms": shared_terms[:12], "shared_entity_ids": shared_entities[:12],
+                    evidence = {"shared_terms": shared_terms[:12],
+                                "suppressed_common_terms": [term for term in shared_terms_all if term not in shared_terms][:12],
+                                "shared_entity_ids": shared_entities[:12],
                                 "method": "lexical_candidate", "requires_review": True}
                     relation_id = "rel_" + hashlib.sha256((source + "\0" + target + "\0possible").encode()).hexdigest()[:24]
                     db.execute("""INSERT INTO topic_relation_reviews
@@ -736,6 +900,40 @@ class TopicMemoryMixin:
                           evidence_json=excluded.evidence_json, updated_at=excluded.updated_at
                         WHERE topic_relation_reviews.status='pending'""", (relation_id, source, target, "posible relación", "pending",
                         "coincidencia candidata; requiere evidencia humana o de IA", json.dumps(evidence, ensure_ascii=False), "system", now, now))
+
+    def _topic_relation_term_stats(self, db, *, requester_agent=None, agent_ids=None):
+        """Count topic-level term frequency within the caller's visible memory scope."""
+        authorized_agents = self._effective_agent_ids(agent_ids)
+        owner_predicate, owner_args = self._topic_owner_predicate("e.topic_id")
+        where = ["t.state!='archivado'", "(s.capture_enabled=1 OR s.agent_id=?)", owner_predicate]
+        args: list[Any] = [requester_agent or "", *owner_args]
+        if authorized_agents is not None:
+            marks = ",".join("?" for _ in authorized_agents)
+            where.append(f"e.agent_id IN ({marks})")
+            args.extend(authorized_agents)
+        predicate = " AND ".join(f"({clause})" for clause in where)
+        rows = db.execute("""SELECT tw.term,COUNT(DISTINCT t.id) AS frequency
+            FROM topic_work_terms tw JOIN topics t ON t.id=tw.topic_id
+            JOIN topic_episodes e ON e.topic_id=t.id JOIN sessions s ON s.id=e.session_id
+            WHERE """ + predicate + " GROUP BY tw.term", args).fetchall()
+        count = db.execute("""SELECT COUNT(DISTINCT t.id)
+            FROM topics t JOIN topic_episodes e ON e.topic_id=t.id
+            JOIN sessions s ON s.id=e.session_id WHERE """ + predicate, args).fetchone()[0]
+        agents = db.execute("""SELECT DISTINCT e.agent_id FROM topic_episodes e
+            JOIN topics t ON t.id=e.topic_id JOIN sessions s ON s.id=e.session_id
+            WHERE """ + predicate, args).fetchall()
+        agent_terms = {token for row in agents
+                       for token in re.findall(r"[\wáéíóúñ]{5,}", str(row[0] or "").casefold())}
+        return ({str(row["term"]).casefold(): int(row["frequency"]) for row in rows},
+                int(count), agent_terms)
+
+    @staticmethod
+    def _specific_shared_terms(terms, term_frequency, topic_count, agent_terms=()):
+        threshold = max(4, math.ceil(int(topic_count or 0) * 0.015))
+        return [str(term).casefold() for term in terms
+                if str(term).casefold() not in _RELATION_STOPWORDS
+                and str(term).casefold() not in agent_terms
+                and term_frequency.get(str(term).casefold(), 0) <= threshold]
 
     def relation_review(self, relation_id, *, status, actor, reason, agent_ids=None):
         if status not in {"accepted", "rejected"}:
@@ -791,7 +989,10 @@ class TopicMemoryMixin:
         if not session or not session["capture_enabled"]:
             raise PermissionError("sesión sin autorización de captura")
         memory_scope = self.memory_scope()
-        match_owner = session["agent_id"] if memory_scope["space_type"] == "agent_brain" else None
+        allow_cross_agent = memory_scope["space_type"] != "agent_brain"
+        # Topics keep their authoring agent identity in project stores too.
+        # Cross-agent continuity is represented by evidence-backed edges.
+        match_owner = session["agent_id"]
         total = 0
         while True:
             with self._connect() as db:
@@ -820,6 +1021,7 @@ class TopicMemoryMixin:
                 for msg in batch:
                     if msg["role"] == "user":
                         entities, terms = self._subject_terms(msg["content"])
+                        entities.extend(self._file_references(msg["content"]))
                         entity_ids = self._entity_ids(db, entities, msg["id"], msg["created_at"])
                         matched_topic = self._find_topic_match(db, session_id, entity_ids, terms,
                                                                owner_agent=match_owner)
@@ -837,7 +1039,8 @@ class TopicMemoryMixin:
                                    (topic_id, msg["agent_id"], "continued" if matched_topic else "created",
                                     json.dumps({"message_id": msg["id"], "extraction": "deterministic-limited",
                                                 "matched_existing": bool(matched_topic), "entity_ids": entity_ids}), time.time()))
-                        self._link_topic_entities(db, topic_id, entity_ids, terms, msg["id"], now)
+                        self._link_topic_entities(db, topic_id, entity_ids, terms, msg["id"], now,
+                                                  owner_agent=msg["agent_id"], allow_cross_agent=allow_cross_agent)
                     elif episode is None:
                         key = hashlib.sha256((session_id + msg["id"]).encode()).hexdigest()[:24]
                         topic_id, episode_id = "top_" + key, "epi_" + key
@@ -857,7 +1060,49 @@ class TopicMemoryMixin:
                 db.execute("INSERT INTO topic_progress VALUES(?,?,?,?) ON CONFLICT(session_id) DO UPDATE SET cursor=excluded.cursor,processed=topic_progress.processed+excluded.processed,updated_at=excluded.updated_at",
                            (session_id, last, len(batch), time.time()))
                 total += len(batch)
-        return {"ok": True, "processed": total, "coverage": self.topic_coverage(), "extraction": "deterministic-limited"}
+        # File references use an independent cursor so existing topic histories
+        # can be enriched without resetting their main thematic cursor.
+        file_references_processed = 0
+        while True:
+            with self._connect() as db:
+                db.execute("BEGIN IMMEDIATE")
+                progress = db.execute("SELECT cursor FROM topic_file_progress WHERE session_id=?", (session_id,)).fetchone()
+                cursor = progress[0] if progress else 0
+                rows = db.execute("""SELECT m.rowid AS seq,m.id,m.agent_id,m.role,m.content,m.created_at,
+                        (SELECT tm.episode_id FROM topic_messages tm JOIN topic_episodes e ON e.id=tm.episode_id
+                         WHERE tm.message_id=m.id AND e.agent_id=m.agent_id ORDER BY e.created_at,e.id LIMIT 1) AS episode_id,
+                        (SELECT e.topic_id FROM topic_messages tm JOIN topic_episodes e ON e.id=tm.episode_id
+                         WHERE tm.message_id=m.id AND e.agent_id=m.agent_id ORDER BY e.created_at,e.id LIMIT 1) AS topic_id
+                    FROM messages m WHERE m.session_id=? AND m.agent_id=? AND m.rowid>? ORDER BY m.rowid LIMIT ?""",
+                    (session_id, session["agent_id"], cursor, max(1, min(100, batch_messages)))).fetchall()
+                if not rows:
+                    break
+                batch, cost = [], 0
+                for row in rows:
+                    size = encoded_tokens(row["content"] or "")
+                    if batch and cost + size > batch_tokens:
+                        break
+                    batch.append(row)
+                    cost += size
+                for row in batch:
+                    if not row["topic_id"]:
+                        continue
+                    references = self._file_references(self._unprotect(row["content"]))
+                    if not references:
+                        continue
+                    entity_ids = self._entity_ids(db, references, row["id"], row["created_at"])
+                    owner = db.execute("SELECT agent_id FROM topic_episodes WHERE id=?", (row["episode_id"],)).fetchone()
+                    self._link_topic_entities(db, row["topic_id"], entity_ids, set(), row["id"],
+                                              row["created_at"], owner_agent=owner[0] if owner else row["agent_id"],
+                                              allow_cross_agent=allow_cross_agent)
+                    file_references_processed += len(entity_ids)
+                last = batch[-1]["seq"]
+                db.execute("""INSERT INTO topic_file_progress VALUES(?,?,?,?)
+                    ON CONFLICT(session_id) DO UPDATE SET cursor=excluded.cursor,
+                    processed=topic_file_progress.processed+excluded.processed,updated_at=excluded.updated_at""",
+                    (session_id, last, len(batch), time.time()))
+        return {"ok": True, "processed": total, "file_references_processed": file_references_processed,
+                "coverage": self.topic_coverage(), "extraction": "deterministic-limited"}
 
     def _topic_source_snapshot(self, db, topic_id):
         """Hash every source message while retaining a bounded, useful context."""
@@ -924,6 +1169,7 @@ class TopicMemoryMixin:
                       retry_failed=False, agent_ids=None):
         """Index deterministic evidence and enrich only new or changed topics."""
         topic_ids, processed = set(), 0
+        allow_cross_agent = self.memory_scope()["space_type"] != "agent_brain"
         with self._connect() as db:
             authorized_agents = self._effective_agent_ids(agent_ids)
             clauses, args = [], []
@@ -935,16 +1181,19 @@ class TopicMemoryMixin:
                 marks = ",".join("?" for _ in authorized_agents)
                 clauses.append(f"e.agent_id IN ({marks})"); args.extend(authorized_agents)
             where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
-            rows = db.execute(f"""SELECT DISTINCT e.topic_id,m.id AS message_id,m.content,m.created_at
+            rows = db.execute(f"""SELECT DISTINCT e.topic_id,e.agent_id,m.id AS message_id,m.content,m.created_at
                 FROM topic_episodes e JOIN topic_messages tm ON tm.episode_id=e.id JOIN messages m ON m.id=tm.message_id
                 JOIN sessions s ON s.id=e.session_id AND s.status!='quarantined'
                 {where} {('AND' if where else 'WHERE')} m.role='user' ORDER BY m.rowid""", args).fetchall()
             for row in rows:
                 topic_ids.add(row["topic_id"])
                 entities, terms = self._subject_terms(self._unprotect(row["content"]))
+                entities.extend(self._file_references(self._unprotect(row["content"])))
                 entity_ids = self._entity_ids(db, entities, row["message_id"], row["created_at"])
                 if entity_ids or terms:
-                    self._link_topic_entities(db, row["topic_id"], entity_ids, terms, row["message_id"], row["created_at"]); processed += 1
+                    self._link_topic_entities(db, row["topic_id"], entity_ids, terms, row["message_id"],
+                                              row["created_at"], owner_agent=row["agent_id"],
+                                              allow_cross_agent=allow_cross_agent); processed += 1
         from .memory_extraction import configured_summary_model, TOPIC_PROMPT_VERSION, assisted_topic_enrichment
         model = configured_summary_model(); ai_provider = "deterministic"; work = []; skipped = 0; protected = 0
         now = time.time()
@@ -1083,6 +1332,11 @@ class TopicMemoryMixin:
             if mixed or not allowed or hidden:
                 raise PermissionError("tema inexistente o no accesible")
             item = dict(db.execute("SELECT * FROM topics WHERE id=?", (topic_id,)).fetchone())
+            participants = db.execute("""SELECT DISTINCT e.agent_id FROM topic_episodes e
+                JOIN sessions s ON s.id=e.session_id
+                WHERE e.topic_id=? AND (s.capture_enabled=1 OR s.agent_id=?)""" + scope +
+                " ORDER BY e.agent_id", [topic_id, requester_agent or "", *(authorized_agents or [])]).fetchall()
+            item["agent_ids"] = [row[0] for row in participants]
             rows = db.execute("SELECT e.* FROM topic_episodes e JOIN sessions s ON s.id=e.session_id WHERE e.topic_id=? AND (s.capture_enabled=1 OR s.agent_id=?)" + scope + " ORDER BY e.created_at,e.id LIMIT ? OFFSET ?",
                               [topic_id, requester_agent or "", *(authorized_agents or []), min(100, max(1, limit)) + 1, max(0, offset)]).fetchall()
             episodes = []
@@ -1092,18 +1346,28 @@ class TopicMemoryMixin:
                 ep["message_ids"] = [r[0] for r in db.execute("SELECT r.message_id FROM topic_messages r JOIN messages m ON m.id=r.message_id AND m.agent_id=? WHERE r.episode_id=? ORDER BY m.rowid LIMIT 21", (ep["agent_id"], ep["id"]))]
                 episodes.append(ep)
             entity_scope = f" AND ep.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents is not None else ""
-            entities = [dict(r) for r in db.execute("""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name,te.relation,te.confidence,te.source_message_id
+            entities = [dict(r) for r in db.execute("""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name,e.metadata_json,
+                te.relation,te.confidence,te.source_message_id
                 FROM topic_entities te JOIN entities e ON e.id=te.entity_id
                 JOIN topic_episodes ep ON ep.topic_id=te.topic_id JOIN sessions es ON es.id=ep.session_id
                 WHERE te.topic_id=? AND (es.capture_enabled=1 OR es.agent_id=?)""" + entity_scope,
                 [topic_id, requester_agent or "", *(authorized_agents or [])])]
+            for entity in entities:
+                try:
+                    entity["metadata"] = json.loads(entity.pop("metadata_json") or "{}")
+                except (TypeError, ValueError):
+                    entity["metadata"] = {}
+                evidence = db.execute("""SELECT source_message_id FROM topic_entity_evidence
+                    WHERE topic_id=? AND entity_id=? ORDER BY created_at,source_message_id LIMIT 100""",
+                    (topic_id, entity["id"])).fetchall()
+                entity["source_message_ids"] = [row[0] for row in evidence]
             relation_scope = ""
             relation_args = [topic_id, topic_id, requester_agent or "", requester_agent or ""]
             if authorized_agents is not None:
                 relation_marks = ",".join("?" for _ in authorized_agents)
                 relation_scope = f" AND se.agent_id IN ({relation_marks}) AND te.agent_id IN ({relation_marks})"
                 relation_args.extend(authorized_agents); relation_args.extend(authorized_agents)
-            else:
+            elif self.memory_scope()["space_type"] == "agent_brain":
                 relation_scope = " AND (ss.agent_id=ts.agent_id OR ss.agent_id=? OR ts.agent_id=?)"
                 relation_args.extend([requester_agent or "", requester_agent or ""])
             relations = [dict(r) for r in db.execute("""SELECT DISTINCT tr.source_topic_id,tr.target_topic_id,tr.relation,tr.confidence,tr.reason,tr.source_message_id

@@ -85,6 +85,40 @@ retomar lo que hizo OpenCode o AGY aunque su sesión no comparta el historial de
 otro cliente. Las actualizaciones son evidencia histórica; se comprueban contra
 el estado actual antes de afirmar que algo sigue vigente.
 
+Los temas siguen separados por agente para conservar quién pidió o realizó cada
+cambio. En un espacio de proyecto compartido, Graphtyn los conecta cuando la
+evidencia identifica el mismo archivo dentro del repositorio o el mismo símbolo;
+la extracción revisa mensajes de usuario, agente y herramienta, conserva la
+referencia al mensaje fuente y normaliza las rutas al espacio del proyecto. Un
+nombre de archivo sin ruta sólo se considera una coincidencia ambigua. También
+se muestran como líneas ámbar punteadas las relaciones temáticas que aún esperan
+revisión. Términos repetidos como el nombre del proyecto o del proveedor no crean
+por sí solos una relación; los candidatos de baja especificidad se conservan
+para auditoría, pero no saturan el grafo. Así, una coincidencia probable ayuda a
+encontrar el otro tema, pero no se registra como hecho ni combina sus autores.
+
+`memory_context` conserva sus campos existentes y agrega `related_topics` para
+temas relacionados por evidencia explícita, con agentes, estado y tipo de
+relación; `suggested_related_topics` contiene candidatos pendientes y marcados
+como ambiguos. Los cerebros de agente mantienen su filtro de propietario y no
+reciben relaciones de otros cerebros. La misma conducta sirve para cualquier
+identidad de agente almacenada, sin una lista fija de proveedores.
+
+En modo `continuity`, `source_messages` devuelve hasta tres mensajes históricos
+de sesiones distintas, ordenados por coincidencia léxica y recencia. Esto evita
+que varios turnos de una sola conversación ocupen todo el resumen breve. Para
+leer la pregunta, respuesta y mensajes vecinos de una referencia, usa
+`memory_message_window`; la ventana permanece dentro de esa misma sesión.
+
+Cuando un agente de OpenClaw trabaja desde su cerebro y necesita recordar un
+proyecto compartido, usa `memory_project_context` con el nombre, ID estable,
+alias exacto o ruta registrada del proyecto. La herramienta resuelve un único
+destino, combina recuerdos con actividad reciente atribuida, consulta sólo ese
+almacén y aplica el alcance de lectura del token. Si
+el nombre no coincide o pertenece a varios proyectos, devuelve el estado y los
+candidatos sin elegir por similitud. `memory_agent_context` continúa limitado al
+cerebro privado del agente y a memorias familiares publicadas explícitamente.
+
 El modo continuity sólo etiqueta como reciente una fecha observada en la fuente
 o una captura en vivo. Si una transcripción importada no trae fecha original,
 Graphtyn conserva el mensaje como historial pero lo omite de la lista de
@@ -109,6 +143,24 @@ Codex, CLI y Dashboard deben apuntar al mismo espacio. En particular, define en
 `~/.codex/config.toml` `GRAPHTYN_HOME` con el directorio central ya configurado
 para Graphtyn; no crees una base local adicional dentro del checkout. Confirma
 la ruta efectiva mediante `memory status` antes de probar la recuperación.
+
+El servidor MCP también debe quedar ligado al proyecto correcto. Si Codex puede
+abrir varios repositorios o inicia el servidor desde un directorio distinto,
+registra un servidor MCP con nombre propio y `--path` explícito:
+
+```toml
+[mcp_servers.graphtyn_project]
+command = "graphtyn"
+args = ["mcp", "--tool-profile", "full", "--path", "/ruta/al/proyecto"]
+
+[mcp_servers.graphtyn_project.env]
+GRAPHTYN_HOME = "/ruta/al/estado-compartido"
+```
+
+Conserva el mismo `GRAPHTYN_HOME` de los demás clientes. Después de reiniciar o
+recargar Codex, verifica que `memory_status` indique la ruta de ese proyecto;
+un servidor genérico sin `--path` puede heredar el directorio de trabajo del
+cliente y consultar otro almacén.
 
 La sincronización de un proyecto busca las fuentes locales de OpenCode, Codex,
 Claude y Antigravity cuando existen. Importa automáticamente sólo sesiones cuya

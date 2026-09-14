@@ -177,7 +177,7 @@ export function updateLinkStyles() {
           .linkCurvature(state.linkStyle === 'curved' ? 0.2 : 0.0)
           .linkDirectionalParticleSpeed(l => particleProfile(l, state.graphStyle === 'holo' ? 0.02 : 0.012).speed)
           .linkDirectionalParticleOffset(l => particleProfile(l, state.graphStyle === 'holo' ? 0.02 : 0.012).offset)
-          .linkLineDash(l => ((state.linkStyle === 'dashed' || l.confidence === 'INFERRED') ? [4, 4] : null));
+          .linkLineDash(l => ((state.linkStyle === 'dashed' || l.confidence === 'INFERRED' || l.confidence === 'AMBIGUOUS') ? [4, 4] : null));
       }
     }
 

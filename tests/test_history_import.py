@@ -322,6 +322,87 @@ def test_project_sync_discovers_local_coding_histories_but_keeps_ambiguous_sessi
     assert routed["ambiguous"][0]["session"] == "11111111-1111-4111-8111-111111111111"
 
 
+def test_antigravity_workspace_metadata_routes_only_matching_project_sessions(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    project = tmp_path / "openclaw"
+    other = tmp_path / "unrelated"
+    project.mkdir()
+    other.mkdir()
+    agy_root = tmp_path / ".gemini" / "antigravity-cli"
+    brain = agy_root / "brain"
+    ids = {
+        "openclaw": "11111111-1111-4111-8111-111111111111",
+        "unrelated": "22222222-2222-4222-8222-222222222222",
+        "unknown": "33333333-3333-4333-8333-333333333333",
+    }
+    for key, session_id in ids.items():
+        transcript = brain / session_id / ".system_generated" / "logs" / "transcript.jsonl"
+        transcript.parent.mkdir(parents=True)
+        transcript.write_text("\n".join(json.dumps(row) for row in [
+            {"source": "USER_EXPLICIT", "type": "USER_INPUT", "content": f"Pregunta {key}"},
+            {"source": "MODEL", "type": "GENERIC", "content": f"Respuesta {key}"},
+        ]) + "\n", encoding="utf-8")
+
+    summaries = sqlite3.connect(agy_root / "conversation_summaries.db")
+    summaries.execute("CREATE TABLE conversation_summaries (conversation_id TEXT, workspace_uris TEXT)")
+    summaries.executemany("INSERT INTO conversation_summaries VALUES (?, ?)", [
+        (ids["openclaw"], json.dumps([project.as_uri()])),
+        (ids["unrelated"], json.dumps([other.as_uri()])),
+    ])
+    summaries.commit()
+    summaries.close()
+
+    source_config = tmp_path / "history-sources.json"
+    monkeypatch.setattr("graphtyn.core.history_import.sources_config_file", lambda: source_config)
+    save_source("antigravity", str(agy_root), label="AGY", project_path=project,
+                agent_id="agy", path=source_config)
+
+    found = discover_histories("antigravity", project_path=project)
+    routed = import_histories(project, found["sessions"], consent=True, dry_run=True)
+
+    assert [row["external_session_id"] for row in found["sessions"]] == [ids["openclaw"], ids["unknown"]]
+    assert found["sessions"][0]["workspace"] == str(project.resolve())
+    assert any(row.get("session") == ids["unrelated"] and
+               row.get("reason") == "workspace de AGY pertenece a otro proyecto"
+               for row in found["excluded"])
+    assert routed["selected"] == 1
+    assert [row["session"] for row in routed["ambiguous"]] == [ids["unknown"]]
+
+
+def test_antigravity_last_conversation_cache_scopes_new_cli_session(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    project = tmp_path / "openclaw"
+    other = tmp_path / "other-project"
+    project.mkdir()
+    other.mkdir()
+    agy_root = tmp_path / ".gemini" / "antigravity-cli"
+    ids = {
+        str(project): "44444444-4444-4444-8444-444444444444",
+        str(other): "55555555-5555-4555-8555-555555555555",
+    }
+    for session_id in ids.values():
+        transcript = agy_root / "brain" / session_id / ".system_generated" / "logs" / "transcript.jsonl"
+        transcript.parent.mkdir(parents=True)
+        transcript.write_text("\n".join(json.dumps(row) for row in [
+            {"source": "USER_EXPLICIT", "type": "USER_INPUT", "content": "Prueba de captura"},
+            {"source": "MODEL", "type": "GENERIC", "content": "Respuesta de prueba"},
+        ]) + "\n", encoding="utf-8")
+    latest = agy_root / "cache" / "last_conversations.json"
+    latest.parent.mkdir(parents=True)
+    latest.write_text(json.dumps(ids), encoding="utf-8")
+
+    source_config = tmp_path / "history-sources.json"
+    monkeypatch.setattr("graphtyn.core.history_import.sources_config_file", lambda: source_config)
+    save_source("antigravity", str(agy_root), project_path=project, agent_id="agy", path=source_config)
+
+    found = discover_histories("antigravity", project_path=project)
+    routed = import_histories(project, found["sessions"], consent=True, dry_run=True)
+
+    assert [row["external_session_id"] for row in found["sessions"]] == [ids[str(project)]]
+    assert found["sessions"][0]["workspace"] == str(project.resolve())
+    assert routed["selected"] == 1
+
+
 def test_opencode_json_sqlite_histories_keep_only_conversation_text_and_exact_project(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
     project = tmp_path / "openclaw"
