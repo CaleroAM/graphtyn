@@ -351,6 +351,33 @@ def test_set_parent_rejects_cycles_and_recomputes_family_tree(tmp_path, monkeypa
                event["evidence"] == "user-confirmed" for event in events)
 
 
+def test_reconnect_removes_obsolete_family_listings_but_preserves_store_data(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    registry = tmp_path / "openclaw-installations.json"
+    source_config = tmp_path / "history-sources.json"
+    installation = connect_openclaw(_installation(tmp_path), parents={"devops": "main"},
+        source_config=source_config, registry=registry)
+    home = tmp_path / "graphtyn-home"
+    projects_file = home / "registered_projects.json"
+    suffix = installation["id"].removeprefix("openclaw-")[:8]
+    stale = home / "brains" / installation["id"] / f"devops-{suffix}-shared"
+    stale.mkdir(parents=True)
+    preserved = stale / "preserve.marker"
+    preserved.write_text("keep the old store", encoding="utf-8")
+    rows = json.loads(projects_file.read_text(encoding="utf-8"))
+    rows.append({"id": stale.name, "name": "Familia · Evi", "path": str(stale),
+                 "mode": "single_folder", "space_type": "agent_brain",
+                 "agent_ids": ["openclaw/devops"]})
+    projects_file.write_text(json.dumps(rows), encoding="utf-8")
+
+    connect_openclaw(_installation(tmp_path), parents={"devops": "main"},
+        source_config=source_config, registry=registry)
+
+    listings = json.loads(projects_file.read_text(encoding="utf-8"))
+    assert str(stale) not in {row.get("path") for row in listings}
+    assert preserved.read_text(encoding="utf-8") == "keep the old store"
+
+
 def test_different_installations_get_separate_child_and_family_stores(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
     source_config = tmp_path / "history-sources.json"
