@@ -291,6 +291,7 @@ Resultados, hardware, metodología y comparaciones anonimizadas:
 | Arquitectura y despliegue | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Memoria multiagente | [docs/shared-memory.md](docs/shared-memory.md) |
 | Conexión nativa con OpenClaw | [docs/openclaw-native.md](docs/openclaw-native.md) |
+| Validación real OpenClaw host + VM | [docs/openclaw-native-validation-2026-09.md](docs/openclaw-native-validation-2026-09.md) |
 | Dashboard | [docs/ui_ux_specification.md](docs/ui_ux_specification.md) |
 | Pruebas | [docs/testing.md](docs/testing.md) |
 | Benchmarks | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) |

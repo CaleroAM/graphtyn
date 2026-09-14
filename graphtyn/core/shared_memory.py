@@ -299,19 +299,54 @@ class SharedMemoryStore(TopicMemoryMixin):
         except Exception: return "[encrypted: invalid key]"
 
     def update_sync_watcher(self, watcher_id: str, status: str, *, interval: float = 5,
-                            error: str = "") -> None:
+                            error: str = "", cycle_result: dict[str, Any] | None = None) -> None:
         """Persist liveness for CLI sync --watch processes in this memory store."""
         watcher_id = str(watcher_id or "").strip()
         if not watcher_id:
             raise ValueError("watcher_id requerido")
         if status not in {"processing", "watching", "error", "stopped"}:
             raise ValueError("estado de watcher inválido")
+        now = time.time()
+        encoded_result = None
+        cycle_ok = False
+        if cycle_result is not None:
+            encoded_result = json.dumps(cycle_result, ensure_ascii=False, separators=(",", ":"))
+            if len(encoded_result) > 12000:
+                raise ValueError("el resumen de sincronización excede el límite permitido")
+            cycle_ok = bool(cycle_result.get("ok"))
         with self._connect() as conn:
-            conn.execute("""INSERT INTO memory_sync_watchers
-                (watcher_id,pid,status,heartbeat,interval,error) VALUES(?,?,?,?,?,?)
-                ON CONFLICT(watcher_id) DO UPDATE SET pid=excluded.pid,status=excluded.status,
-                    heartbeat=excluded.heartbeat,interval=excluded.interval,error=excluded.error""",
-                (watcher_id, os.getpid(), status, time.time(), max(1.0, float(interval)), str(error or "")[:1000]))
+            if status == "processing":
+                conn.execute("""INSERT INTO memory_sync_watchers
+                    (watcher_id,pid,status,heartbeat,interval,error,last_cycle_started)
+                    VALUES(?,?,?,?,?,?,?) ON CONFLICT(watcher_id) DO UPDATE SET
+                    pid=excluded.pid,status=excluded.status,heartbeat=excluded.heartbeat,
+                    interval=excluded.interval,error=excluded.error,
+                    last_cycle_started=excluded.last_cycle_started""",
+                    (watcher_id, os.getpid(), status, now, max(1.0, float(interval)),
+                     str(error or "")[:1000], now))
+            elif cycle_result is not None:
+                conn.execute("""INSERT INTO memory_sync_watchers
+                    (watcher_id,pid,status,heartbeat,interval,error,last_cycle_finished,
+                     last_success_at,cycle_count,failed_cycle_count,last_result_json)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(watcher_id) DO UPDATE SET
+                    pid=excluded.pid,status=excluded.status,heartbeat=excluded.heartbeat,
+                    interval=excluded.interval,error=excluded.error,
+                    last_cycle_finished=excluded.last_cycle_finished,
+                    last_success_at=CASE WHEN ? THEN excluded.last_success_at
+                        ELSE memory_sync_watchers.last_success_at END,
+                    cycle_count=memory_sync_watchers.cycle_count+1,
+                    failed_cycle_count=memory_sync_watchers.failed_cycle_count+?,
+                    last_result_json=excluded.last_result_json""",
+                    (watcher_id, os.getpid(), status, now, max(1.0, float(interval)),
+                     str(error or "")[:1000], now, now if cycle_ok else None, 1, int(not cycle_ok),
+                     encoded_result, int(cycle_ok), int(not cycle_ok)))
+            else:
+                conn.execute("""INSERT INTO memory_sync_watchers
+                    (watcher_id,pid,status,heartbeat,interval,error) VALUES(?,?,?,?,?,?)
+                    ON CONFLICT(watcher_id) DO UPDATE SET pid=excluded.pid,status=excluded.status,
+                        heartbeat=excluded.heartbeat,interval=excluded.interval,error=excluded.error""",
+                    (watcher_id, os.getpid(), status, now, max(1.0, float(interval)),
+                     str(error or "")[:1000]))
 
     def _init_db(self) -> None:
         with _SCHEMA_LOCK:
@@ -398,7 +433,11 @@ class SharedMemoryStore(TopicMemoryMixin):
                 CREATE TABLE IF NOT EXISTS memory_sync_watchers (
                     watcher_id TEXT PRIMARY KEY, pid INTEGER NOT NULL,
                     status TEXT NOT NULL, heartbeat REAL NOT NULL,
-                    interval REAL NOT NULL DEFAULT 5, error TEXT NOT NULL DEFAULT ''
+                    interval REAL NOT NULL DEFAULT 5, error TEXT NOT NULL DEFAULT '',
+                    last_cycle_started REAL, last_cycle_finished REAL, last_success_at REAL,
+                    cycle_count INTEGER NOT NULL DEFAULT 0,
+                    failed_cycle_count INTEGER NOT NULL DEFAULT 0,
+                    last_result_json TEXT NOT NULL DEFAULT '{}'
                 );
                 CREATE TABLE IF NOT EXISTS memory_provenance (
                     memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
@@ -447,6 +486,19 @@ class SharedMemoryStore(TopicMemoryMixin):
                 CREATE INDEX IF NOT EXISTS project_routing_events_source
                     ON project_routing_events(source_key, recorded_at DESC);
             """)
+            watcher_columns = {row["name"] for row in conn.execute(
+                "PRAGMA table_info(memory_sync_watchers)")}
+            watcher_migrations = {
+                "last_cycle_started": "REAL",
+                "last_cycle_finished": "REAL",
+                "last_success_at": "REAL",
+                "cycle_count": "INTEGER NOT NULL DEFAULT 0",
+                "failed_cycle_count": "INTEGER NOT NULL DEFAULT 0",
+                "last_result_json": "TEXT NOT NULL DEFAULT '{}'",
+            }
+            for column, declaration in watcher_migrations.items():
+                if column not in watcher_columns:
+                    conn.execute(f"ALTER TABLE memory_sync_watchers ADD COLUMN {column} {declaration}")
             try:
                 conn.execute("""CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
                     memory_id UNINDEXED, title, content, task, files, nodes,
@@ -459,6 +511,7 @@ class SharedMemoryStore(TopicMemoryMixin):
             conn.execute("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(3, ?)", (time.time(),))
             conn.execute("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(7, ?)", (time.time(),))
             conn.execute("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(9, ?)", (time.time(),))
+            conn.execute("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES(10, ?)", (time.time(),))
             policy = resolve_memory_scope(self.workspace)
             conn.execute("""INSERT INTO memory_space_policy
                 (id,workspace_path,space_type,agent_ids_json,restricted,policy_version,updated_at)
@@ -1916,6 +1969,10 @@ class SharedMemoryStore(TopicMemoryMixin):
             watcher["active"] = (watcher["status"] in {"processing", "watching"}
                                   and time.time() - watcher["heartbeat"] < freshness)
             watcher["kind"] = "memory-sync"
+            try:
+                watcher["last_cycle"] = json.loads(watcher.pop("last_result_json", "{}") or "{}")
+            except (TypeError, ValueError):
+                watcher["last_cycle"] = {}
         last_topic_provider = ""
         last_relation_provider = ""
         if topic_event:

@@ -204,6 +204,15 @@ graphtyn harness openclaw connect --installation openclaw-<id> \
 
 Después de modificar `openclaw.json`, reinicia el gateway de OpenClaw con el método habitual de ese despliegue. Graphtyn no reinicia servicios del harness automáticamente.
 
+`discover` también consulta el registro local cuando ya conoce esa instalación.
+En ese caso `relation_status`, `parent_id` y `relation_evidence` son el estado
+efectivo confirmado por Graphtyn; `config_relation_status` y
+`config_parent_id` conservan por separado lo observado en `openclaw.json`, y
+`relation_discrepancy` señala si difieren los padres. Las identidades nuevas,
+que aún no están en el registro, permanecen como propuestas o pendientes. Por
+eso `discover` puede mostrar datos del archivo sin cambiar el estado efectivo
+que devuelve `list`.
+
 ## Cerebros, subagentes y memoria familiar
 
 Por defecto cada `agents.entries.<id>` tiene un almacén privado. Graphtyn no convierte una similitud de nombre ni una etiqueta como “Evi DevOps” en parentesco. Sin relación confirmada, el agente queda `pending` y sólo consulta su almacén propio.
@@ -285,6 +294,30 @@ graphtyn memory sync --installation openclaw-<id> --watch --interval 300 --conse
 ```
 
 `--consent` autoriza la sincronización de las fuentes asociadas. El cursor por defecto evita importar el historial existente; la importación anterior requiere además `--import-history`. Para restaurar la configuración OpenClaw previa, copia el backup `openclaw.json.graphtyn-backup-*` sobre el config activo y reinicia el gateway.
+
+Los cerebros de agentes sólo examinan fuentes asociadas explícitamente a ese
+cerebro o pasadas directamente en el comando. No recorren por defecto las bases
+locales de OpenCode, Codex, Claude o Antigravity del host: esas fuentes pueden
+pertenecer a otros usuarios o proyectos. Los espacios de proyecto sí conservan
+el descubrimiento local configurado; sus conversaciones sólo se incorporan
+cuando la ruta del proyecto coincide con evidencia explícita, y las sesiones
+ambiguas quedan pendientes.
+
+El servicio, la API/MCP y los comandos CLI deben usar el mismo `GRAPHTYN_HOME`.
+Si un proyecto tiene simultáneamente un almacén local y uno central, Graphtyn
+rechaza elegir uno en silencio; ejecuta el CLI con el mismo valor que usa el
+servicio, por ejemplo `GRAPHTYN_HOME="$HOME/.graphtyn" graphtyn memory status
+--path /ruta/al/proyecto`.
+
+Cada ciclo persiste inicio, fin, última ejecución correcta, número de ciclos y
+resumen por cerebro. El resumen conserva cantidades de sesiones nuevas,
+reutilizadas, ambiguas, excluidas y errores, además de motivos de exclusión; no
+guarda mensajes ni contenido de conversaciones. Una exclusión por identidad o
+por proyecto ambiguo no cuenta como error de sincronización. Los logs del
+watcher informan totales y motivos, no imprimen el resultado completo de cada
+sesión. El esquema añade estos campos mediante la migración SQLite versionada
+10; el dashboard separa el heartbeat del resultado del último ciclo y de la
+última captura guardada.
 
 Esta conexión es específica de OpenClaw. Hermes se conectará mediante su propio descubridor y adaptador; no se autodetecta todavía.
 

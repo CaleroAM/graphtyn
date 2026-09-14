@@ -1051,6 +1051,55 @@ def test_memory_sync_watcher_appears_in_status_and_expires(tmp_path, monkeypatch
     assert status["sync_watchers"][0]["active"] is False
 
 
+def test_memory_sync_watcher_persists_cycle_results_and_success_separately(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+
+    store.update_sync_watcher("cli-sync:456", "processing", interval=300)
+    store.update_sync_watcher("cli-sync:456", "error", interval=300, error="2 errores",
+        cycle_result={"ok": False, "discovered": 8, "imported": 1, "reused": 2,
+                      "excluded": 4, "error_count": 2, "exclusion_reasons": {"owner": 4}})
+    failed = store.status()["sync_watchers"][0]
+    assert failed["cycle_count"] == 1
+    assert failed["failed_cycle_count"] == 1
+    assert failed["last_success_at"] is None
+    assert failed["last_cycle"]["discovered"] == 8
+    assert "last_result_json" not in failed
+
+    store.update_sync_watcher("cli-sync:456", "processing", interval=300)
+    store.update_sync_watcher("cli-sync:456", "watching", interval=300,
+        cycle_result={"ok": True, "discovered": 3, "imported": 1, "reused": 2,
+                      "excluded": 0, "error_count": 0})
+    succeeded = store.status()["sync_watchers"][0]
+    assert succeeded["cycle_count"] == 2
+    assert succeeded["failed_cycle_count"] == 1
+    assert succeeded["last_success_at"] == succeeded["last_cycle_finished"]
+    assert succeeded["last_cycle"]["ok"] is True
+
+
+def test_memory_sync_watcher_schema_migrates_existing_database(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    from graphtyn.core.shared_memory import _resolve_store_path
+    db_path = _resolve_store_path(project, create=True)
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("""CREATE TABLE memory_sync_watchers (
+            watcher_id TEXT PRIMARY KEY, pid INTEGER NOT NULL, status TEXT NOT NULL,
+            heartbeat REAL NOT NULL, interval REAL NOT NULL DEFAULT 5, error TEXT NOT NULL DEFAULT '')""")
+
+    store = SharedMemoryStore(project)
+
+    with store._connect() as conn:
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(memory_sync_watchers)")}
+        migrations = {row[0] for row in conn.execute("SELECT version FROM schema_migrations")}
+    assert {"last_cycle_started", "last_cycle_finished", "last_success_at", "cycle_count",
+            "failed_cycle_count", "last_result_json"} <= columns
+    assert 10 in migrations
+
+
 def test_alias_persistence_and_config_fallback(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
     project = tmp_path / "project"

@@ -322,6 +322,35 @@ def test_project_sync_discovers_local_coding_histories_but_keeps_ambiguous_sessi
     assert routed["ambiguous"][0]["session"] == "11111111-1111-4111-8111-111111111111"
 
 
+def test_agent_brain_sync_skips_unassociated_default_coding_sources(tmp_path, monkeypatch):
+    from graphtyn.core.storage import data_home
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    brain = tmp_path / "cerebro-nexus"
+    brain.mkdir()
+    default_root = tmp_path / "default-opencode"
+    explicit_root = tmp_path / "explicit-opencode"
+    default_root.mkdir(); explicit_root.mkdir()
+    (default_root / "default.jsonl").write_text(
+        json.dumps({"session_id": "unrelated", "role": "user", "content": "No importar"}) + "\n",
+        encoding="utf-8")
+    (explicit_root / "associated.jsonl").write_text(
+        json.dumps({"session_id": "associated", "role": "user", "content": "Captura permitida"}) + "\n",
+        encoding="utf-8")
+    registrations = data_home() / "registered_projects.json"
+    registrations.parent.mkdir(parents=True, exist_ok=True)
+    registrations.write_text(json.dumps([{"path": str(brain), "space_type": "agent_brain",
+                                          "agent_ids": ["openclaw/nexus"]}]), encoding="utf-8")
+    save_source("opencode", str(explicit_root), project_path=brain, path=data_home() / "history-sources.json")
+    monkeypatch.setattr("graphtyn.core.history_import.default_sources",
+                        lambda: {"opencode": [default_root]})
+
+    found = discover_histories("opencode", project_path=brain)
+
+    assert found["count"] == 1
+    assert found["sessions"][0]["external_session_id"] == "associated"
+    assert str(explicit_root) in found["sessions"][0]["source"]
+
+
 def test_antigravity_workspace_metadata_routes_only_matching_project_sessions(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
     project = tmp_path / "openclaw"

@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 import time
 from pathlib import Path
@@ -60,6 +61,42 @@ def test_discover_openclaw_uses_only_explicit_ssh_environment(tmp_path, monkeypa
     assert found[0]["kind"] == "ssh"
     assert found[0]["target"] == "root@192.0.2.10"
     assert found[0]["data_root"] == "/srv/openclaw/data"
+
+
+def test_discover_openclaw_reports_registry_relationship_and_config_observation(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    data_root = tmp_path / "openclaw-data"
+    data_root.mkdir()
+    config_path = data_root / "openclaw.json"
+    config_path.write_text(json.dumps({"agents": {"entries": {
+        "main": {}, "nexus": {}, "specialist": {"parentAgent": "main"},
+    }}}), encoding="utf-8")
+    installation_id = "openclaw-" + hashlib.sha256(
+        f"local|local|{data_root.resolve()}".encode()).hexdigest()[:16]
+    registry = data_home() / "openclaw-installations.json"
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(json.dumps({"version": 1, "installations": [{
+        "id": installation_id,
+        "agents": [
+            {"id": "main", "parent_id": None, "relation_status": "root"},
+            {"id": "nexus", "parent_id": None, "relation_status": "root"},
+            {"id": "specialist", "parent_id": "nexus", "relation_status": "confirmed",
+             "relation_evidence": "user-confirmed"},
+        ],
+    }]}), encoding="utf-8")
+    monkeypatch.setattr("graphtyn.core.openclaw_integration.configured_sources", lambda: [])
+
+    found = discover_openclaw(str(config_path))
+
+    assert len(found) == 1
+    assert found[0]["registry_status"] == "connected"
+    specialist = next(row for row in found[0]["agents"] if row["id"] == "specialist")
+    assert specialist["parent_id"] == "nexus"
+    assert specialist["relation_status"] == "confirmed"
+    assert specialist["relation_source"] == "graphtyn_registry"
+    assert specialist["config_parent_id"] == "main"
+    assert specialist["config_relation_status"] == "proposed"
+    assert specialist["relation_discrepancy"] is True
 
 
 def test_discover_openclaw_requires_ssh_target_and_root_together(monkeypatch):

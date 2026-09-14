@@ -210,9 +210,33 @@ def discover_openclaw(config_path: str | None = None, *, ssh_target: str | None 
             detected.append({**candidate, "ok": False, "error": str(exc), "agents": []})
             continue
         digest = hashlib.sha256(f"{candidate['kind']}|{candidate['target']}|{candidate['data_root']}".encode()).hexdigest()[:16]
-        detected.append({**candidate, "id": f"openclaw-{digest}", "ok": True,
+        installation_id = f"openclaw-{digest}"
+        registered = next((row for row in list_installations()
+                           if row.get("id") == installation_id), None)
+        registered_agents = {str(row.get("id")): row for row in
+                             (registered or {}).get("agents", []) if isinstance(row, dict)}
+        effective_agents = []
+        for observed in agents:
+            row = dict(observed)
+            row["config_parent_id"] = observed.get("parent_id")
+            row["config_relation_status"] = observed.get("relation_status")
+            saved = registered_agents.get(observed["id"])
+            if saved:
+                row["parent_id"] = saved.get("parent_id")
+                row["relation_status"] = saved.get("relation_status", observed.get("relation_status"))
+                row["relation_evidence"] = saved.get("relation_evidence") or observed.get("relation_evidence")
+                row["relation_source"] = "graphtyn_registry"
+                row["relation_discrepancy"] = (
+                    observed.get("parent_id") != saved.get("parent_id")
+                    if observed.get("parent_id") or saved.get("parent_id") else False)
+            else:
+                row["relation_source"] = "openclaw_config"
+                row["relation_discrepancy"] = False
+            effective_agents.append(row)
+        detected.append({**candidate, "id": installation_id, "ok": True,
                          "version": str(config.get("meta", {}).get("lastTouchedVersion") or "unknown"),
-                         "agents": agents})
+                         "registry_status": "connected" if registered else "not_connected",
+                         "agents": effective_agents})
     return sorted(detected, key=lambda item: item.get("id", item.get("config_path", "")))
 
 

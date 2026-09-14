@@ -26,6 +26,8 @@ experimentales y comparaciones comerciales.
 - [`shared-memory.md`](shared-memory.md): uso de la memoria multiagente.
 - [`openclaw-native.md`](openclaw-native.md): detección, jerarquía de agentes y
   captura automática de OpenClaw.
+- [`openclaw-native-validation-2026-09.md`](openclaw-native-validation-2026-09.md):
+  validación del despliegue en host + VM, respaldo SQLite y resultado real de sync.
 - [`shared_semantic_memory_plan.md`](shared_semantic_memory_plan.md): diseño
   detallado y registro de implementación.
 - [`ui_ux_specification.md`](ui_ux_specification.md): contrato del dashboard.

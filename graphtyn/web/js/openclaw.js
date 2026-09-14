@@ -36,9 +36,19 @@ function watcherSummary(memoryStatus) {
   const own = memoryStatus?.own || {};
   const watchers = own.capture_watchers || own.sync_watchers || [];
   const active = watchers.filter(item => item.active);
-  const errors = watchers.filter(item => item.error || item.status === 'error');
+  const syncWatchers = watchers.filter(item => item.kind === 'memory-sync')
+    .sort((a, b) => Number(b.heartbeat || 0) - Number(a.heartbeat || 0));
+  const latestWatcher = syncWatchers[0] || null;
+  const lastSuccessAt = syncWatchers.reduce((max, item) =>
+    Math.max(max, Number(item.last_success_at || 0)), 0);
+  const errors = [
+    ...watchers.filter(item => item.kind !== 'memory-sync' && (item.error || item.status === 'error')),
+    ...(latestWatcher && (latestWatcher.error || latestWatcher.status === 'error') ? [latestWatcher] : []),
+  ];
   const lastRun = watchers.reduce((max, item) => Math.max(max, Number(item.heartbeat || 0)), 0);
-  return {own, active, errors, lastRun};
+  const latestSync = syncWatchers.filter(item => item.last_cycle)
+    .sort((a, b) => Number(b.last_cycle_finished || 0) - Number(a.last_cycle_finished || 0))[0] || null;
+  return {own, active, errors, lastRun, latestSync, lastSuccessAt};
 }
 
 function renderAgent(agent) {
@@ -54,6 +64,13 @@ function renderAgent(agent) {
     : status?.own?.last_capture_at ? when(status.own.last_capture_at) : 'Sin capturas registradas';
   const watchAt = !memoryEnabled ? 'No participa en sincronización'
     : watcher.lastRun ? when(watcher.lastRun) : 'Sin actividad del sincronizador';
+  const latestCycle = watcher.latestSync;
+  const cycleResult = latestCycle?.last_cycle || {};
+  const cycleAt = latestCycle?.last_cycle_finished ? when(latestCycle.last_cycle_finished) : 'Sin ciclos registrados';
+  const successAt = watcher.lastSuccessAt ? when(watcher.lastSuccessAt) : 'Sin ciclo correcto registrado';
+  const cycleLabel = latestCycle
+    ? `${Number(cycleResult.imported || 0)} nuevas · ${Number(cycleResult.reused || 0)} existentes · ${Number(cycleResult.excluded || 0)} excluidas · ${Number(cycleResult.error_count || 0)} errores`
+    : 'Sin resultado persistido';
   const statusError = agent.memory_status_error
     ? `<div class="oc-error">No se pudo consultar este cerebro: ${esc(agent.memory_status_error)}</div>` : '';
   const watcherErrors = watcher.errors.map(item => `<div class="oc-error">${esc(item.error || 'Falló el sincronizador')} · ${esc(item.kind || 'captura')}</div>`).join('');
@@ -66,7 +83,9 @@ function renderAgent(agent) {
       <span>${Number(own.sessions || 0)} sesiones</span><span>${Number(own.memories || 0)} memorias</span>
       <span>${capture}</span>
     </div>
-    <div class="oc-agent-detail"><span>Última captura: <b>${esc(captureAt)}</b></span><span>Actividad de sync: <b>${esc(watchAt)}</b></span></div>
+    <div class="oc-agent-detail"><span>Última captura: <b>${esc(captureAt)}</b></span><span>Actividad de sync: <b>${esc(watchAt)}</b></span>
+      <span>Último ciclo: <b>${esc(cycleAt)} · ${esc(cycleLabel)}</b></span>
+      <span>Última sincronización correcta: <b>${esc(successAt)}</b></span></div>
     ${path ? `<div class="oc-brain-path" title="Almacén privado de este agente">Cerebro privado · <code>${esc(path)}</code></div>` : ''}
     ${statusError}${watcherErrors}${unavailable}
     <div class="oc-agent-actions"><button class="btn-action" data-installation="${esc(agent.installation_id || '')}" data-agent="${esc(agent.agent_id || `openclaw/${agent.id}`)}" data-path="${esc(path)}" onclick="openOpenClawBrain(this)">Abrir memoria</button></div>

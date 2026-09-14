@@ -840,6 +840,14 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
     known = {row["name"] for row in list_adapters()}
     providers = [provider.casefold()] if provider else sorted(known | {row["provider"] for row in configured})
     found, errors, excluded, warnings = [], [], [], []
+    # Agent brains are private stores. Scan only sources explicitly associated
+    # with this brain (or an explicit --source); falling back to every local
+    # coding-agent database creates thousands of predictable owner rejections
+    # on every OpenClaw sync cycle.
+    is_agent_brain = False
+    if project_path is not None:
+        from .memory_scope import resolve_memory_scope
+        is_agent_brain = resolve_memory_scope(project_path)["space_type"] == "agent_brain"
     for name in providers:
         source_owners: dict[str, str] = {}
         source_baselines: dict[str, float] = {}
@@ -861,7 +869,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                                   for row in selected if row.get("agent_id") or agent_id})
             source_baselines.update({row["source"]: float(row["capture_from"])
                                      for row in selected if isinstance(row.get("capture_from"), (int, float))})
-            if not roots and name in {"opencode", "codex", "claude", "antigravity"}:
+            if (not roots and not is_agent_brain and
+                    name in {"opencode", "codex", "claude", "antigravity"}):
                 roots = [str(value) for value in default_sources().get(name, [])]
         else:
             roots = [row["source"] for row in configured if row["provider"] == name]
@@ -917,7 +926,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                             owner = source_owners.get(str(source)) or source_owners.get(str(path))
                             if owner and not _agent_id_matches(owner, item.get("agent_id")):
                                 excluded.append({"source": str(source), "session": item.get("external_session_id"),
-                                                 "agent_id": item.get("agent_id"), "expected_agent_id": owner})
+                                                 "agent_id": item.get("agent_id"), "expected_agent_id": owner,
+                                                 "reason": "agent_identity_mismatch"})
                                 continue
                             baseline = source_baselines.get(str(source), source_baselines.get(str(path)))
                             if baseline is not None and float(item.get("updated_at") or item.get("occurred_at") or 0) <= baseline:
@@ -954,7 +964,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                         owner = source_owners.get(str(source)) or source_owners.get(str(path))
                         if owner and not _agent_id_matches(owner, item.get("agent_id")):
                             excluded.append({"source": str(source), "session": item.get("external_session_id"),
-                                             "agent_id": item.get("agent_id"), "expected_agent_id": owner})
+                                             "agent_id": item.get("agent_id"), "expected_agent_id": owner,
+                                             "reason": "agent_identity_mismatch"})
                             continue
                         baseline = source_baselines.get(str(source), source_baselines.get(str(path)))
                         if baseline is not None and float(item.get("updated_at") or item.get("occurred_at") or 0) <= baseline:

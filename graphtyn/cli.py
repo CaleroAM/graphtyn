@@ -133,6 +133,55 @@ def _install_openclaw_capture_service(installation_id: str, interval: float = 30
         return {"ok": False, "active": False, "unit": str(unit_path), "error": str(exc)}
 
 
+def _sync_cycle_space_summary(result: dict) -> dict:
+    """Keep durable sync telemetry useful without storing transcript contents."""
+    imported = result.get("import") if isinstance(result.get("import"), dict) else {}
+    exclusions = list(result.get("excluded") or []) + list(imported.get("excluded") or [])
+    reasons: dict[str, int] = {}
+    for item in exclusions:
+        reason = str(item.get("reason") or "unspecified") if isinstance(item, dict) else "unspecified"
+        reasons[reason[:80]] = reasons.get(reason[:80], 0) + 1
+    errors = list(result.get("errors") or imported.get("errors") or [])
+    topic = result.get("topic_processing") if isinstance(result.get("topic_processing"), dict) else {}
+    return {
+        "ok": bool(result.get("ok", not errors)) and not errors,
+        "discovered": int(result.get("discovered") or 0),
+        "imported": len(imported.get("imported") or []),
+        "reused": len(imported.get("reused") or []),
+        "ambiguous": len(imported.get("ambiguous") or []),
+        "excluded": len(exclusions),
+        "exclusion_reasons": dict(sorted(reasons.items(), key=lambda item: (-item[1], item[0]))[:8]),
+        "error_count": len(errors) + (1 if result.get("error") and not errors else 0),
+        "topic_sessions": int(topic.get("sessions") or 0),
+        "topic_messages": int(topic.get("messages") or 0),
+    }
+
+
+def _sync_cycle_log_summary(result: dict) -> dict:
+    spaces = result.get("spaces") if isinstance(result.get("spaces"), list) else [result]
+    summaries = []
+    reason_totals: dict[str, int] = {}
+    for item in spaces:
+        if not isinstance(item, dict):
+            continue
+        summary = _sync_cycle_space_summary(item)
+        for reason, count in summary["exclusion_reasons"].items():
+            reason_totals[reason] = reason_totals.get(reason, 0) + count
+        raw_path = str(item.get("path") or "")
+        summaries.append({"space": Path(raw_path).name if raw_path else "unknown", **summary})
+    totals = {key: sum(int(row.get(key) or 0) for row in summaries)
+              for key in ("discovered", "imported", "reused", "ambiguous", "excluded", "error_count")}
+    return {
+        "event": "memory_sync_cycle",
+        "ok": bool(result.get("ok", True)) and all(row["ok"] for row in summaries),
+        "space_count": len(summaries),
+        "failed_spaces": sum(not row["ok"] for row in summaries),
+        **totals,
+        "exclusion_reasons": dict(sorted(reason_totals.items(), key=lambda item: (-item[1], item[0]))[:8]),
+        "by_space": summaries[:20],
+    }
+
+
 def main():
     configure_utf8_stdio()
     parser = argparse.ArgumentParser(
@@ -1457,10 +1506,34 @@ def main():
                 watcher_id = f"cli-sync:{os.getpid()}"
                 interval = max(1.0, float(args.interval))
 
-                def update_watchers(status, error=""):
+                def update_watchers(status, error="", cycle_result=None):
                     for path in sync_targets():
                         SharedMemoryStore(path).update_sync_watcher(
-                            watcher_id, status, interval=interval, error=error)
+                            watcher_id, status, interval=interval, error=error,
+                            cycle_result=cycle_result)
+
+                def record_cycle(result):
+                    spaces = result.get("spaces") if isinstance(result.get("spaces"), list) else [result]
+                    by_path = {}
+                    for item in spaces:
+                        if not isinstance(item, dict) or not item.get("path"):
+                            continue
+                        try:
+                            by_path[str(Path(item["path"]).expanduser().resolve())] = item
+                        except (OSError, RuntimeError, ValueError):
+                            continue
+                    for path in sync_targets():
+                        item = by_path.get(str(path.resolve()))
+                        if item is None:
+                            item = ({**result, "path": str(path)} if result.get("error") else
+                                    {"path": str(path), "ok": False,
+                                     "error": "No se produjo resultado para este almacén"})
+                        summary = _sync_cycle_space_summary(item)
+                        failed = not summary["ok"]
+                        SharedMemoryStore(path).update_sync_watcher(
+                            watcher_id, "error" if failed else "watching", interval=interval,
+                            error=(f"{summary['error_count']} errores en el último ciclo" if failed else ""),
+                            cycle_result=summary)
 
                 def stop_watcher(_signum, _frame):
                     raise KeyboardInterrupt
@@ -1473,16 +1546,10 @@ def main():
                             result = sync_once()
                         except Exception as exc:
                             error = f"{type(exc).__name__}: {exc}"
-                            update_watchers("error", error)
                             result = {"ok": False, "error": error}
-                        else:
-                            spaces = result.get("spaces") or []
-                            ok = bool(result.get("ok", True)) and all(
-                                bool(space.get("ok", True)) for space in spaces
-                            )
-                            update_watchers("watching" if ok else "error",
-                                            "" if ok else "una o más sincronizaciones fallaron")
-                        print(json.dumps(result, ensure_ascii=False), flush=True)
+                        record_cycle(result)
+                        print(json.dumps(_sync_cycle_log_summary(result),
+                                         ensure_ascii=False, separators=(",", ":")), flush=True)
                         time.sleep(interval)
                 except KeyboardInterrupt:
                     pass
