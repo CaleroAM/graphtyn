@@ -1213,8 +1213,17 @@ class ProjectIdentityRegistry:
         try: return json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, ValueError): return {"version": 1, "projects": []}
 
-    def register(self, workspace: str | Path, aliases: list[str] | None = None) -> dict[str, Any]:
+    def register(self, workspace: str | Path, aliases: list[str] | None = None,
+                 project_id: str | None = None) -> dict[str, Any]:
         root = Path(workspace).expanduser().resolve()
+        if project_id is None:
+            try:
+                metadata = json.loads((root / ".graphtyn" / "graphtyn.json").read_text(encoding="utf-8"))
+                project_id = str(metadata.get("project_id") or "") if isinstance(metadata, dict) else ""
+            except (OSError, ValueError, TypeError):
+                project_id = ""
+        if project_id and not re.fullmatch(r"[a-f0-9]{20}", project_id):
+            raise ValueError("project_id debe ser un identificador Graphtyn de 20 caracteres hexadecimales")
         remote = ""
         try:
             import subprocess
@@ -1224,9 +1233,13 @@ class ProjectIdentityRegistry:
         key = hashlib.sha256((remote or str(root)).casefold().encode()).hexdigest()[:20]
         with self._lock:
             data = self._read()
-            item = next((p for p in data["projects"] if p["id"] == key or remote and p.get("remote") == remote), None)
+            item = next((p for p in data["projects"]
+                         if (project_id and p.get("id") == project_id)
+                         or p.get("id") == key
+                         or remote and p.get("remote") == remote
+                         or str(root) in p.get("paths", [])), None)
             if not item:
-                item = {"id": key, "canonical_name": root.name, "aliases": [], "paths": [], "remote": remote,
+                item = {"id": project_id or key, "canonical_name": root.name, "aliases": [], "paths": [], "remote": remote,
                         "created_at": time.time(), "updated_at": time.time()}
                 data["projects"].append(item)
             item["paths"] = sorted(set(item.get("paths", [])) | {str(root)})

@@ -431,6 +431,25 @@ def test_explicit_registration_overrides_auto_discovered_name(tmp_path, monkeypa
     assert projects[0]["name"] == "Graphtyn"
 
 
+def test_dashboard_project_registration_creates_stable_memory_identity(tmp_path, monkeypatch):
+    project = tmp_path / "registered-e50e"
+    project.mkdir()
+    registry = tmp_path / "registered_projects.json"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", registry)
+    monkeypatch.setattr(api_main, "_require_role", lambda *args, **kwargs: ("admin", None))
+
+    result = api_main.register_project({"path": str(project), "name": "E50E"})
+    if hasattr(result, "body"):
+        result = json.loads(result.body)
+
+    assert result["ok"] is True
+    assert result["project_identity"]["id"]
+    metadata = json.loads((project / ".graphtyn/graphtyn.json").read_text(encoding="utf-8"))
+    assert metadata["project_id"] == result["project_identity"]["id"]
+    assert result["integrations"]["status"] == "identity_registered"
+
+
 def test_project_source_attribution_does_not_filter_other_agents(tmp_path, monkeypatch):
     project = tmp_path / "openclaw"
     brain = tmp_path / "brain"

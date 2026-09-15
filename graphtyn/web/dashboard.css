@@ -235,6 +235,7 @@
     }
     .quality-modal { width:720px; max-height:88vh; overflow-y:auto; }
     .quality-summary { margin-top:8px; }
+    .memory-integration-status { color:#94a3b8; font-size:11px; line-height:1.5; }
     .quality-score { display:flex;align-items:baseline;gap:8px;padding:10px;background:#0b1220;border:1px solid #1e3a5f;border-radius:8px; }
     .quality-score strong { color:#10b981;font-size:25px; }
     .quality-score span,.quality-grid span,.context-stats span { color:#64748b;font-size:9px;text-transform:uppercase; }

@@ -946,6 +946,13 @@ def register_project(payload: dict = Body(...), authorization: str | None = Head
     agent_ids = [str(value).strip().casefold() for value in raw_agent_ids if str(value).strip()]
     if any(not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]{1,127}", value) for value in agent_ids):
         return JSONResponse({"ok": False, "error": "agent_ids contiene una identidad inválida"}, status_code=400)
+    project_identity = None
+    if space_type == "project":
+        try:
+            from ..core.project_integrations import ensure_project_identity
+            project_identity = ensure_project_identity(target_path, aliases=[str(name or target_path.name)])
+        except (OSError, ValueError) as exc:
+            return JSONResponse({"ok": False, "error": f"No se pudo registrar la identidad del proyecto: {exc}"}, status_code=400)
     new_entry = {
         "id": target_path.name,
         "name": name or target_path.name,
@@ -962,7 +969,11 @@ def register_project(payload: dict = Body(...), authorization: str | None = Head
         existing.update(new_entry)
     atomic_write_json(REGISTRATION_FILE, custom_projects)
 
-    return JSONResponse({"ok": True, "registered": new_entry, "mode": mode})
+    return JSONResponse({"ok": True, "registered": new_entry, "mode": mode,
+                         "project_identity": project_identity,
+                         "integrations": ({"status": "identity_registered",
+                                           "message": "Selecciona clientes con graphtyn agent-install para generar sus MCP."}
+                                          if project_identity else None)})
 
 import os, urllib.request
 
@@ -1832,11 +1843,31 @@ def memory_status(path: str = Query(...), authorization: str | None = Header(def
     key = str(Path(path).expanduser().resolve())
     resolved_path = Path(key)
     result = SharedMemoryStore(resolved_path).status(agent_ids=_memory_space_agent_ids(resolved_path))
+    try:
+        from ..core.project_integrations import project_integration_status
+        result["project_integrations"] = project_integration_status(resolved_path)
+    except (OSError, ValueError):
+        result["project_integrations"] = {"project_id": None, "mcp_server": None,
+                                           "clients": [], "capture_configured": False,
+                                           "historical_imported_automatically": False}
     with _memory_watch_lock:
         result["sync_watchers"] = [_watcher_public(item, value) for item, value in _memory_watchers.items()
                                     if item == key]
     result["continuous_capture_active"] = bool(result.get("continuous_capture_active") or result["sync_watchers"])
     return result
+
+
+@app.post("/api/memory/integrations/verify")
+def memory_integrations_verify(payload: dict = Body(...), authorization: str | None = Header(default=None)):
+    path = str(payload.get("path") or "").strip()
+    if not path:
+        return JSONResponse({"ok": False, "error": "path requerido"}, status_code=400)
+    _, denied = _require_role(authorization, "writer", path)
+    if denied:
+        return denied
+    from ..core.project_integrations import verify_project_mcp
+    result = verify_project_mcp(path)
+    return result if result.get("ok") else JSONResponse(result, status_code=409)
 
 
 @app.post("/api/memory/sync")

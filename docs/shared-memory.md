@@ -25,15 +25,40 @@ espacio indicado por `path`; no descubre ni combina otros proyectos por sí sola
 
 ## Operación portable
 
-Durante la instalación, `graphtyn setup --apply` pregunta si se desea activar la
-memoria conversacional (`--memory on|off|ask`). Al activarla registra las fuentes
-detectadas e importa historiales compatibles con el proyecto; no requiere indicar
-el MCP en cada turno. Para instalaciones automatizadas usa `--memory on` o
-`--memory off` (el valor `ask` no bloquea procesos sin terminal).
+`graphtyn setup` detecta primero y sólo escribe con `--apply`. Activar memoria
+no importa historiales anteriores ni inicia captura continua. El historial de
+`setup` requiere `--import-history --consent-history`; también puedes usar
+`memory bootstrap` para revisar la vista previa y autorizarla explícitamente.
+Los clientes seleccionados se configuran con `graphtyn agent-install <cliente>
+--path <proyecto>`, y `graphtyn integrations status --path <proyecto>` muestra
+la identidad MCP y los archivos presentes; `graphtyn integrations verify --path
+<proyecto>` prueba el handshake del servidor y la disponibilidad de memoria.
+`graphtyn integrations remove --path <proyecto>` retira sólo las entradas MCP
+generadas por Graphtyn y conserva las demás.
 
-`graphtyn setup` detecta primero y sólo escribe con `--apply`. Los adaptadores se
-gestionan con `graphtyn adapter`; las fuentes con `memory sources
-add|test|remove|list`. `service install --kind systemd --enable` instala y activa
+El identificador del proyecto se guarda en `.graphtyn/graphtyn.json` y se
+mantiene aunque se cambie el nombre de la carpeta. Las configuraciones MCP
+locales usan el ejecutable `graphtyn` del PATH y `--path .`. Codex también
+guarda la ruta absoluta del proyecto como `cwd` en `.codex/config.toml`, para
+iniciar el MCP en el workspace correcto aunque Codex se haya abierto desde otra
+ruta. Regenera esa configuración local en cada máquina y revísala antes de
+compartirla o comitearla porque la ruta depende del equipo. Codex carga la
+configuración de proyecto sólo cuando el proyecto es de confianza.
+
+OpenClaw conserva un servidor compartido por instalación porque sus agentes
+pueden hablar de proyectos distintos en una misma sesión. Sus instrucciones
+resuelven cada consulta con el ID/nombre explícito mediante
+`memory_project_context`; Graphtyn no crea un servidor fijo por proyecto dentro
+de `openclaw.json`.
+
+La captura y la importación histórica son operaciones separadas.
+`graphtyn memory sync --watch --consent` inicia captura incremental y
+`graphtyn memory status` comprueba si el
+watcher está activo. El campo `watch_command` de `setup` sólo es una sugerencia
+de comando; no demuestra que haya un proceso ejecutándose.
+
+Los adaptadores se gestionan con `graphtyn adapter`; las fuentes con
+`graphtyn memory sources add|test|remove|list`. `graphtyn service install --kind systemd --enable` instala y activa
 el dashboard persistente como servicio del usuario; Compose sólo genera el
 artefacto para conservar control explícito sobre Docker.
 

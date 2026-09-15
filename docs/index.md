@@ -24,6 +24,7 @@ experimentales y comparaciones comerciales.
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md): capas y límites actuales.
 - [`shared-memory.md`](shared-memory.md): uso de la memoria multiagente.
+- [`project-mcp-integrations.md`](project-mcp-integrations.md): configuración MCP aislada por proyecto y cliente.
 - [`openclaw-native.md`](openclaw-native.md): detección, jerarquía de agentes y
   captura automática de OpenClaw.
 - [`openclaw-native-validation-2026-09.md`](openclaw-native-validation-2026-09.md):

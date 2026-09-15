@@ -24,5 +24,5 @@ export { openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemo
          loadMoreMemoryTopics, searchMemorySessions, loadMoreMemorySessions, linkAgentProfile, discoverHistoricalMemory,
          applyHistoricalMemory, saveHistoricalSource, testHistoricalSource,
          removeHistoricalSource, saveMemoryAlias, syncMemorySpace, syncAllMemorySpaces,
-         retryMemoryEnrichment, toggleMemoryWatch } from './memory.js';
+         retryMemoryEnrichment, toggleMemoryWatch, verifyProjectMcp } from './memory.js';
 export { loadOpenClawPanel, syncOpenClaw, openOpenClawBrain } from './openclaw.js';

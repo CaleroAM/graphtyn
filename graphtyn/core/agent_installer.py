@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from importlib.resources import files
 from pathlib import Path
+from .project_integrations import configure_project_integrations, ensure_project_identity
 
 MEMORY_POLICY_START = "<!-- BEGIN GRAPHTYN MANAGED MEMORY POLICY -->"
 MEMORY_POLICY_END = "<!-- END GRAPHTYN MANAGED MEMORY POLICY -->"
@@ -66,11 +67,15 @@ description: Use Graphtyn before broad repository exploration to obtain compact,
 def install_agent(root: Path, platform: str | list[str], tool_profile: str = "intent") -> list[str]:
     if tool_profile not in {"intent", "memory", "full"}:
         raise ValueError("tool_profile debe ser intent, memory o full")
+    root = root.expanduser().resolve()
+    if not root.is_dir():
+        raise ValueError(f"La carpeta del proyecto no existe: {root}")
     requested = [platform] if isinstance(platform, str) else list(platform)
     selected = list(TARGETS) if requested == ["all"] else list(dict.fromkeys(requested))
     unknown = set(selected) - set(TARGETS)
     if unknown:
         raise ValueError(f"Plataforma desconocida: {', '.join(sorted(unknown))}")
+    identity = ensure_project_identity(root)
     written: list[str] = []
     for relative in dict.fromkeys(TARGETS[name] for name in selected):
         target = root / relative
@@ -92,7 +97,6 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str = "in
         skill = root / ".agents" / "skills" / "graphtyn" / "SKILL.md"
         plugin_dir = root / ".agents" / "plugins" / "graphtyn"
         plugin = plugin_dir / "plugin.json"
-        mcp_config = plugin_dir / "mcp_config.json"
         skill.parent.mkdir(parents=True, exist_ok=True)
         plugin_dir.mkdir(parents=True, exist_ok=True)
         current_skill = skill.read_text(encoding="utf-8") if skill.exists() else ""
@@ -102,16 +106,20 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str = "in
             "name": "graphtyn",
             "description": "Graphtyn code graph, impact analysis and MCP server",
         }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        mcp_config.write_text(json.dumps({"mcpServers": {"graphtyn": {
-            "command": "graphtyn", "args": ["mcp", "--tool-profile", tool_profile]
-        }}}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        written.extend(map(str, (skill, plugin, mcp_config)))
+        written.extend(map(str, (skill, plugin)))
+
+    integrations = configure_project_integrations(root, selected, tool_profile=tool_profile)
+    written.extend(integrations["files"])
 
     written = list(dict.fromkeys(written))
     manifest = root / ".graphtyn" / "agent-install.json"
     manifest.parent.mkdir(exist_ok=True)
     manifest.write_text(json.dumps({"platforms": selected, "tool_profile": tool_profile,
                                     "memory_policy_version": MEMORY_POLICY_VERSION,
+                                    "project_id": identity["id"],
+                                    "mcp_server": integrations["mcp_server"],
+                                    "integrations": integrations["clients"],
+                                    "capture_configured": False,
                                     "files": written}, indent=2), encoding="utf-8")
     return written
 

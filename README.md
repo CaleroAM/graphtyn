@@ -17,6 +17,7 @@ estructurales.
 
 **Documentación:** [índice completo](docs/index.md) ·
 [arquitectura](docs/ARCHITECTURE.md) · [memoria](docs/shared-memory.md) ·
+[MCP por proyecto](docs/project-mcp-integrations.md) ·
 [conexión OpenClaw](docs/openclaw-native.md) ·
 [pruebas](docs/testing.md) · [benchmarks](docs/BENCHMARKS.md) ·
 [seguridad](docs/SECURITY.md)
@@ -130,8 +131,11 @@ Configuración y memoria conversacional:
 ```bash
 # Configurar el proyecto y preguntar si se activa memoria
 graphtyn setup --apply --memory ask
-# Activar memoria sin interacción (instaladores y CI)
-graphtyn setup --apply --memory on --memory-watch
+# Instalar MCP del proyecto sólo en los clientes elegidos
+graphtyn agent-install codex --path .
+graphtyn agent-install opencode --path .
+graphtyn integrations status --path .
+graphtyn integrations verify --path .
 # Importar o sincronizar historiales autorizados
 graphtyn memory bootstrap --path .
 graphtyn memory sync --path . --watch --interval 5 --consent
@@ -141,9 +145,17 @@ graphtyn memory scope show --path /ruta/al/cerebro
 graphtyn memory scope set --path /ruta/al/cerebro --space-type agent_brain --agent-id openclaw/main
 ```
 
-`--memory off` instala Graphtyn sin captura conversacional. `bootstrap` siempre
-ofrece primero una vista previa; la importación histórica requiere repetirla con
-`--apply --consent`.
+`--memory off` instala Graphtyn sin captura conversacional. Registrar el proyecto
+asigna una identidad persistente; `agent-install` genera el MCP sólo para el
+cliente seleccionado y conserva las demás conexiones. La configuración usa el
+comando `graphtyn` en PATH y una ruta relativa al workspace. Codex también
+guarda la ruta absoluta del proyecto como `cwd` en `.codex/config.toml` para
+iniciar el MCP en el workspace correcto aunque Codex se haya abierto desde otra
+ruta. Regenera esa configuración local en cada máquina y revísala antes de
+compartirla o comitearla. En Codex, el proyecto debe estar marcado como confiable.
+Activar memoria no importa historiales ni inicia un watcher. La importación desde
+`setup` requiere `--import-history --consent-history`; `bootstrap` conserva su
+flujo de vista previa y consentimiento.
 
 Los cerebros `LEGADO` se muestran separados como archivos históricos. Para
 incorporar el historial al cerebro activo de cada agente, usa
@@ -229,18 +241,23 @@ integración explícita. Durante la instalación puedes activar la captura guiad
 ```bash
 # Pregunta en una terminal (predeterminado)
 graphtyn setup --apply --memory ask
-# Automatización sin interacción
-graphtyn setup --apply --memory on --memory-watch
+# Instalar MCP con memoria del proyecto para Codex
+graphtyn agent-install codex --path . --tool-profile intent
+graphtyn integrations status --path .
+# La captura continua se activa por separado
 graphtyn memory sync --path . --watch --interval 5 --consent
 ```
 
-Al activar la memoria, Graphtyn detecta fuentes locales de Codex, OpenCode,
-Claude, AGY y OpenClaw, importa historiales compatibles con el proyecto y
-genera embeddings locales. La captura continua sólo se activa cuando se inicia
-el watcher; registrar un proyecto o instalar instrucciones de agente no lo
-enciende por sí solo. Todos los clientes que deban compartir memoria deben
-resolver el mismo almacén del proyecto. En Codex, configura el mismo
-`GRAPHTYN_HOME` que usa Graphtyn y compruébalo con `memory status`.
+Registrar un proyecto genera su identidad estable. `agent-install` configura
+MCP sólo para los clientes seleccionados y conserva otros servidores. La
+configuración usa el comando `graphtyn` en PATH y `--path .`; Codex además guarda
+un `cwd` absoluto en `.codex/config.toml`. Regenera y revisa esa configuración
+local antes de compartirla. Codex sólo carga un MCP de proyecto en carpetas de
+confianza. Captura e importación histórica se
+gestionan por separado: `setup --memory on` no importa chats ni inicia un
+watcher. Para importarlos explícitamente usa `setup --apply --memory on
+--import-history --consent-history` o `memory bootstrap`; para captura en vivo
+inicia `memory sync --watch` y confirma su estado con `memory status`.
 La opción `--memory off` conserva la instalación sin memoria conversacional.
 Configuración, recuperación, bootstrap histórico, backups y ejemplos están en
 [docs/shared-memory.md](docs/shared-memory.md).
@@ -290,6 +307,7 @@ Resultados, hardware, metodología y comparaciones anonimizadas:
 |---|---|
 | Arquitectura y despliegue | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Memoria multiagente | [docs/shared-memory.md](docs/shared-memory.md) |
+| MCP por proyecto y agentes | [docs/project-mcp-integrations.md](docs/project-mcp-integrations.md) |
 | Conexión nativa con OpenClaw | [docs/openclaw-native.md](docs/openclaw-native.md) |
 | Validación real OpenClaw host + VM | [docs/openclaw-native-validation-2026-09.md](docs/openclaw-native-validation-2026-09.md) |
 | Dashboard | [docs/ui_ux_specification.md](docs/ui_ux_specification.md) |
