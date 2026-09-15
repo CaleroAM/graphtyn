@@ -269,7 +269,7 @@ def test_agent_install_antigravity_uses_project_gemini_policy(git_repo, tmp_path
     policy = (git_repo / "GEMINI.md").read_text(encoding="utf-8")
     assert "graphtyn query-intent" in policy
     assert "memory_ingest_turn" in policy
-    assert "Before any repository listing" in policy
+    assert "For current source-code questions" in policy
     assert "do_not_expand=true" in policy
     assert "without reopening files" in policy
     assert "Never install `graphifyy`" in policy
@@ -427,6 +427,8 @@ def test_agent_install_upgrades_existing_graphtyn_policy(git_repo, tmp_path):
     policy = (git_repo / "AGENTS.md").read_text(encoding="utf-8")
     assert policy.count("not a Graphify backend") == 1
     assert "Never install `graphifyy`" in policy
+    assert "those commands inspect source code and do not retrieve session" in policy
+    assert "graphtyn memory context" in policy
 
 
 def test_agent_policies_enforce_context_stop_contract():
@@ -438,6 +440,8 @@ def test_agent_policies_enforce_context_stop_contract():
         assert "before" in policy.lower()
         assert "Never install `graphifyy`" in policy
         assert "do not substitute another product" in policy
+        assert "those commands inspect source code and do not retrieve session" in policy
+        assert "graphtyn memory context" in policy
 
 
 def test_pr_impact_cli_json(git_repo, tmp_path):
