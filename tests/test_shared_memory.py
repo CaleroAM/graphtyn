@@ -77,6 +77,94 @@ def test_continuity_context_returns_recent_project_activity_with_attribution(tmp
     assert semantic["recent_activity"] == []
 
 
+def test_continuity_context_finds_older_query_matched_message_across_agents(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+    older = store.ensure_external_session("opencode", "older-session", "TourMuseosPuebla dice", consent=True)
+    store.append_message(older["id"], "user",
+        "En TourMuseosPuebla el avance de los dados empieza en cero y desplaza una casilla de más.",
+        metadata={"provider": "opencode", "occurred_at": 100,
+                  "source_message_id": "older-session:user-1"})
+    relevant = store.append_message(older["id"], "assistant",
+        "La revisión del avance de dados desde casilla cero quedó pendiente; no se confirmó un cambio de código.",
+        metadata={"provider": "opencode", "occurred_at": 101,
+                  "source_message_id": "older-session:assistant-1"})
+    store.append_message(older["id"], "user", "¿Dónde está registrado el comando MCP?",
+        metadata={"provider": "opencode", "occurred_at": 200,
+                  "source_message_id": "older-session:user-2"})
+    store.append_message(older["id"], "assistant", "Está registrado en el servidor MCP.",
+        metadata={"provider": "opencode", "occurred_at": 201,
+                  "source_message_id": "older-session:assistant-2"})
+    current = store.ensure_external_session("codex", "current-session", "Continuidad del proyecto", consent=True)
+    store.append_message(current["id"], "user", "Consultar el contexto de otra sesión.",
+        metadata={"provider": "codex", "occurred_at": 300,
+                  "source_message_id": "current-session:user-1"})
+    store.append_message(current["id"], "assistant", "Revisaré el contexto compartido.",
+        metadata={"provider": "codex", "occurred_at": 301,
+                  "source_message_id": "current-session:assistant-1"})
+
+    result = store.context(
+        "TourMuseosPuebla avance dados desde casilla cero pendiente revisión",
+        requester_agent="codex", agent_ids=["opencode", "codex"], mode="continuity",
+        include_graph=False, token_budget=900,
+    )
+
+    assert result["recent_activity"][0]["agent_id"] == "codex"
+    assert result["source_messages"]
+    match = result["source_messages"][0]
+    assert match["message_id"] == relevant["id"]
+    assert match["agent_id"] == "opencode"
+    assert match["provider"] == "opencode"
+    assert match["source_message_id"] == "older-session:assistant-1"
+    assert "pendiente" in match["content"]
+    assert result["coverage"]["source_message_search"]["scanned_messages"] == 6
+    assert result["estimated_tokens"] <= result["token_budget"]
+
+    window = store.message_window(match["message_id"], requester_agent="codex",
+                                  agent_ids=["opencode", "codex"])
+    assert window["center_id"] == relevant["id"]
+    assert len(window["messages"]) >= 2
+
+
+def test_source_message_search_keeps_one_result_per_session(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+
+    historical = store.ensure_external_session("opencode", "historical", "Older report", consent=True)
+    target = store.append_message(
+        historical["id"], "assistant",
+        "El asunto de los dados y la casilla cero quedó pendiente.",
+        metadata={"provider": "opencode", "source_message_id": "historical:decision"},
+    )
+    intermediate = store.ensure_external_session("codex", "intermediate", "Related report", consent=True)
+    store.append_message(
+        intermediate["id"], "assistant",
+        "TourMuseosPuebla: dados en casilla cero; pendiente revisar el avance.",
+        metadata={"provider": "codex", "source_message_id": "intermediate:update"},
+    )
+    current = store.ensure_external_session("openclaw/nexus", "current", "Current check", consent=True)
+    for index, (role, content) in enumerate((
+        ("user", "TourMuseosPuebla avance dados casilla cero pendiente revisión, comprobar."),
+        ("assistant", "TourMuseosPuebla: avance dados desde casilla cero, pendiente de revisión."),
+        ("user", "TourMuseosPuebla dados avance casilla cero pendiente revisión; verificar."),
+        ("assistant", "La revisión TourMuseosPuebla deja pendiente el avance de dados desde casilla cero."),
+    )):
+        store.append_message(current["id"], role, content,
+                             metadata={"provider": "openclaw", "source_message_id": f"current:{index}"})
+
+    results = store.search_messages(
+        "TourMuseosPuebla avance dados casilla cero pendiente revisión", limit=3,
+    )["messages"]
+
+    assert len(results) == 3
+    assert len({item["session_id"] for item in results}) == 3
+    assert any(item["message_id"] == target["id"] for item in results)
+
+
 def test_censored_vendor_alias_recovers_benchmark_memory(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
     project = tmp_path / "project"
@@ -216,16 +304,16 @@ def test_agent_brain_does_not_continue_another_agents_topic(tmp_path, monkeypatc
     evi_legacy = legacy.start_session("openclaw/evi", "Evi legacy report button", capture_enabled=True)
     legacy.append_message(evi_legacy["id"], "user", "También cambia el color del botón de Reportes del CRM")
     legacy.process_topics(evi_legacy["id"])
-    assert legacy.topics()["topics"][0]["id"] == career_topic["id"]
-    assert {episode["agent_id"] for episode in legacy.topic(career_topic["id"])["episodes"]} == {
-        "openclaw/career", "openclaw/evi"}
+    evi_topic = next(topic for topic in legacy.topics()["topics"] if topic["id"] != career_topic["id"])
+    assert {episode["agent_id"] for episode in legacy.topic(career_topic["id"])["episodes"]} == {"openclaw/career"}
+    assert {episode["agent_id"] for episode in legacy.topic(evi_topic["id"])["episodes"]} == {"openclaw/evi"}
 
     registry = state / "registered_projects.json"
     registry.parent.mkdir(parents=True, exist_ok=True)
     registry.write_text(json.dumps([{"id": "brain-evi", "path": str(brain),
         "space_type": "agent_brain", "agent_ids": ["openclaw/evi"]}]), encoding="utf-8")
     isolated = SharedMemoryStore(brain)
-    assert isolated.topics()["topics"] == []
+    assert [topic["id"] for topic in isolated.topics()["topics"]] == [evi_topic["id"]]
     assert all(node.get("topic_id") != career_topic["id"]
                for node in isolated.topic_graph()["nodes"])
     with pytest.raises(PermissionError):
@@ -236,9 +324,9 @@ def test_agent_brain_does_not_continue_another_agents_topic(tmp_path, monkeypatc
 
     evi_topics = isolated.topics()["topics"]
     assert len(evi_topics) == 1
-    assert evi_topics[0]["id"] != career_topic["id"]
-    assert "Ahora cambia" in evi_topics[0]["title"]
-    assert [episode["agent_id"] for episode in isolated.topic(evi_topics[0]["id"])["episodes"]] == ["openclaw/evi"]
+    assert evi_topics[0]["id"] == evi_topic["id"]
+    assert len(isolated.topic(evi_topics[0]["id"])["episodes"]) == 2
+    assert {episode["agent_id"] for episode in isolated.topic(evi_topics[0]["id"])["episodes"]} == {"openclaw/evi"}
     assert all(node.get("topic_id") != career_topic["id"]
                for node in isolated.topic_graph()["nodes"])
 
@@ -961,6 +1049,55 @@ def test_memory_sync_watcher_appears_in_status_and_expires(tmp_path, monkeypatch
     status = store.status()
     assert status["continuous_capture_active"] is False
     assert status["sync_watchers"][0]["active"] is False
+
+
+def test_memory_sync_watcher_persists_cycle_results_and_success_separately(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+
+    store.update_sync_watcher("cli-sync:456", "processing", interval=300)
+    store.update_sync_watcher("cli-sync:456", "error", interval=300, error="2 errores",
+        cycle_result={"ok": False, "discovered": 8, "imported": 1, "reused": 2,
+                      "excluded": 4, "error_count": 2, "exclusion_reasons": {"owner": 4}})
+    failed = store.status()["sync_watchers"][0]
+    assert failed["cycle_count"] == 1
+    assert failed["failed_cycle_count"] == 1
+    assert failed["last_success_at"] is None
+    assert failed["last_cycle"]["discovered"] == 8
+    assert "last_result_json" not in failed
+
+    store.update_sync_watcher("cli-sync:456", "processing", interval=300)
+    store.update_sync_watcher("cli-sync:456", "watching", interval=300,
+        cycle_result={"ok": True, "discovered": 3, "imported": 1, "reused": 2,
+                      "excluded": 0, "error_count": 0})
+    succeeded = store.status()["sync_watchers"][0]
+    assert succeeded["cycle_count"] == 2
+    assert succeeded["failed_cycle_count"] == 1
+    assert succeeded["last_success_at"] == succeeded["last_cycle_finished"]
+    assert succeeded["last_cycle"]["ok"] is True
+
+
+def test_memory_sync_watcher_schema_migrates_existing_database(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    from graphtyn.core.shared_memory import _resolve_store_path
+    db_path = _resolve_store_path(project, create=True)
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("""CREATE TABLE memory_sync_watchers (
+            watcher_id TEXT PRIMARY KEY, pid INTEGER NOT NULL, status TEXT NOT NULL,
+            heartbeat REAL NOT NULL, interval REAL NOT NULL DEFAULT 5, error TEXT NOT NULL DEFAULT '')""")
+
+    store = SharedMemoryStore(project)
+
+    with store._connect() as conn:
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(memory_sync_watchers)")}
+        migrations = {row[0] for row in conn.execute("SELECT version FROM schema_migrations")}
+    assert {"last_cycle_started", "last_cycle_finished", "last_success_at", "cycle_count",
+            "failed_cycle_count", "last_result_json"} <= columns
+    assert 10 in migrations
 
 
 def test_alias_persistence_and_config_fallback(tmp_path, monkeypatch):

@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 import time
 from pathlib import Path
@@ -60,6 +61,42 @@ def test_discover_openclaw_uses_only_explicit_ssh_environment(tmp_path, monkeypa
     assert found[0]["kind"] == "ssh"
     assert found[0]["target"] == "root@192.0.2.10"
     assert found[0]["data_root"] == "/srv/openclaw/data"
+
+
+def test_discover_openclaw_reports_registry_relationship_and_config_observation(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    data_root = tmp_path / "openclaw-data"
+    data_root.mkdir()
+    config_path = data_root / "openclaw.json"
+    config_path.write_text(json.dumps({"agents": {"entries": {
+        "main": {}, "nexus": {}, "specialist": {"parentAgent": "main"},
+    }}}), encoding="utf-8")
+    installation_id = "openclaw-" + hashlib.sha256(
+        f"local|local|{data_root.resolve()}".encode()).hexdigest()[:16]
+    registry = data_home() / "openclaw-installations.json"
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(json.dumps({"version": 1, "installations": [{
+        "id": installation_id,
+        "agents": [
+            {"id": "main", "parent_id": None, "relation_status": "root"},
+            {"id": "nexus", "parent_id": None, "relation_status": "root"},
+            {"id": "specialist", "parent_id": "nexus", "relation_status": "confirmed",
+             "relation_evidence": "user-confirmed"},
+        ],
+    }]}), encoding="utf-8")
+    monkeypatch.setattr("graphtyn.core.openclaw_integration.configured_sources", lambda: [])
+
+    found = discover_openclaw(str(config_path))
+
+    assert len(found) == 1
+    assert found[0]["registry_status"] == "connected"
+    specialist = next(row for row in found[0]["agents"] if row["id"] == "specialist")
+    assert specialist["parent_id"] == "nexus"
+    assert specialist["relation_status"] == "confirmed"
+    assert specialist["relation_source"] == "graphtyn_registry"
+    assert specialist["config_parent_id"] == "main"
+    assert specialist["config_relation_status"] == "proposed"
+    assert specialist["relation_discrepancy"] is True
 
 
 def test_discover_openclaw_requires_ssh_target_and_root_together(monkeypatch):
@@ -312,6 +349,33 @@ def test_set_parent_rejects_cycles_and_recomputes_family_tree(tmp_path, monkeypa
     assert any(event["agent_id"] == "openclaw/design" and
                event["previous_parent_id"] is None and event["parent_id"] == "devops" and
                event["evidence"] == "user-confirmed" for event in events)
+
+
+def test_reconnect_removes_obsolete_family_listings_but_preserves_store_data(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "graphtyn-home"))
+    registry = tmp_path / "openclaw-installations.json"
+    source_config = tmp_path / "history-sources.json"
+    installation = connect_openclaw(_installation(tmp_path), parents={"devops": "main"},
+        source_config=source_config, registry=registry)
+    home = tmp_path / "graphtyn-home"
+    projects_file = home / "registered_projects.json"
+    suffix = installation["id"].removeprefix("openclaw-")[:8]
+    stale = home / "brains" / installation["id"] / f"devops-{suffix}-shared"
+    stale.mkdir(parents=True)
+    preserved = stale / "preserve.marker"
+    preserved.write_text("keep the old store", encoding="utf-8")
+    rows = json.loads(projects_file.read_text(encoding="utf-8"))
+    rows.append({"id": stale.name, "name": "Familia · Evi", "path": str(stale),
+                 "mode": "single_folder", "space_type": "agent_brain",
+                 "agent_ids": ["openclaw/devops"]})
+    projects_file.write_text(json.dumps(rows), encoding="utf-8")
+
+    connect_openclaw(_installation(tmp_path), parents={"devops": "main"},
+        source_config=source_config, registry=registry)
+
+    listings = json.loads(projects_file.read_text(encoding="utf-8"))
+    assert str(stale) not in {row.get("path") for row in listings}
+    assert preserved.read_text(encoding="utf-8") == "keep the old store"
 
 
 def test_different_installations_get_separate_child_and_family_stores(tmp_path, monkeypatch):

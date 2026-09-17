@@ -224,7 +224,7 @@ export function neuralLinkPainter(link, ctx) {
       if (link._tw === undefined) link._tw = Math.random() * Math.PI * 2;
       const tw = state.vertexBlinkOn ? (0.72 + 0.28 * Math.sin(state.neuralPhase * 1.2 + link._tw)) : 1;
       const curved = state.linkStyle === 'curved';
-      const dashed = state.linkStyle === 'dashed';
+      const dashed = state.linkStyle === 'dashed' || link.confidence === 'INFERRED' || link.confidence === 'AMBIGUOUS';
       const mx = (sx + tx) / 2, my = (sy + ty) / 2;
       const bend = dist * 0.16;
       const cx = mx + (-dy / dist) * bend, cy = my + (dx / dist) * bend;
@@ -235,7 +235,7 @@ export function neuralLinkPainter(link, ctx) {
           y: mm * mm * sy + 2 * mm * tt * cy + tt * tt * ty
         };
       };
-      const lc = hexRgb(state.linkColorHex);
+      const lc = link.confidence === 'AMBIGUOUS' ? [245, 158, 11] : hexRgb(state.linkColorHex);
       const w = 0.7 + Math.min(2.6, ((s.degree || 0) + (t.degree || 0)) / 30) + (link.confidence === 'INFERRED' ? -0.2 : 0.2);
       if (state.radianceOn) {
         const grad = ctx.createLinearGradient(sx, sy, tx, ty);
@@ -376,12 +376,14 @@ export function holoLinkPainter(link, ctx) {
       }
       const sx = s.x || 0, sy = s.y || 0, tx = t.x || 0, ty = t.y || 0;
       if (link._dash === undefined) link._dash = Math.random() < 0.18;
+      const ambiguous = link.confidence === 'AMBIGUOUS';
       const act = 0.25 + 0.75 * (state.vertexBlinkOn ? Math.abs(Math.sin(state.neuralPhase * 0.6 + (link.index !== undefined ? link.index : 0) * 0.7)) : 0.5);
       const w = (0.5 + Math.min(1.8, ((s.degree || 0) + (t.degree || 0)) / 30)) * (1 + 0.6 * act);
-      const col = isConnected ? [255, 100, 200] : [30 + act * 200, 150 + act * 95, 220 + act * 35];
+      const col = ambiguous ? [245, 158, 11]
+        : (isConnected ? [255, 100, 200] : [30 + act * 200, 150 + act * 95, 220 + act * 35]);
       ctx.strokeStyle = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${isConnected ? 0.9 : 0.25 + 0.4 * act})`;
       ctx.lineWidth = isConnected ? Math.max(1.2, w * 1.6) : Math.max(0.3, w);
-      if (link._dash) {
+      if (ambiguous || link._dash) {
         ctx.setLineDash([4, 3]);
         ctx.lineDashOffset = -state.neuralPhase * 4;
       } else {

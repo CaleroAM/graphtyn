@@ -210,9 +210,33 @@ def discover_openclaw(config_path: str | None = None, *, ssh_target: str | None 
             detected.append({**candidate, "ok": False, "error": str(exc), "agents": []})
             continue
         digest = hashlib.sha256(f"{candidate['kind']}|{candidate['target']}|{candidate['data_root']}".encode()).hexdigest()[:16]
-        detected.append({**candidate, "id": f"openclaw-{digest}", "ok": True,
+        installation_id = f"openclaw-{digest}"
+        registered = next((row for row in list_installations()
+                           if row.get("id") == installation_id), None)
+        registered_agents = {str(row.get("id")): row for row in
+                             (registered or {}).get("agents", []) if isinstance(row, dict)}
+        effective_agents = []
+        for observed in agents:
+            row = dict(observed)
+            row["config_parent_id"] = observed.get("parent_id")
+            row["config_relation_status"] = observed.get("relation_status")
+            saved = registered_agents.get(observed["id"])
+            if saved:
+                row["parent_id"] = saved.get("parent_id")
+                row["relation_status"] = saved.get("relation_status", observed.get("relation_status"))
+                row["relation_evidence"] = saved.get("relation_evidence") or observed.get("relation_evidence")
+                row["relation_source"] = "graphtyn_registry"
+                row["relation_discrepancy"] = (
+                    observed.get("parent_id") != saved.get("parent_id")
+                    if observed.get("parent_id") or saved.get("parent_id") else False)
+            else:
+                row["relation_source"] = "openclaw_config"
+                row["relation_discrepancy"] = False
+            effective_agents.append(row)
+        detected.append({**candidate, "id": installation_id, "ok": True,
                          "version": str(config.get("meta", {}).get("lastTouchedVersion") or "unknown"),
-                         "agents": agents})
+                         "registry_status": "connected" if registered else "not_connected",
+                         "agents": effective_agents})
     return sorted(detected, key=lambda item: item.get("id", item.get("config_path", "")))
 
 
@@ -562,7 +586,9 @@ def connect_openclaw(discovered: dict[str, Any], *, parents: dict[str, str] | No
                            if row.get("family_id") == agent.get("family_id")]
                 root_id = str(agent.get("family_id") or "").split(":", 1)[-1]
                 family_root = next((row for row in installation["agents"] if row["id"] == root_id), agent)
-                _register_brain_path(family, *members, name=f"Familia · {family_root['display_name']}")
+                _register_brain_path(family, *members, name=f"Familia · {family_root['display_name']}",
+                                     family_installation_id=installation["id"])
+        _remove_stale_family_brain_registrations(installation)
     return installation
 
 
@@ -574,7 +600,8 @@ def _source_for_agent(discovered: dict[str, Any], agent_id: str) -> str | None:
     return candidate if Path(candidate).exists() else None
 
 
-def _register_brain_path(raw_path: str, *agent_ids: str, name: str | None = None) -> None:
+def _register_brain_path(raw_path: str, *agent_ids: str, name: str | None = None,
+                         family_installation_id: str | None = None) -> None:
     from .shared_memory import SharedMemoryStore
     # Use the same central store resolver as the persistent watcher. Without
     # this, a one-off CLI connect could create workspace-local SQLite files
@@ -600,7 +627,62 @@ def _register_brain_path(raw_path: str, *agent_ids: str, name: str | None = None
         item.update({"space_type": "agent_brain", "agent_ids": owners})
         if name:
             item["name"] = name
+    if family_installation_id:
+        registered = next(row for row in rows if isinstance(row, dict) and
+                          str(Path(str(row.get("path") or "")).expanduser().resolve()) == str(root))
+        registered["openclaw_installation_id"] = family_installation_id
     atomic_write_json(target, rows)
+
+
+def _remove_stale_family_brain_registrations(installation: dict[str, Any], *,
+                                              registrations_file: Path | None = None) -> list[str]:
+    """Hide obsolete family stores after agent relationships change, preserving their data.
+
+    Generated family stores live beside a given OpenClaw installation's brains.
+    Only registrations explicitly marked for this installation, or old unmarked
+    family registrations directly under its private ``brains/<installation>``
+    directory, are eligible. The database directories themselves are untouched.
+    """
+    installation_id = str(installation.get("id") or "").strip()
+    if not installation_id:
+        return []
+    active_paths = {
+        str(Path(str(agent["family_path"])).expanduser().resolve())
+        for agent in installation.get("agents", [])
+        if agent.get("family_path") and agent.get("relation_status") in {"root", "confirmed"}
+    }
+    target = registrations_file or (data_home() / "registered_projects.json")
+    try:
+        rows = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    if not isinstance(rows, list):
+        return []
+    owned_root = (data_home() / "brains" / installation_id).resolve()
+    suffix = f"-{installation_id.removeprefix('openclaw-')[:8]}-shared"
+    kept: list[dict[str, Any]] = []
+    removed: list[str] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            kept.append(row)
+            continue
+        raw_path = str(row.get("path") or "")
+        try:
+            path = Path(raw_path).expanduser().resolve()
+            directly_owned = path.parent == owned_root and path.name.endswith(suffix)
+        except (OSError, RuntimeError, ValueError):
+            directly_owned = False
+            path = Path()
+        marked = row.get("openclaw_installation_id") == installation_id
+        old_generated_family = (directly_owned and row.get("space_type") == "agent_brain" and
+                                str(row.get("name") or "").startswith("Familia ·"))
+        if (marked or old_generated_family) and str(path) not in active_paths:
+            removed.append(raw_path)
+            continue
+        kept.append(row)
+    if removed:
+        atomic_write_json(target, kept)
+    return removed
 
 
 def _register_agent_identity(agent: dict[str, Any], installation_id: str) -> None:
@@ -714,7 +796,9 @@ def set_parent(installation_id: str, child_id: str, parent_id: str | None,
         if family_path:
             _register_brain_path(family_path, *(agent["agent_id"] for agent in agents.values()
                                                 if agent.get("family_id") == family_id),
-                                 name=f"Familia · {root.get('display_name') or family_root}")
+                                 name=f"Familia · {root.get('display_name') or family_root}",
+                                 family_installation_id=installation_id)
+    _remove_stale_family_brain_registrations(installation_row)
     installation_row.setdefault("relationship_events", []).append({
         "event_id": f"rel-{time.time_ns()}", "agent_id": row["agent_id"],
         "previous_parent_id": previous_parent, "previous_status": previous_status,

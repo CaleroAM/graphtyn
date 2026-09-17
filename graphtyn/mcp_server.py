@@ -724,6 +724,18 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                 "neighbor_limit": {"type": "integer"}}, "required": ["query", "requester_agent"]}
                         },
                         {
+                            "name": "memory_project_context",
+                            "description": "Antes de responder sobre un proyecto registrado, recupera su memoria compartida usando el nombre, ID o ruta exactos. Si no es único, devuelve candidatos; no elige por similitud.",
+                            "inputSchema": {"type": "object", "properties": {
+                                "project": {"type": "string"}, "query": {"type": "string"},
+                                "requester_agent": {"type": "string"},
+                                "token_budget": {"type": "integer", "minimum": 300, "maximum": 3000},
+                                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+                                "mode": {"type": "string", "enum": ["semantic", "continuity"]},
+                                "activity_limit": {"type": "integer", "minimum": 0, "maximum": 10}},
+                                "required": ["project", "query", "requester_agent"]}
+                        },
+                        {
                             "name": "memory_status",
                             "description": "Estado de captura, cobertura temática, propietarios y ruta del almacén MCP actual.",
                             "inputSchema": {"type": "object", "properties": {
@@ -785,7 +797,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
             if tool_profile == "intent":
                 response["result"]["tools"] = [
                     tool for tool in response["result"]["tools"]
-                    if tool["name"] in {"graph_query_intent", "memory_context", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}
+                    if tool["name"] in {"graph_query_intent", "memory_context", "memory_project_context", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}
                 ]
             elif tool_profile == "memory":
                 response["result"]["tools"] = [
@@ -987,6 +999,35 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                         neighbor_limit=int(args.get("neighbor_limit") or 12),
                                         agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))
                 return _mcp_text(req_id, result)
+            elif name == "memory_project_context":
+                from .core.openclaw_project_routing import resolve_registered_project
+                resolution = resolve_registered_project(str(args.get("project") or ""), home=data_home())
+                if resolution["status"] != "matched":
+                    return _mcp_text(req_id, {"ok": False, "status": resolution["status"],
+                        "candidates": resolution.get("candidates", []),
+                        "error": ("El proyecto no está registrado o el nombre no coincide exactamente"
+                                  if resolution["status"] == "unresolved" else
+                                  "Hay varios proyectos con ese nombre; especifica su ID o ruta")})
+                target = resolution["project"]
+                requester = str(args.get("requester_agent") or "").strip().casefold()
+                if not requester:
+                    return _mcp_text(req_id, {"ok": False, "error": "requester_agent es obligatorio"})
+                target_path = Path(target["path"]).resolve()
+                project_scope = resolve_memory_scope(target_path)
+                owners = set(project_scope["agent_ids"])
+                if project_scope["restricted"] and requester not in owners:
+                    return _mcp_text(req_id, {"ok": False, "error": "el agente no está autorizado para este proyecto"})
+                context = SharedMemoryStore(target_path).context(
+                    str(args.get("query") or ""), requester_agent=requester,
+                    token_budget=max(300, min(3000, int(args.get("token_budget") or 1800))),
+                    limit=max(1, min(50, int(args.get("limit") or 8))),
+                    mode=str(args.get("mode") or "continuity"),
+                    activity_limit=max(0, min(10, int(args.get("activity_limit")
+                        if args.get("activity_limit") is not None else 3))),
+                    agent_ids=project_scope["agent_ids"] if project_scope["restricted"] else [])
+                return _mcp_text(req_id, {"ok": True,
+                    "project": {"id": target["id"], "name": target["name"]},
+                    "requester_agent": requester, "context": context})
             elif name == "memory_status":
                 result = memory.status(agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))
                 result["path"] = str(workspace.resolve())
@@ -1052,6 +1093,12 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
             continue
         try:
             req = json.loads(line)
+            # JSON-RPC notifications (including MCP's notifications/initialized)
+            # have no id and must not receive a response. Emitting an error for
+            # them shifts the stdio stream and makes otherwise valid clients
+            # reject the following tools/list response.
+            if isinstance(req, dict) and "id" not in req:
+                continue
             resp = handle_request(req)
             sys.stdout.write(json.dumps(resp) + "\n")
             sys.stdout.flush()

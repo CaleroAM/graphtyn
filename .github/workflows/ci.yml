@@ -83,7 +83,7 @@ jobs:
           $env:PYTHONIOENCODING = "cp1252"
           $result = (& $exe onboard --path $fixture --agent antigravity --tool-profile full --no-token | ConvertFrom-Json)
           if (-not $result.ok -or $result.index.nodes -lt 1) { throw "El onboarding no produjo un índice útil en Windows." }
-          if (-not (Test-Path (Join-Path $fixture ".agents\plugins\graphtyn\mcp_config.json"))) { throw "Falta la integración MCP de Antigravity." }
+          if (-not (Test-Path (Join-Path $fixture ".agents\mcp_config.json"))) { throw "Falta la integración MCP de Antigravity." }
           $index = Get-Content $result.index.index -Raw | ConvertFrom-Json
           if (($index.nodes | ConvertTo-Json -Depth 8) -match '\\\\') { throw "El índice contiene separadores Windows no normalizados." }
       - name: Start and query the dashboard on Windows

@@ -269,7 +269,7 @@ def test_agent_install_antigravity_uses_project_gemini_policy(git_repo, tmp_path
     policy = (git_repo / "GEMINI.md").read_text(encoding="utf-8")
     assert "graphtyn query-intent" in policy
     assert "memory_ingest_turn" in policy
-    assert "Before any repository listing" in policy
+    assert "For current source-code questions" in policy
     assert "do_not_expand=true" in policy
     assert "without reopening files" in policy
     assert "Never install `graphifyy`" in policy
@@ -277,8 +277,10 @@ def test_agent_install_antigravity_uses_project_gemini_policy(git_repo, tmp_path
     manifest = json.loads((git_repo / ".graphtyn" / "agent-install.json").read_text())
     assert manifest["platforms"] == ["antigravity"]
     assert manifest["tool_profile"] == "intent"
-    mcp = json.loads((git_repo / ".agents/plugins/graphtyn/mcp_config.json").read_text())
-    assert mcp["mcpServers"]["graphtyn"]["args"][-1] == "intent"
+    mcp = json.loads((git_repo / ".agents/mcp_config.json").read_text())
+    entry = mcp["mcpServers"][manifest["mcp_server"]]
+    assert entry["command"] == "graphtyn"
+    assert entry["args"] == ["mcp", "--tool-profile", "intent", "--path", "."]
     assert (git_repo / ".agents/skills/graphtyn/SKILL.md").is_file()
 
 
@@ -294,8 +296,36 @@ def test_onboard_builds_index_and_full_antigravity_integration(git_repo, tmp_pat
     assert data["index"]["nodes"] >= 1
     assert Path(data["index"]["index"]).is_file()
     assert data["dashboard"] == "http://127.0.0.1:9210"
-    mcp = json.loads((git_repo / ".agents/plugins/graphtyn/mcp_config.json").read_text())
-    assert mcp["mcpServers"]["graphtyn"]["args"] == ["mcp", "--tool-profile", "full"]
+    mcp = json.loads((git_repo / ".agents/mcp_config.json").read_text())
+    entry = mcp["mcpServers"][data["setup"]["integrations"]["mcp_server"]]
+    assert entry["command"] == "graphtyn"
+    assert entry["args"] == ["mcp", "--tool-profile", "full", "--path", "."]
+
+
+def test_setup_memory_opt_in_does_not_import_historical_sessions(git_repo, tmp_path):
+    home = tmp_path / "isolated-home"
+    home.mkdir()
+    result = subprocess.run(CLI + ["setup", "--apply", "--memory", "on", "--no-token",
+                                   "--path", str(git_repo)], cwd=str(git_repo),
+                           env=dict(os.environ, HOME=str(home), GRAPHTYN_HOME=str(home / ".graphtyn")),
+                           capture_output=True, text=True, timeout=90)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["memory"]["enabled"] is True
+    assert data["memory"]["historical_imported"] is False
+    assert data["memory"]["continuous_capture_active"] is False
+    assert "discovered" not in data["memory"]
+
+
+def test_setup_history_import_requires_explicit_consent(git_repo, tmp_path):
+    home = tmp_path / "isolated-home"
+    home.mkdir()
+    result = subprocess.run(CLI + ["setup", "--apply", "--memory", "on", "--import-history",
+                                   "--no-token", "--path", str(git_repo)], cwd=str(git_repo),
+                           env=dict(os.environ, HOME=str(home), GRAPHTYN_HOME=str(home / ".graphtyn")),
+                           capture_output=True, text=True, timeout=90)
+    assert result.returncode != 0
+    assert "--consent-history" in result.stderr
 
 
 def test_onboard_auto_connects_a_single_openclaw_installation(git_repo, tmp_path, monkeypatch, capsys):
@@ -397,6 +427,8 @@ def test_agent_install_upgrades_existing_graphtyn_policy(git_repo, tmp_path):
     policy = (git_repo / "AGENTS.md").read_text(encoding="utf-8")
     assert policy.count("not a Graphify backend") == 1
     assert "Never install `graphifyy`" in policy
+    assert "those commands inspect source code and do not retrieve session" in policy
+    assert "graphtyn memory context" in policy
 
 
 def test_agent_policies_enforce_context_stop_contract():
@@ -408,6 +440,8 @@ def test_agent_policies_enforce_context_stop_contract():
         assert "before" in policy.lower()
         assert "Never install `graphifyy`" in policy
         assert "do not substitute another product" in policy
+        assert "those commands inspect source code and do not retrieve session" in policy
+        assert "graphtyn memory context" in policy
 
 
 def test_pr_impact_cli_json(git_repo, tmp_path):

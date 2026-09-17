@@ -313,6 +313,85 @@ def test_http_mcp_exposes_agent_memory_tools_in_intent_profile(monkeypatch):
             "memory_agent_revoke", "memory_agent_update"} <= names
 
 
+def test_http_mcp_reads_only_explicit_registered_project_memory(tmp_path, monkeypatch):
+    _client(tmp_path, monkeypatch)
+    monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "mcp-token")
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS", raising=False)
+    project = tmp_path / "TourMuseosPuebla"
+    project.mkdir()
+    api_main.INDEX_STORE.mkdir(parents=True, exist_ok=True)
+    (api_main.INDEX_STORE / "registered_projects.json").write_text(json.dumps([{
+        "id": "tour", "name": "TourMuseosPuebla", "path": str(project), "space_type": "project",
+    }]), encoding="utf-8")
+    store = SharedMemoryStore(project)
+    session = store.start_session("openclaw/nexus", "Decisiones TourMuseosPuebla", capture_enabled=True)
+    store.append_message(session["id"], "user", "Revisemos el registro de decisiones de TourMuseosPuebla.",
+        metadata={"provider": "openclaw", "source_message_id": "tour-user-1",
+                  "capture_mode": "project_routed_incremental"})
+    store.append_message(session["id"], "assistant", "La decisión queda en el grafo de TourMuseosPuebla.",
+        metadata={"provider": "openclaw", "source_message_id": "tour-assistant-1",
+                  "capture_mode": "project_routed_incremental"})
+    store.checkpoint(session["id"], "decision", "Recuperación de contexto",
+                     "La decisión fue conservar el registro de decisiones en la memoria del proyecto.")
+    monkeypatch.setenv("GRAPHTYN_HTTP_TOOL_PROFILE", "intent")
+
+    def call(project_hint):
+        response = api_main.mcp_http({"jsonrpc": "2.0", "id": 9, "method": "tools/call",
+            "params": {"name": "memory_project_context", "arguments": {
+                "project": project_hint, "query": "registro de decisiones", "requester_agent": "openclaw/nexus",
+            }}}, authorization="Bearer mcp-token")
+        return json.loads(response.body)
+
+    result = call("TourMuseosPuebla")
+    names = api_main.mcp_http({"jsonrpc": "2.0", "id": 10, "method": "tools/list"},
+                              authorization="Bearer mcp-token")
+    tool_names = {row["name"] for row in json.loads(names.body)["result"]["tools"]}
+    payload = json.loads(result["result"]["content"][0]["text"])
+
+    assert "memory_project_context" in tool_names
+    assert payload["ok"] is True
+    assert payload["project"] == {"id": "tour", "name": "TourMuseosPuebla"}
+    assert payload["context"]["memories"][0]["agent_id"] == "openclaw/nexus"
+    assert "registro de decisiones" in payload["context"]["memories"][0]["content"]
+    assert payload["context"]["recent_activity"][0]["agent_id"] == "openclaw/nexus"
+    assert payload["context"]["recent_activity"][0]["provider"] == "openclaw"
+    assert payload["context"]["source_messages"][0]["source_message_id"] == "tour-user-1"
+    assert payload["context"]["source_messages"][0]["agent_id"] == "openclaw/nexus"
+    assert payload["context"]["coverage"]["source_message_search"]["matched_messages"] >= 1
+
+
+def test_http_mcp_project_context_rejects_ambiguous_name_and_out_of_scope_token(tmp_path, monkeypatch):
+    _client(tmp_path, monkeypatch)
+    monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS", json.dumps({
+        "scoped-reader": {"role": "reader", "agent_id": "openclaw/nexus",
+                          "projects": [str(tmp_path / "crm-a")]}}))
+    project_a, project_b = tmp_path / "crm-a", tmp_path / "crm-b"
+    project_a.mkdir(); project_b.mkdir()
+    api_main.INDEX_STORE.mkdir(parents=True, exist_ok=True)
+    (api_main.INDEX_STORE / "registered_projects.json").write_text(json.dumps([
+        {"id": "crm-a", "name": "CRM Operadores", "path": str(project_a),
+         "space_type": "project", "aliases": ["CRM"]},
+        {"id": "crm-b", "name": "CRM Reportes", "path": str(project_b),
+         "space_type": "project", "aliases": ["CRM"]},
+    ]), encoding="utf-8")
+
+    def call(project_hint):
+        response = api_main.mcp_http({"jsonrpc": "2.0", "id": 11, "method": "tools/call",
+            "params": {"name": "memory_project_context", "arguments": {
+                "project": project_hint, "query": "operadores", "requester_agent": "openclaw/nexus",
+            }}}, authorization="Bearer scoped-reader")
+        return json.loads(response.body)["result"]
+
+    ambiguous = call("CRM")
+    denied = call("crm-b")
+
+    assert ambiguous["isError"] is True
+    assert json.loads(ambiguous["content"][0]["text"])["status"] == "ambiguous"
+    assert denied["isError"] is True
+    assert "no permite este proyecto" in json.loads(denied["content"][0]["text"])["error"]
+
+
 def test_memory_http_correct_and_forget_enforce_author(tmp_path, monkeypatch):
     monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
     monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)
@@ -350,6 +429,25 @@ def test_explicit_registration_overrides_auto_discovered_name(tmp_path, monkeypa
 
     assert projects[0]["id"] == "graphtyn"
     assert projects[0]["name"] == "Graphtyn"
+
+
+def test_dashboard_project_registration_creates_stable_memory_identity(tmp_path, monkeypatch):
+    project = tmp_path / "registered-e50e"
+    project.mkdir()
+    registry = tmp_path / "registered_projects.json"
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", registry)
+    monkeypatch.setattr(api_main, "_require_role", lambda *args, **kwargs: ("admin", None))
+
+    result = api_main.register_project({"path": str(project), "name": "E50E"})
+    if hasattr(result, "body"):
+        result = json.loads(result.body)
+
+    assert result["ok"] is True
+    assert result["project_identity"]["id"]
+    metadata = json.loads((project / ".graphtyn/graphtyn.json").read_text(encoding="utf-8"))
+    assert metadata["project_id"] == result["project_identity"]["id"]
+    assert result["integrations"]["status"] == "identity_registered"
 
 
 def test_project_source_attribution_does_not_filter_other_agents(tmp_path, monkeypatch):

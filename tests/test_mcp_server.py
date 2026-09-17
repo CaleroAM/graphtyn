@@ -46,7 +46,7 @@ def test_mcp_initialize_and_tools_list(workspace):
             "graph_context_bundle", "graph_analyze_change", "graph_query_intent",
             "graph_history_search", "graph_history_timeline", "graph_history_get",
             "graph_register_project", "memory_session_start", "memory_checkpoint",
-            "memory_append", "memory_search", "memory_context", "memory_session_end",
+            "memory_append", "memory_search", "memory_context", "memory_project_context", "memory_session_end",
             "memory_status", "memory_correct", "memory_forget", "memory_compact"} <= names
     intent_tool = next(t for t in tools["result"]["tools"] if t["name"] == "graph_query_intent")
     assert "overview" in intent_tool["inputSchema"]["properties"]["intent"]["enum"]
@@ -54,6 +54,17 @@ def test_mcp_initialize_and_tools_list(workspace):
     context_tool = next(t for t in tools["result"]["tools"] if t["name"] == "memory_context")
     assert context_tool["inputSchema"]["properties"]["mode"]["enum"] == ["semantic", "continuity"]
     assert context_tool["inputSchema"]["properties"]["activity_limit"]["maximum"] == 10
+
+
+def test_mcp_stdio_ignores_notifications_without_shifting_responses(workspace):
+    _, responses = _mcp_call(workspace, [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+    ])
+
+    assert [response.get("id") for response in responses] == [1, 2]
+    assert any(tool["name"] == "memory_context" for tool in responses[1]["result"]["tools"])
 
 
 def test_mcp_intent_profile_exposes_context_and_topic_expansion(workspace):
@@ -64,7 +75,7 @@ def test_mcp_intent_profile_exposes_context_and_topic_expansion(workspace):
         capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ),
     )
     response = json.loads(res.stdout.strip())
-    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "memory_context", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
+    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "memory_context", "memory_project_context", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
 
 
 def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalog(workspace):
@@ -75,6 +86,33 @@ def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalo
     names = {tool["name"] for tool in json.loads(res.stdout)["result"]["tools"]}
     assert "graph_query_intent" in names and "memory_compact" in names
     assert "graph_neighborhood" not in names and all(name == "graph_query_intent" or name.startswith("memory_") for name in names)
+
+
+def test_mcp_memory_project_context_resolves_registered_project(workspace, tmp_path, monkeypatch):
+    from graphtyn.core.shared_memory import SharedMemoryStore
+
+    home = tmp_path / ".graphtyn"
+    project = tmp_path / "TourMuseosPuebla"
+    project.mkdir()
+    home.mkdir()
+    monkeypatch.setenv("GRAPHTYN_HOME", str(home))
+    (home / "registered_projects.json").write_text(json.dumps([{
+        "id": "tour", "name": "TourMuseosPuebla", "path": str(project), "space_type": "project",
+    }]), encoding="utf-8")
+    store = SharedMemoryStore(project)
+    session = store.start_session("openclaw/nexus", "Decisión de TourMuseosPuebla")
+    store.checkpoint(session["id"], "decision", "Persistir decisiones",
+                     "La decisión queda registrada en la memoria compartida del proyecto.")
+
+    _, responses = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 22, "method": "tools/call",
+        "params": {"name": "memory_project_context", "arguments": {
+            "project": "TourMuseosPuebla", "query": "memoria compartida proyecto",
+            "requester_agent": "openclaw/nexus"}}}], env={"GRAPHTYN_HOME": str(home)})
+    result = json.loads(responses[0]["result"]["content"][0]["text"])
+
+    assert result["ok"] is True
+    assert result["project"]["name"] == "TourMuseosPuebla"
+    assert result["context"]["memories"][0]["agent_id"] == "openclaw/nexus"
 
 
 def test_mcp_memory_cross_session_attribution(workspace):

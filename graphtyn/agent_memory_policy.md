@@ -11,6 +11,13 @@ identity, `mode="continuity"`, a 1,800-token budget, and up to three recent
 activity entries. The MCP workspace is selected when its server starts; do not
 invent a path parameter for a tool whose schema does not accept one.
 
+For questions about what another agent previously did, added, or decided, this
+memory lookup takes priority over the code-graph query workflow. Do not run
+`graph_query_intent` or `graphtyn query-intent` to answer conversation-history
+questions: those commands inspect source code and do not retrieve session
+history. For a request mixing historical context and current code, retrieve
+memory first, then verify any current-code claims separately.
+
 Use semantic memories and recent activity together. Activity carries the source
 agent, session, source date when available, and message reference. An imported
 session without a source timestamp is not evidence of recency. Treat activity as
@@ -29,7 +36,18 @@ continue with the evidence already returned instead of looping over searches.
 If `memory_context` is absent or fails, verify the registered MCP command,
 version, project scope, and available tools. Do not claim that context was
 retrieved, and do not answer a continuity question from Git alone without
-explaining the gap. `memory_status` can verify the configured store and whether
+explaining the gap. As a local fallback, query the same project's memory store
+directly with the CLI and the same `GRAPHTYN_HOME` as the MCP server:
+
+```bash
+graphtyn memory context "<the complete history question>" --agent <real-client-id> \
+  --mode continuity --activity-limit 3 --no-graph --path <registered-project-path>
+```
+
+This retrieves conversation context without scanning the source tree. If the
+CLI result does not identify the intended project store or has no relevant
+evidence, say that context was not recovered. Never substitute `query-intent`
+for this fallback. `memory_status` can verify the configured store and whether
 continuous capture is active; capture status does not prove retrieval occurred.
 
 At the end of a substantive turn, use the active capture path. Check

@@ -92,6 +92,19 @@ def test_context_complete_response_budget(store):
     assert result['topics']
 
 
+def test_context_budget_keeps_theme_when_topic_has_many_file_entities(store):
+    sid = store.start_session('opencode', 'Cache cleanup', capture_enabled=True)['id']
+    store.append_message(sid, 'user', 'Review the cache cleanup before release')
+    paths = ' '.join(f'src/cache/module_{index}.py' for index in range(40))
+    store.append_message(sid, 'tool', f'Inspected repository files: {paths}')
+    store.process_topics(sid)
+    result = store.context('cache cleanup', requester_agent='codex', limit=1,
+                           token_budget=1800, include_graph=False)
+    assert result['topics']
+    assert result['topics'][0]['agent_ids'] == ['opencode']
+    assert encoded_tokens(result) <= 1800
+
+
 def test_backup_preserves_existing_memories(store, tmp_path):
     sid = store.start_session('agy', 'Existing')['id']
     mid = store.checkpoint(sid, 'fact', 'Existing fact', 'Preserve me')['id']
@@ -142,11 +155,15 @@ def test_topic_graph_marks_possible_relations_ambiguous(store):
     ]):
         store.append_message(sid, 'user', text)
     store.process_topics(sid)
-    graph = store.topic_graph(limit=100)
     possible = store.relation_candidates(requester_agent='agy')['candidates']
+    graph = store.topic_graph(limit=100)
     assert possible
     assert all(item['status'] == 'pending' for item in possible)
-    assert not [link for link in graph['links'] if link['label'] == 'posible relación']
+    possible_links = [link for link in graph['links'] if link['label'] == 'posible relación']
+    assert possible_links
+    assert all(link['confidence'] == 'AMBIGUOUS' and link['status'] == 'pending'
+               for link in possible_links)
+    assert len([node for node in graph['nodes'] if node['kind'] == 'memory_topic']) == 3
 
 
 def test_node_references_and_relation_review_are_stable(store):
@@ -267,23 +284,112 @@ def test_python_chats_link_files_and_symbols_without_merging_work(store):
     assert graph['metadata']['topic_count'] == 2
 
 
+def test_file_references_from_tool_output_connect_agents_with_attribution(store):
+    target = store.workspace / 'src' / 'reports.py'
+    target.parent.mkdir(parents=True)
+    target.write_text('# reports', encoding='utf-8')
+    opencode = store.start_session('opencode', 'Retry behavior', capture_enabled=True)['id']
+    agy = store.start_session('agy', 'Nightly export test', capture_enabled=True)['id']
+    store.append_message(opencode, 'user', 'Fix the retry calculation for exports')
+    store.append_message(opencode, 'assistant', 'I updated ' + str(target))
+    store.append_message(opencode, 'tool', 'pytest ran against src/reports.py')
+    store.append_message(agy, 'user', 'Add a nightly regression test for exports')
+    store.append_message(agy, 'tool', 'The test inspected src/reports.py and passed')
+    store.process_topics(opencode)
+    store.process_topics(agy)
+
+    topics = store.topics(requester_agent='dashboard', limit=20)['topics']
+    assert len(topics) == 2
+    assert {episode['agent_id'] for topic in topics
+            for episode in store.topic(topic['id'], requester_agent='dashboard')['episodes']} == {'opencode', 'agy'}
+    graph = store.topic_graph(requester_agent='dashboard', detail=True, limit=100)
+    file_links = [link for link in graph['links'] if link['label'] == 'mismo archivo']
+    assert file_links
+    assert any(node.get('entity_kind') == 'file' and node.get('entity_key') == 'src/reports.py'
+               and node.get('metadata', {}).get('path_scope') == 'workspace_relative'
+               for node in graph['nodes'])
+    assert store.process_topics(agy)['file_references_processed'] == 0
+    with store._connect() as db:
+        assert db.execute('SELECT COUNT(*) FROM topic_entity_evidence').fetchone()[0] >= 2
+
+    context = store.context('retry', requester_agent='codex', limit=1, include_graph=False)
+    assert context['topics']
+    assert any(item['agent_ids'] == ['agy'] and item['relation'] == 'mismo archivo'
+               for item in context['related_topics'])
+
+
+def test_file_reference_extraction_rejects_external_and_parent_paths(store):
+    refs = store._file_references(
+        f"Changed {store.workspace}/src/reports.py, src/reports.py, report.py, "
+        "../secret.py and https://example.invalid/private.py"
+    )
+    by_key = {item['key']: item['metadata']['path_scope'] for item in refs}
+    assert by_key['src/reports.py'] == 'workspace_relative'
+    assert by_key['report.py'] == 'basename_only'
+    assert 'secret.py' not in by_key
+    assert 'private.py' not in by_key
+
+
+def test_related_topics_remain_separate_across_all_agent_names(store):
+    agents = ('codex', 'agy', 'opencode', 'openclaw/nexus', 'claude')
+    for index, agent in enumerate(agents):
+        sid = store.start_session(agent, f'Billing pipeline work {index}', capture_enabled=True)['id']
+        text = (f'Billing reconciliation pipeline task {index}' if index < 3 else
+                f'Kubernetes canary deployment task {index}')
+        store.append_message(sid, 'user', text)
+        store.process_topics(sid)
+    before = store.topics(requester_agent='dashboard', limit=20)['topics']
+    recorded_agents = {episode['agent_id'] for topic in before
+                       for episode in store.topic(topic['id'], requester_agent='dashboard')['episodes']}
+    assert recorded_agents == set(agents)
+    assert len({topic['id'] for topic in before}) == len(agents)
+    candidates = store.relation_candidates(requester_agent='dashboard', limit=100)['candidates']
+    graph = store.topic_graph(requester_agent='dashboard', limit=100)
+    assert candidates
+    assert any(link['confidence'] == 'AMBIGUOUS' for link in graph['links'])
+
+
+def test_common_project_words_do_not_create_ambiguous_edges(store):
+    for index, agent in enumerate(('codex', 'agy', 'opencode', 'claude', 'openclaw/nexus')):
+        sid = store.start_session(agent, f'Common project work {index}', capture_enabled=True)['id']
+        store.append_message(sid, 'user',
+            'Graphtyn OpenClaw conversation context memory project changes database schema migration')
+        store.process_topics(sid)
+    candidates = store.relation_candidates(requester_agent='dashboard', limit=100)['candidates']
+    assert candidates == []
+    graph = store.topic_graph(requester_agent='dashboard', limit=100)
+    assert not [link for link in graph['links'] if link.get('confidence') == 'AMBIGUOUS']
+
+
 def test_stream_restart_partial_tail_and_exclusions(store, tmp_path):
     from graphtyn.core.history_stream import ingest_jsonl
+    message_count = 1105
     path = tmp_path / 'history.jsonl'
-    path.write_text('\n'.join(json.dumps({'id': str(i), 'role': 'user' if i % 2 == 0 else 'assistant', 'content': f'Android build {i}'}) for i in range(65)) + '\n' + '{"role":')
+    path.write_text('\n'.join(json.dumps({'id': str(i), 'role': 'user' if i % 2 == 0 else 'assistant', 'content': f'Android build {i}'}) for i in range(message_count)) + '\n' + '{"role":')
     kwargs = dict(provider='codex', agent_id='codex', external_session_id='native', consent=True, explicit_project_selection=True)
     with pytest.raises(InterruptedError):
         ingest_jsonl(store, path, **kwargs, progress=lambda _: False)
-    result = ingest_jsonl(store, path, **kwargs)
-    assert result['processed'] == 65
+    # Reopen the same persistent store to exercise process-restart recovery.
+    resumed_store = SharedMemoryStore(store.workspace)
+    result = ingest_jsonl(resumed_store, path, **kwargs)
+    assert result['processed'] == message_count
     assert result['pending_bytes'] > 0
-    repeat = ingest_jsonl(store, path, **kwargs)
-    assert repeat['processed'] == 65
-    assert len(store.list_messages(result['session_id'])) == 65
+    repeat = ingest_jsonl(resumed_store, path, **kwargs)
+    assert repeat['processed_this_run'] == 0
+    assert repeat['processed'] == message_count
+    with resumed_store._connect() as db:
+        imported = db.execute('SELECT metadata_json FROM messages WHERE session_id=? ORDER BY rowid',
+                              (result['session_id'],)).fetchall()
+    source_ids = [json.loads(row[0])['source_message_id'] for row in imported]
+    assert len(source_ids) == message_count
+    assert len(set(source_ids)) == message_count
     with path.open('a') as f: f.write('"user","content":"Botones"}\n')
-    completed = ingest_jsonl(store, path, **kwargs)
-    assert completed['processed'] == 66
+    completed = ingest_jsonl(resumed_store, path, **kwargs)
+    assert completed['processed'] == message_count + 1
     assert completed['pending_bytes'] == 0
+    with resumed_store._connect() as db:
+        assert db.execute('SELECT COUNT(*) FROM messages WHERE session_id=?',
+                          (result['session_id'],)).fetchone()[0] == message_count + 1
 
 
 def test_agy_planner_and_generic_tool_preserve_roles():
@@ -326,3 +432,23 @@ def test_agent_brain_relation_candidates_keep_owner_scope_and_bindings(store, tm
         {item["source_topic_id"], item["target_topic_id"]} <= main_topic_ids
         for item in result["candidates"]
     )
+
+
+def test_agent_brain_does_not_create_cross_owner_file_relations(store, tmp_path):
+    target = store.workspace / 'src' / 'shared.py'
+    target.parent.mkdir(parents=True)
+    target.write_text('# shared', encoding='utf-8')
+    for agent in ('openclaw/main', 'openclaw/career'):
+        sid = store.start_session(agent, 'Shared file task', capture_enabled=True)['id']
+        store.append_message(sid, 'user', f'Work on a different feature for {agent}')
+        store.append_message(sid, 'tool', 'Inspected src/shared.py')
+        store.process_topics(sid)
+    registry = tmp_path / 'state' / 'registered_projects.json'
+    registry.parent.mkdir(parents=True, exist_ok=True)
+    registry.write_text(json.dumps([{
+        'id': 'project', 'path': str(store.workspace), 'space_type': 'agent_brain',
+        'agent_ids': ['openclaw/main'],
+    }]), encoding='utf-8')
+    isolated = SharedMemoryStore(store.workspace)
+    graph = isolated.topic_graph(requester_agent='dashboard', detail=True, limit=100)
+    assert not [link for link in graph['links'] if link['label'] == 'mismo archivo']

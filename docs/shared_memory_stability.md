@@ -29,7 +29,7 @@ otros clientes recuperaron sus checkpoints. Evidencia estructurada:
 [`benchmarks/shared_memory_live_matrix_2026-08-22.json`](../benchmarks/shared_memory_live_matrix_2026-08-22.json).
 estables equivalentes a task IDs o símbolos del proyecto.
 
-## Resultado observado
+## Resultado observado · 22 de agosto de 2026
 
 | Métrica | Resultado |
 |---|---:|
@@ -46,12 +46,36 @@ estables equivalentes a task IDs o símbolos del proyecto.
 La primera ejecución obtuvo Recall@5 de 71.11% porque las consultas usaban aliases
 compuestos que no existían en las memorias. El contrato se corrigió para persistir
 el alias estable junto al título, como Graphtyn hace con símbolos/task IDs; las
-consultas no fueron modificadas.
+consultas no fueron modificadas. Esta medición de tokens es histórica: el cálculo
+actual contabiliza la respuesta estructurada completa, incluidos metadatos y
+referencias.
+
+## Reejecución · 13 de septiembre de 2026
+
+Se repitió la matriz completa después de ampliar el contexto con episodios,
+mensajes fuente y relaciones. La ejecución actual mide todos los campos que el
+cliente recibe:
+
+| Métrica | Resultado |
+|---|---:|
+| Consultas positivas / negativas | 270 / 15 |
+| Recall@5 / Recall@10 | 100% / 100% |
+| MRR | 0,9889 |
+| Atribución / exactitud negativa | 100% / 100% |
+| Tokens estimados por consulta | 516,93 |
+| Latencia media / p95 | 37,11 / 47,75 ms |
+| Fallos | 0 |
+
+Los 90 casos por solicitante también alcanzaron Recall@5 de 100% para AGY,
+Codex y OpenClaw. El presupuesto completo promedio quedó bajo el límite actual
+de 750 tokens; este límite cuenta estructura y referencias además del texto de
+memoria. El benchmark es sintético y no sustituye la evaluación de conversaciones
+reales.
 
 ## Guardrails
 
 La prueba automatizada exige Recall@5 y MRR ≥ 0.98, atribución y negativos al 100%,
-promedio ≤ 350 tokens y cero fallos. También verifica resultados por agente para
+promedio ≤ 750 tokens de respuesta completa y cero fallos. También verifica resultados por agente para
 evitar que un promedio oculte un cliente peor.
 
 ```bash

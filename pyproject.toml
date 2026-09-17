@@ -16,7 +16,8 @@ dependencies = [
     "uvicorn>=0.28.0",
     "mcp>=1.0.0",
     "pydantic>=2.6.0",
-    "typing-extensions>=4.10.0"
+    "typing-extensions>=4.10.0",
+    "tomli>=2.0.1; python_version < '3.11'"
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

@@ -96,6 +96,112 @@ def default_sources() -> dict[str, list[Path]]:
     }
 
 
+def _antigravity_workspace_map(source_root: str | Path) -> dict[str, str]:
+    """Map AGY transcript UUIDs to their recorded workspace from its metadata DB.
+
+    Antigravity's canonical transcript JSONL omits the workspace. Its adjacent
+    conversation_summaries.db carries workspace_uris, so use that metadata to
+    route a session without assigning every AGY conversation to one project.
+    """
+    root = Path(source_root).expanduser()
+    if root.is_file():
+        root = root.parent
+    if root.name == "brain":
+        root = root.parent
+    database = root / "conversation_summaries.db"
+    rows = []
+    if database.is_file():
+        try:
+            connection = sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True, timeout=1)
+            connection.execute("PRAGMA query_only=ON")
+            columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(conversation_summaries)")}
+            if not {"conversation_id", "workspace_uris"}.issubset(columns):
+                connection.close()
+            else:
+                rows = connection.execute(
+                    "SELECT conversation_id, workspace_uris FROM conversation_summaries"
+                ).fetchall()
+                connection.close()
+        except sqlite3.Error:
+            rows = []
+
+    def decode_workspace(value: str) -> str | None:
+        try:
+            parsed = urlparse(value)
+            if parsed.scheme == "file":
+                value = unquote(parsed.path)
+                if parsed.netloc and parsed.netloc.casefold() not in {"", "localhost"}:
+                    value = f"//{parsed.netloc}{value}"
+                elif re.match(r"^/[A-Za-z]:[\\/]", value):
+                    # RFC 8089 file URIs encode Windows drives as file:///C:/…;
+                    # pathlib on Windows expects C:/…, without the extra slash.
+                    value = value[1:]
+            path = Path(value).expanduser()
+            if not path.is_absolute():
+                return None
+            normalized = path.resolve()
+        except (OSError, RuntimeError, ValueError):
+            return None
+
+        # A workspace may be a subdirectory of its Git project. Normalize it
+        # to that checkout root so exact project identity checks remain safe.
+        try:
+            result = subprocess.run(
+                ["git", "-C", str(normalized), "rev-parse", "--show-toplevel"],
+                capture_output=True, text=True, timeout=2, check=False,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return str(Path(result.stdout.strip()).resolve())
+        except (OSError, subprocess.SubprocessError):
+            pass
+        return str(normalized)
+
+    workspaces: dict[str, str] = {}
+    ambiguous_sessions: set[str] = set()
+
+    def associate(session_id: Any, workspace: str | None) -> None:
+        if not session_id or not workspace or str(session_id) in ambiguous_sessions:
+            return
+        key = str(session_id)
+        previous = workspaces.get(key)
+        if previous and previous != workspace:
+            workspaces.pop(key, None)
+            ambiguous_sessions.add(key)
+        else:
+            workspaces[key] = workspace
+
+    for session_id, raw_uris in rows:
+        try:
+            uris = json.loads(raw_uris) if isinstance(raw_uris, str) else raw_uris
+        except (TypeError, ValueError):
+            continue
+        if isinstance(uris, str):
+            uris = [uris]
+        if not isinstance(uris, list):
+            continue
+        candidates = sorted({workspace for uri in uris if isinstance(uri, str)
+                             if (workspace := decode_workspace(uri))})
+        # Multiple distinct project roots are ambiguous and must stay pending.
+        if len(candidates) == 1 and session_id:
+            associate(session_id, candidates[0])
+
+    # The AGY CLI's non-interactive sessions may not yet have a row in
+    # conversation_summaries.db. Its cache maps each working directory to the
+    # latest native conversation id; this safely scopes an active/new session
+    # without importing the rest of the user's AGY history.
+    latest_file = root / "cache" / "last_conversations.json"
+    try:
+        latest = json.loads(latest_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        latest = {}
+    if isinstance(latest, dict):
+        for workspace_uri, session_id in latest.items():
+            if not isinstance(workspace_uri, str) or not isinstance(session_id, str):
+                continue
+            associate(session_id, decode_workspace(workspace_uri))
+    return workspaces
+
+
 def sources_config_file() -> Path:
     return data_home() / "history-sources.json"
 
@@ -437,11 +543,19 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
                 sid = str(row["session_id"])
                 meta = session_meta.get(sid, {})
                 group = grouped.setdefault(sid, {"messages": [], "timestamps": [],
-                    "workspace": None, "branch": None, "title": meta.get("display_name")})
+                    "workspace": None, "workspace_ambiguous": False,
+                    "branch": None, "title": meta.get("display_name")})
                 for child_index, record in enumerate(_walk_records(root)):
                     role, content = _role(record, provider), _content(record)
                     if role not in {"user", "assistant", "tool"} or not content:
                         continue
+                    workspace_hint = _workspace(record) or _workspace(root)
+                    if workspace_hint and not group["workspace_ambiguous"]:
+                        if group["workspace"] and group["workspace"] != workspace_hint:
+                            group["workspace"] = None
+                            group["workspace_ambiguous"] = True
+                        else:
+                            group["workspace"] = workspace_hint
                     native_id = (record.get("id") or record.get("messageId") or record.get("message_id")
                                  or root.get("id") or root.get("eventId") or root.get("event_id"))
                     source_id = str(native_id or f"{sid}:{row['seq']}:{child_index}")
@@ -456,6 +570,7 @@ def parse_history_database(path: Path, provider: str, agent_hint: str | None = N
                     group["messages"].append({"role": role, "content": content,
                         "metadata": {"historical_source": str(path), "source_message_id": source_id,
                                      "provider": provider, "table": "transcript_events",
+                                     **({"source_workspace": workspace_hint} if workspace_hint else {}),
                                      "source_sequence": [int(row["seq"]), child_index],
                                      "occurred_at": stamp}})
                     group["timestamps"].append(stamp)
@@ -616,9 +731,40 @@ def _same_project_path(left: str | Path | None, right: str | Path | None) -> boo
     if not left or not right:
         return False
     try:
-        return Path(str(left)).expanduser().resolve() == Path(str(right)).expanduser().resolve()
+        def resolve(value: str | Path) -> Path:
+            raw = str(value)
+            parsed = urlparse(raw)
+            if parsed.scheme == "file":
+                raw = unquote(parsed.path)
+                if parsed.netloc and parsed.netloc.casefold() not in {"", "localhost"}:
+                    raw = f"//{parsed.netloc}{raw}"
+                elif re.match(r"^/[A-Za-z]:[\\/]", raw):
+                    raw = raw[1:]
+            return Path(raw).expanduser().resolve()
+
+        return resolve(left) == resolve(right)
     except (OSError, RuntimeError, ValueError):
         return str(left).rstrip("/").casefold() == str(right).rstrip("/").casefold()
+
+
+def _is_default_openclaw_agent_workspace(value: str | None, agent_id: str | None) -> bool:
+    """OpenClaw's per-agent workspace is not evidence of a project checkout."""
+    if not value or not agent_id:
+        return False
+    owner = str(agent_id).strip().casefold().removeprefix("openclaw/")
+    if not owner:
+        return False
+    for parts in (Path(value).parts, PurePosixPath(value).parts, PureWindowsPath(value).parts):
+        folded = tuple(str(part).casefold() for part in parts)
+        for index, part in enumerate(folded):
+            if part not in {".openclaw", "openclaw"}:
+                continue
+            tail = folded[index + 1:]
+            if tail == ("workspace", owner):
+                return True
+            if owner == "main" and tail == ("workspace",):
+                return True
+    return False
 
 
 def _source_matches_root(path: str | Path, roots: set[str]) -> bool:
@@ -729,6 +875,14 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
     known = {row["name"] for row in list_adapters()}
     providers = [provider.casefold()] if provider else sorted(known | {row["provider"] for row in configured})
     found, errors, excluded, warnings = [], [], [], []
+    # Agent brains are private stores. Scan only sources explicitly associated
+    # with this brain (or an explicit --source); falling back to every local
+    # coding-agent database creates thousands of predictable owner rejections
+    # on every OpenClaw sync cycle.
+    is_agent_brain = False
+    if project_path is not None:
+        from .memory_scope import resolve_memory_scope
+        is_agent_brain = resolve_memory_scope(project_path)["space_type"] == "agent_brain"
     for name in providers:
         source_owners: dict[str, str] = {}
         source_baselines: dict[str, float] = {}
@@ -750,7 +904,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                                   for row in selected if row.get("agent_id") or agent_id})
             source_baselines.update({row["source"]: float(row["capture_from"])
                                      for row in selected if isinstance(row.get("capture_from"), (int, float))})
-            if not roots and name in {"opencode", "codex", "claude", "antigravity"}:
+            if (not roots and not is_agent_brain and
+                    name in {"opencode", "codex", "claude", "antigravity"}):
                 roots = [str(value) for value in default_sources().get(name, [])]
         else:
             roots = [row["source"] for row in configured if row["provider"] == name]
@@ -765,6 +920,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                 root, temp, source_label = _materialize_source(source)
                 if not root.exists(): continue
                 scan_root = root if root.is_dir() else root.parent
+                antigravity_workspaces = (_antigravity_workspace_map(root)
+                                          if name == "antigravity" else {})
                 if root.is_file():
                     files = [root]
                 elif name == "antigravity":
@@ -798,10 +955,14 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                         from .history_stream import preview_jsonl
                         preview = preview_jsonl(path, name)
                         for item in preview["sessions"]:
+                            if name == "antigravity":
+                                item["workspace"] = (antigravity_workspaces.get(
+                                    str(item.get("external_session_id"))) or item.get("workspace"))
                             owner = source_owners.get(str(source)) or source_owners.get(str(path))
                             if owner and not _agent_id_matches(owner, item.get("agent_id")):
                                 excluded.append({"source": str(source), "session": item.get("external_session_id"),
-                                                 "agent_id": item.get("agent_id"), "expected_agent_id": owner})
+                                                 "agent_id": item.get("agent_id"), "expected_agent_id": owner,
+                                                 "reason": "agent_identity_mismatch"})
                                 continue
                             baseline = source_baselines.get(str(source), source_baselines.get(str(path)))
                             if baseline is not None and float(item.get("updated_at") or item.get("occurred_at") or 0) <= baseline:
@@ -809,7 +970,20 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                                                  "reason": "before_capture_baseline"})
                                 continue
                             if project_path and _source_matches_root(path, associated_sources):
-                                item["explicit_project_selection"] = True
+                                if name == "antigravity":
+                                    workspace_hint = str(item.get("workspace") or "").strip()
+                                    if workspace_hint and not _same_project_path(workspace_hint, project_path):
+                                        excluded.append({"source": str(source),
+                                            "session": item.get("external_session_id"),
+                                            "workspace": workspace_hint,
+                                            "reason": "workspace de AGY pertenece a otro proyecto"})
+                                        continue
+                                    if workspace_hint:
+                                        item["explicit_project_selection"] = True
+                                else:
+                                    item["explicit_project_selection"] = True
+                            if baseline is not None:
+                                item["capture_mode"] = "historical_import" if baseline <= 0 else "incremental_sync"
                             found.append(item)
                         if preview["errors"]:
                             errors.append({"source": str(path), "error": f"{preview['errors']} registros JSON inválidos"})
@@ -825,7 +999,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                         owner = source_owners.get(str(source)) or source_owners.get(str(path))
                         if owner and not _agent_id_matches(owner, item.get("agent_id")):
                             excluded.append({"source": str(source), "session": item.get("external_session_id"),
-                                             "agent_id": item.get("agent_id"), "expected_agent_id": owner})
+                                             "agent_id": item.get("agent_id"), "expected_agent_id": owner,
+                                             "reason": "agent_identity_mismatch"})
                             continue
                         baseline = source_baselines.get(str(source), source_baselines.get(str(path)))
                         if baseline is not None and float(item.get("updated_at") or item.get("occurred_at") or 0) <= baseline:
@@ -834,6 +1009,8 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                             continue
                         if project_path and _source_matches_root(source, associated_sources):
                             item["explicit_project_selection"] = True
+                        if baseline is not None:
+                            item["capture_mode"] = "historical_import" if baseline <= 0 else "incremental_sync"
                         found.append(item)
             except (OSError, ValueError, subprocess.SubprocessError) as exc:
                 errors.append({"source": str(source), "error": str(exc)})
@@ -866,6 +1043,23 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
     authorized_agents = memory_scope["agent_ids"] if memory_scope["restricted"] else None
     discovered = discover_histories(provider, source or None, project_path=None if source else root,
                                     agent_id=agent_id)
+    # An OpenClaw agent's default workspace (for example
+    # ~/.openclaw/workspace/nexus) identifies the agent environment, not a
+    # project checkout. Keep it as provenance and let explicit project names
+    # in the conversation drive project routing. The turn still belongs in
+    # this agent's isolated brain.
+    if memory_scope.get("space_type") == "agent_brain":
+        allowed_owners = memory_scope.get("agent_ids") or ([agent_id] if agent_id else [])
+        for item in discovered.get("sessions") or []:
+            if str(item.get("provider") or "").casefold() != "openclaw":
+                continue
+            item_owner = str(item.get("agent_id") or "").strip().casefold()
+            if allowed_owners and not any(_agent_id_matches(owner, item_owner) for owner in allowed_owners):
+                continue
+            if _is_default_openclaw_agent_workspace(item.get("workspace"), item_owner):
+                item["agent_workspace"] = item["workspace"]
+                item["workspace"] = None
+                item["explicit_project_selection"] = True
     # A source supplied directly is an explicit user selection for this space.
     if source:
         for item in discovered["sessions"]:
@@ -874,6 +1068,7 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
         progress(20, f"{discovered['count']} sesiones descubiertas")
     imported = import_histories(root, discovered["sessions"], consent=True, provider=provider_model,
                                 background_enrich=False, agent_ids=authorized_agents)
+    store = SharedMemoryStore(root)
     result: dict[str, Any] = {"ok": bool(imported.get("ok", True)), "path": str(root),
                               "discovered": discovered["count"], "import": imported,
                               "warnings": list(discovered.get("warnings") or []),
@@ -881,10 +1076,24 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
                               "excluded_count": int(discovered.get("excluded_count") or 0),
                               "errors": list(discovered.get("errors") or [])}
     result["errors"].extend(imported.get("errors") or [])
+    requested_provider = str(provider or "").strip().casefold()
+    openclaw_sessions = [item for item in discovered["sessions"]
+                         if str(item.get("provider") or "").strip().casefold() == "openclaw"]
+    # Installation-wide native capture calls this function without a provider
+    # filter because each brain can have more than one configured source. Route
+    # OpenClaw transcripts by their discovered provider identity in that case;
+    # an explicit filter for another provider must never trigger this path.
+    if (memory_scope.get("space_type") == "agent_brain" and openclaw_sessions and
+            requested_provider in {"", "openclaw"}):
+        routing = _sync_openclaw_project_memories(store, openclaw_sessions, provider_model=provider_model)
+        result["project_routing"] = routing
+        if routing.get("failed_segments"):
+            result["errors"].append({"project_routing": f"falló el enrutamiento de {routing['failed_segments']} segmento(s)"})
+        if routing.get("rejected_segments"):
+            result["warnings"].append({"project_routing": f"{routing['rejected_segments']} segmento(s) rechazado(s) por el alcance de memoria del proyecto"})
     # A brain may already contain captured sessions from MCP before a source
     # was configured. Advance their thematic cursors too, so synchronization
     # reports coverage for the whole space rather than only newly imported data.
-    store = SharedMemoryStore(root)
     processed_sessions, processed_messages = 0, 0
     with store._connect() as db:
         existing_sessions = [row[0] for row in db.execute("SELECT id FROM sessions ORDER BY started_at,id")]
@@ -915,6 +1124,99 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
     return result
 
 
+def _sync_openclaw_project_memories(store: SharedMemoryStore, sessions: list[dict[str, Any]], *,
+                                   provider_model: str) -> dict[str, Any]:
+    """Copy explicitly project-scoped turns from an OpenClaw brain to project stores."""
+    from .openclaw_project_routing import registered_project_targets, route_openclaw_sessions
+
+    routed = route_openclaw_sessions(sessions)
+    # Assign Graphtyn's stable project identity before deriving external
+    # session IDs. On the first sync an older project registration may not yet
+    # exist in project-identities.json; import_histories registers it while
+    # writing, which otherwise changes the segment ID on the next sync and
+    # creates a duplicate session. Register only destinations actually used.
+    if routed["segments"]:
+        identities = ProjectIdentityRegistry()
+        for path, name in sorted({(str(row["project_path"]), str(row["project_name"]))
+                                  for row in routed["segments"]}):
+            identities.register(path, aliases=[name])
+        routed = route_openclaw_sessions(sessions, targets=registered_project_targets())
+    outcomes: dict[str, dict[str, Any]] = {}
+    failed_segments = rejected_segments = imported_segments = reused_segments = 0
+    project_details: dict[str, dict[str, Any]] = {}
+    failures = []
+    for segment in routed["segments"]:
+        source_session_id = str(segment.get("source_external_session_id") or "")
+        state = outcomes.setdefault(source_session_id, {"projects": [], "failed": 0, "rejected": 0,
+                                                         "imported": 0, "reused": 0})
+        project_record = {"id": segment["project_id"], "name": segment["project_name"],
+                          "path": segment["project_path"], "messages": segment["message_count"],
+                          "method": segment["project_route_method"]}
+        try:
+            imported = import_histories(segment["project_path"], [segment], consent=True,
+                                        provider=provider_model, background_enrich=False)
+            if imported.get("errors"):
+                state["failed"] += 1
+                failed_segments += 1
+                failures.append({"session": source_session_id, "project": segment["project_name"],
+                                 "error_count": len(imported["errors"])})
+            elif imported.get("excluded"):
+                state["rejected"] += 1
+                rejected_segments += 1
+            elif imported.get("imported"):
+                state["projects"].append(project_record)
+                state["imported"] += 1
+                imported_segments += 1
+                project_details.setdefault(segment["project_id"], {
+                    "id": segment["project_id"], "name": segment["project_name"],
+                    "sessions": 0, "messages": 0})["sessions"] += 1
+                project_details[segment["project_id"]]["messages"] += segment["message_count"]
+            elif imported.get("reused"):
+                state["projects"].append(project_record)
+                state["reused"] += 1
+                reused_segments += 1
+                project_details.setdefault(segment["project_id"], {
+                    "id": segment["project_id"], "name": segment["project_name"],
+                    "sessions": 0, "messages": 0})["sessions"] += 1
+                project_details[segment["project_id"]]["messages"] += segment["message_count"]
+            else:
+                state["failed"] += 1
+                failed_segments += 1
+                failures.append({"session": source_session_id, "project": segment["project_name"],
+                                 "error_count": 1})
+        except Exception as exc:
+            state["failed"] += 1
+            failed_segments += 1
+            safe_error, _ = SharedMemoryStore._sanitize(f"{type(exc).__name__}: {exc}", 300)
+            failures.append({"session": source_session_id, "project": segment["project_name"],
+                             "error": safe_error})
+
+    for discovered_state in routed["sessions"]:
+        source_session_id = discovered_state["external_session_id"]
+        outcome = outcomes.get(source_session_id, {})
+        projects = outcome.get("projects", [])
+        status = discovered_state["status"]
+        reason = discovered_state["reason"]
+        if outcome.get("failed"):
+            status = "partial" if projects else "failed"
+            reason = "one or more project imports failed"
+        elif outcome.get("rejected") and not projects:
+            status = "rejected"
+            reason = "project memory scope rejected the OpenClaw agent"
+        elif projects and status == "unassigned":
+            status = "routed"
+        saved = {**discovered_state, "status": status, "projects": projects, "reason": reason,
+                 "routed_message_count": sum(int(item.get("messages") or 0) for item in projects)}
+        store.record_project_routing(saved)
+
+    summary = {**routed["summary"], "enabled": True,
+               "imported_segments": imported_segments, "reused_segments": reused_segments,
+               "failed_segments": failed_segments, "rejected_segments": rejected_segments,
+               "projects": sorted(project_details.values(), key=lambda item: str(item["name"]).casefold()),
+               "failures": failures[:20]}
+    return summary
+
+
 class ProjectIdentityRegistry:
     """Global, portable project identity map used by historical imports."""
     def __init__(self, path: Path | None = None):
@@ -926,8 +1228,17 @@ class ProjectIdentityRegistry:
         try: return json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, ValueError): return {"version": 1, "projects": []}
 
-    def register(self, workspace: str | Path, aliases: list[str] | None = None) -> dict[str, Any]:
+    def register(self, workspace: str | Path, aliases: list[str] | None = None,
+                 project_id: str | None = None) -> dict[str, Any]:
         root = Path(workspace).expanduser().resolve()
+        if project_id is None:
+            try:
+                metadata = json.loads((root / ".graphtyn" / "graphtyn.json").read_text(encoding="utf-8"))
+                project_id = str(metadata.get("project_id") or "") if isinstance(metadata, dict) else ""
+            except (OSError, ValueError, TypeError):
+                project_id = ""
+        if project_id and not re.fullmatch(r"[a-f0-9]{20}", project_id):
+            raise ValueError("project_id debe ser un identificador Graphtyn de 20 caracteres hexadecimales")
         remote = ""
         try:
             import subprocess
@@ -937,9 +1248,13 @@ class ProjectIdentityRegistry:
         key = hashlib.sha256((remote or str(root)).casefold().encode()).hexdigest()[:20]
         with self._lock:
             data = self._read()
-            item = next((p for p in data["projects"] if p["id"] == key or remote and p.get("remote") == remote), None)
+            item = next((p for p in data["projects"]
+                         if (project_id and p.get("id") == project_id)
+                         or p.get("id") == key
+                         or remote and p.get("remote") == remote
+                         or str(root) in p.get("paths", [])), None)
             if not item:
-                item = {"id": key, "canonical_name": root.name, "aliases": [], "paths": [], "remote": remote,
+                item = {"id": project_id or key, "canonical_name": root.name, "aliases": [], "paths": [], "remote": remote,
                         "created_at": time.time(), "updated_at": time.time()}
                 data["projects"].append(item)
             item["paths"] = sorted(set(item.get("paths", [])) | {str(root)})
@@ -1046,7 +1361,8 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                 from .history_stream import ingest_jsonl
                 result = ingest_jsonl(store, raw["source"], provider=raw["provider"],
                     external_session_id=raw["external_session_id"], agent_id=raw["agent_id"],
-                    consent=True, explicit_project_selection=True)
+                    consent=True, explicit_project_selection=True,
+                    source_workspace=raw.get("agent_workspace"))
                 (imported if result["processed_this_run"] else reused).append({"source": raw["source"], "session_id": result["session_id"],
                     "external_session_id": raw["external_session_id"], "progress": result})
                 continue
@@ -1076,8 +1392,10 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                     source_time = occurred_at
                 historical_metadata = {**metadata,
                     "source_message_id": metadata.get("source_message_id") or f"{raw.get('external_session_id')}:{index}",
-                    "capture_mode": "historical_import",
+                    "capture_mode": metadata.get("capture_mode") or raw.get("capture_mode") or "historical_import",
                     "provider": raw.get("provider"), "historical_source": raw.get("source")}
+                if raw.get("agent_workspace"):
+                    historical_metadata["agent_workspace"] = str(raw["agent_workspace"])
                 if source_time is not None:
                     historical_metadata["occurred_at"] = source_time
                 else:
@@ -1106,8 +1424,8 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                                     (result["session_id"],)).fetchall()
                 for row in rows:
                     metadata = json.loads(row["metadata_json"] or "{}")
-                    metadata.update({"capture_mode": "historical_import",
-                                     "historical_source": raw.get("source"), "provider": raw.get("provider")})
+                    metadata.setdefault("capture_mode", raw.get("capture_mode") or "historical_import")
+                    metadata.update({"historical_source": raw.get("source"), "provider": raw.get("provider")})
                     if occurred_at is not None:
                         metadata["occurred_at"] = occurred_at
                         conn.execute("UPDATE memories SET metadata_json=?,created_at=?,updated_at=? WHERE id=?",

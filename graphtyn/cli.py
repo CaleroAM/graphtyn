@@ -133,6 +133,55 @@ def _install_openclaw_capture_service(installation_id: str, interval: float = 30
         return {"ok": False, "active": False, "unit": str(unit_path), "error": str(exc)}
 
 
+def _sync_cycle_space_summary(result: dict) -> dict:
+    """Keep durable sync telemetry useful without storing transcript contents."""
+    imported = result.get("import") if isinstance(result.get("import"), dict) else {}
+    exclusions = list(result.get("excluded") or []) + list(imported.get("excluded") or [])
+    reasons: dict[str, int] = {}
+    for item in exclusions:
+        reason = str(item.get("reason") or "unspecified") if isinstance(item, dict) else "unspecified"
+        reasons[reason[:80]] = reasons.get(reason[:80], 0) + 1
+    errors = list(result.get("errors") or imported.get("errors") or [])
+    topic = result.get("topic_processing") if isinstance(result.get("topic_processing"), dict) else {}
+    return {
+        "ok": bool(result.get("ok", not errors)) and not errors,
+        "discovered": int(result.get("discovered") or 0),
+        "imported": len(imported.get("imported") or []),
+        "reused": len(imported.get("reused") or []),
+        "ambiguous": len(imported.get("ambiguous") or []),
+        "excluded": len(exclusions),
+        "exclusion_reasons": dict(sorted(reasons.items(), key=lambda item: (-item[1], item[0]))[:8]),
+        "error_count": len(errors) + (1 if result.get("error") and not errors else 0),
+        "topic_sessions": int(topic.get("sessions") or 0),
+        "topic_messages": int(topic.get("messages") or 0),
+    }
+
+
+def _sync_cycle_log_summary(result: dict) -> dict:
+    spaces = result.get("spaces") if isinstance(result.get("spaces"), list) else [result]
+    summaries = []
+    reason_totals: dict[str, int] = {}
+    for item in spaces:
+        if not isinstance(item, dict):
+            continue
+        summary = _sync_cycle_space_summary(item)
+        for reason, count in summary["exclusion_reasons"].items():
+            reason_totals[reason] = reason_totals.get(reason, 0) + count
+        raw_path = str(item.get("path") or "")
+        summaries.append({"space": Path(raw_path).name if raw_path else "unknown", **summary})
+    totals = {key: sum(int(row.get(key) or 0) for row in summaries)
+              for key in ("discovered", "imported", "reused", "ambiguous", "excluded", "error_count")}
+    return {
+        "event": "memory_sync_cycle",
+        "ok": bool(result.get("ok", True)) and all(row["ok"] for row in summaries),
+        "space_count": len(summaries),
+        "failed_spaces": sum(not row["ok"] for row in summaries),
+        **totals,
+        "exclusion_reasons": dict(sorted(reason_totals.items(), key=lambda item: (-item[1], item[0]))[:8]),
+        "by_space": summaries[:20],
+    }
+
+
 def main():
     configure_utf8_stdio()
     parser = argparse.ArgumentParser(
@@ -152,6 +201,10 @@ def main():
                          help="Memoria conversacional: preguntar, activar o desactivar")
     setup_p.add_argument("--memory-watch", action="store_true",
                          help="Dejar preparado el sincronizador continuo al activar memoria")
+    setup_p.add_argument("--import-history", action="store_true",
+                         help="Importar historial anterior (requiere --consent-history)")
+    setup_p.add_argument("--consent-history", action="store_true",
+                         help="Confirma que autorizas leer e importar conversaciones históricas")
     harness_p = subparsers.add_parser("harness", help="Detecta y conecta memorias de agentes")
     harness_sub = harness_p.add_subparsers(dest="harness_name", required=True)
     openclaw_p = harness_sub.add_parser("openclaw", help="Integración nativa con OpenClaw")
@@ -632,6 +685,17 @@ def main():
     install_p.add_argument("--path", default=".")
     install_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="intent")
 
+    integrations_p = subparsers.add_parser("integrations", help="Consulta o retira conexiones MCP por proyecto")
+    integrations_sub = integrations_p.add_subparsers(dest="integration_action", required=True)
+    integrations_status = integrations_sub.add_parser("status", help="Muestra identidad y estado MCP del proyecto")
+    integrations_status.add_argument("--path", default=".")
+    integrations_verify = integrations_sub.add_parser("verify", help="Prueba el handshake MCP y las herramientas del proyecto")
+    integrations_verify.add_argument("--path", default=".")
+    integrations_remove = integrations_sub.add_parser("remove", help="Retira sólo entradas MCP administradas por Graphtyn")
+    integrations_remove.add_argument("--path", default=".")
+    integrations_remove.add_argument("--agent", action="append", default=[],
+                                     help="Cliente que se desconecta (repetible; sin opción elimina todos los configurados)")
+
     ci_install_p = subparsers.add_parser("ci-install", help="Instala check de impacto para GitHub o GitLab")
     ci_install_p.add_argument("platform", choices=["github", "gitlab"])
     ci_install_p.add_argument("--max-risk", choices=["low", "medium", "high"], default="high")
@@ -755,6 +819,10 @@ def main():
         from .core.deployment import detect_environment, apply_setup
         plan = detect_environment(root)
         if args.apply:
+            if args.import_history and not args.consent_history:
+                raise SystemExit("La importación histórica requiere --consent-history explícito")
+            if args.consent_history and not args.import_history:
+                raise SystemExit("--consent-history sólo se usa junto con --import-history")
             from .core.agent_installer import TARGETS
             agents = args.agent or sorted({row["provider"] for row in plan["sources"]
                                             if row["provider"] in TARGETS})
@@ -762,27 +830,36 @@ def main():
             if memory_choice == "ask" and sys.stdin.isatty():
                 answer = input("¿Activar memoria conversacional para este proyecto? [s/N]: ").strip().casefold()
                 memory_choice = "on" if answer in {"s", "si", "sí", "y", "yes"} else "off"
+            if (args.import_history or args.memory_watch) and memory_choice != "on":
+                raise SystemExit("--import-history y --memory-watch requieren --memory on")
             configured = apply_setup(root, agents=agents, sources=plan["sources"],
                                      create_token=not args.no_token, tool_profile=args.tool_profile)
-            configured["memory"] = {"enabled": memory_choice == "on", "choice": memory_choice}
+            configured["memory"] = {"enabled": memory_choice == "on", "choice": memory_choice,
+                                     "historical_imported": False,
+                                     "continuous_capture_active": False}
             if memory_choice == "on":
-                discovered_rows = []
-                discovery_errors = []
-                for provider in sorted({row["provider"] for row in plan["sources"]}):
-                    found = discover_histories(provider,
-                        [row["source"] for row in plan["sources"] if row["provider"] == provider])
-                    discovered_rows.extend(found["sessions"]); discovery_errors.extend(found["errors"])
-                discovered = {"sessions": discovered_rows, "errors": discovery_errors,
-                              "count": len(discovered_rows)}
-                imported = import_histories(root, discovered["sessions"], consent=True,
-                                            provider="deterministic")
-                configured["memory"].update({"discovered": discovered["count"],
-                                               "imported": len(imported.get("imported", [])),
-                                               "reused": len(imported.get("reused", [])),
-                                               "ambiguous": len(imported.get("ambiguous", [])),
-                                               "watch_command": (f"graphtyn memory sync --path {root} "
-                                                                 "--watch --interval 5 --consent"
-                                                                 if args.memory_watch else None)})
+                if args.import_history:
+                    discovered_rows = []
+                    discovery_errors = []
+                    for provider in sorted({row["provider"] for row in plan["sources"]}):
+                        found = discover_histories(provider,
+                            [row["source"] for row in plan["sources"] if row["provider"] == provider])
+                        discovered_rows.extend(found["sessions"]); discovery_errors.extend(found["errors"])
+                    discovered = {"sessions": discovered_rows, "errors": discovery_errors,
+                                  "count": len(discovered_rows)}
+                    imported = import_histories(root, discovered["sessions"], consent=True,
+                                                provider="deterministic")
+                    configured["memory"].update({"historical_imported": True,
+                                                   "discovered": discovered["count"],
+                                                   "imported": len(imported.get("imported", [])),
+                                                   "reused": len(imported.get("reused", [])),
+                                                   "ambiguous": len(imported.get("ambiguous", [])),
+                                                   "errors": discovery_errors})
+                if args.memory_watch:
+                    configured["memory"].update({
+                        "watch_command": f"graphtyn memory sync --path {root} --watch --interval 5 --consent",
+                        "watch_started": False,
+                        "watch_note": "El comando se informa; debe ejecutarse para activar captura continua."})
             print(json.dumps(configured, ensure_ascii=False, indent=2))
         else:
             print(json.dumps({**plan, "dry_run": True, "message": "Repita con --apply"}, ensure_ascii=False, indent=2))
@@ -1346,7 +1423,8 @@ def main():
                 result["output"] = str(output)
             print(json.dumps(result, ensure_ascii=False, indent=2))
         elif args.memory_action == "projects":
-            current = ProjectIdentityRegistry().register(Path(args.path), aliases=args.alias)
+            from .core.project_integrations import ensure_project_identity
+            current = ensure_project_identity(Path(args.path), aliases=args.alias)
             print(json.dumps({"ok": True, "current": current,
                               "projects": ProjectIdentityRegistry().list()}, ensure_ascii=False, indent=2))
         elif args.memory_action == "sync":
@@ -1457,10 +1535,34 @@ def main():
                 watcher_id = f"cli-sync:{os.getpid()}"
                 interval = max(1.0, float(args.interval))
 
-                def update_watchers(status, error=""):
+                def update_watchers(status, error="", cycle_result=None):
                     for path in sync_targets():
                         SharedMemoryStore(path).update_sync_watcher(
-                            watcher_id, status, interval=interval, error=error)
+                            watcher_id, status, interval=interval, error=error,
+                            cycle_result=cycle_result)
+
+                def record_cycle(result):
+                    spaces = result.get("spaces") if isinstance(result.get("spaces"), list) else [result]
+                    by_path = {}
+                    for item in spaces:
+                        if not isinstance(item, dict) or not item.get("path"):
+                            continue
+                        try:
+                            by_path[str(Path(item["path"]).expanduser().resolve())] = item
+                        except (OSError, RuntimeError, ValueError):
+                            continue
+                    for path in sync_targets():
+                        item = by_path.get(str(path.resolve()))
+                        if item is None:
+                            item = ({**result, "path": str(path)} if result.get("error") else
+                                    {"path": str(path), "ok": False,
+                                     "error": "No se produjo resultado para este almacén"})
+                        summary = _sync_cycle_space_summary(item)
+                        failed = not summary["ok"]
+                        SharedMemoryStore(path).update_sync_watcher(
+                            watcher_id, "error" if failed else "watching", interval=interval,
+                            error=(f"{summary['error_count']} errores en el último ciclo" if failed else ""),
+                            cycle_result=summary)
 
                 def stop_watcher(_signum, _frame):
                     raise KeyboardInterrupt
@@ -1473,16 +1575,10 @@ def main():
                             result = sync_once()
                         except Exception as exc:
                             error = f"{type(exc).__name__}: {exc}"
-                            update_watchers("error", error)
                             result = {"ok": False, "error": error}
-                        else:
-                            spaces = result.get("spaces") or []
-                            ok = bool(result.get("ok", True)) and all(
-                                bool(space.get("ok", True)) for space in spaces
-                            )
-                            update_watchers("watching" if ok else "error",
-                                            "" if ok else "una o más sincronizaciones fallaron")
-                        print(json.dumps(result, ensure_ascii=False), flush=True)
+                        record_cycle(result)
+                        print(json.dumps(_sync_cycle_log_summary(result),
+                                         ensure_ascii=False, separators=(",", ":")), flush=True)
                         time.sleep(interval)
                 except KeyboardInterrupt:
                     pass
@@ -1638,9 +1734,30 @@ def main():
             print(json.dumps(result, ensure_ascii=False, indent=2))
 
     elif args.command == "agent-install":
+        from .core.project_integrations import project_integration_status
         files = install_agent(root, args.platform, tool_profile=args.tool_profile)
+        status = project_integration_status(root)
         print(json.dumps({"ok": True, "platform": args.platform,
+                          "project_id": status.get("project_id"), "mcp_server": status.get("mcp_server"),
+                          "integrations": status.get("clients", []),
                           "tool_profile": args.tool_profile, "files": files}, ensure_ascii=False, indent=2))
+
+    elif args.command == "integrations":
+        from .core.project_integrations import (project_integration_status, remove_project_integrations,
+                                                verify_project_mcp)
+        if args.integration_action == "status":
+            result = {"ok": True, **project_integration_status(Path(args.path))}
+        elif args.integration_action == "verify":
+            result = verify_project_mcp(Path(args.path))
+        else:
+            current = project_integration_status(Path(args.path))
+            clients = args.agent or [str(item.get("platform")) for item in current.get("clients", [])
+                                     if item.get("status") in {"configured", "command_unavailable"}]
+            result = remove_project_integrations(Path(args.path), clients)
+            result["project_id"] = current.get("project_id")
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if not result.get("ok", True):
+            raise SystemExit(1)
 
     elif args.command == "ci-install":
         output = install_ci(root, args.platform, args.max_risk)

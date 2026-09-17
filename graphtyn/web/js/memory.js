@@ -182,10 +182,62 @@ export async function loadMemoryOverview(append = false) {
         ? ` · último contexto consultado por ${lastRetrieval.agent_id || 'agente'} · ${lastRetrieval.recent_activity_count || 0} actualizaciones recientes`
         : ' · ningún agente ha consultado el contexto todavía';
       status.textContent = `${info.memories} memorias · ${info.sessions} sesiones · ${info.agents} agentes · ${info.embedding_provider}${freshness}${capture}${retrieval}${failureText} · ${topicAi}`;
+      const integrationStatus = document.getElementById('memory-integration-status');
+      if (integrationStatus) {
+      const integration = info.project_integrations || {};
+      const clients = integration.clients || [];
+      const verifyButton = document.getElementById('memory-mcp-verify-btn');
+      if (verifyButton) verifyButton.hidden = state.activeSpaceType === 'agent_brain'
+        || state.activeSpaceType === 'agent'
+        || !clients.some(item => item.status === 'configured' || item.status === 'command_unavailable');
+        const stateLabel = item => ({
+          configured: `MCP configurado${item.restart_recommended ? ' · recarga el cliente' : ''}`,
+          command_unavailable: 'config presente; Graphtyn no aparece en el PATH de este dashboard',
+          verified: 'MCP verificado',
+          dynamic_scope: 'usa selección dinámica del proyecto',
+          instructions_only: 'instrucciones instaladas; MCP manual',
+          needs_review: `requiere revisión: ${item.note || 'conflicto de configuración'}`,
+          missing_or_mismatched: 'configuración MCP falta o apunta a otra ruta',
+          missing: 'archivo MCP ausente',
+          removed: 'desconectado',
+        }[item.status] || item.status || 'desconocido');
+        if (state.activeSpaceType === 'agent_brain' || state.activeSpaceType === 'agent') {
+          integrationStatus.textContent = 'Las conexiones MCP por proyecto se configuran desde la carpeta del repositorio; este es un cerebro privado.';
+        } else if (!integration.project_id) {
+          integrationStatus.textContent = 'Sin identidad de proyecto persistida. Registra el proyecto o instala un agente para asignar su ID.';
+        } else {
+          const connections = clients.length
+            ? clients.map(item => `${item.platform}: ${stateLabel(item)}`).join(' · ')
+            : 'sin clientes MCP configurados; usa graphtyn agent-install <cliente> --path .';
+          const verification = integration.mcp_verification?.ok
+            ? `Handshake del servidor: correcto · ${integration.mcp_verification.tool_count} herramientas`
+            : 'Handshake del servidor: pendiente de prueba';
+          integrationStatus.textContent = `Proyecto ${integration.project_id} · ${integration.mcp_server || ''} · ${connections}. ${verification}. Si el cliente no muestra las herramientas, recárgalo. Captura e importación histórica son independientes.`;
+        }
+      }
     const legend = document.getElementById('memory-agent-legend');
     if (legend) legend.innerHTML = '<div class="memory-empty">Abre el mapa para ver la atribución por agente.</div>';
     renderMemorySessions(sessions, append);
   } catch (error) { status.textContent = `No se pudo cargar: ${error.message}`; }
+}
+
+export async function verifyProjectMcp() {
+  const button = document.getElementById('memory-mcp-verify-btn');
+  const status = document.getElementById('memory-integration-status');
+  if (!state.activePath) { if (status) status.textContent = 'Selecciona un proyecto para probar MCP.'; return; }
+  if (button) { button.disabled = true; button.textContent = 'Probando MCP…'; }
+  if (status) status.textContent = 'Iniciando servidor Graphtyn y comprobando handshake…';
+  try {
+    const result = await request('/api/memory/integrations/verify', {
+      method: 'POST', body: JSON.stringify({path: state.activePath})
+    });
+    if (status) status.textContent = `Handshake correcto · ${result.tool_count} herramientas · ${result.server}. Si el cliente aún no las muestra, recárgalo.`;
+    await loadMemoryOverview();
+  } catch (error) {
+    if (status) status.textContent = `No se pudo verificar el servidor MCP: ${error.message}`;
+  } finally {
+    if (button) { button.disabled = false; button.textContent = 'Probar servidor MCP del proyecto'; }
+  }
 }
 
 async function runMemorySync(allSpaces) {
