@@ -39,16 +39,21 @@ class MemoryJobManager:
             temp.replace(target)
 
     def get(self, job_id: str) -> dict[str, Any]:
-        try: return json.loads(self._path(job_id).read_text(encoding="utf-8"))
-        except FileNotFoundError: raise ValueError("job no encontrado")
+        # Windows can reject reads while the worker is replacing the target
+        # file. Share the writer lock with _write so polling never observes a
+        # transient access error during an atomic update.
+        with self._lock:
+            try: return json.loads(self._path(job_id).read_text(encoding="utf-8"))
+            except FileNotFoundError: raise ValueError("job no encontrado")
 
     def list(self, limit: int = 50) -> list[dict[str, Any]]:
-        if not self.root.is_dir(): return []
-        jobs = []
-        for path in sorted(self.root.glob("job_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]:
-            try: jobs.append(json.loads(path.read_text(encoding="utf-8")))
-            except (OSError, ValueError): continue
-        return jobs
+        with self._lock:
+            if not self.root.is_dir(): return []
+            jobs = []
+            for path in sorted(self.root.glob("job_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]:
+                try: jobs.append(json.loads(path.read_text(encoding="utf-8")))
+                except (OSError, ValueError): continue
+            return jobs
 
     def cancel(self, job_id: str) -> dict[str, Any]:
         job = self.get(job_id)
