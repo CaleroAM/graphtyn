@@ -136,6 +136,15 @@ def existing_store_db(workspace: str | Path) -> Path | None:
 
 _STORE_LEASES_LOCK = threading.RLock()
 _STORE_LEASES: dict[str, dict[str, Any]] = {}
+_STORE_WRITE_LOCKS_LOCK = threading.RLock()
+_STORE_WRITE_LOCKS: dict[str, threading.RLock] = {}
+
+
+def _store_write_lock(db_path: Path) -> threading.RLock:
+    """Return the in-process writer lock for one SQLite store."""
+    key = str(Path(db_path).resolve())
+    with _STORE_WRITE_LOCKS_LOCK:
+        return _STORE_WRITE_LOCKS.setdefault(key, threading.RLock())
 
 
 def _os_lock(file_obj, *, exclusive: bool, blocking: bool) -> bool:
@@ -1018,54 +1027,59 @@ class SharedMemoryStore(TopicMemoryMixin):
         files, node_ids, tests = sorted(set(files or [])), sorted(set(node_ids or [])), sorted(set(tests or []))
         digest = hashlib.sha256(_json([title.strip(), content.strip(), files, node_ids]).encode()).hexdigest()
         memory_id, now = _id("mem"), time.time()
-        with self._connect() as conn:
-            existing = conn.execute("SELECT id FROM memories WHERE session_id=? AND content_sha256=? AND kind=?",
-                                    (session_id, digest, kind)).fetchone()
-            if existing:
+        write_lock = _store_write_lock(self.db_path)
+        write_lock.acquire()
+        try:
+            with self._connect() as conn:
+                existing = conn.execute("SELECT id FROM memories WHERE session_id=? AND content_sha256=? AND kind=?",
+                                        (session_id, digest, kind)).fetchone()
+                if existing:
+                    conn.execute("""INSERT OR IGNORE INTO memory_provenance
+                        (memory_id,session_id,agent_id,source_message_ids_json,observed_at) VALUES(?,?,?,?,?)""",
+                        (existing["id"], session_id, session["agent_id"],
+                         _json(safe_metadata.get("source_message_ids", [])), now))
+                    conn.commit()
+                    return self.get(existing["id"], requester_agent=session["agent_id"])
+                equivalent = (conn.execute("""SELECT id FROM memories WHERE content_sha256=? AND kind=?
+                    AND scope!='private' AND status NOT IN ('deleted','contested') ORDER BY updated_at DESC LIMIT 1""",
+                    (digest, kind)).fetchone() if scope != "private" else None)
+                if equivalent:
+                    conn.execute("""INSERT OR IGNORE INTO memory_provenance
+                        (memory_id,session_id,agent_id,source_message_ids_json,observed_at) VALUES(?,?,?,?,?)""",
+                        (equivalent["id"], session_id, session["agent_id"],
+                         _json(safe_metadata.get("source_message_ids", [])), now))
+                    self._audit(conn, "memory_merged", session["agent_id"], session_id, equivalent["id"],
+                                {"reason": "exact_content", "kind": kind})
+                    conn.commit()
+                    return self.get(equivalent["id"], requester_agent=session["agent_id"])
+                conn.execute("""INSERT INTO memories
+                    (id,session_id,agent_id,kind,scope,status,title,content,task,branch,base_commit,
+                     observed_commit,confidence,files_json,node_ids_json,tests_json,metadata_json,
+                     content_sha256,created_at,updated_at,supersedes_id)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (memory_id, session_id, session["agent_id"], kind, scope, status, self._protect(title.strip()), self._protect(content.strip()),
+                     session["task"], session["branch"], session["base_commit"],
+                     observed_commit or self._git_state().get("commit"),
+                     max(0.0, min(1.0, float(confidence))), _json(files), _json(node_ids), _json(tests),
+                     _json({**safe_metadata, "source_fingerprints": self._fingerprints(files),
+                            "redactions": redactions + metadata_redactions}),
+                     digest, now, now, supersedes_id))
+                try:
+                    encrypted = bool(self._cipher())
+                    conn.execute("INSERT INTO memories_fts(memory_id,title,content,task,files,nodes) VALUES(?,?,?,?,?,?)",
+                                 (memory_id, "" if encrypted else title, "" if encrypted else content,
+                                  session["task"], " ".join(files), " ".join(node_ids)))
+                except sqlite3.OperationalError:
+                    pass
+                if supersedes_id:
+                    conn.execute("UPDATE memories SET status='superseded', updated_at=? WHERE id=?", (now, supersedes_id))
+                self._audit(conn, "checkpoint", session["agent_id"], session_id, memory_id, {"kind": kind, "scope": scope})
                 conn.execute("""INSERT OR IGNORE INTO memory_provenance
                     (memory_id,session_id,agent_id,source_message_ids_json,observed_at) VALUES(?,?,?,?,?)""",
-                    (existing["id"], session_id, session["agent_id"],
+                    (memory_id, session_id, session["agent_id"],
                      _json(safe_metadata.get("source_message_ids", [])), now))
-                conn.commit()
-                return self.get(existing["id"], requester_agent=session["agent_id"])
-            equivalent = (conn.execute("""SELECT id FROM memories WHERE content_sha256=? AND kind=?
-                AND scope!='private' AND status NOT IN ('deleted','contested') ORDER BY updated_at DESC LIMIT 1""",
-                (digest, kind)).fetchone() if scope != "private" else None)
-            if equivalent:
-                conn.execute("""INSERT OR IGNORE INTO memory_provenance
-                    (memory_id,session_id,agent_id,source_message_ids_json,observed_at) VALUES(?,?,?,?,?)""",
-                    (equivalent["id"], session_id, session["agent_id"],
-                     _json(safe_metadata.get("source_message_ids", [])), now))
-                self._audit(conn, "memory_merged", session["agent_id"], session_id, equivalent["id"],
-                            {"reason": "exact_content", "kind": kind})
-                conn.commit()
-                return self.get(equivalent["id"], requester_agent=session["agent_id"])
-            conn.execute("""INSERT INTO memories
-                (id,session_id,agent_id,kind,scope,status,title,content,task,branch,base_commit,
-                 observed_commit,confidence,files_json,node_ids_json,tests_json,metadata_json,
-                 content_sha256,created_at,updated_at,supersedes_id)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (memory_id, session_id, session["agent_id"], kind, scope, status, self._protect(title.strip()), self._protect(content.strip()),
-                 session["task"], session["branch"], session["base_commit"],
-                 observed_commit or self._git_state().get("commit"),
-                 max(0.0, min(1.0, float(confidence))), _json(files), _json(node_ids), _json(tests),
-                 _json({**safe_metadata, "source_fingerprints": self._fingerprints(files),
-                        "redactions": redactions + metadata_redactions}),
-                 digest, now, now, supersedes_id))
-            try:
-                encrypted = bool(self._cipher())
-                conn.execute("INSERT INTO memories_fts(memory_id,title,content,task,files,nodes) VALUES(?,?,?,?,?,?)",
-                             (memory_id, "" if encrypted else title, "" if encrypted else content,
-                              session["task"], " ".join(files), " ".join(node_ids)))
-            except sqlite3.OperationalError:
-                pass
-            if supersedes_id:
-                conn.execute("UPDATE memories SET status='superseded', updated_at=? WHERE id=?", (now, supersedes_id))
-            self._audit(conn, "checkpoint", session["agent_id"], session_id, memory_id, {"kind": kind, "scope": scope})
-            conn.execute("""INSERT OR IGNORE INTO memory_provenance
-                (memory_id,session_id,agent_id,source_message_ids_json,observed_at) VALUES(?,?,?,?,?)""",
-                (memory_id, session_id, session["agent_id"],
-                 _json(safe_metadata.get("source_message_ids", [])), now))
+        finally:
+            write_lock.release()
         self._embed_memory(memory_id)
         return self.get(memory_id, requester_agent=session["agent_id"])
 
@@ -2344,11 +2358,12 @@ class SharedMemoryStore(TopicMemoryMixin):
         if vector is None:
             provider = "feature-hash-v2"
             vector = hashed_embedding(text)
-        with self._connect() as conn:
-            conn.execute("""INSERT INTO memory_embeddings(memory_id,provider,dimensions,content_sha256,vector_json,updated_at)
-                VALUES(?,?,?,?,?,?) ON CONFLICT(memory_id,provider) DO UPDATE SET dimensions=excluded.dimensions,
-                content_sha256=excluded.content_sha256,vector_json=excluded.vector_json,updated_at=excluded.updated_at""",
-                (memory_id, provider, len(vector), digest, _json(vector), time.time()))
+        with _store_write_lock(self.db_path):
+            with self._connect() as conn:
+                conn.execute("""INSERT INTO memory_embeddings(memory_id,provider,dimensions,content_sha256,vector_json,updated_at)
+                    VALUES(?,?,?,?,?,?) ON CONFLICT(memory_id,provider) DO UPDATE SET dimensions=excluded.dimensions,
+                    content_sha256=excluded.content_sha256,vector_json=excluded.vector_json,updated_at=excluded.updated_at""",
+                    (memory_id, provider, len(vector), digest, _json(vector), time.time()))
         return True
 
     def _fingerprints(self, files: list[str]) -> dict[str, str]:

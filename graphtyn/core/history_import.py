@@ -132,6 +132,10 @@ def _antigravity_workspace_map(source_root: str | Path) -> dict[str, str]:
                 value = unquote(parsed.path)
                 if parsed.netloc and parsed.netloc.casefold() not in {"", "localhost"}:
                     value = f"//{parsed.netloc}{value}"
+                elif re.match(r"^/[A-Za-z]:[\\/]", value):
+                    # RFC 8089 file URIs encode Windows drives as file:///C:/…;
+                    # pathlib on Windows expects C:/…, without the extra slash.
+                    value = value[1:]
             path = Path(value).expanduser()
             if not path.is_absolute():
                 return None
@@ -727,7 +731,18 @@ def _same_project_path(left: str | Path | None, right: str | Path | None) -> boo
     if not left or not right:
         return False
     try:
-        return Path(str(left)).expanduser().resolve() == Path(str(right)).expanduser().resolve()
+        def resolve(value: str | Path) -> Path:
+            raw = str(value)
+            parsed = urlparse(raw)
+            if parsed.scheme == "file":
+                raw = unquote(parsed.path)
+                if parsed.netloc and parsed.netloc.casefold() not in {"", "localhost"}:
+                    raw = f"//{parsed.netloc}{raw}"
+                elif re.match(r"^/[A-Za-z]:[\\/]", raw):
+                    raw = raw[1:]
+            return Path(raw).expanduser().resolve()
+
+        return resolve(left) == resolve(right)
     except (OSError, RuntimeError, ValueError):
         return str(left).rstrip("/").casefold() == str(right).rstrip("/").casefold()
 
