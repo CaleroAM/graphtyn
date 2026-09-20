@@ -3,6 +3,26 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [0.10.3] - 2026-09-19
+
+### Añadido
+
+- Integraciones MCP aisladas por proyecto para Codex, OpenCode, Claude, Cursor
+  y Antigravity, con identidad persistente y migración controlada de
+  configuraciones antiguas.
+- Recuperación de memoria compartida por proyecto con continuidad entre
+  agentes, enrutamiento exacto de workspaces y soporte ampliado para
+  OpenClaw.
+
+### Corregido
+
+- La concurrencia de checkpoints SQLite y la lectura de trabajos persistentes
+  quedan protegidas también en Windows.
+- Las rutas `file:///C:/...` de Antigravity se normalizan correctamente y la
+  indexación conserva rutas Unicode y separadores portables.
+- El CI de Windows valida las rutas actuales de integración MCP y cubre el
+  onboarding, el dashboard y la instalación del wheel.
+
 ## [0.10.2] - 2026-09-13
 
 ### Añadido
