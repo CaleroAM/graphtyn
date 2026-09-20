@@ -3,7 +3,35 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from .storage import data_home
+from .storage import atomic_write_json, data_home
+
+
+def ensure_project_memory_scope(workspace: str | Path, *, agent_ids=()) -> dict:
+    """Register a shared project scope without removing existing owners."""
+    root = Path(workspace).expanduser().resolve()
+    registry_path = data_home() / "registered_projects.json"
+    try:
+        rows = json.loads(registry_path.read_text(encoding="utf-8"))
+        rows = rows if isinstance(rows, list) else []
+    except (OSError, ValueError, TypeError, RuntimeError):
+        rows = []
+
+    current = next((row for row in rows if isinstance(row, dict) and row.get("path") and
+                    Path(str(row["path"])).expanduser().resolve() == root), None)
+    if current is not None and str(current.get("space_type") or "project").casefold() == "agent_brain":
+        raise ValueError("El espacio ya está registrado como agent_brain; no se modifica su alcance privado")
+    if current is None:
+        current = {"id": root.name, "name": root.name, "path": str(root),
+                   "mode": "single_folder"}
+        rows.append(current)
+
+    existing = current.get("agent_ids") or []
+    owners = sorted({str(value).strip().casefold() for value in [*existing, *agent_ids]
+                     if str(value).strip()})
+    current.update({"path": str(root), "space_type": "project", "agent_ids": owners})
+    atomic_write_json(registry_path, rows)
+    return {"ok": True, "path": str(root), "space_type": "project",
+            "agent_ids": owners, "registered": True, "registry": str(registry_path)}
 
 
 def resolve_memory_scope(workspace: str | Path, *, registrations=None, sources=None) -> dict:

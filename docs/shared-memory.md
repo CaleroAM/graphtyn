@@ -26,8 +26,11 @@ espacio indicado por `path`; no descubre ni combina otros proyectos por sí sola
 ## Operación portable
 
 `graphtyn setup` detecta primero y sólo escribe con `--apply`. Activar memoria
-no importa historiales anteriores ni inicia captura continua. El historial de
-`setup` requiere `--import-history --consent-history`; también puedes usar
+no importa historiales anteriores ni inicia captura continua por sí solo. Cuando
+se usa `--memory-watch`, `setup` registra el alcance compartido del proyecto,
+conserva el perfil MCP existente (o selecciona `full` en una instalación nueva),
+inicia un único watcher y verifica su primer heartbeat antes de terminar. El
+historial de `setup` requiere `--import-history --consent-history`; también puedes usar
 `memory bootstrap` para revisar la vista previa y autorizarla explícitamente.
 Los clientes seleccionados se configuran con `graphtyn agent-install <cliente>
 --path <proyecto>`, y `graphtyn integrations status --path <proyecto>` muestra
@@ -53,9 +56,21 @@ de `openclaw.json`.
 
 La captura y la importación histórica son operaciones separadas.
 `graphtyn memory sync --watch --consent` inicia captura incremental y
-`graphtyn memory status` comprueba si el
-watcher está activo. El campo `watch_command` de `setup` sólo es una sugerencia
-de comando; no demuestra que haya un proceso ejecutándose.
+`graphtyn memory status` comprueba si el watcher está activo. Para configurar un
+proyecto nuevo desde el inicio:
+
+```bash
+graphtyn setup --apply --agent codex --memory on --memory-watch --path /ruta/proyecto
+graphtyn integrations verify --path /ruta/proyecto
+```
+
+El comando es idempotente: si ya existe un watcher saludable no inicia otro.
+El estado de `integrations status` distingue `capture_configured` (la captura
+quedó configurada) de `capture_active` (hay heartbeat vigente) e incluye el
+alcance de memoria resuelto. El watcher iniciado por `setup` es un proceso
+separado y deja su salida en `.graphtyn/memory-sync-watch.log`; en producción
+conviene ejecutarlo bajo systemd, Docker Compose o un supervisor para obtener
+reinicio automático y recuperación tras reinicios del host.
 
 Los adaptadores se gestionan con `graphtyn adapter`; las fuentes con
 `graphtyn memory sources add|test|remove|list`. `graphtyn service install --kind systemd --enable` instala y activa

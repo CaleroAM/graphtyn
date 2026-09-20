@@ -182,6 +182,61 @@ def _sync_cycle_log_summary(result: dict) -> dict:
     }
 
 
+def _project_sync_watcher(root: Path) -> dict | None:
+    """Return the live persisted watcher for a project, if one exists."""
+    if existing_store_db(root) is None:
+        return None
+    try:
+        status = SharedMemoryStore(root).status()
+    except (OSError, RuntimeError, sqlite3.Error, ValueError):
+        return None
+    return next((item for item in status.get("sync_watchers", [])
+                 if isinstance(item, dict) and item.get("active")), None)
+
+
+def _start_project_memory_watch(root: Path, *, interval: float = 5) -> dict:
+    """Start one detached project watcher and verify its first heartbeat."""
+    root = Path(root).expanduser().resolve()
+    existing = _project_sync_watcher(root)
+    if existing:
+        return {"ok": True, "active": True, "started": False,
+                "pid": existing.get("pid"), "watcher_id": existing.get("watcher_id"),
+                "reason": "already_active"}
+
+    state_dir = root / ".graphtyn"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    log_path = state_dir / "memory-sync-watch.log"
+    command = [sys.executable, "-m", "graphtyn.cli", "memory", "sync",
+               "--path", str(root), "--watch", "--interval", str(max(1.0, float(interval))),
+               "--consent"]
+    try:
+        with log_path.open("a", encoding="utf-8") as log:
+            process = subprocess.Popen(command, cwd=str(root), stdin=subprocess.DEVNULL,
+                                       stdout=log, stderr=subprocess.STDOUT,
+                                       start_new_session=True, close_fds=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"ok": False, "active": False, "started": False,
+                "log": str(log_path), "error": str(exc)}
+
+    deadline = time.monotonic() + 3
+    while time.monotonic() < deadline:
+        watcher = _project_sync_watcher(root)
+        if watcher:
+            return {"ok": True, "active": True, "started": True,
+                    "pid": watcher.get("pid") or process.pid,
+                    "watcher_id": watcher.get("watcher_id"), "log": str(log_path)}
+        if process.poll() is not None:
+            break
+        time.sleep(0.1)
+    try:
+        detail = log_path.read_text(encoding="utf-8")[-1200:]
+    except OSError:
+        detail = ""
+    return {"ok": False, "active": False, "started": False, "pid": process.pid,
+            "log": str(log_path), "error": "El watcher terminó antes de registrar heartbeat",
+            "detail": detail}
+
+
 def main():
     configure_utf8_stdio()
     parser = argparse.ArgumentParser(
@@ -196,11 +251,12 @@ def main():
     setup_p.add_argument("--agent", action="append", default=[])
     setup_p.add_argument("--apply", action="store_true")
     setup_p.add_argument("--no-token", action="store_true")
-    setup_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="intent")
+    setup_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default=None,
+                         help="Perfil MCP; si se omite conserva el existente o usa full con memoria activa")
     setup_p.add_argument("--memory", choices=["ask", "on", "off"], default="ask",
                          help="Memoria conversacional: preguntar, activar o desactivar")
     setup_p.add_argument("--memory-watch", action="store_true",
-                         help="Dejar preparado el sincronizador continuo al activar memoria")
+                         help="Iniciar y verificar el sincronizador continuo al activar memoria")
     setup_p.add_argument("--import-history", action="store_true",
                          help="Importar historial anterior (requiere --consent-history)")
     setup_p.add_argument("--consent-history", action="store_true",
@@ -683,7 +739,8 @@ def main():
     install_p = subparsers.add_parser("agent-install", help="Instala instrucciones Graphtyn para asistentes")
     install_p.add_argument("platform", choices=["all", "codex", "opencode", "openclaw", "hermes", "claude", "cursor", "gemini", "antigravity", "copilot"])
     install_p.add_argument("--path", default=".")
-    install_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="intent")
+    install_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default=None,
+                           help="Perfil MCP; si se omite conserva el existente")
 
     integrations_p = subparsers.add_parser("integrations", help="Consulta o retira conexiones MCP por proyecto")
     integrations_sub = integrations_p.add_subparsers(dest="integration_action", required=True)
@@ -833,7 +890,8 @@ def main():
             if (args.import_history or args.memory_watch) and memory_choice != "on":
                 raise SystemExit("--import-history y --memory-watch requieren --memory on")
             configured = apply_setup(root, agents=agents, sources=plan["sources"],
-                                     create_token=not args.no_token, tool_profile=args.tool_profile)
+                                     create_token=not args.no_token, tool_profile=args.tool_profile,
+                                     memory_enabled=memory_choice == "on", memory_agents=agents)
             configured["memory"] = {"enabled": memory_choice == "on", "choice": memory_choice,
                                      "historical_imported": False,
                                      "continuous_capture_active": False}
@@ -856,11 +914,25 @@ def main():
                                                    "ambiguous": len(imported.get("ambiguous", [])),
                                                    "errors": discovery_errors})
                 if args.memory_watch:
+                    watch = _start_project_memory_watch(root, interval=5)
                     configured["memory"].update({
                         "watch_command": f"graphtyn memory sync --path {root} --watch --interval 5 --consent",
-                        "watch_started": False,
-                        "watch_note": "El comando se informa; debe ejecutarse para activar captura continua."})
+                        "watch_started": bool(watch.get("active")),
+                        "watch": watch,
+                        "continuous_capture_active": bool(watch.get("active")),
+                        "watch_note": ("Captura continua activa y verificada."
+                                       if watch.get("active") else
+                                       "No se pudo verificar el heartbeat del watcher.")})
+                    from .core.agent_installer import update_agent_manifest
+                    update_agent_manifest(root, capture_configured=bool(watch.get("active")),
+                                          capture=watch)
+                    from .core.project_integrations import project_integration_status
+                    configured["integrations"] = project_integration_status(root)
+                    configured["ok"] = bool(configured.get("ok") and watch.get("ok"))
+            configured["tool_profile"] = configured.get("tool_profile") or args.tool_profile
             print(json.dumps(configured, ensure_ascii=False, indent=2))
+            if not configured.get("ok", True):
+                raise SystemExit(1)
         else:
             print(json.dumps({**plan, "dry_run": True, "message": "Repita con --apply"}, ensure_ascii=False, indent=2))
     elif args.command == "onboard":
@@ -1734,13 +1806,15 @@ def main():
             print(json.dumps(result, ensure_ascii=False, indent=2))
 
     elif args.command == "agent-install":
+        from .core.agent_installer import resolve_tool_profile
         from .core.project_integrations import project_integration_status
-        files = install_agent(root, args.platform, tool_profile=args.tool_profile)
+        profile = resolve_tool_profile(root, args.tool_profile)
+        files = install_agent(root, args.platform, tool_profile=profile)
         status = project_integration_status(root)
         print(json.dumps({"ok": True, "platform": args.platform,
                           "project_id": status.get("project_id"), "mcp_server": status.get("mcp_server"),
                           "integrations": status.get("clients", []),
-                          "tool_profile": args.tool_profile, "files": files}, ensure_ascii=False, indent=2))
+                          "tool_profile": profile, "files": files}, ensure_ascii=False, indent=2))
 
     elif args.command == "integrations":
         from .core.project_integrations import (project_integration_status, remove_project_integrations,
