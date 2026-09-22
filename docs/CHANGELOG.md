@@ -3,6 +3,22 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [0.10.4] - 2026-09-21
+
+### Añadido
+
+- Resolución canónica de alias de agente (`antigravity` ↔ `agy`, `openclaw`, `codex`, `cursor`, etc.) en permisos de proyectos, filtros de importación de historial y llamadas MCP.
+- Asignación automática del ámbito de memoria del proyecto al ejecutar `agent-install` para el cliente seleccionado.
+- Auto-consolidación transparente de bases de datos de memoria (`memory-v2.db`) entre el almacenamiento local y central con respaldo preventivo, resolviendo conflictos de duplicación.
+- Soporte explícito del parámetro `path` y etiquetado con metadatos de `project_context` y `workspace` en las herramientas MCP de grafo (`graph_neighborhood`, `graph_blast_radius`, `graph_search_concepts`, etc.).
+- Metadatos de `runtime` en el reporte del CLI `agent-install` e `integrations` clarificando el alcance global del binario frente a configuraciones locales de proyecto.
+
+### Corregido
+
+- Los proyectos compartidos con agentes asignados ya no se tratan erróneamente como restringidos (`restricted`), permitiendo el acceso multi-agente legítimo sin bloqueos de autorización ni fugas hacia proyectos externos.
+- El servidor MCP auto-registra al agente solicitante activo del workspace en proyectos registrados, previniendo caídas a servidores MCP globales con contexto de otros proyectos.
+- `graphtyn setup` inicializa el almacenamiento de memoria de proyecto por defecto (`memory-ready`).
+
 ## [0.10.3] - 2026-09-19
 
 ### Añadido

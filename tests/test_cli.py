@@ -1,5 +1,6 @@
 import json
 import os
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -315,6 +316,70 @@ def test_setup_memory_opt_in_does_not_import_historical_sessions(git_repo, tmp_p
     assert data["memory"]["historical_imported"] is False
     assert data["memory"]["continuous_capture_active"] is False
     assert "discovered" not in data["memory"]
+
+
+def test_setup_memory_configures_full_profile_and_project_scope(git_repo, tmp_path):
+    home = tmp_path / "memory-scope-home"
+    home.mkdir()
+    result = _run_cli(["setup", "--apply", "--agent", "codex", "--memory", "on",
+                       "--no-token", "--path", str(git_repo)], git_repo, home)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["tool_profile"] == "full"
+    assert data["memory_scope"]["space_type"] == "project"
+    assert data["memory_scope"]["agent_ids"] == ["codex"]
+    registry = json.loads((home / ".graphtyn" / "registered_projects.json").read_text())
+    row = next(item for item in registry if item["path"] == str(git_repo.resolve()))
+    assert row["space_type"] == "project"
+    assert row["agent_ids"] == ["codex"]
+
+
+def test_setup_preserves_existing_full_profile_when_profile_is_omitted(git_repo, tmp_path):
+    home = tmp_path / "profile-home"
+    home.mkdir()
+    first = _run_cli(["agent-install", "codex", "--tool-profile", "full",
+                      "--path", str(git_repo)], git_repo, home)
+    assert first.returncode == 0, first.stderr
+    second = _run_cli(["agent-install", "codex", "--path", str(git_repo)], git_repo, home)
+    assert second.returncode == 0, second.stderr
+    data = json.loads(second.stdout)
+    assert data["tool_profile"] == "full"
+    manifest = json.loads((git_repo / ".graphtyn" / "agent-install.json").read_text())
+    assert manifest["tool_profile"] == "full"
+
+
+def test_setup_memory_watch_starts_and_reuses_one_watcher(git_repo, tmp_path):
+    home = tmp_path / "watch-home"
+    home.mkdir()
+    env = dict(os.environ, HOME=str(home), GRAPHTYN_HOME=str(home / ".graphtyn"))
+    result = subprocess.run(CLI + ["setup", "--apply", "--agent", "codex", "--memory", "on",
+                                   "--memory-watch", "--no-token", "--path", str(git_repo)],
+                           cwd=str(git_repo), env=env, capture_output=True, text=True, timeout=90)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    watcher_pid = data["memory"]["watch"]["pid"]
+    try:
+        assert data["memory"]["watch_started"] is True
+        assert data["memory"]["continuous_capture_active"] is True
+        status = subprocess.run(CLI + ["integrations", "status", "--path", str(git_repo)],
+                                cwd=str(git_repo), env=env, capture_output=True, text=True, timeout=90)
+        assert status.returncode == 0, status.stderr
+        integration = json.loads(status.stdout)
+        assert integration["capture_configured"] is True
+        assert integration["capture_active"] is True
+        second = subprocess.run(CLI + ["setup", "--apply", "--agent", "codex", "--memory", "on",
+                                       "--memory-watch", "--no-token", "--path", str(git_repo)],
+                                cwd=str(git_repo), env=env, capture_output=True, text=True, timeout=90)
+        assert second.returncode == 0, second.stderr
+        second_data = json.loads(second.stdout)
+        assert second_data["memory"]["watch"]["started"] is False
+        assert second_data["memory"]["watch"]["reason"] == "already_active"
+        assert second_data["memory"]["watch"]["pid"] == watcher_pid
+    finally:
+        try:
+            os.kill(int(watcher_pid), signal.SIGTERM)
+        except (ProcessLookupError, ValueError):
+            pass
 
 
 def test_setup_history_import_requires_explicit_consent(git_repo, tmp_path):

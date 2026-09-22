@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from importlib.resources import files
 from pathlib import Path
+from .storage import atomic_write_json
 from .project_integrations import configure_project_integrations, ensure_project_identity
 
 MEMORY_POLICY_START = "<!-- BEGIN GRAPHTYN MANAGED MEMORY POLICY -->"
@@ -64,10 +65,42 @@ description: Use Graphtyn before broad repository exploration to obtain compact,
 """ + POLICY + "\n\n" + f"{MEMORY_POLICY_START}\n{_managed_memory_policy()}\n{MEMORY_POLICY_END}\n"
 
 
-def install_agent(root: Path, platform: str | list[str], tool_profile: str = "intent") -> list[str]:
+def resolve_tool_profile(root: Path, tool_profile: str | None = None, *, memory_enabled: bool = False) -> str:
+    """Resolve an explicit profile, preserving an existing managed profile when omitted."""
+    if tool_profile is not None:
+        if tool_profile not in {"intent", "memory", "full"}:
+            raise ValueError("tool_profile debe ser intent, memory o full")
+        return tool_profile
+    manifest_path = Path(root).expanduser().resolve() / ".graphtyn" / "agent-install.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        existing = str(manifest.get("tool_profile") or "").strip().casefold()
+        if existing in {"intent", "memory", "full"}:
+            return existing
+    except (OSError, ValueError, TypeError):
+        pass
+    return "full" if memory_enabled else "intent"
+
+
+def update_agent_manifest(root: Path, **updates) -> dict:
+    """Update managed installation metadata without losing capture state."""
+    path = Path(root).expanduser().resolve() / ".graphtyn" / "agent-install.json"
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        manifest = {}
+    if not isinstance(manifest, dict):
+        manifest = {}
+    manifest.update(updates)
+    atomic_write_json(path, manifest)
+    return manifest
+
+
+def install_agent(root: Path, platform: str | list[str], tool_profile: str | None = None) -> list[str]:
+    root = Path(root).expanduser().resolve()
+    tool_profile = resolve_tool_profile(root, tool_profile)
     if tool_profile not in {"intent", "memory", "full"}:
         raise ValueError("tool_profile debe ser intent, memory o full")
-    root = root.expanduser().resolve()
     if not root.is_dir():
         raise ValueError(f"La carpeta del proyecto no existe: {root}")
     requested = [platform] if isinstance(platform, str) else list(platform)
@@ -110,17 +143,26 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str = "in
 
     integrations = configure_project_integrations(root, selected, tool_profile=tool_profile)
     written.extend(integrations["files"])
+    from .memory_scope import ensure_project_memory_scope
+    ensure_project_memory_scope(root, agent_ids=selected)
 
     written = list(dict.fromkeys(written))
     manifest = root / ".graphtyn" / "agent-install.json"
     manifest.parent.mkdir(exist_ok=True)
-    manifest.write_text(json.dumps({"platforms": selected, "tool_profile": tool_profile,
-                                    "memory_policy_version": MEMORY_POLICY_VERSION,
-                                    "project_id": identity["id"],
-                                    "mcp_server": integrations["mcp_server"],
-                                    "integrations": integrations["clients"],
-                                    "capture_configured": False,
-                                    "files": written}, indent=2), encoding="utf-8")
+    try:
+        previous = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        previous = {}
+    payload = {"platforms": selected, "tool_profile": tool_profile,
+               "memory_policy_version": MEMORY_POLICY_VERSION,
+               "project_id": identity["id"],
+               "mcp_server": integrations["mcp_server"],
+               "integrations": integrations["clients"],
+               "capture_configured": bool(previous.get("capture_configured", False)),
+               "files": written}
+    if isinstance(previous.get("capture"), dict):
+        payload["capture"] = previous["capture"]
+    atomic_write_json(manifest, payload)
     return written
 
 

@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 from .history_import import default_sources, save_source
+from .memory_scope import ensure_project_memory_scope
 from .storage import data_home, secure_private_file, unsafe_project_root
 
 DASHBOARD_URL = "http://127.0.0.1:9210"
@@ -77,14 +78,18 @@ def detect_environment(project: Path) -> dict[str, Any]:
             "warnings": ([] if project.exists() else ["project_path_missing"])}
 
 def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str]],
-                create_token: bool = True, tool_profile: str = "intent") -> dict[str, Any]:
-    from .agent_installer import install_agent
+                create_token: bool = True, tool_profile: str | None = None,
+                memory_enabled: bool = False, memory_agents: list[str] | None = None) -> dict[str, Any]:
+    from .agent_installer import install_agent, resolve_tool_profile
     from .project_integrations import ensure_project_identity, project_integration_status
     project = project.expanduser().resolve(); project.mkdir(parents=True, exist_ok=True)
     if reason := unsafe_project_root(project):
         raise ValueError(reason + "; indica la ruta del repositorio concreto")
     identity = ensure_project_identity(project)
-    installed = install_agent(project, agents, tool_profile=tool_profile) if agents else []
+    memory_scope = (ensure_project_memory_scope(project, agent_ids=memory_agents or agents)
+                    if memory_enabled else None)
+    resolved_profile = resolve_tool_profile(project, tool_profile, memory_enabled=memory_enabled)
+    installed = install_agent(project, agents, tool_profile=resolved_profile) if agents else []
     configured = [save_source(row["provider"], row["source"], label="setup discovery") for row in sources]
     token_file = None
     if create_token:
@@ -96,6 +101,7 @@ def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str
     # explicitly for newer clients.
     agent_files = {agent: installed for agent in agents}
     return {"ok": True, "project": str(project), "project_id": identity["id"],
+            "tool_profile": resolved_profile, "memory_scope": memory_scope,
             "integrations": project_integration_status(project), "agents": agent_files,
             "platforms": agents, "files": installed, "sources": configured,
             "token_file": str(token_file) if token_file else None}

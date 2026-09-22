@@ -640,7 +640,7 @@ def _workspace(record: dict[str, Any]) -> str | None:
     for key in ("cwd", "workspace", "workspaceDir", "project_path", "workdir", "directory"):
         value = record.get(key)
         if isinstance(value, str) and value.strip(): return value.strip()
-    metadata = record.get("metadata") or record.get("context")
+    metadata = record.get("metadata") or record.get("context") or record.get("payload")
     return _workspace(metadata) if isinstance(metadata, dict) and metadata and metadata is not record else None
 
 
@@ -678,8 +678,13 @@ def parse_history_file(path: Path, provider: str, agent_hint: str | None = None)
     # A single-pass stream cannot pre-scan metadata; records update these values
     # as they arrive and messages inherit the latest known context.
     for record_index, root in enumerate(values):
-        if provider == "codex" and isinstance(root, dict) and root.get("type") in {"event_msg", "world_state", "turn_context", "compacted"}:
-            continue
+        if provider == "codex" and isinstance(root, dict):
+            if root.get("type") in {"event_msg", "world_state", "turn_context", "compacted"}:
+                continue
+            if root.get("type") == "session_meta":
+                pld = root.get("payload") or {}
+                if isinstance(pld, dict) and pld.get("id"):
+                    file_session = str(pld["id"]).strip()
         root_session = ((root.get("sessionId") or root.get("session_id") or root.get("conversation_id"))
                         if isinstance(root, dict) else None) or file_session
         root_workspace = (_workspace(root) if isinstance(root, dict) else None) or file_workspace
@@ -696,7 +701,9 @@ def parse_history_file(path: Path, provider: str, agent_hint: str | None = None)
             source_id = str(native_id or f"{sid}:{record_index}:{child_index}")
             metadata = {"historical_source": str(path), "source_message_id": source_id,
                         "provider": provider, "source_sequence": [record_index, child_index]}
-            stamp = record.get("timestamp") or record.get("created_at") or record.get("createdAt")
+            root_stamp = ((root.get("timestamp") or root.get("created_at") or root.get("createdAt"))
+                          if isinstance(root, dict) else None)
+            stamp = root_stamp or record.get("timestamp") or record.get("created_at") or record.get("createdAt")
             if isinstance(stamp, str):
                 try: stamp = datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp()
                 except ValueError: stamp = None
@@ -704,7 +711,6 @@ def parse_history_file(path: Path, provider: str, agent_hint: str | None = None)
                 metadata["occurred_at"] = float(stamp) / (1000 if stamp > 1e11 else 1)
             group["messages"].append({"role": role, "content": content, "metadata": metadata})
             group["workspace"] = group["workspace"] or _workspace(record)
-            stamp = record.get("timestamp") or record.get("created_at") or record.get("createdAt")
             if isinstance(stamp, (int, float)): group["timestamps"].append(float(stamp) / (1000 if stamp > 1e11 else 1))
             elif isinstance(stamp, str):
                 try: group["timestamps"].append(datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp())
@@ -864,7 +870,10 @@ def _agent_id_matches(expected: str | None, observed: str | None) -> bool:
     actual = str(observed or "").strip().casefold()
     if not wanted or not actual:
         return False
-    return bool(wanted and wanted == actual)
+    if wanted == actual:
+        return True
+    from .memory_scope import expand_agent_aliases
+    return bool(expand_agent_aliases(wanted) & expand_agent_aliases(actual))
 
 
 def discover_histories(provider: str | None = None, sources: list[str] | None = None,

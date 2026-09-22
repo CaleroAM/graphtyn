@@ -415,7 +415,7 @@ def test_cli_sync_all_spaces_surfaces_store_conflict_and_continues(tmp_path, mon
     assert result["spaces"][1]["ok"] is True
 
 
-def test_store_resolution_rejects_local_and_central_duplicates(tmp_path, monkeypatch):
+def test_store_resolution_auto_consolidates_local_and_central_duplicates(tmp_path, monkeypatch):
     monkeypatch.delenv("GRAPHTYN_HOME", raising=False)
     state = tmp_path / "home"
     monkeypatch.setattr(memory_store_module, "data_home", lambda: state)
@@ -423,13 +423,18 @@ def test_store_resolution_rejects_local_and_central_duplicates(tmp_path, monkeyp
     project.mkdir()
     local = project / ".graphtyn" / "memory-v2.db"
     central = memory_store_module.project_store_dir(state, project, create=True) / "memory-v2.db"
-    SharedMemoryStore(project, db_path=local)
-    SharedMemoryStore(project, db_path=central)
+    s_local = SharedMemoryStore(project, db_path=local)
+    s_local.checkpoint(s_local.start_session("codex", "T1")["id"], "decision", "LocalD", "Local Content")
+    s_central = SharedMemoryStore(project, db_path=central)
+    s_central.checkpoint(s_central.start_session("codex", "T2")["id"], "decision", "CentralD", "Central Content")
 
-    with pytest.raises(memory_store_module.MemoryStoreConflictError, match="dos almacenes"):
-        SharedMemoryStore(project)
-    with pytest.raises(memory_store_module.MemoryStoreConflictError, match="dos almacenes"):
-        memory_store_module.existing_store_db(project)
+    # When resolved without GRAPHTYN_HOME, it should auto-consolidate instead of failing
+    store = SharedMemoryStore(project)
+    assert store.status()["memories"] >= 2
+    # The secondary should have been renamed with .consolidated- suffix
+    backups = list((project / ".graphtyn").glob("memory-v2.db.consolidated-*")) + \
+              list(central.parent.glob("memory-v2.db.consolidated-*"))
+    assert len(backups) >= 1
 
 
 def test_checkpoint_is_idempotent_and_wal_enabled(tmp_path, monkeypatch):

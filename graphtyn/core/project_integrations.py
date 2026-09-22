@@ -329,9 +329,12 @@ def project_integration_status(project: str | Path) -> dict[str, Any]:
             try:
                 if client.get("platform") == "codex":
                     text = path.read_text(encoding="utf-8")
+                    profile = str(manifest.get("tool_profile") or "intent")
                     present = (f"{_MANAGED_START}{metadata.get('project_id')}" in text
                                and f"mcp_servers.{_toml_string(str(client.get('alias')))}" in text
-                               and 'command = "graphtyn"' in text and '"--path", "."' in text)
+                               and 'command = "graphtyn"' in text
+                               and f'"--tool-profile", "{profile}"' in text
+                               and '"--path", "."' in text)
                 else:
                     platform = str(client.get("platform"))
                     section = "mcp" if platform == "opencode" else "mcpServers"
@@ -370,6 +373,28 @@ def project_integration_status(project: str | Path) -> dict[str, Any]:
                         "managed_by_graphtyn": False,
                         "note": "Entrada existente de Codex, reconocida en modo de sólo lectura."})
 
+    capture_configured = bool(manifest.get("capture_configured", False))
+    capture_active = False
+    capture_watchers = []
+    memory_space = {"space_type": "project", "agent_ids": [], "restricted": False, "configured": False}
+    try:
+        from .memory_scope import resolve_memory_scope
+        memory_space = resolve_memory_scope(root)
+    except (OSError, RuntimeError, ValueError, TypeError):
+        pass
+    try:
+        from .shared_memory import SharedMemoryStore, existing_store_db
+        if existing_store_db(root) is not None:
+            memory_status = SharedMemoryStore(root).status()
+            capture_watchers = [item for item in memory_status.get("sync_watchers", [])
+                                if isinstance(item, dict)]
+            capture_active = bool(memory_status.get("continuous_capture_active") or
+                                  any(item.get("active") for item in capture_watchers))
+            memory_space = dict(memory_status.get("memory_space") or memory_space)
+    except (OSError, RuntimeError, ValueError, TypeError):
+        pass
+    capture_configured = bool(capture_configured or capture_active)
+
     mcp_server = manifest.get("mcp_server")
     if not mcp_server and global_codex:
         mcp_server = global_codex[0]["alias"]
@@ -377,9 +402,21 @@ def project_integration_status(project: str | Path) -> dict[str, Any]:
             "project_name": identity.get("canonical_name") or metadata.get("name") or root.name,
             "project_aliases": identity.get("aliases", []),
             "mcp_server": mcp_server,
+            "runtime": {
+                "command": "graphtyn",
+                "binary_available": bool(shutil.which("graphtyn")),
+                "binary_scope": "global",
+                "project_configuration_scope": "project",
+                "project_configuration_required": True,
+                "note": "El ejecutable se instala una vez; cada cliente necesita una entrada MCP con el workspace del proyecto.",
+            },
             "clients": clients,
             "mcp_verification": manifest.get("mcp_verification"),
-            "capture_configured": bool(manifest.get("capture_configured", False)),
+            "capture_configured": capture_configured,
+            "capture_active": capture_active,
+            "capture_watchers": capture_watchers,
+            "memory_scope": memory_space,
+            "scope_configured": bool(memory_space.get("configured")),
             "historical_imported_automatically": False}
 
 

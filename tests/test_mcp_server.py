@@ -56,6 +56,22 @@ def test_mcp_initialize_and_tools_list(workspace):
     assert context_tool["inputSchema"]["properties"]["activity_limit"]["maximum"] == 10
 
 
+def test_mcp_initialize_reports_bound_project_context(workspace):
+    metadata = workspace / ".graphtyn" / "graphtyn.json"
+    metadata.parent.mkdir()
+    metadata.write_text(json.dumps({"name": "sample", "project_id": "abc123"}), encoding="utf-8")
+
+    _, responses = _mcp_call(workspace, [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+    ])
+
+    info = responses[0]["result"]["serverInfo"]
+    assert info["workspace"] == str(workspace.resolve())
+    assert info["project_id"] == "abc123"
+    assert info["project_name"] == "sample"
+    assert info["scope"] == "project"
+
+
 def test_mcp_stdio_ignores_notifications_without_shifting_responses(workspace):
     _, responses = _mcp_call(workspace, [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
@@ -200,6 +216,63 @@ def test_mcp_query_intent_supports_one_shot_and_delta(workspace):
     assert delta["entities"] == {}
     assert delta["relations"] == []
     assert delta["estimated_tokens"] < first["estimated_tokens"]
+
+
+def test_mcp_graph_queries_honor_explicit_project_path(workspace, tmp_path):
+    other = tmp_path / "other-project"
+    other.mkdir()
+    (other / "main.py").write_text("def main():\n    return 1\n", encoding="utf-8")
+
+    _, responses = _mcp_call(workspace, [{
+        "jsonrpc": "2.0", "id": 40, "method": "tools/call",
+        "params": {"name": "graph_neighborhood", "arguments": {"path": str(other)}},
+    }])
+    neighborhood = json.loads(responses[0]["result"]["content"][0]["text"])
+    assert "main.py" in {Path(path).name for path in neighborhood["files"].values()}
+    assert "a.py" not in {Path(path).name for path in neighborhood["files"].values()}
+    assert neighborhood["project_context"]["workspace"] == str(other.resolve())
+
+    _, responses = _mcp_call(workspace, [{
+        "jsonrpc": "2.0", "id": 41, "method": "tools/call",
+        "params": {"name": "graph_query_intent", "arguments": {
+            "path": str(other), "request": "Dime qué archivos de código hay", "intent": "overview",
+        }},
+    }])
+    overview = json.loads(responses[0]["result"]["content"][0]["text"])
+    assert overview["project_context"]["workspace"] == str(other.resolve())
+    assert overview["project_profile"]["entry_points"] == ["main.py"]
+
+
+def test_mcp_context_delta_cannot_cross_project_boundaries(workspace, tmp_path):
+    other = tmp_path / "other-project"
+    other.mkdir()
+    process = subprocess.Popen(
+        [sys.executable, "-c", MCP_RUNNER % str(workspace)],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, cwd=str(workspace), env=dict(os.environ),
+    )
+    try:
+        process.stdin.write(json.dumps({
+            "jsonrpc": "2.0", "id": 42, "method": "tools/call",
+            "params": {"name": "graph_query_intent", "arguments": {"request": "overview"}},
+        }) + "\n")
+        process.stdin.flush()
+        first = json.loads(process.stdout.readline())
+        context_id = json.loads(first["result"]["content"][0]["text"])["context_id"]
+
+        process.stdin.write(json.dumps({
+            "jsonrpc": "2.0", "id": 43, "method": "tools/call",
+            "params": {"name": "graph_query_intent", "arguments": {
+                "path": str(other), "request": "overview", "extends_context_id": context_id,
+            }},
+        }) + "\n")
+        process.stdin.flush()
+        second = json.loads(process.stdout.readline())
+        assert second["error"]["code"] == -32602
+        assert "otro workspace" in second["error"]["message"]
+    finally:
+        process.terminate()
+        process.wait(timeout=10)
 
 
 def test_mcp_query_intent_auto_adds_bounded_source_for_exact_flow(workspace):
@@ -427,3 +500,43 @@ def test_mcp_unknown_method_returns_error(workspace):
     ])
     r = next(x for x in resp if x.get("id") == 9)
     assert r["error"]["code"] == -32601
+
+
+def test_mcp_memory_context_includes_project_context(workspace):
+    _, resp = _mcp_call(workspace, [
+        {"jsonrpc": "2.0", "id": 10, "method": "tools/call",
+         "params": {"name": "memory_context", "arguments": {"query": "context test", "requester_agent": "antigravity"}}},
+    ])
+    result = json.loads(resp[0]["result"]["content"][0]["text"])
+    assert result["ok"] is True
+    assert "project_context" in result
+    assert result["project_context"]["workspace"] == str(workspace)
+    assert result["workspace"] == str(workspace)
+
+
+def test_mcp_memory_project_context_authorizes_agent_aliases(workspace, tmp_path, monkeypatch):
+    from graphtyn.core.shared_memory import SharedMemoryStore
+
+    home = tmp_path / ".graphtyn"
+    project = tmp_path / "MyProject"
+    project.mkdir()
+    home.mkdir()
+    monkeypatch.setenv("GRAPHTYN_HOME", str(home))
+    (home / "registered_projects.json").write_text(json.dumps([{
+        "id": "my_proj", "name": "MyProject", "path": str(project), "space_type": "project",
+        "agent_ids": ["agy"], "restricted": True
+    }]), encoding="utf-8")
+    store = SharedMemoryStore(project)
+    session = store.start_session("agy", "Tarea inicial")
+    store.checkpoint(session["id"], "decision", "Título", "Contenido guardado")
+
+    # Requester uses "antigravity", which is an alias of "agy"
+    _, responses = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 30, "method": "tools/call",
+        "params": {"name": "memory_project_context", "arguments": {
+            "project": "MyProject", "query": "Contenido guardado",
+            "requester_agent": "antigravity"}}}], env={"GRAPHTYN_HOME": str(home)})
+    result = json.loads(responses[0]["result"]["content"][0]["text"])
+
+    assert result["ok"] is True
+    assert result["project"]["name"] == "MyProject"
+    assert result["context"]["memories"][0]["title"] == "Título"
