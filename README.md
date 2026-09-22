@@ -10,7 +10,7 @@ contexto compacto a agentes mediante MCP. También conserva memoria semántica
 compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
 estructurales.
 
-> Última versión estable publicada: [`0.10.3`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.10.3).
+> Última versión estable publicada: [`0.10.4`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.10.4).
 > Graphtyn se distribuye por GitHub Releases; PyPI permanece deshabilitado. El
 > despliegue es self-hosted: los agentes pueden compartir memoria con permisos
 > por token y proyecto, pero no es un servicio SaaS multi-tenant.
@@ -63,7 +63,7 @@ Graphtyn aún no está publicado en PyPI. Instala el wheel de
 [GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/latest):
 
 ```bash
-python -m pip install "https://github.com/CaleroAM/graphtyn/releases/latest/download/graphtyn-0.10.3-py3-none-any.whl"
+python -m pip install "https://github.com/CaleroAM/graphtyn/releases/latest/download/graphtyn-0.10.4-py3-none-any.whl"
 ```
 
 También puedes instalarlo en modo desarrollo desde un checkout:
@@ -145,9 +145,10 @@ graphtyn memory scope show --path /ruta/al/cerebro
 graphtyn memory scope set --path /ruta/al/cerebro --space-type agent_brain --agent-id openclaw/main
 ```
 
-`--memory off` instala Graphtyn sin captura conversacional. Registrar el proyecto
-asigna una identidad persistente; `agent-install` genera el MCP sólo para el
-cliente seleccionado y conserva las demás conexiones. La configuración usa el
+`--memory off` instala Graphtyn sin captura conversacional. El ejecutable se
+instala una vez por usuario; registrar el proyecto asigna una identidad
+persistente y `agent-install` sólo genera la configuración MCP por proyecto
+para el cliente seleccionado, conservando las demás conexiones. La configuración usa el
 comando `graphtyn` en PATH y una ruta relativa al workspace. Codex también
 guarda la ruta absoluta del proyecto como `cwd` en `.codex/config.toml` para
 iniciar el MCP en el workspace correcto aunque Codex se haya abierto desde otra
@@ -249,7 +250,8 @@ graphtyn memory sync --path . --watch --interval 5 --consent
 ```
 
 Registrar un proyecto genera su identidad estable. `agent-install` configura
-MCP sólo para los clientes seleccionados y conserva otros servidores. La
+MCP sólo para los clientes seleccionados y conserva otros servidores; no vuelve
+a instalar el ejecutable global. La
 configuración usa el comando `graphtyn` en PATH y `--path .`; Codex además guarda
 un `cwd` absoluto en `.codex/config.toml`. Regenera y revisa esa configuración
 local antes de compartirla. Codex sólo carga un MCP de proyecto en carpetas de
