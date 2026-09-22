@@ -1,5 +1,11 @@
 # MCP por proyecto
 
+El comando `graphtyn` es una instalación global del equipo. No se vuelve a
+instalar el paquete dentro de cada repositorio. La configuración por proyecto
+es necesaria porque cada cliente debe iniciar el mismo ejecutable con el
+`cwd` y la identidad del proyecto correctos; `agent-install` sólo escribe esa
+entrada MCP y las instrucciones del cliente.
+
 Cada proyecto registrado recibe un ID persistente en `.graphtyn/graphtyn.json`.
 El alias MCP se deriva del nombre actual de la carpeta y del ID, por ejemplo
 `graphtyn_e50e_a1b2c3d4`; así los repos con el mismo nombre no comparten el

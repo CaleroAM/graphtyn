@@ -88,6 +88,9 @@ def test_agent_install_status_and_remove_only_touch_managed_mcp(tmp_path, monkey
     status = project_integration_status(root)
     assert status["project_id"]
     assert status["mcp_server"].startswith("graphtyn_sample_project_")
+    assert status["runtime"]["binary_scope"] == "global"
+    assert status["runtime"]["project_configuration_scope"] == "project"
+    assert status["runtime"]["project_configuration_required"] is True
     assert {item["platform"] for item in status["clients"] if item["status"] == "configured"} == {"codex", "cursor"}
 
     removed = remove_project_integrations(root, ["codex", "cursor"])

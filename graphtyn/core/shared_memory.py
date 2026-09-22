@@ -14,6 +14,7 @@ import uuid
 import base64
 import tempfile
 import contextlib
+from contextlib import closing
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -98,6 +99,113 @@ class MemoryStoreConflictError(RuntimeError):
     """The workspace has multiple stores and no explicit deployment choice."""
 
 
+def _auto_consolidate_stores(primary: Path, secondary: Path) -> None:
+    """Merge sessions, messages, and memories from *secondary* into *primary*.
+
+    After a successful merge the secondary file is renamed to a timestamped
+    backup so the conflict does not recur.  The merge is idempotent: rows that
+    already exist in the primary (by primary key) are silently skipped.
+    """
+    import shutil
+    backup_suffix = f".consolidated-{time.strftime('%Y%m%d%H%M%S')}"
+    backup_path = secondary.with_suffix(secondary.suffix + backup_suffix)
+    try:
+        # First, checkpoint the secondary WAL so ATTACH reads all data
+        with closing(sqlite3.connect(secondary, timeout=5)) as tmp:
+            try:
+                tmp.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            except sqlite3.OperationalError:
+                pass
+
+        # Use isolation_level=None (autocommit) so we can control transactions
+        # explicitly and DETACH won't fail with "database src is locked"
+        dst = sqlite3.connect(str(primary), timeout=10, isolation_level=None)
+        try:
+            dst.execute("PRAGMA journal_mode=WAL")
+            dst.execute("PRAGMA busy_timeout=10000")
+            dst.execute("ATTACH DATABASE ? AS src", (str(secondary),))
+
+            # Tables to merge in dependency order:
+            # agents → sessions → messages, memories → memory_embeddings, memory_provenance
+            _MERGE_TABLES = [
+                ("agents",             ["id", "client", "display_name", "created_at"]),
+                ("agent_aliases",      ["alias", "canonical", "source", "created_at"]),
+                ("sessions",           ["id", "agent_id", "task", "branch", "base_commit", "worktree",
+                                        "capture_enabled", "started_at", "ended_at", "status"]),
+                ("messages",           ["id", "session_id", "agent_id", "role", "content",
+                                        "event_type", "metadata_json", "content_sha256", "created_at"]),
+                ("memories",           ["id", "session_id", "agent_id", "kind", "scope", "status",
+                                        "title", "content", "task", "branch", "base_commit",
+                                        "observed_commit", "confidence", "files_json", "node_ids_json",
+                                        "tests_json", "metadata_json", "content_sha256",
+                                        "created_at", "updated_at", "supersedes_id"]),
+                ("memory_embeddings",  ["memory_id", "provider", "dimensions", "content_sha256",
+                                        "vector_json", "updated_at"]),
+                ("memory_provenance",  ["memory_id", "session_id", "agent_id",
+                                        "source_message_ids_json", "observed_at"]),
+            ]
+            src_tables = {row[0] for row in dst.execute(
+                "SELECT name FROM src.sqlite_master WHERE type='table'").fetchall()}
+
+            dst.execute("BEGIN")
+            for table, columns in _MERGE_TABLES:
+                if table not in src_tables:
+                    continue
+                # Verify columns exist in both sides before merging
+                dst_cols = {row[1] for row in dst.execute(f"PRAGMA table_info({table})")}
+                src_cols = {row[1] for row in dst.execute(f"PRAGMA src.table_info({table})")}
+                usable = [c for c in columns if c in dst_cols and c in src_cols]
+                if not usable:
+                    continue
+                col_list = ", ".join(usable)
+                dst.execute(
+                    f"INSERT OR IGNORE INTO main.{table} ({col_list}) "
+                    f"SELECT {col_list} FROM src.{table}"
+                )
+            # Also merge FTS index entries for any new memories
+            if "memories_fts" in src_tables:
+                try:
+                    dst.execute("""
+                        INSERT OR IGNORE INTO main.memories_fts
+                            (memory_id, title, content, task, files, nodes)
+                        SELECT memory_id, title, content, task, files, nodes
+                        FROM src.memories_fts
+                        WHERE memory_id NOT IN (SELECT memory_id FROM main.memories_fts)
+                    """)
+                except sqlite3.OperationalError:
+                    pass  # FTS schema mismatch; embeddings will be rebuilt on next access
+            dst.execute("COMMIT")
+            dst.execute("DETACH DATABASE src")
+        finally:
+            dst.close()
+
+        # Success — rename the secondary to a backup
+        shutil.move(str(secondary), str(backup_path))
+        # Also clean up WAL/SHM leftovers if present
+        for suffix in ("-wal", "-shm"):
+            leftover = secondary.with_suffix(secondary.suffix + suffix)
+            if leftover.exists():
+                try:
+                    leftover.unlink()
+                except OSError:
+                    pass
+    except Exception:
+        # If anything fails, leave both files intact and let the caller
+        # fall through to the old MemoryStoreConflictError behavior.
+        raise
+
+
+def _store_record_count(db_path: Path) -> int:
+    """Return a rough size metric (sessions + memories) for choosing the primary store."""
+    try:
+        with closing(sqlite3.connect(db_path, timeout=5)) as conn:
+            sessions = conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+            memories = conn.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
+            return sessions + memories
+    except Exception:
+        return 0
+
+
 def _resolve_store_path(workspace: str | Path, *, create: bool) -> Path:
     ws = Path(workspace).expanduser().resolve()
     local = ws / ".graphtyn" / "memory-v2.db"
@@ -107,11 +215,23 @@ def _resolve_store_path(workspace: str | Path, *, create: bool) -> Path:
     else:
         present = [candidate for candidate in (local, central) if candidate.is_file()]
         if len(present) > 1 and present[0].resolve() != present[1].resolve():
-            raise MemoryStoreConflictError(
-                "hay dos almacenes de memoria para este espacio; configura GRAPHTYN_HOME "
-                "explícitamente o conserva un único memory-v2.db antes de continuar"
-            )
-        if present:
+            # Auto-consolidate: merge the smaller store into the larger one
+            count_0 = _store_record_count(present[0])
+            count_1 = _store_record_count(present[1])
+            if count_0 >= count_1:
+                primary, secondary = present[0], present[1]
+            else:
+                primary, secondary = present[1], present[0]
+            try:
+                _auto_consolidate_stores(primary, secondary)
+                selected = primary
+            except Exception:
+                raise MemoryStoreConflictError(
+                    "hay dos almacenes de memoria para este espacio y la consolidación "
+                    "automática falló; configura GRAPHTYN_HOME explícitamente o conserva "
+                    "un único memory-v2.db antes de continuar"
+                )
+        elif present:
             selected = present[0]
         elif create:
             try:

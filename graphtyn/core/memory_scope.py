@@ -3,7 +3,31 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from collections.abc import Iterable
 from .storage import atomic_write_json, data_home
+
+
+AGENT_PLATFORM_ALIASES: dict[str, list[str]] = {
+    "antigravity": ["antigravity", "agy"],
+    "agy": ["antigravity", "agy"],
+}
+
+
+def expand_agent_aliases(agents: str | Iterable[str] | None) -> set[str]:
+    """Expand known aliases for agents so requester identities match configured platforms."""
+    if agents is None:
+        return set()
+    if isinstance(agents, str):
+        agents = [agents]
+    expanded: set[str] = set()
+    for item in agents:
+        val = str(item or "").strip().casefold()
+        if not val:
+            continue
+        expanded.add(val)
+        if val in AGENT_PLATFORM_ALIASES:
+            expanded.update(AGENT_PLATFORM_ALIASES[val])
+    return expanded
 
 
 def ensure_project_memory_scope(workspace: str | Path, *, agent_ids=()) -> dict:
@@ -26,8 +50,7 @@ def ensure_project_memory_scope(workspace: str | Path, *, agent_ids=()) -> dict:
         rows.append(current)
 
     existing = current.get("agent_ids") or []
-    owners = sorted({str(value).strip().casefold() for value in [*existing, *agent_ids]
-                     if str(value).strip()})
+    owners = sorted(expand_agent_aliases(existing) | expand_agent_aliases(agent_ids))
     current.update({"path": str(root), "space_type": "project", "agent_ids": owners})
     atomic_write_json(registry_path, rows)
     return {"ok": True, "path": str(root), "space_type": "project",
@@ -64,15 +87,24 @@ def resolve_memory_scope(workspace: str | Path, *, registrations=None, sources=N
     explicit_type = str((registration or {}).get("space_type") or "").strip().casefold()
     space_type = explicit_type if explicit_type in {"project", "agent_brain", "container"} else (
         "project")
-    owners = {str(value).strip().casefold() for value in (registration or {}).get("agent_ids", [])
-              if str(value).strip()}
+    raw_owners = {str(value).strip().casefold() for value in (registration or {}).get("agent_ids", [])
+                  if str(value).strip()}
+    owners = expand_agent_aliases(raw_owners)
     # Source attribution identifies who produced a conversation; it does not
     # turn a shared project into a private agent brain. Only agent-brain
     # stores inherit owners from their linked sources.
     if space_type == "agent_brain":
-        owners.update(str(row.get("agent_id") or row.get("agent") or "").strip().casefold()
-                      for row in associated_sources if str(row.get("agent_id") or row.get("agent") or "").strip())
-    restricted = space_type == "agent_brain" or bool((registration or {}).get("agent_ids"))
+        owners.update(expand_agent_aliases(
+            str(row.get("agent_id") or row.get("agent") or "").strip().casefold()
+            for row in associated_sources if str(row.get("agent_id") or row.get("agent") or "").strip()
+        ))
+    explicit_restricted = (registration or {}).get("restricted")
+    if explicit_restricted is not None:
+        restricted = bool(explicit_restricted)
+    elif space_type == "agent_brain":
+        restricted = True
+    else:
+        restricted = False
     return {"workspace": str(root), "space_type": space_type, "agent_ids": sorted(owners),
             "restricted": restricted, "configured": bool(owners),
             "source_count": len(associated_sources), "registered": registration is not None}

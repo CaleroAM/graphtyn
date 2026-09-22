@@ -736,7 +736,7 @@ def main():
     agents_p.add_argument("--path", dest="agent_path", action="append", default=[])
     agents_p.add_argument("--description", default="")
 
-    install_p = subparsers.add_parser("agent-install", help="Instala instrucciones Graphtyn para asistentes")
+    install_p = subparsers.add_parser("agent-install", help="Configura el MCP de Graphtyn para un proyecto; el ejecutable es global")
     install_p.add_argument("platform", choices=["all", "codex", "opencode", "openclaw", "hermes", "claude", "cursor", "gemini", "antigravity", "copilot"])
     install_p.add_argument("--path", default=".")
     install_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default=None,
@@ -1814,6 +1814,7 @@ def main():
         print(json.dumps({"ok": True, "platform": args.platform,
                           "project_id": status.get("project_id"), "mcp_server": status.get("mcp_server"),
                           "integrations": status.get("clients", []),
+                          "runtime": status.get("runtime", {}),
                           "tool_profile": profile, "files": files}, ensure_ascii=False, indent=2))
 
     elif args.command == "integrations":

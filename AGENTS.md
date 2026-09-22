@@ -15,7 +15,7 @@ Use Graphtyn before broad repository exploration when a task asks for implementa
 
 ## Default workflow
 
-1. Call `graph_query_intent` with the user's complete task and `evidence_mode=auto`. It uses the workspace selected when the MCP server starts; the tool itself does not accept `path`. If the client may launch MCP from another directory, configure that server with `graphtyn mcp --path /ruta/al/proyecto`. The CLI equivalent `graphtyn query-intent` also accepts `--path`.
+1. Call `graph_query_intent` with the user's complete task and `evidence_mode=auto`. It uses the workspace selected when the MCP server starts by default and reports that identity in `project_context`; graph tools also accept an explicit `path` when a deliberate cross-project query is required. If the client may launch MCP from another directory, configure that server with `graphtyn mcp --path /ruta/al/proyecto`. The CLI equivalent `graphtyn query-intent` also accepts `--path`.
 2. Select `overview`, `flow`, `impact`, `persistence`, `bindings`, or `tests`; use `auto` only when no intent is evident. Use `overview` for repository purpose, technologies, entry points, subsystems, or architecture summaries.
 3. Start with the MCP's compact default budget of 10 entities.
 4. Verify the returned symbols and `file:line` locations in source. Source code remains authoritative.
@@ -52,8 +52,9 @@ each substantive task in a new session, and whenever the user refers to previous
 work, first call `memory_context` before using Git history as the account of past
 work. Use the full request plus the recovered reference, the real `requester_agent`
 identity, `mode="continuity"`, a 1,800-token budget, and up to three recent
-activity entries. The MCP workspace is selected when its server starts; do not
-invent a path parameter for a tool whose schema does not accept one.
+activity entries. The MCP workspace is selected when its server starts; use that
+workspace by default and pass an explicit path only when the requested project
+is deliberate and the returned `project_context` is checked.
 
 For questions about what another agent previously did, added, or decided, this
 memory lookup takes priority over the code-graph query workflow. Do not run

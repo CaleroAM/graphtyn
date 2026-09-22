@@ -143,6 +143,8 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str | Non
 
     integrations = configure_project_integrations(root, selected, tool_profile=tool_profile)
     written.extend(integrations["files"])
+    from .memory_scope import ensure_project_memory_scope
+    ensure_project_memory_scope(root, agent_ids=selected)
 
     written = list(dict.fromkeys(written))
     manifest = root / ".graphtyn" / "agent-install.json"

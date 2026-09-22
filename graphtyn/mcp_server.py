@@ -30,11 +30,56 @@ def _cached_index_dir(workspace: Path) -> Path:
 def _memory_scope_agents(workspace: Path, requester: str | None = None) -> list[str]:
     """Resolve the owner configured for this MCP memory space."""
     scope = resolve_memory_scope(workspace)
-    # A requester is a visibility principal, not the owner of the store.  Do
-    # not turn an unregistered workspace into a single-agent store merely
-    # because another agent is asking a question; private memories are still
-    # filtered by ``requester_agent`` inside the store.
+    if requester and scope.get("space_type") == "project" and scope.get("registered"):
+        try:
+            from .core.memory_scope import ensure_project_memory_scope
+            scope = ensure_project_memory_scope(workspace, agent_ids=[requester])
+        except Exception:
+            pass
     return scope["agent_ids"] if scope["restricted"] else []
+
+
+def _workspace_context(workspace: Path) -> dict[str, Any]:
+    """Return the identity bound to an MCP server's source workspace."""
+    workspace = workspace.expanduser().resolve()
+    metadata_path = workspace / ".graphtyn" / "graphtyn.json"
+    metadata: dict[str, Any] = {}
+    try:
+        loaded = json.loads(metadata_path.read_text(encoding="utf-8"))
+        if isinstance(loaded, dict):
+            metadata = loaded
+    except (OSError, ValueError, TypeError):
+        pass
+    return {
+        "workspace": str(workspace),
+        "project_id": str(metadata.get("project_id") or "") or None,
+        "project_name": str(metadata.get("name") or workspace.name),
+        "scope": "project",
+    }
+
+
+def _graph_workspace(default_workspace: Path, args: dict[str, Any]) -> Path:
+    """Resolve an explicit graph path relative to the server workspace.
+
+    Project MCPs use their startup workspace by default.  The optional path is
+    honored for tools that explicitly request another registered/local project,
+    instead of silently querying the startup project's graph.
+    """
+    raw_path = args.get("path")
+    if raw_path in (None, ""):
+        return default_workspace
+    requested = Path(str(raw_path)).expanduser()
+    if not requested.is_absolute():
+        requested = default_workspace / requested
+    requested = requested.resolve()
+    if not requested.is_dir():
+        raise ValueError(f"La ruta del proyecto no existe o no es una carpeta: {requested}")
+    return requested
+
+
+def _tag_graph_result(result: dict[str, Any], workspace: Path) -> dict[str, Any]:
+    result["project_context"] = _workspace_context(workspace)
+    return result
 
 
 def _validate_memory_owner(workspace: Path, agent_id: str | None) -> None:
@@ -524,6 +569,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
     Stdio Model Context Protocol (MCP) Server for Graphtyn.
     Provides tools for AI agents: graph_neighborhood, graph_blast_radius, graph_search_concepts, graph_register_project.
     """
+    workspace = workspace.expanduser().resolve()
+    server_context = _workspace_context(workspace)
     parser = ASTParser()
     history = HistoryTracker(workspace)
     memory = SharedMemoryStore(workspace)
@@ -540,7 +587,14 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "graphtyn-mcp", "version": __version__}
+                    "serverInfo": {
+                        "name": "graphtyn-mcp",
+                        "version": __version__,
+                        "workspace": server_context["workspace"],
+                        "project_id": server_context["project_id"],
+                        "project_name": server_context["project_name"],
+                        "scope": server_context["scope"],
+                    }
                 }
             }
         elif method == "tools/list":
@@ -559,7 +613,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                     "intent": {"type": "string", "enum": ["auto", "overview", "flow", "bindings", "persistence", "tests", "impact"]},
                                     "limit": {"type": "integer", "description": "Máximo de entidades; default 10"},
                                     "evidence_mode": {"type": "string", "enum": ["auto", "compact", "balanced", "precision"], "description": "auto amplía solo preguntas que necesitan evidencia del cuerpo"},
-                                    "extends_context_id": {"type": "string", "description": "Contexto previo para devolver sólo evidencia nueva"}
+                                    "extends_context_id": {"type": "string", "description": "Contexto previo para devolver sólo evidencia nueva"},
+                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
                                 },
                                 "required": ["request"]
                             }
@@ -572,7 +627,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                 "properties": {
                                     "request": {"type": "string", "description": "Issue, requisito o cambio solicitado"},
                                     "limit": {"type": "integer", "description": "Máximo de entidades; default 18"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"]}
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"]},
+                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
                                 },
                                 "required": ["request"]
                             }
@@ -586,7 +642,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                     "symbols": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
                                     "depth": {"type": "integer", "description": "Default 1"},
                                     "limit": {"type": "integer", "description": "Presupuesto global de nodos; default 12"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"], "description": "compact usa aliases evidence-v1 (default)"}
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"], "description": "compact usa aliases evidence-v1 (default)"},
+                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
                                 },
                                 "required": ["symbols"]
                             }
@@ -615,7 +672,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                     "symbol": {"type": "string", "description": "Nombre de la función o clase"},
                                     "depth": {"type": "integer", "description": "Profundidad máxima de recorrido (default 2)"},
                                     "limit": {"type": "integer", "description": "Máximo de impactos; default 24"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"]}
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"]},
+                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
                                 },
                                 "required": ["symbol"]
                             }
@@ -628,7 +686,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                 "properties": {
                                     "query": {"type": "string", "description": "Término o concepto semántico a buscar"},
                                     "limit": {"type": "integer", "description": "Máximo de resultados; default 12"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"]}
+                                    "response_mode": {"type": "string", "enum": ["compact", "full"]},
+                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
                                 },
                                 "required": ["query"]
                             }
@@ -811,16 +870,22 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
             args = params.get("arguments", {})
 
             if name == "graph_query_intent":
-                graph = get_workspace_graph(workspace, parser)
+                graph_workspace = _graph_workspace(workspace, args)
+                graph = get_workspace_graph(graph_workspace, parser)
                 request = str(args.get("request") or "").strip()
                 limit = max(4, min(24, int(args.get("limit") or 10)))
                 raw = query_intent(graph, request, str(args.get("intent") or "auto"), limit)
-                raw = attach_source_evidence(workspace, raw, request, str(args.get("evidence_mode") or "auto"))
-                raw = attach_learning(raw, workspace)
+                raw = attach_source_evidence(graph_workspace, raw, request, str(args.get("evidence_mode") or "auto"))
+                raw = attach_learning(raw, graph_workspace)
                 result = evidence_result(raw, max_nodes=limit)
                 context_id = hashlib.sha256(json.dumps(result, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:12]
                 previous_id = str(args.get("extends_context_id") or "")
-                previous = intent_contexts.get(previous_id)
+                previous_entry = intent_contexts.get(previous_id)
+                if previous_entry and previous_entry["workspace"] != str(graph_workspace):
+                    return {"jsonrpc": "2.0", "id": req_id,
+                            "error": {"code": -32602,
+                                      "message": "extends_context_id pertenece a otro workspace; inicia una nueva consulta"}}
+                previous = previous_entry["evidence"] if previous_entry else None
                 if previous:
                     old_entities = previous.get("entities", {})
                     old_relations = {json.dumps(item, ensure_ascii=False) for item in previous.get("relations", [])}
@@ -835,29 +900,37 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     result["estimated_tokens"] = len(json.dumps(result, ensure_ascii=False, separators=(",", ":"))) // 4
                 else:
                     result["context_id"] = context_id
-                intent_contexts[context_id] = evidence_result(raw, max_nodes=limit)
-                history.log_event("mcp", "query_intent", f"Consulta {raw['intent']} de una ronda", {"request": request[:240], "context_id": context_id, "estimated_tokens": result["estimated_tokens"]})
+                intent_contexts[context_id] = {
+                    "evidence": evidence_result(raw, max_nodes=limit),
+                    "workspace": str(graph_workspace),
+                }
+                _tag_graph_result(result, graph_workspace)
+                history.log_event("mcp", "query_intent", f"Consulta {raw['intent']} de una ronda", {"request": request[:240], "context_id": context_id, "workspace": str(graph_workspace), "estimated_tokens": result["estimated_tokens"]})
                 return {"jsonrpc": "2.0", "id": req_id,
                         "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
             elif name == "graph_analyze_change":
-                graph = get_workspace_graph(workspace, parser)
+                graph_workspace = _graph_workspace(workspace, args)
+                graph = get_workspace_graph(graph_workspace, parser)
                 request = str(args.get("request") or "").strip()
                 limit = max(6, min(40, int(args.get("limit") or 18)))
                 result = analyze_change(graph, request, limit)
                 if args.get("response_mode", "compact") != "full":
                     result = evidence_result(result, max_nodes=limit)
-                history.log_event("mcp", "analyze_change", "Análisis de cambio con evidencia", {"request": request[:240], "confidence": result.get("plan", {}).get("confidence")})
+                _tag_graph_result(result, graph_workspace)
+                history.log_event("mcp", "analyze_change", "Análisis de cambio con evidencia", {"request": request[:240], "workspace": str(graph_workspace), "confidence": result.get("plan", {}).get("confidence")})
                 return {"jsonrpc": "2.0", "id": req_id,
                         "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
             elif name == "graph_context_bundle":
-                graph = get_workspace_graph(workspace, parser)
+                graph_workspace = _graph_workspace(workspace, args)
+                graph = get_workspace_graph(graph_workspace, parser)
                 symbols = args.get("symbols") or []
                 requested_limit = args.get("limit")
                 adaptive_limit = int(requested_limit) if requested_limit else min(36, max(12, len(symbols) * 6))
                 result = context_bundle(graph, symbols, int(args.get("depth", 1)), adaptive_limit)
                 if args.get("response_mode", "compact") != "full":
                     result = evidence_result(result, max_nodes=adaptive_limit)
-                history.log_event("mcp", "context_bundle", f"Contexto agrupado para {len(result['symbols'])} símbolos", {"symbols": result["symbols"], "estimated_tokens": result["estimated_tokens"]})
+                _tag_graph_result(result, graph_workspace)
+                history.log_event("mcp", "context_bundle", f"Contexto agrupado para {len(result['symbols'])} símbolos", {"symbols": result["symbols"], "workspace": str(graph_workspace), "estimated_tokens": result["estimated_tokens"]})
                 return {"jsonrpc": "2.0", "id": req_id,
                         "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
             elif name == "graph_neighborhood":
@@ -865,7 +938,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 depth = int(args.get("depth", 1))
                 limit = int(args.get("limit") or 0)
                 response_mode = args.get("response_mode", "compact")
-                graph = get_workspace_graph(workspace, parser)
+                graph_workspace = _graph_workspace(workspace, args)
+                graph = get_workspace_graph(graph_workspace, parser)
                 if symbol:
                     result = neighborhood_subgraph(graph, symbol, depth=depth)
                 else:
@@ -886,7 +960,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     result = {"nodes": pruned_nodes, "links": sub_links, "limit": limit or None}
                 if response_mode != "full":
                     result = evidence_result(result, max_nodes=limit or 24)
-                history.log_event("mcp", "neighborhood", f"Escaneo de mapa de código para {workspace.name}", {"nodes": len(result.get("nodes", [])), "tokens_avoided": _tokens_avoided(workspace, result, json.dumps(result))})
+                _tag_graph_result(result, graph_workspace)
+                history.log_event("mcp", "neighborhood", f"Escaneo de mapa de código para {graph_workspace.name}", {"nodes": len(result.get("nodes", [])), "workspace": str(graph_workspace), "tokens_avoided": _tokens_avoided(graph_workspace, result, json.dumps(result))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}
@@ -894,7 +969,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
             elif name == "graph_blast_radius":
                 symbol = args.get("symbol", "")
                 depth = int(args.get("depth", 2))
-                graph = get_workspace_graph(workspace, parser)
+                graph_workspace = _graph_workspace(workspace, args)
+                graph = get_workspace_graph(graph_workspace, parser)
                 result = blast_radius(graph, symbol, depth=depth)
                 result["matched"] = [_prune_node(n) for n in result["matched"]]
                 for imp in result["impacted"]:
@@ -902,14 +978,16 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 impacted_count = len(result["impacted"])
                 if args.get("response_mode", "compact") != "full":
                     result = evidence_result(result, max_nodes=int(args.get("limit") or 24))
-                history.log_event("mcp", "blast_radius", f"Evaluación de radio de impacto para {symbol}", {"symbol": symbol, "depth": depth, "impacted": impacted_count, "tokens_avoided": _tokens_avoided(workspace, result, json.dumps(result))})
+                _tag_graph_result(result, graph_workspace)
+                history.log_event("mcp", "blast_radius", f"Evaluación de radio de impacto para {symbol}", {"symbol": symbol, "depth": depth, "workspace": str(graph_workspace), "impacted": impacted_count, "tokens_avoided": _tokens_avoided(graph_workspace, result, json.dumps(result))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}
                 }
             elif name == "graph_search_concepts":
                 query = args.get("query", "").lower().strip()
-                graph = get_workspace_graph(workspace, parser)
+                graph_workspace = _graph_workspace(workspace, args)
+                graph = get_workspace_graph(graph_workspace, parser)
                 terms = list(dict.fromkeys(term for term in re.findall(r"[\w.]+", query) if len(term) >= 3))[:12]
                 ranked = []
                 ranked_ids = set()
@@ -927,7 +1005,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                         ranked.append((score, node))
                         ranked_ids.add(node.get("id"))
                 from .core.semantic_index import build_semantic_index, semantic_search
-                semantic_index = build_semantic_index(graph, _cached_index_dir(workspace) / "semantic_index.json")
+                semantic_index = build_semantic_index(graph, _cached_index_dir(graph_workspace) / "semantic_index.json")
                 semantic_hits = semantic_search(graph, query, limit=max(1, min(50, int(args.get("limit") or 12))),
                                                  index=semantic_index)
                 for hit in semantic_hits:
@@ -939,7 +1017,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                  "retrieval": "hybrid lexical + local embeddings"}
                 if args.get("response_mode", "compact") != "full":
                     result_search = evidence_result(result_search, max_nodes=int(args.get("limit") or 12), max_links=0)
-                history.log_event("mcp", "search_concepts", f"Búsqueda semántica de concepto: {query}", {"query": query, "count": len(matches), "tokens_avoided": _tokens_avoided(workspace, result_search, json.dumps(result_search))})
+                _tag_graph_result(result_search, graph_workspace)
+                history.log_event("mcp", "search_concepts", f"Búsqueda semántica de concepto: {query}", {"query": query, "workspace": str(graph_workspace), "count": len(matches), "tokens_avoided": _tokens_avoided(graph_workspace, result_search, json.dumps(result_search))})
                 return {
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps(result_search, ensure_ascii=False, separators=(",", ":"))}]}
@@ -998,6 +1077,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                                         include_graph=bool(args.get("include_graph", True)),
                                         neighbor_limit=int(args.get("neighbor_limit") or 12),
                                         agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))
+                result["project_context"] = _workspace_context(workspace)
+                result["workspace"] = str(workspace.resolve())
                 return _mcp_text(req_id, result)
             elif name == "memory_project_context":
                 from .core.openclaw_project_routing import resolve_registered_project
@@ -1014,8 +1095,10 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     return _mcp_text(req_id, {"ok": False, "error": "requester_agent es obligatorio"})
                 target_path = Path(target["path"]).resolve()
                 project_scope = resolve_memory_scope(target_path)
-                owners = set(project_scope["agent_ids"])
-                if project_scope["restricted"] and requester not in owners:
+                from .core.memory_scope import expand_agent_aliases
+                owners = expand_agent_aliases(project_scope["agent_ids"])
+                requester_aliases = expand_agent_aliases(requester)
+                if project_scope["restricted"] and not (requester_aliases & owners):
                     return _mcp_text(req_id, {"ok": False, "error": "el agente no está autorizado para este proyecto"})
                 context = SharedMemoryStore(target_path).context(
                     str(args.get("query") or ""), requester_agent=requester,
@@ -1026,7 +1109,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                         if args.get("activity_limit") is not None else 3))),
                     agent_ids=project_scope["agent_ids"] if project_scope["restricted"] else [])
                 return _mcp_text(req_id, {"ok": True,
-                    "project": {"id": target["id"], "name": target["name"]},
+                    "project": {"id": target["id"], "name": target["name"], "path": str(target_path)},
                     "requester_agent": requester, "context": context})
             elif name == "memory_status":
                 result = memory.status(agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))
