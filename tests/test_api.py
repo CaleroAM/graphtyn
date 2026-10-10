@@ -50,8 +50,26 @@ class _LiveClient:
 def _client(tmp_path, monkeypatch):
     state = tmp_path / ".graphtyn-store"
     monkeypatch.setattr(api_main, "INDEX_STORE", state)
+    monkeypatch.setattr(api_main, "reindex_jobs", MemoryJobManager(state / "reindex-jobs"))
+    monkeypatch.setattr(api_main, "_reindex_jobs_ready_for", None)
     monkeypatch.setenv("GRAPHTYN_HOME", str(state))
+    monkeypatch.setenv("GRAPHTYN_ALLOW_UNREGISTERED_PROJECTS", "1")
     return _LiveClient()
+
+
+def _reindex(client, payload):
+    created = client.post("/api/reindex", json=payload)
+    assert created.status_code == 202
+    job = created.json()
+    deadline = time.monotonic() + 20
+    while job["status"] not in {"completed", "failed", "cancelled"}:
+        assert time.monotonic() < deadline, job
+        time.sleep(0.02)
+        status = client.get(f"/api/reindex/{job['id']}")
+        assert status.status_code == 200
+        job = status.json()
+    assert job["status"] == "completed", job
+    return job["result"]
 
 
 def test_health_endpoint(tmp_path, monkeypatch):
@@ -588,9 +606,7 @@ def test_reindex_ast_pure_and_graph_views(tmp_path, monkeypatch):
     (proj / "a.py").write_text("def f():\n    return 1\n", encoding="utf-8")
     (proj / "b.py").write_text("from a import f\n\nprint(f())\n", encoding="utf-8")
 
-    res = client.post("/api/reindex", json={"path": str(proj), "engine": "ast_pure"})
-    assert res.status_code == 200
-    body = res.json()
+    body = _reindex(client, {"path": str(proj), "engine": "ast_pure"})
     assert body["ok"] is True
     assert body["nodes"] > 0
     assert body["links"] > 0
@@ -615,13 +631,47 @@ def test_reindex_ast_pure_and_graph_views(tmp_path, monkeypatch):
     assert any(n.get("kind") == "orchestrator_agent" for n in agents.json()["nodes"])
 
 
+def test_reindex_deduplicates_and_cancels_between_stages(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    proj = tmp_path / "slow-project"
+    proj.mkdir()
+    started = threading.Event()
+    release = threading.Event()
+
+    def slow_scan(*_args, **_kwargs):
+        started.set()
+        assert release.wait(5)
+        return {"nodes": [], "links": [], "metadata": {}}
+
+    monkeypatch.setattr(api_main.parser, "scan_directory", slow_scan)
+    first = client.post("/api/reindex", json={"path": str(proj), "engine": "ast_pure"})
+    assert first.status_code == 202
+    assert started.wait(2)
+    duplicate = client.post("/api/reindex", json={"path": str(proj), "engine": "ast_pure"})
+    assert duplicate.status_code == 202
+    assert duplicate.json()["id"] == first.json()["id"]
+    assert duplicate.json()["deduplicated"] is True
+
+    cancelled = client.request("DELETE", f"/api/reindex/{first.json()['id']}")
+    assert cancelled.status_code == 200
+    assert cancelled.json()["status"] == "cancelling"
+    release.set()
+    deadline = time.monotonic() + 5
+    status = cancelled.json()
+    while status["status"] != "cancelled":
+        assert time.monotonic() < deadline
+        time.sleep(0.02)
+        status = client.get(f"/api/reindex/{first.json()['id']}").json()
+    assert status["result"]["phase"] == "structural"
+
+
 def test_quality_and_context_bundle_endpoints(tmp_path, monkeypatch):
     client = _client(tmp_path, monkeypatch)
     proj = tmp_path / "quality-project"
     proj.mkdir()
     (proj / "a.py").write_text("def helper():\n    return 1\n", encoding="utf-8")
     (proj / "b.py").write_text("from a import helper\n\ndef use():\n    return helper()\n", encoding="utf-8")
-    assert client.post("/api/reindex", json={"path": str(proj), "engine": "ast_pure"}).status_code == 200
+    _reindex(client, {"path": str(proj), "engine": "ast_pure"})
 
     quality = client.get("/api/index-quality", params={"path": str(proj)})
     assert quality.status_code == 200
@@ -662,18 +712,17 @@ def test_reindex_incremental_reuses_context(tmp_path, monkeypatch):
     subprocess.run(["git", "add", "a.py"], cwd=proj, check=True)
     subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=proj, check=True)
 
-    r1 = client.post("/api/reindex", json={"path": str(proj), "engine": "ast_pure"})
-    assert r1.json()["mode"] == "full"
-    r2 = client.post("/api/reindex", json={"path": str(proj), "engine": "ast_pure"})
-    assert r2.json()["mode"] == "full"  # ast_pure no usa incremental
+    r1 = _reindex(client, {"path": str(proj), "engine": "ast_pure"})
+    assert r1["mode"] == "full"
+    r2 = _reindex(client, {"path": str(proj), "engine": "ast_pure"})
+    assert r2["mode"] == "full"  # ast_pure no usa incremental
 
     (proj / "b.py").write_text("y = 2\n", encoding="utf-8")
     subprocess.run(["git", "add", "b.py"], cwd=proj, check=True)
     # sin commitear: git status la detecta como untracked
-    r3 = client.post("/api/reindex", json={"path": str(proj), "engine": "ast_local_llm", "model": None})
+    r3 = _reindex(client, {"path": str(proj), "engine": "ast_local_llm", "model": None})
     # ast_local_llm sin ollama conectado hará fallback interno; la respuesta no debe explotar
-    assert r3.status_code == 200
-    assert r3.json()["ok"] is True
+    assert r3["ok"] is True
 
 
 def test_semantic_graph_includes_and_relates_enriched_media():
@@ -700,7 +749,7 @@ def test_diff_endpoint_git_repo(tmp_path, monkeypatch):
     (proj / "a.py").write_text("x = 1\n", encoding="utf-8")
     subprocess.run(["git", "add", "a.py"], cwd=proj, check=True)
     subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=proj, check=True)
-    client.post("/api/reindex", json={"path": str(proj), "engine": "ast_pure"})
+    _reindex(client, {"path": str(proj), "engine": "ast_pure"})
     (proj / "a.py").write_text("x = 2\n", encoding="utf-8")
     res = client.get("/api/diff", params={"path": str(proj)})
     assert res.status_code == 200

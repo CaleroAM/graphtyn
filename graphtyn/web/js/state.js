@@ -6,6 +6,7 @@ export const state = {
   brainSpaces: {},
   activeView: 'code',
   memoryGraphMode: 'simplified',
+  memoryGraphView: 'topics',
   activeDim: '2d',
   isRotating: false,
   rotateRaf: null,
@@ -57,6 +58,13 @@ export const MEMORY_COLOR_DEFAULTS = {
   memory_agent:  { label: 'Agente',   node: '#7c3aed', halo: '#7c3aed', linkedHalo: true },
   memory_episode:{ label: 'Episodio', node: '#22c55e', halo: '#22c55e', linkedHalo: true },
   memory_entity: { label: 'Entidad',  node: '#14b8a6', halo: '#14b8a6', linkedHalo: true },
+  memory:           { label: 'Evidencia',  node: '#38bdf8', halo: '#38bdf8', linkedHalo: true },
+  memory_execution: { label: 'Ejecución',  node: '#a78bfa', halo: '#a78bfa', linkedHalo: true },
+  memory_result_artifact: { label: 'Resultado estructurado', node: '#06b6d4', halo: '#06b6d4', linkedHalo: true },
+  memory_metric:    { label: 'Métrica',    node: '#60a5fa', halo: '#60a5fa', linkedHalo: true },
+  memory_test:      { label: 'Prueba',     node: '#22c55e', halo: '#22c55e', linkedHalo: true },
+  memory_file:      { label: 'Archivo',    node: '#f59e0b', halo: '#f59e0b', linkedHalo: true },
+  memory_reference: { label: 'Referencia', node: '#14b8a6', halo: '#14b8a6', linkedHalo: true },
 };
 
 // Paletas específicas de «Memoria del proyecto». Conservan la semántica de

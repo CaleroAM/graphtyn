@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from graphtyn import __version__
 from graphtyn import cli as graphtyn_cli
 
 CLI = [sys.executable, "-m", "graphtyn.cli"]
@@ -16,6 +17,32 @@ def _run_cli(args, cwd, home):
     env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"))
     return subprocess.run(CLI + args, cwd=str(cwd), env=env,
                           capture_output=True, text=True, timeout=90)
+
+
+def test_cli_version_starts_without_unix_resource(tmp_path):
+    script = """
+import builtins
+import sys
+
+original_import = builtins.__import__
+def import_without_resource(name, *args, **kwargs):
+    if name == "resource":
+        raise ModuleNotFoundError("resource is unavailable on this platform")
+    return original_import(name, *args, **kwargs)
+
+builtins.__import__ = import_without_resource
+from graphtyn.cli import main
+sys.argv = ["graphtyn", "--version"]
+main()
+"""
+
+    result = subprocess.run(
+        [sys.executable, "-c", script], cwd=tmp_path,
+        capture_output=True, text=True, timeout=30,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert f"graphtyn {__version__}" in result.stdout
 
 
 @pytest.fixture
@@ -560,3 +587,23 @@ def test_memory_doctor_and_benchmark_cli(git_repo, tmp_path):
     metrics = json.loads(benchmark.stdout)["metrics"]
     assert metrics["recall_at_5"] == 1.0
     assert metrics["attribution_accuracy"] == 1.0
+
+
+def test_memory_run_local_and_migration_preview_cli(git_repo, tmp_path):
+    home = tmp_path / "home-memory-runner"
+    home.mkdir()
+    (git_repo / "test_probe.py").write_text("def test_probe(): assert True\n", encoding="utf-8")
+    executed = _run_cli([
+        "memory", "run-local", "--test", "test_probe.py", "--dependency", "a.py",
+        "--path", str(git_repo), "--", sys.executable, "-m", "pytest", "-q", "test_probe.py",
+    ], git_repo, home)
+    preview = _run_cli([
+        "memory", "migrate-evidence", "--path", str(git_repo),
+    ], git_repo, home)
+
+    assert executed.returncode == 0, executed.stderr
+    execution = json.loads(executed.stdout)
+    assert execution["outcome"] == "success"
+    assert execution["measured_metrics"] == {"tests_passed": 1}
+    assert preview.returncode == 0, preview.stderr
+    assert json.loads(preview.stdout)["preview"] is True

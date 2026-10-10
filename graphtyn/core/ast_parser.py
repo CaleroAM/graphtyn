@@ -8,6 +8,8 @@ from typing import Dict, Any, List, Set, Optional
 from .tree_sitter_backend import PARSER_VERSION, parse_file as parse_tree_sitter_file
 from .overview_report import collect_project_evidence
 from .graph_hygiene import normalize_graph
+from .relation_resolution import CandidateRanker, unique_symbol_id
+from .source_files import git_visible_files
 from .type_evidence import apply_type_evidence
 
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
@@ -142,6 +144,11 @@ class ASTParser:
         tree_parsed_files: Set[str] = set()
         cache_hits = 0
         cache_misses = 0
+        suppressed_relations = {
+            "bound_calls": 0,
+            "runtime_calls": 0,
+            "ambiguous_mentions": 0,
+        }
 
         structural_cache = {"version": PARSER_VERSION, "files": {}}
         if cache_path and Path(cache_path).exists():
@@ -190,11 +197,8 @@ class ASTParser:
                 name = sym["name"]
                 kind = sym["kind"]
                 qualified = f"{namespace}.{name}" if namespace and kind in ("class", "interface", "struct", "enum") else name
-                sym_id = f"symbol:{rel_file}:{qualified}"
-                if sym_id in node_ids and kind in ("method", "function"):
-                    arity = sym.get("parameter_count")
-                    sym_id = f"{sym_id}/{arity if arity is not None else sym['line']}"
-                if sym_id in node_ids:
+                sym_id = unique_symbol_id(rel_file, qualified, kind, sym, node_ids)
+                if sym_id is None:
                     continue
                 symbol_node = {
                     "id": sym_id, "name": name, "kind": kind,
@@ -204,6 +208,7 @@ class ASTParser:
                     "file": rel_file, "line": sym["line"], "end_line": sym.get("end_line", sym["line"]),
                     "evidence": sym.get("evidence", ""), "parser": "tree-sitter",
                     "namespace": namespace, "container": sym.get("container", ""),
+                    "scope": sym.get("scope", ""),
                     "parameter_count": sym.get("parameter_count"), "signature": sym.get("signature", ""),
                     "required_parameter_count": sym.get("required_parameter_count"),
                     "is_constructor": sym.get("is_constructor", False),
@@ -317,22 +322,7 @@ class ASTParser:
             "Logs", "Temp", "obj", "bin", "dist", "build", ".git", ".idea", "Captures", ".vs"
         }
 
-        tracked_files = None
-        if respect_git and (root_dir / ".git").exists():
-            try:
-                import subprocess
-                res = subprocess.run(
-                    ["git", "ls-files", "-z"], cwd=root_dir, capture_output=True, timeout=30
-                )
-                if res.returncode == 0:
-                    # NUL-delimited raw bytes avoid core.quotePath escaping
-                    # Unicode names such as "Código" before comparison.
-                    tracked_files = {
-                        raw.decode("utf-8", errors="surrogateescape").replace("\\", "/")
-                        for raw in res.stdout.split(b"\0") if raw
-                    }
-            except Exception:
-                tracked_files = None
+        tracked_files = git_visible_files(root_dir) if respect_git else None
 
         csharp_files: List[tuple] = []
         python_files: List[tuple] = []
@@ -720,55 +710,13 @@ class ASTParser:
                 current = next_type
             return current
 
-        def _imports_for(rel_file: str) -> tuple[Set[str], Dict[str, str]]:
-            namespaces: Set[str] = set()
-            aliases: Dict[str, str] = {}
-            for item in tree_imports.get(rel_file, []):
-                text = item.get("text", "")
-                match = re.search(r"\busing\s+(?:(\w+)\s*=\s*)?([A-Za-z_][A-Za-z0-9_.]*)", text)
-                if match:
-                    if match.group(1):
-                        aliases[match.group(1)] = match.group(2)
-                    else:
-                        namespaces.add(match.group(2))
-            return namespaces, aliases
-
-        def _rank_candidate(target_id: str, rel_file: str, container: str = "", receiver: str = "", arity: Any = None) -> int:
-            target = node_by_id.get(target_id, {})
-            score = 0
-            if target.get("file") == rel_file:
-                score += 4
-            if container and target.get("container") == container:
-                score += 5
-            if receiver and receiver in {target.get("container"), target.get("name")}:
-                score += 12
-            if arity is not None:
-                required = target.get("required_parameter_count")
-                maximum = target.get("parameter_count")
-                if maximum == arity:
-                    score += 5
-                elif required is not None and maximum is not None and required <= arity <= maximum:
-                    score += 3
-                    if required == arity:
-                        # C# overload resolution generally prefers the viable
-                        # overload that does not need omitted optional values.
-                        score += 2
-            source_assembly = node_by_id.get(f"file:{rel_file}", {}).get("assembly")
-            if source_assembly and source_assembly == target.get("assembly"):
-                score += 2
-            imported, aliases = _imports_for(rel_file)
-            namespace = target.get("namespace", "")
-            if namespace and (namespace in imported or any(namespace.startswith(item + ".") for item in imported)):
-                score += 3
-            if receiver and aliases.get(receiver, "").endswith("." + target.get("container", "")):
-                score += 12
-            return score
+        rank_candidate = CandidateRanker(node_by_id, tree_imports)
 
         for source_id, base_name, rel_file, line, evidence in pending_inheritance:
             candidates = symbol_name_ids.get(base_name, set())
             if not candidates:
                 continue
-            ranked = sorted((( _rank_candidate(target, rel_file), target) for target in candidates if target != source_id), reverse=True)
+            ranked = sorted(((rank_candidate(target, rel_file), target) for target in candidates if target != source_id), reverse=True)
             if not ranked:
                 continue
             best_score = ranked[0][0]
@@ -788,7 +736,26 @@ class ASTParser:
             f_id = f"file:{rel_file}"
             seen_calls = set()
             for call in calls:
-                targets = symbol_name_ids.get(call["name"], set())
+                target_name = rank_candidate.imported_target_name(rel_file, call["name"])
+                targets = symbol_name_ids.get(target_name, set())
+                caller_ids = [
+                    target for target in symbol_name_ids.get(call.get("caller", ""), set())
+                    if node_by_id.get(target, {}).get("file") == rel_file
+                    and (not call.get("container") or node_by_id.get(target, {}).get("container") == call.get("container"))
+                ]
+                source_id = caller_ids[0] if len(caller_ids) == 1 else f_id
+                lexical_candidates = set(targets)
+                if call["name"] != target_name:
+                    lexical_candidates.update(symbol_name_ids.get(call["name"], set()))
+                lexical_targets = (set() if call.get("receiver") else rank_candidate.lexical_targets(
+                    rel_file, call["name"], call.get("caller", ""), lexical_candidates,
+                ))
+                # Resolve lexical shadowing before import filtering. Python
+                # binds a nested or module-local definition ahead of an
+                # imported name with the same spelling.
+                targets = lexical_targets or rank_candidate.filter_imported_targets(
+                    rel_file, call["name"], targets,
+                )
                 if not targets:
                     continue
                 is_creation = call.get("call_kind") in ("new_expression", "object_creation_expression")
@@ -805,14 +772,21 @@ class ASTParser:
                 # call to an unrelated same-named method in this repository.
                 if receiver_type and receiver_type not in known_containers and call.get("receiver"):
                     continue
-                caller_ids = [
-                    target for target in symbol_name_ids.get(call.get("caller", ""), set())
+                if call.get("bound_locally"):
+                    suppressed_relations["bound_calls"] += 1
+                    continue
+                local_targets = {
+                    target for target in targets
                     if node_by_id.get(target, {}).get("file") == rel_file
-                    and (not call.get("container") or node_by_id.get(target, {}).get("container") == call.get("container"))
-                ]
-                source_id = caller_ids[0] if len(caller_ids) == 1 else f_id
+                }
+                if call.get("runtime_builtin") and not local_targets and not rank_candidate.is_imported(rel_file, call["name"]):
+                    suppressed_relations["runtime_calls"] += 1
+                    continue
                 ranked = sorted((
-                    (_rank_candidate(target, rel_file, call.get("container", ""), receiver_type, call.get("argument_count")), target)
+                    (rank_candidate(
+                        target, rel_file, call.get("container", ""), receiver_type,
+                        call.get("argument_count"), call.get("caller", ""), call.get("name", ""),
+                    ), target)
                     for target in targets if target != source_id
                 ), reverse=True)
                 if not ranked:
@@ -836,6 +810,7 @@ class ASTParser:
                             "receiver": call.get("receiver", ""), "receiver_type": receiver_type,
                             "receiver_chain": call.get("receiver_chain", []),
                             "caller": call.get("caller", ""),
+                            "called_name": call.get("name", ""), "target_name": target_name,
                         },
                     })
 
@@ -871,10 +846,13 @@ class ASTParser:
                 if cname in content and not sym_id.startswith(f"symbol:{rel_file}:"):
                     if re.search(r"\b" + re.escape(cname) + r"\b", content):
                         ambiguous = len(symbol_name_ids.get(cname, {sym_id})) > 1
+                        if ambiguous:
+                            suppressed_relations["ambiguous_mentions"] += 1
+                            continue
                         links.append({
                             "source": f_id, "target": sym_id, "label": "usa",
                             "color": "rgba(56, 189, 248, 0.25)",
-                            "confidence": "AMBIGUOUS" if ambiguous else "INFERRED",
+                            "confidence": "INFERRED",
                         })
 
         for l in links:
@@ -912,6 +890,7 @@ class ASTParser:
                     "total_links": len(links),
                     "by_confidence": confidence_counts,
                     "unresolved_or_ambiguous": confidence_counts["AMBIGUOUS"] + confidence_counts["INFERRED"],
+                    "suppressed_weak_candidates": suppressed_relations,
                 },
                 "project_evidence": collect_project_evidence(root_dir),
             },

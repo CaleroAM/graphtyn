@@ -12,7 +12,20 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v12-doc-sections"
+PARSER_VERSION = "treesitter-v13-lexical-bindings"
+
+_RUNTIME_BUILTINS = {
+    ".py": {
+        "abs", "all", "any", "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes",
+        "callable", "chr", "classmethod", "compile", "complex", "delattr", "dict", "dir",
+        "divmod", "enumerate", "eval", "exec", "filter", "float", "format", "frozenset",
+        "getattr", "globals", "hasattr", "hash", "help", "hex", "id", "input", "int",
+        "isinstance", "issubclass", "iter", "len", "list", "locals", "map", "max",
+        "memoryview", "min", "next", "object", "oct", "open", "ord", "pow", "print",
+        "property", "range", "repr", "reversed", "round", "set", "setattr", "slice",
+        "sorted", "staticmethod", "str", "sum", "super", "tuple", "type", "vars", "zip",
+    },
+}
 
 
 def _language_for_extension(ext: str):
@@ -91,6 +104,51 @@ def _ancestor_name(source: bytes, node, types: set[str]) -> str:
             return _name(source, ancestor)
         ancestor = ancestor.parent
     return ""
+
+
+def _parameter_names(source: bytes, parameters) -> set[str]:
+    """Extract declared parameter names without confusing type identifiers."""
+    if parameters is None:
+        return set()
+    names: set[str] = set()
+    for parameter in parameters.named_children:
+        name_node = parameter.child_by_field_name("name")
+        if name_node is None and parameter.type in {"identifier", "variable_name"}:
+            name_node = parameter
+        if name_node is None:
+            pending = list(parameter.named_children)
+            while pending and name_node is None:
+                child = pending.pop(0)
+                if child.type in {"identifier", "variable_name"}:
+                    name_node = child
+                    break
+                pending[0:0] = child.named_children
+        if name_node is not None:
+            names.add(_text(source, name_node).lstrip("$"))
+    return names
+
+
+def _is_parameter_binding(source: bytes, node, name: str, callable_types: set[str]) -> bool:
+    """Whether a call name is a parameter in its current lexical closure."""
+    ancestor = node.parent
+    scope_types = callable_types | {
+        "lambda", "lambda_expression", "anonymous_function", "arrow_function",
+    }
+    while ancestor is not None:
+        if ancestor.type in scope_types:
+            parameters = ancestor.child_by_field_name("parameters")
+            if name in _parameter_names(source, parameters):
+                return True
+        ancestor = ancestor.parent
+    return False
+
+
+def _call_binding_metadata(source: bytes, node, name: str, callable_types: set[str], ext: str) -> dict[str, Any]:
+    return {
+        "call_kind": node.type,
+        "bound_locally": _is_parameter_binding(source, node, name, callable_types),
+        "runtime_builtin": name in _RUNTIME_BUILTINS.get(ext, set()),
+    }
 
 
 def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
@@ -233,7 +291,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     "evidence": evidence,
                     "bases": bases,
                     "parser": "tree-sitter",
-                    "container": _ancestor_name(source, node, type_declarations),
+                    "container": _ancestor_name(source, node, type_declarations), "scope": _ancestor_name(source, node, callable_declarations),
                     "parameter_count": parameter_count,
                     "required_parameter_count": required_parameter_count,
                     "is_constructor": node.type == "constructor_declaration",
@@ -254,7 +312,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     "argument_count": args.named_child_count if args is not None else None,
                     "caller": _ancestor_name(source, node, callable_declarations),
                     "container": _ancestor_name(source, node, type_declarations),
-                    "call_kind": node.type,
+                    **_call_binding_metadata(source, node, name, callable_declarations, ext),
                 })
                 operation_text = " ".join(_text(source, node).split())[:300]
                 operations.append({

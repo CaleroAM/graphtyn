@@ -167,9 +167,15 @@ def analyze_impact(root: Path, graph: dict, base: str | None = None, staged_only
                 "evidence": {key: edge.get(key) for key in ("file", "line", "evidence") if edge.get(key) is not None},
             })
             frontier.append((neighbor, hop + 1))
-    direct = sum(1 for item in impacted if item["hop"] == 1)
+    direct_functional = sum(1 for item in impacted if item["hop"] == 1 and item.get("label") != "contiene")
+    containment_nodes = sum(1 for item in impacted if item.get("label") == "contiene")
+    transitive = max(0, len(impacted) - direct_functional - containment_nodes)
     signature_changes = sum("signature" in item["change_types"] for item in changed_symbols)
-    score = min(100, len(changed) * 5 + signature_changes * 12 + direct * 3 + max(0, len(impacted) - direct))
+
+    code_files = [f for f in changed if Path(f).suffix.lower() not in {".md", ".txt", ".rst", ".adoc", ".markdown"}]
+    doc_files = [f for f in changed if Path(f).suffix.lower() in {".md", ".txt", ".rst", ".adoc", ".markdown"}]
+
+    score = min(100, len(code_files) * 5 + len(doc_files) * 2 + signature_changes * 12 + direct_functional * 3 + transitive + min(5, containment_nodes // 8))
     risk = "high" if score >= 60 else "medium" if score >= 25 else "low"
     conflicts: list[str] = []
     conflict_note = "Sin rama base: solo se calculó riesgo sobre dependencias."
@@ -208,7 +214,7 @@ def analyze_impact(root: Path, graph: dict, base: str | None = None, staged_only
     if categories["tests"]:
         verification.append({"action": "run_adjacent_tests", "targets": categories["tests"][:20]})
     else:
-        verification.append({"action": "add_or_locate_targeted_tests", "targets": [item["id"] for item in changed_symbols]})
+        verification.append({"action": "add_or_locate_targeted_tests", "targets": [item["id"] for item in changed_symbols[:20]]})
     if categories["contracts"]:
         verification.append({"action": "verify_contract_implementations", "targets": categories["contracts"][:20]})
     if categories["ambiguous"]:
@@ -226,7 +232,11 @@ def analyze_impact(root: Path, graph: dict, base: str | None = None, staged_only
         "verification_plan": verification,
         "traversal": {"max_hops": max_hops, "consumer_labels": sorted(consumer_labels),
                       "direction": "incoming consumers; containment descendants; contract/event dependents"},
-        "risk": {"level": risk, "score": score, "direct": direct, "transitive": len(impacted) - direct},
+        "risk": {"level": risk, "score": score, "direct": direct_functional, "transitive": transitive,
+                 "containment": containment_nodes,
+                 "factors": {"code_files": len(code_files), "doc_files": len(doc_files),
+                             "signature_changes": signature_changes, "direct": direct_functional,
+                             "transitive": transitive, "containment": containment_nodes}},
         "conflicts": sorted(set(conflicts)),
         "conflict_detection": conflict_note,
     }

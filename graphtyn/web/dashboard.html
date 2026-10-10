@@ -155,6 +155,18 @@
               <label><input type="checkbox" class="f-relation" value="crea" checked onchange="applyFilter()"> Persistencia</label>
               <label><input type="checkbox" class="f-relation" value="despacha evento" checked onchange="applyFilter()"> Eventos</label>
             </div>
+            <div class="section-label" style="margin-top:8px;">Evidencia / Procedencia</div>
+            <div class="relation-filter-grid">
+              <label><input type="checkbox" class="f-relation" value="sustentada por" checked onchange="applyFilter()"> Sustentada por</label>
+              <label><input type="checkbox" class="f-relation" value="resulta de" checked onchange="applyFilter()"> Resulta de ejecución</label>
+              <label><input type="checkbox" class="f-relation" value="genera resultado" checked onchange="applyFilter()"> Genera resultado</label>
+              <label><input type="checkbox" class="f-relation" value="mide" checked onchange="applyFilter()"> Resultado mide</label>
+              <label><input type="checkbox" class="f-relation" value="produce" checked onchange="applyFilter()"> Produce métrica</label>
+              <label><input type="checkbox" class="f-relation" value="declara" checked onchange="applyFilter()"> Declara métrica</label>
+              <label><input type="checkbox" class="f-relation" value="verifica" checked onchange="applyFilter()"> Prueba verifica</label>
+              <label><input type="checkbox" class="f-relation" value="depende de" checked onchange="applyFilter()"> Depende de</label>
+              <label><input type="checkbox" class="f-relation" value="invalida" checked onchange="applyFilter()"> Invalida</label>
+            </div>
             <button class="btn-link" id="reset-web-flow" style="display:none;padding:5px 0;" onclick="clearWebFlow()">Restablecer grafo completo</button>
             <hr style="border:none;border-top:1px solid #1e293b;margin:6px 0;">
             <div class="filter-row">
@@ -294,14 +306,18 @@
             <div class="settings-heading"><strong>Motor de índice</strong><span>Se aplica al reindexar</span></div>
             <label class="section-label" for="engine-sel">Pipeline de código y documentos</label>
             <select id="engine-sel" class="control-select">
-              <option value="ast_local_llm" selected>AST + Local (Ollama)</option>
+              <option value="ast_pure" selected>Solo AST (rápido, cero tokens)</option>
+              <option value="ast_local_llm">AST + Local (Ollama)</option>
               <option value="ast_cloud">AST + Cloud API (Gemini/Claude)</option>
-              <option value="ast_pure">Solo AST (cero tokens)</option>
             </select>
             <label class="section-label" for="code-model-sel">Modelo de código</label>
             <select id="code-model-sel" class="control-select" onchange="updateModelEstimate()"><option value="">Auto-detectar</option></select>
             <label class="section-label" for="vision-model-sel">Modelo de visión</label>
             <select id="vision-model-sel" class="control-select" onchange="updateModelEstimate()"><option value="">Auto-detectar</option></select>
+            <div class="filter-row engine-scope-row">
+              <span title="Puede ser lento; se detiene tras el primer fallo consecutivo">Enriquecer imágenes con visión</span>
+              <label class="chk-wrap"><input type="checkbox" id="chk-vision"><span class="chk-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></label>
+            </div>
             <div id="est-time" class="engine-estimate"><span id="est-time-val"></span></div>
             <div class="filter-row engine-scope-row">
               <span title="Incluye solo archivos versionados y respeta las exclusiones del proyecto">Respetar .gitignore</span>
@@ -392,7 +408,7 @@
         <button class="btn-action" id="memory-sync-all-btn" onclick="syncAllMemorySpaces()">Actualizar todos los espacios</button>
         <button class="btn-action" id="memory-enrich-retry-btn" onclick="retryMemoryEnrichment()">Reintentar IA</button>
         <button class="btn-action" id="memory-watch-btn" onclick="toggleMemoryWatch()">Activar captura continua</button>
-        <button class="btn-action" id="memory-graph-btn" onclick="showSharedMemoryGraph()">Ver mapa por agente</button>
+        <button class="btn-action" id="memory-graph-btn" onclick="showSharedMemoryGraph()">Ver evidencia y relaciones</button>
       </div>
       <div class="memory-options">
         <label>Ruta del agente <input id="memory-agent-ws" class="text-inp" style="width:280px" placeholder="/ruta/al/workspace del agente (IDENTITY.md/SOUL.md)"></label>

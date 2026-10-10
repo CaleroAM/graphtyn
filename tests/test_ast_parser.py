@@ -1,5 +1,6 @@
 import tempfile
 import json
+import importlib
 from pathlib import Path
 import pytest
 from graphtyn.core.ast_parser import ASTParser
@@ -222,6 +223,213 @@ def test_csharp_nested_member_chain_resolves_receiver_type(tmp_path):
     assert nodes[calls[0]["target"]]["container"] == "UI"
     assert calls[0]["confidence"] == "EXTRACTED"
     assert calls[0]["resolution"]["receiver_type"] == "UI"
+
+
+def test_python_call_resolution_honors_lexical_bindings(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    (tmp_path / "scopes.py").write_text(
+        "def first():\n"
+        "    def call(value):\n"
+        "        return value\n"
+        "    return call(1)\n\n"
+        "def second():\n"
+        "    def call(value):\n"
+        "        return value\n"
+        "    return call(2)\n\n"
+        "def third():\n"
+        "    def call(value):\n"
+        "        return value\n"
+        "    return call(4)\n\n"
+        "def with_callback(update):\n"
+        "    return update(3)\n\n"
+        "def use_builtin(items):\n"
+        "    return list(items)\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "unrelated.py").write_text(
+        "def update(value):\n    return value\n\n"
+        "def list(value):\n    return value\n",
+        encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    calls = [link for link in graph["links"] if link.get("label") == "llama"]
+
+    scoped = [link for link in calls if link.get("evidence") in {"call(1)", "call(2)", "call(4)"}]
+    assert len(scoped) == 3
+    assert all(nodes[link["target"]]["scope"] == nodes[link["source"]]["name"] for link in scoped)
+    assert all(link["confidence"] == "EXTRACTED" for link in scoped)
+    assert not any(link.get("evidence") in {"update(3)", "list(items)"} for link in calls)
+    suppressed = graph["metadata"]["relation_coverage"]["suppressed_weak_candidates"]
+    assert suppressed["bound_calls"] == 1
+    assert suppressed["runtime_calls"] == 1
+
+
+def test_python_import_disambiguates_same_named_functions(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    (tools / "metrics.py").write_text(
+        "def collect(value):\n    return value\n", encoding="utf-8"
+    )
+    (tmp_path / "other.py").write_text(
+        "def collect(value):\n    return value\n", encoding="utf-8"
+    )
+    (tmp_path / "consumer.py").write_text(
+        "from tools.metrics import collect\n\ndef run(value):\n    return collect(value)\n",
+        encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    call = next(
+        link for link in graph["links"]
+        if link.get("label") == "llama" and link.get("evidence") == "collect(value)"
+    )
+
+    assert call["target"].startswith("symbol:tools/metrics.py:collect")
+    assert call["confidence"] == "EXTRACTED"
+
+
+def test_python_relative_import_resolves_from_consumer_package(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    package = tmp_path / "pkg"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "helpers.py").write_text("def collect(value):\n    return value\n", encoding="utf-8")
+    (tmp_path / "helpers.py").write_text("def collect(value):\n    return value\n", encoding="utf-8")
+    (package / "consumer.py").write_text(
+        "from .helpers import collect\n\ndef run():\n    return collect(1)\n", encoding="utf-8"
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    call = next(link for link in graph["links"] if link.get("evidence") == "collect(1)")
+
+    assert call["target"].startswith("symbol:pkg/helpers.py:collect")
+    assert call["confidence"] == "EXTRACTED"
+
+
+def test_python_local_definition_shadows_same_named_import(tmp_path, monkeypatch):
+    pytest.importorskip("tree_sitter_python")
+    package = tmp_path / "shadowpkg"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "helpers.py").write_text(
+        "def collect(value):\n    return \"IMPORTED\"\n", encoding="utf-8"
+    )
+    (package / "consumer.py").write_text(
+        "from .helpers import collect\n\n"
+        "def run():\n"
+        "    def collect(value):\n"
+        "        return \"LOCAL\"\n"
+        "    return collect(1)\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.syspath_prepend(str(tmp_path))
+    importlib.invalidate_caches()
+    executed = importlib.import_module("shadowpkg.consumer")
+    assert executed.run() == "LOCAL"
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    call = next(link for link in graph["links"]
+                if link.get("label") == "llama" and link.get("evidence") == "collect(1)")
+
+    assert nodes[call["target"]]["file"] == "shadowpkg/consumer.py"
+    assert nodes[call["target"]]["scope"] == "run"
+    assert call["confidence"] == "EXTRACTED"
+
+
+def test_python_import_alias_resolves_before_candidate_selection(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    package = tmp_path / "pkg"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "helpers.py").write_text("def collect(value):\n    return value\n", encoding="utf-8")
+    (tmp_path / "consumer.py").write_text(
+        "from pkg.helpers import collect as fetch\n\ndef run():\n    return fetch(1)\n", encoding="utf-8"
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    call = next(link for link in graph["links"] if link.get("evidence") == "fetch(1)")
+
+    assert call["target"].startswith("symbol:pkg/helpers.py:collect")
+    assert call["confidence"] == "EXTRACTED"
+    assert call["resolution"]["called_name"] == "fetch"
+    assert call["resolution"]["target_name"] == "collect"
+
+
+def test_python_runtime_bindings_match_graph_for_parameter_and_alias(tmp_path, monkeypatch):
+    pytest.importorskip("tree_sitter_python")
+    package = tmp_path / "bindingpkg"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "helpers.py").write_text(
+        "def collect(value):\n    return \"IMPORTED\"\n", encoding="utf-8"
+    )
+    (package / "consumer.py").write_text(
+        "from .helpers import collect as fetch\n\n"
+        "def parameter_shadow(collect):\n"
+        "    return collect(1)\n\n"
+        "def alias_shadow():\n"
+        "    def fetch(value):\n"
+        "        return \"LOCAL\"\n"
+        "    return fetch(1)\n\n"
+        "def alias_call():\n"
+        "    return fetch(1)\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.syspath_prepend(str(tmp_path))
+    importlib.invalidate_caches()
+    executed = importlib.import_module("bindingpkg.consumer")
+    assert executed.parameter_shadow(lambda _value: "PARAMETER") == "PARAMETER"
+    assert executed.alias_shadow() == "LOCAL"
+    assert executed.alias_call() == "IMPORTED"
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    links = [link for link in graph["links"] if link.get("label") == "llama"]
+    alias_links = [link for link in links if link.get("evidence") == "fetch(1)"]
+    alias_shadow_link = next(link for link in alias_links
+                             if nodes[link["source"]].get("name") == "alias_shadow")
+    alias_link = next(link for link in alias_links
+                      if nodes[link["source"]].get("name") == "alias_call")
+
+    assert nodes[alias_shadow_link["target"]]["file"] == "bindingpkg/consumer.py"
+    assert nodes[alias_link["target"]]["file"] == "bindingpkg/helpers.py"
+    assert not any(nodes[link["source"]].get("name") == "parameter_shadow"
+                   for link in links if link.get("evidence") == "collect(1)")
+
+
+def test_external_python_import_alias_does_not_bind_to_local_homonym(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    (tmp_path / "local.py").write_text("def collect(value):\n    return value\n", encoding="utf-8")
+    (tmp_path / "consumer.py").write_text(
+        "from external.helpers import collect as fetch\n\ndef run():\n    return fetch(1)\n",
+        encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+
+    assert not any(link.get("evidence") == "fetch(1)" for link in graph["links"])
+
+
+def test_duplicate_document_mentions_do_not_create_ambiguous_edges(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    (tmp_path / "a.py").write_text("def status():\n    return 'a'\n", encoding="utf-8")
+    (tmp_path / "b.py").write_text("def status():\n    return 'b'\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("The status appears here.\n", encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+
+    assert not any(
+        link.get("source") == "file:README.md" and link.get("label") == "usa"
+        for link in graph["links"]
+    )
+    suppressed = graph["metadata"]["relation_coverage"]["suppressed_weak_candidates"]
+    assert suppressed["ambiguous_mentions"] >= 1
 
 
 def test_structural_cache_reuses_unchanged_tree_sitter_result(tmp_path, monkeypatch):

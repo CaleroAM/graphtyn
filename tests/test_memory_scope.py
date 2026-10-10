@@ -36,6 +36,8 @@ def test_ensure_project_memory_scope_registers_and_expands_aliases(tmp_path, mon
 
     res = ensure_project_memory_scope(project, agent_ids=["antigravity"])
     assert res["ok"] is True
+    assert res["restricted"] is False
+    assert res["configured"] is True
     assert "antigravity" in res["agent_ids"]
     assert "agy" in res["agent_ids"]
 

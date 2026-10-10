@@ -44,7 +44,7 @@ def test_reindex_persists_report_next_to_index(tmp_path, monkeypatch):
     project.mkdir()
     (project / "README.md").write_text("# Demo\n\nDemo manages inventory for independent stores and warehouses.\n")
     (project / "main.py").write_text("def main():\n    return 1\n")
-    data = _body(api_main.reindex_project({"path": str(project), "engine": "ast_pure", "full": True}))
+    data = api_main._execute_reindex({"path": str(project), "engine": "ast_pure", "full": True})
     assert data["ok"] is True
     report = Path(data["report"])
     assert report.name == "GRAPHTYN_REPORT.md" and report.is_file()
@@ -186,7 +186,10 @@ def test_dashboard_exposes_framework_flow_filters_and_route_metadata():
     painters = (WEB / "js" / "painters.js").read_text()
     quality = (WEB / "js" / "quality.js").read_text()
     assert 'id="f-route"' in html
-    assert html.count('class="f-relation"') == 5
+    assert html.count('class="f-relation"') == 14
+    for relation in ("sustentada por", "resulta de", "genera resultado", "mide",
+                     "produce", "declara", "verifica", "depende de", "invalida"):
+        assert f'value="{relation}"' in html
     assert "AMBIGUOUS" in html and "AMBIGUOUS" in graph
     assert "focusWebFlow" in dashboard and "clearWebFlow" in dashboard
     assert "http_method" in graph and "node.path" in graph

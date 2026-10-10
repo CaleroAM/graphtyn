@@ -8,6 +8,17 @@ permissions:
   contents: read
 
 jobs:
+  maintainability:
+    name: Maintainability budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python tools/check_maintainability.py
+
   tests:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
@@ -60,6 +71,7 @@ jobs:
       - run: git config --global user.name "Graphtyn CI"; git config --global user.email "ci@graphtyn.invalid"
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
+      - run: python -m graphtyn.cli --version
       - run: python -m pytest -q tests/test_deployment_admin.py tests/test_api.py tests/test_shared_memory.py tests/test_history_import.py
       - run: python -m pip install build; python -m build
       - name: Install the wheel through the public PowerShell installer

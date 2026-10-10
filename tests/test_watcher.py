@@ -1,6 +1,21 @@
 import json
+import subprocess
 
 from graphtyn.core.watcher import ProjectWatcher
+
+
+def test_watcher_includes_untracked_nonignored_sources(tmp_path):
+    project = tmp_path / "project"
+    store = tmp_path / "store"
+    project.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=project, check=True)
+    (project / ".gitignore").write_text("ignored.py\n", encoding="utf-8")
+    (project / "new.py").write_text("value = 1\n", encoding="utf-8")
+    (project / "ignored.py").write_text("secret = 1\n", encoding="utf-8")
+
+    event = ProjectWatcher(project, store).scan_once(refresh=False)
+
+    assert event["created"] == ["new.py"]
 
 
 def test_watcher_detects_create_modify_delete(tmp_path):

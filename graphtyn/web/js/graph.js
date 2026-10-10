@@ -11,6 +11,18 @@ function selectedLink(link) {
     }
 function memoryLinkColor(link, base) {
       if (state.selectedNode && !selectedLink(link)) return 'rgba(255,255,255,0.06)';
+      const relationColors = {
+        'invalida': 'rgba(239,68,68,0.88)',
+        'verifica': 'rgba(34,197,94,0.82)',
+        'depende de': 'rgba(245,158,11,0.74)',
+        'sustentada por': 'rgba(6,182,212,0.82)',
+        'resulta de': 'rgba(167,139,250,0.82)',
+        'genera resultado': 'rgba(6,182,212,0.82)',
+        'mide': 'rgba(59,130,246,0.82)',
+        'produce': 'rgba(96,165,250,0.78)',
+        'declara': 'rgba(148,163,184,0.72)'
+      };
+      if (relationColors[link.label]) return relationColors[link.label];
       if (link.confidence === 'AMBIGUOUS') return 'rgba(245,158,11,0.62)';
       if (link.confidence === 'INFERRED') return 'rgba(148,163,184,0.22)';
       return base;
@@ -346,6 +358,17 @@ export function onNodeClick(node) {
         node.agent_id ? ['Agente', node.agent_id] : null,
         node.session_id ? ['Sesión', node.session_id] : null,
         node.status ? ['Estado memoria', node.status] : null,
+        node.verification_level ? ['Nivel de evidencia', node.verification_level] : null,
+        node.claim_policy ? ['Política de afirmación', node.claim_policy] : null,
+        node.execution_observed != null ? ['Ejecución observada', node.execution_observed ? 'sí' : 'no'] : null,
+        node.metric_verification ? ['Verificación de métrica', node.metric_verification] : null,
+        node.execution_outcome ? ['Resultado de ejecución', node.execution_outcome] : null,
+        node.exit_code != null ? ['Código de salida', node.exit_code] : null,
+        node.executor ? ['Ejecutor', node.executor] : null,
+        node.stale ? ['Vigencia', 'obsoleta'] : null,
+        node.stale_files?.length ? ['Dependencias cambiadas', node.stale_files.join(', ')] : null,
+        node.missing_dependencies?.length ? ['Dependencias ausentes', node.missing_dependencies.join(', ')] : null,
+        node.execution_errors?.length ? ['Errores de ejecución', node.execution_errors.join(', ')] : null,
         node.ai_status ? ['IA temática', node.ai_status] : null,
         node.ai_model ? ['Modelo IA', node.ai_model] : null,
         node.ai_source_revision != null ? ['Revisión fuente', node.ai_source_revision] : null,
@@ -677,13 +700,15 @@ export function loadGraph() {
         : state.activeView === 'memory'
         ? (state.activeAgentId
           ? '/api/memory/agent-graph?agent_id=' + encodeURIComponent(state.activeAgentId) + '&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400'
-          : '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&view=topics&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400&session_limit=100' + (state.memoryFocusSession ? '&session_id=' + encodeURIComponent(state.memoryFocusSession) : ''))
+          : '/api/memory/graph?path=' + encodeURIComponent(state.activePath) + '&requester_agent=dashboard&view=' + encodeURIComponent(state.memoryGraphView || 'topics') + '&detail=' + (state.memoryGraphMode === 'detailed' ? 'true' : 'false') + '&limit=400&session_limit=100' + (state.memoryFocusSession ? '&session_id=' + encodeURIComponent(state.memoryFocusSession) : ''))
         : state.activeView === 'semantic'
         ? '/api/graph?view=semantic&path=' + encodeURIComponent(state.activePath)
         : '/api/graph?path=' + encodeURIComponent(state.activePath);
 
       const loadingMessage = state.activeView === 'agents' ? 'Cargando topología de agentes...'
-        : state.activeView === 'memory' ? (state.memoryFocusSession ? 'Cargando sesión y sus temas...' : 'Cargando sesiones, temas y episodios...')
+        : state.activeView === 'memory' ? (state.memoryGraphView === 'evidence'
+          ? 'Cargando evidencia, ejecuciones y dependencias...'
+          : state.memoryFocusSession ? 'Cargando sesión y sus temas...' : 'Cargando sesiones, temas y episodios...')
         : 'Escaneando proyecto...';
       showGraphSpinner(loadingMessage);
       document.getElementById('stats').textContent = 'Cargando...';
@@ -732,7 +757,9 @@ export function loadGraph() {
           badge.textContent = state.activeView === 'memory'
             ? (state.activeAgentId
               ? `Memoria del agente · ${(data.metadata || {}).space_count || 0} espacios · ${data.nodes.length} nodos`
-              : `Memoria ${((data.metadata || {}).mode === 'detailed') ? 'detallada' : 'simplificada'} · ${(((data.metadata || {}).topic_returned ?? (data.metadata || {}).topic_count) || 0)}/${(((data.metadata || {}).topic_total ?? (data.metadata || {}).topic_count) || 0)} temas · ${(((data.metadata || {}).session_returned ?? 0) || 0)}/${(((data.metadata || {}).session_total ?? 0) || 0)} sesiones`)
+              : state.memoryGraphView === 'evidence'
+                ? `Evidencia y procedencia · ${data.nodes.length} nodos · ${data.links.length} relaciones`
+                : `Memoria ${((data.metadata || {}).mode === 'detailed') ? 'detallada' : 'simplificada'} · ${(((data.metadata || {}).topic_returned ?? (data.metadata || {}).topic_count) || 0)}/${(((data.metadata || {}).topic_total ?? (data.metadata || {}).topic_count) || 0)} temas · ${(((data.metadata || {}).session_returned ?? 0) || 0)}/${(((data.metadata || {}).session_total ?? 0) || 0)} sesiones`)
             : (meta.ai_model ? meta.ai_model : '') + (meta.reindex_mode ? ' · ' + meta.reindex_mode : '');
         }
 
@@ -875,6 +902,18 @@ function updateMemoryLegend(data) {
         '<span class="memory-agent-key"><i data-memory-legend-kind="memory_session" data-memory-legend-halo="memory_session" style="background:' + escapeHtml(getMemoryColor('memory_session', 'node')) + '"></i>sesión</span>' +
         '<span class="memory-agent-key"><i data-memory-legend-kind="memory_episode" style="background:' + escapeHtml(getMemoryColor('memory_episode', 'node')) + '"></i>episodio</span>' +
         '<span class="memory-agent-key"><i data-memory-legend-kind="memory_entity" style="background:' + escapeHtml(getMemoryColor('memory_entity', 'node')) + '"></i>entidad</span>' +
+        (state.memoryGraphView === 'evidence'
+          ? '<span class="memory-agent-key"><i style="background:' + escapeHtml(getMemoryColor('memory', 'node')) + '"></i>evidencia</span>' +
+            '<span class="memory-agent-key"><i style="background:' + escapeHtml(getMemoryColor('memory_execution', 'node')) + '"></i>ejecución</span>' +
+            '<span class="memory-agent-key"><i style="background:' + escapeHtml(getMemoryColor('memory_result_artifact', 'node')) + '"></i>resultado JUnit</span>' +
+            '<span class="memory-agent-key"><i style="background:' + escapeHtml(getMemoryColor('memory_metric', 'node')) + '"></i>métrica</span>' +
+            '<span class="memory-agent-key"><i style="background:' + escapeHtml(getMemoryColor('memory_test', 'node')) + '"></i>prueba</span>' +
+            '<div class="memory-legend-title">Relaciones de evidencia</div>' +
+            '<span class="memory-agent-key">● sustentada por</span><span class="memory-agent-key">● resulta de</span>' +
+            '<span class="memory-agent-key">● genera resultado</span><span class="memory-agent-key">● mide</span>' +
+            '<span class="memory-agent-key">● produce (verificada)</span><span class="memory-agent-key">● declara (sin verificar)</span><span class="memory-agent-key">● verifica</span>' +
+            '<span class="memory-agent-key">● depende de</span><span class="memory-agent-key" style="color:#f87171">● invalida</span>'
+          : '') +
         '<div class="memory-legend-title">Agentes del proyecto</div>' +
         (data.agents || []).map(key).join('');
       if ((data.consulters || []).length) {
