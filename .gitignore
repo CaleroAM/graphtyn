@@ -1,5 +1,6 @@
 # Graphtyn local generated indexes and runtime state
 .graphtyn/
+.codex/
 .env
 .env.local
 *.log
