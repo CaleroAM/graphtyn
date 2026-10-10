@@ -5,13 +5,13 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import subprocess
 import threading
 import time
 from pathlib import Path
 from typing import Any
 
 from .ast_parser import ASTParser, VALID_EXTS
+from .source_files import git_visible_files
 
 
 _IGNORED_PARTS = {
@@ -44,23 +44,12 @@ class ProjectWatcher:
             return True
 
     def _eligible_files(self) -> list[Path]:
-        if self._respect_git() and (self.root / ".git").exists():
-            try:
-                result = subprocess.run(
-                    ["git", "ls-files", "-z"], cwd=self.root, capture_output=True, timeout=30
-                )
-                if result.returncode == 0:
-                    paths = []
-                    for raw in result.stdout.split(b"\0"):
-                        if not raw:
-                            continue
-                        rel = raw.decode("utf-8", errors="replace")
-                        path = self.root / rel
-                        if path.is_file() and path.suffix.lower() in VALID_EXTS:
-                            paths.append(path)
-                    return paths
-            except (OSError, subprocess.SubprocessError):
-                pass
+        visible = git_visible_files(self.root) if self._respect_git() else None
+        if visible is not None:
+            return [
+                self.root / rel for rel in sorted(visible)
+                if (self.root / rel).is_file() and (self.root / rel).suffix.lower() in VALID_EXTS
+            ]
         return [
             path for path in self.root.rglob("*")
             if path.is_file()

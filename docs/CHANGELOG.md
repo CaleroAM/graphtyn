@@ -3,6 +3,29 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [Unreleased]
+
+Los cambios posteriores a `0.10.5` se documentarán aquí antes de la próxima
+versión.
+
+## [0.10.5] - 2026-10-10
+
+### Añadido
+
+- El perfil mixto de RF07 evalúa decisiones en español, paráfrasis sin
+  identificadores sintéticos y preguntas naturales sin respuesta, con métricas
+  separadas por tipo.
+- `memory project-evaluation` comprueba en un checkout real la recuperación,
+  procedencia de archivos/nodos y abstención; sus fallos se conservan como
+  regresiones reproducibles.
+
+### Corregido
+
+- La puntuación híbrida prioriza vocabulario coincidente y tokens identificadores
+  exactos frente a memorias recientes que sólo comparten palabras genéricas.
+- `query-intent` mantiene coherentes `missing`, `do_not_expand` y
+  `stopping.sufficient_evidence` después de adjuntar evidencia de fuente.
+
 ## [0.10.4] - 2026-09-21
 
 ### Añadido

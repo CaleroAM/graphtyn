@@ -35,7 +35,8 @@ except (ImportError, OSError) as exc:
 PORT = 9211
 BASE = f"http://127.0.0.1:{PORT}"
 ROOT = Path(__file__).resolve().parent.parent
-CLI = [sys.executable, "-m", "graphtyn.cli"]
+SERVER_PYTHON = os.environ.get("GRAPHTYN_SMOKE_PYTHON", sys.executable)
+CLI = [SERVER_PYTHON, "-m", "graphtyn.cli"]
 CHROMIUM = os.environ.get(
     "GRAPHTYN_CHROMIUM",
     shutil.which("chromium") or shutil.which("chromium-browser") or "")
@@ -83,6 +84,11 @@ def main():
     home.mkdir()
 
     env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"), OLLAMA_HOST="http://127.0.0.1:1")
+    # A Nix Playwright shell exports its own Python search paths. The Graphtyn
+    # server may deliberately run from a project virtualenv, so keep that
+    # interpreter isolated from the browser runner's Python environment.
+    env.pop("PYTHONPATH", None)
+    env.pop("PYTHONHOME", None)
     server = subprocess.Popen(
         CLI + ["serve",
          "--host", "127.0.0.1", "--port", str(PORT), "--path", str(proj)],
@@ -93,10 +99,28 @@ def main():
             print("FAIL: servidor no levantó")
             return 1
 
+        for project in (proj, proj2):
+            registered = api("POST", "/api/projects/register", json={
+                "path": str(project), "name": project.name, "mode": "single_folder",
+                "space_type": "project",
+            })
+            assert registered.returncode == 0, registered.stderr
+            registered_body = json.loads(registered.stdout)
+            assert registered_body.get("ok"), registered_body
+
         r = api("POST", "/api/reindex", json={"path": str(proj), "engine": "ast_pure"})
         assert r.returncode == 0, r.stderr
         body = json.loads(r.stdout)
-        assert body.get("ok") and body.get("nodes", 0) > 0, r.stdout
+        job_id = body.get("id")
+        assert body.get("ok") and job_id, r.stdout
+        deadline = time.monotonic() + 30
+        while body.get("status") not in {"completed", "failed", "cancelled"}:
+            assert time.monotonic() < deadline, body
+            time.sleep(0.1)
+            r = api("GET", f"/api/reindex/{job_id}")
+            assert r.returncode == 0, r.stderr
+            body = json.loads(r.stdout)
+        assert body.get("status") == "completed" and body.get("result", {}).get("nodes", 0) > 0, body
 
         # Seed attributed memory through the public CLI so the browser must
         # render a real agent -> memory -> file graph, not merely an empty view.
@@ -127,6 +151,29 @@ def main():
              "--scope", "project", "--files", "worker.py", "--path", str(proj2)],
             cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=30)
         assert checkpoint2.returncode == 0, checkpoint2.stderr
+
+        # Seed a typed evidence record so the visual evidence view exercises
+        # execution, metric, test and dependency relations in a real browser.
+        (proj / "test_probe.py").write_text("def test_probe():\n    assert True\n", encoding="utf-8")
+        evidence = proj / "benchmarks" / "smoke" / "summary.json"
+        evidence.parent.mkdir(parents=True)
+        evidence.write_text(json.dumps({
+            "subject": "a.py", "tests": ["test_probe.py"], "tests_passed": 1,
+            "execution_record": {
+                "command": ["pytest", "test_probe.py"], "exit_code": 0,
+                "started_at": 1, "finished_at": 2, "executor": "frontend-smoke",
+                "log_digest_sha256": "b" * 64, "project": {"id": "smoke-project"},
+                "git_context": {"commit": "smoke", "dirty": False},
+                "test_files": ["test_probe.py"], "data_files": [],
+                "environment_digest_sha256": "d" * 64,
+                "declared_dependencies": ["a.py"],
+            },
+        }), encoding="utf-8")
+        ingested = subprocess.run(
+            CLI + ["memory", "ingest-evidence", "--files", "benchmarks/smoke/summary.json",
+                   "--path", str(proj)], cwd=str(ROOT), env=env, capture_output=True,
+            text=True, timeout=30)
+        assert ingested.returncode == 0, ingested.stderr
 
         with sync_playwright() as pw:
             launch = {"args": ["--no-sandbox"]}
@@ -261,7 +308,7 @@ def main():
 
             page.evaluate("openMemoryPanel()")
             page.wait_for_selector("#modal-memory.show", timeout=5000)
-            page.wait_for_function("() => !document.querySelector('#memory-status').innerText.includes('Consultando')", timeout=5000)
+            page.wait_for_function("() => !document.querySelector('#memory-status').innerText.includes('Consultando')", timeout=15000)
             assert "memorias" in page.locator("#memory-status").inner_text().lower()
             page.fill("#memory-query", "decisión de autenticación")
             page.evaluate("searchSharedMemory()")
@@ -278,6 +325,25 @@ def main():
             page.wait_for_selector("#memory-legend-overlay", state="visible", timeout=5000)
             assert "smoke-agent" in page.locator("#memory-legend-overlay").inner_text()
             assert page.locator("#graph-container canvas").count() >= 1, "grafo visual de memoria no renderizado"
+
+            page.evaluate("openMemoryPanel()")
+            page.wait_for_selector("#modal-memory.show", timeout=5000)
+            page.click("#memory-graph-btn")
+            page.wait_for_function(
+                "() => document.querySelector('#model-badge').innerText.includes('Evidencia y procedencia')",
+                timeout=15000)
+            page.wait_for_selector("#memory-legend-overlay", state="visible", timeout=5000)
+            evidence_legend = page.locator("#memory-legend-overlay").inner_text().lower()
+            assert "ejecución" in evidence_legend and "produce" in evidence_legend and "depende de" in evidence_legend
+            assert page.locator("#graph-container canvas").count() >= 1, "grafo visual de evidencia no renderizado"
+
+            # Return to the thematic memory view before testing project switching.
+            page.evaluate("openMemoryPanel()")
+            page.wait_for_selector("#modal-memory.show", timeout=5000)
+            page.click("#memory-graph-btn")
+            page.wait_for_function(
+                "() => document.querySelector('#model-badge').innerText.includes('Memoria simplificada') || document.querySelector('#model-badge').innerText.includes('Memoria detallada')",
+                timeout=15000)
 
             # Switch projects while requests from the previous view may still be
             # in flight; only the newest project's memory may paint the canvas.

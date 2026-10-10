@@ -1,7 +1,12 @@
 import json
 import hashlib
+import os
 import re
 import sys
+import threading
+import time
+import uuid
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from pathlib import Path
 from typing import Dict, Any
 from . import __version__
@@ -15,13 +20,118 @@ from .core.storage import data_home, project_store_dir
 from .core.memory_scope import resolve_memory_scope
 from .core.history_import import configured_sources, _agent_id_matches
 from .core.source_evidence import attach_source_evidence
+from .core.answer_validation import validate_answer
+from .core.ambiguity_review import apply_decisions
 from .core.console import configure_utf8_stdio
+from .mcp_catalog import tools_list_response
 
 
 def _mcp_text(req_id: Any, result: Any) -> Dict[str, Any]:
     return {"jsonrpc": "2.0", "id": req_id, "result": {"content": [
         {"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}
     ]}}
+
+
+_MEMORY_WORKERS = max(1, int(os.environ.get("GRAPHTYN_MCP_MEMORY_WORKERS", "4")))
+_MEMORY_QUEUE = max(_MEMORY_WORKERS, int(os.environ.get("GRAPHTYN_MCP_MEMORY_QUEUE", "8")))
+_MEMORY_EXECUTOR = ThreadPoolExecutor(max_workers=_MEMORY_WORKERS,
+                                      thread_name_prefix="graphtyn-memory-call")
+_MEMORY_CAPACITY = threading.BoundedSemaphore(_MEMORY_QUEUE)
+_MEMORY_OPERATIONS: dict[str, dict[str, Any]] = {}
+_MEMORY_OPERATIONS_LOCK = threading.Lock()
+_MEMORY_WRITE_TOOLS = {
+    "memory_session_start", "memory_append", "memory_ingest_turn", "memory_checkpoint",
+    "memory_ingest_evidence", "memory_session_end", "memory_compact", "memory_correct",
+    "memory_forget", "memory_topic_update", "memory_relation_review", "memory_topics_enrich",
+}
+
+
+def _memory_operation_status(operation_id: str) -> dict[str, Any]:
+    with _MEMORY_OPERATIONS_LOCK:
+        entry = _MEMORY_OPERATIONS.get(str(operation_id or ""))
+        if not entry:
+            return {"ok": False, "code": "operation_not_found",
+                    "error": "Operación de memoria no encontrada"}
+        return {key: value for key, value in entry.items() if key not in {"future", "exception"}}
+
+
+def _bounded_memory_call(operation, timeout_seconds: float | None = None, *,
+                         write: bool = False, operation_id: str | None = None) -> tuple[bool, Any]:
+    """Run a memory operation with bounded concurrency and retry-safe metadata."""
+    timeout = timeout_seconds
+    if timeout is None:
+        try:
+            timeout = float(os.environ.get("GRAPHTYN_MCP_MEMORY_TIMEOUT", "25"))
+        except ValueError:
+            timeout = 25.0
+    timeout = max(0.05, float(timeout))
+    op_id = str(operation_id or f"memop_{uuid.uuid4().hex}")
+    with _MEMORY_OPERATIONS_LOCK:
+        existing = _MEMORY_OPERATIONS.get(op_id)
+    if existing:
+        future = existing.get("future")
+        if existing.get("status") == "completed":
+            return True, existing.get("result")
+        if existing.get("status") == "failed":
+            exc = existing.get("exception")
+            if exc:
+                raise exc
+            return False, {"ok": False, "code": "memory_operation_failed",
+                           "error": existing.get("error"), "operation_id": op_id,
+                           "retryable": not bool(existing.get("write"))}
+    else:
+        if not _MEMORY_CAPACITY.acquire(blocking=False):
+            return False, {"ok": False, "code": "memory_busy",
+                           "error": "La cola de operaciones de memoria está llena",
+                           "retryable": not write, "operation_id": op_id,
+                           "operation_may_continue": False}
+        entry: dict[str, Any] = {"ok": True, "operation_id": op_id, "status": "running",
+                                 "write": bool(write), "started_at": time.time(),
+                                 "updated_at": time.time()}
+
+        def worker() -> Any:
+            try:
+                result = operation()
+                with _MEMORY_OPERATIONS_LOCK:
+                    entry.update(status="completed", result=result, updated_at=time.time())
+                return result
+            except BaseException as exc:
+                with _MEMORY_OPERATIONS_LOCK:
+                    entry.update(status="failed", error=f"{type(exc).__name__}: {exc}",
+                                 exception=exc, updated_at=time.time())
+                raise
+            finally:
+                _MEMORY_CAPACITY.release()
+
+        try:
+            future = _MEMORY_EXECUTOR.submit(worker)
+        except BaseException:
+            _MEMORY_CAPACITY.release()
+            raise
+        entry["future"] = future
+        with _MEMORY_OPERATIONS_LOCK:
+            # Keep the registry bounded without discarding active operations.
+            old = sorted(((key, value) for key, value in _MEMORY_OPERATIONS.items()
+                          if value.get("status") != "running"),
+                         key=lambda pair: float(pair[1].get("updated_at") or 0))
+            for key, _value in old[:-200]:
+                _MEMORY_OPERATIONS.pop(key, None)
+            _MEMORY_OPERATIONS[op_id] = entry
+    try:
+        value = future.result(timeout=timeout)
+    except FutureTimeout:
+        cancelled = future.cancel()
+        return False, {
+            "ok": False,
+            "code": "memory_timeout",
+            "error": f"La operación de memoria excedió {timeout:g} segundos",
+            "retryable": False if write else True,
+            "timeout_seconds": timeout,
+            "operation_id": op_id,
+            "operation_may_continue": not cancelled,
+            "fallback": "Usa 'graphtyn memory context' con el mismo GRAPHTYN_HOME y --path del proyecto.",
+        }
+    return True, value
 
 def _cached_index_dir(workspace: Path) -> Path:
     return project_store_dir(data_home(), workspace)
@@ -80,6 +190,24 @@ def _graph_workspace(default_workspace: Path, args: dict[str, Any]) -> Path:
 def _tag_graph_result(result: dict[str, Any], workspace: Path) -> dict[str, Any]:
     result["project_context"] = _workspace_context(workspace)
     return result
+
+
+def _validate_expected_project(workspace: Path, args: dict[str, Any]) -> None:
+    """Reject a call when the client names a project other than this workspace."""
+    expected = str(args.get("expected_project") or "").strip()
+    if not expected:
+        return
+    context = _workspace_context(workspace)
+    accepted = {
+        str(context.get("workspace") or "").casefold(),
+        str(context.get("project_id") or "").casefold(),
+        str(context.get("project_name") or "").casefold(),
+    }
+    if expected.casefold() not in accepted:
+        raise ValueError(
+            f"MCP ligado a '{context['project_name']}' ({context['workspace']}), "
+            f"pero la llamada esperaba '{expected}'"
+        )
 
 
 def _validate_memory_owner(workspace: Path, agent_id: str | None) -> None:
@@ -273,7 +401,10 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
             impacted.append([alias, item.get("hop"), item.get("label"), item.get("via")])
 
     output = {key: value for key, value in result.items()
-              if key not in ("matched", "matches", "nodes", "links", "impacted", "estimated_tokens", "intent_terms", "operation_limit")}
+              if key not in ("matched", "matched_ids", "matches", "nodes", "links", "impacted", "estimated_tokens", "intent_terms", "operation_limit")}
+    explicit_matched_ids = result.get("matched_ids") or []
+    if explicit_matched_ids:
+        output["matches"] = [aliases[node_id] for node_id in explicit_matched_ids if node_id in aliases]
     if "contexts" in output:
         output["contexts"] = [
             {**{key: value for key, value in context.items() if key != "matched_ids"},
@@ -576,7 +707,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
     memory = SharedMemoryStore(workspace)
     intent_contexts: dict[str, dict] = {}
 
-    def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
         method = req.get("method")
         req_id = req.get("id")
 
@@ -598,276 +729,15 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 }
             }
         elif method == "tools/list":
-            response = {
-                "jsonrpc": "2.0",
-                "id": req_id,
-                "result": {
-                    "tools": [
-                        {
-                            "name": "graph_query_intent",
-                            "description": "Ruta principal adaptativa. Usa grafo compacto y, cuando la pregunta exige orden/condiciones/ciclo de vida, adjunta fragmentos mínimos de fuente. Devuelve complete_for y do_not_expand.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "request": {"type": "string", "description": "Pregunta o tarea completa"},
-                                    "intent": {"type": "string", "enum": ["auto", "overview", "flow", "bindings", "persistence", "tests", "impact"]},
-                                    "limit": {"type": "integer", "description": "Máximo de entidades; default 10"},
-                                    "evidence_mode": {"type": "string", "enum": ["auto", "compact", "balanced", "precision"], "description": "auto amplía solo preguntas que necesitan evidencia del cuerpo"},
-                                    "extends_context_id": {"type": "string", "description": "Contexto previo para devolver sólo evidencia nueva"},
-                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
-                                },
-                                "required": ["request"]
-                            }
-                        },
-                        {
-                            "name": "graph_analyze_change",
-                            "description": "Primera opción para flujos, bindings, persistencia e impacto. Devuelve targets, contratos, estado y operaciones internas compactas (ops). Responde con esa evidencia; expande sólo si falta un hecho y cita aliases.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "request": {"type": "string", "description": "Issue, requisito o cambio solicitado"},
-                                    "limit": {"type": "integer", "description": "Máximo de entidades; default 18"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"]},
-                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
-                                },
-                                "required": ["request"]
-                            }
-                        },
-                        {
-                            "name": "graph_context_bundle",
-                            "description": "Obtén evidencia compacta para hasta 10 símbolos en una llamada. Responde directamente si complete=true; expande sólo si falta un hecho.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "symbols": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
-                                    "depth": {"type": "integer", "description": "Default 1"},
-                                    "limit": {"type": "integer", "description": "Presupuesto global de nodos; default 12"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"], "description": "compact usa aliases evidence-v1 (default)"},
-                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
-                                },
-                                "required": ["symbols"]
-                            }
-                        },
-                        {
-                            "name": "graph_neighborhood",
-                            "description": "Obtén evidencia estructural de un símbolo. Si complete=true, los ceros de coverage son evidencia negativa suficiente: no busques sinónimos ni amplíes para reconfirmarlos.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "path": {"type": "string", "description": "Ruta del proyecto"},
-                                    "symbol": {"type": "string", "description": "Opcional: nombre de símbolo o archivo para devolver solo su vecindario"},
-                                    "depth": {"type": "integer", "description": "Saltos alrededor del símbolo (default 1)"},
-                                    "limit": {"type": "integer", "description": "Máximo de nodos; default 24"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"], "description": "compact (default) reduce tokens; full conserva todos los campos"}
-                                },
-                                "required": []
-                            }
-                        },
-                        {
-                            "name": "graph_blast_radius",
-                            "description": "Calcula impacto con evidencia E/I/A. Si complete=true, coverage=0 confirma ausencia de relaciones; no hagas búsquedas adicionales para reconfirmar.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "symbol": {"type": "string", "description": "Nombre de la función o clase"},
-                                    "depth": {"type": "integer", "description": "Profundidad máxima de recorrido (default 2)"},
-                                    "limit": {"type": "integer", "description": "Máximo de impactos; default 24"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"]},
-                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
-                                },
-                                "required": ["symbol"]
-                            }
-                        },
-                        {
-                            "name": "graph_search_concepts",
-                            "description": "Busca nombres, descripciones y operaciones internas (AddScoped, Publish, Skip/Take, etc.). Devuelve coincidencias compactas; usa graph_analyze_change para agrupar un flujo.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "query": {"type": "string", "description": "Término o concepto semántico a buscar"},
-                                    "limit": {"type": "integer", "description": "Máximo de resultados; default 12"},
-                                    "response_mode": {"type": "string", "enum": ["compact", "full"]},
-                                    "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
-                                },
-                                "required": ["query"]
-                            }
-                        },
-                        {
-                            "name": "graph_history_search",
-                            "description": "Busca en el historial de sesiones y acciones pasadas del agente para recordar eventos o decisiones.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {"query": {"type": "string", "description": "Término de búsqueda en el historial"}},
-                                "required": ["query"]
-                            }
-                        },
-                        {
-                            "name": "graph_history_timeline",
-                            "description": "Devuelve la secuencia cronológica de acciones de una sesión previa para contexto completo.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {"session_id": {"type": "string", "description": "ID de sesión opcional"}},
-                                "required": []
-                            }
-                        },
-                        {
-                            "name": "graph_history_get",
-                            "description": "Recupera la observación detallada de una acción pasada específica por su ID.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {"id": {"type": "integer", "description": "ID de la observación"}},
-                                "required": ["id"]
-                            }
-                        },
-                        {
-                            "name": "memory_session_start",
-                            "description": "Abre una sesión atribuida para compartir conocimiento dentro de este proyecto.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "agent_id": {"type": "string"}, "task": {"type": "string"},
-                                "branch": {"type": "string"}, "base_commit": {"type": "string"},
-                                "capture_enabled": {"type": "boolean"}}, "required": ["agent_id", "task"]}
-                        },
-                        {
-                            "name": "memory_checkpoint",
-                            "description": "Guarda una decisión, resultado o handoff con atribución y evidencia.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "session_id": {"type": "string"},
-                                "kind": {"type": "string", "enum": ["episodic", "decision", "fact", "procedure", "outcome", "correction", "handoff"]},
-                                "title": {"type": "string"}, "content": {"type": "string"},
-                                "scope": {"type": "string", "enum": ["private", "project", "team"]},
-                                "files": {"type": "array", "items": {"type": "string"}},
-                                "node_ids": {"type": "array", "items": {"type": "string"}},
-                                "tests": {"type": "array", "items": {"type": "string"}}},
-                                "required": ["session_id", "kind", "title", "content"]}
-                        },
-                        {
-                            "name": "memory_append",
-                            "description": "Añade un mensaje o evento saneado; requiere captura opt-in en la sesión.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "session_id": {"type": "string"}, "role": {"type": "string", "enum": ["user", "assistant", "tool"]},
-                                "content": {"type": "string"}, "event_type": {"type": "string"},
-                                "metadata": {"type": "object"}}, "required": ["session_id", "role", "content"]}
-                        },
-                        {
-                            "name": "memory_ingest_turn",
-                            "description": "Hook idempotente por turno: abre/reutiliza sesión externa, captura mensajes autorizados, compacta y genera embeddings.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "agent_id": {"type": "string"}, "external_session_id": {"type": "string"},
-                                "task": {"type": "string"}, "branch": {"type": "string"},
-                                "messages": {"type": "array", "items": {"type": "object", "properties": {
-                                    "role": {"type": "string", "enum": ["user", "assistant", "tool"]},
-                                    "content": {"type": "string"}, "event_type": {"type": "string"},
-                                    "metadata": {"type": "object"}}, "required": ["role", "content"]}},
-                                "consent": {"type": "boolean"}, "compact": {"type": "boolean"},
-                                "close": {"type": "boolean"},
-                                "provider": {"type": "string", "enum": ["auto", "deterministic", "ollama", "api"]}},
-                                "required": ["agent_id", "external_session_id", "task", "messages", "consent"]}
-                        },
-                        {
-                            "name": "memory_search",
-                            "description": "Recupera recuerdos compartidos entre sesiones con atribución de agente y sesión.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "query": {"type": "string"}, "requester_agent": {"type": "string"},
-                                "limit": {"type": "integer"}, "branch": {"type": "string"}}, "required": ["query"]}
-                        },
-                        {
-                            "name": "memory_context",
-                            "description": "Genera contexto compacto con política de afirmaciones; identifique siempre al agente solicitante.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "query": {"type": "string"}, "requester_agent": {"type": "string", "description": "Identidad real del cliente o perfil, sin alias implícitos."},
-                                "branch": {"type": "string"}, "limit": {"type": "integer"},
-                                "token_budget": {"type": "integer"},
-                                "mode": {"type": "string", "enum": ["semantic", "continuity"], "description": "continuity agrega actividad reciente atribuida al proyecto."},
-                                "activity_limit": {"type": "integer", "minimum": 0, "maximum": 10},
-                                "include_graph": {"type": "boolean"},
-                                "neighbor_limit": {"type": "integer"}}, "required": ["query", "requester_agent"]}
-                        },
-                        {
-                            "name": "memory_project_context",
-                            "description": "Antes de responder sobre un proyecto registrado, recupera su memoria compartida usando el nombre, ID o ruta exactos. Si no es único, devuelve candidatos; no elige por similitud.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "project": {"type": "string"}, "query": {"type": "string"},
-                                "requester_agent": {"type": "string"},
-                                "token_budget": {"type": "integer", "minimum": 300, "maximum": 3000},
-                                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
-                                "mode": {"type": "string", "enum": ["semantic", "continuity"]},
-                                "activity_limit": {"type": "integer", "minimum": 0, "maximum": 10}},
-                                "required": ["project", "query", "requester_agent"]}
-                        },
-                        {
-                            "name": "memory_status",
-                            "description": "Estado de captura, cobertura temática, propietarios y ruta del almacén MCP actual.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "requester_agent": {"type": "string", "description": "Identidad real que consulta el estado."}}}
-                        },
-                        {
-                            "name": "memory_ingest_evidence",
-                            "description": "Ingiere benchmarks como evidencia verificada, hasheada y ligada a la revisión Git.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "files": {"type": "array", "items": {"type": "string"}}}}
-                        },
-                        {
-                            "name": "memory_session_end",
-                            "description": "Cierra una sesión y opcionalmente persiste un resumen handoff.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "session_id": {"type": "string"}, "summary": {"type": "string"},
-                                "observed_commit": {"type": "string"}}, "required": ["session_id"]}
-                        },
-                        {
-                            "name": "memory_correct",
-                            "description": "Crea una corrección versionada y marca la memoria anterior como superseded.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "memory_id": {"type": "string"}, "session_id": {"type": "string"},
-                                "title": {"type": "string"}, "content": {"type": "string"}},
-                                "required": ["memory_id", "session_id", "title", "content"]}
-                        },
-                        {
-                            "name": "memory_forget",
-                            "description": "Invalida o elimina físicamente una memoria; sólo puede hacerlo su agente autor.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "memory_id": {"type": "string"}, "requester_agent": {"type": "string"},
-                                "physical": {"type": "boolean"}}, "required": ["memory_id", "requester_agent"]}
-                        },
-                        {
-                            "name": "memory_compact",
-                            "description": "Extrae memorias proposed desde mensajes saneados de una sesión opt-in; Qwen/API nunca verifica hechos automáticamente.",
-                            "inputSchema": {"type": "object", "properties": {
-                                "session_id": {"type": "string"},
-                                "provider": {"type": "string", "enum": ["auto", "deterministic", "ollama", "api"]}},
-                                "required": ["session_id"]}
-                        },
-                        {
-                            "name": "graph_register_project",
-                            "description": "Registra autónomamente una ruta de proyecto en Graphtyn.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "path": {"type": "string", "description": "Ruta absoluta del proyecto"},
-                                    "name": {"type": "string", "description": "Nombre del proyecto"}
-                                },
-                                "required": ["path"]
-                            }
-                        }
-                    ]
-                }
-            }
-            from .core.topic_contracts import TOPIC_TOOLS
-            response["result"]["tools"].extend(TOPIC_TOOLS)
-            if tool_profile == "intent":
-                response["result"]["tools"] = [
-                    tool for tool in response["result"]["tools"]
-                    if tool["name"] in {"graph_query_intent", "memory_context", "memory_project_context", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review", "memory_topics_enrich"}
-                ]
-            elif tool_profile == "memory":
-                response["result"]["tools"] = [
-                    tool for tool in response["result"]["tools"]
-                    if tool["name"] == "graph_query_intent" or tool["name"].startswith("memory_")
-                ]
-            return response
+            return tools_list_response(req_id, tool_profile)
         elif method == "tools/call":
             params = req.get("params", {})
             name = params.get("name")
             args = params.get("arguments", {})
+            if str(name or "").startswith("graph_") and name != "graph_register_project":
+                _validate_expected_project(_graph_workspace(workspace, args), args)
+            elif str(name or "").startswith("memory_") or name == "project_doctor":
+                _validate_expected_project(workspace, args)
 
             if name == "graph_query_intent":
                 graph_workspace = _graph_workspace(workspace, args)
@@ -908,6 +778,14 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 history.log_event("mcp", "query_intent", f"Consulta {raw['intent']} de una ronda", {"request": request[:240], "context_id": context_id, "workspace": str(graph_workspace), "estimated_tokens": result["estimated_tokens"]})
                 return {"jsonrpc": "2.0", "id": req_id,
                         "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
+            elif name == "graph_validate_answer":
+                graph_workspace = _graph_workspace(workspace, args)
+                graph = apply_decisions(get_workspace_graph(graph_workspace, parser), graph_workspace)
+                result = validate_answer(
+                    graph, str(args.get("answer") or ""), args.get("claims"), project_root=graph_workspace
+                )
+                _tag_graph_result(result, graph_workspace)
+                return _mcp_text(req_id, result)
             elif name == "graph_analyze_change":
                 graph_workspace = _graph_workspace(workspace, args)
                 graph = get_workspace_graph(graph_workspace, parser)
@@ -1031,6 +909,8 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     "jsonrpc": "2.0", "id": req_id,
                     "result": {"content": [{"type": "text", "text": json.dumps({"query": q, "results": events}, indent=2)}]}
                 }
+            elif name == "memory_operation_status":
+                return _mcp_text(req_id, _memory_operation_status(str(args.get("operation_id") or "")))
             elif name == "memory_session_start":
                 _validate_memory_owner(workspace, str(args.get("agent_id") or ""))
                 result = memory.start_session(str(args.get("agent_id") or ""), str(args.get("task") or ""),
@@ -1115,8 +995,16 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 result = memory.status(agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")))
                 result["path"] = str(workspace.resolve())
                 return _mcp_text(req_id, result)
+            elif name == "project_doctor":
+                return _mcp_text(req_id, memory.project_doctor(
+                    agent_ids=_memory_scope_agents(workspace, args.get("requester_agent"))))
             elif name == "memory_ingest_evidence":
                 return _mcp_text(req_id, memory.ingest_benchmark_evidence(args.get("files") or None))
+            elif name == "memory_evidence_status":
+                return _mcp_text(req_id, memory.evidence_status(
+                    args.get("memory_id"), requester_agent=args.get("requester_agent"),
+                    agent_ids=_memory_scope_agents(workspace, args.get("requester_agent")),
+                    limit=max(1, min(1000, int(args.get("limit") or 100)))))
             elif name == "memory_session_end":
                 _validate_memory_session_owner(workspace, memory, args.get("session_id"))
                 result = memory.end_session(str(args.get("session_id") or ""), args.get("summary"),
@@ -1171,6 +1059,20 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
 
         return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": "Method not found"}}
 
+    def handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
+        params = req.get("params", {}) if isinstance(req, dict) else {}
+        name = params.get("name") if isinstance(params, dict) else None
+        if (req.get("method") == "tools/call" and str(name or "").startswith("memory_")
+                and name != "memory_operation_status"):
+            args = params.get("arguments", {}) if isinstance(params.get("arguments", {}), dict) else {}
+            ok, result = _bounded_memory_call(
+                lambda: _handle_request(req), write=name in _MEMORY_WRITE_TOOLS,
+                operation_id=args.get("operation_id"))
+            if not ok:
+                return _mcp_text(req.get("id"), result)
+            return result
+        return _handle_request(req)
+
     for line in sys.stdin:
         if not line.strip():
             continue
@@ -1188,3 +1090,9 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
 
         except Exception as e:
             sys.stderr.write(f"[Graphtyn MCP Error] {e}\n")
+            req_id = req.get("id") if isinstance(req, dict) else None
+            if req_id is not None:
+                error = {"jsonrpc": "2.0", "id": req_id,
+                         "error": {"code": -32602, "message": str(e)}}
+                sys.stdout.write(json.dumps(error) + "\n")
+                sys.stdout.flush()

@@ -26,7 +26,7 @@ _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
 _MEDIA_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg")
 
-def _vision_ask(host: str, model: str, image_path: Path, timeout: int = 60) -> str:
+def _vision_ask(host: str, model: str, image_path: Path, timeout: int = 20) -> str:
     try:
         import base64
         try:
@@ -258,7 +258,9 @@ def _extract_symbol_source(root_dir: Path, rel_path: str, sym_name: str, kind: s
             break
     return "\n".join(lines[start:end + 1])[:2000]
 
-def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict = None, changed: set = None, model_override: str = None, vision_model_override: str = None):
+def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict = None,
+                    changed: set = None, model_override: str = None,
+                    vision_model_override: str = None, allow_vision: bool = False):
     ai_calls = 0
     if not root_dir:
         return graph
@@ -371,6 +373,8 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                 file_nodes = file_nodes[:file_limit]
             image_limit = int(os.environ.get("GRAPHTYN_IMAGE_LIMIT", "0"))
             image_count = 0
+            vision_failures = 0
+            vision_failure_limit = max(1, int(os.environ.get("GRAPHTYN_VISION_FAILURE_LIMIT", "1")))
             media_limit = int(os.environ.get("GRAPHTYN_MEDIA_LIMIT", "0"))
             media_count = 0
             for n in file_nodes:
@@ -392,6 +396,12 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                 lang = _EXT_LANG.get(file_path.suffix.lower(), "código")
                 if file_path.suffix.lower() in _IMAGE_EXTS:
                     image_count += 1
+                    if not allow_vision:
+                        n["details"] = f"Imagen en {rel_path}"
+                        continue
+                    if vision_failures >= vision_failure_limit:
+                        n["details"] = f"Imagen en {rel_path}"
+                        continue
                     if image_limit > 0 and image_count > image_limit:
                         n["details"] = f"Imagen en {rel_path}"
                         continue
@@ -425,6 +435,9 @@ def _enrich_with_ai(graph: dict, engine: str, root_dir: Path = None, prev: dict 
                     if ans:
                         n["details"] = f"{_clean_answer(ans)} ({rel_path})"
                     else:
+                        vision_failures += 1
+                        if vision_failures >= vision_failure_limit:
+                            print("[AI Enrich] Vision circuit breaker abierto; se omiten las imágenes restantes.")
                         n["details"] = f"Imagen en {rel_path}"
                     continue
                 if file_path.suffix.lower() in _MEDIA_EXTS:

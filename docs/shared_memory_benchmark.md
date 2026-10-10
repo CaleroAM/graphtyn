@@ -1,7 +1,8 @@
 # Benchmark de memoria compartida v1
 
-> Evidencia `PARTIAL`; consulte [`testing.md`](testing.md). No demuestra todavía
-> rendimiento empresarial a gran escala.
+> La suite v1 continúa siendo una regresión pequeña. Su extensión RF07 tiene
+> evidencia `FULL` para el protocolo local de 1k/10k/50k documentado, sin
+> extrapolar a rendimiento empresarial ni embeddings remotos.
 
 **Fecha:** 2026-08-22  
 **Corpus:** `benchmarks/shared_memory_v1.json`  
@@ -41,3 +42,50 @@ Antes de publicar una afirmación externa se requiere ampliar a por lo menos 30
 escenarios, tres formulaciones y tres agentes, conservar negativos difíciles y
 reportar intervalos de confianza. Los tokens usan la aproximación UTF-8/4 y no
 representan facturación de un proveedor.
+
+## Extensión de escala RF07
+
+El comando de escala acepta repeticiones y consultas deterministas:
+
+```bash
+graphtyn memory benchmark --suite scale --records 50000 \
+  --query-count 90 --repetitions 5 \
+  --output benchmarks/rf07_2026-10-09/scale_50000.json --path .
+python benchmarks/summarize_shared_memory_rf07.py benchmarks/rf07_2026-10-09
+```
+
+El mismo comando se ejecutó para 1.000 y 10.000 registros. El informe consolidado,
+entorno, umbrales, muestras por consulta y resultados de las cinco repeticiones están
+en [`benchmarks/rf07_2026-10-09/REPORT.md`](../benchmarks/rf07_2026-10-09/REPORT.md).
+Las consultas RF07 son sintéticas y contienen identificadores/anclas exactos del
+fixture. Miden regresión, escala y degradación de ese protocolo; no acreditan la
+misma calidad ante preguntas generales, paráfrasis abiertas o conversaciones reales.
+
+Para complementar esa medición sin alterar el protocolo sintético, use
+`--query-profile mixed`:
+
+```bash
+graphtyn memory benchmark --suite scale --records 1000 \
+  --query-count 90 --query-profile mixed --repetitions 1 --path .
+```
+
+El perfil mixto conserva la consulta con identificador exacto como control y
+añade preguntas en español y paráfrasis de decisiones que no contienen
+`scaleanchor`, además de negativos naturales sin palabras del fixture. El
+resultado separa recall/MRR y precisión negativa en `by_query_kind`; estas
+sondas complementan RF07 y no sustituyen su ejecución en 1.000, 10.000 y
+50.000 registros.
+
+Para ejercitar la procedencia sobre un proyecto real, el comando siguiente
+crea un almacén temporal, enlaza cada respuesta con archivos y nodos del
+checkout actual y registra cualquier fallo reproducible:
+
+```bash
+graphtyn memory project-evaluation --path . \
+  --output benchmarks/real_project_evaluation.json
+```
+
+Un caso positivo sólo pasa si la memoria esperada aparece y sus archivos y
+`node_ids` siguen resolviendo en el proyecto. Las preguntas negativas deben
+devolver cero memorias. Los errores se serializan en `errors` para convertirlos
+en regresiones permanentes.

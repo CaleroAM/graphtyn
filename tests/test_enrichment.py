@@ -128,17 +128,19 @@ def test_generate_semantic_graph_communities_and_god_nodes():
     assert "pertenece" in labels and "agrupa" in labels
 
 
-def test_scan_directory_respects_git_tracked(tmp_path):
+def test_scan_directory_respects_git_visibility(tmp_path):
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     (tmp_path / "tracked.py").write_text("def f():\n    return 1\n", encoding="utf-8")
     (tmp_path / ".gitignore").write_text("ignored.py\n", encoding="utf-8")
     (tmp_path / "ignored.py").write_text("def noise():\n    return 0\n", encoding="utf-8")
+    (tmp_path / "new.py").write_text("def pending():\n    return 2\n", encoding="utf-8")
     subprocess.run(["git", "add", "tracked.py", ".gitignore"], cwd=tmp_path, check=True)
     subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=tmp_path, check=True)
 
     graph_respect = ASTParser().scan_directory(tmp_path, respect_git=True)
     ids = {n["id"] for n in graph_respect["nodes"]}
     assert "file:tracked.py" in ids
+    assert "file:new.py" in ids
     assert "file:ignored.py" not in ids
 
     graph_all = ASTParser().scan_directory(tmp_path, respect_git=False)

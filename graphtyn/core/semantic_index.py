@@ -26,9 +26,23 @@ _ALIASES = {
     "autenticacion": ("authentication", "auth", "identity", "token", "credential"),
     "validación": ("validation", "validate", "verify", "check"),
     "validacion": ("validation", "validate", "verify", "check"),
+    "prueba": ("test", "tests", "verification"),
+    "pruebas": ("test", "tests", "verification"),
     "credencial": ("credential", "auth", "identity"),
     "credenciales": ("credential", "auth", "identity"),
     "identidad": ("identity", "auth", "authentication"),
+    "alcance": ("scope", "lexical", "local"),
+    "local": ("local", "lexical", "scope"),
+    "alias": ("alias", "import"),
+    "aliases": ("alias", "import"),
+    "importado": ("import", "imported"),
+    "importada": ("import", "imported"),
+    "procedencia": ("provenance", "evidence", "source"),
+    "ejecución": ("execution", "run", "command"),
+    "ejecucion": ("execution", "run", "command"),
+    "ejecuciones": ("execution", "run", "command"),
+    "registra": ("record", "store", "log"),
+    "registrar": ("record", "store", "log"),
     "verifica": ("verify", "validate", "check"), "comprobar": ("verify", "validate", "check"),
     "comprueba": ("verify", "validate", "check"),
     "usuario": ("user", "identity", "account"), "usuarios": ("user", "identity", "account"),
@@ -44,6 +58,13 @@ def _tokens(text: str) -> list[str]:
     split = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
     words = re.findall(r"[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_]{1,}", split.lower())
     return words + [alias for word in words for alias in _ALIASES.get(word, ())]
+
+
+def alias_tokens(text: str) -> list[str]:
+    """Return only explicit language/domain aliases, excluding generic split words."""
+    split = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
+    words = re.findall(r"[A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_]{1,}", split.lower())
+    return list(dict.fromkeys(alias for word in words for alias in _ALIASES.get(word, ())))
 
 
 def _text(node: dict[str, Any]) -> str:

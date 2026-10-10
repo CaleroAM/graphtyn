@@ -8,6 +8,7 @@ from pathlib import Path
 
 import graphtyn
 from graphtyn.api.main import app
+from graphtyn.cli_parser import build_parser
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,8 +46,8 @@ def test_ci_has_required_release_gates():
         assert version in ci
     for gate in ("python -m pytest -q", "python -m build", "smoke_frontend.py",
                  "test_security_leaks.py", "pip_audit", "docker build", "windows-latest",
-                 "./install.ps1", "Invoke-RestMethod", "graphtyn-unity-fixture",
-                 "onboard --path"):
+                 "python -m graphtyn.cli --version", "./install.ps1", "Invoke-RestMethod", "graphtyn-unity-fixture",
+                 "onboard --path", "tools/check_maintainability.py"):
         assert gate in ci
     release = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
     for gate in ("ci-gate", "GH_TOKEN", "EXPECTED_SHA", "--event push", "needs: ci-gate"):
@@ -88,8 +89,9 @@ def test_architecture_is_canonical_and_readme_has_compact_map():
     architecture = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for concept in ("FastAPI", "Starlette", "Uvicorn", "Dos grafos", "SQLite",
-                    "Empaquetado, despliegue y entrega", "0.10.1"):
+                    "Empaquetado, despliegue y entrega"):
         assert concept in architecture
+    assert f"`{graphtyn.__version__}`" in architecture
     assert architecture.count("```mermaid") >= 5
     assert "## Arquitectura en un minuto" in readme
     assert "[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)" in readme
@@ -97,5 +99,6 @@ def test_architecture_is_canonical_and_readme_has_compact_map():
 
 def test_serve_defaults_to_loopback_and_announces_dashboard_url():
     cli = (ROOT / "graphtyn" / "cli.py").read_text(encoding="utf-8")
-    assert 'serve_p.add_argument("--host", default="127.0.0.1"' in cli
+    args = build_parser().parse_args(["serve"])
+    assert args.host == "127.0.0.1"
     assert 'print(f"   Dashboard: {scheme}://{dashboard_host}:{args.port}")' in cli

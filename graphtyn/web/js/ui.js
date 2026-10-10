@@ -384,27 +384,51 @@ export function initWatchPolling() {
       state.watchTimer = setInterval(poll, 1500);
     }
 
-export function doReindex(full) {
+export async function doReindex(full) {
       const btn = document.getElementById('reindex-btn');
       const engineSel = document.getElementById('engine-sel');
-      const engineVal = engineSel ? engineSel.value : 'ast_local_llm';
+      const engineVal = engineSel ? engineSel.value : 'ast_pure';
       const engine = engineVal;
       const codeModelSel = document.getElementById('code-model-sel');
       const visionModelSel = document.getElementById('vision-model-sel');
       const codeModel = codeModelSel ? codeModelSel.value : '';
       const visionModel = visionModelSel ? visionModelSel.value : '';
+      const vision = !!document.getElementById('chk-vision')?.checked;
       const estVal = document.getElementById('est-time-val') ? document.getElementById('est-time-val').textContent : '';
-      btn.innerHTML = 'Indexando (' + estVal + ')…';
-      const body = { path: state.activePath, engine, full: !!full };
+      if (!btn || btn.disabled || !state.activePath) return;
+      const idleHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      btn.textContent = 'Preparando (' + estVal + ')…';
+      const body = { path: state.activePath, engine, full: !!full, vision };
       if (codeModel) body.model = codeModel;
-      if (visionModel) body.vision_model = visionModel;
-      fetch('/api/reindex', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      }).then(r => r.json()).then(() => {
-        btn.innerHTML = '<svg class="svg-ico" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>Reindexar';
+      if (vision && visionModel) body.vision_model = visionModel;
+      try {
+        const response = await fetch('/api/reindex', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+        });
+        const created = await response.json();
+        if (!response.ok || created.ok === false || !created.id) {
+          throw new Error(created.error || `HTTP ${response.status}`);
+        }
+        let job = created;
+        while (!['completed', 'failed', 'cancelled'].includes(job.status)) {
+          btn.textContent = `${job.message || 'Indexando'} · ${job.progress || 0}%`;
+          await new Promise(resolve => setTimeout(resolve, 700));
+          const statusResponse = await fetch(`/api/reindex/${encodeURIComponent(created.id)}`);
+          job = await statusResponse.json();
+          if (!statusResponse.ok || job.ok === false) throw new Error(job.error || `HTTP ${statusResponse.status}`);
+        }
+        if (job.status !== 'completed') throw new Error(job.error || job.message || 'Reindexación cancelada');
         loadProjects(); loadGraph();
-      });
+      } catch (error) {
+        console.error('Reindex failed', error);
+        window.alert(`No se pudo reindexar: ${error.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+        btn.innerHTML = idleHtml;
+      }
     }
 
 export function toggleGitignore(checked) {

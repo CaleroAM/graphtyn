@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,29 @@ def _mcp_call(workspace, requests, env=None):
         if line.strip():
             responses.append(json.loads(line))
     return res, responses
+
+
+def _compound_confidence_graph(second_confidence):
+    handler = "symbol:src/handler.py:handler"
+    service = "symbol:src/service.py:Service"
+    database = "symbol:src/db.py:Database"
+    return {
+        "metadata": {"path": ""},
+        "nodes": [
+            {"id": handler, "name": "handler", "kind": "function", "file": "src/handler.py",
+             "line": 1, "end_line": 15, "details": "Handles requests"},
+            {"id": service, "name": "Service", "kind": "class", "file": "src/service.py",
+             "line": 1, "end_line": 30, "details": "Coordinates tasks"},
+            {"id": database, "name": "Database", "kind": "class", "file": "src/db.py",
+             "line": 1, "end_line": 20, "details": "Stores records"},
+        ],
+        "links": [
+            {"source": handler, "target": service, "label": "llama", "confidence": "EXTRACTED",
+             "file": "src/handler.py", "line": 5},
+            {"source": service, "target": database, "label": "llama", "confidence": second_confidence,
+             "file": "src/service.py", "line": 10},
+        ],
+    }
 
 
 @pytest.fixture
@@ -54,6 +78,27 @@ def test_mcp_initialize_and_tools_list(workspace):
     context_tool = next(t for t in tools["result"]["tools"] if t["name"] == "memory_context")
     assert context_tool["inputSchema"]["properties"]["mode"]["enum"] == ["semantic", "continuity"]
     assert context_tool["inputSchema"]["properties"]["activity_limit"]["maximum"] == 10
+    assert "expected_project" in context_tool["inputSchema"]["properties"]
+
+
+def test_bounded_memory_call_returns_structured_timeout():
+    from graphtyn.mcp_server import _bounded_memory_call
+
+    ok, result = _bounded_memory_call(lambda: time.sleep(0.2), timeout_seconds=0.05)
+
+    assert ok is False
+    assert result["code"] == "memory_timeout"
+    assert result["retryable"] is True
+
+
+def test_mcp_expected_project_rejects_wrong_workspace(workspace):
+    _, responses = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 77, "method": "tools/call",
+        "params": {"name": "graph_query_intent", "arguments": {
+            "request": "resume el proyecto", "intent": "overview",
+            "expected_project": "otro-proyecto"}}}])
+
+    assert responses[0]["error"]["code"] == -32602
+    assert "otro-proyecto" in responses[0]["error"]["message"]
 
 
 def test_mcp_initialize_reports_bound_project_context(workspace):
@@ -91,7 +136,7 @@ def test_mcp_intent_profile_exposes_context_and_topic_expansion(workspace):
         capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ),
     )
     response = json.loads(res.stdout.strip())
-    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "memory_context", "memory_project_context", "memory_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
+    assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "graph_validate_answer", "project_doctor", "memory_context", "memory_project_context", "memory_status", "memory_evidence_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
 
 
 def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalog(workspace):
@@ -101,7 +146,9 @@ def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalo
         capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ))
     names = {tool["name"] for tool in json.loads(res.stdout)["result"]["tools"]}
     assert "graph_query_intent" in names and "memory_compact" in names
-    assert "graph_neighborhood" not in names and all(name == "graph_query_intent" or name.startswith("memory_") for name in names)
+    assert "graph_neighborhood" not in names and all(
+        name in {"graph_query_intent", "project_doctor"} or name.startswith("memory_") for name in names
+    )
 
 
 def test_mcp_memory_project_context_resolves_registered_project(workspace, tmp_path, monkeypatch):
@@ -308,6 +355,56 @@ def test_mcp_query_intent_overview_preserves_project_profile(workspace):
     assert result["project_profile"]["documentation"] == ["README.md"]
     assert result["project_profile"]["entry_points"] == ["main.py"]
     assert result["context_id"]
+
+
+def test_mcp_validate_answer_preserves_unsupported_and_operation_status(workspace):
+    (workspace / "service.py").write_text("def charge():\n    return True\n", encoding="utf-8")
+    _, responses = _mcp_call(workspace, [{
+        "jsonrpc": "2.0", "id": 381, "method": "tools/call",
+        "params": {"name": "graph_validate_answer", "arguments": {
+            "answer": "charge procesa 99 pagos por segundo (service.py:99).",
+        }},
+    }])
+    result = json.loads(responses[0]["result"]["content"][0]["text"])
+    assert result["schema_version"] == "2.0"
+    assert result["operation_ok"] is True
+    assert result["summary"]["supported"] == 0
+    assert result["summary"]["unsupported"] == 1
+    assert result["evidence_resolution"]["unresolved_citations"]
+
+
+@pytest.mark.parametrize(
+    ("second_confidence", "expected_verdict", "expected_reason", "ambiguity_present"),
+    [
+        ("EXTRACTED", "supported", "extracted_relations_confirmed", False),
+        ("AMBIGUOUS", "ambiguous", "claim_contains_ambiguous_relations", True),
+        ("INFERRED", "partially_supported", "inferred_relations_require_verification", False),
+    ],
+)
+def test_mcp_validate_answer_preserves_weakest_required_confidence(
+    workspace, tmp_path, second_confidence, expected_verdict, expected_reason, ambiguity_present,
+):
+    from graphtyn.core.storage import project_store_dir
+
+    home = tmp_path / "mcp-home"
+    graph = _compound_confidence_graph(second_confidence)
+    graph["metadata"]["path"] = str(workspace)
+    index = project_store_dir(home, workspace) / "index.json"
+    index.write_text(json.dumps(graph), encoding="utf-8")
+    claim = "handler calls Service, then Service calls Database"
+
+    _, responses = _mcp_call(workspace, [{
+        "jsonrpc": "2.0", "id": 382, "method": "tools/call",
+        "params": {"name": "graph_validate_answer", "arguments": {
+            "answer": claim, "claims": [{"text": claim}],
+        }},
+    }], env={"GRAPHTYN_HOME": str(home)})
+
+    result = json.loads(responses[0]["result"]["content"][0]["text"])
+    verdict = result["claims"][0]
+    assert verdict["verdict"] == expected_verdict
+    assert verdict["verdict_reason"] == expected_reason
+    assert verdict["ambiguity_present"] is ambiguity_present
 
 
 def test_mcp_graph_neighborhood(workspace):

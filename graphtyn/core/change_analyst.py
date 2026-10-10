@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import json
 from typing import Any
 
 
@@ -43,6 +44,68 @@ _MANIFEST_NAMES = {
     "cargo.toml", "go.mod", "pom.xml", "build.gradle", "build.gradle.kts",
     "gemfile", "dockerfile", "docker-compose.yml", "docker-compose.yaml",
 }
+
+
+def _intent_evidence_status(selected_intent: str, has_tests: bool) -> tuple[list[str], list[str]]:
+    missing = [] if has_tests or selected_intent != "tests" else ["tests"]
+    return ([] if missing else [selected_intent]), missing
+
+
+def _intent_can_stop(result: dict[str, Any]) -> bool:
+    return bool(result["stopping"]["sufficient_evidence"] and result["validation"]["ok"]
+                and not result["missing"])
+
+
+def _compact_overview_node(node: dict[str, Any]) -> dict[str, Any]:
+    compact = {key: node[key] for key in (
+        "id", "name", "kind", "file", "path", "line", "end_line", "degree",
+        "container", "namespace", "signature", "parser",
+    ) if node.get(key) not in (None, "", [], {})}
+    if node.get("details"):
+        compact["details"] = str(node["details"])[:240]
+    if node.get("imports"):
+        compact["imports"] = list(node["imports"][:8])
+    return compact
+
+
+def _finalize_overview_projection(result: dict[str, Any], selected: list[dict[str, Any]],
+                                  links: list[dict[str, Any]], token_budget: int = 4000) -> dict[str, Any]:
+    """Emit each entity once and enforce a serialized response budget."""
+    result["matched_ids"] = [str(node.get("id")) for node in selected[:5] if node.get("id")]
+    result.pop("matched", None)
+    result["nodes"] = [_compact_overview_node(node) for node in selected]
+    result["links"] = [
+        {key: link[key] for key in ("source", "target", "label", "confidence", "file", "line")
+         if link.get(key) not in (None, "")}
+        for link in links
+    ]
+    result["detail_refs"] = {
+        str(node["id"]): {"tool": "graph_neighborhood", "symbol": str(node.get("name") or node["id"]),
+                          "depth": 1}
+        for node in result["nodes"] if node.get("id")
+    }
+    result["projection_version"] = "overview-compact-v2"
+    result["payload_budget_tokens"] = int(token_budget)
+
+    def size() -> int:
+        return len(json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+
+    byte_budget = token_budget * 4
+    while size() > byte_budget and len(result["nodes"]) > 4:
+        removed = result["nodes"].pop()
+        result["detail_refs"].pop(str(removed.get("id")), None)
+        allowed = {node.get("id") for node in result["nodes"]}
+        result["links"] = [link for link in result["links"]
+                           if link.get("source") in allowed and link.get("target") in allowed]
+    if size() > byte_budget:
+        result["representative_flows"] = list(result.get("representative_flows") or [])[:3]
+        result["risk_signals"] = list(result.get("risk_signals") or [])[:4]
+    result["payload_bytes"] = size()
+    result["estimated_tokens"] = result["payload_bytes"] // 4
+    result["budget"].update({"selected_nodes": len(result["nodes"]),
+                             "payload_tokens": result["estimated_tokens"],
+                             "payload_token_budget": token_budget})
+    return result
 
 
 def _overview_package(graph: dict[str, Any], request: str, max_nodes: int) -> dict[str, Any]:
@@ -128,15 +191,14 @@ def _overview_package(graph: dict[str, Any], request: str, max_nodes: int) -> di
     }
     result = {
         "request": str(request or "").strip(), "intent": "overview", "intent_terms": _terms(request),
-        "project_profile": profile, "matched": selected[:min(5, len(selected))],
-        "nodes": selected, "links": links, "complete_for": ["overview"],
+        "project_profile": profile, "nodes": selected, "links": links, "complete_for": ["overview"],
         "missing": [] if selected else ["project evidence"], "do_not_expand": bool(selected),
         "guidance": "Explain purpose, technologies, entry points and subsystems from this evidence. Cite aliases; distinguish observed facts from inference.",
         "planner": "overview-v1", "budget": {"max_nodes": max_nodes, "selected_nodes": len(selected)},
         "operation_limit": 3,
     }
     from .overview_report import enrich_overview
-    return enrich_overview(graph, result)
+    return _finalize_overview_projection(enrich_overview(graph, result), selected, links)
 
 _QUERY_EXPANSIONS = {
     "eliminar": ("delete", "deleted"), "eliminación": ("delete", "deleted"),
@@ -205,8 +267,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         expansion for word, values in _QUERY_EXPANSIONS.items() if word in request_lower for expansion in values
     ))
     direct_terms = _terms(request)
-    # Qualified symbols are common in agent prompts (Mux.ServeHTTP,
-    # Controller::store). Preserve the full token and also resolve each
+    # Qualified symbols (Mux.ServeHTTP, Controller::store) preserve the full token;
+    # also resolve each
     # identifier so exact symbol anchoring wins over broad semantic matches.
     qualified_parts = [
         part.lower()
@@ -223,7 +285,6 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         (owner.lower(), member.lower())
         for owner, member in re.findall(r"([A-Za-z_][\w]*)\s*(?:::|\.|#)\s*([A-Za-z_][\w]*)", str(request or ""))
     ]
-
     def qualified_match(node: dict) -> bool:
         name = str(node.get("name") or "").lower()
         owner_text = " ".join(str(node.get(key) or "") for key in ("container", "signature", "owner_signature")).lower()
@@ -540,6 +601,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
             str(node.get("id") or ""),
         ))
     matched = exact_matched + remaining_matches
+    complete_for, missing = _intent_evidence_status(selected_intent, has_tests)
     result = {
         "request": str(request or "").strip(),
         "intent": selected_intent,
@@ -547,20 +609,20 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         "matched": matched[:min(5, len(matched))],
         "nodes": nodes,
         "links": links,
-        "complete_for": [selected_intent],
-        "missing": ([] if has_tests or selected_intent != "tests" else ["tests"]),
-        "do_not_expand": bool(nodes),
+        "complete_for": complete_for,
+        "missing": missing,
+        "do_not_expand": bool(nodes) and not missing,
         "guidance": "Answer now from ops and relations. Cite aliases. Do not call another graph tool when do_not_expand=true.",
         "planner": "adaptive-intent-v2",
         "budget": {"requested_ceiling": requested_ceiling, "max_nodes": max_nodes,
                    "selected_nodes": len(nodes), "complexity": complexity},
-        "stopping": {"sufficient_evidence": bool(nodes) and (bool(exact_matched) or len(nodes) >= 2),
+        "stopping": {"sufficient_evidence": bool(nodes) and not missing and (bool(exact_matched) or len(nodes) >= 2),
                      "reason": "exact target or multi-node evidence selected" if nodes else "no evidence selected"},
         "operation_limit": {"bindings": 12, "persistence": 8, "tests": 6, "impact": 5, "flow": 8}[selected_intent],
     }
     from .answer_validation import validate_context_package
     result["validation"] = validate_context_package(graph, result)
-    result["do_not_expand"] = bool(result["stopping"]["sufficient_evidence"] and result["validation"]["ok"])
+    result["do_not_expand"] = _intent_can_stop(result)
     return result
 
 

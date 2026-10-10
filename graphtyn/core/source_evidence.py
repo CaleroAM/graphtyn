@@ -65,6 +65,15 @@ def _numbered_excerpt(path: Path, start: int, end: int, line_budget: int) -> tup
     return text, start, end
 
 
+def _sync_stopping(result: dict[str, Any]) -> None:
+    stopping = result.get("stopping")
+    if stopping:
+        stopping["sufficient_evidence"] = bool(
+            stopping.get("sufficient_evidence") and not result.get("missing")
+            and result.get("do_not_expand")
+        )
+
+
 def attach_source_evidence(
     root: Path,
     result: dict[str, Any],
@@ -82,6 +91,7 @@ def attach_source_evidence(
     result["requested_obligations"] = obligations
     if mode == "compact" or result.get("intent") in {"overview", "impact"}:
         result["source_retrieval"] = {"enabled": False, "reason": "structural evidence is sufficient for this request"}
+        _sync_stopping(result)
         return result
 
     max_snippets = 1 if mode == "balanced" else 3
@@ -180,4 +190,5 @@ def attach_source_evidence(
             "Answer from relations, operations and exact source excerpts. Cite file:line. "
             "Use excerpt order for conditions and control flow; do not call another tool."
         )
+    _sync_stopping(result)
     return result

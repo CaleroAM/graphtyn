@@ -69,6 +69,15 @@ def test_adaptive_planner_uses_semantic_fallback_and_validates_context():
     assert result["stopping"]["sufficient_evidence"] is True
 
 
+def test_query_intent_does_not_claim_complete_tests_without_test_evidence():
+    result = query_intent(graph(), "Dime qué pruebas cubren SessionMiddleware", intent="tests", max_nodes=6)
+
+    assert result["missing"] == ["tests"]
+    assert result["complete_for"] == []
+    assert result["do_not_expand"] is False
+    assert result["stopping"]["sufficient_evidence"] is False
+
+
 def test_qualified_symbol_request_anchors_method_and_owner():
     data = {
         "nodes": [
@@ -120,6 +129,21 @@ def test_adaptive_source_evidence_reads_only_selected_symbol_body(tmp_path):
     assert "pool.Get" in result["source_evidence"][0]["text"]
     assert "UnrelatedSecret" not in result["source_evidence"][0]["text"]
     assert result["do_not_expand"] is True
+
+
+def test_source_evidence_keeps_stopping_consistent_with_missing_obligations(tmp_path):
+    source = tmp_path / "service.py"
+    source.write_text("def run():\n    return 1\n", encoding="utf-8")
+    package = {
+        "intent": "tests", "matched": [{"id": "s:run", "name": "run", "kind": "function",
+                                             "file": "service.py", "line": 1, "end_line": 2}],
+        "nodes": [], "complete_for": [], "missing": ["tests"],
+        "do_not_expand": False,
+        "stopping": {"sufficient_evidence": True},
+    }
+    result = attach_source_evidence(tmp_path, package, "Describe run", "compact")
+    assert result["do_not_expand"] is False
+    assert result["stopping"]["sufficient_evidence"] is False
 
 
 def test_compact_source_mode_never_reads_files(tmp_path):
@@ -209,3 +233,22 @@ def test_statistical_protocol_has_36_tasks_and_paired_statistics():
     stats = paired_statistics(rows, bootstrap_samples=100)
     assert stats["pairs"] == 2
     assert stats["token_reduction"] == 0.5
+
+
+def test_overview_projection_is_compact_bounded_and_does_not_duplicate_matches():
+    nodes = [{"id": "file:README.md", "name": "README.md", "kind": "doc",
+              "file": "README.md", "degree": 30, "details": "x" * 5000}]
+    for index in range(40):
+        nodes.append({"id": f"s:{index}", "name": f"Service{index}", "kind": "class",
+                      "file": f"src/domain_{index}/service.py", "line": index + 1,
+                      "degree": 40 - index, "details": "detail " * 1000,
+                      "operations": [{"name": f"operation-{item}", "text": "body " * 200}
+                                     for item in range(20)]})
+    result = query_intent({"nodes": nodes, "links": []}, "arquitectura del proyecto", "overview", 12)
+    encoded = json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+    assert result["projection_version"] == "overview-compact-v2"
+    assert "matched" not in result and result["matched_ids"]
+    assert len(encoded) <= result["payload_budget_tokens"] * 4
+    assert all(len(node.get("details", "")) <= 240 for node in result["nodes"])
+    assert set(result["detail_refs"]) == {node["id"] for node in result["nodes"]}

@@ -108,8 +108,15 @@ export async function validateAgentAnswer() {
   if (!input?.value.trim() || !out) return;
   const response = await fetch('/api/validate-answer', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({path:state.activePath,answer:input.value})});
   const data = await response.json();
-  if (!response.ok || !data.ok) { out.innerHTML = `<div class="quality-error">${esc(data.error || 'Falló la validación')}</div>`; return; }
-  out.innerHTML = `<div class="quality-score"><strong>${Math.round(data.traceability_score*100)}%</strong><span>trazabilidad</span></div><div class="quality-note">${data.summary.supported} respaldadas · ${data.summary.partial} parciales · ${data.summary.unsupported} sin respaldo</div>`;
+  if (!response.ok || data.operation_ok === false) { out.innerHTML = `<div class="quality-error">${esc(data.error || 'Falló la validación')}</div>`; return; }
+  const summary = data.summary || {};
+  const unresolved = data.evidence_resolution || {};
+  const claims = (data.claims || []).map(item => `<div class="ambiguity-item"><strong>${esc(item.verdict)}</strong> · ${esc(item.claim)}<div class="quality-note">${esc(item.verdict_reason || '')}${(item.unresolved_citations || []).length ? ' · citas sin resolver: ' + item.unresolved_citations.map(esc).join(', ') : ''}</div></div>`).join('');
+  out.innerHTML = `<div class="quality-score"><strong>${Math.round((data.traceability_score || 0)*100)}%</strong><span>trazabilidad</span></div>
+    <div class="quality-note">${summary.supported || 0} respaldadas · ${summary.partially_supported || 0} parciales · ${summary.ambiguous || 0} ambiguas · ${summary.unsupported || 0} sin respaldo · ${summary.abstained || 0} abstenciones</div>
+    ${data.completeness?.complete === false ? `<div class="quality-warning">Respuesta incompleta: ${(data.completeness.reasons || []).map(esc).join(', ')}</div>` : ''}
+    ${(unresolved.unresolved_citations || []).length || (unresolved.unresolved_evidence_ids || []).length ? `<div class="quality-warning">Evidencia sin resolver: ${[...(unresolved.unresolved_citations || []), ...(unresolved.unresolved_evidence_ids || [])].map(esc).join(', ')}</div>` : ''}
+    ${claims}`;
 }
 
 export async function generateChangeReport() {

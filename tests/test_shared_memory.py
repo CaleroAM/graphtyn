@@ -10,7 +10,8 @@ import pytest
 
 from graphtyn.core.shared_memory import SharedMemoryStore
 from graphtyn.core import shared_memory as memory_store_module
-from graphtyn.core.memory_benchmark import build_stability_dataset, run_memory_benchmark
+from graphtyn.core.memory_benchmark import build_scale_dataset, build_stability_dataset, run_memory_benchmark
+from graphtyn.core.memory_scale_benchmark import run_scale_benchmark
 from graphtyn.core import memory_extraction
 
 
@@ -192,7 +193,18 @@ def test_censored_vendor_report_is_tagged_as_comparison_evidence(tmp_path, monke
 
     assert result["imported"] and not result["errors"]
     assert found[0]["metadata"]["comparison_evidence"] is True
-    assert "Comparativa verificada: true" in found[0]["content"]
+    assert "Comparativa detectada: true" in found[0]["content"]
+    assert "Métricas verificadas: false" in found[0]["content"]
+
+
+def test_benchmark_evidence_rejects_general_project_documents(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "PLAN_PROYECTO.md").write_text("# Plan general", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="artefacto no permitido"):
+        SharedMemoryStore(project).ingest_benchmark_evidence(["PLAN_PROYECTO.md"])
 
 
 def test_private_memory_is_visible_only_to_its_agent(tmp_path, monkeypatch):
@@ -379,7 +391,7 @@ def test_memory_scope_cli_manages_owner_policy_without_overwriting_registration(
 
 
 def test_cli_sync_all_spaces_surfaces_store_conflict_and_continues(tmp_path, monkeypatch, capsys):
-    from graphtyn import cli
+    from graphtyn import cli, cli_memory
 
     conflict, healthy = tmp_path / "conflict", tmp_path / "healthy"
     conflict.mkdir(); healthy.mkdir()
@@ -397,13 +409,13 @@ def test_cli_sync_all_spaces_surfaces_store_conflict_and_continues(tmp_path, mon
         def list(self):
             return []
 
-    monkeypatch.setattr(cli, "ProjectIdentityRegistry", Registry)
-    monkeypatch.setattr(cli, "existing_store_db", lambda path: Path(path) / "memory-v2.db")
+    monkeypatch.setattr(cli_memory, "ProjectIdentityRegistry", Registry)
+    monkeypatch.setattr(cli_memory, "existing_store_db", lambda path: Path(path) / "memory-v2.db")
     def sync(path, **_kwargs):
         if Path(path) == conflict:
             raise memory_store_module.MemoryStoreConflictError("duplicate store")
         return {"ok": True, "path": str(path)}
-    monkeypatch.setattr(cli, "sync_memory_workspace", sync)
+    monkeypatch.setattr(cli_memory, "sync_memory_workspace", sync)
     monkeypatch.setattr(sys, "argv", ["graphtyn", "memory", "sync", "--all-spaces", "--consent"])
 
     cli.main()
@@ -593,6 +605,22 @@ def test_context_truncates_large_memory_to_respect_budget(tmp_path, monkeypatch)
     assert context["memories"][0]["truncated"] is True
 
 
+def test_context_preserves_coverage_shape_after_minimum_budget_fallback(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+    session = store.start_session("scale-evaluator", "Scale probe")
+    store.checkpoint(session["id"], "fact", "Deterministic record",
+                     "Unique retrieval fact scaleanchor00000 belongs to record zero.")
+
+    context = store.context("¿Qué evidencia existe para rf07_tema_inexistente_00?",
+                            requester_agent="scale-evaluator", token_budget=300,
+                            include_graph=False)
+
+    assert context["coverage"]["source_message_search"]["returned_messages"] == 0
+
+
 def test_ingest_and_context_persist_token_telemetry(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
     project = tmp_path / "project"
@@ -654,6 +682,16 @@ def test_benchmark_evidence_is_verified_revision_bound_and_idempotent(tmp_path, 
         "systems": {"Graphtyn": {"tokens": 40000, "quality": 0.55},
                     "Graphify": {"tokens": 64000, "quality": 0.64}},
         "limitations": ["diagnostic sample, not a superiority claim"],
+        "execution_record": {
+            "command": ["python", "bench.py"], "exit_code": 0,
+            "started_at": 1, "finished_at": 2, "executor": "pytest-fixture",
+            "log_digest_sha256": "0" * 64,
+            "project": {"id": "fixture-project"},
+            "git_context": {"commit": "fixture-commit", "dirty": False},
+            "test_files": [], "data_files": [],
+            "environment_digest_sha256": "1" * 64,
+            "declared_dependencies": ["BENCHMARKS.md"],
+        },
     }), encoding="utf-8")
     store = SharedMemoryStore(project)
 
@@ -666,11 +704,55 @@ def test_benchmark_evidence_is_verified_revision_bound_and_idempotent(tmp_path, 
     assert first["imported"] and not first["errors"]
     assert second["imported"] == []
     assert second["reused"] == first["imported"]
-    assert memory["status"] == "verified"
-    assert memory["claim_policy"] == "verified_measured"
+    assert memory["status"] == "observed"
+    assert memory["claim_policy"] == "imported_only"
     assert context["memories"][0]["id"] == memory["id"]
     assert "systems.Graphtyn.tokens: 40000" in memory["content"]
     assert "limitations" in memory["content"]
+
+
+def test_evidence_status_and_visual_graph_link_execution_metrics_tests_and_dependencies(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home-evidence-graph"))
+    project = tmp_path / "project"
+    (project / "benchmarks" / "probe").mkdir(parents=True)
+    (project / "tests").mkdir()
+    (project / "subject.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (project / "tests" / "test_probe.py").write_text("def test_probe(): pass\n", encoding="utf-8")
+    artifact = project / "benchmarks" / "probe" / "summary.json"
+    store = SharedMemoryStore(project)
+    record = store.run_local_execution(
+        command=[sys.executable, "-m", "pytest", "-q", "tests/test_probe.py"],
+        executor="ci/local",
+        test_files=["tests/test_probe.py"],
+        data_files=[],
+        declared_dependencies=["subject.py"],
+    )
+    artifact.write_text(json.dumps({
+        "subject": "subject.py", "tests": ["tests/test_probe.py"], "tests_passed": 1,
+        "execution_id": record["execution_id"],
+        "execution_record": record,
+    }), encoding="utf-8")
+    imported = store.ingest_benchmark_evidence(["benchmarks/probe/summary.json"])
+    memory_id = imported["imported"][0]
+
+    status = store.evidence_status(memory_id, requester_agent="dashboard")
+    assert status["records"][0]["claim_policy"] == "verified_measured"
+    assert status["records"][0]["execution_state"] == "success"
+    graph = store.attribution_graph("dashboard")
+    labels = {link["label"] for link in graph["links"]}
+    assert {"sustentada por", "resulta de", "genera resultado", "mide", "produce",
+            "verifica", "depende de"} <= labels
+    evidence_node = next(node for node in graph["nodes"] if node.get("memory_id") == memory_id)
+    assert evidence_node["verification_level"] == "execution_observed"
+    assert evidence_node["claim_policy"] == "verified_measured"
+    assert any(node["kind"] == "memory_execution" for node in graph["nodes"])
+    assert any(node["kind"] == "memory_result_artifact" for node in graph["nodes"])
+    assert any(node["kind"] == "memory_metric" and node["name"] == "tests_passed" for node in graph["nodes"])
+
+    (project / "subject.py").write_text("VALUE = 2\n", encoding="utf-8")
+    stale_graph = store.attribution_graph("dashboard")
+    assert any(link["label"] == "invalida" for link in stale_graph["links"])
+    assert store.evidence_status(memory_id, requester_agent="dashboard")["records"][0]["claim_policy"] == "stale"
 
 
 def test_context_attributes_missing_requester_instead_of_null(tmp_path, monkeypatch):
@@ -834,6 +916,11 @@ def test_versioned_memory_benchmark_meets_quality_and_token_guardrails(tmp_path)
     assert result["metrics"]["mrr"] == 1.0
     assert result["metrics"]["attribution_accuracy"] == 1.0
     assert result["metrics"]["estimated_tokens_total"] <= 4000  # Full envelopes, including provenance/telemetry.
+    assert result["metrics"]["latency_ms_p50"] <= result["metrics"]["latency_ms_p95"]
+    assert result["metrics"]["python_peak_memory_bytes"] > 0
+    assert result["metrics"]["token_source"] == "utf8_estimate"
+    assert result["metrics"]["provider_reported_tokens_total"] is None
+    assert set(result["metrics"]["by_split"]) == {"evaluation"}
     assert result["failures"] == []
 
 
@@ -978,7 +1065,8 @@ def test_stability_suite_has_30x3x3_design_and_meets_v1_guardrails():
     dataset = build_stability_dataset()
     assert dataset["design"] == {"scenarios": 30, "formulations_per_scenario": 3,
                                   "requesters": ["codex", "agy", "openclaw"],
-                                  "positive_queries": 270, "negative_queries": 15}
+                                  "positive_queries": 270, "negative_queries": 15,
+                                  "development_scenarios": 10, "evaluation_scenarios": 20}
 
     result = run_memory_benchmark(dataset)
     metrics = result["metrics"]
@@ -990,8 +1078,76 @@ def test_stability_suite_has_30x3x3_design_and_meets_v1_guardrails():
     assert metrics["negative_accuracy"] == 1.0
     assert metrics["estimated_tokens_mean"] <= 750  # Previously counted memory bodies only.
     assert set(metrics["by_requester_agent"]) == {"agy", "codex", "openclaw"}
+    assert set(metrics["by_split"]) == {"development", "evaluation"}
+    assert metrics["latency_ms_p50"] <= metrics["latency_ms_p95"]
+    assert metrics["python_peak_memory_bytes"] > 0
     assert all(item["recall_at_5"] >= .98 for item in metrics["by_requester_agent"].values())
     assert result["failures"] == []
+
+
+def test_scale_suite_is_prepared_without_claiming_execution():
+    dataset = build_scale_dataset(1_000, query_count=12)
+
+    assert dataset["suite"] == "scale-1000"
+    assert dataset["scale"] == {"records": 1000, "executed": False}
+    assert len(dataset["memories"]) == 1000
+    assert len([query for query in dataset["queries"] if query["expected_key"] is not None]) == 12
+    assert all(query["split"] == "evaluation" for query in dataset["queries"])
+
+
+def test_scale_suite_mixed_profile_adds_realistic_query_categories():
+    dataset = build_scale_dataset(1_000, query_count=2, query_profile="mixed")
+
+    kinds = {query["query_kind"] for query in dataset["queries"]}
+    assert dataset["query_profile"] == "mixed"
+    assert {"exact_identifier", "spanish", "paraphrase", "no_answer"} <= kinds
+    assert any("¿Qué registro" in query["query"] for query in dataset["queries"])
+    natural_positive = [query for query in dataset["queries"]
+                        if query["expected_key"] is not None and query["query_kind"] == "paraphrase"]
+    assert natural_positive
+    assert all("scaleanchor" not in query["query"] for query in natural_positive)
+    assert any(query["query_kind"] == "no_answer_natural" and "scaleanchor" not in query["query"]
+               for query in dataset["queries"])
+    assert all(query["expected_key"] is None
+               for query in dataset["queries"] if query["query_kind"] == "no_answer")
+
+
+def test_rf07_scale_runner_reports_paired_quality_performance_and_isolation(tmp_path):
+    dataset = build_scale_dataset(1_000, query_count=3, query_profile="mixed")
+    dataset["memories"][0].update({"title": "Authentication centralized [scaleanchor00000]",
+                                    "content": "AuthService validates JWT credentials for scaleanchor00000"})
+    dataset["queries"].append({"id": "old-semantic-alias", "query": "¿cómo se comprueba la identidad?",
+                               "expected_key": "scale-00000", "expected_agent": "scale-agent-0",
+                               "agent_id": "scale-evaluator", "token_budget": 500, "split": "evaluation"})
+    output = tmp_path / "rf07.json"
+
+    result = run_scale_benchmark(dataset, repetitions=1, output=output)
+
+    assert result["ok"] is True, result["runs"][0]["normal"]["guardrails"]
+    assert result["dataset"]["records"] == 1_000
+    assert result["repetitions"] == 1
+    assert output.is_file()
+    run = result["runs"][0]
+    assert run["indexing"]["records_per_second"] > 0
+    assert run["incremental"]["records"] == 10
+    assert run["incremental"]["records_per_second"] > 0
+    assert run["database_bytes"] > 0
+    assert run["peak_rss_fraction"] < .8
+    assert run["isolation_violations"] == 0
+    for mode in ("normal", "degraded_without_embeddings"):
+        metrics = run[mode]
+        assert metrics["recall_at_5"] == metrics["mrr"] == metrics["ndcg_at_10"] == 1.0
+        assert metrics["negative_accuracy"] == metrics["attribution_accuracy"] == 1.0
+        assert metrics["retrieval_mode_explicit"] == 1.0
+        assert metrics["latency_ms_p50"] <= metrics["latency_ms_p95"] <= metrics["latency_ms_p99"]
+        assert metrics["errors"] == []
+        assert {"exact_identifier", "spanish", "paraphrase", "no_answer"} <= set(metrics["by_query_kind"])
+        assert metrics["by_query_kind"]["no_answer"]["negative_accuracy"] == 1.0
+        natural = [sample for sample in metrics["samples"] if sample["query_kind"] == "paraphrase"]
+        assert natural and all("scaleanchor" not in sample["query"] for sample in natural)
+        natural_negative = [sample for sample in metrics["samples"]
+                            if sample["query_kind"] == "no_answer_natural"]
+        assert natural_negative and all(not sample["returned"] for sample in natural_negative)
 
 
 def test_ingest_agent_profile_from_workspace(tmp_path, monkeypatch):
@@ -1082,6 +1238,34 @@ def test_memory_sync_watcher_persists_cycle_results_and_success_separately(tmp_p
     assert succeeded["failed_cycle_count"] == 1
     assert succeeded["last_success_at"] == succeeded["last_cycle_finished"]
     assert succeeded["last_cycle"]["ok"] is True
+
+
+def test_project_doctor_distinguishes_stale_permission_and_missing_activity(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home-doctor-matrix"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+
+    initial = store.project_doctor()
+    assert initial["ok"] is True and initial["operation_ok"] is True
+    assert initial["signals"]["capture"]["state"] == "not_configured"
+    assert initial["signals"]["retrieval"]["state"] == "never_observed"
+
+    store.update_sync_watcher("cli-sync:stale", "watching", interval=5)
+    with store._connect() as conn:
+        conn.execute("UPDATE memory_sync_watchers SET heartbeat=0 WHERE watcher_id='cli-sync:stale'")
+    stale = store.project_doctor()
+    assert stale["health"] == "degraded"
+    assert stale["signals"]["capture"]["state"] == "stale"
+    assert stale["signals"]["capture"]["cause"] == "heartbeat_expired"
+    assert "stale_sync_watchers" in stale["signals"]["storage"]["details"]["issues"]
+
+    store.update_sync_watcher("cli-sync:stale", "error", interval=5, error="Permission denied: archive")
+    denied = store.project_doctor()
+    watcher = denied["signals"]["capture"]["watchers"][0]
+    assert watcher["effective_state"] == "degraded"
+    assert watcher["cause"] == "permission_denied"
+    assert denied["signals"]["storage"]["details"]["diagnostics"][0]["remedy"]
 
 
 def test_memory_sync_watcher_schema_migrates_existing_database(tmp_path, monkeypatch):

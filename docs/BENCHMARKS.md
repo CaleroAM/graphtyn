@@ -12,7 +12,7 @@
 | go-chi, Go | PARTIAL; la regresión dirigida cambió el protocolo |
 | CleanArchitecture, .NET | PARTIAL; v8 no completó las tres condiciones |
 | ZERP, Laravel/React | PARTIAL; diagnóstico y una tarea dirigida |
-| Memoria compartida | PARTIAL; falta más escala y repetición |
+| Memoria compartida | FULL para el protocolo local RF07 de 1k/10k/50k; no extrapola a embeddings remotos |
 | Comparativa Graphtyn 0.8.0 vs Graphify 0.9.58 | PARTIAL; cuatro tareas, una repetición; sin afirmación de superioridad |
 | 36 tareas multilenguaje | PENDING |
 
@@ -20,6 +20,36 @@ La medición de la release 0.8.0 está en
 [`competitive-validation-0.8.0.md`](competitive-validation-0.8.0.md). Separa
 conteos estructurales de cobertura factual y documenta que el piloto de cuatro
 tareas no permite declarar un ganador general.
+
+## Memoria compartida RF07 — 9 oct 2026
+
+Cinco repeticiones independientes de 1.000, 10.000 y 50.000 registros midieron
+carga inicial, actualización incremental, 90 consultas positivas y 10 negativas
+por modo, recuperación sin embeddings, tamaño de SQLite, RSS y aislamiento. Las
+tres escalas obtuvieron Recall@5, MRR, nDCG@10, atribución y negativos de 1,0, sin
+errores ni fugas. p95 normal fue 136,568, 148,645 y 198,901 ms; el RSS máximo fue
+90,19 MB. Informe y datos crudos:
+[`benchmarks/rf07_2026-10-09/REPORT.md`](../benchmarks/rf07_2026-10-09/REPORT.md).
+
+Esto acredita el protocolo local con `feature-hash` en el equipo documentado. No
+acredita búsqueda vectorial remota, concurrencia multiusuario ni un SLA universal.
+Las consultas de la medición publicada son sintéticas y usan identificadores/anclas
+exactos del fixture; los resultados no demuestran la misma calidad para preguntas
+generales sin esas anclas. Para una medición complementaria,
+`graphtyn memory benchmark --suite scale --query-profile mixed` conserva la
+sonda exacta como control y añade decisiones en español y paráfrasis sin
+identificadores `scaleanchor`, junto con negativos naturales sin respaldo; sus
+resultados quedan separados por `by_query_kind`. La evaluación de proyecto
+real (`graphtyn memory project-evaluation`) comprueba además que las citas de
+archivo y nodo sigan resolviendo y que una pregunta sin evidencia produzca una
+respuesta vacía.
+El smoke visual de navegador quedó omitido porque Chromium no encontró
+`libstdc++.so.6`; la suite no convierte esa omisión ambiental en una aprobación visual.
+
+La distribución publicada `v0.10.4` sí pasó el job nativo **Windows portability**
+de CI (Python 3.12, suite de API/memoria, construcción e instalación del wheel,
+onboarding UTF-8, dashboard y servicio): [run 35679035785](https://github.com/CaleroAM/graphtyn/actions/runs/35679035785).
+Ese resultado corresponde al commit publicado `3d754e96a60fc3d1caaa1dec9423678065c49645`; el commit del nuevo release debe volver a ejecutar el mismo job antes de etiquetarse.
 
 ## Validación de regresión — 25 ago 2026
 

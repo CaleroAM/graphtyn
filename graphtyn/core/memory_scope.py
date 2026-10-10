@@ -54,7 +54,8 @@ def ensure_project_memory_scope(workspace: str | Path, *, agent_ids=()) -> dict:
     current.update({"path": str(root), "space_type": "project", "agent_ids": owners})
     atomic_write_json(registry_path, rows)
     return {"ok": True, "path": str(root), "space_type": "project",
-            "agent_ids": owners, "registered": True, "registry": str(registry_path)}
+            "agent_ids": owners, "restricted": False, "configured": bool(owners),
+            "registered": True, "registry": str(registry_path)}
 
 
 def resolve_memory_scope(workspace: str | Path, *, registrations=None, sources=None) -> dict:

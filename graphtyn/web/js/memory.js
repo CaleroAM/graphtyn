@@ -1,6 +1,6 @@
-import { state, getMemoryColor } from './state.js';
+import { state } from './state.js';
 import { setView } from './controls.js';
-import { destroyGraph, focusNode, loadGraph, refreshStyleInPlace, updateMemoryFocusBanner } from './graph.js';
+import { destroyGraph, focusNode, loadGraph, updateMemoryFocusBanner } from './graph.js';
 import { buildPulseSim } from './sim.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -304,36 +304,20 @@ export function loadMoreMemorySessions() {
 
 export async function showSharedMemoryGraph() {
   const status = document.getElementById('memory-status');
-  if (!state.activePath || !state.graphInst) { status.textContent = 'Selecciona un proyecto y espera a que cargue el grafo.'; return; }
-  status.textContent = 'Construyendo mapa de autoría y recuperación…';
-  try {
-    const agent = document.getElementById('memory-agent').value.trim() || 'dashboard';
-    const sessionParam = state.memoryFocusSession ? `&session_id=${encodeURIComponent(state.memoryFocusSession)}` : '';
-    const data = await request(`/api/memory/graph?path=${encodeURIComponent(state.activePath)}&requester_agent=${encodeURIComponent(agent)}&view=topics&detail=${state.memoryGraphMode === 'detailed'}&limit=400&session_limit=100${sessionParam}`);
-    state.activeView = 'memory';
-    state.fullData = {nodes:data.nodes || [], links:data.links || []};
-    state.memoryGraphMeta = data.metadata || null;
-    state.selectedNode = null; state.selectedNeighbors = null;
-    state.graphInst.graphData(state.fullData);
-    refreshStyleInPlace();
-    window.refreshMemoryColorControls?.();
-    updateMemoryFocusBanner(data);
-    setTimeout(() => state.graphInst?.zoomToFit?.(700, 55), 80);
-    const legend = document.getElementById('memory-agent-legend');
-    if (legend) {
-      const keyHtml = item => `<span class="memory-agent-key"><i data-memory-legend-kind="memory_agent" style="background:${esc(getMemoryColor('memory_agent', 'node'))}"></i>${esc(item.id)}</span>`;
-      const html = '<span class="memory-agent-key"><i data-memory-legend-kind="memory_topic" style="background:' + esc(getMemoryColor('memory_topic', 'node')) + '"></i>tema</span>' +
-        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_session" style="background:' + esc(getMemoryColor('memory_session', 'node')) + '"></i>sesión</span>' +
-        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_episode" style="background:' + esc(getMemoryColor('memory_episode', 'node')) + '"></i>episodio</span>' +
-        '<span class="memory-agent-key"><i data-memory-legend-kind="memory_entity" style="background:' + esc(getMemoryColor('memory_entity', 'node')) + '"></i>entidad</span>' +
-        (data.agents || []).map(keyHtml).join('')
-        + ((data.consulters || []).length ? '<span class="memory-agent-key">· sólo consulta:</span>'
-          + data.consulters.map(keyHtml).join('') : '');
-      legend.innerHTML = html || '<div class="memory-empty">No hay agentes atribuidos.</div>';
-    }
-    status.textContent = `${data.metadata?.mode === 'detailed' ? 'Vista detallada' : 'Vista simplificada'} · ${(data.metadata?.topic_returned ?? data.metadata?.topic_count) || 0}/${(data.metadata?.topic_total ?? data.metadata?.topic_count) || 0} temas · ${(data.metadata?.session_returned ?? 0) || 0}/${(data.metadata?.session_total ?? 0) || 0} sesiones · ${data.nodes.length} nodos · ${data.links.length} relaciones`;
-    closeMemoryPanel();
-  } catch (error) { status.textContent = `No se pudo generar el mapa: ${error.message}`; }
+  if (!state.activePath) { status.textContent = 'Selecciona un proyecto.'; return; }
+  state.memoryGraphView = state.memoryGraphView === 'evidence' ? 'topics' : 'evidence';
+  state.activeView = 'memory';
+  state.activeAgentId = null;
+  state.memoryFocusSession = null;
+  state.selectedNode = null;
+  state.selectedNeighbors = null;
+  const button = document.getElementById('memory-graph-btn');
+  if (button) button.textContent = state.memoryGraphView === 'evidence' ? 'Ver temas y sesiones' : 'Ver evidencia y relaciones';
+  status.textContent = state.memoryGraphView === 'evidence'
+    ? 'Abriendo evidencia, ejecuciones, métricas y dependencias…'
+    : 'Abriendo temas, sesiones y episodios…';
+  closeMemoryPanel();
+  loadGraph();
 }
 
 export async function searchSharedMemory() {

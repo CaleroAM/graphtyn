@@ -20,7 +20,15 @@ def graph():
 
 
 def test_answer_validation_requires_traceable_evidence():
-    result = validate_answer(graph(), "handler calls Service (src/api.py:9). UnknownThing controls billing.")
+    g = graph()
+    # Ambiguous relations preserve uncertainty and must not be promoted to supported
+    amb_res = validate_answer(g, "handler calls Service (src/api.py:9). UnknownThing controls billing.")
+    assert amb_res["summary"]["ambiguous"] >= 1
+    assert amb_res["summary"]["unsupported"] >= 1
+
+    # Extracted relations provide verified evidence
+    g["links"][0]["confidence"] = "EXTRACTED"
+    result = validate_answer(g, "handler calls Service (src/api.py:9). UnknownThing controls billing.")
     assert result["summary"]["total"] == 2
     assert result["summary"]["supported"] >= 1
     assert result["summary"]["unsupported"] >= 1

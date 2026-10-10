@@ -1,0 +1,70 @@
+{
+  "ok": true,
+  "project": "<PROJECT>",
+  "graph": {
+    "nodes": 2570,
+    "links": 6246
+  },
+  "cases": [
+    {
+      "id": "local-alias-resolution",
+      "query": "¿Cómo se conserva el alcance local antes de resolver un alias importado?",
+      "expected_key": "relation-resolution",
+      "returned_keys": [
+        "relation-resolution",
+        "execution-evidence"
+      ],
+      "hit": true,
+      "provenance_ok": true,
+      "provenance_errors": [],
+      "reason": "evidence_and_provenance_resolved",
+      "context_id": "0644c1c581d7",
+      "claim_policies": [
+        "imported_only",
+        "imported_only"
+      ]
+    },
+    {
+      "id": "structured-execution-evidence",
+      "query": "¿Cómo se comprueban las métricas estructuradas de una ejecución local?",
+      "expected_key": "execution-evidence",
+      "returned_keys": [
+        "relation-resolution",
+        "execution-evidence"
+      ],
+      "hit": true,
+      "provenance_ok": true,
+      "provenance_errors": [],
+      "reason": "evidence_and_provenance_resolved",
+      "context_id": "e7715d450819",
+      "claim_policies": [
+        "imported_only",
+        "imported_only"
+      ]
+    },
+    {
+      "id": "missing-orbital-protocol",
+      "query": "teletransporte orbital protocolizado",
+      "expected_key": null,
+      "returned_keys": [],
+      "hit": false,
+      "provenance_ok": true,
+      "provenance_errors": [],
+      "reason": "abstained",
+      "context_id": "9bf90b04efc8",
+      "claim_policies": []
+    }
+  ],
+  "errors": [],
+  "contract": {
+    "positive_requires": [
+      "expected memory returned",
+      "all files exist under project",
+      "all node_ids resolve in current graph"
+    ],
+    "negative_requires": [
+      "no memories returned"
+    ],
+    "provenance_source": "current project files and AST graph"
+  }
+}

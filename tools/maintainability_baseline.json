@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "description": "Deuda heredada: puede reducirse o eliminarse, pero no crecer.",
+  "limits": {
+    "module": 1200,
+    "class": 800,
+    "function": 120
+  },
+  "hotspots": [
+    {
+      "key": "graphtyn/api/enrich.py::_enrich_with_ai",
+      "kind": "function",
+      "max_lines": 330
+    },
+    {
+      "key": "graphtyn/api/main.py",
+      "kind": "module",
+      "max_lines": 3210
+    },
+    {
+      "key": "graphtyn/core/agent_benchmark.py::compare_agent_runs",
+      "kind": "function",
+      "max_lines": 251
+    },
+    {
+      "key": "graphtyn/core/ast_parser.py::ASTParser",
+      "kind": "class",
+      "max_lines": 900
+    },
+    {
+      "key": "graphtyn/core/ast_parser.py::ASTParser.scan_directory",
+      "kind": "function",
+      "max_lines": 792
+    },
+    {
+      "key": "graphtyn/core/ast_parser.py::ASTParser.scan_directory._add_tree_symbols",
+      "kind": "function",
+      "max_lines": 140
+    },
+    {
+      "key": "graphtyn/core/change_analyst.py::query_intent",
+      "kind": "function",
+      "max_lines": 372
+    },
+    {
+      "key": "graphtyn/core/history_import.py",
+      "kind": "module",
+      "max_lines": 1470
+    },
+    {
+      "key": "graphtyn/core/history_import.py::parse_history_database",
+      "kind": "function",
+      "max_lines": 238
+    },
+    {
+      "key": "graphtyn/core/history_import.py::discover_histories",
+      "kind": "function",
+      "max_lines": 160
+    },
+    {
+      "key": "graphtyn/core/history_import.py::import_histories",
+      "kind": "function",
+      "max_lines": 158
+    },
+    {
+      "key": "graphtyn/core/impact.py::analyze_impact",
+      "kind": "function",
+      "max_lines": 144
+    },
+    {
+      "key": "graphtyn/core/memory_consolidation.py::consolidate_legacy_brain",
+      "kind": "function",
+      "max_lines": 552
+    },
+    {
+      "key": "graphtyn/core/memory_topics.py",
+      "kind": "module",
+      "max_lines": 1547
+    },
+    {
+      "key": "graphtyn/core/memory_topics.py::TopicMemoryMixin",
+      "kind": "class",
+      "max_lines": 1488
+    },
+    {
+      "key": "graphtyn/core/memory_topics.py::TopicMemoryMixin.topic_graph",
+      "kind": "function",
+      "max_lines": 250
+    },
+    {
+      "key": "graphtyn/core/openclaw_integration.py::connect_openclaw",
+      "kind": "function",
+      "max_lines": 215
+    },
+    {
+      "key": "graphtyn/core/shared_memory.py",
+      "kind": "module",
+      "max_lines": 3663
+    },
+    {
+      "key": "graphtyn/core/shared_memory.py::SharedMemoryStore",
+      "kind": "class",
+      "max_lines": 3175
+    },
+    {
+      "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.context",
+      "kind": "function",
+      "max_lines": 305
+    },
+    {
+      "key": "graphtyn/core/shared_memory.py::SharedMemoryStore._verify_execution_provenance",
+      "kind": "function",
+      "max_lines": 134
+    },
+    {
+      "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.ingest_benchmark_evidence",
+      "kind": "function",
+      "max_lines": 223
+    },
+    {
+      "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.status",
+      "kind": "function",
+      "max_lines": 173
+    },
+    {
+      "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.attribution_graph",
+      "kind": "function",
+      "max_lines": 209
+    },
+    {
+      "key": "graphtyn/core/tree_sitter_backend.py::parse_file",
+      "kind": "function",
+      "max_lines": 254
+    },
+    {
+      "key": "graphtyn/core/tree_sitter_backend.py::parse_file.visit",
+      "kind": "function",
+      "max_lines": 170
+    },
+    {
+      "key": "graphtyn/mcp_server.py::evidence_result",
+      "kind": "function",
+      "max_lines": 155
+    },
+    {
+      "key": "graphtyn/mcp_server.py::run_mcp_server",
+      "kind": "function",
+      "max_lines": 402
+    },
+    {
+      "key": "graphtyn/mcp_server.py::run_mcp_server._handle_request",
+      "kind": "function",
+      "max_lines": 351
+    }
+  ]
+}
