@@ -241,8 +241,15 @@ def _guardrails(metrics: dict[str, Any], isolation_violations: int,
     for name, threshold in QUALITY_THRESHOLDS.items():
         key, comparison = (name[:-4], "min") if name.endswith("_min") else (name[:-4], "max")
         value = actual.get(key)
-        passed = value is not None and (value >= threshold if comparison == "min" else value <= threshold)
-        results[name] = {"actual": value, "threshold": threshold, "passed": passed}
+        measured = value is not None
+        # RSS is an optional host metric. A platform without a supported
+        # process API must report it as unmeasured rather than failing all
+        # functional guardrails; the report retains the missing value.
+        passed = True if key == "peak_rss_fraction" and not measured else (
+            measured and (value >= threshold if comparison == "min" else value <= threshold)
+        )
+        results[name] = {"actual": value, "threshold": threshold,
+                         "measured": measured, "passed": passed}
     return results
 
 

@@ -30,19 +30,30 @@ def _windows_memory() -> tuple[int, int, int | None]:
                 ("pagefile", ctypes.c_size_t), ("peak_pagefile", ctypes.c_size_t),
             ]
 
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.GlobalMemoryStatusEx.argtypes = [ctypes.POINTER(MemoryStatus)]
+        kernel32.GlobalMemoryStatusEx.restype = wintypes.BOOL
         status = MemoryStatus()
         status.length = ctypes.sizeof(status)
-        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+        if not kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
             return 0, 0, None
-        counters = ProcessMemory()
-        counters.cb = ctypes.sizeof(counters)
-        handle = ctypes.windll.kernel32.GetCurrentProcess()
-        measured = ctypes.windll.psapi.GetProcessMemoryInfo(
-            handle, ctypes.byref(counters), counters.cb
-        )
-        return int(status.total_physical), int(status.available_physical), (
-            int(counters.peak_working_set) if measured else None
-        )
+
+        peak_working_set = None
+        try:
+            psapi = ctypes.WinDLL("psapi", use_last_error=True)
+            psapi.GetProcessMemoryInfo.argtypes = [
+                wintypes.HANDLE, ctypes.POINTER(ProcessMemory), wintypes.DWORD,
+            ]
+            psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+            counters = ProcessMemory()
+            counters.cb = ctypes.sizeof(counters)
+            handle = kernel32.GetCurrentProcess()
+            if psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+                peak_working_set = int(counters.peak_working_set)
+        except (AttributeError, OSError, TypeError, ValueError):
+            pass
+
+        return int(status.total_physical), int(status.available_physical), peak_working_set
     except (AttributeError, ImportError, OSError, TypeError, ValueError):
         return 0, 0, None
 

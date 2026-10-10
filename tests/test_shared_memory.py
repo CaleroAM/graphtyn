@@ -1123,7 +1123,7 @@ def test_rf07_scale_runner_reports_paired_quality_performance_and_isolation(tmp_
 
     result = run_scale_benchmark(dataset, repetitions=1, output=output)
 
-    assert result["ok"] is True
+    assert result["ok"] is True, result["runs"][0]["normal"]["guardrails"]
     assert result["dataset"]["records"] == 1_000
     assert result["repetitions"] == 1
     assert output.is_file()
