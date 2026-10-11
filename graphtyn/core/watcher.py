@@ -144,9 +144,6 @@ class ProjectWatcher:
 
     def _run(self) -> None:
         self.running = True
-        if not self._manifest:
-            self._manifest = self._snapshot()
-            self._save_manifest()
         while not self._stop.wait(self.interval):
             try:
                 self.scan_once(refresh=True)
@@ -159,6 +156,17 @@ class ProjectWatcher:
         if self._thread and self._thread.is_alive():
             return
         self._stop.clear()
+        # Reconcile before returning so callers never read a stale index on the
+        # first request after a restart.  With no prior manifest every eligible
+        # source is treated as created, which also repairs indexes produced
+        # while file watching was disabled.
+        try:
+            self.scan_once(refresh=True)
+            self.last_error = ""
+        except Exception as exc:
+            # Keep the watcher alive so transient parser or filesystem errors
+            # are retried by the polling loop and remain visible in status.
+            self.last_error = str(exc)
         self._thread = threading.Thread(target=self._run, name=f"graphtyn-watch-{self.root.name}", daemon=True)
         self._thread.start()
 

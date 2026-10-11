@@ -5,8 +5,21 @@ compatibles con PEP 440.
 
 ## [Unreleased]
 
-Los cambios posteriores a `0.10.5` se documentarán aquí antes de la próxima
+Los cambios posteriores a `0.10.6` se documentarán aquí antes de la próxima
 versión.
+
+## [0.10.6] - 2026-10-11
+
+### Corregido
+
+- El watcher reconcilia de forma síncrona los cambios ocurridos mientras
+  Graphtyn estaba apagado antes de servir el índice. Si falta su manifiesto,
+  reconstruye el grafo en lugar de aceptar una fotografía antigua.
+- El dashboard recarga el proyecto cuando cambia la versión del watcher,
+  incluido el reinicio de su contador después de reiniciar el servicio.
+- La vista detallada de memoria carga las relaciones entre temas y entidades
+  en una consulta por lote, evitando una conexión por cada combinación y los
+  bloqueos observados en proyectos con cientos de temas.
 
 ## [0.10.5] - 2026-10-10
 
