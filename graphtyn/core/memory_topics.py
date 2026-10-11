@@ -685,7 +685,8 @@ class TopicMemoryMixin:
             placeholders = ",".join("?" for _ in topic_ids)
             with self._connect() as db:
                 entity_scope = f" AND ep.agent_id IN ({','.join('?' for _ in authorized_agents)})" if authorized_agents is not None else ""
-                entities = db.execute(f"""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name,e.metadata_json
+                entity_links = db.execute(f"""SELECT DISTINCT e.id,e.kind,e.entity_key,e.name,e.metadata_json,
+                    te.topic_id,te.relation,te.confidence,te.source_message_id
                     FROM entities e JOIN topic_entities te ON te.entity_id=e.id
                     JOIN topic_episodes ep ON ep.topic_id=te.topic_id JOIN sessions es ON es.id=ep.session_id
                     WHERE te.topic_id IN ({placeholders}) AND (es.capture_enabled=1 OR es.agent_id=?)
@@ -696,24 +697,19 @@ class TopicMemoryMixin:
                     FROM topic_episodes e JOIN sessions es ON es.id=e.session_id AND es.agent_id=e.agent_id
                     WHERE e.topic_id IN ({placeholders}) AND (es.capture_enabled=1 OR es.agent_id=?)
                     {episode_scope} ORDER BY e.created_at,e.id""", [*topic_ids, requester, *(authorized_agents or [])]).fetchall()
-            for entity in entities:
+            for entity in entity_links:
                 entity_id = "entity:" + entity["id"]
                 try:
                     entity_metadata = json.loads(entity["metadata_json"] or "{}")
                 except (TypeError, ValueError):
                     entity_metadata = {}
-                nodes[entity_id] = {"id": entity_id, "kind": "memory_entity", "name": entity["name"],
-                                    "details": f"{entity['kind']}:{entity['entity_key']}",
-                                    "entity_id": entity["id"], "entity_kind": entity["kind"],
-                                    "entity_key": entity["entity_key"], "metadata": entity_metadata}
-                for topic_id in topic_ids:
-                    with self._connect() as db:
-                        linked = db.execute("SELECT relation,confidence,source_message_id FROM topic_entities WHERE topic_id=? AND entity_id=?",
-                                            (topic_id, entity["id"])).fetchone()
-                    if linked:
-                        links.append({"source": "topic:" + topic_id, "target": entity_id,
-                                      "label": linked[0], "confidence": linked[1],
-                                      "source_message_id": linked[2]})
+                nodes.setdefault(entity_id, {"id": entity_id, "kind": "memory_entity", "name": entity["name"],
+                                             "details": f"{entity['kind']}:{entity['entity_key']}",
+                                             "entity_id": entity["id"], "entity_kind": entity["kind"],
+                                             "entity_key": entity["entity_key"], "metadata": entity_metadata})
+                links.append({"source": "topic:" + entity["topic_id"], "target": entity_id,
+                              "label": entity["relation"], "confidence": entity["confidence"],
+                              "source_message_id": entity["source_message_id"]})
             for episode in episodes[: max(1, min(1200, limit * 4))]:
                 episode_id = "episode:" + episode["id"]
                 topic_id = "topic:" + episode["topic_id"]

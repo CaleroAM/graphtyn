@@ -80,3 +80,45 @@ def test_watcher_refreshes_index_atomically(tmp_path):
     second_graph = json.loads((store / "index.json").read_text(encoding="utf-8"))
     assert any(node.get("name") == "second" for node in second_graph["nodes"])
     assert not (store / "index.tmp").exists()
+
+
+def test_watcher_reconciles_offline_changes_before_start_returns(tmp_path):
+    project = tmp_path / "project"
+    store = tmp_path / "store"
+    project.mkdir()
+    source = project / "service.py"
+    source.write_text("def before_restart():\n    return 1\n", encoding="utf-8")
+
+    first = ProjectWatcher(project, store)
+    first.scan_once(refresh=True)
+    source.write_text("def after_restart():\n    return 2\n", encoding="utf-8")
+
+    restarted = ProjectWatcher(project, store, interval=60)
+    restarted.start()
+    try:
+        graph = json.loads((store / "index.json").read_text(encoding="utf-8"))
+        assert any(node.get("name") == "after_restart" for node in graph["nodes"])
+        assert not any(node.get("name") == "before_restart" for node in graph["nodes"])
+        assert restarted.version == 1
+        assert restarted.last_event["modified"] == ["service.py"]
+    finally:
+        restarted.stop()
+
+
+def test_watcher_rebuilds_existing_index_when_manifest_is_missing(tmp_path):
+    project = tmp_path / "project"
+    store = tmp_path / "store"
+    project.mkdir()
+    source = project / "service.py"
+    source.write_text("def current_source():\n    return 1\n", encoding="utf-8")
+    store.mkdir()
+    (store / "index.json").write_text(json.dumps({"nodes": [], "links": []}), encoding="utf-8")
+
+    watcher = ProjectWatcher(project, store, interval=60)
+    watcher.start()
+    try:
+        graph = json.loads((store / "index.json").read_text(encoding="utf-8"))
+        assert any(node.get("name") == "current_source" for node in graph["nodes"])
+        assert watcher.last_event["created"] == ["service.py"]
+    finally:
+        watcher.stop()

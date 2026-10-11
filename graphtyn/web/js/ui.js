@@ -374,7 +374,7 @@ export function initWatchPolling() {
         data.projects.forEach(project => {
           const previous = state.watchVersions[project.path];
           state.watchVersions[project.path] = project.version || 0;
-          if (previous !== undefined && project.version > previous && project.path === state.activePath) {
+          if (previous !== undefined && project.version !== previous && project.path === state.activePath) {
             loadProjects();
             loadGraph();
           }

@@ -218,6 +218,30 @@ def test_distinct_button_topics_are_connected_by_explicit_entity(store):
     assert graph['metadata']['entity_count'] >= 1
 
 
+def test_detailed_topic_graph_loads_entity_links_in_one_batch(store, monkeypatch):
+    session = store.start_session('agy', 'Button details', capture_enabled=True)
+    sid = session['id']
+    for number in range(1, 9):
+        store.append_message(sid, 'user', f'Cambia el color del botón {number}')
+    store.process_topics(sid)
+
+    original_connect = store._connect
+    connection_count = 0
+
+    def counted_connect():
+        nonlocal connection_count
+        connection_count += 1
+        return original_connect()
+
+    monkeypatch.setattr(store, '_connect', counted_connect)
+    graph = store.topic_graph(limit=100, detail=True)
+
+    assert graph['metadata']['entity_count'] >= 8
+    # The detailed graph has a fixed number of store-level reads. It must not
+    # open one connection for every topic/entity pair.
+    assert connection_count <= 12
+
+
 def test_named_buttons_share_design_context_without_merging_work(store):
     session = store.start_session('agy', 'Button design', capture_enabled=True)
     sid = session['id']
