@@ -15,6 +15,12 @@ from .type_evidence import apply_type_evidence
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
 
 _MEDIA_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg")
+_EXTENSIONLESS_SOURCE_NAMES = {
+    "dockerfile", "gnumakefile", "justfile", "makefile",
+}
+_STRUCTURED_SOURCE_NAMES = {
+    "composer.json", "package.json",
+}
 _DOC_SECRET_RE = re.compile(
     r"(?i)\b(api[_-]?key|secret|password|passwd|access[_-]?token)\b(\s*[:=]\s*)([^\s,;]+)"
 )
@@ -91,6 +97,7 @@ VALID_EXTS = (
     ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp",
     ".mp3", ".wav", ".m4a", ".ogg", ".flac", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm", ".avi", ".mpeg",
     ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json",
+    ".yaml", ".yml", ".toml", ".ini", ".cfg",
 )
 
 class ASTParser:
@@ -336,11 +343,19 @@ class ASTParser:
             if not path.is_file():
                 continue
             relative_parts = path.relative_to(root_dir).parts
-            if any(part.startswith(".") or part in ignored_parts for part in relative_parts):
+            github_workflow = len(relative_parts) >= 3 \
+                and relative_parts[0] == ".github" and relative_parts[1] == "workflows"
+            hidden_outside_workflow = any(
+                part.startswith(".") and not (github_workflow and index == 0)
+                for index, part in enumerate(relative_parts)
+            )
+            if any(part in ignored_parts for part in relative_parts) or hidden_outside_workflow:
                 continue
 
             ext = path.suffix.lower()
-            if ext not in VALID_EXTS:
+            lower_name = path.name.lower()
+            extensionless_source = lower_name in _EXTENSIONLESS_SOURCE_NAMES
+            if ext not in VALID_EXTS and not extensionless_source:
                 continue
 
             rel_file = path.relative_to(root_dir).as_posix()
@@ -381,7 +396,8 @@ class ASTParser:
                 php_files.append((path, rel_file, f_id))
             elif ext in (".tf", ".tfvars"):
                 terraform_files.append((path, rel_file, f_id))
-            elif ext in (".md", ".mdx", ".rst", ".txt"):
+            elif ext in (".md", ".mdx", ".rst", ".txt", ".yaml", ".yml", ".toml", ".ini", ".cfg") \
+                    or extensionless_source or lower_name in _STRUCTURED_SOURCE_NAMES:
                 doc_files.append((path, rel_file, f_id))
             elif ext in (".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".kt", ".kts", ".swift", ".dart", ".sh", ".bash", ".sql", ".vue", ".svelte", ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".cls", ".trigger"):
                 other_code_files.append((path, rel_file, f_id, ext))

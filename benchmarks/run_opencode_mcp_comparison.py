@@ -10,6 +10,44 @@ from pathlib import Path
 from graphtyn.core.benchmark import syntactically_complete_answer
 
 
+def aggregate_step_usage(events: list[dict], semantics: str) -> tuple[dict, list[dict]]:
+    """Aggregate OpenCode usage without guessing whether counters are cumulative.
+
+    OpenCode emits one ``step_finish`` per model step in current releases. Older
+    artifacts must declare their semantics before they can be recomputed.
+    """
+    samples = []
+    for event in events:
+        if event.get("type") != "step_finish":
+            continue
+        part = event.get("part", {})
+        sample = dict(part.get("tokens", {}))
+        sample["cost"] = part.get("cost", 0)
+        samples.append(sample)
+    if semantics not in {"per-step", "cumulative"}:
+        raise ValueError("step usage semantics must be per-step or cumulative")
+
+    def normalized(tokens: dict) -> dict[str, int | float]:
+        cache = tokens.get("cache") or {}
+        return {
+            "input_tokens": int(tokens.get("input", 0) or 0),
+            "cached_input_tokens": int(cache.get("read", 0) or 0),
+            "cache_write_input_tokens": int(cache.get("write", 0) or 0),
+            "output_tokens": int(tokens.get("output", 0) or 0),
+            "thinking_tokens": int(tokens.get("reasoning", 0) or 0),
+            "total_tokens": int(tokens.get("total", 0) or 0),
+            "cost": float(tokens.get("cost", 0) or 0),
+        }
+
+    rows = [normalized(sample) for sample in samples]
+    if not rows:
+        empty = normalized({})
+        return empty, samples
+    if semantics == "cumulative":
+        return rows[-1], samples
+    return ({key: sum(row[key] for row in rows) for key in rows[0]}, samples)
+
+
 def config(command: list[str] | None, name: str, project: Path) -> str:
     mcp = {
         "unityMCP": {"enabled": False},
@@ -34,7 +72,8 @@ def config(command: list[str] | None, name: str, project: Path) -> str:
     return json.dumps(result)
 
 
-def run_task(project: Path, model: str, variant: str, command: list[str] | None, task: dict) -> dict:
+def run_task(project: Path, model: str, variant: str, command: list[str] | None,
+             task: dict, step_usage_semantics: str = "per-step") -> dict:
     if command is None:
         prompt = (
             f"Sin usar Graphtyn ni Graphify, investiga exclusivamente el repositorio {project} con las herramientas locales de OpenCode. "
@@ -64,7 +103,7 @@ def run_task(project: Path, model: str, variant: str, command: list[str] | None,
         returncode = 124
     answer: list[str] = []
     tool_calls = 0
-    last_tokens = {"input": 0, "output": 0, "reasoning": 0, "total": 0}
+    parsed_events: list[dict] = []
     errors: list[str] = []
     finish_reason = ""
     for line in stdout.splitlines():
@@ -72,24 +111,17 @@ def run_task(project: Path, model: str, variant: str, command: list[str] | None,
             event = json.loads(line)
         except json.JSONDecodeError:
             continue
+        parsed_events.append(event)
         if event.get("type") == "text":
             answer.append(event.get("part", {}).get("text", ""))
         elif event.get("type") == "tool_use":
             tool_calls += 1
         elif event.get("type") == "step_finish":
             part = event.get("part", {})
-            tokens = part.get("tokens", {})
             finish_reason = str(part.get("reason") or part.get("finish_reason") or finish_reason)
-            if int(tokens.get("total", 0)) >= int(last_tokens.get("total", 0)):
-                last_tokens = tokens
         elif event.get("type") == "error":
             errors.append(json.dumps(event, ensure_ascii=False))
-    usage = {
-        "input_tokens": int(last_tokens.get("input", 0)),
-        "output_tokens": int(last_tokens.get("output", 0)),
-        "thinking_tokens": int(last_tokens.get("reasoning", 0)),
-        "total_tokens": int(last_tokens.get("total", 0)),
-    }
+    usage, step_usage = aggregate_step_usage(parsed_events, step_usage_semantics)
     final_answer = "\n".join(answer).strip()
     answer_complete = syntactically_complete_answer(final_answer)
     status = "SUCCESS" if returncode == 0 and final_answer and answer_complete else (
@@ -102,6 +134,11 @@ def run_task(project: Path, model: str, variant: str, command: list[str] | None,
         "status": status,
         "duration_seconds": round(time.monotonic() - started, 4),
         "usage": usage,
+        "usage_accounting": {
+            "step_finish_semantics": step_usage_semantics,
+            "step_finish_count": len(step_usage),
+            "raw_step_tokens": step_usage,
+        },
         "tool_calls": tool_calls,
         "answer": final_answer,
         "completion_check": {"syntactically_complete": answer_complete, "finish_reason": finish_reason},
@@ -124,7 +161,13 @@ def main() -> None:
     parser.add_argument("--task", action="append", help="Ejecuta sólo estos task_id y conserva los demás resultados")
     parser.add_argument("--output-prefix", default="tour", help="Prefijo estable para los artefactos JSON")
     parser.add_argument("--retry-incomplete", action="store_true", help="Reintenta una respuesta sintácticamente incompleta y acumula su costo")
+    parser.add_argument("--step-usage-semantics", required=True, choices=("per-step", "cumulative"),
+                        help="Semántica verificada de tokens en step_finish para la versión de OpenCode usada")
     args = parser.parse_args()
+    version_probe = subprocess.run(
+        ["opencode", "--version"], text=True, capture_output=True, timeout=15,
+    )
+    opencode_version = (version_probe.stdout or version_probe.stderr).strip() or "unknown"
     args.output_dir.mkdir(parents=True, exist_ok=True)
     tasks = json.loads(args.tasks.read_text(encoding="utf-8"))["tasks"]
     if args.task:
@@ -144,10 +187,12 @@ def main() -> None:
         by_task = {run["task_id"]: run for run in runs}
         for index, task in enumerate(tasks, 1):
             print(f"[{variant}] {index}/{len(tasks)} {task['id']}", flush=True)
-            result = run_task(args.project, args.model, variant, command, task)
+            result = run_task(args.project, args.model, variant, command, task, args.step_usage_semantics)
+            result["opencode_version"] = opencode_version
             if args.retry_incomplete and result["status"] == "INCOMPLETE":
                 retry_task = {**task, "prompt": task["prompt"] + " Entrega una respuesta final autocontenida y completa; no narres pasos ni termines a mitad de una sección."}
-                retry = run_task(args.project, args.model, variant, command, retry_task)
+                retry = run_task(args.project, args.model, variant, command, retry_task, args.step_usage_semantics)
+                retry["opencode_version"] = opencode_version
                 first = result
                 chosen = retry if len(retry.get("answer", "")) > len(first.get("answer", "")) else first
                 result = {
@@ -157,6 +202,10 @@ def main() -> None:
                     "duration_seconds": round(first["duration_seconds"] + retry["duration_seconds"], 4),
                     "tool_calls": first["tool_calls"] + retry["tool_calls"],
                     "usage": {key: first["usage"].get(key, 0) + retry["usage"].get(key, 0) for key in first["usage"]},
+                    "usage_accounting": {
+                        "step_finish_semantics": args.step_usage_semantics,
+                        "attempts": [first["usage_accounting"], retry["usage_accounting"]],
+                    },
                     "terminal_error": "\n".join(filter(None, [first.get("terminal_error"), retry.get("terminal_error")])),
                 }
             else:

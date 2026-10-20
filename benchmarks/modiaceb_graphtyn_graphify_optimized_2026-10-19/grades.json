@@ -1,0 +1,19 @@
+{
+  "schema_version": "graphtyn-graphify-grade-v1",
+  "valid_runs": {
+    "question_C1": {"baseline": "6/6", "graphtyn": "6/6", "graphify_retry5": "6/6"},
+    "edit_manifest": {"baseline": "8/8", "graphtyn": "8/8", "graphify_retry5": "8/8"}
+  },
+  "independent_tests": {
+    "baseline": "24 passed",
+    "graphtyn": "21 passed",
+    "graphify_retry5": "23 passed"
+  },
+  "excluded_graphify_attempts": [
+    "initial: contaminated by Graphtyn skill/CLI",
+    "retry1: MCP tool unavailable; stopped",
+    "retry2: MCP tool unavailable; stopped",
+    "retry3: MCP tool unavailable; stopped",
+    "retry4: MCP tool unavailable; stopped"
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "ok": true,
+  "schema_version": 1,
+  "isolated": true,
+  "external_models": false,
+  "live_store_modified": false,
+  "cases": 2,
+  "repetitions": 5,
+  "queries": 10,
+  "recall_at_6": 1.0,
+  "obligation_sufficiency_rate": 1.0,
+  "evaluation_leak_rate": 0.0,
+  "latency_ms": {
+    "median": 1.977,
+    "p95": 2.328
+  },
+  "consumption_guardrail": {
+    "metric": "returned_characters",
+    "limit_per_query": 3840,
+    "maximum_observed": 273,
+    "passed": true,
+    "note": "Context size guardrail; not provider-billed tokens."
+  },
+  "observations": [
+    {
+      "case": "tailscale-command-rationale",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 273,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "memory-product-purpose",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 88,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "tailscale-command-rationale",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 273,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "memory-product-purpose",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 88,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "tailscale-command-rationale",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 273,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "memory-product-purpose",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 88,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "tailscale-command-rationale",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 273,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "memory-product-purpose",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 88,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "tailscale-command-rationale",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 273,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    },
+    {
+      "case": "memory-product-purpose",
+      "hit": true,
+      "evaluation_leak": false,
+      "sufficient_evidence": true,
+      "missing": [],
+      "returned_characters": 88,
+      "candidate_messages": 2,
+      "retrieval": "hybrid-rrf:feature-hash-v2"
+    }
+  ]
+}

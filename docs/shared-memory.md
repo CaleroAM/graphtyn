@@ -52,7 +52,10 @@ OpenClaw conserva un servidor compartido por instalación porque sus agentes
 pueden hablar de proyectos distintos en una misma sesión. Sus instrucciones
 resuelven cada consulta con el ID/nombre explícito mediante
 `memory_project_context`; Graphtyn no crea un servidor fijo por proyecto dentro
-de `openclaw.json`.
+de `openclaw.json`. El instalador limita ese servidor a
+`memory_project_context`, `memory_message_window` y `memory_status`; las
+herramientas de escritura y administración no forman parte del contexto base
+del agente.
 
 La captura y la importación histórica son operaciones separadas.
 `graphtyn memory sync --watch --consent` inicia captura incremental y
@@ -88,8 +91,21 @@ graphtyn service restart
 graphtyn service uninstall
 ```
 
-El servicio escucha exclusivamente en `http://127.0.0.1:9210` y conserva la ruta
-absoluta del ejecutable instalado para funcionar con pipx, virtualenv y NixOS.
+El servicio escucha por defecto exclusivamente en `http://127.0.0.1:9210` y
+conserva la ruta absoluta del ejecutable instalado para funcionar con pipx,
+virtualenv y NixOS. Para un cliente MCP en otra máquina o VM se puede seleccionar
+una interfaz con `--host` y `--port`; cualquier dirección fuera de loopback exige
+un `--tokens-file` existente y no vacío. `--embed-model` y `--ollama-host`
+mantienen la recuperación semántica local en el servicio persistente. Por ejemplo:
+
+```bash
+graphtyn service install --kind systemd --path /ruta/proyecto \
+  --host 192.0.2.10 --port 9210 \
+  --tokens-file ~/.graphtyn/memory-tokens.json \
+  --embed-model nomic-embed-text:latest --ollama-host http://127.0.0.1:11434 \
+  --enable
+```
+
 La sincronización incremental se activa explícitamente con **Captura continua**
 o `memory sync --watch --interval 10`. Registrar un proyecto por sí solo no
 importa historiales: las conversaciones anteriores se previsualizan y requieren
@@ -144,9 +160,10 @@ como ambiguos. Los cerebros de agente mantienen su filtro de propietario y no
 reciben relaciones de otros cerebros. La misma conducta sirve para cualquier
 identidad de agente almacenada, sin una lista fija de proveedores.
 
-En modo `continuity`, `source_messages` devuelve hasta tres mensajes históricos
-de sesiones distintas, ordenados por coincidencia léxica y recencia. Esto evita
-que varios turnos de una sola conversación ocupen todo el resumen breve. Para
+En modo `continuity`, `source_messages` devuelve un conjunto breve de mensajes
+históricos diversificados por sesión, ordenados por FTS, similitud local,
+obligaciones y estado observado/propuesto. Esto evita que varios turnos de una
+sola conversación ocupen todo el resumen breve. Para
 leer la pregunta, respuesta y mensajes vecinos de una referencia, usa
 `memory_message_window`; la ventana permanece dentro de esa misma sesión.
 
@@ -257,6 +274,20 @@ graphtyn memory benchmark --path .
 graphtyn memory scope show --path /ruta/al/cerebro
 graphtyn memory scope set --path /ruta/al/cerebro --space-type agent_brain --agent-id openclaw/main
 ```
+
+La recuperación de mensajes fuente usa candidatos acotados de FTS5 y embeddings
+locales, combina ambos rankings y aplica después las reglas de procedencia y
+evidencia. `coverage.source_message_search.obligations` separa lo solicitado,
+lo cubierto y lo faltante; `do_not_expand=true` sólo se emite cuando esas
+obligaciones están cubiertas. Cada coincidencia incluye fragmentos adaptativos
+y `expand_with: memory_message_window` para pedir el contexto completo únicamente
+cuando haga falta. Los mensajes con `origin=evaluation`, `origin=bootstrap` o
+derivados de una recuperación no compiten como evidencia histórica.
+
+`graphtyn memory reindex --path .` actualiza tanto los embeddings de recuerdos
+como los de mensajes. Si el almacén usa cifrado, Graphtyn no conserva índices de
+texto ni vectores de mensajes y usa una búsqueda acotada sobre el contenido
+descifrado durante la consulta.
 
 `memory scope set` agrega propietarios explícitos por defecto; `--replace-agent-ids`
 reemplaza la lista y `--clear-agent-ids` la vacía de forma deliberada. MCP stdio

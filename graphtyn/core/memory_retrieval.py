@@ -65,3 +65,51 @@ def ranked_vector_hits(
                 heapq.heapreplace(heap, entry)
     cursor.close()
     return sorted(heap, key=lambda entry: (-entry[0], entry[1]))
+
+
+def ranked_message_vector_hits(
+    conn: sqlite3.Connection,
+    *,
+    provider: str,
+    query_vector: list[float] | None,
+    candidate_ids: list[str],
+    owner_clause: str,
+    owner_params: list[Any],
+    limit: int,
+) -> list[tuple[float, str]]:
+    """Return bounded semantic message candidates without reading transcripts."""
+    if query_vector is None:
+        return []
+    candidate_clause = ""
+    values: list[Any] = [provider]
+    if candidate_ids:
+        marks = ",".join("?" for _ in candidate_ids)
+        candidate_clause = f" AND m.id IN ({marks})"
+        values.extend(candidate_ids)
+    elif provider == "feature-hash-v2":
+        return []
+    values.extend(owner_params)
+    cursor = conn.execute(f"""SELECT m.id,e.vector_json
+        FROM messages m JOIN sessions s ON s.id=m.session_id
+        JOIN message_embeddings e ON e.message_id=m.id
+        WHERE e.provider=? AND s.capture_enabled=1
+          AND m.role IN ('user','assistant'){candidate_clause}{owner_clause}""", values)
+    heap: list[tuple[float, str]] = []
+    while batch := cursor.fetchmany(256):
+        for row in batch:
+            try:
+                vector = json.loads(row["vector_json"])
+                if len(vector) != len(query_vector):
+                    continue
+                score = sum(a * b for a, b in zip(query_vector, vector))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+            if score <= 0:
+                continue
+            entry = (score, str(row["id"]))
+            if len(heap) < limit:
+                heapq.heappush(heap, entry)
+            elif entry > heap[0]:
+                heapq.heapreplace(heap, entry)
+    cursor.close()
+    return sorted(heap, key=lambda entry: (-entry[0], entry[1]))

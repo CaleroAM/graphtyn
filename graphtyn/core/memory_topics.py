@@ -1251,7 +1251,8 @@ class TopicMemoryMixin:
                 "extraction": ai_provider if model else "deterministic-limited"}
 
     def topics(self, query="", *, requester_agent=None, state=None, agent_id=None,
-               session_id=None, since=None, until=None, limit=20, offset=0, agent_ids=None):
+               session_id=None, since=None, until=None, limit=20, offset=0, agent_ids=None,
+               semantic_memory_ids=None):
         where, args = ["(s.capture_enabled=1 OR s.agent_id=?)", "NOT EXISTS (SELECT 1 FROM topic_episodes hidden JOIN sessions hs ON hs.id=hidden.session_id WHERE hidden.topic_id=t.id AND hs.capture_enabled=0 AND hs.agent_id!=?)"], [requester_agent or "", requester_agent or ""]
         authorized_agents = self._effective_agent_ids(agent_ids)
         owner_predicate, owner_args = self._topic_owner_predicate("t.id")
@@ -1269,8 +1270,9 @@ class TopicMemoryMixin:
         # decryption. This bounded page scan reports that it is not semantic recall.
         semantic = set()
         if query:
-            memory_ids = [m["id"] for m in self.search(query, requester_agent=requester_agent, limit=30,
-                                                         agent_ids=authorized_agents)]
+            memory_ids = (list(semantic_memory_ids) if semantic_memory_ids is not None else
+                          [m["id"] for m in self.search(query, requester_agent=requester_agent, limit=30,
+                                                        agent_ids=authorized_agents)])
             with self._connect() as db:
                 for mid in memory_ids:
                     semantic.update(r[0] for r in db.execute("SELECT topic_id FROM topic_memory_links WHERE memory_id=?", (mid,)))

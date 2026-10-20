@@ -34,6 +34,15 @@ consolidación de memorias y los módulos heredados que aún figuran en el basel
 deben conservar atribución, alcance y procedencia; optimizar una consulta no
 puede ampliar la visibilidad de una memoria.
 
+La revisión de `0.10.7` registra 34 hotspots. Cinco aparecen por primera vez en
+esta entrega: el módulo y el contexto de implementación de `change_analyst`, la
+búsqueda de mensajes en `SharedMemoryStore`, el adjunto de evidencia fuente y el
+módulo MCP. Además crecieron rutas ya registradas de intención, contexto de
+memoria y despacho MCP. Las siguientes extracciones deben separar el armado de
+planes de edición, el ranking y recorte de mensajes, y los handlers MCP por
+familia. Este baseline documenta la deuda y prohíbe crecimiento adicional; no
+afirma que esas responsabilidades ya estén separadas.
+
 ## Escala
 
 SQLite con WAL es el backend local soportado. RF07 midió cinco repeticiones en

@@ -1,0 +1,48 @@
+[
+  {
+    "client": "opencode",
+    "model": "opencode/deepseek-v4.1-flash",
+    "task_id": "C1",
+    "arm": "baseline",
+    "started_at": "2026-10-19T14:45:37.807630+00:00",
+    "wall_seconds": 2.706,
+    "returncode": 1,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": null,
+      "cached_input_tokens": null,
+      "cache_write_input_tokens": null,
+      "output_tokens": null,
+      "reasoning_tokens": null,
+      "total_tokens": null,
+      "provider_cost": null
+    },
+    "answer_present": false,
+    "prompt_sha256": "496e8a503ce43666e25726932ebe728f8a77f9f42dcbe984ef7998cd55b33eb2",
+    "raw_event_count": 1,
+    "terminal_errors": [
+      {
+        "name": "APIError",
+        "data": {
+          "message": "Upstream request failed: Insufficient account funds",
+          "statusCode": 402,
+          "isRetryable": false,
+          "responseHeaders": {
+            "cf-placement": "remote-IAD",
+            "cf-ray": "a4d0915dc90768d9-PHX",
+            "connection": "keep-alive",
+            "content-length": "97",
+            "content-type": "application/json",
+            "date": "Mon, 19 Oct 2026 14:45:40 GMT",
+            "server": "cloudflare",
+            "x-opencode-log-id": "01a154a0-16c1-7efc-9540-bb10d57fd82a"
+          },
+          "responseBody": "{\"error\":{\"type\":\"server_error\",\"message\":\"Upstream request failed: Insufficient account funds\"}}",
+          "metadata": {
+            "url": "https://opencode.ai/inference/openai/v1/chat/completions"
+          }
+        }
+      }
+    ]
+  }
+]

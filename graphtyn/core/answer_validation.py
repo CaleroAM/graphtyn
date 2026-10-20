@@ -11,6 +11,10 @@ _STOP = {"the", "and", "for", "with", "this", "that", "from", "para", "como", "e
 _CITATION = re.compile(
     r"(?<![\w.-])(?P<file>(?:(?:[A-Za-z]:)?[\\/])?(?:[\w.-]+[\\/])*[\w.-]+\.[A-Za-z][A-Za-z0-9]*)(?::(?P<line>\d+))?"
 )
+_KNOWN_SOURCE_EXTENSIONS = {
+    "c", "cc", "cpp", "cs", "css", "go", "h", "hpp", "html", "java", "js", "json", "jsx",
+    "md", "php", "py", "rb", "rs", "sh", "sql", "toml", "ts", "tsx", "txt", "xml", "yaml", "yml",
+}
 _NEGATIONS = {"no", "not", "never", "nunca", "jamás", "jamas", "without", "sin"}
 _MODALITY = {"may", "might", "could", "possibly", "perhaps", "quizá", "quizas", "quizás", "puede", "podría", "podria"}
 _CLAUSE_CONNECTORS = {
@@ -174,6 +178,14 @@ def _resolve_citation(file_part: str, line_num: int | None, nodes: dict[str, dic
         if len(distinct_link_files) > 1:
             return False, "ambiguous_citation_multiple_files", []
         if not matching_links:
+            if project_root is not None and not _is_absolute_path(clean_file):
+                candidate = (Path(project_root).resolve() / clean_file).resolve()
+                try:
+                    candidate.relative_to(Path(project_root).resolve())
+                    if candidate.is_file():
+                        return False, "file_exists_but_not_indexed", []
+                except (OSError, ValueError):
+                    pass
             return False, "file_not_in_graph", []
 
     if line_num is not None:
@@ -278,7 +290,13 @@ def _number_context_matches(claim: dict[str, Any], evidence: dict[str, Any]) -> 
 
 def _unsupported_numbers(text: str, citations: list[re.Match], evidence_text: str) -> list[str]:
     masked = _mask_citations(text, citations)
-    claimed_numbers = re.findall(r"\b\d+(?:\.\d+)?\b", masked)
+    # Digits embedded in technical identifiers (SHA-256, UTF-8, x509) are
+    # labels, not quantitative assertions.
+    claimed_numbers = [
+        match.group(0) for match in re.finditer(r"\b\d+(?:\.\d+)?\b", masked)
+        if not (match.start() > 0 and masked[match.start() - 1] in "-_")
+        and not (match.end() < len(masked) and masked[match.end()] in "-_")
+    ]
     if not claimed_numbers:
         return []
     unsupported = []
@@ -391,7 +409,12 @@ def _resolve_claim_citations(
     project_root: Path | str | None,
 ) -> tuple[list[re.Match[str]], list[str], set[str], list[dict[str, Any]]]:
     """Resolve every citation once and retain the details needed by callers."""
-    matches = list(_CITATION.finditer(text))
+    matches = [
+        match for match in _CITATION.finditer(text)
+        if match.group("line")
+        or "/" in match.group("file") or "\\" in match.group("file")
+        or match.group("file").rsplit(".", 1)[-1].lower() in _KNOWN_SOURCE_EXTENSIONS
+    ]
     resolved: list[str] = []
     resolved_node_ids: set[str] = set()
     unresolved: list[dict[str, Any]] = []
@@ -500,6 +523,10 @@ def _classify_claim(
         value in ("EXTRACTED", "REVIEWED") for value in edge_confidences
     )
 
+    if unresolved_citations and all(
+        item.get("reason") == "file_exists_but_not_indexed" for item in unresolved_citations
+    ):
+        return "abstained", "source_exists_but_not_indexed; verification_not_possible"
     if unresolved_citations:
         return "unsupported", f"citation_unresolved: {[item['raw'] for item in unresolved_citations]}"
     if unresolved_requested:
@@ -606,7 +633,9 @@ def _evaluate_claim(
         "claim": text,
         "verdict": confidence,
         "verdict_reason": reason,
-        "evidence_ids": evidence_ids if confidence != "unsupported" else [],
+        "evidence_ids": evidence_ids if confidence in {
+            "supported", "partially_supported", "ambiguous"
+        } else [],
         "resolved_citations": resolved_citations,
         "unresolved_citations": [item["raw"] for item in unresolved_citations],
         "citation_errors": unresolved_citations,
@@ -685,5 +714,9 @@ def validate_answer(graph: dict, answer: str, claims: list[dict[str, Any]] | Non
             "abstained": abstained,
         },
         "completeness": completeness,
-        "guidance": "SUPPORTED means traceable to indexed, non-ambiguous evidence. AMBIGUOUS relations must not be asserted as fact.",
+        "guidance": (
+            "SUPPORTED means traceable to indexed, non-ambiguous evidence. "
+            "ABSTAINED means the cited source exists but could not be verified from the index. "
+            "AMBIGUOUS relations must not be asserted as fact."
+        ),
     }

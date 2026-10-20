@@ -1,0 +1,50 @@
+[
+  {
+    "client": "codex",
+    "model": "gpt-6-astra",
+    "task_id": "C1",
+    "arm": "baseline",
+    "started_at": "2026-10-19T17:52:19.438644+00:00",
+    "wall_seconds": 41.82,
+    "returncode": 0,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": 99493,
+      "cached_input_tokens": 67968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1685,
+      "reasoning_tokens": 22,
+      "total_tokens": 101178,
+      "provider_cost": null
+    },
+    "answer_present": true,
+    "prompt_sha256": "496e8a503ce43666e25726932ebe728f8a77f9f42dcbe984ef7998cd55b33eb2",
+    "raw_event_count": 13,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": []
+  },
+  {
+    "client": "codex",
+    "model": "gpt-6-astra",
+    "task_id": "C1",
+    "arm": "graphtyn",
+    "started_at": "2026-10-19T17:53:01.369659+00:00",
+    "wall_seconds": 53.3,
+    "returncode": 0,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": 152602,
+      "cached_input_tokens": 120704,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1801,
+      "reasoning_tokens": null,
+      "total_tokens": 154403,
+      "provider_cost": null
+    },
+    "answer_present": true,
+    "prompt_sha256": "709208b5114060602bf60e617d756abeb5ab1a92f96ca63baa1239c17edd8f46",
+    "raw_event_count": 17,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": []
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "client": "codex",
+    "model": "gpt-6-astra",
+    "task_id": "C1",
+    "arm": "graphtyn",
+    "started_at": "2026-10-19T17:50:51.598460+00:00",
+    "wall_seconds": 58.832,
+    "returncode": 0,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": 161026,
+      "cached_input_tokens": 140416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2136,
+      "reasoning_tokens": 8,
+      "total_tokens": 163162,
+      "provider_cost": null
+    },
+    "answer_present": true,
+    "prompt_sha256": "709208b5114060602bf60e617d756abeb5ab1a92f96ca63baa1239c17edd8f46",
+    "raw_event_count": 21,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": []
+  }
+]

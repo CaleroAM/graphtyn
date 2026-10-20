@@ -450,9 +450,11 @@ def _command_service(args, root: Path, parser) -> None:
         resolved_kind = native_service_kind() if args.kind == "auto" else args.kind
         output_path = Path(args.output).expanduser() if args.output else default_service_output(resolved_kind)
         output = service_artifact(root, kind=resolved_kind, output=output_path, interval=args.interval,
-                                  watch=args.watch)
+                                  watch=args.watch, host=args.host, port=args.port,
+                                  tokens_file=(Path(args.tokens_file) if args.tokens_file else None),
+                                  embed_model=args.embed_model, ollama_host=args.ollama_host)
         result = {"ok": True, "kind": resolved_kind, "output": str(output),
-                  "dashboard": "http://127.0.0.1:9210"}
+                  "dashboard": f"http://{args.host}:{args.port}"}
         if args.enable:
             if resolved_kind == "compose":
                 parser.error("--enable no aplica a Compose; use docker compose up -d")
@@ -538,6 +540,9 @@ def _command_query_intent(args, root: Path, parser) -> None:
     result = query_intent(graph, args.request, args.intent, args.limit)
     result = attach_source_evidence(root, result, args.request, args.evidence_mode)
     result = attach_learning(result, root)
+    if args.response_mode == "compact":
+        from .mcp_server import evidence_result
+        result = evidence_result(result, max_nodes=args.limit)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 def _command_analyze_change(args, root: Path, parser) -> None:

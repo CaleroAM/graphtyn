@@ -1,0 +1,50 @@
+[
+  {
+    "client": "antigravity",
+    "model": "gemini-3.8-flash-high",
+    "task_id": "C1",
+    "arm": "baseline",
+    "started_at": "2026-10-19T17:42:31.436417+00:00",
+    "wall_seconds": 240.477,
+    "returncode": 0,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": 113525,
+      "cached_input_tokens": 896255,
+      "cache_write_input_tokens": null,
+      "output_tokens": 24782,
+      "reasoning_tokens": 13139,
+      "total_tokens": 138307,
+      "provider_cost": null
+    },
+    "answer_present": true,
+    "prompt_sha256": "496e8a503ce43666e25726932ebe728f8a77f9f42dcbe984ef7998cd55b33eb2",
+    "raw_event_count": 1292,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": []
+  },
+  {
+    "client": "antigravity",
+    "model": "gemini-3.8-flash-high",
+    "task_id": "C1",
+    "arm": "graphtyn",
+    "started_at": "2026-10-19T17:46:32.189582+00:00",
+    "wall_seconds": 226.69,
+    "returncode": 0,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": 92738,
+      "cached_input_tokens": 652834,
+      "cache_write_input_tokens": null,
+      "output_tokens": 23140,
+      "reasoning_tokens": 13074,
+      "total_tokens": 115878,
+      "provider_cost": null
+    },
+    "answer_present": true,
+    "prompt_sha256": "709208b5114060602bf60e617d756abeb5ab1a92f96ca63baa1239c17edd8f46",
+    "raw_event_count": 1258,
+    "antigravity_mcp_registration": "Added MCP server \"graphtyn_benchmark\" (stdio)",
+    "terminal_errors": []
+  }
+]

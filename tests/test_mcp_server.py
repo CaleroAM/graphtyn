@@ -101,6 +101,22 @@ def test_mcp_expected_project_rejects_wrong_workspace(workspace):
     assert "otro-proyecto" in responses[0]["error"]["message"]
 
 
+def test_expected_project_accepts_registered_alias(workspace, monkeypatch):
+    from graphtyn.core import project_integrations
+    from graphtyn.mcp_server import _validate_expected_project, _workspace_context
+
+    monkeypatch.setattr(project_integrations, "_registered_identity", lambda _root: {
+        "id": "stable-id", "canonical_name": "sample", "aliases": ["legacy-name"],
+    })
+
+    context = _workspace_context(workspace)
+    _validate_expected_project(workspace, {"expected_project": "legacy-name"})
+
+    assert context["project_id"] == "stable-id"
+    assert context["project_name"] == "sample"
+    assert context["project_aliases"] == ["legacy-name"]
+
+
 def test_mcp_initialize_reports_bound_project_context(workspace):
     metadata = workspace / ".graphtyn" / "graphtyn.json"
     metadata.parent.mkdir()
@@ -176,6 +192,7 @@ def test_mcp_memory_project_context_resolves_registered_project(workspace, tmp_p
     assert result["ok"] is True
     assert result["project"]["name"] == "TourMuseosPuebla"
     assert result["context"]["memories"][0]["agent_id"] == "openclaw/nexus"
+    assert result["context"]["graph_neighbors"] == []
 
 
 def test_mcp_memory_cross_session_attribution(workspace):
@@ -240,29 +257,64 @@ def test_mcp_change_analyst_is_compact_and_grounded(workspace):
 def test_mcp_query_intent_supports_one_shot_and_delta(workspace):
     (workspace / "flow.py").write_text("def run():\n    return helper()\n", encoding="utf-8")
     _, first_response = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 34, "method": "tools/call",
-        "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8}}}])
+        "params": {"name": "graph_query_intent", "arguments": {
+            "request": "Explica el orden exacto del flujo helper", "limit": 8,
+        }}}])
     first = json.loads(first_response[0]["result"]["content"][0]["text"])
     assert first["planner"] == "adaptive-intent-v2"
     assert first["do_not_expand"] is True
     assert first["context_id"]
+    assert first["source_evidence"]
+    assert set(first["timing_ms"]) == {
+        "server_startup", "load_index", "retrieval", "coverage", "render", "total",
+        "index_cache_hit",
+    }
     # Delta must be exercised in the same MCP process because contexts are
     # intentionally session-local and never persisted to the repository.
     requests = [
-        {"jsonrpc": "2.0", "id": 35, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8}}},
+        {"jsonrpc": "2.0", "id": 35, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8}}},
     ]
     _, seed_response = _mcp_call(workspace, requests)
     seed = json.loads(seed_response[0]["result"]["content"][0]["text"])
     # Use a direct server transcript with two calls so the second can extend
     # the first; obtain the deterministic context id from an equivalent call.
     _, responses = _mcp_call(workspace, [
-        {"jsonrpc": "2.0", "id": 36, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8}}},
-        {"jsonrpc": "2.0", "id": 37, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Traza el flujo helper", "limit": 8, "extends_context_id": seed["context_id"]}}},
+        {"jsonrpc": "2.0", "id": 36, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8}}},
+        {"jsonrpc": "2.0", "id": 37, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8, "extends_context_id": seed["context_id"]}}},
     ])
     delta = json.loads(responses[1]["result"]["content"][0]["text"])
     assert delta["format"] == "evidence-delta-v1"
     assert delta["entities"] == {}
     assert delta["relations"] == []
+    assert "source_evidence" not in delta
+    assert isinstance(delta["timing_ms"]["index_cache_hit"], bool)
     assert delta["estimated_tokens"] < first["estimated_tokens"]
+
+
+def test_workspace_graph_cache_reuses_and_invalidates_persisted_index(tmp_path, monkeypatch):
+    from graphtyn import mcp_server
+
+    index_dir = tmp_path / "store"
+    index_dir.mkdir()
+    index = index_dir / "index.json"
+    index.write_text(json.dumps({"nodes": [{"id": "one"}], "links": []}), encoding="utf-8")
+    monkeypatch.setattr(mcp_server, "_cached_index_dir", lambda _workspace: index_dir)
+    mcp_server._GRAPH_CACHE.clear()
+
+    class Parser:
+        def scan_directory(self, _workspace):
+            raise AssertionError("persisted index should be used")
+
+    first, first_hit = mcp_server.get_workspace_graph_with_meta(tmp_path, Parser())
+    second, second_hit = mcp_server.get_workspace_graph_with_meta(tmp_path, Parser())
+    index.write_text(json.dumps({"nodes": [{"id": "two-longer"}], "links": []}), encoding="utf-8")
+    third, third_hit = mcp_server.get_workspace_graph_with_meta(tmp_path, Parser())
+
+    assert first_hit is False
+    assert second_hit is True
+    assert second is first
+    assert third_hit is False
+    assert third["nodes"][0]["id"] == "two-longer"
 
 
 def test_mcp_graph_queries_honor_explicit_project_path(workspace, tmp_path):
@@ -571,6 +623,99 @@ def test_evidence_prioritizes_query_relevant_operations():
     ops = compact["entities"]["N1"]["ops"]
     assert any(op[1] == "AddScoped" for op in ops)
     assert len(ops) == 10
+
+
+def test_evidence_budget_applies_to_complete_serialized_payload():
+    from graphtyn.mcp_server import evidence_result
+    node = {
+        "id": "symbol:service.py:run", "name": "run", "kind": "function",
+        "file": "service.py", "line": 1, "details": "d" * 2000,
+        "operations": [
+            {"kind": "call", "name": f"step_{index}", "line": index + 2,
+             "text": "execute(" + "x" * 500 + ")"}
+            for index in range(30)
+        ],
+    }
+    compact = evidence_result({
+        "matched": [node], "nodes": [node], "links": [],
+        "source_evidence": [{"symbol": "run", "file": "service.py", "start_line": 1,
+                             "end_line": 200, "text": "source\n" * 2000}],
+        "source_retrieval": {"enabled": True, "snippets": 1, "characters": 14000},
+    }, max_nodes=4, token_budget=1200)
+
+    assert compact["payload_tokens"] <= compact["payload_token_budget"]
+    assert compact["estimated_tokens"] == compact["payload_tokens"]
+    assert compact["payload_truncated"] is True
+    assert compact["entities"]["N1"]["name"] == "run"
+    assert compact["source_evidence"][0]["text"]
+
+
+def test_source_evidence_preserves_planner_obligations(tmp_path):
+    from graphtyn.core.source_evidence import attach_source_evidence
+    source = tmp_path / "loader.py"
+    source.write_text("def load():\n    return True\n", encoding="utf-8")
+    result = {
+        "intent": "flow", "requested_obligations": ["artifacts", "table_generation"],
+        "matched": [{"id": "load", "name": "load", "kind": "function",
+                     "file": "loader.py", "line": 1, "end_line": 2}],
+        "nodes": [], "missing": [], "complete_for": ["flow"], "do_not_expand": True,
+        "stopping": {"sufficient_evidence": True}, "validation": {"ok": True},
+    }
+
+    enriched = attach_source_evidence(tmp_path, result, "explica el flujo y errores", "balanced")
+
+    assert set(enriched["requested_obligations"]) == {
+        "artifacts", "table_generation", "order_and_control_flow", "failure_semantics",
+    }
+
+
+def test_source_evidence_prioritizes_symbol_covering_more_obligations(tmp_path):
+    from graphtyn.core.source_evidence import attach_source_evidence
+    (tmp_path / "generic.py").write_text("def validate():\n    return True\n", encoding="utf-8")
+    (tmp_path / "loader.py").write_text("def load():\n    return True\n", encoding="utf-8")
+    nodes = [
+        {"id": "generic", "name": "validate", "kind": "function",
+         "file": "generic.py", "line": 1, "end_line": 2},
+        {"id": "loader", "name": "load", "kind": "function",
+         "file": "loader.py", "line": 1, "end_line": 2},
+    ]
+    result = {
+        "intent": "flow", "requested_obligations": ["one", "two"],
+        "obligation_evidence": {"one": ["loader"], "two": ["loader"]},
+        "matched": nodes, "nodes": nodes, "missing": [], "complete_for": ["flow"],
+        "do_not_expand": True, "stopping": {"sufficient_evidence": True},
+        "validation": {"ok": True}, "intent_terms": ["load"],
+    }
+
+    enriched = attach_source_evidence(tmp_path, result, "explica load y sus condiciones", "balanced")
+
+    assert enriched["source_evidence"][0]["file"] == "loader.py"
+
+
+def test_evidence_identities_ignore_local_alias_order():
+    from graphtyn.mcp_server import _evidence_identities
+    first = {
+        "files": {"F1": "a.py", "F2": "b.py"},
+        "entities": {
+            "N1": {"name": "a", "kind": "function", "at": "F1:1"},
+            "N2": {"name": "b", "kind": "function", "at": "F2:2"},
+        },
+        "relations": [["N1", "llama", "N2", "E", 1]],
+    }
+    reordered = {
+        "files": {"F1": "b.py", "F2": "a.py"},
+        "entities": {
+            "N1": {"name": "b", "kind": "function", "at": "F1:2"},
+            "N2": {"name": "a", "kind": "function", "at": "F2:1"},
+        },
+        "relations": [["N2", "llama", "N1", "E", 1]],
+    }
+
+    first_entities, first_relations, _ = _evidence_identities(first)
+    second_entities, second_relations, _ = _evidence_identities(reordered)
+
+    assert set(first_entities.values()) == set(second_entities.values())
+    assert first_relations == second_relations
 
 
 def test_mcp_history_flow(workspace):

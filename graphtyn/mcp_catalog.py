@@ -20,7 +20,7 @@ _BASE_TOOLS: list[dict[str, Any]] = [
                 "limit": {"type": "integer", "description": "Máximo de entidades; default 10"},
                 "evidence_mode": {"type": "string", "enum": ["auto", "compact", "balanced", "precision"], "description": "auto amplía solo preguntas que necesitan evidencia del cuerpo"},
                 "extends_context_id": {"type": "string", "description": "Contexto previo para devolver sólo evidencia nueva"},
-                "expected_project": {"type": "string", "description": "Nombre, ID o ruta que el cliente espera; la llamada falla si no coincide"},
+                "expected_project": {"type": "string", "description": "Guardia opcional para un proyecto elegido deliberadamente; omítala al usar el workspace del servidor. La llamada falla si no coincide"},
                 "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
             },
             "required": ["request"]
@@ -197,7 +197,7 @@ _BASE_TOOLS: list[dict[str, Any]] = [
             "activity_limit": {"type": "integer", "minimum": 0, "maximum": 10},
             "include_graph": {"type": "boolean"},
             "neighbor_limit": {"type": "integer"},
-            "expected_project": {"type": "string", "description": "Nombre, ID o ruta que el cliente espera; la llamada falla si no coincide"}}, "required": ["query", "requester_agent"]}
+            "expected_project": {"type": "string", "description": "Guardia opcional para un proyecto elegido deliberadamente; omítala al usar el workspace del servidor. La llamada falla si no coincide"}}, "required": ["query", "requester_agent"]}
     },
     {
         "name": "memory_project_context",

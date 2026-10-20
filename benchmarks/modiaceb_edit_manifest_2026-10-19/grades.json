@@ -1,0 +1,23 @@
+{
+  "grading": "Deterministic rubric review after preserving both runs; opencode.json schema insertion excluded as a symmetric client side effect.",
+  "baseline": {
+    "score": 8,
+    "maximum": 8,
+    "tests_independently_verified": "16 passed",
+    "notes": [
+      "All required consumers were changed.",
+      "Tests cover separate path, empty/unset fallback and configured missing manifest.",
+      "No dedicated cache-invalidation regression test, but the effective manifest path and stat tuple participate in the cache key."
+    ]
+  },
+  "graphtyn": {
+    "score": 8,
+    "maximum": 8,
+    "tests_independently_verified": "16 passed",
+    "notes": [
+      "All required consumers were changed.",
+      "Adds an explicit effective-manifest cache invalidation regression test.",
+      "Clears FEATURE_STORE_MANIFEST_PATH in the shared fixture to prevent environment leakage."
+    ]
+  }
+}

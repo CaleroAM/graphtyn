@@ -1,0 +1,13 @@
+{
+  "grader": "codex/root",
+  "independent": false,
+  "rubric": "C1 congelada en modIAceb/benchmarks/graphtyn_ab/2026-10-18/protocol.json",
+  "scores": [
+    {"client": "opencode", "arm": "baseline", "passed": ["q1", "q2", "q3", "q4", "q5", "q6"], "score": 6},
+    {"client": "opencode", "arm": "graphtyn", "passed": ["q1", "q2", "q3", "q4", "q5", "q6"], "score": 6},
+    {"client": "codex", "arm": "baseline", "source": "../modiaceb_three_client_optimized_2026-10-19_codex_retry2", "passed": ["q1", "q2", "q3", "q4", "q5", "q6"], "score": 6},
+    {"client": "codex", "arm": "graphtyn", "source": "../modiaceb_three_client_optimized_2026-10-19_codex_retry2", "passed": ["q1", "q2", "q3", "q4", "q5", "q6"], "score": 6},
+    {"client": "antigravity", "arm": "baseline", "source": "../modiaceb_three_client_optimized_2026-10-19_antigravity_retry1", "passed": ["q1", "q2", "q3", "q4", "q5", "q6"], "score": 6},
+    {"client": "antigravity", "arm": "graphtyn", "source": "../modiaceb_three_client_optimized_2026-10-19_antigravity_retry1", "passed": ["q1", "q2", "q3", "q4", "q5", "q6"], "score": 6}
+  ]
+}

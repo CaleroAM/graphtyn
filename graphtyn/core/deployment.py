@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import re
 import secrets
 import shutil
 import subprocess
@@ -107,24 +108,64 @@ def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str
             "token_file": str(token_file) if token_file else None}
 
 def service_artifact(project: Path, *, kind: str, output: Path, interval: float = 10,
-                     watch: bool = False) -> Path:
+                     watch: bool = False, host: str = "127.0.0.1", port: int = 9210,
+                     tokens_file: Path | None = None, embed_model: str | None = None,
+                     ollama_host: str | None = None) -> Path:
     project, output = project.resolve(), output.expanduser().resolve()
+    host = str(host or "127.0.0.1").strip()
+    if not re.fullmatch(r"[A-Za-z0-9._:-]+", host):
+        raise ValueError("host de servicio inválido")
+    port = int(port)
+    if not 1 <= port <= 65535:
+        raise ValueError("port debe estar entre 1 y 65535")
+    tokens_file = tokens_file.expanduser().resolve() if tokens_file else None
+    if host not in {"127.0.0.1", "localhost", "::1"} and not tokens_file:
+        raise ValueError("un servicio expuesto fuera de loopback requiere --tokens-file")
+    if tokens_file:
+        try:
+            token_entries = json.loads(tokens_file.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            raise ValueError("--tokens-file debe existir y contener JSON válido") from None
+        if not isinstance(token_entries, dict) or not token_entries:
+            raise ValueError("--tokens-file debe contener al menos un token")
+    embed_model = str(embed_model or "").strip()
+    if embed_model and not re.fullmatch(r"[A-Za-z0-9._:/-]+", embed_model):
+        raise ValueError("modelo de embeddings inválido")
+    ollama_host = str(ollama_host or "").strip().rstrip("/")
+    if ollama_host and not re.fullmatch(r"https?://[A-Za-z0-9._:\[\]-]+", ollama_host):
+        raise ValueError("OLLAMA_HOST inválido")
     output.parent.mkdir(parents=True, exist_ok=True)
     if kind == "auto": kind = native_service_kind()
+    environment = ""
+    if tokens_file:
+        environment += f"Environment=GRAPHTYN_MEMORY_TOKENS_FILE={tokens_file}\n"
+    if embed_model:
+        environment += f"Environment=GRAPHTYN_EMBED_MODEL={embed_model}\n"
+    if ollama_host:
+        environment += f"Environment=OLLAMA_HOST={ollama_host}\n"
     if kind == "systemd":
         # Do not resolve the interpreter symlink: virtualenv/pipx launchers live
         # beside sys.executable even when it points into Nix/store or /usr.
         executable = _graphtyn_executable()
         watch_flag = " --watch" if watch else ""
-        content = f"""[Unit]\nDescription=Graphtyn persistent dashboard\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nEnvironment=GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}\nExecStart=\"{executable}\" serve --host 127.0.0.1 --port 9210{watch_flag} --path \"{project}\"\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
+        content = f"""[Unit]\nDescription=Graphtyn persistent dashboard\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nEnvironment=GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}\n{environment}ExecStart=\"{executable}\" serve --host {host} --port {port}{watch_flag} --path \"{project}\"\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
     elif kind == "windows":
         executable = _graphtyn_executable()
         watch_flag = " --watch" if watch else ""
+        windows_environment = ""
+        if tokens_file: windows_environment += f'set "GRAPHTYN_MEMORY_TOKENS_FILE={tokens_file}"\r\n'
+        if embed_model: windows_environment += f'set "GRAPHTYN_EMBED_MODEL={embed_model}"\r\n'
+        if ollama_host: windows_environment += f'set "OLLAMA_HOST={ollama_host}"\r\n'
         content = (f'@echo off\r\nsetlocal\r\nset "GRAPHTYN_HOME={data_home()}"\r\n'
                    f'set "GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}"\r\n'
-                   f'"{executable}" serve --host 127.0.0.1 --port 9210{watch_flag} --path "{project}"\r\n')
+                   f'{windows_environment}'
+                   f'"{executable}" serve --host {host} --port {port}{watch_flag} --path "{project}"\r\n')
     elif kind == "compose":
-        content = f"""services:\n  graphtyn:\n    image: graphtyn:latest\n    command: [\"serve\",\"--host\",\"0.0.0.0\",\"--port\",\"9210\",\"--path\",\"/workspace\",\"--watch\"]\n    ports: [\"127.0.0.1:9210:9210\"]\n    volumes:\n      - {project}:/workspace:ro\n      - graphtyn-state:/state\n    environment:\n      GRAPHTYN_HOME: /state\n      GRAPHTYN_MEMORY_TOKENS_FILE: /run/secrets/graphtyn_tokens\n    secrets: [graphtyn_tokens]\n    restart: unless-stopped\nsecrets:\n  graphtyn_tokens:\n    file: ./memory-tokens.json\nvolumes:\n  graphtyn-state:\n"""
+        bind_host = "127.0.0.1" if host in {"localhost", "::1"} else host
+        secret_file = tokens_file or Path("./memory-tokens.json")
+        optional_embedding = (f"      GRAPHTYN_EMBED_MODEL: {embed_model}\n" if embed_model else "")
+        optional_ollama = (f"      OLLAMA_HOST: {ollama_host}\n" if ollama_host else "")
+        content = f"""services:\n  graphtyn:\n    image: graphtyn:latest\n    command: [\"serve\",\"--host\",\"0.0.0.0\",\"--port\",\"{port}\",\"--path\",\"/workspace\",\"--watch\"]\n    ports: [\"{bind_host}:{port}:{port}\"]\n    volumes:\n      - {project}:/workspace:ro\n      - graphtyn-state:/state\n    environment:\n      GRAPHTYN_HOME: /state\n      GRAPHTYN_MEMORY_TOKENS_FILE: /run/secrets/graphtyn_tokens\n{optional_embedding}{optional_ollama}    secrets: [graphtyn_tokens]\n    restart: unless-stopped\nsecrets:\n  graphtyn_tokens:\n    file: {secret_file}\nvolumes:\n  graphtyn-state:\n"""
     else: raise ValueError("kind debe ser auto, systemd, windows o compose")
     output.write_text(content, encoding="utf-8"); return output
 

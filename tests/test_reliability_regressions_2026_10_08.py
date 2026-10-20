@@ -203,6 +203,35 @@ class TestAnswerValidationRegressions20261008:
         assert result["evidence_resolution"]["total_citations"] == 0
         assert result["evidence_resolution"]["unresolved_citations"] == []
 
+    def test_v_technical_dotted_names_are_not_file_citations(self):
+        graph = make_reproduction_graph()
+
+        result = validate_answer(graph, "El permiso api.puede_aprobar y manifest.input_schema.features son obligatorios.")
+
+        assert result["evidence_resolution"]["total_citations"] == 0
+        assert result["evidence_resolution"]["unresolved_citations"] == []
+
+    def test_v_sha_algorithm_identifier_is_not_a_numeric_claim(self):
+        graph = make_reproduction_graph()
+        graph["nodes"][0]["details"] = "El manifiesto conserva un hash SHA-256 del artefacto."
+
+        result = validate_answer(graph, "El manifiesto conserva SHA-256 (src/handler.py:5).")
+
+        assert "numeric_values_not_in_evidence" not in result["claims"][0]["verdict_reason"]
+
+    def test_v_existing_unindexed_file_is_distinguished(self, tmp_path):
+        graph = make_reproduction_graph()
+        (tmp_path / "docker-compose.yml").write_text("services: {}\n", encoding="utf-8")
+
+        result = validate_answer(
+            graph, "La configuración está en docker-compose.yml:1.", project_root=tmp_path,
+        )
+
+        assert result["claims"][0]["citation_errors"][0]["reason"] == "file_exists_but_not_indexed"
+        assert result["claims"][0]["verdict"] == "abstained"
+        assert result["summary"]["abstained"] == 1
+        assert result["summary"]["unsupported"] == 0
+
     def test_v_homonyms_multiple_files_ambiguity(self):
         """Abbreviated citation matching multiple files in different folders is flagged ambiguous."""
         graph = {

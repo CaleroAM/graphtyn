@@ -91,6 +91,11 @@ def _add_admin_commands(subparsers: argparse._SubParsersAction) -> None:
     service_install.add_argument("--kind", choices=["auto", "systemd", "windows", "compose"], default="auto")
     service_install.add_argument("--output", default=None); service_install.add_argument("--interval", type=float, default=10)
     service_install.add_argument("--path", default=".")
+    service_install.add_argument("--host", default="127.0.0.1", help="Interfaz de escucha; fuera de loopback requiere --tokens-file")
+    service_install.add_argument("--port", type=int, default=9210)
+    service_install.add_argument("--tokens-file", default=None, help="Archivo JSON de tokens HTTP")
+    service_install.add_argument("--embed-model", default=None, help="Modelo local de embeddings de Ollama")
+    service_install.add_argument("--ollama-host", default=None, help="URL local de Ollama")
     service_install.add_argument("--enable", action="store_true", help="Activa el servicio nativo ahora y al iniciar sesión")
     service_install.add_argument("--watch", action="store_true", help="Activa reindexación automática (puede usar CPU en repositorios grandes)")
     for service_action in ("start", "stop", "restart", "status", "uninstall"):
@@ -141,6 +146,7 @@ def _add_graph_commands(subparsers: argparse._SubParsersAction) -> None:
     intent_p.add_argument("--intent", default="auto", choices=["auto", "overview", "flow", "bindings", "persistence", "tests", "impact"])
     intent_p.add_argument("--limit", type=int, default=10, help="Máximo de entidades")
     intent_p.add_argument("--evidence-mode", default="auto", choices=["auto", "compact", "balanced", "precision"], help="Expansión dirigida de fuente")
+    intent_p.add_argument("--response-mode", default="compact", choices=["compact", "full"], help="Salida compacta con aliases (predeterminado) o estructura interna completa")
     intent_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
     # path

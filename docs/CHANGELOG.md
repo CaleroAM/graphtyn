@@ -5,8 +5,72 @@ compatibles con PEP 440.
 
 ## [Unreleased]
 
-Los cambios posteriores a `0.10.6` se documentarán aquí antes de la próxima
+Los cambios posteriores a `0.10.7` se documentarán aquí antes de la próxima
 versión.
+
+## [0.10.7] - 2026-10-20
+
+### Añadido
+
+- La memoria de proyecto mantiene índices FTS5 y embeddings persistentes para
+  mensajes fuente, con una migración compatible para almacenes existentes.
+- La regresión aislada de recuperación publica Recall@6, cobertura de
+  obligaciones, filtrado de mensajes de evaluación, latencia y tamaño máximo
+  del contexto sin llamar modelos, servicios externos ni almacenes activos.
+- `graph_query_intent` entrega un `implementation_context` acotado con archivos
+  iniciales, consumidores directos, efectos laterales, pruebas, comandos
+  extraídos y un presupuesto explícito de exploración para tareas de edición.
+- El servicio persistente acepta interfaz, puerto, archivo de tokens y
+  configuración local de Ollama. Exponerlo fuera de loopback requiere un
+  archivo de autenticación válido.
+- Los arneses comparativos cubren OpenCode, Codex y Antigravity, conservan el
+  desglose de entrada, caché, salida y razonamiento informado por cada cliente,
+  y separan recuperación, sesión completa y coste monetario.
+
+### Cambiado
+
+- La recuperación de mensajes combina candidatos léxicos y semánticos acotados,
+  aplica ranking recíproco, diversifica por sesión y devuelve fragmentos
+  adaptativos con una referencia para ampliar sólo el mensaje necesario.
+- Cada resultado distingue obligaciones solicitadas, cubiertas y faltantes, y
+  clasifica la evidencia como observada, histórica o propuesta. Los mensajes de
+  bootstrap, evaluación y ecos de recuperaciones previas quedan fuera del
+  ranking histórico.
+- La conexión predeterminada de OpenClaw expone únicamente
+  `memory_project_context`, `memory_message_window` y `memory_status`. La captura
+  continúa a cargo del watcher autorizado y no de herramientas de escritura en
+  el contexto del agente.
+- Los embeddings locales de Ollama admiten lotes, reutilizan consultas recientes
+  y conservan un fallback compatible cuando el endpoint por lotes no está
+  disponible. La reindexación incluye recuerdos y mensajes.
+- El índice incluye manifiestos y configuración YAML, TOML, INI, CFG, Docker y
+  workflows. El planificador pondera identificadores dentro de operaciones,
+  reserva evidencia para configuración, pruebas y verificadores, y reclasifica
+  peticiones operativas de `overview` a `flow`.
+- `evidence-v1` limita el JSON serializado completo, deduplica expansiones por
+  identidad estable de archivo/símbolo y publica tiempos de carga, recuperación,
+  cobertura y render junto con el estado de caché del índice.
+- La skill de Graphtyn trata `implementation_context` como contrato de acción:
+  lee `read_first` en orden, evita exploración amplia cuando la cobertura está
+  completa y no instala dependencias durante una edición sin petición explícita.
+
+### Corregido
+
+- Pytest limita el descubrimiento a `tests/`, evitando que checkouts temporales
+  guardados bajo artefactos de benchmark se mezclen con la suite de Graphtyn.
+- `do_not_expand` y `sufficient_evidence` ya no pueden indicar que la
+  recuperación está completa cuando falta una obligación solicitada.
+- `project_doctor` prioriza un watcher actual y saludable frente a registros
+  antiguos obsoletos o degradados del mismo almacén.
+- El benchmark de OpenCode exige declarar si `step_finish` es por paso o
+  acumulado, conserva las muestras crudas y suma los reintentos en lugar de
+  seleccionar el contador máximo sin conocer su semántica.
+- `validate-answer` deja de interpretar los dígitos de identificadores técnicos
+  como `SHA-256` o `UTF-8` como afirmaciones numéricas independientes y distingue
+  una fuente existente pero no indexada de una cita inexistente.
+
+La validación y sus límites están en
+[`release-validation-0.10.7.md`](release-validation-0.10.7.md).
 
 ## [0.10.6] - 2026-10-11
 

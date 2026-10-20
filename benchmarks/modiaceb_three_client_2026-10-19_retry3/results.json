@@ -1,0 +1,71 @@
+[
+  {
+    "client": "opencode",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "task_id": "C1",
+    "arm": "baseline",
+    "started_at": "2026-10-19T14:53:39.177147+00:00",
+    "wall_seconds": 109.409,
+    "returncode": 0,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": 75265,
+      "cached_input_tokens": 459904,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3186,
+      "reasoning_tokens": 2149,
+      "total_tokens": 540504,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "prompt_sha256": "496e8a503ce43666e25726932ebe728f8a77f9f42dcbe984ef7998cd55b33eb2",
+    "raw_event_count": 41,
+    "terminal_errors": []
+  },
+  {
+    "client": "opencode",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "task_id": "C1",
+    "arm": "graphtyn",
+    "started_at": "2026-10-19T14:55:28.695747+00:00",
+    "wall_seconds": 150.466,
+    "returncode": 0,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": 74350,
+      "cached_input_tokens": 578432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3927,
+      "reasoning_tokens": 6210,
+      "total_tokens": 662919,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "prompt_sha256": "709208b5114060602bf60e617d756abeb5ab1a92f96ca63baa1239c17edd8f46",
+    "raw_event_count": 50,
+    "terminal_errors": []
+  },
+  {
+    "client": "codex",
+    "model": "gpt-6-astra",
+    "task_id": "C1",
+    "arm": "graphtyn",
+    "started_at": "2026-10-19T14:57:59.262165+00:00",
+    "wall_seconds": 0.026,
+    "returncode": 1,
+    "timed_out": false,
+    "usage": {
+      "input_tokens": null,
+      "cached_input_tokens": null,
+      "cache_write_input_tokens": null,
+      "output_tokens": null,
+      "reasoning_tokens": null,
+      "total_tokens": null,
+      "provider_cost": null
+    },
+    "answer_present": false,
+    "prompt_sha256": "709208b5114060602bf60e617d756abeb5ab1a92f96ca63baa1239c17edd8f46",
+    "raw_event_count": 0,
+    "terminal_errors": []
+  }
+]

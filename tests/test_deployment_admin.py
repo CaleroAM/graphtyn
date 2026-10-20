@@ -63,6 +63,28 @@ def test_windows_service_artifact_and_default_location_are_portable(tmp_path, mo
     assert default_service_output("windows").name == "graphtyn-dashboard.cmd"
 
 
+def test_remote_systemd_service_requires_auth_and_configures_local_embeddings(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    project = tmp_path / "repo"; project.mkdir()
+    tokens = tmp_path / "tokens.json"
+    tokens.write_text('{"secret": {"role": "reader", "projects": []}}')
+
+    with pytest.raises(ValueError, match="tokens-file"):
+        service_artifact(project, kind="systemd", output=tmp_path / "unsafe.service",
+                         host="192.0.2.10")
+
+    artifact = service_artifact(
+        project, kind="systemd", output=tmp_path / "remote.service",
+        host="192.0.2.10", port=9321, tokens_file=tokens,
+        embed_model="nomic-embed-text:latest", ollama_host="http://127.0.0.1:11434",
+    )
+    text = artifact.read_text()
+    assert "serve --host 192.0.2.10 --port 9321 --path" in text
+    assert f"Environment=GRAPHTYN_MEMORY_TOKENS_FILE={tokens.resolve()}" in text
+    assert "Environment=GRAPHTYN_EMBED_MODEL=nomic-embed-text:latest" in text
+    assert "Environment=OLLAMA_HOST=http://127.0.0.1:11434" in text
+
+
 def test_native_service_kind_supports_windows_and_linux(monkeypatch):
     assert native_service_kind("Windows") == "windows"
     monkeypatch.setattr("graphtyn.core.deployment.shutil.which", lambda name: "/usr/bin/systemctl")

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+  "model": "opencode/deepseek-v4.1-flash-free",
+  "conditions": ["baseline", "graphtyn", "graphify"],
+  "tasks": ["question_C1", "edit_manifest"],
+  "repetitions": 1,
+  "planned_sessions": 6,
+  "quality": "Frozen C1 six-item rubric and edit eight-item rubric; grade every completed answer/diff.",
+  "accounting": "Preserve raw OpenCode events and report input, cache, output, reasoning, total, time and provider cost separately.",
+  "graph_policy": "One initial graph query per graph condition, followed by bounded local verification.",
+  "limitations": "One repository, model and repetition; no pooling with historical sessions."
+}

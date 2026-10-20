@@ -1,0 +1,49 @@
+[
+  {
+    "condition": "graphify",
+    "kind": "question_C1",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "graphify_version": "0.9.92",
+    "returncode": 0,
+    "wall_seconds": 67.386,
+    "usage": {
+      "input_tokens": 75612,
+      "cached_input_tokens": 355200,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3906,
+      "reasoning_tokens": 2340,
+      "total_tokens": 437058,
+      "provider_cost": 0
+    },
+    "tool_calls": 25,
+    "answer_present": true
+  },
+  {
+    "condition": "graphify",
+    "kind": "edit_manifest",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "graphify_version": "0.9.92",
+    "returncode": 0,
+    "wall_seconds": 377.325,
+    "usage": {
+      "input_tokens": 246146,
+      "cached_input_tokens": 2729856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 10129,
+      "reasoning_tokens": 12362,
+      "total_tokens": 2998493,
+      "provider_cost": 0
+    },
+    "tool_calls": 72,
+    "answer_present": true,
+    "status": [
+      " M backend/api/management/commands/verificar_respaldo_ia.py",
+      " M backend/api/model_loader.py",
+      " M backend/tests/conftest.py",
+      " M backend/tests/test_model_artifact.py",
+      " M docker-compose.yml",
+      " M opencode.json",
+      " M scripts/comprobar_instalacion.py"
+    ]
+  }
+]

@@ -1,0 +1,53 @@
+[
+  {
+    "arm": "baseline",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "returncode": 0,
+    "wall_seconds": 192.449,
+    "usage": {
+      "input_tokens": 116684,
+      "cached_input_tokens": 1546112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 7859,
+      "reasoning_tokens": 9283,
+      "total_tokens": 1679938,
+      "provider_cost": 0
+    },
+    "tool_calls": 48,
+    "answer_present": true,
+    "status": [
+      " M backend/api/management/commands/verificar_respaldo_ia.py",
+      " M backend/api/model_loader.py",
+      " M backend/tests/test_model_artifact.py",
+      " M docker-compose.yml",
+      " M opencode.json",
+      " M scripts/comprobar_instalacion.py"
+    ]
+  },
+  {
+    "arm": "graphtyn",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "returncode": 0,
+    "wall_seconds": 277.267,
+    "usage": {
+      "input_tokens": 213199,
+      "cached_input_tokens": 2297984,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 10752,
+      "reasoning_tokens": 13108,
+      "total_tokens": 2535043,
+      "provider_cost": 0
+    },
+    "tool_calls": 55,
+    "answer_present": true,
+    "status": [
+      " M backend/api/management/commands/verificar_respaldo_ia.py",
+      " M backend/api/model_loader.py",
+      " M backend/tests/conftest.py",
+      " M backend/tests/test_model_artifact.py",
+      " M docker-compose.yml",
+      " M opencode.json",
+      " M scripts/comprobar_instalacion.py"
+    ]
+  }
+]

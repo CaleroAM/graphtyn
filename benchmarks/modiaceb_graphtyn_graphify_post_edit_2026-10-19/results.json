@@ -1,0 +1,149 @@
+[
+  {
+    "kind": "question_C1",
+    "condition": "baseline",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+    "returncode": 0,
+    "timed_out": false,
+    "wall_seconds": 48.368,
+    "usage": {
+      "input_tokens": 45395,
+      "cached_input_tokens": 277120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4267,
+      "reasoning_tokens": 3704,
+      "total_tokens": 330486,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "tool_calls": 26,
+    "status": []
+  },
+  {
+    "kind": "question_C1",
+    "condition": "graphtyn",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+    "returncode": 0,
+    "timed_out": false,
+    "wall_seconds": 29.978,
+    "usage": {
+      "input_tokens": 23580,
+      "cached_input_tokens": 67328,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2798,
+      "reasoning_tokens": 733,
+      "total_tokens": 94439,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "tool_calls": 12,
+    "status": []
+  },
+  {
+    "kind": "question_C1",
+    "condition": "graphify",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+    "returncode": 0,
+    "timed_out": false,
+    "wall_seconds": 90.853,
+    "usage": {
+      "input_tokens": 52000,
+      "cached_input_tokens": 286336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3726,
+      "reasoning_tokens": 2416,
+      "total_tokens": 344478,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "tool_calls": 19,
+    "status": []
+  },
+  {
+    "kind": "edit_manifest",
+    "condition": "graphify",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+    "returncode": 0,
+    "timed_out": false,
+    "wall_seconds": 414.945,
+    "usage": {
+      "input_tokens": 127247,
+      "cached_input_tokens": 2431744,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 10242,
+      "reasoning_tokens": 10248,
+      "total_tokens": 2579481,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "tool_calls": 54,
+    "status": [
+      " M backend/api/management/commands/verificar_respaldo_ia.py",
+      " M backend/api/model_loader.py",
+      " M backend/tests/test_model_artifact.py",
+      " M docker-compose.yml",
+      " M scripts/backup_modiaceb.sh",
+      " M scripts/comprobar_instalacion.py",
+      " M scripts/restore_modiaceb.sh"
+    ]
+  },
+  {
+    "kind": "edit_manifest",
+    "condition": "graphtyn",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+    "returncode": 0,
+    "timed_out": false,
+    "wall_seconds": 444.486,
+    "usage": {
+      "input_tokens": 59631,
+      "cached_input_tokens": 2413056,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 21790,
+      "reasoning_tokens": 0,
+      "total_tokens": 2494477,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "tool_calls": 51,
+    "status": [
+      " M backend/api/management/commands/verificar_respaldo_ia.py",
+      " M backend/api/model_loader.py",
+      " M backend/tests/test_model_artifact.py",
+      " M docker-compose.yml",
+      " M scripts/comprobar_instalacion.py"
+    ]
+  },
+  {
+    "kind": "edit_manifest",
+    "condition": "baseline",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+    "returncode": 0,
+    "timed_out": false,
+    "wall_seconds": 652.32,
+    "usage": {
+      "input_tokens": 79673,
+      "cached_input_tokens": 2221824,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 23978,
+      "reasoning_tokens": 0,
+      "total_tokens": 2325475,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "tool_calls": 47,
+    "status": [
+      " M .env.example",
+      " M backend/api/management/commands/verificar_respaldo_ia.py",
+      " M backend/api/model_loader.py",
+      " M backend/tests/test_model_artifact.py",
+      " M docker-compose.yml",
+      " M scripts/comprobar_instalacion.py"
+    ]
+  }
+]

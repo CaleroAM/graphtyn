@@ -35,7 +35,9 @@ current source state.
 
 Call `graph_query_intent` before reading directories or many files for questions
 about current source code. It queries the workspace configured when the MCP
-server started, so do not invent a `path` argument. Use the user's complete
+server started, so do not invent a `path` argument. Omit `expected_project` for
+that default workspace; use it only as a guard after the user deliberately
+selects a registered project by its exact name, ID, alias, or path. Use the user's complete
 request, including the concrete change recovered from recent conversation
 context. When using the CLI instead, pass `--path` if the target is not the
 current directory.
@@ -57,6 +59,9 @@ tree, grep broadly, or read source beforehand. When `do_not_expand=true` and
 `source_evidence` satisfies the obligations, answer directly from those excerpts
 without reopening their files. For a named gap, read only the returned line range
 or extend the same `context_id`; never open an entire file as redundant validation.
+When `missing` contains `relevant_anchor`, follow `anchor_fallback` once: run only
+its exact queries, keep at most its stated result count, and extend the same
+context. If no exact match exists, report the gap instead of broadening the search.
 
 ## Interpret evidence
 
@@ -78,6 +83,19 @@ Resolve phrases such as “ese cambio”, “lo anterior” or “el cambio que 
 ## Act and report
 
 For analysis or diagnosis, report evidence before proposing action. For authorized implementation, use the graph to scope the edit, verify the returned source, implement, run relevant tests, and use `impact` again when the change could affect consumers.
+
+When `implementation_context` is present, treat it as the action contract:
+
+- Open `read_first` in order and keep initial reads within `exploration_budget`.
+- Use `source_evidence` to support claims; it supplements rather than replaces
+  `implementation_context`, `execution_policy`, or the original task.
+- Run the first suggested test command that covers `test_files`. Do not install
+  dependencies during the edit unless the user explicitly requested it.
+- Use at most one exact expansion for a named missing obligation. Do not run a
+  broad grep, list unrelated directories, or inspect global environments when
+  `do_not_expand=true`.
+- Stop when the targeted tests pass and `missing` is empty. Report an unavailable
+  runner as a gap instead of provisioning a new environment.
 
 For a Git-aware implementation, run `graphtyn impact --base HEAD --head HEAD --path <project>` and follow `GRAPHTYN_CHANGE_REPORT.md`. Use `graphtyn review --staged` for the exact staged set. If the graph reports ambiguous relations, list them with `graphtyn review --ambiguities`; record accept/reject/correct only after source verification. For high-impact answers, run `graphtyn validate-answer --answer @draft.md` and fix unsupported claims before publishing.
 
