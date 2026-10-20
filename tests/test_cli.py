@@ -448,7 +448,8 @@ def test_onboard_auto_connects_a_single_openclaw_installation(git_repo, tmp_path
 
     data = json.loads(capsys.readouterr().out)
     assert data["ok"] is True
-    assert data["harness_auto_connect"]["status"] == "connected"
+    assert data["harness_auto_connect"]["status"] == "configured_restart_required"
+    assert data["harness_auto_connect"]["gateway_restart_required"] is True
     assert data["harness_auto_connect"]["agent_count"] == 2
     assert data["harness_auto_connect"]["relationships_pending_review"] == 1
     assert data["harness_auto_connect"]["history_imported"] is False

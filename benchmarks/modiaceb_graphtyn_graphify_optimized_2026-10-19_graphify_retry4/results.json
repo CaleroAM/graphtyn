@@ -1,0 +1,44 @@
+[
+  {
+    "kind": "question_C1",
+    "condition": "graphify",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+    "returncode": 0,
+    "timed_out": false,
+    "wall_seconds": 20.313,
+    "usage": {
+      "input_tokens": 8050,
+      "cached_input_tokens": 33024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 614,
+      "reasoning_tokens": 1331,
+      "total_tokens": 43019,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "tool_calls": 7,
+    "status": []
+  },
+  {
+    "kind": "edit_manifest",
+    "condition": "graphify",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "source_commit": "70dc1e8b732ebb08d93e39219a2016f4ef2d8bf8",
+    "returncode": 0,
+    "timed_out": false,
+    "wall_seconds": 6.779,
+    "usage": {
+      "input_tokens": 5201,
+      "cached_input_tokens": 1792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 75,
+      "reasoning_tokens": 729,
+      "total_tokens": 7797,
+      "provider_cost": 0
+    },
+    "answer_present": true,
+    "tool_calls": 0,
+    "status": []
+  }
+]

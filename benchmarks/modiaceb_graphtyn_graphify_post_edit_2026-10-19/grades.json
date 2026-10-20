@@ -1,0 +1,13 @@
+{
+  "method": "Evaluación local no independiente contra rúbricas congeladas; parches aplicados sobre copias limpias.",
+  "question_C1": {
+    "baseline": {"score": 6, "maximum": 6},
+    "graphtyn": {"score": 6, "maximum": 6},
+    "graphify": {"score": 6, "maximum": 6}
+  },
+  "edit_manifest": {
+    "baseline": {"score": 8, "maximum": 8, "independent_tests": "24 passed"},
+    "graphtyn": {"score": 8, "maximum": 8, "independent_tests": "23 passed"},
+    "graphify": {"score": 8, "maximum": 8, "independent_tests": "22 passed"}
+  }
+}

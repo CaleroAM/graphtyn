@@ -198,7 +198,16 @@ El estado `memory_enabled` se muestra en el registro y su historial queda en
 `memory_policy_events`. Para reanudar la captura, usa `--state enabled`; la
 fuente se vuelve a registrar con un cursor nuevo.
 
-Para usar MCP, `connect` conserva una entrada Graphtyn válida que ya exista en `openclaw.json`. Si configuras `GRAPHTYN_MCP_URL` y `GRAPHTYN_MCP_TOKEN`, también escribe la entrada MCP, haciendo una copia `openclaw.json.graphtyn-backup-<timestamp>` antes. El token no se imprime. Si no hay URL/token, fuentes y watcher pueden quedar configurados, pero `connect` informa que la consulta MCP sigue pendiente y devuelve estado incompleto.
+Para usar MCP, `connect` conserva una entrada Graphtyn válida que ya exista en
+`openclaw.json`. Si configuras `GRAPHTYN_MCP_URL` y `GRAPHTYN_MCP_TOKEN`, también
+escribe la entrada MCP, haciendo una copia
+`openclaw.json.graphtyn-backup-<timestamp>` antes. El token no se imprime. La
+entrada limita el catálogo del agente a `memory_project_context`,
+`memory_message_window` y `memory_status`: consulta contexto compartido, amplía
+una referencia concreta y comprueba el estado, pero no modifica memoria ni
+administra el servicio. Si no hay URL/token, fuentes y watcher pueden quedar
+configurados, pero `connect` informa que la consulta MCP sigue pendiente y
+devuelve estado incompleto.
 
 ```bash
 export GRAPHTYN_MCP_URL='https://graphtyn.example/mcp'
@@ -275,7 +284,12 @@ cerebro privado activo de OpenClaw mientras la captura esté habilitada; no
 actualizan el archivo legado. **Revisar novedades** comprueba si ese archivo
 recibió datos nuevos y sólo vuelve a integrarlos después de confirmación.
 
-En OpenClaw, usa el MCP `memory_agent_context` con el ID real, por ejemplo `openclaw/devops`. Si hay una única instalación conectada, `installation_id` se resuelve automáticamente. Para varias instalaciones, pásalo explícitamente. `memory_agent_status` informa relación, cobertura y estado de captura.
+En el perfil MCP predeterminado de OpenClaw, usa `memory_project_context` con el
+proyecto exacto y la identidad real, por ejemplo `openclaw/devops`. El watcher
+alimenta por separado el cerebro privado; el operador puede inspeccionarlo en el
+dashboard o por CLI. `memory_agent_context` y `memory_agent_status` permanecen
+en el catálogo administrativo completo, pero no se inyectan en el contexto base
+de todos los agentes.
 
 ## Qué se modifica en OpenClaw
 

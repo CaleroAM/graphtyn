@@ -120,7 +120,8 @@ def test_continuity_context_finds_older_query_matched_message_across_agents(tmp_
     assert match["provider"] == "opencode"
     assert match["source_message_id"] == "older-session:assistant-1"
     assert "pendiente" in match["content"]
-    assert result["coverage"]["source_message_search"]["scanned_messages"] == 6
+    assert result["coverage"]["source_message_search"]["scanned_messages"] < 6
+    assert result["coverage"]["source_message_search"]["retrieval"].startswith("hybrid-rrf:")
     assert result["estimated_tokens"] <= result["token_budget"]
 
     window = store.message_window(match["message_id"], requester_agent="codex",
@@ -164,6 +165,118 @@ def test_source_message_search_keeps_one_result_per_session(tmp_path, monkeypatc
     assert len(results) == 3
     assert len({item["session_id"] for item in results}) == 3
     assert any(item["message_id"] == target["id"] for item in results)
+
+
+def test_source_message_search_recovers_renamed_command_and_companion_evidence(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"
+    project.mkdir()
+    store = SharedMemoryStore(project)
+
+    source = store.ensure_external_session("openclaw/nexus", "remote-access", "Gateway access", consent=True)
+    decision = store.append_message(
+        source["id"], "assistant",
+        "Se decidió usar Tailscale Serve en el host porque la VM ya no estaba en el tailnet.",
+        metadata={"provider": "openclaw", "source_message_id": "source:decision"},
+    )
+    command = store.append_message(
+        source["id"], "assistant",
+        "Comando aplicado: sudo tailscale serve --bg --https=443 --set-path / http://10.0.0.8:18789",
+        metadata={"provider": "openclaw", "source_message_id": "source:command"},
+    )
+    distractor = store.ensure_external_session("openclaw/career", "newer", "Networking chat", consent=True)
+    store.append_message(
+        distractor["id"], "assistant", "Revisamos Tailscale Funnel y el enlace del proyecto.",
+        metadata={"provider": "openclaw", "source_message_id": "noise:1"},
+    )
+
+    result = store.search_messages(
+        "¿Qué comando de Tailscale Funnel se usó, por qué se eligió ese puerto y enlace?", limit=3,
+    )
+
+    ids = {item["message_id"] for item in result["messages"]}
+    assert {decision["id"], command["id"]} <= ids
+    assert result["messages"][0]["message_id"] == command["id"]
+    recovered = next(item for item in result["messages"] if item["message_id"] == command["id"])
+    assert "serve" in recovered["matched_alias_terms"]
+    assert "serve" in result["query_expansions"]
+
+
+def test_source_message_search_ignores_captured_agent_bootstrap(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"; project.mkdir()
+    store = SharedMemoryStore(project)
+    bootstrap = store.ensure_external_session("codex", "bootstrap", "Injected context", consent=True)
+    injected = store.append_message(
+        bootstrap["id"], "user",
+        "# AGENTS.md instructions for /repo\n<INSTRUCTIONS>Use Tailscale command gateway host</INSTRUCTIONS>",
+    )
+    retrieval_request = store.append_message(
+        bootstrap["id"], "user",
+        "Consulta con Graphtyn la memoria compartida: Tailscale command gateway host.",
+    )
+    retrieval_answer = store.append_message(
+        bootstrap["id"], "assistant",
+        "Según la memoria compartida, Tailscale command gateway host. message_id: msg_source.",
+    )
+    history = store.ensure_external_session("openclaw/nexus", "history", "Decision", consent=True)
+    answer = store.append_message(
+        history["id"], "assistant",
+        "The Tailscale command exposes the gateway from the host.",
+    )
+
+    result = store.search_messages("Tailscale command gateway host", limit=3)
+
+    assert [item["message_id"] for item in result["messages"]] == [answer["id"]]
+    assert {injected["id"], retrieval_request["id"], retrieval_answer["id"]}.isdisjoint(
+        {item["message_id"] for item in result["messages"]}
+    )
+
+
+def test_message_obligations_provenance_and_adaptive_snippets(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"; project.mkdir()
+    store = SharedMemoryStore(project)
+    session = store.ensure_external_session("openclaw/test-agent", "decision", "Tailscale", consent=True)
+    source = store.append_message(session["id"], "assistant", (
+        "Comando: `sudo tailscale serve --bg --https=443 --set-path / "
+        "http://192.0.2.79:18789`. " + "detalle " * 60 +
+        "El enlace fue https://node.example.test. Se decidió Serve porque la VM ya no "
+        "estaba en el tailnet; el host hace proxy al backend del puerto 18789."),
+        metadata={"source_message_id": "eve:tailscale", "provider": "openclaw"})
+    evaluation = store.append_message(session["id"], "assistant", "Tailscale Serve puerto 18789",
+        metadata={"source_message_id": "eval:echo", "evaluation": True,
+                  "derived_from": ["eve:tailscale"]})
+
+    result = store.search_messages(
+        "¿Cuál fue el comando, enlace, puerto, backend, modo Serve o Funnel y por qué se decidió?", limit=3)
+    context = store.context(
+        "¿Cuál fue el comando, enlace, puerto, backend, modo Serve o Funnel y por qué se decidió?",
+        requester_agent="openclaw/eve", mode="continuity", include_graph=False, token_budget=1800)
+
+    assert [item["message_id"] for item in result["messages"]] == [source["id"]]
+    assert evaluation["metadata"]["origin"] == "evaluation"
+    assert source["metadata"]["origin"] == "conversation"
+    assert len(result["messages"][0]["snippet_spans"]) >= 2
+    assert not result["obligations"]["missing"]
+    assert result["obligations"]["sufficient_evidence"] is True
+    assert context["do_not_expand"] is True
+    assert context["evidence_complete"] is True
+
+
+def test_proposed_command_does_not_satisfy_memory_evidence(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"; project.mkdir()
+    store = SharedMemoryStore(project)
+    session = store.ensure_external_session("agent", "proposal", "Gateway", consent=True)
+    store.append_message(session["id"], "assistant",
+        "Plan propuesto, cuando me des luz verde: `sudo tailscale serve --https=443 http://host:18789`.")
+
+    result = store.search_messages("¿Qué comando y puerto se ejecutó para Tailscale?", limit=3)
+
+    assert result["messages"][0]["evidence_state"] == "proposed"
+    assert result["obligations"]["sufficient_evidence"] is False
+    assert set(result["obligations"]["missing"]) == {"command", "port"}
 
 
 def test_censored_vendor_alias_recovers_benchmark_memory(tmp_path, monkeypatch):
@@ -1266,6 +1379,13 @@ def test_project_doctor_distinguishes_stale_permission_and_missing_activity(tmp_
     assert watcher["effective_state"] == "degraded"
     assert watcher["cause"] == "permission_denied"
     assert denied["signals"]["storage"]["details"]["diagnostics"][0]["remedy"]
+
+    store.update_sync_watcher("cli-sync:current", "watching", interval=300,
+        cycle_result={"ok": True, "discovered": 1, "imported": 1, "error_count": 0})
+    recovered = store.project_doctor()
+    assert recovered["signals"]["capture"]["state"] == "healthy"
+    assert "stale_sync_watchers" not in recovered["signals"]["storage"]["details"]["issues"]
+    assert "degraded_sync_watchers" not in recovered["signals"]["storage"]["details"]["issues"]
 
 
 def test_memory_sync_watcher_schema_migrates_existing_database(tmp_path, monkeypatch):

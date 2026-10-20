@@ -4,6 +4,45 @@ import importlib
 from pathlib import Path
 import pytest
 from graphtyn.core.ast_parser import ASTParser
+
+
+def test_configuration_files_are_indexed_as_bounded_source_evidence(tmp_path):
+    (tmp_path / "docker-compose.yml").write_text(
+        "services:\n  api:\n    environment:\n      FEATURE_STORE_PATH: /app/data.parquet\n",
+        encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+
+    config = [node for node in graph["nodes"]
+              if node.get("kind") == "documentation_section"
+              and node.get("file") == "docker-compose.yml"]
+    assert config
+    assert "FEATURE_STORE_PATH" in config[0]["details"]
+
+
+def test_extensionless_runners_and_package_scripts_are_indexed(tmp_path):
+    (tmp_path / "Makefile").write_text(
+        "test:\n\tpython -m pytest tests/test_unit.py\n", encoding="utf-8",
+    )
+    (tmp_path / "Dockerfile").write_text("FROM python:3.12-slim\n", encoding="utf-8")
+    (tmp_path / "package.json").write_text(
+        '{"scripts":{"test":"vitest run"}}\n', encoding="utf-8",
+    )
+    workflows = tmp_path / ".github" / "workflows"
+    workflows.mkdir(parents=True)
+    (workflows / "tests.yml").write_text(
+        "steps:\n  - run: python -m pytest -q\n", encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    sections = {node.get("file"): node.get("details", "") for node in graph["nodes"]
+                if node.get("kind") == "documentation_section"}
+
+    assert "python -m pytest tests/test_unit.py" in sections["Makefile"]
+    assert "FROM python:3.12-slim" in sections["Dockerfile"]
+    assert '"test":"vitest run"' in sections["package.json"]
+    assert "python -m pytest -q" in sections[".github/workflows/tests.yml"]
 from graphtyn.core.tree_sitter_backend import parse_file as parse_tree_sitter_file
 
 def test_parse_python_file():

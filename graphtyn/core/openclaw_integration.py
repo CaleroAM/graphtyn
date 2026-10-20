@@ -266,13 +266,21 @@ def configure_openclaw_mcp(discovered: dict[str, Any], *, mcp_url: str | None = 
     if not token:
         return {"ok": False, "configured": False,
                 "reason": "falta GRAPHTYN_MCP_TOKEN para autenticar el servidor MCP"}
-    if str(existing.get("url") or "") == url and existing_token == token:
+    # OpenClaw agents only need the compact, read-only project-memory surface.
+    # Keeping capture/admin tools out of the directory reduces tool context and
+    # prevents an answer-only agent from accidentally mutating shared history.
+    tool_filter = {"include": [
+        "memory_project_context", "memory_message_window", "memory_status"
+    ]}
+    if (str(existing.get("url") or "") == url and existing_token == token
+            and existing.get("toolFilter") == tool_filter):
         return {"ok": True, "configured": True, "changed": False, "url": url}
     replacement = json.loads(json.dumps(config))
     if not isinstance(replacement.get("mcp"), dict): replacement["mcp"] = {}
     if not isinstance(replacement["mcp"].get("servers"), dict): replacement["mcp"]["servers"] = {}
     replacement["mcp"]["servers"]["graphtyn"] = {
-        **existing, "url": url, "headers": {**headers, "Authorization": f"Bearer {token}"}}
+        **existing, "url": url, "headers": {**headers, "Authorization": f"Bearer {token}"},
+        "toolFilter": tool_filter}
     payload = json.dumps(replacement, ensure_ascii=False, indent=2) + "\n"
     config_path = str(discovered["config_path"])
     backup = f"{config_path}.graphtyn-backup-{time.time_ns()}"
@@ -307,7 +315,7 @@ def configure_openclaw_mcp(discovered: dict[str, Any], *, mcp_url: str | None = 
             try: os.unlink(temporary)
             except FileNotFoundError: pass
     return {"ok": True, "configured": True, "changed": True,
-            "url": url, "backup": backup}
+            "url": url, "tool_count": len(tool_filter["include"]), "backup": backup}
 
 
 def _registered_path(agent_id: str, source_config: Path | None = None) -> str | None:

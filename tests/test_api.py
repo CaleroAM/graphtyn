@@ -16,6 +16,18 @@ from graphtyn.core.history_import import HistoricalSession
 from graphtyn.core.memory_jobs import MemoryJobManager
 
 
+def test_missing_configured_token_file_never_falls_back_to_local_admin(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS_FILE", str(tmp_path / "missing.json"))
+    monkeypatch.delenv("GRAPHTYN_MEMORY_TOKENS", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPHTYN_MCP_TOKEN", raising=False)
+
+    principal, denied = api_main._authorize_http_mcp(None)
+
+    assert principal is None
+    assert denied.status_code == 401
+
+
 class _LiveClient:
     """Exercise the real Uvicorn HTTP stack without Starlette TestClient."""
 

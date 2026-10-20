@@ -15,7 +15,7 @@
     {
       "key": "graphtyn/api/main.py",
       "kind": "module",
-      "max_lines": 3210
+      "max_lines": 3212
     },
     {
       "key": "graphtyn/core/agent_benchmark.py::compare_agent_runs",
@@ -25,22 +25,32 @@
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser",
       "kind": "class",
-      "max_lines": 900
+      "max_lines": 886
     },
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser.scan_directory",
       "kind": "function",
-      "max_lines": 792
+      "max_lines": 778
     },
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser.scan_directory._add_tree_symbols",
       "kind": "function",
-      "max_lines": 140
+      "max_lines": 138
+    },
+    {
+      "key": "graphtyn/core/change_analyst.py",
+      "kind": "module",
+      "max_lines": 1522
+    },
+    {
+      "key": "graphtyn/core/change_analyst.py::_implementation_context",
+      "kind": "function",
+      "max_lines": 278
     },
     {
       "key": "graphtyn/core/change_analyst.py::query_intent",
       "kind": "function",
-      "max_lines": 372
+      "max_lines": 654
     },
     {
       "key": "graphtyn/core/history_import.py",
@@ -75,17 +85,17 @@
     {
       "key": "graphtyn/core/memory_topics.py",
       "kind": "module",
-      "max_lines": 1547
+      "max_lines": 1545
     },
     {
       "key": "graphtyn/core/memory_topics.py::TopicMemoryMixin",
       "kind": "class",
-      "max_lines": 1488
+      "max_lines": 1486
     },
     {
       "key": "graphtyn/core/memory_topics.py::TopicMemoryMixin.topic_graph",
       "kind": "function",
-      "max_lines": 250
+      "max_lines": 246
     },
     {
       "key": "graphtyn/core/openclaw_integration.py::connect_openclaw",
@@ -95,17 +105,22 @@
     {
       "key": "graphtyn/core/shared_memory.py",
       "kind": "module",
-      "max_lines": 3663
+      "max_lines": 4054
     },
     {
       "key": "graphtyn/core/shared_memory.py::SharedMemoryStore",
       "kind": "class",
-      "max_lines": 3175
+      "max_lines": 3412
+    },
+    {
+      "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.search_messages",
+      "kind": "function",
+      "max_lines": 193
     },
     {
       "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.context",
       "kind": "function",
-      "max_lines": 305
+      "max_lines": 323
     },
     {
       "key": "graphtyn/core/shared_memory.py::SharedMemoryStore._verify_execution_provenance",
@@ -128,6 +143,11 @@
       "max_lines": 209
     },
     {
+      "key": "graphtyn/core/source_evidence.py::attach_source_evidence",
+      "kind": "function",
+      "max_lines": 151
+    },
+    {
       "key": "graphtyn/core/tree_sitter_backend.py::parse_file",
       "kind": "function",
       "max_lines": 254
@@ -138,19 +158,24 @@
       "max_lines": 170
     },
     {
+      "key": "graphtyn/mcp_server.py",
+      "kind": "module",
+      "max_lines": 1306
+    },
+    {
       "key": "graphtyn/mcp_server.py::evidence_result",
       "kind": "function",
-      "max_lines": 155
+      "max_lines": 165
     },
     {
       "key": "graphtyn/mcp_server.py::run_mcp_server",
       "kind": "function",
-      "max_lines": 402
+      "max_lines": 461
     },
     {
       "key": "graphtyn/mcp_server.py::run_mcp_server._handle_request",
       "kind": "function",
-      "max_lines": 351
+      "max_lines": 408
     }
   ]
 }

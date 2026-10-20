@@ -265,6 +265,54 @@ Gra…ify publica dos métricas distintas que no deben mezclarse:
 
 Fuentes oficiales: [Gra…ify BENCHMARKS v8](https://github.com/Gra…ify-Labs/graphify/blob/v8/BENCHMARKS.md) y [benchmark Karpathy](https://github.com/Gra…ify-Labs/graphify/blob/v8/worked/karpathy-repos/review.md).
 
+#### Réplica modIAceb con consumo total (19 oct 2026)
+
+Una réplica local con OpenCode 1.18.13 y `deepseek-v4.1-flash-free` separó el
+benchmark interno de compresión de Graphify de dos tareas end-to-end. Graphify
+0.9.92 informó **87.1×** al comparar el corpus estimado con el subgrafo medio.
+En la pregunta C1, con calidad 6/6 en los tres brazos, los totales fueron 540,504
+sin grafo, 662,919 con Graphtyn y 437,058 con Graphify: Graphify redujo 19.14%
+frente a lectura directa. En la tarea de edición, con calidad 8/8, los totales
+fueron 1,679,938, 2,535,043 y 2,998,493 respectivamente: Graphify consumió
+78.49% más que lectura directa y 18.28% más que Graphtyn. Una tarea por tipo y
+una repetición no permiten generalizar. Informe y resultados agregados:
+`benchmarks/modiaceb_graphify_2026-10-19/`.
+
+El diagnóstico de esa réplica originó correcciones que todavía no constituyen
+un nuevo resultado end-to-end: `query-intent` distingue extensiones de archivo
+de símbolos calificados, pondera identificadores encontrados dentro de
+operaciones, reserva evidencia para configuración/pruebas/verificadores y no
+cierra la búsqueda cuando falta una obligación. Los archivos YAML, TOML, INI y
+CFG ahora forman parte del índice acotado. `evidence-v1` aplica un presupuesto
+al JSON serializado completo y las expansiones deduplican por identidad de
+archivo y símbolo, no por el alias posicional de cada respuesta. La regresión
+local de la tarea `FEATURE_STORE_MANIFEST_PATH` recupera cargador,
+`docker-compose.yml`, pruebas y verificadores; falta repetir el benchmark
+pareado para medir si esto reduce tokens totales sin perder calidad.
+
+#### Repeticiones posteriores a las optimizaciones
+
+Las nuevas ejecuciones conservaron calidad 6/6 en la pregunta C1, pero el efecto
+dependió del cliente. Frente a su baseline emparejado, Graphtyn registró 64.5%
+menos tokens totales en OpenCode, 5.2% más en Codex y 31.3% menos en
+Antigravity. Los totales no se agregan entre clientes porque sus modelos,
+políticas de caché y contadores son distintos. Protocolo, desviaciones e intentos
+excluidos: `benchmarks/modiaceb_three_client_post_edit_2026-10-19/REPORT_VALID.md`.
+
+La comparación posterior entre baseline, Graphtyn y Graphify usó OpenCode
+1.18.13 con `opencode/deepseek-v4.1-flash-free`. En C1, Graphtyn registró 71.4%
+menos tokens que baseline y 72.6% menos que Graphify, con calidad 6/6. En la
+edición, los tres brazos alcanzaron 8/8: Graphtyn consumió 7.3% más que baseline
+y 3.3% menos que Graphify. Los intentos anteriores y sus resultados no se
+reescribieron. Informe:
+`benchmarks/modiaceb_graphtyn_graphify_post_edit_2026-10-19/FINAL_REPORT.md`.
+
+Estas son muestras de una repetición por celda. Demuestran que el contexto puede
+reemplazar exploración en algunos clientes y añadir trabajo en otros; no prueban
+un ahorro universal ni un coste monetario menor. La release mantiene separadas
+la compresión del contexto recuperado, el consumo total reportado por la sesión
+y la facturación del proveedor.
+
 ### OpenCode `x-preview-f-free`: MCP compacto `evidence-v1`
 
 Prueba end-to-end sobre la raíz completa de UnityCommerceDemo, con seis tareas pareadas, MCPs aislados y el mismo modelo. `evidence-v1` declara cada ruta una vez, usa aliases para nodos, codifica relaciones como tuplas y ajusta el presupuesto al número de símbolos. Los ceros de `coverage` son evidencia negativa cuando `complete=true`, evitando búsquedas redundantes.
@@ -310,6 +358,13 @@ V7 elevó la calidad **+43.75 puntos**, redujo tokens **29.25%**, tiempo **23.62
 Tres tareas alcanzaron 100%. `infrastructure-bindings` puntuó 0% porque `x-preview-f-free` terminó una respuesta después de la primera sección pese a devolver estado `SUCCESS`; se conservó sin reintento para evitar selección favorable. El paquete sí contenía los bindings y ambas selecciones de base de datos. Por tanto, el 75% mezcla calidad del índice con estabilidad de generación del proveedor. Artefactos: `benchmarks/cleanarchitecture_x_preview_f_free_v7_2026-08-21/`.
 
 #### Perfil MCP de intención única v8
+
+> **Nota de auditoría (18 oct 2026):** estas cifras históricas conservaron el
+> `step_finish` con mayor `tokens.total`. Los artefactos no fijaron la versión de
+> OpenCode ni conservaron todos los eventos por paso, por lo que no permiten
+> demostrar si ese contador era acumulado o incremental ni recalcular el consumo
+> total. Los porcentajes siguientes describen el contador publicado y quedan
+> pendientes de réplica con contabilidad versionada; no equivalen a coste.
 
 El trace de v7 mostró que OpenCode seguía llamando herramientas antiguas antes y después del nuevo planificador. Se añadió `graph_query_intent`, contexto diferencial mediante `context_id`, señales `complete_for`/`do_not_expand`, expansión bilingüe de conceptos y un perfil MCP predeterminado que expone solamente esta tool. El catálogo completo permanece disponible con `--tool-profile full`.
 
@@ -369,7 +424,12 @@ Se repitió el protocolo competitivo en un segundo repositorio y ecosistema: `en
 | OpenCode directo | 93.75% | 21,741 | 153.00 | 9.50 |
 | Gra…ify 0.9.48 | 62.50% | 21,880 | 228.98 | 26.75 |
 
-Graphtyn redujo 53.16% de tokens y 81.58% de llamadas frente a lectura directa, con +2.09 puntos de calidad. Frente a Gra…ify redujo 53.46% de tokens y 93.46% de llamadas, con +33.34 puntos de calidad. Los tres resultados finales completaron 4/4 tareas y no activaron afirmaciones prohibidas.
+Con el contador histórico publicado, Graphtyn registró 53.16% menos tokens y
+81.58% menos llamadas frente a lectura directa, con +2.09 puntos de calidad.
+Frente a Gra…ify registró 53.46% menos tokens y 93.46% menos llamadas, con
++33.34 puntos de calidad. Los tres resultados finales completaron 4/4 tareas y
+no activaron afirmaciones prohibidas. Esto mide sesiones de ese protocolo; no
+garantiza ahorro en flujos que obliguen memoria, grafo, lectura y validación.
 
 La primera corrida de Graphtyn obtuvo 50% y expuso dos defectos que el benchmark C# no detectaba: un nodo sintáctico Python vacío causaba `IndexError`, y los componentes nombrados exactamente podían quedar desplazados por métodos genéricos con muchas operaciones. Se corrigieron ambos, se agregaron regresiones automatizadas y se repitió Graphtyn. Los artefactos iniciales y finales se conservan; los fallos transitorios de finalización/SQLite de OpenCode se reintentaron por tarea, sin repetir resultados exitosos de Gra…ify.
 

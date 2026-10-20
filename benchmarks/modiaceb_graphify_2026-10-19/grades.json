@@ -1,0 +1,15 @@
+{
+  "question_C1": {
+    "graphify": {"score": 6, "maximum": 6},
+    "comparison": {"baseline": "6/6", "graphtyn": "6/6"}
+  },
+  "edit_manifest": {
+    "graphify": {"score": 8, "maximum": 8, "independent_tests": "17 passed"},
+    "comparison": {"baseline": "8/8; 16 passed", "graphtyn": "8/8; 16 passed"}
+  },
+  "notes": [
+    "The opencode.json schema insertion occurred symmetrically in every edit arm and is excluded as a client side effect.",
+    "Graphify added whitespace fallback coverage and isolated FEATURE_STORE_MANIFEST_PATH in the shared fixture.",
+    "No successful arm was rerun."
+  ]
+}

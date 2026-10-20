@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "status": "PROPOSED_NOT_EXECUTED",
+  "purpose": "Medir calidad y consumo total de una política selectiva de Graphtyn frente a lectura local en modIAceb.",
+  "design": {
+    "clients": ["opencode", "codex", "antigravity"],
+    "tasks": ["C1", "C2", "C3"],
+    "arms": ["local_reading", "selective_graphtyn"],
+    "repetitions": 2,
+    "planned_sessions": 36,
+    "order": "Within each client: paired AB/BA, reversing task order in repetition 2. Preserve all attempted cells.",
+    "model_control": "Use the same underlying model and fixed reasoning effort across clients only if all three expose the exact same model revision and settings. Otherwise treat client+model as an experimental environment, report each separately, and do not pool token totals or infer a client-only effect.",
+    "direct_file_access": "allowed equally in both arms",
+    "selective_policy": "Use graph_query_intent once; expand or read bounded source when obligations remain missing. Do not require project memory for code-only tasks. Validate only material claims.",
+    "grading": "Frozen six-obligation rubric per task; blind independent grading when available. Preserve every run and failure."
+  },
+  "mcp_contract": {
+    "implementation": "One Graphtyn MCP implementation shared by all clients; do not create three product variants.",
+    "session_isolation": "Each benchmark session may launch its own stdio server process.",
+    "same_server_command": "graphtyn mcp --tool-profile intent --path <absolute-modiaceb-path>",
+    "same_graphtyn_version": true,
+    "same_tool_profile": "intent",
+    "same_project_index": true,
+    "client_configuration": {
+      "opencode": "Project-local OpenCode MCP entry plus an OpenCode event adapter.",
+      "codex": ".codex/config.toml MCP entry plus a Codex JSON-event adapter.",
+      "antigravity": ".agents/mcp_config.json MCP entry plus an Antigravity stream-event adapter. The legacy CLI query-intent runner is not equivalent to MCP use."
+    }
+  },
+  "accounting": {
+    "record_client_version": true,
+    "record_model_request": true,
+    "record_raw_usage_events": true,
+    "record_cache_read_and_write": true,
+    "record_output_and_reasoning": true,
+    "record_all_attempts": true,
+    "unknown_usage_is_null_not_zero": true,
+    "report_separately": [
+      "retrieved_context_bytes",
+      "session_input_tokens",
+      "uncached_input_tokens",
+      "cached_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "provider_cost",
+      "wall_seconds",
+      "quality"
+    ]
+  },
+  "guardrails_requiring_explicit_authorization": {
+    "per_session_total_token_ceiling": 300000,
+    "phase_1": {
+      "scope": "One frozen task, both arms, one repetition, all three clients",
+      "sessions": 6,
+      "total_token_ceiling": 1800000
+    },
+    "phase_2": {
+      "scope": "C1-C3, both arms, two repetitions, all three clients",
+      "sessions": 36,
+      "total_token_ceiling": 10800000,
+      "requires_new_authorization_after_phase_1": true
+    },
+    "monetary_ceiling": null,
+    "stop_if_runtime_cannot_enforce_budget": true
+  },
+  "success_rule": "Comparable quality with lower tokens or time, or a prespecified quality gain that justifies higher consumption.",
+  "notes": [
+    "The ceilings are proposals, not authorization.",
+    "Do not start phase 1 until the three adapters expose comparable usage fields and the user approves token and monetary ceilings.",
+    "Historical results remain unchanged.",
+    "Do not rerun successful cells to select favorable answers."
+  ]
+}

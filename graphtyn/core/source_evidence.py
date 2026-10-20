@@ -87,7 +87,10 @@ def attach_source_evidence(
     """
     mode = select_evidence_mode(request, requested_mode, str(result.get("intent") or "flow"))
     result["evidence_mode"] = mode
-    obligations = requested_obligations(request)
+    obligations = list(dict.fromkeys([
+        *result.get("requested_obligations", []),
+        *requested_obligations(request),
+    ]))
     result["requested_obligations"] = obligations
     if mode == "compact" or result.get("intent") in {"overview", "impact"}:
         result["source_retrieval"] = {"enabled": False, "reason": "structural evidence is sufficient for this request"}
@@ -138,6 +141,23 @@ def attach_source_evidence(
                 continue
             seen.add(node_id)
             candidates.append(node)
+    obligation_counts: dict[str, int] = {}
+    obligation_weights: dict[str, int] = {}
+    priority = {"missing_artifact_behavior": 4, "integrity_schema": 3, "record_identity": 2}
+    for label, node_ids in (result.get("obligation_evidence") or {}).items():
+        for node_id in node_ids:
+            obligation_counts[str(node_id)] = obligation_counts.get(str(node_id), 0) + 1
+            obligation_weights[str(node_id)] = obligation_weights.get(str(node_id), 0) + priority.get(label, 1)
+    candidates.sort(key=lambda node: (
+        -obligation_weights.get(str(node.get("id") or ""), 0),
+        -obligation_counts.get(str(node.get("id") or ""), 0),
+        -sum(term in (
+            " ".join(str(node.get(key) or "") for key in ("name", "file", "signature", "details"))
+            + " " + " ".join(f"{op.get('name', '')} {op.get('text', '')}"
+                                 for op in node.get("operations", []))
+        ).lower() for term in request_terms if len(term) >= 5),
+        str(node.get("file") or ""), int(node.get("line") or 0),
+    ))
 
     qualified = [
         (owner.lower(), member.lower())
@@ -185,10 +205,23 @@ def attach_source_evidence(
     if excerpts:
         result["complete_for"] = list(dict.fromkeys([*result.get("complete_for", []), *obligations]))
         result["missing"] = [item for item in result.get("missing", []) if item not in obligations]
-        result["do_not_expand"] = True
-        result["guidance"] = (
+        # A snippet is evidence for the obligations it actually covers; its
+        # mere presence must not override an earlier missing/stopping signal.
+        stopping = result.get("stopping") or {}
+        result["do_not_expand"] = bool(
+            stopping.get("sufficient_evidence", True)
+            and not result.get("missing")
+            and result.get("validation", {}).get("ok", True)
+        )
+        source_guidance = (
             "Answer from relations, operations and exact source excerpts. Cite file:line. "
             "Use excerpt order for conditions and control flow; do not call another tool."
+        )
+        # Source evidence strengthens factual claims.  It must not erase the
+        # implementation order and exploration limits chosen by the planner.
+        existing_guidance = str(result.get("guidance") or "").strip()
+        result["guidance"] = " ".join(
+            part for part in (existing_guidance, source_guidance) if part
         )
     _sync_stopping(result)
     return result

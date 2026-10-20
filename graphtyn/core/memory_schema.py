@@ -57,6 +57,12 @@ SCHEMA_SQL = """
                     content_sha256 TEXT NOT NULL, vector_json TEXT NOT NULL,
                     updated_at REAL NOT NULL, PRIMARY KEY(memory_id, provider)
                 );
+                CREATE TABLE IF NOT EXISTS message_embeddings (
+                    message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+                    provider TEXT NOT NULL, dimensions INTEGER NOT NULL,
+                    content_sha256 TEXT NOT NULL, vector_json TEXT NOT NULL,
+                    updated_at REAL NOT NULL, PRIMARY KEY(message_id, provider)
+                );
                 CREATE TABLE IF NOT EXISTS legacy_imports (
                     source_key TEXT PRIMARY KEY, memory_id TEXT NOT NULL,
                     imported_at REAL NOT NULL
@@ -209,6 +215,13 @@ def initialize_memory_schema(conn: sqlite3.Connection, applied_at: float) -> Non
     try:
         conn.execute("""CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
             memory_id UNINDEXED, title, content, task, files, nodes,
+            tokenize='unicode61 remove_diacritics 2'
+        )""")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("""CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+            message_id UNINDEXED, content, task,
             tokenize='unicode61 remove_diacritics 2'
         )""")
     except sqlite3.OperationalError:

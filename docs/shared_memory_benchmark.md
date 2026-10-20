@@ -54,6 +54,29 @@ graphtyn memory benchmark --suite scale --records 50000 \
 python benchmarks/summarize_shared_memory_rf07.py benchmarks/rf07_2026-10-09
 ```
 
+La recuperación directa de mensajes tiene además una regresión aislada que no
+usa un almacén real ni llama modelos o servicios externos:
+
+```bash
+PYTHONPATH=. python benchmarks/run_memory_retrieval_benchmark.py --repetitions 5 \
+  --output benchmarks/memory_retrieval_2026-10-19/result.json
+```
+
+Publica Recall@6, cobertura de obligaciones, filtrado de mensajes de evaluación,
+latencia y un límite de caracteres devueltos. Este límite mide tamaño de contexto;
+no representa tokens facturados por un proveedor. El corpus mínimo sirve como
+regresión determinista y no sustituye una comparación pareada entre agentes.
+
+La ejecución publicada del 19 de octubre de 2026 realizó 10 consultas: Recall@6
+1.00, cobertura suficiente de obligaciones 1.00, fuga de evaluación 0.00,
+mediana 1.977 ms, p95 2.328 ms y máximo 273 caracteres frente al límite de
+3.840. El resultado completo está en
+[`memory_retrieval_2026-10-19/result.json`](../benchmarks/memory_retrieval_2026-10-19/result.json)
+y su resumen reproducible en
+[`memory_retrieval_2026-10-19/REPORT.md`](../benchmarks/memory_retrieval_2026-10-19/REPORT.md).
+El entorno y los límites de interpretación de la publicación están en
+[`release-validation-0.10.7.md`](release-validation-0.10.7.md).
+
 El mismo comando se ejecutó para 1.000 y 10.000 registros. El informe consolidado,
 entorno, umbrales, muestras por consulta y resultados de las cinco repeticiones están
 en [`benchmarks/rf07_2026-10-09/REPORT.md`](../benchmarks/rf07_2026-10-09/REPORT.md).

@@ -148,6 +148,9 @@ def test_mcp_config_update_keeps_backup_and_does_not_return_token(tmp_path, monk
     assert current["mcp"]["servers"]["graphtyn"]["url"] == "https://graphtyn.test/mcp"
     assert current["mcp"]["servers"]["graphtyn"]["headers"]["Authorization"] == \
         "Bearer never-return-this-token"
+    assert current["mcp"]["servers"]["graphtyn"]["toolFilter"]["include"] == [
+        "memory_project_context", "memory_message_window", "memory_status"]
+    assert configured["tool_count"] == 3
 
 
 def test_connect_keeps_roots_and_children_isolated_and_family_explicit(tmp_path, monkeypatch):

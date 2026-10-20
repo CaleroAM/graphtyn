@@ -84,6 +84,16 @@ graphtyn service install --path . --enable
 graphtyn service status
 ```
 
+Para un cliente MCP en otra máquina o VM, exponga sólo la interfaz alcanzable y
+use un archivo de tokens. El instalador rechaza una interfaz no local sin
+autenticación:
+
+```bash
+graphtyn service install --kind systemd --path . --host 192.0.2.10 --port 9210 \
+  --tokens-file ~/.graphtyn/memory-tokens.json \
+  --embed-model nomic-embed-text:latest --ollama-host http://127.0.0.1:11434 --enable
+```
+
 En Windows, descargue `install.ps1` y el wheel de la misma versión, colóquelos
 en la misma carpeta y ejecute PowerShell:
 
@@ -312,6 +322,7 @@ Resultados, hardware, metodología y comparaciones anonimizadas:
 | MCP por proyecto y agentes | [docs/project-mcp-integrations.md](docs/project-mcp-integrations.md) |
 | Conexión nativa con OpenClaw | [docs/openclaw-native.md](docs/openclaw-native.md) |
 | Validación real OpenClaw host + VM | [docs/openclaw-native-validation-2026-09.md](docs/openclaw-native-validation-2026-09.md) |
+| Validación de 0.10.7 | [docs/release-validation-0.10.7.md](docs/release-validation-0.10.7.md) |
 | Dashboard | [docs/ui_ux_specification.md](docs/ui_ux_specification.md) |
 | Pruebas | [docs/testing.md](docs/testing.md) |
 | Benchmarks | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) |
@@ -365,7 +376,9 @@ Graphtyn puede recuperar asuntos de conversaciones completas y asociarlos a elem
 Para OpenClaw, Graphtyn reconoce tanto sesiones JSONL como el almacén SQLite
 `agent/openclaw-agent.sqlite` (`transcript_events`). Si el agente vive en otra
 máquina, publica `/mcp` con `GRAPHTYN_MCP_TOKEN`, comprueba desde ese runtime que
-`tools/list` incluye `memory_ingest_turn` y usa el MCP al cerrar cada turno.
+`tools/list` incluye `memory_project_context`, `memory_message_window` y
+`memory_status`. Este perfil es de lectura; la captura de turnos corresponde al
+watcher autorizado y no a una herramienta MCP expuesta al agente.
 En el dashboard, “Memoria del proyecto” separa sesiones, temas, episodios y
 agentes: el catálogo de sesiones admite búsqueda y paginación, cada nodo muestra
 su referencia `N-xxxxxx` y el mapa puede enfocarse en una sesión o ampliarse por

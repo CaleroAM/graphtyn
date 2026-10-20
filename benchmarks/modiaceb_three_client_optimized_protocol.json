@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Repetir la comparación mínima después de las correcciones de recuperación y presupuesto de salida de Graphtyn.",
+  "design": {
+    "clients": ["opencode", "codex", "antigravity"],
+    "tasks": ["C1"],
+    "arms": ["local_reading", "selective_graphtyn"],
+    "repetitions": 1,
+    "planned_sessions": 6,
+    "order": "Orden contrabalanceado por cliente; conservar todos los intentos y fallos.",
+    "model_control": "Cada cliente y modelo es un entorno experimental distinto; no agregar tokens entre clientes ni atribuir diferencias al cliente solamente.",
+    "direct_file_access": "Permitido por igual en ambos brazos.",
+    "grading": "Rúbrica congelada de seis obligaciones de C1; la evaluación local se declarará no independiente."
+  },
+  "mcp_contract": {
+    "implementation": "Un solo Graphtyn MCP, con proceso stdio aislado por sesión de tratamiento.",
+    "command": ".venv/bin/graphtyn mcp --tool-profile intent --path <workspace-aislado>",
+    "same_tool_profile": "intent"
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "fields": ["input_tokens", "cached_input_tokens", "cache_write_input_tokens", "output_tokens", "reasoning_tokens", "total_tokens", "provider_cost", "wall_seconds"]
+  },
+  "authorization": {
+    "source": "El usuario pidió repetir los benchmarks y autorizó usar todos los tokens necesarios para comparar.",
+    "total_token_ceiling": null
+  },
+  "success_rule": "Comparar consumo dentro de cada cliente con calidad equivalente; informar cualquier ganancia de calidad por separado."
+}
