@@ -1,0 +1,32 @@
+{
+  "codex_RAILS_SAVE_FLOW_baseline": {
+    "reviewer": "same investigator; non-independent",
+    "facts": {
+      "create_branch": {
+        "value": true,
+        "reason": "The answer states that a new record selects _create_record, but does not use the frozen grader's exact ternary wording.",
+        "evidence": ["answer.txt:17"]
+      }
+    }
+  },
+  "codex_RAILS_SAVE_FLOW_graphtyn": {
+    "reviewer": "same investigator; non-independent",
+    "facts": {
+      "create_branch": {
+        "value": true,
+        "reason": "The answer explicitly checks readonly/destroyed state and says new_record? selects _create_record.",
+        "evidence": ["answer.txt:27"]
+      },
+      "create_record": {
+        "value": true,
+        "reason": "The answer describes filtering insert attributes, acquiring the connection, selecting returning columns and invoking _insert_record.",
+        "evidence": ["answer.txt:31", "answer.txt:41"]
+      },
+      "failure_semantics": {
+        "value": true,
+        "reason": "The answer covers invalid validation, callback abort, readonly/destroyed state, SQL exceptions and false-result rollback.",
+        "evidence": ["answer.txt:57", "answer.txt:61"]
+      }
+    }
+  }
+}

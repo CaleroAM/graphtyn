@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.0",
+  "runs": 12,
+  "complete_runs": 11,
+  "incomplete_runs": 1,
+  "pairs": [
+    {
+      "repository": "redis",
+      "client": "opencode",
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "baseline": {
+        "status": "complete",
+        "tokens": 388682,
+        "technical_tokens_including_cache": 388682,
+        "seconds": 141.523,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 186533,
+        "technical_tokens_including_cache": 186533,
+        "seconds": 421.177,
+        "quality": 8,
+        "index_seconds": 142.264
+      },
+      "quality_total": 8,
+      "quality_comparable": true,
+      "token_delta_percent": -52.01,
+      "technical_token_delta_percent": -52.01,
+      "component_deltas_percent": {
+        "input_tokens": -57.43,
+        "cached_input_tokens": -50.2,
+        "output_tokens": -32.26,
+        "reasoning_tokens": -74.53
+      },
+      "session_time_delta_percent": 197.6
+    },
+    {
+      "repository": "redis",
+      "client": "codex",
+      "model": "gpt-6-astra",
+      "baseline": {
+        "status": "complete",
+        "tokens": 109060,
+        "technical_tokens_including_cache": 109060,
+        "seconds": 53.758,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 84538,
+        "technical_tokens_including_cache": 84538,
+        "seconds": 43.275,
+        "quality": 8,
+        "index_seconds": 142.613
+      },
+      "quality_total": 8,
+      "quality_comparable": true,
+      "token_delta_percent": -22.48,
+      "technical_token_delta_percent": -22.48,
+      "component_deltas_percent": {
+        "input_tokens": -22.43,
+        "cached_input_tokens": -26.93,
+        "output_tokens": -26.61,
+        "reasoning_tokens": null
+      },
+      "session_time_delta_percent": -19.5
+    },
+    {
+      "repository": "redis",
+      "client": "antigravity",
+      "model": "gemini-3.8-flash-high",
+      "baseline": {
+        "status": "complete",
+        "tokens": 158966,
+        "technical_tokens_including_cache": 564117,
+        "seconds": 201.28,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 79555,
+        "technical_tokens_including_cache": 182690,
+        "seconds": 92.991,
+        "quality": 8,
+        "index_seconds": 126.56
+      },
+      "quality_total": 8,
+      "quality_comparable": true,
+      "token_delta_percent": -49.95,
+      "technical_token_delta_percent": -67.61,
+      "component_deltas_percent": {
+        "input_tokens": -49.69,
+        "cached_input_tokens": -74.54,
+        "output_tokens": -51.71,
+        "reasoning_tokens": -58.61
+      },
+      "session_time_delta_percent": -53.8
+    },
+    {
+      "repository": "fmt",
+      "client": "opencode",
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "baseline": {
+        "status": "complete",
+        "tokens": 859913,
+        "technical_tokens_including_cache": 859913,
+        "seconds": 238.236,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "timeout",
+        "tokens": null,
+        "technical_tokens_including_cache": null,
+        "seconds": 915.139,
+        "quality": 0,
+        "index_seconds": 26.621
+      },
+      "quality_total": 8,
+      "quality_comparable": false,
+      "token_delta_percent": null,
+      "technical_token_delta_percent": null,
+      "component_deltas_percent": {
+        "input_tokens": null,
+        "cached_input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null
+      },
+      "session_time_delta_percent": null
+    },
+    {
+      "repository": "fmt",
+      "client": "codex",
+      "model": "gpt-6-astra",
+      "baseline": {
+        "status": "complete",
+        "tokens": 111793,
+        "technical_tokens_including_cache": 111793,
+        "seconds": 67.764,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 124364,
+        "technical_tokens_including_cache": 124364,
+        "seconds": 73.046,
+        "quality": 8,
+        "index_seconds": 25.462
+      },
+      "quality_total": 8,
+      "quality_comparable": true,
+      "token_delta_percent": 11.24,
+      "technical_token_delta_percent": 11.24,
+      "component_deltas_percent": {
+        "input_tokens": 11.55,
+        "cached_input_tokens": 15.61,
+        "output_tokens": -4.44,
+        "reasoning_tokens": null
+      },
+      "session_time_delta_percent": 7.79
+    },
+    {
+      "repository": "fmt",
+      "client": "antigravity",
+      "model": "gemini-3.8-flash-high",
+      "baseline": {
+        "status": "complete",
+        "tokens": 263050,
+        "technical_tokens_including_cache": 1806694,
+        "seconds": 345.213,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 230029,
+        "technical_tokens_including_cache": 1794304,
+        "seconds": 247.676,
+        "quality": 8,
+        "index_seconds": 26.475
+      },
+      "quality_total": 8,
+      "quality_comparable": true,
+      "token_delta_percent": -12.55,
+      "technical_token_delta_percent": -0.69,
+      "component_deltas_percent": {
+        "input_tokens": -11.05,
+        "cached_input_tokens": 1.34,
+        "output_tokens": -23.86,
+        "reasoning_tokens": -27.41
+      },
+      "session_time_delta_percent": -28.25
+    }
+  ],
+  "aggregation_warning": "Do not pool token totals across clients or models.",
+  "raw_artifacts_preserved": true
+}

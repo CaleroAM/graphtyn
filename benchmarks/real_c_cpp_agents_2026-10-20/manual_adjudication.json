@@ -1,0 +1,22 @@
+{
+  "opencode_REDIS_COMMAND_FLOW_baseline": {
+    "reviewer": "same investigator; non-independent",
+    "facts": {
+      "operational_rejections": {
+        "value": true,
+        "reason": "The frozen criterion asks for at least two operational rejection branches. The answer covers OOM, read-only replica, Pub/Sub and loading branches; its wording did not match the grader's narrow keyword list.",
+        "evidence": ["answer.txt:26", "answer.txt:33"]
+      }
+    }
+  },
+  "codex_REDIS_COMMAND_FLOW_baseline": {
+    "reviewer": "same investigator; non-independent",
+    "facts": {
+      "operational_rejections": {
+        "value": true,
+        "reason": "The frozen criterion asks for at least two operational rejection branches. The answer covers failed eviction/OOM, read-only replica and loading branches; its wording did not match the grader's narrow keyword list.",
+        "evidence": ["answer.txt:9", "answer.txt:10", "answer.txt:11", "answer.txt:12"]
+      }
+    }
+  }
+}

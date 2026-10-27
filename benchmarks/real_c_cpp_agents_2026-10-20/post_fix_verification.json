@@ -1,0 +1,175 @@
+{
+  "schema_version": "1.0",
+  "scope": "post-fix local index and retrieval verification; no model sessions and no token comparison",
+  "repository": {
+    "name": "fmtlib/fmt",
+    "commit": "0fc31633e7d53ac895ae0a688b83b7d44f0b0c1f"
+  },
+  "parser_version": "treesitter-v16-language-packs",
+  "index": {
+    "historical_benchmark": {
+      "nodes": 4627,
+      "connectors": 14368
+    },
+    "post_fix": {
+      "nodes": 7103,
+      "connectors": 18036
+    },
+    "node_delta": 2476,
+    "connector_delta": 3668
+  },
+  "historical_query": {
+    "selected_source_evidence": [
+      {
+        "file": "test/format-test.cc",
+        "start_line": 739,
+        "end_line": 741,
+        "symbol": "format"
+      },
+      {
+        "file": "test/format-test.cc",
+        "start_line": 1979,
+        "end_line": 1982,
+        "symbol": "format"
+      },
+      {
+        "file": "test/format-test.cc",
+        "start_line": 2325,
+        "end_line": 2328,
+        "symbol": "format"
+      }
+    ],
+    "source_characters": 544,
+    "payload_tokens": 2568,
+    "missing": [],
+    "do_not_expand": true
+  },
+  "post_fix_query": {
+    "selected_nodes": [
+      {
+        "name": "format",
+        "kind": "function",
+        "file": "include/fmt/format.h",
+        "line": 4666,
+        "namespace": "",
+        "container": ""
+      },
+      {
+        "name": "runtime",
+        "kind": "method",
+        "file": "include/fmt/core.h",
+        "line": 2695,
+        "namespace": "",
+        "container": "basic_format_args"
+      },
+      {
+        "name": "vformat_to",
+        "kind": "function",
+        "file": "include/fmt/format-inl.h",
+        "line": 1468,
+        "namespace": "detail",
+        "container": ""
+      },
+      {
+        "name": "format_to",
+        "kind": "function",
+        "file": "include/fmt/core.h",
+        "line": 2831,
+        "namespace": "",
+        "container": ""
+      },
+      {
+        "name": "fstring",
+        "kind": "struct",
+        "file": "include/fmt/core.h",
+        "line": 2699,
+        "namespace": "",
+        "container": "basic_format_args"
+      },
+      {
+        "name": "vformat",
+        "kind": "function",
+        "file": "include/fmt/format-inl.h",
+        "line": 1458,
+        "namespace": "",
+        "container": ""
+      },
+      {
+        "name": "Core API",
+        "kind": "documentation_section",
+        "file": "doc/api.md",
+        "line": null,
+        "namespace": null,
+        "container": null
+      },
+      {
+        "name": "format",
+        "kind": "method",
+        "file": "include/fmt/format-inl.h",
+        "line": 1407,
+        "namespace": "",
+        "container": "formatter<detail::bigint>"
+      },
+      {
+        "name": "runtime",
+        "kind": "function",
+        "file": "include/fmt/xchar.h",
+        "line": 122,
+        "namespace": "",
+        "container": ""
+      },
+      {
+        "name": "vformat_to",
+        "kind": "method",
+        "file": "include/fmt/color.h",
+        "line": 478,
+        "namespace": "",
+        "container": "styled_arg"
+      }
+    ],
+    "source_evidence": [
+      {
+        "symbol": "format",
+        "file": "include/fmt/format.h",
+        "start_line": 4666,
+        "end_line": 4669
+      },
+      {
+        "symbol": "fstring",
+        "file": "include/fmt/core.h",
+        "start_line": 2699,
+        "end_line": 2725
+      },
+      {
+        "symbol": "vformat",
+        "file": "include/fmt/format-inl.h",
+        "start_line": 1458,
+        "end_line": 1464
+      }
+    ],
+    "source_characters": 1679,
+    "missing": [],
+    "complete_for": [
+      "flow",
+      "order_and_control_flow"
+    ],
+    "do_not_expand": true
+  },
+  "observed_change": {
+    "public_api_anchor": "include/fmt/format.h:4666",
+    "named_flow_nodes": [
+      "format",
+      "runtime",
+      "vformat_to",
+      "format_to",
+      "fstring",
+      "vformat"
+    ],
+    "test_anchors_in_first_ten": 0
+  },
+  "limits": [
+    "No provider token usage was measured after the fix.",
+    "The same 3-client A/B must be rerun to measure its session-level effect.",
+    "Tree-sitter still reports recoverable parse errors on macro-heavy fmt headers."
+  ]
+}

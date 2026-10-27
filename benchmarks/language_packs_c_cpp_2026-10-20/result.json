@@ -1,0 +1,127 @@
+{
+  "protocol": {
+    "name": "language-packs-c-cpp-v1",
+    "scope": "local parser coverage and latency; no agent, model, network or token measurement",
+    "repetitions": 30,
+    "warmup_runs": 1,
+    "fixtures": [
+      "c",
+      "cpp"
+    ]
+  },
+  "environment": {
+    "parser_version": "treesitter-v16-language-packs",
+    "tree_sitter_c": "0.24.2",
+    "tree_sitter_cpp": "0.23.4"
+  },
+  "measurements": {
+    "c": {
+      "facts": {
+        "clean_parse": true,
+        "include": true,
+        "type": true,
+        "functions": true,
+        "member": true,
+        "call": true
+      },
+      "facts_passed": 6,
+      "facts_total": 6,
+      "median_ms": 0.165,
+      "p95_ms": 0.232,
+      "samples_ms": [
+        0.232,
+        0.181,
+        0.171,
+        0.164,
+        0.159,
+        0.157,
+        0.157,
+        0.156,
+        0.154,
+        0.158,
+        0.154,
+        0.159,
+        0.167,
+        0.154,
+        0.153,
+        0.15,
+        0.166,
+        0.161,
+        0.2,
+        0.169,
+        0.159,
+        0.163,
+        0.468,
+        0.199,
+        0.177,
+        0.18,
+        0.17,
+        0.173,
+        0.187,
+        0.184
+      ]
+    },
+    "cpp": {
+      "facts": {
+        "clean_parse": true,
+        "include": true,
+        "type": true,
+        "functions": true,
+        "member": true,
+        "call": true,
+        "inheritance": true
+      },
+      "facts_passed": 7,
+      "facts_total": 7,
+      "median_ms": 0.24,
+      "p95_ms": 0.368,
+      "samples_ms": [
+        0.368,
+        0.379,
+        0.295,
+        0.262,
+        0.23,
+        0.248,
+        0.22,
+        0.218,
+        0.237,
+        0.255,
+        0.229,
+        0.224,
+        0.233,
+        0.273,
+        0.353,
+        0.256,
+        0.228,
+        0.238,
+        0.24,
+        0.241,
+        0.253,
+        0.273,
+        0.228,
+        0.222,
+        0.251,
+        0.276,
+        0.243,
+        0.234,
+        0.225,
+        0.23
+      ]
+    }
+  },
+  "graph": {
+    "tree_sitter_files": 2,
+    "language_packs": [
+      "c",
+      "cpp"
+    ],
+    "inheritance_edge": true,
+    "call_edges": 2
+  },
+  "summary": {
+    "facts_passed": 13,
+    "facts_total": 13,
+    "coverage": 1.0,
+    "passed": true
+  }
+}

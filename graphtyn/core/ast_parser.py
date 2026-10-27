@@ -5,7 +5,11 @@ import re
 import posixpath
 from pathlib import Path
 from typing import Dict, Any, List, Set, Optional
-from .tree_sitter_backend import PARSER_VERSION, parse_file as parse_tree_sitter_file
+from .tree_sitter_backend import (
+    PARSER_VERSION,
+    TREE_SITTER_EXTENSIONS,
+    parse_file as parse_tree_sitter_file,
+)
 from .overview_report import collect_project_evidence
 from .graph_hygiene import normalize_graph
 from .relation_resolution import CandidateRanker, unique_symbol_id
@@ -90,7 +94,8 @@ def _documentation_sections(content: str, suffix: str, max_chars: int = 1800):
             yield ordinal, heading, line_start, max(line_start, line_end), chunk_text
 
 VALID_EXTS = (
-    ".py", ".cs", ".php", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".h", ".hpp",
+    ".py", ".cs", ".php", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb",
+    ".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx",
     ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".tf", ".tfvars", ".cls", ".trigger",
     ".kt", ".kts", ".swift", ".dart", ".sh", ".bash", ".sql", ".vue", ".svelte",
     ".md", ".mdx", ".rst", ".txt", ".pdf", ".docx", ".xlsx", ".xlsm",
@@ -102,9 +107,9 @@ VALID_EXTS = (
 
 class ASTParser:
     """
-    Deterministic zero-token standalone multi-language AST code symbol parser for Graphtyn.
-    Parses Python, C#, PHP, JS/TS, Java, Go, Rust, Ruby, C/C++ classes, functions, methods,
-    calls, inheritance and folder hierarchy without any external dependencies.
+    Deterministic zero-token multi-language code graph parser for Graphtyn.
+    Built-in fallbacks work without optional dependencies; installed language
+    packs add precise Tree-sitter symbols, calls, members and inheritance.
     """
 
     def parse_python_file(self, file_path: Path, root_dir: Path) -> Dict[str, Any]:
@@ -141,20 +146,26 @@ class ASTParser:
         nodes: List[Dict[str, Any]] = []
         links: List[Dict[str, Any]] = []
         node_ids: Set[str] = set()
+        file_nodes_by_id: Dict[str, Dict[str, Any]] = {}
         symbol_name_map: Dict[str, str] = {}
         symbol_name_ids: Dict[str, Set[str]] = {}
         pending_inheritance: List[tuple] = []
+        pending_mixins: List[tuple] = []
         tree_calls: Dict[str, List[Dict[str, Any]]] = {}
         tree_imports: Dict[str, List[Dict[str, Any]]] = {}
         tree_members: Dict[str, List[Dict[str, Any]]] = {}
         file_namespaces: Dict[str, str] = {}
         tree_parsed_files: Set[str] = set()
+        tree_languages: Set[str] = set()
         cache_hits = 0
         cache_misses = 0
         suppressed_relations = {
             "bound_calls": 0,
             "runtime_calls": 0,
             "ambiguous_mentions": 0,
+            "ambiguous_calls": 0,
+            "ambiguous_inheritance": 0,
+            "ambiguous_mixins": 0,
         }
 
         structural_cache = {"version": PARSER_VERSION, "files": {}}
@@ -168,7 +179,7 @@ class ASTParser:
 
         def _tree_facts(path: Path, rel_file: str) -> Optional[Dict[str, Any]]:
             nonlocal cache_hits, cache_misses
-            if path.suffix.lower() not in (".cs", ".php", ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".go", ".rs"):
+            if path.suffix.lower() not in TREE_SITTER_EXTENSIONS:
                 return None
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             cached = structural_cache.get("files", {}).get(rel_file, {})
@@ -187,14 +198,19 @@ class ASTParser:
 
         def _add_tree_symbols(result: Dict[str, Any], f_id: str, namespace: str = "") -> None:
             rel_file = result["file"]
+            local_symbol_nodes: List[Dict[str, Any]] = []
+            owner_ids: Dict[str, str] = {}
             tree_parsed_files.add(rel_file)
+            if result.get("language"):
+                tree_languages.add(result["language"])
             tree_calls[rel_file] = result.get("calls", [])
             tree_imports[rel_file] = result.get("imports", [])
             import_evidence = list(dict.fromkeys(
                 str(item.get("text") or "").strip()[:180]
                 for item in result.get("imports", []) if str(item.get("text") or "").strip()
             ))[:24]
-            file_node = next((node for node in nodes if node.get("id") == f_id), None)
+            file_node = file_nodes_by_id.get(f_id)
+            file_assembly = file_node.get("assembly") if file_node is not None else None
             if file_node is not None and import_evidence:
                 file_node["imports"] = import_evidence
             tree_members[rel_file] = result.get("members", [])
@@ -203,29 +219,33 @@ class ASTParser:
             for sym in result.get("symbols", []):
                 name = sym["name"]
                 kind = sym["kind"]
-                qualified = f"{namespace}.{name}" if namespace and kind in ("class", "interface", "struct", "enum") else name
+                symbol_namespace = sym.get("namespace") if "namespace" in sym else namespace
+                qualified = f"{symbol_namespace}.{name}" if symbol_namespace and kind in ("class", "interface", "struct", "union", "enum", "module") else name
                 sym_id = unique_symbol_id(rel_file, qualified, kind, sym, node_ids)
                 if sym_id is None:
                     continue
                 symbol_node = {
                     "id": sym_id, "name": name, "kind": kind,
-                    "val": 6 if kind in ("class", "interface") else (3 if kind in ("method", "function") else 4),
-                    "color": "#f59e0b" if kind in ("class", "interface", "struct") else "#a78bfa",
+                    "val": 6 if kind in ("class", "interface", "module") else (3 if kind in ("method", "function") else 4),
+                    "color": "#f59e0b" if kind in ("class", "interface", "struct", "union", "module") else "#a78bfa",
                     "details": f"{kind.capitalize()} en {rel_file}:{sym['line']}",
                     "file": rel_file, "line": sym["line"], "end_line": sym.get("end_line", sym["line"]),
                     "evidence": sym.get("evidence", ""), "parser": "tree-sitter",
-                    "namespace": namespace, "container": sym.get("container", ""),
+                    "namespace": symbol_namespace, "container": sym.get("container", ""),
                     "scope": sym.get("scope", ""),
                     "parameter_count": sym.get("parameter_count"), "signature": sym.get("signature", ""),
                     "required_parameter_count": sym.get("required_parameter_count"),
                     "is_constructor": sym.get("is_constructor", False),
-                    "assembly": next((node.get("assembly") for node in nodes if node.get("id") == f_id), None),
+                    "assembly": file_assembly,
                 }
-                if kind in ("class", "interface", "struct", "enum") and import_evidence:
+                if kind in ("class", "interface", "struct", "union", "enum", "module") and import_evidence:
                     symbol_node["imports"] = import_evidence
                 nodes.append(symbol_node)
+                local_symbol_nodes.append(symbol_node)
                 node_ids.add(sym_id)
                 _register_symbol(name, sym_id)
+                if kind in ("class", "interface", "struct", "union", "module"):
+                    owner_ids[name] = sym_id
                 links.append({
                     "source": f_id, "target": sym_id, "label": "contiene",
                     "color": "rgba(148, 163, 184, 0.2)", "confidence": "EXTRACTED",
@@ -233,11 +253,7 @@ class ASTParser:
                 })
                 container = sym.get("container", "")
                 if container:
-                    owner = next((
-                        node["id"] for node in nodes
-                        if node.get("name") == container and node.get("file") == rel_file
-                        and node.get("kind") in ("class", "interface", "struct")
-                    ), None)
+                    owner = owner_ids.get(container)
                     if owner:
                         links.append({
                             "source": owner, "target": sym_id, "label": "declara",
@@ -246,6 +262,12 @@ class ASTParser:
                         })
                 for base in sym.get("bases", []):
                     pending_inheritance.append((sym_id, base, rel_file, sym["line"], sym.get("evidence", "")))
+                for mixin in sym.get("mixins", []):
+                    pending_mixins.append((
+                        sym_id, mixin.get("name", ""), rel_file,
+                        mixin.get("line", sym["line"]), mixin.get("evidence", ""),
+                        mixin.get("kind", "include"), mixin.get("qualified_name", ""),
+                    ))
             for member in result.get("members", []):
                 name = member.get("name", "")
                 container = member.get("container", "")
@@ -265,17 +287,13 @@ class ASTParser:
                     "evidence": member.get("evidence", ""), "parser": "tree-sitter",
                     "namespace": namespace, "container": container,
                     "member_type": member_type, "signature": member.get("signature", ""),
-                    "assembly": next((node.get("assembly") for node in nodes if node.get("id") == f_id), None),
+                    "assembly": file_assembly,
                 })
                 node_ids.add(sym_id)
                 _register_symbol(name, sym_id)
-                container_ids = [
-                    node["id"] for node in nodes
-                    if node.get("name") == container and node.get("file") == rel_file
-                    and node.get("kind") in ("class", "interface", "struct")
-                ]
+                container_id = owner_ids.get(container)
                 links.append({
-                    "source": container_ids[0] if container_ids else f_id,
+                    "source": container_id or f_id,
                     "target": sym_id, "label": "declara", "confidence": "EXTRACTED",
                     "file": rel_file, "line": member["line"],
                     "evidence": member.get("evidence", ""),
@@ -285,15 +303,17 @@ class ASTParser:
             # callable. This preserves external/framework operations even when
             # no local target node exists, without creating noisy fake edges.
             seen_operations: Dict[str, Set[tuple]] = {}
+            callables_by_name: Dict[str, List[Dict[str, Any]]] = {}
+            for local_node in local_symbol_nodes:
+                if local_node.get("kind") in ("method", "function"):
+                    callables_by_name.setdefault(str(local_node.get("name") or ""), []).append(local_node)
             for operation in result.get("operations", []):
                 caller = operation.get("caller", "")
                 container = operation.get("container", "")
                 line = int(operation.get("line") or 0)
                 candidates = [
-                    node for node in nodes
-                    if node.get("file") == rel_file and node.get("name") == caller
-                    and node.get("kind") in ("method", "function")
-                    and (not container or node.get("container") == container)
+                    node for node in callables_by_name.get(caller, [])
+                    if (not container or node.get("container") == container)
                     and int(node.get("line") or 0) <= line <= int(node.get("end_line") or line)
                 ]
                 if not candidates:
@@ -310,7 +330,9 @@ class ASTParser:
                     "line": line,
                     "text": str(operation.get("text") or "")[:300],
                 })
-            for owner in (node for node in nodes if node.get("file") == rel_file and node.get("operations")):
+            # Only this file's callables received operations above; scanning the
+            # global node list here made indexing quadratic in repository size.
+            for owner in (node for node in local_symbol_nodes if node.get("operations")):
                 ops_text = " ".join(str(op.get("text") or "") for op in owner["operations"])
                 signature = str(owner.get("signature") or "")
                 if "TryGetValue(" in ops_text and re.search(r"\breturn\s+[A-Za-z_]\w*\s*;", ops_text):
@@ -330,6 +352,8 @@ class ASTParser:
         }
 
         tracked_files = git_visible_files(root_dir) if respect_git else None
+        from .ignore_rules import IgnoreRules
+        project_ignores = IgnoreRules.load(root_dir)
 
         csharp_files: List[tuple] = []
         python_files: List[tuple] = []
@@ -361,6 +385,8 @@ class ASTParser:
             rel_file = path.relative_to(root_dir).as_posix()
             if tracked_files is not None and rel_file not in tracked_files:
                 continue
+            if project_ignores and project_ignores.ignored(rel_file):
+                continue
             f_id = f"file:{rel_file}"
 
             # Parent folder node
@@ -381,10 +407,12 @@ class ASTParser:
 
             if f_id not in node_ids:
                 kind = "asset" if ext in (".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml") else ("image" if ext in _IMAGE_EXTS else ("media" if ext in _MEDIA_EXTS else ("doc" if ext in (".pdf", ".docx", ".xlsx", ".xlsm") else "file")))
-                nodes.append({
+                file_node = {
                     "id": f_id, "name": path.name, "kind": kind,
                     "val": 5, "color": "#38bdf8", "details": rel_file
-                })
+                }
+                nodes.append(file_node)
+                file_nodes_by_id[f_id] = file_node
                 node_ids.add(f_id)
                 links.append({"source": p_id, "target": f_id, "label": "contiene", "color": "rgba(148, 163, 184, 0.2)"})
 
@@ -399,7 +427,7 @@ class ASTParser:
             elif ext in (".md", ".mdx", ".rst", ".txt", ".yaml", ".yml", ".toml", ".ini", ".cfg") \
                     or extensionless_source or lower_name in _STRUCTURED_SOURCE_NAMES:
                 doc_files.append((path, rel_file, f_id))
-            elif ext in (".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rs", ".rb", ".c", ".cpp", ".kt", ".kts", ".swift", ".dart", ".sh", ".bash", ".sql", ".vue", ".svelte", ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".cls", ".trigger"):
+            elif ext in TREE_SITTER_EXTENSIONS or ext in (".rb", ".kt", ".kts", ".swift", ".dart", ".sh", ".bash", ".sql", ".vue", ".svelte", ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".cls", ".trigger"):
                 other_code_files.append((path, rel_file, f_id, ext))
 
         file_contents: Dict[str, str] = {}
@@ -737,6 +765,9 @@ class ASTParser:
                 continue
             best_score = ranked[0][0]
             best = [target for score, target in ranked if score == best_score]
+            if len(best) > 4:
+                suppressed_relations["ambiguous_inheritance"] += 1
+                continue
             for target_id in best:
                 target_node = node_by_id.get(target_id, {})
                 links.append({
@@ -748,6 +779,36 @@ class ASTParser:
                     "resolution": {"strategy": "namespace-assembly", "score": best_score, "candidates": len(candidates)},
                 })
 
+        for source_id, mixin_name, rel_file, line, evidence, mixin_kind, qualified_name in pending_mixins:
+            candidates = symbol_name_ids.get(mixin_name, set())
+            ranked = sorted(((rank_candidate(target, rel_file), target)
+                             for target in candidates if target != source_id), reverse=True)
+            if not ranked:
+                continue
+            best_score = ranked[0][0]
+            best = [target for score, target in ranked if score == best_score]
+            if len(best) > 4:
+                suppressed_relations["ambiguous_mixins"] += 1
+                continue
+            for target_id in best:
+                links.append({
+                    "source": source_id, "target": target_id, "label": "incluye",
+                    "color": "rgba(236, 72, 153, 0.35)",
+                    "confidence": "AMBIGUOUS" if len(best) > 1 else ("EXTRACTED" if best_score >= 2 else "INFERRED"),
+                    "file": rel_file, "line": line, "evidence": evidence,
+                    "mixin_kind": mixin_kind, "qualified_name": qualified_name,
+                    "resolution": {"strategy": "ruby-mixin-namespace", "score": best_score, "candidates": len(candidates)},
+                })
+
+        # Callers are resolved inside their own file. Indexing homonyms by file
+        # avoids rescanning every same-named symbol (e.g. all `initialize`
+        # methods of a large repository) for each call site.
+        symbols_by_file_name: Dict[tuple, List[str]] = {}
+        for symbol_name, symbol_ids in symbol_name_ids.items():
+            for target in symbol_ids:
+                target_file = node_by_id.get(target, {}).get("file")
+                if target_file is not None:
+                    symbols_by_file_name.setdefault((target_file, symbol_name), []).append(target)
         for rel_file, calls in tree_calls.items():
             f_id = f"file:{rel_file}"
             seen_calls = set()
@@ -755,9 +816,8 @@ class ASTParser:
                 target_name = rank_candidate.imported_target_name(rel_file, call["name"])
                 targets = symbol_name_ids.get(target_name, set())
                 caller_ids = [
-                    target for target in symbol_name_ids.get(call.get("caller", ""), set())
-                    if node_by_id.get(target, {}).get("file") == rel_file
-                    and (not call.get("container") or node_by_id.get(target, {}).get("container") == call.get("container"))
+                    target for target in symbols_by_file_name.get((rel_file, call.get("caller", "")), ())
+                    if not call.get("container") or node_by_id.get(target, {}).get("container") == call.get("container")
                 ]
                 source_id = caller_ids[0] if len(caller_ids) == 1 else f_id
                 lexical_candidates = set(targets)
@@ -809,6 +869,9 @@ class ASTParser:
                     continue
                 best_score = ranked[0][0]
                 best = [target for score, target in ranked if score == best_score]
+                if len(best) > 4:
+                    suppressed_relations["ambiguous_calls"] += 1
+                    continue
                 for target_id in best:
                     call_key = (source_id, target_id, call["line"])
                     if call_key in seen_calls:
@@ -844,7 +907,9 @@ class ASTParser:
         }
         removed_ids = {
             n.get("id") for n in nodes
-            if n.get("id", "").startswith("symbol:") and n.get("name", "").lower() in keyword_noise
+            if n.get("id", "").startswith("symbol:")
+            and n.get("name", "").lower() in keyword_noise
+            and n.get("parser") != "tree-sitter"
         }
         if removed_ids:
             nodes = [n for n in nodes if n.get("id") not in removed_ids]
@@ -852,14 +917,25 @@ class ASTParser:
                 l for l in links
                 if l.get("source") not in removed_ids and l.get("target") not in removed_ids
             ]
+        # Word-shaped names can only match `\bname\b` when they are one of the
+        # file's word tokens, so look them up instead of testing every symbol
+        # against every untyped file. Other names keep the substring check.
+        mention_names = [(cname, sym_id) for cname, sym_id in symbol_name_map.items()
+                         if len(cname) >= 4 and cname.lower() not in keyword_noise]
+        name_order = {cname: index for index, (cname, _) in enumerate(mention_names)}
+        word_names = {cname for cname, _ in mention_names if re.fullmatch(r"\w+", cname)}
+        other_names = [(cname, sym_id) for cname, sym_id in mention_names if cname not in word_names]
+        sym_by_name = dict(mention_names)
         for rel_file, content in file_contents.items():
             if rel_file in tree_parsed_files:
                 continue
             f_id = f"file:{rel_file}"
-            for cname, sym_id in symbol_name_map.items():
-                if len(cname) < 4 or cname.lower() in keyword_noise:
-                    continue
-                if cname in content and not sym_id.startswith(f"symbol:{rel_file}:"):
+            tokens = set(re.findall(r"\w+", content)) & word_names
+            candidates = sorted([(cname, sym_by_name[cname]) for cname in tokens] + [
+                (cname, sym_id) for cname, sym_id in other_names if cname in content
+            ], key=lambda item: name_order[item[0]])
+            for cname, sym_id in candidates:
+                if not sym_id.startswith(f"symbol:{rel_file}:"):
                     if re.search(r"\b" + re.escape(cname) + r"\b", content):
                         ambiguous = len(symbol_name_ids.get(cname, {sym_id})) > 1
                         if ambiguous:
@@ -886,6 +962,10 @@ class ASTParser:
             except OSError:
                 pass
 
+        from .rationale import attach_rationale
+        rationale_comments = attach_rationale(
+            nodes, file_contents, {rel: path for path, rel, _ in csharp_files})
+
         confidence_counts = {level: sum(1 for link in links if link.get("confidence") == level)
                              for level in ("EXTRACTED", "INFERRED", "AMBIGUOUS")}
         graph = {
@@ -894,6 +974,7 @@ class ASTParser:
             "metadata": {
                 "structural_parser": "tree-sitter+fallback" if tree_parsed_files else "builtin-fallback",
                 "tree_sitter_files": len(tree_parsed_files),
+                "language_packs": sorted(tree_languages),
                 "structural_cache": bool(cache_path),
                 "incremental": {
                     "reused_files": cache_hits,
@@ -902,6 +983,7 @@ class ASTParser:
                     "cache_version": PARSER_VERSION,
                 },
                 "laravel_routes": laravel_stats["routes"],
+                "rationale_comments": rationale_comments,
                 "relation_coverage": {
                     "total_links": len(links),
                     "by_confidence": confidence_counts,

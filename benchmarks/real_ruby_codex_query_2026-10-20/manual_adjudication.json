@@ -1,0 +1,19 @@
+{
+  "codex_RAILS_SAVE_FLOW_baseline": {
+    "reviewer": "same investigator; non-independent",
+    "task_complete": true,
+    "task_complete_reason": "Cubre el flujo, las capas y los fallos pedidos con fuentes directas.",
+    "facts": {
+      "create_branch": {"value": true, "reason": "Explica que new_record? selecciona _create_record.", "evidence": ["answer.txt"]},
+      "failure_semantics": {"value": true, "reason": "Explica validación, abortos, excepciones y rollback.", "evidence": ["answer.txt"]}
+    }
+  },
+  "codex_RAILS_SAVE_FLOW_graphtyn": {
+    "reviewer": "same investigator; non-independent",
+    "task_complete": false,
+    "task_complete_reason": "La propia respuesta declara que faltan Transactions#save, callbacks de creación y la semántica de abortos/excepciones; el cierre missing=[] fue falso.",
+    "facts": {
+      "failure_semantics": {"value": true, "reason": "La rúbrica congelada acepta la explicación del rollback por resultado falso, aunque la tarea completa quedó incompleta.", "evidence": ["answer.txt:13", "answer.txt:15"]}
+    }
+  }
+}

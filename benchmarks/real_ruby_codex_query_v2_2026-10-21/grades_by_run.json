@@ -1,0 +1,271 @@
+[
+  {
+    "client": "codex",
+    "model": "gpt-6-astra",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "baseline",
+    "started_at": "2026-10-21T06:01:47.187555+00:00",
+    "wall_seconds": 96.006,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 133525,
+      "cached_input_tokens": 103296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3552,
+      "reasoning_tokens": 31,
+      "total_tokens": 137077,
+      "provider_cost": null
+    },
+    "usage_accounting": {
+      "source": "turn.completed",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input_including_cached",
+        "output_including_reasoning"
+      ],
+      "cached_input_is_separate": false,
+      "cached_input_is_subset_of_input": true,
+      "reasoning_is_subset_of_output": true,
+      "technical_total_including_cache": 137077,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed",
+      "normalization_correction": "cached input is a subset of Codex input_tokens"
+    },
+    "usage_trace": {
+      "granularity": "session_aggregate",
+      "per_model_call_available": false,
+      "records": [
+        {
+          "input_tokens": 133525,
+          "cached_input_tokens": 103296,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3552,
+          "reasoning_tokens": 31,
+          "total_tokens": 137077,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "The client emitted only aggregate usage; individual model calls cannot be reconstructed."
+    },
+    "answer_present": true,
+    "index_setup": null,
+    "prompt_sha256": "4e6a12c899cca438355c9772683e59f49f27bff35087b70df730c778484ac610",
+    "raw_event_count": 16,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": [],
+    "run_id": "codex_RAILS_SAVE_FLOW_baseline",
+    "quality": {
+      "automatic_facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": false,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": false
+      },
+      "automatic_passed": 6,
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "coverage": 1.0,
+      "task_complete": true,
+      "task_complete_reason": "Cubre el flujo, las capas y los fallos pedidos con fuentes directas.",
+      "citations": {
+        "total": 39,
+        "resolved": 39,
+        "valid": 39,
+        "invalid": [],
+        "unresolved_short_or_ambiguous": []
+      },
+      "answer_bytes": 9767,
+      "adjudication": {
+        "reviewer": "same investigator; non-independent",
+        "task_complete": true,
+        "task_complete_reason": "Cubre el flujo, las capas y los fallos pedidos con fuentes directas.",
+        "facts": {
+          "create_branch": {
+            "value": true,
+            "reason": "Explica que new_record? selecciona _create_record.",
+            "evidence": [
+              "answer.txt"
+            ]
+          },
+          "failure_semantics": {
+            "value": true,
+            "reason": "Explica validación, abortos, excepciones y rollback.",
+            "evidence": [
+              "answer.txt"
+            ]
+          }
+        }
+      },
+      "grader": "deterministic frozen rubric plus disclosed non-independent adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_names": [],
+      "forbidden_tools": [],
+      "answer_sha256": "38bdacef40165ec5331e747d0be16bb0c3cc1187491a121f2c6c26965114c9b0",
+      "events_sha256": "6b17747ff7e23ae890132ec2ff53db38594bcf8b9d8f5b6027de6ea5b4ea1cc9",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-ruby-codex-query-v2-2026-10-21/runs/codex_RAILS_SAVE_FLOW_baseline"
+    }
+  },
+  {
+    "client": "codex",
+    "model": "gpt-6-astra",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "graphtyn",
+    "started_at": "2026-10-21T06:06:17.303883+00:00",
+    "wall_seconds": 48.268,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 49042,
+      "cached_input_tokens": 21888,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1284,
+      "reasoning_tokens": 13,
+      "total_tokens": 50326,
+      "provider_cost": null
+    },
+    "usage_accounting": {
+      "source": "turn.completed",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input_including_cached",
+        "output_including_reasoning"
+      ],
+      "cached_input_is_separate": false,
+      "cached_input_is_subset_of_input": true,
+      "reasoning_is_subset_of_output": true,
+      "technical_total_including_cache": 50326,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed",
+      "normalization_correction": "cached input is a subset of Codex input_tokens"
+    },
+    "usage_trace": {
+      "granularity": "session_aggregate",
+      "per_model_call_available": false,
+      "records": [
+        {
+          "input_tokens": 49042,
+          "cached_input_tokens": 21888,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1284,
+          "reasoning_tokens": 13,
+          "total_tokens": 50326,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "The client emitted only aggregate usage; individual model calls cannot be reconstructed."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 173.603,
+      "stdout": "✓ Reindexado AST local completado (fast): 63719 nodos, 244530 conectores.",
+      "stderr": "",
+      "included_in_session_time": false
+    },
+    "prompt_sha256": "e3d02c7cf94610ff886db9cb28441a82d1dccd2fe48c01f4ede988e6debc9f37",
+    "raw_event_count": 6,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": [],
+    "run_id": "codex_RAILS_SAVE_FLOW_graphtyn",
+    "quality": {
+      "automatic_facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": false,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "automatic_passed": 7,
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "coverage": 1.0,
+      "task_complete": true,
+      "task_complete_reason": "Cubre las validaciones, ambos callbacks, la entrada transaccional, el rollback, la rama de creación y la llamada al adaptador; delimita lo que no aporta el paquete.",
+      "citations": {
+        "total": 14,
+        "resolved": 13,
+        "valid": 13,
+        "invalid": [],
+        "unresolved_short_or_ambiguous": [
+          {
+            "file": "validations.rb",
+            "line": 47,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          }
+        ]
+      },
+      "answer_bytes": 4570,
+      "adjudication": {
+        "reviewer": "same investigator; non-independent",
+        "task_complete": true,
+        "task_complete_reason": "Cubre las validaciones, ambos callbacks, la entrada transaccional, el rollback, la rama de creación y la llamada al adaptador; delimita lo que no aporta el paquete.",
+        "facts": {
+          "create_branch": {
+            "value": true,
+            "reason": "Explica readonly?, destroyed? y que new_record? selecciona _create_record.",
+            "evidence": [
+              "answer.txt:9"
+            ]
+          }
+        }
+      },
+      "grader": "deterministic frozen rubric plus disclosed non-independent adjudication"
+    },
+    "retrieval": {
+      "output_captured": true,
+      "context_id": "ab200461bbb3",
+      "selected_nodes": 10,
+      "missing": [],
+      "do_not_expand": true,
+      "payload_tokens": 4533,
+      "payload_truncated": false,
+      "source_characters": 7470,
+      "source_snippets": 9,
+      "total_ms": 3941.023
+    },
+    "audit": {
+      "tool_names": [
+        "graph_query_intent",
+        "graph_query_intent"
+      ],
+      "forbidden_tools": [],
+      "answer_sha256": "31dd4c5892ed65e7a943f295c3abb81a1ccc5144a1d80324f1c6766f0a2cf3eb",
+      "events_sha256": "54b9a67f3089843ea2b8bdc10dafe09aacad968c438e81dffcf1312f8d63b7f2",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-ruby-codex-query-v2-2026-10-21/runs/codex_RAILS_SAVE_FLOW_graphtyn"
+    }
+  }
+]

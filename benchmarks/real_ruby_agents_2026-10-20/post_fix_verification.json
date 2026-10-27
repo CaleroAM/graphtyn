@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "scope": "Local reindex and retrieval after ambiguous-fanout suppression; no agent/model session was rerun.",
+  "repository": {
+    "name": "rails/rails",
+    "commit": "3f0b675158e8284241bb1213c00375bc1fb9c52f",
+    "ruby_files": 3482
+  },
+  "before": {
+    "nodes": 63743,
+    "relations": 691917,
+    "ambiguous_call_relations": 453772,
+    "index_bytes": 581948108,
+    "structural_cache_bytes": 187696753,
+    "cold_index_seconds": 187.162,
+    "query_seconds": 13.282,
+    "state": "/home/calero/Documentos/docker/graphtyn-benchmark-state-2026-10-20/rails-ruby-v19"
+  },
+  "after": {
+    "nodes": 63743,
+    "relations": 244592,
+    "index_bytes": 253461644,
+    "structural_cache_bytes": 187696753,
+    "cold_index_seconds": 175.308,
+    "query_seconds": 7.296,
+    "state": "/home/calero/Documentos/docker/graphtyn-benchmark-state-2026-10-20/rails-ruby-compact",
+    "retrieval": {
+      "file": "post_fix_retrieval.json",
+      "payload_tokens": 2756,
+      "selected_entities": 10,
+      "missing": [],
+      "do_not_expand": true,
+      "complete_for": [
+        "flow",
+        "validations",
+        "callbacks",
+        "transactions",
+        "persistence_adapter",
+        "failure_semantics",
+        "order_and_control_flow",
+        "conditions_and_branches"
+      ]
+    }
+  },
+  "deltas_percent": {
+    "relations": -64.65,
+    "index_bytes": -56.45,
+    "cold_index_seconds": -6.33,
+    "query_seconds": -45.07
+  },
+  "historical_run_policy": "The six frozen agent sessions retain the pre-fix graph and their original measurements. These structural improvements must not be presented as new token deltas."
+}
