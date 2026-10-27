@@ -1,0 +1,1611 @@
+[
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "FMT_FORMAT_FLOW",
+    "arm": "graphify",
+    "repetition": 1,
+    "started_at": "2026-10-26T19:25:21.098722+00:00",
+    "wall_seconds": 55.391,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 16,
+      "cached_input_tokens": 311582,
+      "cache_write_input_tokens": 25536,
+      "output_tokens": 5989,
+      "reasoning_tokens": null,
+      "total_tokens": 343123,
+      "provider_cost": 0.1932242
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 343123,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 25332,
+          "cache_write_input_tokens": 3582,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28948,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28914,
+          "cache_write_input_tokens": 5305,
+          "output_tokens": 10,
+          "reasoning_tokens": null,
+          "total_tokens": 34231,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 34219,
+          "cache_write_input_tokens": 2220,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 36457,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 36439,
+          "cache_write_input_tokens": 7290,
+          "output_tokens": 2,
+          "reasoning_tokens": null,
+          "total_tokens": 43733,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 43729,
+          "cache_write_input_tokens": 1454,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 45201,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 45183,
+          "cache_write_input_tokens": 2420,
+          "output_tokens": 4,
+          "reasoning_tokens": null,
+          "total_tokens": 47609,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 47603,
+          "cache_write_input_tokens": 2560,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 50185,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 50163,
+          "cache_write_input_tokens": 705,
+          "output_tokens": 960,
+          "reasoning_tokens": null,
+          "total_tokens": 51830,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 5.031,
+      "stdout": "with --obsidian for full node-level detail.\n[graphify watch] Rebuilt: 6639 nodes, 12936 edges, 271 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/fmt/workspaces/claude_FMT_FORMAT_FLOW_graphify_r1/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": "no.h (error region at line 324, 365 symbol(s) extracted), include/fmt/color.h (error region at line 13, 80 symbol(s) extracted), include/fmt/core.h (error region at line 316, 291 symbol(s) extracted), include/fmt/enum.h (error region at line 265, 23 symbol(s) extracted) (+21 more)\n  warning: 9 code file(s) yielded no symbols (0.01 MB) — a data file, or source this extractor models no symbols for: doc/fmt.js, include/fmt/base.h, support/build.gradle, support/mkdocs, test/detect-stdfs.cc (+4 more)",
+      "included_in_session_time": false,
+      "nodes": 6639,
+      "links": 12936
+    },
+    "prompt_sha256": "a51b629761e72b33f2c11d594ada13a40b81135df6219aca4b4979b134d1a8a7",
+    "raw_event_count": 28,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "fmt",
+    "run_id": "claude_FMT_FORMAT_FLOW_graphify_r1",
+    "quality": {
+      "facts": {
+        "compile_string": true,
+        "compile_parse": true,
+        "runtime": true,
+        "public_format": true,
+        "arguments": true,
+        "vformat_buffer": true,
+        "runtime_parse": true,
+        "output_iterator": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 57,
+        "valid": 57,
+        "invalid": []
+      },
+      "answer_bytes": 9520,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 6,
+        "Read": 1,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "65b92d16a51b95b338bce0828bc4c2bc9a6a5f126c1a2da05c3e7da6bff595b2",
+      "events_sha256": "9553f12d010cf0f17250372a5090d2fc7980850b269a0056173a5b74c27569a7",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/fmt/runs/claude_FMT_FORMAT_FLOW_graphify_r1"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "FMT_FORMAT_FLOW",
+    "arm": "graphify",
+    "repetition": 2,
+    "started_at": "2026-10-26T19:26:21.444164+00:00",
+    "wall_seconds": 40.051,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 12,
+      "cached_input_tokens": 213393,
+      "cache_write_input_tokens": 18985,
+      "output_tokens": 3927,
+      "reasoning_tokens": null,
+      "total_tokens": 236317,
+      "provider_cost": 0.1365733
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 236317,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26237,
+          "cache_write_input_tokens": 2677,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28948,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28914,
+          "cache_write_input_tokens": 6917,
+          "output_tokens": 36,
+          "reasoning_tokens": null,
+          "total_tokens": 35869,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 35831,
+          "cache_write_input_tokens": 2258,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 38111,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 38089,
+          "cache_write_input_tokens": 3665,
+          "output_tokens": 7,
+          "reasoning_tokens": null,
+          "total_tokens": 41763,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 41754,
+          "cache_write_input_tokens": 814,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 42590,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 42568,
+          "cache_write_input_tokens": 2654,
+          "output_tokens": 887,
+          "reasoning_tokens": null,
+          "total_tokens": 46111,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 4.89,
+      "stdout": "with --obsidian for full node-level detail.\n[graphify watch] Rebuilt: 6639 nodes, 12936 edges, 271 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/fmt/workspaces/claude_FMT_FORMAT_FLOW_graphify_r2/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": "no.h (error region at line 324, 365 symbol(s) extracted), include/fmt/color.h (error region at line 13, 80 symbol(s) extracted), include/fmt/core.h (error region at line 316, 291 symbol(s) extracted), include/fmt/enum.h (error region at line 265, 23 symbol(s) extracted) (+21 more)\n  warning: 9 code file(s) yielded no symbols (0.01 MB) — a data file, or source this extractor models no symbols for: doc/fmt.js, include/fmt/base.h, support/build.gradle, support/mkdocs, test/detect-stdfs.cc (+4 more)",
+      "included_in_session_time": false,
+      "nodes": 6639,
+      "links": 12936
+    },
+    "prompt_sha256": "a51b629761e72b33f2c11d594ada13a40b81135df6219aca4b4979b134d1a8a7",
+    "raw_event_count": 19,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "fmt",
+    "run_id": "claude_FMT_FORMAT_FLOW_graphify_r2",
+    "quality": {
+      "facts": {
+        "compile_string": true,
+        "compile_parse": true,
+        "runtime": true,
+        "public_format": true,
+        "arguments": true,
+        "vformat_buffer": true,
+        "runtime_parse": true,
+        "output_iterator": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 26,
+        "valid": 26,
+        "invalid": []
+      },
+      "answer_bytes": 6503,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 4,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "0b253d17c4827b998e35242f33d089a04d013acdf7044a239a523c9137edcdab",
+      "events_sha256": "7019550197cb60ea3772aab15a593cf29ef69426ebe0b008581effa58cf35bf0",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/fmt/runs/claude_FMT_FORMAT_FLOW_graphify_r2"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "FMT_FORMAT_FLOW",
+    "arm": "graphify",
+    "repetition": 3,
+    "started_at": "2026-10-26T19:27:06.073604+00:00",
+    "wall_seconds": 41.753,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 12,
+      "cached_input_tokens": 205926,
+      "cache_write_input_tokens": 17972,
+      "output_tokens": 4649,
+      "reasoning_tokens": null,
+      "total_tokens": 228559,
+      "provider_cost": 0.1389946
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 228559,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26237,
+          "cache_write_input_tokens": 2677,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28948,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28914,
+          "cache_write_input_tokens": 3766,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 32685,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 32680,
+          "cache_write_input_tokens": 2269,
+          "output_tokens": 21,
+          "reasoning_tokens": null,
+          "total_tokens": 34972,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 34949,
+          "cache_write_input_tokens": 4763,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 39734,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 39712,
+          "cache_write_input_tokens": 3722,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 43439,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 43434,
+          "cache_write_input_tokens": 775,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 44214,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 4.521,
+      "stdout": "with --obsidian for full node-level detail.\n[graphify watch] Rebuilt: 6639 nodes, 12936 edges, 271 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/fmt/workspaces/claude_FMT_FORMAT_FLOW_graphify_r3/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": "no.h (error region at line 324, 365 symbol(s) extracted), include/fmt/color.h (error region at line 13, 80 symbol(s) extracted), include/fmt/core.h (error region at line 316, 291 symbol(s) extracted), include/fmt/enum.h (error region at line 265, 23 symbol(s) extracted) (+21 more)\n  warning: 9 code file(s) yielded no symbols (0.01 MB) — a data file, or source this extractor models no symbols for: doc/fmt.js, include/fmt/base.h, support/build.gradle, support/mkdocs, test/detect-stdfs.cc (+4 more)",
+      "included_in_session_time": false,
+      "nodes": 6639,
+      "links": 12936
+    },
+    "prompt_sha256": "a51b629761e72b33f2c11d594ada13a40b81135df6219aca4b4979b134d1a8a7",
+    "raw_event_count": 22,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "fmt",
+    "run_id": "claude_FMT_FORMAT_FLOW_graphify_r3",
+    "quality": {
+      "facts": {
+        "compile_string": true,
+        "compile_parse": true,
+        "runtime": true,
+        "public_format": true,
+        "arguments": true,
+        "vformat_buffer": true,
+        "runtime_parse": true,
+        "output_iterator": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 39,
+        "valid": 39,
+        "invalid": []
+      },
+      "answer_bytes": 7822,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 5,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "53bcb330576d80ef328f16e56c2114e76046f8ec2c299c27f36e07639e5f6141",
+      "events_sha256": "c1a240ccbcf4ffb54ed25936f9948ccc6d007f210f4a5654fdf57f4ebfc8d329",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/fmt/runs/claude_FMT_FORMAT_FLOW_graphify_r3"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "graphify",
+    "repetition": 1,
+    "started_at": "2026-10-26T19:29:38.698050+00:00",
+    "wall_seconds": 53.92,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 14,
+      "cached_input_tokens": 233190,
+      "cache_write_input_tokens": 13899,
+      "output_tokens": 4344,
+      "reasoning_tokens": null,
+      "total_tokens": 251447,
+      "provider_cost": 0.12238299999999999
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 251447,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 25332,
+          "cache_write_input_tokens": 3567,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28933,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28899,
+          "cache_write_input_tokens": 3424,
+          "output_tokens": 17,
+          "reasoning_tokens": null,
+          "total_tokens": 32342,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 32323,
+          "cache_write_input_tokens": 1677,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 34022,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 34000,
+          "cache_write_input_tokens": 2304,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 36322,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 36304,
+          "cache_write_input_tokens": 1260,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 37586,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 37564,
+          "cache_write_input_tokens": 1204,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 38773,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 38768,
+          "cache_write_input_tokens": 463,
+          "output_tokens": 837,
+          "reasoning_tokens": null,
+          "total_tokens": 40070,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 109.001,
+      "stdout": "--obsidian for full node-level detail.\n[graphify watch] Rebuilt: 64938 nodes, 108078 edges, 2957 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/rails/workspaces/claude_RAILS_SAVE_FLOW_graphify_r1/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": " nothing to the graph because a dependency is missing: tree_sitter_sql not installed. Install it with: pip install \"graphifyy[sql]\" (#1745)\n  warning: 193 code file(s) yielded no symbols (0.39 MB) — a data file, or source this extractor models no symbols for: .github/workflows/scripts/check-markdown-api.rb, .github/workflows/scripts/test-container.rb, .mdlrc.rb, actioncable/app/javascript/action_cable/adapters.js, actioncable/app/javascript/action_cable/index_with_name_deprecation.js (+188 more)",
+      "included_in_session_time": false,
+      "nodes": 64938,
+      "links": 108078
+    },
+    "prompt_sha256": "af0639bcd1b0a2aa0f544ca6771cec8df03b56bd30ae7f1e548ccd87332e63b7",
+    "raw_event_count": 19,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "rails",
+    "run_id": "claude_RAILS_SAVE_FLOW_graphify_r1",
+    "quality": {
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 33,
+        "valid": 18,
+        "invalid": [
+          {
+            "file": "base.rb",
+            "line": 352,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 47,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 90,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 69,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "activemodel/.../validations.rb",
+            "line": 409,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "activemodel/.../validations/callbacks.rb",
+            "line": 132,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "activemodel/.../validations.rb",
+            "line": 511,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 113,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 478,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 454,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 482,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 95,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "connection_adapters/abstract/database_statements.rb",
+            "line": 254,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 48,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 53,
+            "line_count": null,
+            "valid": false
+          }
+        ]
+      },
+      "answer_bytes": 6031,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 5,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "8f9ac6d663c88639477470e54e307658810ae967d38ddf16cb18b4353b59e8f7",
+      "events_sha256": "9174bfd5597419c377aa7dc174fc62205cf5f9ef231efa3398a59260e3d4fd3c",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/rails/runs/claude_RAILS_SAVE_FLOW_graphify_r1"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "graphify",
+    "repetition": 2,
+    "started_at": "2026-10-26T19:32:18.655257+00:00",
+    "wall_seconds": 45.788,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 14,
+      "cached_input_tokens": 240149,
+      "cache_write_input_tokens": 13126,
+      "output_tokens": 4898,
+      "reasoning_tokens": null,
+      "total_tokens": 258187,
+      "provider_cost": 0.1255269
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 258187,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26223,
+          "cache_write_input_tokens": 2676,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28933,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28899,
+          "cache_write_input_tokens": 4721,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 33638,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 33620,
+          "cache_write_input_tokens": 2650,
+          "output_tokens": 5,
+          "reasoning_tokens": null,
+          "total_tokens": 36277,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 36270,
+          "cache_write_input_tokens": 1247,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 37539,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 37517,
+          "cache_write_input_tokens": 1076,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 38615,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 38593,
+          "cache_write_input_tokens": 434,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 39045,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 39027,
+          "cache_write_input_tokens": 322,
+          "output_tokens": 833,
+          "reasoning_tokens": null,
+          "total_tokens": 40184,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 104.509,
+      "stdout": "--obsidian for full node-level detail.\n[graphify watch] Rebuilt: 64938 nodes, 108078 edges, 2957 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/rails/workspaces/claude_RAILS_SAVE_FLOW_graphify_r2/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": " nothing to the graph because a dependency is missing: tree_sitter_sql not installed. Install it with: pip install \"graphifyy[sql]\" (#1745)\n  warning: 193 code file(s) yielded no symbols (0.39 MB) — a data file, or source this extractor models no symbols for: .github/workflows/scripts/check-markdown-api.rb, .github/workflows/scripts/test-container.rb, .mdlrc.rb, actioncable/app/javascript/action_cable/adapters.js, actioncable/app/javascript/action_cable/index_with_name_deprecation.js (+188 more)",
+      "included_in_session_time": false,
+      "nodes": 64938,
+      "links": 108078
+    },
+    "prompt_sha256": "af0639bcd1b0a2aa0f544ca6771cec8df03b56bd30ae7f1e548ccd87332e63b7",
+    "raw_event_count": 22,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "rails",
+    "run_id": "claude_RAILS_SAVE_FLOW_graphify_r2",
+    "quality": {
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 26,
+        "valid": 11,
+        "invalid": [
+          {
+            "file": "base.rb",
+            "line": 345,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 47,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 69,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "activemodel/.../validations.rb",
+            "line": 409,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "activemodel/.../validations/callbacks.rb",
+            "line": 132,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 113,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 478,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 454,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 482,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 95,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "connection_adapters/abstract/database_statements.rb",
+            "line": 254,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "connection_adapters/postgresql/database_statements.rb",
+            "line": 34,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 48,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 54,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "activemodel/.../callbacks.rb",
+            "line": 13,
+            "line_count": null,
+            "valid": false
+          }
+        ]
+      },
+      "answer_bytes": 7118,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 6,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "f9d3aaf9127a830ba19f9d0e415f55f3c129d25d79013b30bd3d7d338a3c3cdc",
+      "events_sha256": "13642ba9502f12eafc72e9bef134c9cbb97ca30ffa66d48627938c43a296f17e",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/rails/runs/claude_RAILS_SAVE_FLOW_graphify_r2"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "graphify",
+    "repetition": 3,
+    "started_at": "2026-10-26T19:34:50.944809+00:00",
+    "wall_seconds": 43.637,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 14,
+      "cached_input_tokens": 232947,
+      "cache_write_input_tokens": 12480,
+      "output_tokens": 4328,
+      "reasoning_tokens": null,
+      "total_tokens": 249769,
+      "provider_cost": 0.1165227
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 249769,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26223,
+          "cache_write_input_tokens": 2676,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28933,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28899,
+          "cache_write_input_tokens": 3424,
+          "output_tokens": 17,
+          "reasoning_tokens": null,
+          "total_tokens": 32342,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 32323,
+          "cache_write_input_tokens": 1679,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 34024,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 34002,
+          "cache_write_input_tokens": 2235,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 36242,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 36237,
+          "cache_write_input_tokens": 984,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 37239,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 37221,
+          "cache_write_input_tokens": 821,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 38060,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 38042,
+          "cache_write_input_tokens": 661,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 38708,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 105.596,
+      "stdout": "--obsidian for full node-level detail.\n[graphify watch] Rebuilt: 64938 nodes, 108078 edges, 2957 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/rails/workspaces/claude_RAILS_SAVE_FLOW_graphify_r3/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": " nothing to the graph because a dependency is missing: tree_sitter_sql not installed. Install it with: pip install \"graphifyy[sql]\" (#1745)\n  warning: 193 code file(s) yielded no symbols (0.39 MB) — a data file, or source this extractor models no symbols for: .github/workflows/scripts/check-markdown-api.rb, .github/workflows/scripts/test-container.rb, .mdlrc.rb, actioncable/app/javascript/action_cable/adapters.js, actioncable/app/javascript/action_cable/index_with_name_deprecation.js (+188 more)",
+      "included_in_session_time": false,
+      "nodes": 64938,
+      "links": 108078
+    },
+    "prompt_sha256": "af0639bcd1b0a2aa0f544ca6771cec8df03b56bd30ae7f1e548ccd87332e63b7",
+    "raw_event_count": 23,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "rails",
+    "run_id": "claude_RAILS_SAVE_FLOW_graphify_r3",
+    "quality": {
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": false,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": false
+      },
+      "passed": 6,
+      "total": 8,
+      "citations": {
+        "total": 21,
+        "valid": 12,
+        "invalid": [
+          {
+            "file": "validations.rb",
+            "line": 47,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 478,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 113,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 482,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 95,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "connection_adapters/abstract/database_statements.rb",
+            "line": 254,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 48,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 53,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 183,
+            "line_count": null,
+            "valid": false
+          }
+        ]
+      },
+      "answer_bytes": 5967,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 5,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "bce5aef08b4a7b5a73a70bacd962d8e4d5a0e00c8d7c6405bd6e4a625a388b57",
+      "events_sha256": "2f5edbb67fd1649fd03bfb27fe25d467925581b3d99048e4a569ea7f9183525d",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/rails/runs/claude_RAILS_SAVE_FLOW_graphify_r3"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "REDIS_COMMAND_FLOW",
+    "arm": "graphify",
+    "repetition": 1,
+    "started_at": "2026-10-26T19:23:10.874935+00:00",
+    "wall_seconds": 34.546,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 10,
+      "cached_input_tokens": 147799,
+      "cache_write_input_tokens": 45066,
+      "output_tokens": 3777,
+      "reasoning_tokens": null,
+      "total_tokens": 196652,
+      "provider_cost": 0.2328339
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 196652,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 28894,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28928,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28894,
+          "cache_write_input_tokens": 3774,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 32686,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 32668,
+          "cache_write_input_tokens": 9963,
+          "output_tokens": 6,
+          "reasoning_tokens": null,
+          "total_tokens": 42639,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 42631,
+          "cache_write_input_tokens": 975,
+          "output_tokens": 21,
+          "reasoning_tokens": null,
+          "total_tokens": 43629,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 43606,
+          "cache_write_input_tokens": 1460,
+          "output_tokens": 993,
+          "reasoning_tokens": null,
+          "total_tokens": 46061,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 19.413,
+      "stdout": "-obsidian for full node-level detail.\n[graphify watch] Rebuilt: 18639 nodes, 65015 edges, 549 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/redis/workspaces/claude_REDIS_COMMAND_FLOW_graphify_r1/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": "/containers/mixed_equal.h (error region at line 36, no symbols extracted), deps/croaring/include/roaring/containers/mixed_intersection.h (error region at line 104, no symbols extracted) (+95 more)\n  warning: 185 code file(s) yielded no symbols (0.53 MB) — a data file, or source this extractor models no symbols for: deps/croaring/include/roaring/roaring_version.h, deps/croaring/src/license-comment.h, deps/fpconv/fpconv_dtoa.h, deps/hdr_histogram/hdr_redis_malloc.h, deps/hiredis/dict.h (+180 more)",
+      "included_in_session_time": false,
+      "nodes": 18639,
+      "links": 65015
+    },
+    "prompt_sha256": "fd4c0815a89e4d81540a302539036d03ca636c603de5579fc2c40ed66e399a54",
+    "raw_event_count": 19,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "redis",
+    "run_id": "claude_REDIS_COMMAND_FLOW_graphify_r1",
+    "quality": {
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 22,
+        "valid": 22,
+        "invalid": []
+      },
+      "answer_bytes": 5989,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 3,
+        "Read": 1,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "e3ced9eaf80bfad04d76760908bcb5256ea387adf1c0941392e0a52fbed319c1",
+      "events_sha256": "0e9a6783454d78ba07edebb6fbb9223d79566891d320f2acce408ad53d4f1f3f",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/redis/runs/claude_REDIS_COMMAND_FLOW_graphify_r1"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "REDIS_COMMAND_FLOW",
+    "arm": "graphify",
+    "repetition": 2,
+    "started_at": "2026-10-26T19:24:04.696901+00:00",
+    "wall_seconds": 26.779,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 10,
+      "cached_input_tokens": 170457,
+      "cache_write_input_tokens": 16815,
+      "output_tokens": 3452,
+      "reasoning_tokens": null,
+      "total_tokens": 190734,
+      "provider_cost": 0.11884570000000001
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 190734,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26217,
+          "cache_write_input_tokens": 2677,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28928,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28894,
+          "cache_write_input_tokens": 3671,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 32583,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 32565,
+          "cache_write_input_tokens": 8432,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 41002,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 40997,
+          "cache_write_input_tokens": 787,
+          "output_tokens": 21,
+          "reasoning_tokens": null,
+          "total_tokens": 41807,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 41784,
+          "cache_write_input_tokens": 1248,
+          "output_tokens": 956,
+          "reasoning_tokens": null,
+          "total_tokens": 43990,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 18.909,
+      "stdout": "-obsidian for full node-level detail.\n[graphify watch] Rebuilt: 18639 nodes, 65015 edges, 549 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/redis/workspaces/claude_REDIS_COMMAND_FLOW_graphify_r2/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": "/containers/mixed_equal.h (error region at line 36, no symbols extracted), deps/croaring/include/roaring/containers/mixed_intersection.h (error region at line 104, no symbols extracted) (+95 more)\n  warning: 185 code file(s) yielded no symbols (0.53 MB) — a data file, or source this extractor models no symbols for: deps/croaring/include/roaring/roaring_version.h, deps/croaring/src/license-comment.h, deps/fpconv/fpconv_dtoa.h, deps/hdr_histogram/hdr_redis_malloc.h, deps/hiredis/dict.h (+180 more)",
+      "included_in_session_time": false,
+      "nodes": 18639,
+      "links": 65015
+    },
+    "prompt_sha256": "fd4c0815a89e4d81540a302539036d03ca636c603de5579fc2c40ed66e399a54",
+    "raw_event_count": 18,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "redis",
+    "run_id": "claude_REDIS_COMMAND_FLOW_graphify_r2",
+    "quality": {
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 47,
+        "valid": 47,
+        "invalid": []
+      },
+      "answer_bytes": 5452,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 3,
+        "Read": 1,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "233446c1eccfe7e8f0292ca10ec02e8f336d5d1de502863ce123b9fecf640e3c",
+      "events_sha256": "d9cf5baefbfbad4002bc21d919ffc30fccbeca7712cd17154d3d7ee51992de12",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/redis/runs/claude_REDIS_COMMAND_FLOW_graphify_r2"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "REDIS_COMMAND_FLOW",
+    "arm": "graphify",
+    "repetition": 3,
+    "started_at": "2026-10-26T19:24:50.649219+00:00",
+    "wall_seconds": 24.607,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 6,
+      "cached_input_tokens": 89612,
+      "cache_write_input_tokens": 14106,
+      "output_tokens": 3386,
+      "reasoning_tokens": null,
+      "total_tokens": 107110,
+      "provider_cost": 0.0992572
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 107110,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26217,
+          "cache_write_input_tokens": 2677,
+          "output_tokens": 32,
+          "reasoning_tokens": null,
+          "total_tokens": 28928,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 28894,
+          "cache_write_input_tokens": 5607,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 34523,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 34501,
+          "cache_write_input_tokens": 5822,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 40328,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 18.487,
+      "stdout": "-obsidian for full node-level detail.\n[graphify watch] Rebuilt: 18639 nodes, 65015 edges, 549 communities\n[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/redis/workspaces/claude_REDIS_COMMAND_FLOW_graphify_r3/graphify-out\nCode graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.\nTip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.",
+      "stderr": "/containers/mixed_equal.h (error region at line 36, no symbols extracted), deps/croaring/include/roaring/containers/mixed_intersection.h (error region at line 104, no symbols extracted) (+95 more)\n  warning: 185 code file(s) yielded no symbols (0.53 MB) — a data file, or source this extractor models no symbols for: deps/croaring/include/roaring/roaring_version.h, deps/croaring/src/license-comment.h, deps/fpconv/fpconv_dtoa.h, deps/hdr_histogram/hdr_redis_malloc.h, deps/hiredis/dict.h (+180 more)",
+      "included_in_session_time": false,
+      "nodes": 18639,
+      "links": 65015
+    },
+    "prompt_sha256": "fd4c0815a89e4d81540a302539036d03ca636c603de5579fc2c40ed66e399a54",
+    "raw_event_count": 20,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "query_graph"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "redis",
+    "run_id": "claude_REDIS_COMMAND_FLOW_graphify_r3",
+    "quality": {
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 39,
+        "valid": 39,
+        "invalid": []
+      },
+      "answer_bytes": 4985,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 2,
+        "Read": 3,
+        "mcp__graphify_benchmark__query_graph": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "ff6757cc88957628eb96ae3fe89213c7678aa7244a72e127c502f3654902f091",
+      "events_sha256": "561b49f1a4f7ac24f74fe6eb31143edc97ebc3a6e19301d492d4e27324f2a387",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-graphify-2026-10-26/redis/runs/claude_REDIS_COMMAND_FLOW_graphify_r3"
+    }
+  }
+]

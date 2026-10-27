@@ -657,49 +657,72 @@ def _overview_package(graph: dict[str, Any], request: str, max_nodes: int) -> di
         "request": str(request or "").strip(), "intent": "overview", "intent_terms": _terms(request),
         "project_profile": profile, "nodes": selected, "links": links, "complete_for": ["overview"],
         "missing": [] if selected else ["project evidence"], "do_not_expand": bool(selected),
-        "guidance": "Explain purpose, technologies, entry points and subsystems from this evidence. Cite aliases; distinguish observed facts from inference.",
+        "guidance": "Explain purpose, technologies, entry points and subsystems from this evidence. Cite real file:line, expanding F-aliases through files; distinguish observed facts from inference.",
         "planner": "overview-v1", "budget": {"max_nodes": max_nodes, "selected_nodes": len(selected)},
         "operation_limit": 3,
+    }
+    from .communities import analyze_communities
+    structure = analyze_communities(graph, max_communities=6, max_bridges=3)
+    result["structure"] = {
+        "communities": [{key: item[key] for key in ("label", "files", "central_symbols")}
+                        for item in structure["communities"]],
+        "god_nodes": [f"{row['name']} {row['file']}:{row['line']}" for row in structure["god_nodes"][:5]],
+        "surprising_connections": [f"{item['from']} <-> {item['to']}"
+                                   for item in structure["surprising_connections"]],
+        "algorithm": structure["algorithm"],
     }
     from .overview_report import enrich_overview
     return _finalize_overview_projection(enrich_overview(graph, result), selected, links)
 
+# Generic bilingual programming vocabulary: a request word maps to identifier
+# fragments that commonly spell the same concept. Entries must not name a
+# specific product or corpus (e.g. no "SalesInvoice"); expansions only widen
+# lexical matching and never satisfy an obligation by themselves.
 _QUERY_EXPANSIONS = {
-    "eliminar": ("delete", "deleted"), "eliminación": ("delete", "deleted"),
-    "borrado": ("delete", "deleted", "deleteservice"),
-    "evento": ("event", "publish", "handler"), "eventos": ("event", "publish", "handler"),
-    "correo": ("email", "sendemail"), "persistencia": ("repository", "save", "database"),
-    "repositorio": ("repository",), "consulta": ("query",), "prueba": ("test", "assert"),
-    "inyección": ("addscoped", "dependency", "service"),
-    "propuesta": ("proposal", "salesproposal"), "propuestas": ("proposal", "salesproposal"),
-    "factura": ("invoice", "salesinvoice"), "facturas": ("invoice", "salesinvoice"),
-    "devolución": ("return", "purchasereturn"), "devoluciones": ("return", "purchasereturn"),
-    "compra": ("purchase",), "compras": ("purchase",),
-    "almacén": ("almacen", "warehouse", "store"),
-    "manifiesto": ("manifest",), "integridad": ("hash", "checksum", "validar", "verify"),
-    "parcela": ("parcel", "parcela_id", "id_poligono"),
-    "producto": ("product",), "productos": ("product",),
-    "arranque": ("bootstrap", "app.tsx", "app.blade.php", "inertia"),
-    "creación": ("create", "store"), "crear": ("create", "store"),
-    "conversión": ("convert", "converttoinvoice"), "convertir": ("convert", "converttoinvoice"),
+    "eliminar": ("delete", "remove", "destroy"), "eliminación": ("delete", "remove", "destroy"),
+    "borrado": ("delete", "remove", "destroy", "expires", "set-cookie"),
+    "evento": ("event", "publish", "emit", "dispatch", "handler", "listener"),
+    "eventos": ("event", "publish", "emit", "dispatch", "handler", "listener"),
+    "correo": ("email", "mail", "send"),
+    "persistencia": ("repository", "save", "persist", "insert", "database"),
+    "repositorio": ("repository",), "consulta": ("query", "select", "find"),
+    "prueba": ("test", "assert"), "pruebas": ("test", "assert"),
+    "inyección": ("inject", "dependency", "provider", "service", "addscoped"),
+    "creación": ("create", "store", "insert"), "crear": ("create", "store", "insert"),
+    "conversión": ("convert", "transform"), "convertir": ("convert", "transform"),
     "aprobar": ("approve",), "aprobación": ("approve",),
-    "completar": ("complete",), "completado": ("complete",),
-    "autorización": ("authorize", "request"), "validación": ("request", "rules"),
-    "lectura": ("cookie", "cookies", "decode", "loads"),
-    "verificación": ("verify", "unsign", "signature", "signer", "badsignature"),
-    "firma": ("sign", "unsign", "signer", "signature", "badsignature", "timestampsigner"),
-    "inválida": ("invalid", "badsignature", "except", "session"),
-    "acceso": ("accessed", "mark_accessed"), "modificación": ("modified", "mark_modified"),
-    "escritura": ("encode", "b64encode", "set-cookie", "append"),
-    "borrado": ("expires", "1970", "delete", "set-cookie"),
+    "completar": ("complete", "finish"), "completado": ("complete", "finish"),
+    "autorización": ("authorize", "permission", "policy", "request"),
+    "autenticación": ("auth", "login", "session", "token"),
+    "permiso": ("permission", "authorize", "policy", "acl"), "permisos": ("permission", "authorize", "policy", "acl"),
+    "validación": ("validate", "request", "rules", "check"),
+    "lectura": ("read", "load", "decode", "loads", "cookie", "cookies"),
+    "verificación": ("verify", "unsign", "signature", "signer"),
+    "firma": ("sign", "unsign", "signer", "signature"),
+    "inválida": ("invalid", "except", "session"), "inválido": ("invalid", "except", "error"),
+    "acceso": ("access", "accessed"), "modificación": ("modify", "modified", "update"),
+    "escritura": ("write", "encode", "set-cookie", "append"),
     "cookie": ("cookie", "set-cookie", "httponly", "samesite", "secure", "max-age"),
-    "seguridad": ("httponly", "samesite", "secure", "https_only", "security_flags"),
-    "estado": ("state", "active", "isauctionactive"),
-    "interfaz": ("interface", "implements"), "interfaces": ("interface", "implements"),
+    "seguridad": ("security", "secure", "httponly", "samesite", "csrf"),
+    "estado": ("state", "status", "active"),
+    "interfaz": ("interface", "implements", "protocol"), "interfaces": ("interface", "implements", "protocol"),
     "consumidor": ("consumer", "caller", "calls"), "consumidores": ("consumer", "caller", "calls"),
-    "captured": ("urlparams", "routeparams", "findroute", "keys", "values"),
-    "capture": ("urlparams", "routeparams", "findroute", "keys", "values"),
-    "entry": ("__call__", "servehttp", "main", "application"),
+    "captured": ("params", "keys", "values", "match"), "capture": ("params", "keys", "values", "match"),
+    "entry": ("__call__", "servehttp", "main", "application", "handler"),
+    "arranque": ("bootstrap", "main", "startup", "init", "app"),
+    "transacción": ("transaction", "commit", "rollback"), "transacciones": ("transaction", "commit", "rollback"),
+    "ruta": ("route", "router", "path"), "rutas": ("route", "router", "path"),
+    "controlador": ("controller", "handler"), "modelo": ("model", "entity"), "vista": ("view", "template", "render"),
+    "configuración": ("config", "settings", "options"), "caché": ("cache",), "cola": ("queue", "job", "worker"),
+    "error": ("error", "exception", "raise", "throw"), "excepción": ("exception", "raise", "throw", "error"),
+    "sesión": ("session",), "usuario": ("user",), "pago": ("payment", "charge"),
+    "notificación": ("notify", "notification"), "migración": ("migration", "migrate"), "esquema": ("schema",),
+    "plantilla": ("template",), "almacén": ("almacen", "warehouse", "store", "storage"),
+    "manifiesto": ("manifest",), "integridad": ("hash", "checksum", "verify", "integrity"),
+    "producto": ("product",), "productos": ("product",), "propuesta": ("proposal",), "propuestas": ("proposal",),
+    "factura": ("invoice",), "facturas": ("invoice",), "devolución": ("return", "refund"),
+    "devoluciones": ("return", "refund"), "compra": ("purchase", "order"), "compras": ("purchase", "order"),
+    "parcela": ("parcel"),
 }
 
 
@@ -707,7 +730,7 @@ def _terms(request: str) -> list[str]:
     return list(dict.fromkeys(
         normalized for token in re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w.]+", request)
         if len(normalized := token.lower().strip(".")) >= 3 and normalized not in _STOP
-    ))[:20]
+    ))[:48]
 
 
 def classify_intent(request: str, requested: str = "auto") -> str:
@@ -721,7 +744,7 @@ def classify_intent(request: str, requested: str = "auto") -> str:
     # Models sometimes choose ``overview`` merely because the prompt names a
     # repository. An enumerated operational question needs symbol/operation
     # evidence, even when the caller supplied that overly broad intent.
-    if requested == "overview" and ((enumerated and operational) or _is_change_request(text)):
+    if requested == "overview" and enumerated and operational:
         return "flow"
     if requested in _INTENT_MARKERS:
         return requested
@@ -767,6 +790,24 @@ def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
         if "manifiesto" in text or "manifest" in text:
             concerns["runtime_manifest_generation"] = re.compile(
                 r"preparar_almacen(?:_inferencia)?|prepare[^/\s]*manifest", re.I)
+    if re.search(r"validaci[oó]n|validaciones?|validations?", text):
+        concerns["validation_gate"] = re.compile(
+            r"perform_validations|_run_validation_callbacks", re.I)
+    if re.search(r"callbacks?|retrollamadas?", text):
+        concerns["save_callbacks"] = re.compile(r"_run_save_callbacks", re.I)
+        if re.search(r"_create_record|registro nuevo|new record|creaci[oó]n|create", text):
+            concerns["create_callbacks"] = re.compile(r"_run_create_callbacks", re.I)
+    if re.search(r"transacci[oó]n|transacciones?|transactions?", text):
+        concerns["transaction_entry"] = re.compile(r"with_transaction_returning_status", re.I)
+        concerns["transaction_rollback"] = re.compile(r"rollback|with_transaction_returning_status", re.I)
+    if re.search(r"adaptador|adapter|llamada final|base de datos", text):
+        concerns["persistence_adapter"] = re.compile(
+            r"connection\.(?:insert|update|delete)|connection_adapters?", re.I)
+    if re.search(r"aborta|fall[ao]|error|rollback", text):
+        concerns["save_failure_result"] = re.compile(
+            r"recordinvalid|recordnotsaved|return\s+false|perform_validations", re.I)
+        if re.search(r"aborta|abort", text):
+            concerns["callback_abort"] = re.compile(r"throw\s*:abort|abort", re.I)
     return concerns
 
 
@@ -806,12 +847,15 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         for part in re.split(r"\.|::|#", token)
         if len(part) >= 3 and part.lower() not in _STOP
     ]
-    direct_terms = list(dict.fromkeys([*direct_terms, *qualified_parts]))[:24]
+    direct_terms = list(dict.fromkeys([*direct_terms, *qualified_parts]))[:52]
     request_terms = direct_terms + expansions
     generic_symbol_terms = {
         "app", "application", "context", "handler", "middleware", "request", "response", "route", "router",
         "api", "worker", "data", "datos", "file", "files", "archivo", "archivos", "variable", "variables",
         "script", "scripts", "function", "functions", "función", "funciones", "project", "proyecto",
+        "buffer", "detail", "fmt", "read", "write", "callback", "callbacks",
+        "transaction", "transactions", "validation", "validations",
+        "commit", "rails",
     }
     symbol_terms = [term for term in direct_terms if term not in generic_symbol_terms]
     explicit_identifiers = {
@@ -822,18 +866,44 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         for identifier in re.findall(r"\b[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]+\b", str(request or ""))
     }
     all_nodes = graph.get("nodes", [])
-    qualified_symbols = [
-        (owner.lower(), member.lower())
-        for owner, member in re.findall(r"([A-Za-z_][\w]*)\s*(?:::|\.|#)\s*([A-Za-z_][\w]*)", str(request or ""))
-        if member.lower() not in non_symbol_suffixes
-    ]
-    def qualified_match(node: dict) -> bool:
+    qualified_symbols = []
+    for qualified in re.findall(
+        r"[A-Za-z_][\w]*(?:(?:::|\.|#)[A-Za-z_][\w]*)+", str(request or ""),
+    ):
+        parts = [part for part in re.split(r"::|\.|#", qualified) if part]
+        if len(parts) >= 2 and parts[-1].lower() not in non_symbol_suffixes:
+            qualified_symbols.append((parts[-2].lower(), parts[-1].lower()))
+    def qualified_pair_match(node: dict, owner: str, member: str) -> bool:
         name = str(node.get("name") or "").lower()
-        owner_text = " ".join(str(node.get(key) or "") for key in ("container", "signature", "owner_signature")).lower()
-        return any(name == member and re.search(rf"\b{re.escape(owner)}\b", owner_text)
+        if name != member:
+            return False
+        container = str(node.get("container") or "").lower()
+        namespace = str(node.get("namespace") or "").lower().replace(".", "::")
+        namespace_owner = namespace.rsplit("::", 1)[-1]
+        signature = str(node.get("signature") or "").lower()
+        path_parts = set(str(node.get("file") or "").lower().replace("\\", "/").split("/"))
+        path_owned_free = (owner in path_parts
+                           and "formatter" not in container
+                           and not re.search(r"\)\s*const\b", signature))
+        return (
+            (container and owner == container)
+            or (not container and namespace and owner == namespace_owner)
+            or (not container and not namespace and owner in path_parts)
+            or path_owned_free
+            or (not container and not namespace and re.search(rf"\b{re.escape(owner)}\b", signature))
+        )
+
+    def qualified_match(node: dict) -> bool:
+        return any(qualified_pair_match(node, owner, member)
                    for owner, member in qualified_symbols)
 
     qualified_nodes = [node for node in all_nodes if qualified_match(node)]
+    qualified_node_ids = {node.get("id") for node in qualified_nodes}
+    qualified_package_roots = {
+        str(node.get("file") or "").replace("\\", "/").split("/", 1)[0]
+        for node in qualified_nodes
+        if "/" in str(node.get("file") or "").replace("\\", "/")
+    }
     explicit_names = {
         str(node.get("name") or "").lower()
         for node in all_nodes
@@ -906,28 +976,46 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         return result
     ranked = []
     strong_semantic_ids: set[str] = set()
+    operation_filters = tuple(markers)
+    concept_terms = tuple(dict.fromkeys([*markers, *expansions]))
+    symbol_term_set = set(symbol_terms)
+    entry_request = any(term in direct_terms for term in ("entry", "entrypoint", "entry-point"))
+    capture_request = any(term in direct_terms for term in ("capture", "captured"))
+    owners_by_file_and_name: dict[tuple[str, str], dict[str, Any]] = {}
+    for candidate in all_nodes:
+        if candidate.get("kind") in ("class", "interface", "struct", "module"):
+            key = (str(candidate.get("file") or ""), str(candidate.get("name") or ""))
+            owners_by_file_and_name.setdefault(key, candidate)
+    # Substring tests against every operation of the graph dominate large
+    # repositories; one alternation of literals answers the same `any(...)`.
+    def _literal_matcher(terms) -> Any:
+        literals = sorted({str(term) for term in terms}, key=len, reverse=True)
+        return re.compile("|".join(map(re.escape, literals))).search if literals else None
+    operation_marker = _literal_matcher(operation_filters)
+    request_term_match = _literal_matcher(request_terms)
+    long_symbol_terms = [term for term in symbol_terms if len(term) >= 5]
+    long_symbol_match = _literal_matcher(long_symbol_terms)
     for node in all_nodes:
         operations = node.get("operations") or []
         filtered_ops = []
         operation_request_hits = 0
         for op in operations:
             searchable = f"{op.get('name', '')} {op.get('text', '')}".lower()
-            operation_filters = list(markers)
             operation_name = str(op.get("name") or "").lower()
-            if (not operation_filters or any(marker in searchable for marker in operation_filters)
+            if (not operation_filters or operation_marker(searchable)
                     or operation_name in request_terms
-                    or any(term in searchable for term in request_terms)):
+                    or (request_term_match is not None and request_term_match(searchable))):
                 filtered_ops.append(op)
-            operation_request_hits += sum(
-                1 for term in symbol_terms
-                if len(term) >= 5 and term in searchable
-            )
+            if (operation_request_hits < 4 and long_symbol_match is not None
+                    and long_symbol_match(searchable)):
+                operation_request_hits = min(4, operation_request_hits + sum(
+                    1 for term in long_symbol_terms if term in searchable
+                ))
         copy = dict(node)
         if node.get("container") and node.get("kind") in ("method", "function"):
-            owner = next((candidate for candidate in all_nodes
-                          if candidate.get("file") == node.get("file")
-                          and candidate.get("name") == node.get("container")
-                          and candidate.get("kind") in ("class", "interface", "struct")), None)
+            owner = owners_by_file_and_name.get((
+                str(node.get("file") or ""), str(node.get("container") or ""),
+            ))
             if owner and owner.get("signature"):
                 copy["owner_signature"] = owner["signature"]
         if filtered_ops:
@@ -939,14 +1027,14 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         )
         fields = " ".join(str(node.get(key) or "") for key in ("name", "container", "file", "signature", "kind")).lower()
         lexical_hits = sum(term in fields for term in request_terms)
-        concept_hits = sum(term in fields for term in list(markers) + expansions)
+        concept_hits = sum(term in fields for term in concept_terms)
         identity = {
             str(node.get("name") or "").lower(),
             str(node.get("container") or "").lower(),
         }
         # Expansions improve semantic recall but must not masquerade as a
         # user-named symbol (e.g. Spanish "borrado" expanding to `delete`).
-        exact_hits = (sum(term in identity for term in symbol_terms)
+        exact_hits = (len(identity & symbol_term_set)
                       if node.get("kind") not in {"file", "module", "documentation_section", "doc", "image", "media"}
                       else 0)
         if exact_hits and operations:
@@ -957,6 +1045,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
             copy["operations"] = operations
         path = str(node.get("file") or "").replace("\\", "/")
         primary_bonus = 50 if path.startswith(("src/", "backend/", "app/")) else 0
+        package_bonus = 180 if qualified_package_roots and path.split("/", 1)[0] in qualified_package_roots else 0
         test_penalty = -250 if selected_intent != "tests" and not tests_requested and re.search(
             r"(?:^|/)(?:tests?|fixtures?)(?:/|$|[_.])", path, re.I
         ) else 0
@@ -965,12 +1054,11 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         ) else 0
         anchor_bonus = 90 if path in anchor_files else 0
         container_bonus = 160 if str(node.get("container") or "").lower() in explicit_names else 0
-        qualified_bonus = 900 if qualified_match(node) else 0
-        entry_request = any(term in direct_terms for term in ("entry", "entrypoint", "entry-point"))
+        qualified_bonus = 900 if node.get("id") in qualified_node_ids else 0
         entry_name = str(node.get("name") or "").lower() in {"__call__", "servehttp", "main", "run"}
         entry_file = bool(re.search(r"(?:^|/)(?:applications?|app|main|server)\.[^.]+$", path, re.I))
         entry_bonus = 1_200 if entry_request and entry_name and entry_file else 0
-        capture_bonus = 700 if any(term in direct_terms for term in ("capture", "captured")) and str(node.get("name") or "").lower() == "findroute" else 0
+        capture_bonus = 700 if capture_request and str(node.get("name") or "").lower() == "findroute" else 0
         docker_bonus = 1_200 if docker_requested and re.search(r"(?:^|/)(?:dockerfile|docker-compose[^/]*)$", path, re.I) else 0
         verifier_bonus = 700 if verifier_requested and re.search(
             r"verif|comprob|instala|backup|respaldo", f"{path} {node.get('name', '')}", re.I
@@ -982,7 +1070,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         score = (min(6, len(filtered_ops)) * 25 + min(4, operation_request_hits) * 300
                  + lexical_hits * 10 + concept_hits * 45 + exact_hits * 400 + qualified_bonus
                  + int(bool(kind_relevant)) * 100 + primary_bonus + test_penalty + benchmark_penalty
-                 + anchor_bonus + container_bonus
+                 + anchor_bonus + container_bonus + package_bonus
                  + entry_bonus + capture_bonus
                  + docker_bonus + verifier_bonus + generation_bonus
                  + int(node.get("kind") == "route" and lexical_hits > 0) * 180
@@ -1004,7 +1092,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                              and node.get("file")), None)
         if entry_anchor:
             anchor_files = {str(entry_anchor["file"])}
-    if any(term in direct_terms for term in ("capture", "captured")):
+    if capture_request:
         capture_ids = {
             node.get("id") for node in all_nodes
             if str(node.get("name") or "").lower() in {"findroute", "find_route"}
@@ -1016,7 +1104,21 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         # their place before homonyms even when another symbol has more
         # operations or a higher graph degree.
         qualified_ids = {node.get("id") for node in qualified_nodes}
-        qualified_ranked = [(1_000_000, dict(node)) for node in qualified_nodes]
+        prior_scores = {node.get("id"): score for score, node in ranked}
+        def qualified_declaration_score(node: dict[str, Any]) -> int:
+            path = Path(str(node.get("file") or ""))
+            canonical_header = path.stem == str(node.get("name") or "").lower()
+            inline_header = "-inl" in path.stem or "detail" in path.parts
+            public_signature = "format_string" in str(node.get("signature") or "").lower()
+            return (prior_scores.get(node.get("id"), 0)
+                    + int(canonical_header) * 5_000
+                    + int(public_signature) * 2_000
+                    - int(inline_header) * 500)
+        qualified_ranked = sorted(
+            [(1_000_000 + qualified_declaration_score(node), dict(node))
+             for node in qualified_nodes],
+            key=lambda item: (-item[0], str(item[1].get("id") or "")),
+        )
         ranked = qualified_ranked + [item for item in ranked if item[1].get("id") not in qualified_ids]
     # Semantic retrieval is a recall fallback, never a replacement for exact
     # symbol/operation evidence. It remains local and deterministic unless an
@@ -1054,7 +1156,31 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
             identity = " ".join(str(node.get(key) or "") for key in
                                 ("name", "file", "signature")).lower()
             return bool(pattern.search(identity))
+        if label == "transaction_entry":
+            return (str(node.get("name") or "").lower() == "save"
+                    and "transaction" in str(node.get("namespace") or "").lower()
+                    and bool(pattern.search(searchable_node(node))))
+        if label == "transaction_rollback":
+            return (str(node.get("name") or "").lower() == "with_transaction_returning_status"
+                    and bool(pattern.search(searchable_node(node))))
+        if label == "save_failure_result":
+            return (str(node.get("name") or "").lower() == "save"
+                    and bool(pattern.search(searchable_node(node))))
+        if label == "callback_abort":
+            callback_scope = " ".join(str(node.get(key) or "") for key in
+                                      ("container", "namespace", "file")).lower()
+            return ("callback" in callback_scope
+                    and not re.search(r"(?:^|/)(?:tests?|fixtures?)(?:/|$|[_.])", callback_scope)
+                    and bool(pattern.search(searchable_node(node))))
         return bool(pattern.search(searchable_node(node)))
+
+    # Concern patterns name framework symbols (for example Rails' perform_validations).
+    # When no node of this graph can satisfy one, the obligation does not apply to
+    # this repository and must not keep the package permanently incomplete.
+    inapplicable_concerns = [label for label, pattern in requested_concerns.items()
+                             if not any(concern_matches(label, pattern, node) for node in all_nodes)]
+    for label in inapplicable_concerns:
+        del requested_concerns[label]
 
     generation_patterns = {label: pattern for label, pattern in requested_concerns.items()
                            if label.endswith("_generation")}
@@ -1069,6 +1195,40 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         ranked.sort(key=lambda item: (-item[0], str(item[1].get("id") or "")))
 
     mandatory: list[tuple[int, dict[str, Any]]] = []
+    for owner, member in qualified_symbols:
+        primary = next((item for item in ranked
+                        if qualified_pair_match(item[1], owner, member)), None)
+        if primary and primary[1].get("id") not in {item[1].get("id") for item in mandatory}:
+            mandatory.append(primary)
+    # Multi-stage flow questions often name several concrete functions. Keep
+    # one production declaration for each name so a prolific homonym cannot
+    # consume the complete budget.
+    for explicit_name in sorted(explicit_names):
+        if any(str(item[1].get("name") or "").lower() == explicit_name for item in mandatory):
+            continue
+        candidates = [
+            item for item in ranked
+            if str(item[1].get("name") or "").lower() == explicit_name
+            and not re.search(r"(?:^|/)(?:tests?|fixtures?)(?:/|$|[_.])",
+                              str(item[1].get("file") or ""), re.I)
+        ]
+        if candidates:
+            def explicit_declaration_score(item: tuple[int, dict[str, Any]]) -> tuple[int, int, int, int]:
+                score, node = item
+                path = str(node.get("file") or "").lower().replace("\\", "/")
+                signature = str(node.get("signature") or "").lower()
+                main_header = Path(path).name in {"core.h", "format.h", "format-inl.h"}
+                type_declaration = bool(re.search(
+                    rf"\b(?:class|struct|type)\s+{re.escape(explicit_name)}\b", signature,
+                ))
+                specialization_penalty = sum(
+                    marker not in request_lower and marker in f"{path} {signature}"
+                    for marker in ("wchar", "wstring", "text_style", "locale_ref", "compiledformat")
+                )
+                return (-specialization_penalty, int(main_header), int(type_declaration), score)
+            mandatory.append(max(candidates, key=explicit_declaration_score))
+        if len(mandatory) >= max_nodes:
+            break
     predicates = []
     if explicit_identifiers:
         explicit_candidates = [
@@ -1155,7 +1315,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         # symbols are enough for context. Filling the full node ceiling adds
         # unrelated lexical matches and makes agents re-read the repository.
         selection_cap = min(max_nodes, max(6, len(mandatory) + 3))
-    if anchor_files:
+    if anchor_files and len(explicit_names) <= 2:
         # A named component is stronger evidence than a translated lexical
         # coincidence elsewhere. Reserve most of the small budget for its
         # implementation while leaving two slots for real cross-file flow.
@@ -1175,6 +1335,12 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         # omit unrelated lexical matches; they cost tokens and can mislead the
         # model into joining two independent flows.
         fallback_candidates = [item for item in external if item not in connected]
+        if qualified_nodes and selected_intent != "tests" and not tests_requested:
+            fallback_candidates = [
+                item for item in fallback_candidates
+                if not re.search(r"(?:^|/)(?:tests?|fixtures?)(?:/|$|[_.])",
+                                 str(item[1].get("file") or ""), re.I)
+            ]
         # A flow may begin in a named API and be populated in another file
         # without a directly resolved call edge (route-tree parameter capture is
         # a common example). Preserve two high-ranked external stages.
@@ -1380,6 +1546,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         "request": str(request or "").strip(),
         "intent": selected_intent,
         "requested_obligations": list(requested_concerns),
+        "not_applicable_obligations": inapplicable_concerns,
         "obligation_evidence": obligation_evidence,
         "intent_terms": request_terms + list(markers),
         "matched": matched[:min(5, len(matched))],
@@ -1388,7 +1555,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         "complete_for": complete_for,
         "missing": missing,
         "do_not_expand": bool(nodes) and not missing,
-        "guidance": "Answer now from ops and relations. Cite aliases. Do not call another graph tool when do_not_expand=true.",
+        "guidance": "Answer now from ops and relations. Cite real file:line for each claim, taking them from citations or expanding F-aliases through files; never cite N/F aliases alone. Do not call another graph tool when do_not_expand=true.",
         "planner": "adaptive-intent-v2",
         "budget": {"requested_ceiling": requested_ceiling, "max_nodes": max_nodes,
                    "selected_nodes": len(nodes), "complexity": complexity},

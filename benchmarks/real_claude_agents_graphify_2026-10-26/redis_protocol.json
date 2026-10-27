@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Tercer brazo Graphify para la réplica de tres repeticiones con Claude Code: mismo commit, tarea, rúbrica congelada, modelo y cliente. Se compara con los brazos base y Graphtyn de real_claude_agents_reps_2026-10-25 (no contemporáneos).",
+  "repository": {
+    "name": "redis/redis",
+    "url": "https://github.com/redis/redis",
+    "commit": "f2a17a8dca1566d2a0f078840fffef5661eab4b1"
+  },
+  "design": {
+    "clients": [
+      "claude"
+    ],
+    "tasks": [
+      "REDIS_COMMAND_FLOW"
+    ],
+    "arms": [
+      "graphify"
+    ],
+    "repetitions": 3,
+    "planned_sessions": 3,
+    "order": "Sólo el brazo Graphify, r1–r3 consecutivas; base y Graphtyn ya medidos el 25–26 oct.",
+    "direct_file_access": "Permitido por igual en ambos brazos.",
+    "grading": "Rúbrica determinista congelada antes de ejecutar; revisión final no independiente."
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "opencode_step_finish_semantics": "per-step",
+    "fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "cache_write_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "provider_cost",
+      "wall_seconds"
+    ]
+  },
+  "authorization": {
+    "source": "El usuario pidió instalar Graphify fuera del repo y correr el benchmark (2026-10-26).",
+    "total_token_ceiling": null
+  },
+  "client_config": {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "mcp": "--strict-mcp-config; sólo graphify_benchmark en el brazo Graphify",
+    "disallowed_tools": "Edit,Write,NotebookEdit,WebFetch,WebSearch,Task,Agent",
+    "setting_sources": "project (workspace sin .claude/ ni .mcp.json)",
+    "user_claude_md": "no aislado (--claude-bare no usado: requiere ANTHROPIC_API_KEY)"
+  },
+  "source_protocol": "benchmarks/real_c_cpp_agents_2026-10-20/redis_protocol.json",
+  "previous_runs": [
+    "benchmarks/real_claude_agents_2026-10-25",
+    "benchmarks/real_claude_agents_postfix_2026-10-25",
+    "benchmarks/real_claude_agents_reps_2026-10-25"
+  ],
+  "graphify": {
+    "package": "graphifyy",
+    "version": "0.9.96",
+    "installation": "~/.cache/graphtyn-bench/graphify-latest (venv aislado, fuera del repo)",
+    "graph": "graphify update <workspace> con GRAPHIFY_BACKEND=none (sólo código, sin LLM), antes de la sesión",
+    "mcp": "graphify-mcp oficial con sus 10 herramientas, único servidor (--strict-mcp-config)",
+    "skill_or_hook_installed": false,
+    "registered_as_graphtyn": false
+  }
+}

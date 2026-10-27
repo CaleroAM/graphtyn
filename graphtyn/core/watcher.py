@@ -44,17 +44,21 @@ class ProjectWatcher:
             return True
 
     def _eligible_files(self) -> list[Path]:
+        from .ignore_rules import IgnoreRules
+        ignores = IgnoreRules.load(self.root)
         visible = git_visible_files(self.root) if self._respect_git() else None
         if visible is not None:
             return [
                 self.root / rel for rel in sorted(visible)
                 if (self.root / rel).is_file() and (self.root / rel).suffix.lower() in VALID_EXTS
+                and not ignores.ignored(rel)
             ]
         return [
             path for path in self.root.rglob("*")
             if path.is_file()
             and path.suffix.lower() in VALID_EXTS
             and not any(part.startswith(".") or part in _IGNORED_PARTS for part in path.relative_to(self.root).parts)
+            and not ignores.ignored(path.relative_to(self.root).as_posix())
         ]
 
     def _load_manifest(self) -> dict[str, dict[str, Any]]:

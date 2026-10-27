@@ -1,0 +1,1230 @@
+{
+  "schema_version": "1.0",
+  "graphify_runs": 9,
+  "complete_graphify_runs": 9,
+  "triples": [
+    {
+      "repository": "redis",
+      "repetition": 1,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 166601,
+        "usage": {
+          "input_tokens": 10,
+          "cached_input_tokens": 147151,
+          "cache_write_input_tokens": 15556,
+          "output_tokens": 3884,
+          "reasoning_tokens": null,
+          "total_tokens": 166601,
+          "provider_cost": 0.1157991
+        },
+        "seconds": 29.158,
+        "quality": 8,
+        "citations": 51,
+        "cost_usd": 0.1157991,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 3,
+          "Read": 1
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62544,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49718,
+          "cache_write_input_tokens": 10686,
+          "output_tokens": 2136,
+          "reasoning_tokens": null,
+          "total_tokens": 62544,
+          "provider_cost": 0.0690838
+        },
+        "seconds": 18.228,
+        "quality": 8,
+        "citations": 3,
+        "cost_usd": 0.0690838,
+        "index_seconds": 14.998,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 196652,
+        "usage": {
+          "input_tokens": 10,
+          "cached_input_tokens": 147799,
+          "cache_write_input_tokens": 45066,
+          "output_tokens": 3777,
+          "reasoning_tokens": null,
+          "total_tokens": 196652,
+          "provider_cost": 0.2328339
+        },
+        "seconds": 34.546,
+        "quality": 8,
+        "citations": 22,
+        "cost_usd": 0.2328339,
+        "index_seconds": 19.413,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 3,
+          "Read": 1,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": 18.04,
+      "graphtyn_vs_baseline_tokens_percent": -62.46,
+      "graphtyn_vs_graphify_tokens_percent": -68.2,
+      "graphify_vs_baseline_cost_percent": 101.07,
+      "graphtyn_vs_graphify_cost_percent": -70.33
+    },
+    {
+      "repository": "redis",
+      "repetition": 2,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 170359,
+        "usage": {
+          "input_tokens": 10,
+          "cached_input_tokens": 148598,
+          "cache_write_input_tokens": 17584,
+          "output_tokens": 4167,
+          "reasoning_tokens": null,
+          "total_tokens": 170359,
+          "provider_cost": 0.1268858
+        },
+        "seconds": 30.715,
+        "quality": 8,
+        "citations": 60,
+        "cost_usd": 0.1268858,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 3,
+          "Read": 2
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62900,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49718,
+          "cache_write_input_tokens": 10686,
+          "output_tokens": 2492,
+          "reasoning_tokens": null,
+          "total_tokens": 62900,
+          "provider_cost": 0.0726438
+        },
+        "seconds": 21.511,
+        "quality": 8,
+        "citations": 29,
+        "cost_usd": 0.0726438,
+        "index_seconds": 15.444,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 190734,
+        "usage": {
+          "input_tokens": 10,
+          "cached_input_tokens": 170457,
+          "cache_write_input_tokens": 16815,
+          "output_tokens": 3452,
+          "reasoning_tokens": null,
+          "total_tokens": 190734,
+          "provider_cost": 0.11884570000000001
+        },
+        "seconds": 26.779,
+        "quality": 8,
+        "citations": 47,
+        "cost_usd": 0.11884570000000001,
+        "index_seconds": 18.909,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 3,
+          "Read": 1,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": 11.96,
+      "graphtyn_vs_baseline_tokens_percent": -63.08,
+      "graphtyn_vs_graphify_tokens_percent": -67.02,
+      "graphify_vs_baseline_cost_percent": -6.34,
+      "graphtyn_vs_graphify_cost_percent": -38.88
+    },
+    {
+      "repository": "redis",
+      "repetition": 3,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 208690,
+        "usage": {
+          "input_tokens": 12,
+          "cached_input_tokens": 186882,
+          "cache_write_input_tokens": 17909,
+          "output_tokens": 3887,
+          "reasoning_tokens": null,
+          "total_tokens": 208690,
+          "provider_cost": 0.1292182
+        },
+        "seconds": 35.654,
+        "quality": 8,
+        "citations": 49,
+        "cost_usd": 0.1292182,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 4,
+          "Read": 1
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 63123,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49718,
+          "cache_write_input_tokens": 10686,
+          "output_tokens": 2715,
+          "reasoning_tokens": null,
+          "total_tokens": 63123,
+          "provider_cost": 0.0748738
+        },
+        "seconds": 22.613,
+        "quality": 8,
+        "citations": 6,
+        "cost_usd": 0.0748738,
+        "index_seconds": 15.348,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 107110,
+        "usage": {
+          "input_tokens": 6,
+          "cached_input_tokens": 89612,
+          "cache_write_input_tokens": 14106,
+          "output_tokens": 3386,
+          "reasoning_tokens": null,
+          "total_tokens": 107110,
+          "provider_cost": 0.0992572
+        },
+        "seconds": 24.607,
+        "quality": 8,
+        "citations": 39,
+        "cost_usd": 0.0992572,
+        "index_seconds": 18.487,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 2,
+          "Read": 3,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": -48.68,
+      "graphtyn_vs_baseline_tokens_percent": -69.75,
+      "graphtyn_vs_graphify_tokens_percent": -41.07,
+      "graphify_vs_baseline_cost_percent": -23.19,
+      "graphtyn_vs_graphify_cost_percent": -24.57
+    },
+    {
+      "repository": "fmt",
+      "repetition": 1,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 310168,
+        "usage": {
+          "input_tokens": 18,
+          "cached_input_tokens": 282508,
+          "cache_write_input_tokens": 21870,
+          "output_tokens": 5772,
+          "reasoning_tokens": null,
+          "total_tokens": 310168,
+          "provider_cost": 0.1734868
+        },
+        "seconds": 45.363,
+        "quality": 8,
+        "citations": 48,
+        "cost_usd": 0.1734868,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 9
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62933,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49758,
+          "cache_write_input_tokens": 10239,
+          "output_tokens": 2932,
+          "reasoning_tokens": null,
+          "total_tokens": 62933,
+          "provider_cost": 0.0752598
+        },
+        "seconds": 22.26,
+        "quality": 8,
+        "citations": 17,
+        "cost_usd": 0.0752598,
+        "index_seconds": 3.469,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 343123,
+        "usage": {
+          "input_tokens": 16,
+          "cached_input_tokens": 311582,
+          "cache_write_input_tokens": 25536,
+          "output_tokens": 5989,
+          "reasoning_tokens": null,
+          "total_tokens": 343123,
+          "provider_cost": 0.1932242
+        },
+        "seconds": 55.391,
+        "quality": 8,
+        "citations": 57,
+        "cost_usd": 0.1932242,
+        "index_seconds": 5.031,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 6,
+          "Read": 1,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": 10.62,
+      "graphtyn_vs_baseline_tokens_percent": -79.71,
+      "graphtyn_vs_graphify_tokens_percent": -81.66,
+      "graphify_vs_baseline_cost_percent": 11.38,
+      "graphtyn_vs_graphify_cost_percent": -61.05
+    },
+    {
+      "repository": "fmt",
+      "repetition": 2,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 344531,
+        "usage": {
+          "input_tokens": 20,
+          "cached_input_tokens": 293681,
+          "cache_write_input_tokens": 43771,
+          "output_tokens": 7059,
+          "reasoning_tokens": null,
+          "total_tokens": 344531,
+          "provider_cost": 0.27508210000000005
+        },
+        "seconds": 54.922,
+        "quality": 8,
+        "citations": 78,
+        "cost_usd": 0.27508210000000005,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 10
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62622,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49758,
+          "cache_write_input_tokens": 10216,
+          "output_tokens": 2644,
+          "reasoning_tokens": null,
+          "total_tokens": 62622,
+          "provider_cost": 0.0722878
+        },
+        "seconds": 20.631,
+        "quality": 8,
+        "citations": 18,
+        "cost_usd": 0.0722878,
+        "index_seconds": 3.315,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 236317,
+        "usage": {
+          "input_tokens": 12,
+          "cached_input_tokens": 213393,
+          "cache_write_input_tokens": 18985,
+          "output_tokens": 3927,
+          "reasoning_tokens": null,
+          "total_tokens": 236317,
+          "provider_cost": 0.1365733
+        },
+        "seconds": 40.051,
+        "quality": 8,
+        "citations": 26,
+        "cost_usd": 0.1365733,
+        "index_seconds": 4.89,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 4,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": -31.41,
+      "graphtyn_vs_baseline_tokens_percent": -81.82,
+      "graphtyn_vs_graphify_tokens_percent": -73.5,
+      "graphify_vs_baseline_cost_percent": -50.35,
+      "graphtyn_vs_graphify_cost_percent": -47.07
+    },
+    {
+      "repository": "fmt",
+      "repetition": 3,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 232972,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 207347,
+          "cache_write_input_tokens": 19906,
+          "output_tokens": 5705,
+          "reasoning_tokens": null,
+          "total_tokens": 232972,
+          "provider_cost": 0.1574367
+        },
+        "seconds": 41.959,
+        "quality": 8,
+        "citations": 52,
+        "cost_usd": 0.1574367,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 7
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 63245,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 26218,
+          "cache_write_input_tokens": 33782,
+          "output_tokens": 3241,
+          "reasoning_tokens": null,
+          "total_tokens": 63245,
+          "provider_cost": 0.1701678
+        },
+        "seconds": 25.701,
+        "quality": 8,
+        "citations": 30,
+        "cost_usd": 0.1701678,
+        "index_seconds": 1.219,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 228559,
+        "usage": {
+          "input_tokens": 12,
+          "cached_input_tokens": 205926,
+          "cache_write_input_tokens": 17972,
+          "output_tokens": 4649,
+          "reasoning_tokens": null,
+          "total_tokens": 228559,
+          "provider_cost": 0.1389946
+        },
+        "seconds": 41.753,
+        "quality": 8,
+        "citations": 39,
+        "cost_usd": 0.1389946,
+        "index_seconds": 4.521,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 5,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": -1.89,
+      "graphtyn_vs_baseline_tokens_percent": -72.85,
+      "graphtyn_vs_graphify_tokens_percent": -72.33,
+      "graphify_vs_baseline_cost_percent": -11.71,
+      "graphtyn_vs_graphify_cost_percent": 22.43
+    },
+    {
+      "repository": "rails",
+      "repetition": 1,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 228903,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 207812,
+          "cache_write_input_tokens": 15577,
+          "output_tokens": 5500,
+          "reasoning_tokens": null,
+          "total_tokens": 228903,
+          "provider_cost": 0.1381172
+        },
+        "seconds": 50.29,
+        "quality": 6,
+        "citations": 16,
+        "cost_usd": 0.1381172,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 6
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62568,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 48793,
+          "cache_write_input_tokens": 11530,
+          "output_tokens": 2241,
+          "reasoning_tokens": null,
+          "total_tokens": 62568,
+          "provider_cost": 0.0734173
+        },
+        "seconds": 29.031,
+        "quality": 7,
+        "citations": 15,
+        "cost_usd": 0.0734173,
+        "index_seconds": 25.292,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 251447,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 233190,
+          "cache_write_input_tokens": 13899,
+          "output_tokens": 4344,
+          "reasoning_tokens": null,
+          "total_tokens": 251447,
+          "provider_cost": 0.12238299999999999
+        },
+        "seconds": 53.92,
+        "quality": 8,
+        "citations": 18,
+        "cost_usd": 0.12238299999999999,
+        "index_seconds": 109.001,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 5,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": 9.85,
+      "graphtyn_vs_baseline_tokens_percent": -72.67,
+      "graphtyn_vs_graphify_tokens_percent": -75.12,
+      "graphify_vs_baseline_cost_percent": -11.39,
+      "graphtyn_vs_graphify_cost_percent": -40.01
+    },
+    {
+      "repository": "rails",
+      "repetition": 2,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 195226,
+        "usage": {
+          "input_tokens": 12,
+          "cached_input_tokens": 175539,
+          "cache_write_input_tokens": 14050,
+          "output_tokens": 5625,
+          "reasoning_tokens": null,
+          "total_tokens": 195226,
+          "provider_cost": 0.13002789999999997
+        },
+        "seconds": 44.53,
+        "quality": 7,
+        "citations": 21,
+        "cost_usd": 0.13002789999999997,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 6
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62930,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49729,
+          "cache_write_input_tokens": 10594,
+          "output_tokens": 2603,
+          "reasoning_tokens": null,
+          "total_tokens": 62930,
+          "provider_cost": 0.0733869
+        },
+        "seconds": 28.309,
+        "quality": 8,
+        "citations": 11,
+        "cost_usd": 0.0733869,
+        "index_seconds": 24.478,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 258187,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 240149,
+          "cache_write_input_tokens": 13126,
+          "output_tokens": 4898,
+          "reasoning_tokens": null,
+          "total_tokens": 258187,
+          "provider_cost": 0.1255269
+        },
+        "seconds": 45.788,
+        "quality": 8,
+        "citations": 11,
+        "cost_usd": 0.1255269,
+        "index_seconds": 104.509,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 6,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": 32.25,
+      "graphtyn_vs_baseline_tokens_percent": -67.77,
+      "graphtyn_vs_graphify_tokens_percent": -75.63,
+      "graphify_vs_baseline_cost_percent": -3.46,
+      "graphtyn_vs_graphify_cost_percent": -41.54
+    },
+    {
+      "repository": "rails",
+      "repetition": 3,
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 217576,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 202156,
+          "cache_write_input_tokens": 10659,
+          "output_tokens": 4747,
+          "reasoning_tokens": null,
+          "total_tokens": 217576,
+          "provider_cost": 0.11034959999999998
+        },
+        "seconds": 39.868,
+        "quality": 7,
+        "citations": 16,
+        "cost_usd": 0.11034959999999998,
+        "index_seconds": null,
+        "mcp": {
+          "server_status": null,
+          "tool_calls": []
+        },
+        "tool_counts": {
+          "Bash": 6
+        }
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62701,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49729,
+          "cache_write_input_tokens": 10594,
+          "output_tokens": 2374,
+          "reasoning_tokens": null,
+          "total_tokens": 62701,
+          "provider_cost": 0.0710969
+        },
+        "seconds": 26.643,
+        "quality": 8,
+        "citations": 12,
+        "cost_usd": 0.0710969,
+        "index_seconds": 23.602,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        },
+        "tool_counts": {
+          "mcp__graphtyn_benchmark__graph_query_intent": 1
+        }
+      },
+      "graphify": {
+        "status": "complete",
+        "tokens": 249769,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 232947,
+          "cache_write_input_tokens": 12480,
+          "output_tokens": 4328,
+          "reasoning_tokens": null,
+          "total_tokens": 249769,
+          "provider_cost": 0.1165227
+        },
+        "seconds": 43.637,
+        "quality": 6,
+        "citations": 12,
+        "cost_usd": 0.1165227,
+        "index_seconds": 105.596,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "query_graph"
+          ]
+        },
+        "tool_counts": {
+          "Bash": 5,
+          "mcp__graphify_benchmark__query_graph": 1
+        }
+      },
+      "graphify_mcp_called": true,
+      "quality_total": 8,
+      "graphify_vs_baseline_tokens_percent": 14.8,
+      "graphtyn_vs_baseline_tokens_percent": -71.18,
+      "graphtyn_vs_graphify_tokens_percent": -74.9,
+      "graphify_vs_baseline_cost_percent": 5.59,
+      "graphtyn_vs_graphify_cost_percent": -38.98
+    }
+  ],
+  "corpora": {
+    "redis": {
+      "repetitions": 3,
+      "quality": {
+        "baseline": [
+          8,
+          8,
+          8
+        ],
+        "graphtyn": [
+          8,
+          8,
+          8
+        ],
+        "graphify": [
+          8,
+          8,
+          8
+        ]
+      },
+      "tokens": {
+        "baseline": {
+          "n": 3,
+          "mean": 181883.33,
+          "stdev": 23291.17,
+          "min": 166601,
+          "max": 208690
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 62855.67,
+          "stdev": 292.03,
+          "min": 62544,
+          "max": 63123
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 164832.0,
+          "stdev": 50076.22,
+          "min": 107110,
+          "max": 196652
+        }
+      },
+      "cost_usd": {
+        "baseline": {
+          "n": 3,
+          "mean": 0.12,
+          "stdev": 0.01,
+          "min": 0.12,
+          "max": 0.13
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 0.07,
+          "stdev": 0.0,
+          "min": 0.07,
+          "max": 0.07
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 0.15,
+          "stdev": 0.07,
+          "min": 0.1,
+          "max": 0.23
+        }
+      },
+      "seconds": {
+        "baseline": {
+          "n": 3,
+          "mean": 31.84,
+          "stdev": 3.39,
+          "min": 29.16,
+          "max": 35.65
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 20.78,
+          "stdev": 2.28,
+          "min": 18.23,
+          "max": 22.61
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 28.64,
+          "stdev": 5.23,
+          "min": 24.61,
+          "max": 34.55
+        }
+      },
+      "graphify_vs_baseline_tokens_percent": {
+        "n": 3,
+        "mean": -6.23,
+        "stdev": 36.89,
+        "min": -48.68,
+        "max": 18.04
+      },
+      "graphtyn_vs_graphify_tokens_percent": {
+        "n": 3,
+        "mean": -58.76,
+        "stdev": 15.33,
+        "min": -68.2,
+        "max": -41.07
+      },
+      "graphtyn_vs_graphify_cost_percent": {
+        "n": 3,
+        "mean": -44.59,
+        "stdev": 23.41,
+        "min": -70.33,
+        "max": -24.57
+      },
+      "graphify_index_seconds": {
+        "n": 3,
+        "mean": 18.94,
+        "stdev": 0.46,
+        "min": 18.49,
+        "max": 19.41
+      },
+      "graphify_tool_calls": [
+        [
+          "query_graph"
+        ],
+        [
+          "query_graph"
+        ],
+        [
+          "query_graph"
+        ]
+      ]
+    },
+    "fmt": {
+      "repetitions": 3,
+      "quality": {
+        "baseline": [
+          8,
+          8,
+          8
+        ],
+        "graphtyn": [
+          8,
+          8,
+          8
+        ],
+        "graphify": [
+          8,
+          8,
+          8
+        ]
+      },
+      "tokens": {
+        "baseline": {
+          "n": 3,
+          "mean": 295890.33,
+          "stdev": 57133.54,
+          "min": 232972,
+          "max": 344531
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 62933.33,
+          "stdev": 311.5,
+          "min": 62622,
+          "max": 63245
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 269333.0,
+          "stdev": 64021.63,
+          "min": 228559,
+          "max": 343123
+        }
+      },
+      "cost_usd": {
+        "baseline": {
+          "n": 3,
+          "mean": 0.2,
+          "stdev": 0.06,
+          "min": 0.16,
+          "max": 0.28
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 0.11,
+          "stdev": 0.06,
+          "min": 0.07,
+          "max": 0.17
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 0.16,
+          "stdev": 0.03,
+          "min": 0.14,
+          "max": 0.19
+        }
+      },
+      "seconds": {
+        "baseline": {
+          "n": 3,
+          "mean": 47.41,
+          "stdev": 6.72,
+          "min": 41.96,
+          "max": 54.92
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 22.86,
+          "stdev": 2.59,
+          "min": 20.63,
+          "max": 25.7
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 45.73,
+          "stdev": 8.41,
+          "min": 40.05,
+          "max": 55.39
+        }
+      },
+      "graphify_vs_baseline_tokens_percent": {
+        "n": 3,
+        "mean": -7.56,
+        "stdev": 21.58,
+        "min": -31.41,
+        "max": 10.62
+      },
+      "graphtyn_vs_graphify_tokens_percent": {
+        "n": 3,
+        "mean": -75.83,
+        "stdev": 5.08,
+        "min": -81.66,
+        "max": -72.33
+      },
+      "graphtyn_vs_graphify_cost_percent": {
+        "n": 3,
+        "mean": -28.56,
+        "stdev": 44.71,
+        "min": -61.05,
+        "max": 22.43
+      },
+      "graphify_index_seconds": {
+        "n": 3,
+        "mean": 4.81,
+        "stdev": 0.26,
+        "min": 4.52,
+        "max": 5.03
+      },
+      "graphify_tool_calls": [
+        [
+          "query_graph"
+        ],
+        [
+          "query_graph"
+        ],
+        [
+          "query_graph"
+        ]
+      ]
+    },
+    "rails": {
+      "repetitions": 3,
+      "quality": {
+        "baseline": [
+          6,
+          7,
+          7
+        ],
+        "graphtyn": [
+          7,
+          8,
+          8
+        ],
+        "graphify": [
+          8,
+          8,
+          6
+        ]
+      },
+      "tokens": {
+        "baseline": {
+          "n": 3,
+          "mean": 213901.67,
+          "stdev": 17136.53,
+          "min": 195226,
+          "max": 228903
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 62733.0,
+          "stdev": 183.11,
+          "min": 62568,
+          "max": 62930
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 253134.33,
+          "stdev": 4455.45,
+          "min": 249769,
+          "max": 258187
+        }
+      },
+      "cost_usd": {
+        "baseline": {
+          "n": 3,
+          "mean": 0.13,
+          "stdev": 0.01,
+          "min": 0.11,
+          "max": 0.14
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 0.07,
+          "stdev": 0.0,
+          "min": 0.07,
+          "max": 0.07
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 0.12,
+          "stdev": 0.0,
+          "min": 0.12,
+          "max": 0.13
+        }
+      },
+      "seconds": {
+        "baseline": {
+          "n": 3,
+          "mean": 44.9,
+          "stdev": 5.22,
+          "min": 39.87,
+          "max": 50.29
+        },
+        "graphtyn": {
+          "n": 3,
+          "mean": 27.99,
+          "stdev": 1.22,
+          "min": 26.64,
+          "max": 29.03
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 47.78,
+          "stdev": 5.42,
+          "min": 43.64,
+          "max": 53.92
+        }
+      },
+      "graphify_vs_baseline_tokens_percent": {
+        "n": 3,
+        "mean": 18.97,
+        "stdev": 11.77,
+        "min": 9.85,
+        "max": 32.25
+      },
+      "graphtyn_vs_graphify_tokens_percent": {
+        "n": 3,
+        "mean": -75.22,
+        "stdev": 0.37,
+        "min": -75.63,
+        "max": -74.9
+      },
+      "graphtyn_vs_graphify_cost_percent": {
+        "n": 3,
+        "mean": -40.18,
+        "stdev": 1.29,
+        "min": -41.54,
+        "max": -38.98
+      },
+      "graphify_index_seconds": {
+        "n": 3,
+        "mean": 106.37,
+        "stdev": 2.34,
+        "min": 104.51,
+        "max": 109.0
+      },
+      "graphify_tool_calls": [
+        [
+          "query_graph"
+        ],
+        [
+          "query_graph"
+        ],
+        [
+          "query_graph"
+        ]
+      ]
+    }
+  },
+  "comparison_warning": "Baseline and Graphtyn arms come from real_claude_agents_reps_2026-10-25; the Graphify arm ran later, so prompt-cache state and cost are not contemporaneous. Token totals are the primary metric.",
+  "raw_artifacts_preserved": true
+}
