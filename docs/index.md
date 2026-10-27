@@ -19,7 +19,8 @@ experimentales y comparaciones comerciales.
 
 - [`README.md`](../README.md): instalación, comandos y flujo inicial.
 - [`AGENTS.md`](../AGENTS.md): contrato operativo para agentes de código.
-- [`skills/graphtyn/SKILL.md`](../skills/graphtyn/SKILL.md): skill reutilizable.
+- [`skills/graphtyn/SKILL.md`](../skills/graphtyn/SKILL.md): skill de contexto e impacto de código.
+- [`skills/graphtyn-memory/SKILL.md`](../skills/graphtyn-memory/SKILL.md): skill de memoria compartida y brains.
 
 ## Diseño y operación
 

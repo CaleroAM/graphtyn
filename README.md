@@ -78,7 +78,7 @@ graphtyn serve --path .
 ```
 
 Para Claude Code, `graphtyn agent-install claude --path .` escribe `CLAUDE.md`,
-la skill `.claude/skills/graphtyn/SKILL.md` y la entrada compartible
+las skills `.claude/skills/graphtyn` y `.claude/skills/graphtyn-memory` y la entrada compartible
 `.mcp.json`. Si el ejecutable `claude` está disponible, registra además el mismo
 servidor en el ámbito `local` de Claude Code (privado para el usuario y el
 proyecto), porque Claude Code deja pendientes de aprobación interactiva los
@@ -263,10 +263,10 @@ que recibe el proyecto en cada llamada.
 
 | Cliente | Comando | Escribe | Verificar |
 |---|---|---|---|
-| Claude Code | `graphtyn agent-install claude --path .` | `CLAUDE.md`, `.claude/skills/graphtyn/SKILL.md`, `.mcp.json` y registro `local` con `claude mcp add` | `claude mcp list` |
+| Claude Code | `graphtyn agent-install claude --path .` | `CLAUDE.md`, `.claude/skills/graphtyn{,-memory}/`, `.mcp.json` y registro `local` con `claude mcp add` | `claude mcp list` |
 | Codex | `graphtyn agent-install codex --path .` | `AGENTS.md`, `.codex/config.toml` (requiere proyecto de confianza) | `codex mcp list` |
 | OpenCode | `graphtyn agent-install opencode --path .` | `AGENTS.md`, `opencode.json` | `opencode mcp list` |
-| Antigravity | `graphtyn agent-install antigravity --path .` | `GEMINI.md`, `.agents/skills/graphtyn/SKILL.md`, `.agents/mcp_config.json` | `agy mcp list` |
+| Antigravity | `graphtyn agent-install antigravity --path .` | `GEMINI.md`, `.agents/skills/graphtyn{,-memory}/`, `.agents/mcp_config.json` | `agy mcp list` |
 | OpenClaw | `graphtyn harness openclaw connect` | servidor compartido de la instalación | ver [conexión OpenClaw](docs/openclaw-native.md) |
 | Cursor, Gemini, Copilot | `graphtyn agent-install <cliente> --path .` | instrucciones (y `.cursor/mcp.json` en Cursor) | inspector MCP del cliente |
 
@@ -362,7 +362,14 @@ Antigravity no ofrece un mecanismo equivalente; allí sólo aplica el paquete
 `lean` del MCP.
 
 El repositorio incluye [AGENTS.md](AGENTS.md) para descubrimiento automático y
-una [skill reutilizable](skills/graphtyn/SKILL.md). El patrón recomendado es:
+dos skills reutilizables con alcances separados:
+[`graphtyn`](skills/graphtyn/SKILL.md) para contexto e impacto de código (los
+flujos de cambio, overview y validación se cargan aparte desde
+[`references/change-workflow.md`](skills/graphtyn/references/change-workflow.md))
+y [`graphtyn-memory`](skills/graphtyn-memory/SKILL.md) para memoria compartida,
+brains de agentes y OpenClaw. `graphtyn agent-install` instala estas mismas
+skills; al actualizar sólo reemplaza los archivos que no se editaron, y migra la
+skill combinada anterior guardando una copia en `.graphtyn/legacy-skills/`. El patrón recomendado es:
 
 1. Pedir a Graphtyn un `overview`, `context`, `flow` o `impact` según la tarea.
 2. Leer sólo los puntos de entrada y fragmentos devueltos.

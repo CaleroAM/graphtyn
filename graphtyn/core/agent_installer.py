@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from importlib.resources import files
 from pathlib import Path
@@ -68,24 +69,68 @@ TARGETS = {
     "copilot": Path(".github/copilot-instructions.md"),
 }
 
-ANTIGRAVITY_SKILL = """---
-name: graphtyn
-description: Use Graphtyn before broad repository exploration to obtain compact, evidence-backed context, impact and shared project memory.
----
+# The published skills (`skills/` in the repository) ship as package data:
+# `graphtyn` for code context and impact, `graphtyn-memory` for shared memory.
+SKILL_NAMES = ("graphtyn", "graphtyn-memory")
+# Frontmatter of the single combined skill written before 0.11.0.
+LEGACY_SKILL_HEAD = ("---\nname: graphtyn\ndescription: Use Graphtyn before broad repository exploration to "
+                     "obtain compact, evidence-backed context, impact and shared project memory.\n---\n")
 
-""" + POLICY + "\n\n" + f"{MEMORY_POLICY_START}\n{_managed_memory_policy()}\n{MEMORY_POLICY_END}\n"
+
+def packaged_skill_files() -> dict[str, str]:
+    """Relative path (`<skill>/...`) → text of every packaged skill file."""
+    found: dict[str, str] = {}
+
+    def walk(node, prefix: str) -> None:
+        for child in node.iterdir():
+            relative = f"{prefix}/{child.name}"
+            if child.is_dir():
+                walk(child, relative)
+            elif child.name.endswith((".md", ".yaml")):
+                found[relative] = child.read_text(encoding="utf-8")
+
+    root = files("graphtyn").joinpath("skills")
+    for name in SKILL_NAMES:
+        walk(root.joinpath(name), name)
+    return dict(sorted(found.items()))
 
 
-def _write_skill(skill: Path) -> Path:
-    """Create the Graphtyn skill or refresh only its managed memory block.
+def _sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-    Antigravity and Claude Code share the SKILL.md frontmatter format.
+
+def _write_skills(project: Path, skills_dir: Path, recorded: dict[str, str]) -> tuple[list[Path], dict[str, str]]:
+    """Install or update the packaged skills under `skills_dir`, never clobbering user edits.
+
+    A file is replaced only when it is missing, unchanged since Graphtyn wrote it
+    (its hash is in `recorded`), or the legacy combined skill, which is first
+    copied to `.graphtyn/legacy-skills/`. Edited files keep their text; the
+    memory skill still gets its managed policy block refreshed.
+    Returns the written paths and the hashes to record for this directory.
     """
-    skill.parent.mkdir(parents=True, exist_ok=True)
-    current = skill.read_text(encoding="utf-8") if skill.exists() else ""
-    skill.write_text(merge_managed_memory_policy(current) if current else ANTIGRAVITY_SKILL,
-                     encoding="utf-8")
-    return skill
+    written, hashes = [], {}
+    for relative, text in packaged_skill_files().items():
+        target = skills_dir / relative
+        key = target.relative_to(project).as_posix()
+        current = target.read_text(encoding="utf-8") if target.is_file() else None
+        if current is None or current == text or recorded.get(key) == _sha256(current):
+            content = text
+        elif relative == "graphtyn/SKILL.md" and current.startswith(LEGACY_SKILL_HEAD):
+            backup = project / ".graphtyn" / "legacy-skills" / key
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            backup.write_text(current, encoding="utf-8")
+            content = text
+        elif MEMORY_POLICY_START in current or relative == "graphtyn-memory/SKILL.md":
+            content = merge_managed_memory_policy(current)
+        else:
+            continue  # user-owned file
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if content != current:
+            target.write_text(content, encoding="utf-8")
+        if content == text:
+            hashes[key] = _sha256(text)
+        written.append(target)
+    return written, hashes
 
 
 def resolve_tool_profile(root: Path, tool_profile: str | None = None, *, memory_enabled: bool = False) -> str:
@@ -149,8 +194,22 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str | Non
             target.write_text(updated, encoding="utf-8")
         written.append(str(target))
 
+    manifest = root / ".graphtyn" / "agent-install.json"
+    try:
+        previous = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        previous = {}
+    recorded = previous.get("skill_hashes") if isinstance(previous.get("skill_hashes"), dict) else {}
+    skill_hashes = dict(recorded)
+    # Antigravity and Claude Code share the SKILL.md frontmatter format.
+    skill_dirs = ([root / ".agents" / "skills"] if "antigravity" in selected else []) + (
+        [root / ".claude" / "skills"] if "claude" in selected else [])
+    for skills_dir in skill_dirs:
+        skill_files, hashes = _write_skills(root, skills_dir, recorded)
+        written.extend(map(str, skill_files))
+        skill_hashes.update(hashes)
+
     if "antigravity" in selected:
-        skill = _write_skill(root / ".agents" / "skills" / "graphtyn" / "SKILL.md")
         plugin_dir = root / ".agents" / "plugins" / "graphtyn"
         plugin = plugin_dir / "plugin.json"
         plugin_dir.mkdir(parents=True, exist_ok=True)
@@ -158,11 +217,7 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str | Non
             "name": "graphtyn",
             "description": "Graphtyn code graph, impact analysis and MCP server",
         }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        written.extend(map(str, (skill, plugin)))
-
-    if "claude" in selected:
-        # Claude Code discovers project skills here and loads them on demand.
-        written.append(str(_write_skill(root / ".claude" / "skills" / "graphtyn" / "SKILL.md")))
+        written.append(str(plugin))
 
     integrations = configure_project_integrations(root, selected, tool_profile=tool_profile)
     written.extend(integrations["files"])
@@ -170,9 +225,8 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str | Non
     ensure_project_memory_scope(root, agent_ids=selected)
 
     written = list(dict.fromkeys(written))
-    manifest = root / ".graphtyn" / "agent-install.json"
     manifest.parent.mkdir(exist_ok=True)
-    try:
+    try:  # integrations may have updated the manifest since it was read
         previous = json.loads(manifest.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         previous = {}
@@ -182,7 +236,7 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str | Non
                "mcp_server": integrations["mcp_server"],
                "integrations": integrations["clients"],
                "capture_configured": bool(previous.get("capture_configured", False)),
-               "files": written}
+               "files": written, "skill_hashes": skill_hashes}
     for key in ("capture", "claude_capture", "claude_context", "codex_context", "opencode_context"):
         if isinstance(previous.get(key), dict):
             payload[key] = previous[key]

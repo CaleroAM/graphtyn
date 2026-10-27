@@ -41,7 +41,8 @@ stdio en la configuración local del proyecto. Las entradas usan el comando
 de aprobación interactiva los servidores de `.mcp.json`; por eso, si encuentra
 el ejecutable `claude`, `agent-install claude` registra además el mismo servidor
 en el ámbito `local` con `claude mcp add --scope local` (privado para el usuario
-y el proyecto) y escribe la skill `.claude/skills/graphtyn/SKILL.md`. Retirar la
+y el proyecto) y escribe las skills `.claude/skills/graphtyn` (código) y
+`.claude/skills/graphtyn-memory` (memoria). Retirar la
 integración ejecuta `claude mcp remove --scope local`. Verifica con
 `claude mcp list`. Si un cliente de
 escritorio no hereda el PATH de la terminal, instala Graphtyn en un PATH visible

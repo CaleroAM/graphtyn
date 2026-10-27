@@ -10,6 +10,15 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
+- La skill publicada se divide en `skills/graphtyn` (contexto e impacto de
+  código, con el flujo de cambios en `references/change-workflow.md`) y
+  `skills/graphtyn-memory` (memoria compartida, brains y OpenClaw), cada una con
+  una descripción acotada que remite a la otra. La skill de código reconoce el
+  bloque `<graphtyn-context>` de los hooks; la de memoria lleva la política
+  gestionada vigente, verificada por tests. `graphtyn agent-install` instala las
+  dos desde los datos del paquete, registra el hash de cada archivo escrito para
+  actualizar sólo los no editados y migra la skill combinada anterior con copia
+  en `.graphtyn/legacy-skills/`.
 - `graphtyn codex-context` y `graphtyn opencode-context` (`install|uninstall|status|hook`):
   el hook de primer turno para Codex (`.codex/hooks.json`, `UserPromptSubmit`
   con `additionalContextLimit`) y OpenCode (plugin `chat.message` en
