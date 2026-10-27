@@ -3,10 +3,10 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
-## [Unreleased]
+## [0.11.0] - sin publicar
 
-Los cambios posteriores a `0.10.7` se documentarán aquí antes de la próxima
-versión.
+Versión preparada en el repositorio; la etiqueta y los artefactos se publican
+tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
