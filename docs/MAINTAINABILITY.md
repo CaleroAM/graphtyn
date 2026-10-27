@@ -43,6 +43,25 @@ planes de edición, el ranking y recorte de mensajes, y los handlers MCP por
 familia. Este baseline documenta la deuda y prohíbe crecimiento adicional; no
 afirma que esas responsabilidades ya estén separadas.
 
+La revisión de `0.11.0` registra 33 hotspots, ninguno nuevo. Sale del baseline
+`attach_source_evidence`, dividido en recopilación, ranking, selección de
+fragmentos y registro de cobertura. El paquete `lean` pasó a
+`graphtyn/core/lean_package.py`, fuera de `mcp_server.py`. Crecen con
+justificación explícita:
+
+- **Paquetes de lenguaje:** `tree_sitter_backend.parse_file` y `visit` (C/C++,
+  Ruby, Kotlin, Swift y Scala comparten un único recorrido) y
+  `ASTParser.scan_directory` (registro de paquetes, rationale e ignore rules).
+- **Planificación de intenciones:** `change_analyst.query_intent` y el módulo
+  (precisión por símbolo nombrado y capas de Rails).
+- **Servidor MCP:** el módulo, `evidence_result` (copia de fragmentos y
+  presupuesto explícito) y `run_mcp_server` (`--response-detail`).
+- **Memoria:** `history_import` y `SharedMemoryStore`, por la identidad
+  `claude`/`claude-code` y la captura de Claude Code.
+
+La próxima extracción debe separar el recorrido de tree-sitter por familia de
+lenguaje y los handlers MCP por herramienta.
+
 ## Escala
 
 SQLite con WAL es el backend local soportado. RF07 midió cinco repeticiones en

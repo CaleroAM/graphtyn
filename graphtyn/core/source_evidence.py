@@ -236,32 +236,8 @@ def _sync_stopping(result: dict[str, Any]) -> None:
         )
 
 
-def attach_source_evidence(
-    root: Path,
-    result: dict[str, Any],
-    request: str,
-    requested_mode: str = "auto",
-) -> dict[str, Any]:
-    """Add a few exact symbol bodies when structural evidence is insufficient.
-
-    This runs after graph selection, so it never scans the repository or sends
-    unrelated files. Limits are deliberately small and deterministic.
-    """
-    mode = select_evidence_mode(request, requested_mode, str(result.get("intent") or "flow"))
-    result["evidence_mode"] = mode
-    obligations = list(dict.fromkeys([
-        *result.get("requested_obligations", []),
-        *requested_obligations(request),
-    ]))
-    result["requested_obligations"] = obligations
-    if mode == "compact" or result.get("intent") in {"overview", "impact"}:
-        result["source_retrieval"] = {"enabled": False, "reason": "structural evidence is sufficient for this request"}
-        _sync_stopping(result)
-        return result
-
-    max_snippets = 1 if mode == "balanced" else 10
-    line_budget = 60 if mode == "balanced" else 100
-    char_budget = 5_000 if mode == "balanced" else 20_000
+def _collect_candidates(result: dict[str, Any], request: str) -> tuple[list[dict[str, Any]], list[str]]:
+    """Graph-selected nodes (and projected route edges) whose bodies may be read."""
     candidates: list[dict[str, Any]] = []
     seen: set[str] = set()
     # Framework resolvers often know the exact JSX/TSX line that invokes a
@@ -306,7 +282,12 @@ def attach_source_evidence(
                 continue
             seen.add(node_id)
             candidates.append(node)
-    required_symbols = _explicit_source_symbols(request, candidates) if mode == "precision" else []
+    return candidates, request_terms
+
+
+def _rank_candidates(result: dict[str, Any], request: str, candidates: list[dict[str, Any]],
+                     request_terms: list[str], required_symbols: list[str]) -> dict[str, int]:
+    """Order candidates in place; returns how many obligations each node backs."""
     obligation_counts: dict[str, int] = {}
     obligation_weights: dict[str, int] = {}
     priority = {"missing_artifact_behavior": 4, "integrity_schema": 3, "record_identity": 2}
@@ -344,8 +325,13 @@ def attach_source_evidence(
         # ahead of generic homonyms from unrelated files.
         candidates.sort(key=lambda node: str(node.get("file") or "") != primary_file)
 
-    focus_terms = _focus_terms(request) if mode == "precision" else []
+    return obligation_counts
 
+
+def _select_excerpts(root: Path, candidates: list[dict[str, Any]], required_symbols: list[str],
+                     obligation_counts: dict[str, int], focus_terms: list[str], mode: str,
+                     max_snippets: int, line_budget: int, char_budget: int) -> list[dict[str, Any]]:
+    """Read bounded, focused excerpts of the ranked candidates."""
     def relevance(node: dict[str, Any]) -> int:
         searchable = (" ".join(str(node.get(key) or "") for key in ("name", "signature", "details"))
                       + " " + " ".join(f"{op.get('name', '')} {op.get('text', '')}"
@@ -398,6 +384,12 @@ def attach_source_evidence(
         })
         remaining -= len(text)
 
+    return excerpts
+
+
+def _record_source_coverage(result: dict[str, Any], excerpts: list[dict[str, Any]], required_symbols: list[str],
+                            obligations: list[str], mode: str, max_snippets: int, line_budget: int) -> None:
+    """Attach the excerpts and reconcile coverage, missing and stopping."""
     excerpt_ids = {item["_node_id"] for item in excerpts}
     source_obligations = {}
     for label, node_ids in (result.get("obligation_evidence") or {}).items():
@@ -466,5 +458,40 @@ def attach_source_evidence(
         result["guidance"] = " ".join(
             part for part in (existing_guidance, source_guidance) if part
         )
+
+
+def attach_source_evidence(
+    root: Path,
+    result: dict[str, Any],
+    request: str,
+    requested_mode: str = "auto",
+) -> dict[str, Any]:
+    """Add a few exact symbol bodies when structural evidence is insufficient.
+
+    This runs after graph selection, so it never scans the repository or sends
+    unrelated files. Limits are deliberately small and deterministic.
+    """
+    mode = select_evidence_mode(request, requested_mode, str(result.get("intent") or "flow"))
+    result["evidence_mode"] = mode
+    obligations = list(dict.fromkeys([
+        *result.get("requested_obligations", []),
+        *requested_obligations(request),
+    ]))
+    result["requested_obligations"] = obligations
+    if mode == "compact" or result.get("intent") in {"overview", "impact"}:
+        result["source_retrieval"] = {"enabled": False, "reason": "structural evidence is sufficient for this request"}
+        _sync_stopping(result)
+        return result
+
+    max_snippets = 1 if mode == "balanced" else 10
+    line_budget = 60 if mode == "balanced" else 100
+    char_budget = 5_000 if mode == "balanced" else 20_000
+    candidates, request_terms = _collect_candidates(result, request)
+    required_symbols = _explicit_source_symbols(request, candidates) if mode == "precision" else []
+    obligation_counts = _rank_candidates(result, request, candidates, request_terms, required_symbols)
+    focus_terms = _focus_terms(request) if mode == "precision" else []
+    excerpts = _select_excerpts(root, candidates, required_symbols, obligation_counts, focus_terms, mode,
+                                max_snippets, line_budget, char_budget)
+    _record_source_coverage(result, excerpts, required_symbols, obligations, mode, max_snippets, line_budget)
     _sync_stopping(result)
     return result
