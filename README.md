@@ -268,12 +268,14 @@ que recibe el proyecto en cada llamada.
 | OpenCode | `graphtyn agent-install opencode --path .` | `AGENTS.md`, `opencode.json` | `opencode mcp list` |
 | Antigravity | `graphtyn agent-install antigravity --path .` | `GEMINI.md`, `.agents/skills/graphtyn{,-memory}/`, `.agents/mcp_config.json` | `agy mcp list` |
 | OpenClaw | `graphtyn harness openclaw connect` | servidor compartido de la instalación | ver [conexión OpenClaw](docs/openclaw-native.md) |
-| Cursor, Gemini, Copilot | `graphtyn agent-install <cliente> --path .` | instrucciones (y `.cursor/mcp.json` en Cursor) | inspector MCP del cliente |
+| Copilot (VS Code) | `graphtyn agent-install copilot --path .` | `.github/copilot-instructions.md`, `.vscode/mcp.json` (sin verificar con un cliente real) | vista MCP de VS Code |
+| Cursor, Gemini | `graphtyn agent-install <cliente> --path .` | instrucciones (y `.cursor/mcp.json` en Cursor) | inspector MCP del cliente |
 
 Con `--path` cada entrada usa `graphtyn mcp --tool-profile <perfil> --path .`
 desde la raíz del proyecto. `graphtyn integrations status --path .` muestra el
 estado de todas y `graphtyn integrations remove --path . --agent <cliente>`
-retira sólo las que creó Graphtyn.
+retira sólo las que creó Graphtyn, junto con las skills que instaló para ese
+cliente y que nadie editó después.
 
 ### Instalación hecha por un agente
 

@@ -100,3 +100,47 @@ def test_agent_install_migrates_the_legacy_combined_skill_with_a_backup(tmp_path
     # A skill the user wrote is not Graphtyn's to replace.
     assert custom.read_text(encoding="utf-8").endswith("hand written\n")
     assert MEMORY_POLICY_START in (root / ".claude/skills/graphtyn-memory/SKILL.md").read_text(encoding="utf-8")
+
+
+def test_removing_an_integration_deletes_only_unedited_skills(tmp_path, monkeypatch):
+    import json
+    from graphtyn.core.project_integrations import remove_project_integrations
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    root = tmp_path / "project"
+    root.mkdir()
+    _install(root, ["antigravity", "claude"])
+    edited = root / ".claude/skills/graphtyn-memory/SKILL.md"
+    edited.write_text(edited.read_text(encoding="utf-8") + "\nmy note\n", encoding="utf-8")
+
+    result = remove_project_integrations(root, ["claude"])
+
+    assert ".claude/skills/graphtyn/SKILL.md" in result["removed_skills"]
+    assert result["preserved_skills"] == [".claude/skills/graphtyn-memory/SKILL.md"]
+    assert not (root / ".claude/skills/graphtyn").exists() and edited.is_file()
+    # The other client's skills and their records are untouched.
+    assert (root / ".agents/skills/graphtyn/SKILL.md").is_file()
+    hashes = json.loads((root / ".graphtyn/agent-install.json").read_text())["skill_hashes"]
+    assert hashes and all(key.startswith(".agents/") for key in hashes)
+
+
+def test_copilot_gets_a_workspace_mcp_server_that_round_trips(tmp_path, monkeypatch):
+    import json
+    from graphtyn.core.project_integrations import project_integration_status, remove_project_integrations
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    root = tmp_path / "project"
+    root.mkdir()
+    (root / ".vscode").mkdir()
+    (root / ".vscode/mcp.json").write_text(json.dumps({"servers": {"mine": {"type": "stdio", "command": "x"}}}))
+
+    _install(root, "copilot")
+
+    config = json.loads((root / ".vscode/mcp.json").read_text())
+    alias = next(name for name in config["servers"] if name != "mine")
+    assert config["servers"][alias] == {"type": "stdio", "command": "graphtyn", "cwd": "${workspaceFolder}",
+                                        "args": ["mcp", "--tool-profile", "intent", "--path", "."]}
+    assert (root / ".github/copilot-instructions.md").is_file()
+    client = next(c for c in project_integration_status(root)["clients"] if c["platform"] == "copilot")
+    assert client["configuration_present"] is True
+
+    assert remove_project_integrations(root, ["copilot"])["removed"] == ["copilot"]
+    assert json.loads((root / ".vscode/mcp.json").read_text()) == {"servers": {"mine": {"type": "stdio", "command": "x"}}}

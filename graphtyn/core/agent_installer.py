@@ -133,6 +133,43 @@ def _write_skills(project: Path, skills_dir: Path, recorded: dict[str, str]) -> 
     return written, hashes
 
 
+SKILL_DIRS = {"claude": Path(".claude") / "skills", "antigravity": Path(".agents") / "skills"}
+
+
+def remove_installed_skills(root: Path, platforms: list[str],
+                            hashes: dict[str, str]) -> tuple[list[str], list[str], dict[str, str]]:
+    """Delete the skill files Graphtyn installed for `platforms` and nobody edited since.
+
+    Returns the removed and preserved paths and the hashes that remain recorded.
+    Edited files stay; empty skill directories are pruned.
+    """
+    remaining = dict(hashes)
+    removed, preserved = [], []
+    for platform in dict.fromkeys(platforms):
+        base = SKILL_DIRS.get(platform)
+        if base is None:
+            continue
+        prefix = base.as_posix() + "/"
+        for key, digest in hashes.items():
+            if not key.startswith(prefix):
+                continue
+            path = root / key
+            if path.is_file() and _sha256(path.read_text(encoding="utf-8")) == digest:
+                path.unlink()
+                removed.append(key)
+            elif path.exists():
+                preserved.append(key)
+            remaining.pop(key, None)
+        for name in SKILL_NAMES:
+            directory = root / base / name
+            for folder in sorted((p for p in directory.rglob("*") if p.is_dir()), reverse=True) if directory.is_dir() else []:
+                if not any(folder.iterdir()):
+                    folder.rmdir()
+            if directory.is_dir() and not any(directory.iterdir()):
+                directory.rmdir()
+    return removed, preserved, remaining
+
+
 def resolve_tool_profile(root: Path, tool_profile: str | None = None, *, memory_enabled: bool = False) -> str:
     """Resolve an explicit profile, preserving an existing managed profile when omitted."""
     if tool_profile is not None:

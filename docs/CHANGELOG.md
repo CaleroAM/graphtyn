@@ -10,6 +10,13 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
+- `graphtyn agent-install copilot` registra además el servidor MCP del proyecto
+  en `.vscode/mcp.json` (`servers`, `type: stdio`, `cwd: ${workspaceFolder}`)
+  para el modo agente de Copilot en VS Code. Está cubierto por tests pero no se
+  verificó con un cliente Copilot real.
+- `graphtyn integrations remove` retira también las skills que `agent-install`
+  escribió para ese cliente y que nadie editó después (según el hash registrado);
+  las editadas se conservan y se informan en `preserved_skills`.
 - La skill publicada se divide en `skills/graphtyn` (contexto e impacto de
   código, con el flujo de cambios en `references/change-workflow.md`) y
   `skills/graphtyn-memory` (memoria compartida, brains y OpenClaw), cada una con
