@@ -1,0 +1,722 @@
+{
+  "schema_version": "1.0",
+  "runs": 18,
+  "complete_runs": 18,
+  "pairs": [
+    {
+      "repository": "redis",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 166601,
+        "usage": {
+          "input_tokens": 10,
+          "cached_input_tokens": 147151,
+          "cache_write_input_tokens": 15556,
+          "output_tokens": 3884,
+          "reasoning_tokens": null,
+          "total_tokens": 166601,
+          "provider_cost": 0.1157991
+        },
+        "seconds": 29.158,
+        "quality": 8,
+        "citations": 51,
+        "cost_usd": 0.1157991
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62544,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49718,
+          "cache_write_input_tokens": 10686,
+          "output_tokens": 2136,
+          "reasoning_tokens": null,
+          "total_tokens": 62544,
+          "provider_cost": 0.0690838
+        },
+        "seconds": 18.228,
+        "quality": 8,
+        "citations": 3,
+        "cost_usd": 0.0690838,
+        "index_seconds": 14.998,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -62.46,
+      "cost_delta_percent": -40.34,
+      "session_time_delta_percent": -37.49,
+      "component_deltas_percent": {
+        "input_tokens": -60.0,
+        "cached_input_tokens": -66.21,
+        "cache_write_input_tokens": -31.31,
+        "output_tokens": -45.01
+      },
+      "repetition": 1
+    },
+    {
+      "repository": "fmt",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 310168,
+        "usage": {
+          "input_tokens": 18,
+          "cached_input_tokens": 282508,
+          "cache_write_input_tokens": 21870,
+          "output_tokens": 5772,
+          "reasoning_tokens": null,
+          "total_tokens": 310168,
+          "provider_cost": 0.1734868
+        },
+        "seconds": 45.363,
+        "quality": 8,
+        "citations": 48,
+        "cost_usd": 0.1734868
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62933,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49758,
+          "cache_write_input_tokens": 10239,
+          "output_tokens": 2932,
+          "reasoning_tokens": null,
+          "total_tokens": 62933,
+          "provider_cost": 0.0752598
+        },
+        "seconds": 22.26,
+        "quality": 8,
+        "citations": 17,
+        "cost_usd": 0.0752598,
+        "index_seconds": 3.469,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -79.71,
+      "cost_delta_percent": -56.62,
+      "session_time_delta_percent": -50.93,
+      "component_deltas_percent": {
+        "input_tokens": -77.78,
+        "cached_input_tokens": -82.39,
+        "cache_write_input_tokens": -53.18,
+        "output_tokens": -49.2
+      },
+      "repetition": 1
+    },
+    {
+      "repository": "rails",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 228903,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 207812,
+          "cache_write_input_tokens": 15577,
+          "output_tokens": 5500,
+          "reasoning_tokens": null,
+          "total_tokens": 228903,
+          "provider_cost": 0.1381172
+        },
+        "seconds": 50.29,
+        "quality": 6,
+        "citations": 16,
+        "cost_usd": 0.1381172
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62568,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 48793,
+          "cache_write_input_tokens": 11530,
+          "output_tokens": 2241,
+          "reasoning_tokens": null,
+          "total_tokens": 62568,
+          "provider_cost": 0.0734173
+        },
+        "seconds": 29.031,
+        "quality": 7,
+        "citations": 15,
+        "cost_usd": 0.0734173,
+        "index_seconds": 25.292,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": false,
+      "token_delta_percent": -72.67,
+      "cost_delta_percent": -46.84,
+      "session_time_delta_percent": -42.27,
+      "component_deltas_percent": {
+        "input_tokens": -71.43,
+        "cached_input_tokens": -76.52,
+        "cache_write_input_tokens": -25.98,
+        "output_tokens": -59.25
+      },
+      "repetition": 1
+    },
+    {
+      "repository": "redis",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 170359,
+        "usage": {
+          "input_tokens": 10,
+          "cached_input_tokens": 148598,
+          "cache_write_input_tokens": 17584,
+          "output_tokens": 4167,
+          "reasoning_tokens": null,
+          "total_tokens": 170359,
+          "provider_cost": 0.1268858
+        },
+        "seconds": 30.715,
+        "quality": 8,
+        "citations": 60,
+        "cost_usd": 0.1268858
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62900,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49718,
+          "cache_write_input_tokens": 10686,
+          "output_tokens": 2492,
+          "reasoning_tokens": null,
+          "total_tokens": 62900,
+          "provider_cost": 0.0726438
+        },
+        "seconds": 21.511,
+        "quality": 8,
+        "citations": 29,
+        "cost_usd": 0.0726438,
+        "index_seconds": 15.444,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -63.08,
+      "cost_delta_percent": -42.75,
+      "session_time_delta_percent": -29.97,
+      "component_deltas_percent": {
+        "input_tokens": -60.0,
+        "cached_input_tokens": -66.54,
+        "cache_write_input_tokens": -39.23,
+        "output_tokens": -40.2
+      },
+      "repetition": 2
+    },
+    {
+      "repository": "fmt",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 344531,
+        "usage": {
+          "input_tokens": 20,
+          "cached_input_tokens": 293681,
+          "cache_write_input_tokens": 43771,
+          "output_tokens": 7059,
+          "reasoning_tokens": null,
+          "total_tokens": 344531,
+          "provider_cost": 0.27508210000000005
+        },
+        "seconds": 54.922,
+        "quality": 8,
+        "citations": 78,
+        "cost_usd": 0.27508210000000005
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62622,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49758,
+          "cache_write_input_tokens": 10216,
+          "output_tokens": 2644,
+          "reasoning_tokens": null,
+          "total_tokens": 62622,
+          "provider_cost": 0.0722878
+        },
+        "seconds": 20.631,
+        "quality": 8,
+        "citations": 18,
+        "cost_usd": 0.0722878,
+        "index_seconds": 3.315,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -81.82,
+      "cost_delta_percent": -73.72,
+      "session_time_delta_percent": -62.44,
+      "component_deltas_percent": {
+        "input_tokens": -80.0,
+        "cached_input_tokens": -83.06,
+        "cache_write_input_tokens": -76.66,
+        "output_tokens": -62.54
+      },
+      "repetition": 2
+    },
+    {
+      "repository": "rails",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 195226,
+        "usage": {
+          "input_tokens": 12,
+          "cached_input_tokens": 175539,
+          "cache_write_input_tokens": 14050,
+          "output_tokens": 5625,
+          "reasoning_tokens": null,
+          "total_tokens": 195226,
+          "provider_cost": 0.13002789999999997
+        },
+        "seconds": 44.53,
+        "quality": 7,
+        "citations": 21,
+        "cost_usd": 0.13002789999999997
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62930,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49729,
+          "cache_write_input_tokens": 10594,
+          "output_tokens": 2603,
+          "reasoning_tokens": null,
+          "total_tokens": 62930,
+          "provider_cost": 0.0733869
+        },
+        "seconds": 28.309,
+        "quality": 8,
+        "citations": 11,
+        "cost_usd": 0.0733869,
+        "index_seconds": 24.478,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": false,
+      "token_delta_percent": -67.77,
+      "cost_delta_percent": -43.56,
+      "session_time_delta_percent": -36.43,
+      "component_deltas_percent": {
+        "input_tokens": -66.67,
+        "cached_input_tokens": -71.67,
+        "cache_write_input_tokens": -24.6,
+        "output_tokens": -53.72
+      },
+      "repetition": 2
+    },
+    {
+      "repository": "redis",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 208690,
+        "usage": {
+          "input_tokens": 12,
+          "cached_input_tokens": 186882,
+          "cache_write_input_tokens": 17909,
+          "output_tokens": 3887,
+          "reasoning_tokens": null,
+          "total_tokens": 208690,
+          "provider_cost": 0.1292182
+        },
+        "seconds": 35.654,
+        "quality": 8,
+        "citations": 49,
+        "cost_usd": 0.1292182
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 63123,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49718,
+          "cache_write_input_tokens": 10686,
+          "output_tokens": 2715,
+          "reasoning_tokens": null,
+          "total_tokens": 63123,
+          "provider_cost": 0.0748738
+        },
+        "seconds": 22.613,
+        "quality": 8,
+        "citations": 6,
+        "cost_usd": 0.0748738,
+        "index_seconds": 15.348,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -69.75,
+      "cost_delta_percent": -42.06,
+      "session_time_delta_percent": -36.58,
+      "component_deltas_percent": {
+        "input_tokens": -66.67,
+        "cached_input_tokens": -73.4,
+        "cache_write_input_tokens": -40.33,
+        "output_tokens": -30.15
+      },
+      "repetition": 3
+    },
+    {
+      "repository": "fmt",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 232972,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 207347,
+          "cache_write_input_tokens": 19906,
+          "output_tokens": 5705,
+          "reasoning_tokens": null,
+          "total_tokens": 232972,
+          "provider_cost": 0.1574367
+        },
+        "seconds": 41.959,
+        "quality": 8,
+        "citations": 52,
+        "cost_usd": 0.1574367
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 63245,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 26218,
+          "cache_write_input_tokens": 33782,
+          "output_tokens": 3241,
+          "reasoning_tokens": null,
+          "total_tokens": 63245,
+          "provider_cost": 0.1701678
+        },
+        "seconds": 25.701,
+        "quality": 8,
+        "citations": 30,
+        "cost_usd": 0.1701678,
+        "index_seconds": 1.219,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -72.85,
+      "cost_delta_percent": 8.09,
+      "session_time_delta_percent": -38.75,
+      "component_deltas_percent": {
+        "input_tokens": -71.43,
+        "cached_input_tokens": -87.36,
+        "cache_write_input_tokens": 69.71,
+        "output_tokens": -43.19
+      },
+      "repetition": 3
+    },
+    {
+      "repository": "rails",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 217576,
+        "usage": {
+          "input_tokens": 14,
+          "cached_input_tokens": 202156,
+          "cache_write_input_tokens": 10659,
+          "output_tokens": 4747,
+          "reasoning_tokens": null,
+          "total_tokens": 217576,
+          "provider_cost": 0.11034959999999998
+        },
+        "seconds": 39.868,
+        "quality": 7,
+        "citations": 16,
+        "cost_usd": 0.11034959999999998
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62701,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 49729,
+          "cache_write_input_tokens": 10594,
+          "output_tokens": 2374,
+          "reasoning_tokens": null,
+          "total_tokens": 62701,
+          "provider_cost": 0.0710969
+        },
+        "seconds": 26.643,
+        "quality": 8,
+        "citations": 12,
+        "cost_usd": 0.0710969,
+        "index_seconds": 23.602,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": false,
+      "token_delta_percent": -71.18,
+      "cost_delta_percent": -35.57,
+      "session_time_delta_percent": -33.17,
+      "component_deltas_percent": {
+        "input_tokens": -71.43,
+        "cached_input_tokens": -75.4,
+        "cache_write_input_tokens": -0.61,
+        "output_tokens": -49.99
+      },
+      "repetition": 3
+    }
+  ],
+  "corpora": {
+    "redis": {
+      "pairs": 3,
+      "comparable_pairs": 3,
+      "quality_baseline": [
+        8,
+        8,
+        8
+      ],
+      "quality_graphtyn": [
+        8,
+        8,
+        8
+      ],
+      "token_delta_percent": {
+        "n": 3,
+        "mean": -65.1,
+        "stdev": 4.04,
+        "min": -69.75,
+        "max": -62.46
+      },
+      "cost_delta_percent": {
+        "n": 3,
+        "mean": -41.72,
+        "stdev": 1.24,
+        "min": -42.75,
+        "max": -40.34
+      },
+      "session_time_delta_percent": {
+        "n": 3,
+        "mean": -34.68,
+        "stdev": 4.1,
+        "min": -37.49,
+        "max": -29.97
+      },
+      "baseline_tokens": {
+        "n": 3,
+        "mean": 181883.33,
+        "stdev": 23291.17,
+        "min": 166601,
+        "max": 208690
+      },
+      "graphtyn_tokens": {
+        "n": 3,
+        "mean": 62855.67,
+        "stdev": 292.03,
+        "min": 62544,
+        "max": 63123
+      },
+      "citations_baseline": [
+        51,
+        60,
+        49
+      ],
+      "citations_graphtyn": [
+        3,
+        29,
+        6
+      ],
+      "graphtyn_reduced_tokens_in": 3
+    },
+    "fmt": {
+      "pairs": 3,
+      "comparable_pairs": 3,
+      "quality_baseline": [
+        8,
+        8,
+        8
+      ],
+      "quality_graphtyn": [
+        8,
+        8,
+        8
+      ],
+      "token_delta_percent": {
+        "n": 3,
+        "mean": -78.13,
+        "stdev": 4.69,
+        "min": -81.82,
+        "max": -72.85
+      },
+      "cost_delta_percent": {
+        "n": 3,
+        "mean": -40.75,
+        "stdev": 43.15,
+        "min": -73.72,
+        "max": 8.09
+      },
+      "session_time_delta_percent": {
+        "n": 3,
+        "mean": -50.71,
+        "stdev": 11.85,
+        "min": -62.44,
+        "max": -38.75
+      },
+      "baseline_tokens": {
+        "n": 3,
+        "mean": 295890.33,
+        "stdev": 57133.54,
+        "min": 232972,
+        "max": 344531
+      },
+      "graphtyn_tokens": {
+        "n": 3,
+        "mean": 62933.33,
+        "stdev": 311.5,
+        "min": 62622,
+        "max": 63245
+      },
+      "citations_baseline": [
+        48,
+        78,
+        52
+      ],
+      "citations_graphtyn": [
+        17,
+        18,
+        30
+      ],
+      "graphtyn_reduced_tokens_in": 3
+    },
+    "rails": {
+      "pairs": 3,
+      "comparable_pairs": 0,
+      "quality_baseline": [
+        6,
+        7,
+        7
+      ],
+      "quality_graphtyn": [
+        7,
+        8,
+        8
+      ],
+      "token_delta_percent": {
+        "n": 3,
+        "mean": -70.54,
+        "stdev": 2.51,
+        "min": -72.67,
+        "max": -67.77
+      },
+      "cost_delta_percent": {
+        "n": 3,
+        "mean": -41.99,
+        "stdev": 5.8,
+        "min": -46.84,
+        "max": -35.57
+      },
+      "session_time_delta_percent": {
+        "n": 3,
+        "mean": -37.29,
+        "stdev": 4.61,
+        "min": -42.27,
+        "max": -33.17
+      },
+      "baseline_tokens": {
+        "n": 3,
+        "mean": 213901.67,
+        "stdev": 17136.53,
+        "min": 195226,
+        "max": 228903
+      },
+      "graphtyn_tokens": {
+        "n": 3,
+        "mean": 62733.0,
+        "stdev": 183.11,
+        "min": 62568,
+        "max": 62930
+      },
+      "citations_baseline": [
+        16,
+        21,
+        16
+      ],
+      "citations_graphtyn": [
+        15,
+        11,
+        12
+      ],
+      "graphtyn_reduced_tokens_in": 3
+    }
+  },
+  "aggregation_warning": "Do not pool token totals across clients or models; n=3 per corpus.",
+  "raw_artifacts_preserved": true
+}

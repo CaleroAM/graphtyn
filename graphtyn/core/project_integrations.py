@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import time
 import unicodedata
 from pathlib import Path
@@ -207,6 +208,34 @@ def _merge_json_config(path: Path, section: str, name: str,
     _write_json(path, data)
 
 
+def _claude_executable() -> str | None:
+    return shutil.which("claude")
+
+
+def _register_claude_local(root: Path, name: str, server: dict[str, Any] | None) -> dict[str, Any]:
+    """Add (or remove, when server is None) the alias in Claude Code's local scope.
+
+    Claude Code keeps servers from a shared .mcp.json pending until the user
+    approves them interactively; the local scope is private to this user and
+    project, starts without that prompt and is reverted by `claude mcp remove`.
+    """
+    executable = _claude_executable()
+    if not executable:
+        return {"status": "claude_cli_unavailable"}
+    command = ([executable, "mcp", "add", "--scope", "local", name, "--", server["command"], *server["args"]]
+               if server else [executable, "mcp", "remove", "--scope", "local", name])
+    try:
+        process = subprocess.run(command, cwd=root, text=True, capture_output=True, timeout=30)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"status": "failed", "error": str(exc)[:300]}
+    output = (process.stdout + process.stderr).strip()
+    if process.returncode == 0 or (server and "already exists" in output):
+        return {"status": "registered" if server else "removed"}
+    if not server and "No MCP server named" in output:
+        return {"status": "absent"}
+    return {"status": "failed", "error": output[-300:]}
+
+
 def _toml_string(value: str) -> str:
     # JSON basic strings use escapes accepted by TOML for these characters.
     return json.dumps(value, ensure_ascii=False)
@@ -259,8 +288,8 @@ def _migrate_legacy_antigravity_mcp(root: Path) -> bool:
 def configure_project_integrations(project: str | Path, platforms: list[str], *,
                                    tool_profile: str = "intent") -> dict[str, Any]:
     root = Path(project).expanduser().resolve()
-    if tool_profile not in {"intent", "memory", "full"}:
-        raise ValueError("tool_profile debe ser intent, memory o full")
+    if tool_profile not in {"query", "intent", "memory", "full"}:
+        raise ValueError("tool_profile debe ser query, intent, memory o full")
     identity = ensure_project_identity(root)
     name = project_server_name(root, identity["id"])
     server = _command(tool_profile, root)
@@ -300,11 +329,18 @@ def configure_project_integrations(project: str | Path, platforms: list[str], *,
                             "configuration": str(path), "note": str(exc)})
             continue
         files.append(str(path))
-        clients.append({"platform": platform, "status": "configured", "alias": name,
-                        "configuration": str(path), "restart_recommended": True,
-                        "command_available": bool(shutil.which("graphtyn")),
-                        "note": ("Codex sólo carga la configuración del proyecto cuando éste es de confianza."
-                                 if platform == "codex" else "Reinicia o recarga el cliente para descubrir el MCP.")})
+        client = {"platform": platform, "status": "configured", "alias": name,
+                  "configuration": str(path), "restart_recommended": True,
+                  "command_available": bool(shutil.which("graphtyn")),
+                  "note": ("Codex sólo carga la configuración del proyecto cuando éste es de confianza."
+                           if platform == "codex" else "Reinicia o recarga el cliente para descubrir el MCP.")}
+        if platform == "claude":
+            local = _register_claude_local(root, name, server)
+            client["local_registration"] = local
+            client["note"] = ("Registrado también en el ámbito local de Claude Code; verifica con `claude mcp list`."
+                              if local["status"] == "registered" else
+                              "Claude Code pedirá aprobar el servidor de .mcp.json al abrir el proyecto.")
+        clients.append(client)
     return {"project_id": identity["id"], "project_name": identity.get("canonical_name", root.name),
             "mcp_server": name, "clients": clients, "files": files}
 
@@ -548,9 +584,12 @@ def remove_project_integrations(project: str | Path, platforms: list[str]) -> di
                        else command == "graphtyn" and args == expected_args)
             if managed:
                 del servers[alias]
-                if not servers:
+                # Claude Code rejects a .mcp.json without an mcpServers record.
+                if not servers and platform != "claude":
                     data.pop(section, None)
                 _write_json(path, data)
+                if platform == "claude":
+                    _register_claude_local(root, alias, None)
                 removed.append(platform)
             else:
                 preserved.append(platform)

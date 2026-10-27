@@ -220,3 +220,50 @@ def test_verify_uses_existing_codex_user_entry_and_preserves_global_config(tmp_p
     assert result["alias"] == "graphtyn_openclaw"
     assert result["configuration_scope"] == "global"
     assert config.read_text(encoding="utf-8") == original
+
+
+def test_claude_install_registers_local_scope_skill_and_reverts(tmp_path, monkeypatch):
+    import graphtyn.core.project_integrations as integrations
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    calls = []
+    monkeypatch.setattr(integrations, "_claude_executable", lambda: "/usr/bin/claude")
+    monkeypatch.setattr(integrations.subprocess, "run", lambda command, **kwargs: calls.append(
+        (command, kwargs["cwd"])) or type("Done", (), {"returncode": 0, "stdout": "", "stderr": ""})())
+    root = tmp_path / "claude-project"
+    root.mkdir()
+
+    install_agent(root, "claude", tool_profile="full")
+    status = project_integration_status(root)
+    alias = status["mcp_server"]
+
+    assert calls[0] == (["/usr/bin/claude", "mcp", "add", "--scope", "local", alias, "--",
+                         "graphtyn", "mcp", "--tool-profile", "full", "--path", "."], root)
+    client = next(item for item in status["clients"] if item["platform"] == "claude")
+    assert client["configuration_present"] is True
+    assert client["local_registration"] == {"status": "registered"}
+    skill = root / ".claude/skills/graphtyn/SKILL.md"
+    assert skill.read_text(encoding="utf-8").startswith("---\nname: graphtyn\n")
+    assert (root / "CLAUDE.md").is_file()
+
+    assert remove_project_integrations(root, ["claude"])["removed"] == ["claude"]
+    assert calls[-1] == (["/usr/bin/claude", "mcp", "remove", "--scope", "local", alias], root)
+    assert json.loads((root / ".mcp.json").read_text()) == {"mcpServers": {}}
+
+
+def test_claude_install_without_cli_keeps_project_mcp_json(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "state"))
+    root = tmp_path / "no-cli"
+    root.mkdir()
+
+    result = configure_project_integrations(root, ["claude"])
+
+    client = result["clients"][0]
+    assert client["status"] == "configured"
+    assert client["local_registration"] == {"status": "claude_cli_unavailable"}
+    assert "aprobar" in client["note"]
+    assert result["mcp_server"] in json.loads((root / ".mcp.json").read_text())["mcpServers"]
+
+
+def test_claude_identity_aliases_share_project_scope():
+    from graphtyn.core.memory_scope import expand_agent_aliases
+    assert expand_agent_aliases("claude-code") == {"claude", "claude-code"}

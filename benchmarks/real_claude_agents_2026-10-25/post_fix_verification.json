@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-10-25",
+  "kind": "offline package and index verification; no model sessions were run",
+  "method": {
+    "package_facts": "graphtyn query-intent with the frozen task request on a copy of each pinned corpus; a rubric fact counts when any of its terms appears in the serialized package",
+    "graph_equivalence": "ASTParser.scan_directory before and after the indexing changes; SHA-256 of canonical JSON nodes and links",
+    "baseline_packages": "Graphtyn tool results recorded in the 2026-10-25 Claude benchmark events"
+  },
+  "package_facts": {
+    "redis": {
+      "before": "3/8",
+      "after": "8/8",
+      "before_missing": [
+        "auth",
+        "acl",
+        "operational_rejections",
+        "multi",
+        "execute"
+      ],
+      "before_contract": {
+        "missing": [
+          "validation_gate"
+        ],
+        "do_not_expand": false
+      },
+      "after_contract": {
+        "missing": [],
+        "do_not_expand": true
+      },
+      "payload_tokens_before": 3847,
+      "payload_tokens_after": 3977
+    },
+    "fmt": {
+      "before": "8/8",
+      "after": "8/8",
+      "payload_tokens_after": 3784
+    },
+    "rails": {
+      "before": "8/8",
+      "after": "8/8",
+      "payload_tokens_after": 3976
+    }
+  },
+  "root_causes": [
+    "validation_gate used a Rails-only pattern (perform_validations) and stayed missing in C repositories",
+    "camelCase entry points such as processCommand were not recognised as explicitly named symbols",
+    "long bodies were cut to their first 100 lines and payload trimming removed the tail with the final call",
+    "flow guidance asked to cite aliases instead of real file:line"
+  ],
+  "cold_index_seconds": {
+    "graph_identical": true,
+    "graph_sha256_prefix": {
+      "fmt": [
+        "f4b652ef15ba7165",
+        "082c01d84f12bdec"
+      ],
+      "redis": [
+        "cabefc7318e7781a",
+        "588d9c8679162e80"
+      ],
+      "rails": [
+        "97d751e8e59472f8",
+        "3a74154faac5b7c8"
+      ]
+    },
+    "scan_before": {
+      "fmt": 35.3,
+      "redis": 27.3,
+      "rails": 214.3
+    },
+    "scan_after": {
+      "fmt": 5.6,
+      "redis": 18.0,
+      "rails": 58.3
+    },
+    "reindex_command_benchmark": {
+      "fmt": 33.146,
+      "redis": 24.004,
+      "rails": 259.746
+    },
+    "reindex_command_after": {
+      "fmt": 5,
+      "redis": 18,
+      "rails": 62
+    },
+    "causes": [
+      "operation hints rescanned the global node list per file",
+      "caller lookup rescanned every homonym per call site",
+      "lexical mention fallback tested every symbol against every untyped file",
+      "receiver typing rebuilt and regex-scanned the file prefix per call"
+    ]
+  },
+  "limitations": "Package fact presence is necessary but not sufficient for answer quality; a new model run is required to measure tokens and quality after these changes. Timings are single runs on one workstation."
+}

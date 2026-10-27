@@ -10,6 +10,8 @@ from .storage import atomic_write_json, data_home
 AGENT_PLATFORM_ALIASES: dict[str, list[str]] = {
     "antigravity": ["antigravity", "agy"],
     "agy": ["antigravity", "agy"],
+    "claude": ["claude", "claude-code"],
+    "claude-code": ["claude", "claude-code"],
 }
 
 

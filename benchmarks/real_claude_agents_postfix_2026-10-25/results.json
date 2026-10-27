@@ -1,0 +1,245 @@
+{
+  "schema_version": "1.0",
+  "runs": 6,
+  "complete_runs": 6,
+  "pairs": [
+    {
+      "repository": "redis",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 206119,
+        "usage": {
+          "input_tokens": 12,
+          "cached_input_tokens": 163566,
+          "cache_write_input_tokens": 39351,
+          "output_tokens": 3190,
+          "reasoning_tokens": null,
+          "total_tokens": 206119,
+          "provider_cost": 0.20568460000000002
+        },
+        "seconds": 26.333,
+        "quality": 8,
+        "citations": 47,
+        "cost_usd": 0.20568460000000002
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 63373,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 26202,
+          "cache_write_input_tokens": 34239,
+          "output_tokens": 2928,
+          "reasoning_tokens": null,
+          "total_tokens": 63373,
+          "provider_cost": 0.1688642
+        },
+        "seconds": 24.171,
+        "quality": 8,
+        "citations": 35,
+        "cost_usd": 0.1688642,
+        "index_seconds": 18.993,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -69.25,
+      "cost_delta_percent": -17.9,
+      "session_time_delta_percent": -8.21,
+      "component_deltas_percent": {
+        "input_tokens": -66.67,
+        "cached_input_tokens": -83.98,
+        "cache_write_input_tokens": -12.99,
+        "output_tokens": -8.21
+      }
+    },
+    {
+      "repository": "fmt",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 360509,
+        "usage": {
+          "input_tokens": 22,
+          "cached_input_tokens": 331753,
+          "cache_write_input_tokens": 21763,
+          "output_tokens": 6971,
+          "reasoning_tokens": null,
+          "total_tokens": 360509,
+          "provider_cost": 0.18998130000000002
+        },
+        "seconds": 57.711,
+        "quality": 8,
+        "citations": 69,
+        "cost_usd": 0.18998130000000002
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62719,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 48812,
+          "cache_write_input_tokens": 10884,
+          "output_tokens": 3019,
+          "reasoning_tokens": null,
+          "total_tokens": 62719,
+          "provider_cost": 0.0786152
+        },
+        "seconds": 23.974,
+        "quality": 8,
+        "citations": 24,
+        "cost_usd": 0.0786152,
+        "index_seconds": 3.85,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -82.6,
+      "cost_delta_percent": -58.62,
+      "session_time_delta_percent": -58.46,
+      "component_deltas_percent": {
+        "input_tokens": -81.82,
+        "cached_input_tokens": -85.29,
+        "cache_write_input_tokens": -49.99,
+        "output_tokens": -56.69
+      }
+    },
+    {
+      "repository": "rails",
+      "client": "claude",
+      "model": "claude-sonnet-5-5",
+      "baseline": {
+        "status": "complete",
+        "tokens": 259795,
+        "usage": {
+          "input_tokens": 16,
+          "cached_input_tokens": 239822,
+          "cache_write_input_tokens": 14504,
+          "output_tokens": 5453,
+          "reasoning_tokens": null,
+          "total_tokens": 259795,
+          "provider_cost": 0.13656020000000002
+        },
+        "seconds": 43.63,
+        "quality": 8,
+        "citations": 16,
+        "cost_usd": 0.13656020000000002
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 62245,
+        "usage": {
+          "input_tokens": 4,
+          "cached_input_tokens": 48797,
+          "cache_write_input_tokens": 11172,
+          "output_tokens": 2272,
+          "reasoning_tokens": null,
+          "total_tokens": 62245,
+          "provider_cost": 0.07229569999999999
+        },
+        "seconds": 26.47,
+        "quality": 8,
+        "citations": 13,
+        "cost_usd": 0.07229569999999999,
+        "index_seconds": 61.532,
+        "mcp": {
+          "server_status": "connected",
+          "tool_calls": [
+            "graph_query_intent"
+          ]
+        }
+      },
+      "quality_total": 8,
+      "graphtyn_mcp_called": true,
+      "quality_comparable": true,
+      "token_delta_percent": -76.04,
+      "cost_delta_percent": -47.06,
+      "session_time_delta_percent": -39.33,
+      "component_deltas_percent": {
+        "input_tokens": -75.0,
+        "cached_input_tokens": -79.65,
+        "cache_write_input_tokens": -22.97,
+        "output_tokens": -58.33
+      }
+    }
+  ],
+  "prior_clients_same_tasks": {
+    "redis": [
+      {
+        "client": "opencode",
+        "model": "opencode/deepseek-v4.1-flash-free",
+        "token_delta_percent": -52.01,
+        "quality": "8→8"
+      },
+      {
+        "client": "codex",
+        "model": "gpt-6-astra",
+        "token_delta_percent": -22.48,
+        "quality": "8→8"
+      },
+      {
+        "client": "antigravity",
+        "model": "gemini-3.8-flash-high",
+        "token_delta_percent": -49.95,
+        "quality": "8→8"
+      }
+    ],
+    "fmt": [
+      {
+        "client": "opencode",
+        "model": "opencode/deepseek-v4.1-flash-free",
+        "token_delta_percent": null,
+        "quality": "8→0"
+      },
+      {
+        "client": "codex",
+        "model": "gpt-6-astra",
+        "token_delta_percent": 11.24,
+        "quality": "8→8"
+      },
+      {
+        "client": "antigravity",
+        "model": "gemini-3.8-flash-high",
+        "token_delta_percent": -12.55,
+        "quality": "8→8"
+      }
+    ],
+    "rails": [
+      {
+        "client": "opencode",
+        "model": "opencode/deepseek-v4.1-flash-free",
+        "token_delta_percent": -67.3,
+        "quality": "8→8"
+      },
+      {
+        "client": "codex",
+        "model": "gpt-6-astra",
+        "token_delta_percent": 86.52,
+        "quality": "8→8"
+      },
+      {
+        "client": "antigravity",
+        "model": "gemini-3.8-flash-high",
+        "token_delta_percent": -38.79,
+        "quality": "8→8"
+      }
+    ]
+  },
+  "aggregation_warning": "Do not pool token totals across clients or models.",
+  "raw_artifacts_preserved": true
+}

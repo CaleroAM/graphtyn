@@ -1,0 +1,980 @@
+[
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "FMT_FORMAT_FLOW",
+    "arm": "baseline",
+    "started_at": "2026-10-26T03:03:48.056647+00:00",
+    "wall_seconds": 53.863,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 22,
+      "cached_input_tokens": 344575,
+      "cache_write_input_tokens": 23939,
+      "output_tokens": 6845,
+      "reasoning_tokens": null,
+      "total_tokens": 375381,
+      "provider_cost": 0.19870749999999998
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 375381,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 22110,
+          "cache_write_input_tokens": 3517,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 25645,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 25627,
+          "cache_write_input_tokens": 1103,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 26748,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26730,
+          "cache_write_input_tokens": 198,
+          "output_tokens": 17,
+          "reasoning_tokens": null,
+          "total_tokens": 26947,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26928,
+          "cache_write_input_tokens": 305,
+          "output_tokens": 39,
+          "reasoning_tokens": null,
+          "total_tokens": 27274,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 27233,
+          "cache_write_input_tokens": 717,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 27968,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 27950,
+          "cache_write_input_tokens": 2812,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 30780,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 30762,
+          "cache_write_input_tokens": 4590,
+          "output_tokens": 3,
+          "reasoning_tokens": null,
+          "total_tokens": 35357,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 35352,
+          "cache_write_input_tokens": 2243,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 37617,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 37595,
+          "cache_write_input_tokens": 2864,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 40481,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 40459,
+          "cache_write_input_tokens": 3370,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 43851,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 43829,
+          "cache_write_input_tokens": 2220,
+          "output_tokens": 917,
+          "reasoning_tokens": null,
+          "total_tokens": 46968,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": null,
+    "prompt_sha256": "6cb481dd3a054ec1cd21f409e72304d197c42f4a44d5b9940a783bcc48a25ad7",
+    "raw_event_count": 27,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": null,
+      "tool_calls": []
+    },
+    "terminal_errors": [],
+    "repository": "fmt",
+    "run_id": "claude_FMT_FORMAT_FLOW_baseline",
+    "quality": {
+      "facts": {
+        "compile_string": true,
+        "compile_parse": true,
+        "runtime": true,
+        "public_format": true,
+        "arguments": true,
+        "vformat_buffer": true,
+        "runtime_parse": true,
+        "output_iterator": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 72,
+        "valid": 72,
+        "invalid": []
+      },
+      "answer_bytes": 10529,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 10
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "7a4c774f1e3a2ac5371e5aae9dfdbdf084b0066b68cf41080acab2b5e867041d",
+      "events_sha256": "d33ccf577e9264bf12bc15506e8fe23dbae65a5cf6a9c729d014a8e8ca154322",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-2026-10-25/fmt_baseline/runs/claude_FMT_FORMAT_FLOW_baseline"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "FMT_FORMAT_FLOW",
+    "arm": "graphtyn",
+    "started_at": "2026-10-26T03:03:27.648439+00:00",
+    "wall_seconds": 19.613,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 4,
+      "cached_input_tokens": 48808,
+      "cache_write_input_tokens": 11652,
+      "output_tokens": 2628,
+      "reasoning_tokens": null,
+      "total_tokens": 63092,
+      "provider_cost": 0.07777680000000001
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 63092,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 22590,
+          "cache_write_input_tokens": 3628,
+          "output_tokens": 40,
+          "reasoning_tokens": null,
+          "total_tokens": 26260,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26218,
+          "cache_write_input_tokens": 8024,
+          "output_tokens": 912,
+          "reasoning_tokens": null,
+          "total_tokens": 35156,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 33.146,
+      "stdout": "✓ Reindexado AST local completado (fast): 7104 nodos, 14636 conectores.",
+      "stderr": "",
+      "included_in_session_time": false
+    },
+    "prompt_sha256": "df17c16a217080fe97447324fb10629c6ee78096b3f47e6c34c763d13dd4aab2",
+    "raw_event_count": 6,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "graph_query_intent"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "fmt",
+    "run_id": "claude_FMT_FORMAT_FLOW_graphtyn",
+    "quality": {
+      "facts": {
+        "compile_string": true,
+        "compile_parse": true,
+        "runtime": true,
+        "public_format": true,
+        "arguments": true,
+        "vformat_buffer": true,
+        "runtime_parse": true,
+        "output_iterator": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 28,
+        "valid": 28,
+        "invalid": []
+      },
+      "answer_bytes": 5226,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": {
+      "context_id": "b7c94b1b01a4",
+      "selected_nodes": 10,
+      "missing": [],
+      "do_not_expand": true,
+      "payload_tokens": 4215,
+      "payload_truncated": false,
+      "total_ms": 390.944
+    },
+    "audit": {
+      "tool_counts": {
+        "mcp__graphtyn_benchmark__graph_query_intent": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "51e25e134edd8631045a3ebaf98acb1c62f74866ed85e3bd2f28df531a49d86f",
+      "events_sha256": "063468387b2a255488db8fc2dd20416944c10871415c8a54883bd7877203950c",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-2026-10-25/fmt_graphtyn/runs/claude_FMT_FORMAT_FLOW_graphtyn"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "baseline",
+    "started_at": "2026-10-26T03:04:43.274008+00:00",
+    "wall_seconds": 44.521,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 14,
+      "cached_input_tokens": 204949,
+      "cache_write_input_tokens": 14547,
+      "output_tokens": 5704,
+      "reasoning_tokens": null,
+      "total_tokens": 225214,
+      "provider_cost": 0.1357509
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 225214,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 22110,
+          "cache_write_input_tokens": 3502,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 25630,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 25612,
+          "cache_write_input_tokens": 696,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 26326,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26308,
+          "cache_write_input_tokens": 3519,
+          "output_tokens": 4,
+          "reasoning_tokens": null,
+          "total_tokens": 29833,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 29827,
+          "cache_write_input_tokens": 1708,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 31553,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 31535,
+          "cache_write_input_tokens": 2521,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 34078,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 34056,
+          "cache_write_input_tokens": 1445,
+          "output_tokens": 4,
+          "reasoning_tokens": null,
+          "total_tokens": 35507,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 35501,
+          "cache_write_input_tokens": 1156,
+          "output_tokens": 852,
+          "reasoning_tokens": null,
+          "total_tokens": 37511,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": null,
+    "prompt_sha256": "4e6a12c899cca438355c9772683e59f49f27bff35087b70df730c778484ac610",
+    "raw_event_count": 23,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": null,
+      "tool_calls": []
+    },
+    "terminal_errors": [],
+    "repository": "rails",
+    "run_id": "claude_RAILS_SAVE_FLOW_baseline",
+    "quality": {
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 38,
+        "valid": 20,
+        "invalid": [
+          {
+            "file": "base.rb",
+            "line": 345,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 47,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 90,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 69,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 113,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 478,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 454,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "attribute_methods/dirty.rb",
+            "line": 247,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 482,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 95,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "connection_adapters/abstract/database_statements.rb",
+            "line": 254,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 211,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "postgresql/database_statements.rb",
+            "line": 34,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 48,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 91,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 545,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "connection_adapters/abstract/transaction.rb",
+            "line": 674,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 53,
+            "line_count": null,
+            "valid": false
+          }
+        ]
+      },
+      "answer_bytes": 8048,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 6
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "b6031716de9351b7a115f418f3b15d85ec2e0b9f174eb18ea20c8c7c319ad930",
+      "events_sha256": "3939d19335e635ca79ed2a9186bae1251a5a819fda1a3aebc8c6cdbde4af5838",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-2026-10-25/rails_baseline/runs/claude_RAILS_SAVE_FLOW_baseline"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "graphtyn",
+    "started_at": "2026-10-26T03:09:48.630654+00:00",
+    "wall_seconds": 27.279,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 4,
+      "cached_input_tokens": 48793,
+      "cache_write_input_tokens": 11121,
+      "output_tokens": 2173,
+      "reasoning_tokens": null,
+      "total_tokens": 62091,
+      "provider_cost": 0.0711013
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 62091,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 22590,
+          "cache_write_input_tokens": 3613,
+          "output_tokens": 36,
+          "reasoning_tokens": null,
+          "total_tokens": 26241,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26203,
+          "cache_write_input_tokens": 7508,
+          "output_tokens": 840,
+          "reasoning_tokens": null,
+          "total_tokens": 34553,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 259.746,
+      "stdout": "✓ Reindexado AST local completado (fast): 63719 nodos, 244530 conectores.",
+      "stderr": "",
+      "included_in_session_time": false
+    },
+    "prompt_sha256": "e3d02c7cf94610ff886db9cb28441a82d1dccd2fe48c01f4ede988e6debc9f37",
+    "raw_event_count": 7,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "graph_query_intent"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "rails",
+    "run_id": "claude_RAILS_SAVE_FLOW_graphtyn",
+    "quality": {
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 21,
+        "valid": 16,
+        "invalid": [
+          {
+            "file": "validations.rb",
+            "line": 47,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 43,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 478,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 482,
+            "line_count": null,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 48,
+            "line_count": null,
+            "valid": false
+          }
+        ]
+      },
+      "answer_bytes": 4583,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": {
+      "context_id": "ab200461bbb3",
+      "selected_nodes": 10,
+      "missing": [],
+      "do_not_expand": true,
+      "payload_tokens": 4533,
+      "payload_truncated": false,
+      "total_ms": 6112.795
+    },
+    "audit": {
+      "tool_counts": {
+        "mcp__graphtyn_benchmark__graph_query_intent": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "7409f70f047a67a50a23f2b784a2b1275ce835eb038561377c4923ce1055b759",
+      "events_sha256": "b6995465f2c3070937407327d1b538de86e1c76ac19eda054dd6a5d206960aec",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-2026-10-25/rails_graphtyn/runs/claude_RAILS_SAVE_FLOW_graphtyn"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "REDIS_COMMAND_FLOW",
+    "arm": "baseline",
+    "started_at": "2026-10-26T03:01:33.200870+00:00",
+    "wall_seconds": 32.399,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 10,
+      "cached_input_tokens": 128991,
+      "cache_write_input_tokens": 40527,
+      "output_tokens": 3883,
+      "reasoning_tokens": null,
+      "total_tokens": 173411,
+      "provider_cost": 0.2138571
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 173411,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 25607,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 25625,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 25607,
+          "cache_write_input_tokens": 959,
+          "output_tokens": 16,
+          "reasoning_tokens": null,
+          "total_tokens": 26584,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26566,
+          "cache_write_input_tokens": 11143,
+          "output_tokens": 4,
+          "reasoning_tokens": null,
+          "total_tokens": 37715,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 37709,
+          "cache_write_input_tokens": 1400,
+          "output_tokens": 20,
+          "reasoning_tokens": null,
+          "total_tokens": 39131,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 39109,
+          "cache_write_input_tokens": 1418,
+          "output_tokens": 977,
+          "reasoning_tokens": null,
+          "total_tokens": 41506,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": null,
+    "prompt_sha256": "5cdd7ddaf244acbe819f83dc61ee1ea0fbe1b15a5afacd945701ac5e90b29a78",
+    "raw_event_count": 18,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": null,
+      "tool_calls": []
+    },
+    "terminal_errors": [],
+    "repository": "redis",
+    "run_id": "claude_REDIS_COMMAND_FLOW_baseline",
+    "quality": {
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 10,
+        "valid": 10,
+        "invalid": []
+      },
+      "answer_bytes": 5921,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_counts": {
+        "Bash": 3,
+        "Read": 2
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "d29f99c2dea3218882509dc94d76d7d6bae20b68610ee6d0ad6b2491ccf32ff2",
+      "events_sha256": "2bace12eae77de7ca78911746d02fbba65e9b22ab3a071be422a7f90c2148a5d",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-2026-10-25/redis_baseline/runs/claude_REDIS_COMMAND_FLOW_baseline"
+    }
+  },
+  {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "task_id": "REDIS_COMMAND_FLOW",
+    "arm": "graphtyn",
+    "started_at": "2026-10-26T03:02:30.479763+00:00",
+    "wall_seconds": 23.276,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 6,
+      "cached_input_tokens": 59591,
+      "cache_write_input_tokens": 41872,
+      "output_tokens": 2594,
+      "reasoning_tokens": null,
+      "total_tokens": 104063,
+      "provider_cost": 0.1993991
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "cache_read_input",
+        "cache_creation_input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "cached_input_is_subset_of_input": false,
+      "reasoning_is_subset_of_output": false,
+      "technical_total_including_cache": 104063,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "usage_trace": {
+      "granularity": "model_call",
+      "per_model_call_available": true,
+      "records": [
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 26198,
+          "output_tokens": 40,
+          "reasoning_tokens": null,
+          "total_tokens": 26240,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 26198,
+          "cache_write_input_tokens": 7195,
+          "output_tokens": 38,
+          "reasoning_tokens": null,
+          "total_tokens": 33433,
+          "provider_cost": null
+        },
+        {
+          "input_tokens": 2,
+          "cached_input_tokens": 33393,
+          "cache_write_input_tokens": 8479,
+          "output_tokens": 970,
+          "reasoning_tokens": null,
+          "total_tokens": 42844,
+          "provider_cost": null
+        }
+      ],
+      "limitation": "Records are keyed by Anthropic message id; the session total comes from result.usage and is not recomputed from these records."
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 24.004,
+      "stdout": "✓ Reindexado AST local completado (fast): 20664 nodos, 76844 conectores.",
+      "stderr": "",
+      "included_in_session_time": false
+    },
+    "prompt_sha256": "dc6630b60568124c20d2803e31e6b605a4250cb5ce397e60418b7d04786d6901",
+    "raw_event_count": 10,
+    "antigravity_mcp_registration": null,
+    "claude_mcp": {
+      "server_status": "connected",
+      "tool_calls": [
+        "graph_query_intent"
+      ]
+    },
+    "terminal_errors": [],
+    "repository": "redis",
+    "run_id": "claude_REDIS_COMMAND_FLOW_graphtyn",
+    "quality": {
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "total": 8,
+      "citations": {
+        "total": 2,
+        "valid": 2,
+        "invalid": []
+      },
+      "answer_bytes": 4506,
+      "grader": "deterministic frozen rubric; no manual adjudication"
+    },
+    "retrieval": {
+      "context_id": "59c9abc28f27",
+      "selected_nodes": 10,
+      "missing": [
+        "validation_gate"
+      ],
+      "do_not_expand": false,
+      "payload_tokens": 5853,
+      "payload_truncated": true,
+      "total_ms": 1635.687
+    },
+    "audit": {
+      "tool_counts": {
+        "Read": 1,
+        "mcp__graphtyn_benchmark__graph_query_intent": 1
+      },
+      "forbidden_tools": [],
+      "answer_sha256": "af1e7454a3d2aa5bf5ea8de4a083f5f534fa2f69b7105037b93a775b4120cfa2",
+      "events_sha256": "cef5c355ece5e6de6050244f539fe3accf9fae01ae68bedb7c17575beb433a94",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-claude-2026-10-25/redis_graphtyn/runs/claude_REDIS_COMMAND_FLOW_graphtyn"
+    }
+  }
+]

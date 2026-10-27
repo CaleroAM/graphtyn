@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Comparar lectura local contra recuperación selectiva de Graphtyn en un repositorio C++ real. Réplica con Claude Code sobre el mismo commit, tarea y rúbrica congelada.",
+  "repository": {
+    "name": "fmtlib/fmt",
+    "url": "https://github.com/fmtlib/fmt",
+    "commit": "0fc31633e7d53ac895ae0a688b83b7d44f0b0c1f"
+  },
+  "design": {
+    "clients": [
+      "claude"
+    ],
+    "tasks": [
+      "FMT_FORMAT_FLOW"
+    ],
+    "arms": [
+      "baseline",
+      "graphtyn"
+    ],
+    "repetitions": 1,
+    "planned_sessions": 2,
+    "order": "graphtyn→baseline; contrabalanceado entre corpus porque hay un solo cliente; no repetir celdas completas.",
+    "direct_file_access": "Permitido por igual en ambos brazos.",
+    "grading": "Rúbrica determinista congelada antes de ejecutar; revisión final no independiente."
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "opencode_step_finish_semantics": "per-step",
+    "fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "cache_write_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "provider_cost",
+      "wall_seconds"
+    ]
+  },
+  "authorization": {
+    "source": "El usuario pidió correr el benchmark completo con Claude Sonnet (2026-10-25).",
+    "total_token_ceiling": null
+  },
+  "client_config": {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "mcp": "--strict-mcp-config; sólo graphtyn_benchmark (perfil query, --preload-index) en el brazo Graphtyn",
+    "disallowed_tools": "Edit,Write,NotebookEdit,WebFetch,WebSearch,Task,Agent",
+    "setting_sources": "project (workspace sin .claude/ ni .mcp.json)",
+    "user_claude_md": "no aislado (--claude-bare no usado: requiere ANTHROPIC_API_KEY)"
+  },
+  "source_protocol": "benchmarks/real_c_cpp_agents_2026-10-20/fmt_protocol.json"
+}

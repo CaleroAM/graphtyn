@@ -52,8 +52,9 @@ continuous capture is active; capture status does not prove retrieval occurred.
 
 At the end of a substantive turn, use the active capture path. Check
 `memory_status` at most once when capture ownership is unclear. When the project
-watcher captures this client's transcript, do not ingest the same turn again
-through MCP. If no watcher handles it and shared capture is authorized, call
+watcher, or a client hook listed in `client_capture_hooks` (for example Claude
+Code's `Stop` hook), captures this client's transcript, do not ingest the same
+turn again through MCP. If neither handles it and shared capture is authorized, call
 `memory_ingest_turn` only when the client exposes it; use the real client identity
 and a stable session id, and include only the user request and a concise outcome.
 Never include system instructions, hidden reasoning, credentials, or bulk tool

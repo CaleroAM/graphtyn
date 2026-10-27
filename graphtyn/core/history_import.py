@@ -330,9 +330,32 @@ def _materialize_source(source: str | Path) -> tuple[Path, tempfile.TemporaryDir
     return copied, temp, raw.rstrip("/")
 
 
+# Content blocks that carry tool traffic or hidden reasoning, never conversation.
+_NON_CONVERSATIONAL_BLOCKS = {"thinking", "redacted_thinking", "reasoning", "analysis",
+                              "tool_use", "tool_result", "server_tool_use", "image"}
+
+
+# Client-injected context inside user turns (Claude Code) is instructions and
+# harness state, never something the user wrote.
+_INJECTED_CONTEXT = re.compile(r"<system-reminder>.*?</system-reminder>|<graphtyn-context\b[^>]*>.*?</graphtyn-context>", re.S)
+_AUTOMATED_TURN_PREFIXES = ("<task-notification>", "<local-command-", "<command-name>")
+
+
+def _is_message_envelope(value: dict[str, Any]) -> bool:
+    """Claude Code wraps each turn as {"type": "user", "uuid", "message": {...}}."""
+    message = value.get("message")
+    return (isinstance(message, dict) and bool(message.get("role"))
+            and str(value.get("type") or "").casefold() in {"user", "assistant"}
+            and "content" not in value and "text" not in value)
+
+
 def _walk_records(value: Any) -> Iterable[dict[str, Any]]:
     if isinstance(value, dict):
         yield value
+        if _is_message_envelope(value):
+            # The envelope already exposes the nested message with its id and
+            # timestamp; visiting the message again would duplicate the turn.
+            return
         for key in ("messages", "history", "conversation", "turns", "events", "items", "item", "payload", "message", "data"):
             nested = value.get(key)
             if isinstance(nested, list):
@@ -353,11 +376,11 @@ def _content(record: dict[str, Any]) -> str:
         parts = []
         for item in value:
             if isinstance(item, str): parts.append(item)
-            elif isinstance(item, dict) and item.get("type") not in {"thinking", "reasoning", "analysis"} and isinstance(item.get("text"), str): parts.append(item["text"])
+            elif isinstance(item, dict) and item.get("type") not in _NON_CONVERSATIONAL_BLOCKS and isinstance(item.get("text"), str): parts.append(item["text"])
         value = "\n".join(parts)
     if isinstance(value, dict):
-        value = value.get("text") or value.get("content") or ""
-    return str(value or "").strip()
+        value = value.get("text") or (_content(value) if "content" in value else "")
+    return _INJECTED_CONTEXT.sub("", str(value or "")).strip()
 
 
 def _role(record: dict[str, Any], provider: str | None = None) -> str | None:
@@ -370,6 +393,8 @@ def _role(record: dict[str, Any], provider: str | None = None) -> str | None:
         text = _content(record).lstrip().casefold()
         if text.startswith("<environment_context>"):
             return None
+    if record.get("isMeta") or _content(record).startswith(_AUTOMATED_TURN_PREFIXES):
+        return None
     source = str(record.get("source") or "").upper()
     record_type = str(record.get("type") or "").upper()
     if record.get("tool_call_id") or record.get("toolUseId") or record_type in {"TOOL_RESULT", "FUNCTION_CALL_OUTPUT", "TOOL", "TOOL_RESPONSE"}:

@@ -37,7 +37,13 @@ otra ruta. Esta ruta depende de cada máquina: regenera la configuración local 
 revísala antes de compartirla o comitearla. Antigravity usa
 `.agents/mcp_config.json`. OpenCode, Claude Code y Cursor reciben una entrada de
 stdio en la configuración local del proyecto. Las entradas usan el comando
-`graphtyn` del PATH y una ruta relativa al workspace. Si un cliente de
+`graphtyn` del PATH y una ruta relativa al workspace. Claude Code deja pendientes
+de aprobación interactiva los servidores de `.mcp.json`; por eso, si encuentra
+el ejecutable `claude`, `agent-install claude` registra además el mismo servidor
+en el ámbito `local` con `claude mcp add --scope local` (privado para el usuario
+y el proyecto) y escribe la skill `.claude/skills/graphtyn/SKILL.md`. Retirar la
+integración ejecuta `claude mcp remove --scope local`. Verifica con
+`claude mcp list`. Si un cliente de
 escritorio no hereda el PATH de la terminal, instala Graphtyn en un PATH visible
 para ese cliente y recárgalo.
 
