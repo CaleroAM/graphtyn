@@ -22,6 +22,55 @@ _OBLIGATION_MARKERS = {
     "failure_semantics": ("panic", "error", "timeout", "recover", "fallo", "defer"),
 }
 
+_SOURCE_OBLIGATION_PATTERNS = {
+    "validation_gate": re.compile(r"perform_validations\s*\([^)]*\)\s*\?\s*super\s*:\s*false", re.I),
+    "save_callbacks": re.compile(r"_run_save_callbacks\s*\{\s*super\s*\}", re.I),
+    "create_callbacks": re.compile(r"_run_create_callbacks\s*\{\s*super\s*\}", re.I),
+    "transaction_entry": re.compile(r"def\s+save\b[\s\S]{0,300}with_transaction_returning_status\s*\{\s*super\s*\}", re.I),
+    "transaction_rollback": re.compile(r"raise\s+ActiveRecord::Rollback\s+unless\s+status", re.I),
+    "persistence_adapter": re.compile(r"connection\.(?:insert|update|delete)\s*\(", re.I),
+    "save_failure_result": re.compile(
+        r"perform_validations\s*\([^)]*\)\s*\?\s*super\s*:\s*false|rescue\s+ActiveRecord::RecordInvalid",
+        re.I,
+    ),
+    "callback_abort": re.compile(r"throw(?:s|ing)?\s+\+?:abort\+?|throw\s*:abort", re.I),
+}
+
+
+# Language-neutral vocabulary that maps request wording to identifiers that
+# usually spell the concept in source. Used only to focus long bodies.
+_FOCUS_EXPANSIONS = {
+    "aridad": ("arity", "argc"), "arity": ("arity", "argc"),
+    "autenticación": ("auth",), "autenticacion": ("auth",), "authentication": ("auth",),
+    "autorización": ("auth", "perm"), "autorizacion": ("auth", "perm"), "permiso": ("perm",),
+    "rechazo": ("reject", "deny", "err"), "rechazos": ("reject", "deny", "err"),
+    "rechaza": ("reject", "deny", "err"), "reject": ("reject", "deny", "err"),
+    "error": ("err", "fail"), "fallo": ("err", "fail"), "falla": ("err", "fail"),
+    "ejecuta": ("call(", "exec", "invoke"), "ejecución": ("call(", "exec", "invoke"),
+    "ejecucion": ("call(", "exec", "invoke"), "execute": ("call(", "exec", "invoke"),
+    "existencia": ("exist", "unknown", "null"), "existence": ("exist", "unknown", "null"),
+    "protegidos": ("protected",), "protegido": ("protected",),
+    "reutilización": ("reus", "cache", "last"), "reutilizacion": ("reus", "cache", "last"),
+    "bloqueo": ("block", "lock"), "bloqueados": ("block",), "cola": ("queue",),
+    "transacción": ("transaction", "multi", "queue"), "transaccion": ("transaction", "multi", "queue"),
+    "validación": ("valid", "check"), "validacion": ("valid", "check"),
+    "búfer": ("buffer",), "buffer": ("buffer",), "salida": ("out", "write"),
+}
+_FOCUS_STOPWORDS = {"cómo", "como", "desde", "explica", "menos", "dentro", "donde", "punto",
+                    "finalmente", "evidencia", "archivo", "línea", "linea", "cita", "qué", "que",
+                    "ocurre", "dos", "ramas", "the", "and", "with", "from", "where", "what"}
+
+
+_COMMENT_LINE = re.compile(r"\s*(?:/\*|\*|//|#(?!\s*(?:if|else|elif|endif|define|include)\b)|--|\"\"\"|''')")
+
+
+def _focus_terms(request: str) -> list[str]:
+    words = [word.lower() for word in re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w]{2,}", request)]
+    terms = [word for word in words if word not in _FOCUS_STOPWORDS and len(word) >= 3]
+    for word in words:
+        terms.extend(_FOCUS_EXPANSIONS.get(word, ()))
+    return list(dict.fromkeys(terms))
+
 
 def select_evidence_mode(request: str, requested: str = "auto", intent: str = "flow") -> str:
     """Choose source expansion only for questions that need body-level proof."""
@@ -38,6 +87,32 @@ def select_evidence_mode(request: str, requested: str = "auto", intent: str = "f
 def requested_obligations(request: str) -> list[str]:
     text = str(request or "").lower()
     return [name for name, markers in _OBLIGATION_MARKERS.items() if any(marker in text for marker in markers)]
+
+
+def _explicit_source_symbols(request: str, candidates: list[dict[str, Any]]) -> list[str]:
+    """Return code-like symbols that an exact-flow question names explicitly."""
+    available = {str(node.get("name") or "").lower() for node in candidates}
+    qualified_members = [
+        parts[-1].lower()
+        for token in re.findall(r"[A-Za-z_][\w]*(?:(?:::|\.|#)[A-Za-z_][\w]*)+", request)
+        if len(parts := [part for part in re.split(r"::|\.|#", token) if part]) >= 2
+    ]
+    underscored = [
+        token.lower()
+        for token in re.findall(r"(?<!\w)_?[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]+", request)
+    ]
+    # camelCase/PascalCase identifiers (processCommand, ServeHTTP) are as
+    # explicit as snake_case ones; plain words never contain an inner capital.
+    camel = [token.lower() for token in re.findall(r"(?<!\w)[A-Za-z]+[a-z][A-Z][A-Za-z0-9]*", request)]
+    # A selected type whose exact name the request spells ("format_string/fstring")
+    # is named on purpose; plain function names stay ambiguous with prose.
+    words = {word.lower() for word in re.findall(r"[A-Za-z_]\w{3,}", request)}
+    types = [str(node.get("name") or "").lower() for node in candidates
+             if node.get("kind") in {"class", "struct", "interface", "type", "union"}
+             and str(node.get("name") or "").lower() in words]
+    return list(dict.fromkeys(
+        symbol for symbol in [*qualified_members, *underscored, *camel, *types] if symbol in available
+    ))
 
 
 def _safe_source(root: Path, relative: str) -> Path | None:
@@ -63,6 +138,93 @@ def _numbered_excerpt(path: Path, start: int, end: int, line_budget: int) -> tup
         end = start + line_budget - 1
     text = "\n".join(f"{number}: {lines[number - 1]}" for number in range(start, end + 1))
     return text, start, end
+
+
+def _focused_excerpt(path: Path, start: int, end: int, line_budget: int,
+                     terms: list[str], char_budget: int = 6_000) -> tuple[str, int, int]:
+    """Keep the lines of a long body that match the request, in source order.
+
+    Rare terms weigh more than terms present on every line, so a 400-line
+    function contributes its ACL check or final call instead of only its first
+    screen. Line numbers stay real, and gaps are marked so citations stay exact.
+    """
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return "", 0, 0
+    start = max(1, min(start, len(lines)))
+    end = max(start, min(end, len(lines)))
+    if end - start + 1 <= line_budget or not terms:
+        return _numbered_excerpt(path, start, end, line_budget)
+    body = range(start, end + 1)
+    lowered = {number: lines[number - 1].lower() for number in body}
+    frequency = {term: sum(term in text for text in lowered.values()) for term in terms}
+    # Square-root damping: a concept the request names on purpose ("reject"
+    # branches) recurs on many lines and must not lose to a rare substring.
+    weights = {term: count ** -0.5 for term, count in frequency.items() if count}
+    # Comments mention terms incidentally ("DELs", "trim"); code lines decide.
+    scores = {number: sum(weight for term, weight in weights.items() if term in text)
+              * (0.25 if _COMMENT_LINE.match(text) else 1.0)
+              for number, text in lowered.items()}
+    # Indentation is dropped: the real line number already locates each line.
+    cost = {number: len(lines[number - 1].strip()) + len(str(number)) + 3 for number in body}
+    keep = {number for number in range(start, min(end, start + 3) + 1)} | {end}
+    spent = sum(cost[number] for number in keep)
+    for number in sorted(body, key=lambda value: (-scores[value], value)):
+        if not scores[number] or len(keep) >= line_budget:
+            break
+        window = [value for value in range(number - 1, number + 2)
+                  if start <= value <= end and value not in keep]
+        extra = sum(cost[value] for value in window)
+        if spent + extra > char_budget:
+            continue
+        keep.update(window)
+        spent += extra
+    rendered, previous = [], None
+    for number in sorted(keep):
+        if previous is not None and number > previous + 1:
+            rendered.append(f"…: ({number - previous - 1} lines omitted)")
+        rendered.append(f"{number}: {lines[number - 1].strip()}")
+        previous = number
+    return "\n".join(rendered), start, end
+
+
+_TYPE_KINDS = {"class", "struct", "interface", "type", "union"}
+_BRACE_SUFFIXES = {".c", ".h", ".cc", ".cpp", ".cxx", ".hh", ".hpp", ".hxx", ".java", ".cs", ".go", ".rs",
+                   ".js", ".jsx", ".ts", ".tsx", ".php", ".kt", ".swift", ".scala"}
+
+
+def _brace_block_end(path: Path, line: int, max_lines: int = 400) -> int | None:
+    """Line closing the first `{` opened at or after `line`, ignoring strings and comments."""
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    depth, opened, in_block = 0, False, False
+    for number in range(max(1, line), min(len(lines), line + max_lines) + 1):
+        text = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', "", lines[number - 1])
+        position = 0
+        while position < len(text):
+            if in_block:
+                close = text.find("*/", position)
+                if close < 0:
+                    break
+                in_block, position = False, close + 2
+                continue
+            if text.startswith("//", position):
+                break
+            if text.startswith("/*", position):
+                in_block, position = True, position + 2
+                continue
+            char = text[position]
+            if char == "{":
+                depth, opened = depth + 1, True
+            elif char == "}" and opened:
+                depth -= 1
+                if depth == 0:
+                    return number
+            position += 1
+    return None
 
 
 def _sync_stopping(result: dict[str, Any]) -> None:
@@ -97,9 +259,9 @@ def attach_source_evidence(
         _sync_stopping(result)
         return result
 
-    max_snippets = 1 if mode == "balanced" else 3
-    line_budget = 60 if mode == "balanced" else 120
-    char_budget = 5_000 if mode == "balanced" else 12_000
+    max_snippets = 1 if mode == "balanced" else 10
+    line_budget = 60 if mode == "balanced" else 100
+    char_budget = 5_000 if mode == "balanced" else 20_000
     candidates: list[dict[str, Any]] = []
     seen: set[str] = set()
     # Framework resolvers often know the exact JSX/TSX line that invokes a
@@ -135,12 +297,16 @@ def attach_source_evidence(
     for group in (result.get("matched", []), result.get("nodes", [])):
         for node in group:
             node_id = str(node.get("id") or "")
-            if node_id in seen or node.get("kind") not in {"method", "function", "constructor"}:
+            source_kinds = {"method", "function", "constructor"}
+            named_type = (node.get("kind") in {"class", "struct", "interface", "type", "union"}
+                          and str(node.get("name") or "").lower() in request_terms)
+            if node_id in seen or (node.get("kind") not in source_kinds and not named_type):
                 continue
             if not node.get("file") or not node.get("line"):
                 continue
             seen.add(node_id)
             candidates.append(node)
+    required_symbols = _explicit_source_symbols(request, candidates) if mode == "precision" else []
     obligation_counts: dict[str, int] = {}
     obligation_weights: dict[str, int] = {}
     priority = {"missing_artifact_behavior": 4, "integrity_schema": 3, "record_identity": 2}
@@ -149,8 +315,11 @@ def attach_source_evidence(
             obligation_counts[str(node_id)] = obligation_counts.get(str(node_id), 0) + 1
             obligation_weights[str(node_id)] = obligation_weights.get(str(node_id), 0) + priority.get(label, 1)
     candidates.sort(key=lambda node: (
+        -int(str(node.get("name") or "").lower() in required_symbols),
         -obligation_weights.get(str(node.get("id") or ""), 0),
         -obligation_counts.get(str(node.get("id") or ""), 0),
+        -int(node.get("kind") in {"class", "struct", "interface", "type", "union"}
+             and str(node.get("name") or "").lower() in request_terms),
         -sum(term in (
             " ".join(str(node.get(key) or "") for key in ("name", "file", "signature", "details"))
             + " " + " ".join(f"{op.get('name', '')} {op.get('text', '')}"
@@ -175,25 +344,98 @@ def attach_source_evidence(
         # ahead of generic homonyms from unrelated files.
         candidates.sort(key=lambda node: str(node.get("file") or "") != primary_file)
 
+    focus_terms = _focus_terms(request) if mode == "precision" else []
+
+    def relevance(node: dict[str, Any]) -> int:
+        searchable = (" ".join(str(node.get(key) or "") for key in ("name", "signature", "details"))
+                      + " " + " ".join(f"{op.get('name', '')} {op.get('text', '')}"
+                                       for op in node.get("operations", []))).lower()
+        return sum(term in searchable for term in focus_terms if len(term) >= 4)
+
     excerpts = []
     remaining = char_budget
+    resolved_symbols: set[str] = set()
     for node in candidates:
         if len(excerpts) >= max_snippets or remaining < 200:
             break
+        node_id = str(node.get("id") or "")
+        name = str(node.get("name") or "").lower()
+        # The first (best-ranked) declaration answers a named symbol; homonyms
+        # in other files must earn their place like any other neighbour.
+        required = name in required_symbols and name not in resolved_symbols
+        if required:
+            resolved_symbols.add(name)
+        # With a named entry point, unrelated neighbours only dilute the budget.
+        if (required_symbols and not required and not obligation_counts.get(node_id)
+                and relevance(node) < 2):
+            continue
         source = _safe_source(root, str(node["file"]))
         if not source:
             continue
         start = int(node.get("line") or 1)
+        if mode == "precision":
+            # Short declaration comments often define failure behavior (for
+            # example callback abort semantics) that the AST body omits.
+            start = max(1, start - 12)
         declared_end = int(node.get("end_line") or start + line_budget - 1)
-        text, actual_start, actual_end = _numbered_excerpt(source, start, declared_end, line_budget)
+        if node.get("kind") in _TYPE_KINDS and source.suffix.lower() in _BRACE_SUFFIXES:
+            # Macro-heavy headers make parsers close a type at its first
+            # member body; the braces in the source give the real extent.
+            declared_end = max(declared_end, _brace_block_end(source, int(node.get("line") or start)) or 0)
+        if focus_terms:
+            text, actual_start, actual_end = _focused_excerpt(
+                source, start, declared_end, line_budget * (2 if required else 1), focus_terms,
+                char_budget=6_000 if required else 2_500)
+        else:
+            text, actual_start, actual_end = _numbered_excerpt(source, start, declared_end, line_budget)
         text = text[:remaining]
         if not text:
             continue
         excerpts.append({
             "symbol": node.get("name"), "file": node.get("file"),
             "start_line": actual_start, "end_line": actual_end, "text": text,
+            "_node_id": str(node.get("id") or ""),
         })
         remaining -= len(text)
+
+    excerpt_ids = {item["_node_id"] for item in excerpts}
+    source_obligations = {}
+    for label, node_ids in (result.get("obligation_evidence") or {}).items():
+        pattern = _SOURCE_OBLIGATION_PATTERNS.get(label)
+        source_obligations[label] = (
+            any(pattern.search(str(item.get("text") or "")) for item in excerpts)
+            if pattern else
+            bool(excerpt_ids.intersection(str(node_id) for node_id in node_ids))
+        )
+    source_symbols = {
+        symbol: any(str(item.get("symbol") or "").lower() == symbol for item in excerpts)
+        for symbol in required_symbols
+    }
+    for item in excerpts:
+        node_id = item.pop("_node_id")
+        item["covers"] = []
+        for label, node_ids in (result.get("obligation_evidence") or {}).items():
+            pattern = _SOURCE_OBLIGATION_PATTERNS.get(label)
+            if ((pattern and pattern.search(str(item.get("text") or "")))
+                    or (not pattern and node_id in {str(value) for value in node_ids})):
+                item["covers"].append(label)
+        symbol = str(item.get("symbol") or "").lower()
+        if symbol in required_symbols:
+            item["covers"].append(f"source_symbol:{symbol}")
+        item["covers"] = list(dict.fromkeys(item["covers"]))
+
+    missing_source = [label for label, covered in source_obligations.items() if not covered]
+    missing_source.extend(
+        f"source_symbol:{symbol}" for symbol, covered in source_symbols.items() if not covered
+    )
+    result["source_coverage"] = {
+        "required_obligations": source_obligations,
+        "required_symbols": source_symbols,
+        "complete": not missing_source,
+    }
+    if missing_source:
+        result["missing"] = list(dict.fromkeys([*result.get("missing", []), *missing_source]))
+        result["complete_for"] = []
 
     result["source_evidence"] = excerpts
     result["source_retrieval"] = {
@@ -203,8 +445,9 @@ def attach_source_evidence(
         "scope": "only graph-selected symbol bodies",
     }
     if excerpts:
-        result["complete_for"] = list(dict.fromkeys([*result.get("complete_for", []), *obligations]))
-        result["missing"] = [item for item in result.get("missing", []) if item not in obligations]
+        if not missing_source:
+            result["complete_for"] = list(dict.fromkeys([*result.get("complete_for", []), *obligations]))
+            result["missing"] = [item for item in result.get("missing", []) if item not in obligations]
         # A snippet is evidence for the obligations it actually covers; its
         # mere presence must not override an earlier missing/stopping signal.
         stopping = result.get("stopping") or {}

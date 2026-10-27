@@ -1,0 +1,617 @@
+{
+  "method": "Adjudicación conceptual ciega (rúbrica v2): respuestas barajadas con etiqueta aleatoria; cliente, brazo y repetición se revelaron sólo tras puntuar. Adjudicador: el mismo agente que implementó los cambios (no independiente).",
+  "criteria": {
+    "redis": {
+      "entry": "Identifies processCommand in src/server.c as the entry point.",
+      "lookup": "Explains command reuse (lastcmd/isCommandReusable) or lookup (lookupCommand).",
+      "shape_checks": "Explains at least one of: unknown command rejection, arity check, protected command check.",
+      "auth": "Explains the authentication gate (auth required / commands allowed without auth).",
+      "acl": "Explains the ACL permission check and its rejection (NOPERM or ACL log).",
+      "operational_rejections": "Names at least one concrete operational rejection branch with its source: OOM/eviction, disk write error, insufficient good replicas, master down, loading, read-only replica.",
+      "multi": "Explains that inside MULTI the command is queued instead of executed (QUEUED).",
+      "execute": "Identifies where the command is finally executed (call(c, ...))."
+    },
+    "fmt": {
+      "compile_string": "Explains that format_string/fstring checks literals at compile time (consteval constructor / checker).",
+      "compile_parse": "Explains that the compile-time check parses the string (parse_format_string or compile checks).",
+      "runtime": "Explains what fmt::runtime changes (runtime_format_string skips compile-time checking).",
+      "public_format": "Locates the public fmt::format entry point (format.h).",
+      "arguments": "Explains how arguments are packed (vargs / format_args / make_format_args).",
+      "vformat_buffer": "Explains vformat writing into a memory_buffer and converting it to a string.",
+      "runtime_parse": "Explains detail::vformat_to parsing the string and the fast path for a single {}.",
+      "output_iterator": "Explains how format_to adapts an output iterator (buffer/get_iterator)."
+    },
+    "rails": {
+      "transaction_wrapper": "Explains that save runs inside a transaction wrapper (with_transaction_returning_status).",
+      "validation_layer": "Explains where validations run (perform_validations / validate: false).",
+      "save_entry": "Locates Persistence#save calling create_or_update (and save! raising RecordInvalid/NotSaved).",
+      "callbacks": "Explains save/create callbacks wrapping create_or_update/_create_record.",
+      "create_branch": "Explains that a new record takes the _create_record (insert) branch rather than update.",
+      "create_record": "Explains _create_record building the insert attributes and calling _insert_record.",
+      "adapter_insert": "Identifies the final adapter insert (connection insert / InsertManager).",
+      "failure_semantics": "Explains what happens on failure: save returns false and/or the transaction rolls back, callbacks can abort (:abort)."
+    }
+  },
+  "rows": [
+    {
+      "corpus": "fmt",
+      "client": "antigravity",
+      "arm": "graphtyn_full",
+      "repetition": 2,
+      "run_id": "antigravity_FMT_FORMAT_FLOW_graphtyn_full_r2",
+      "label": "FM0a91d8",
+      "facts": {
+        "compile_string": true,
+        "compile_parse": true,
+        "runtime": true,
+        "public_format": true,
+        "arguments": true,
+        "vformat_buffer": true,
+        "runtime_parse": true,
+        "output_iterator": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "fmt",
+      "client": "codex",
+      "arm": "graphtyn",
+      "repetition": 1,
+      "run_id": "codex_FMT_FORMAT_FLOW_graphtyn_r1",
+      "label": "FM6defcd",
+      "facts": {
+        "compile_string": true,
+        "compile_parse": true,
+        "runtime": true,
+        "public_format": true,
+        "arguments": true,
+        "vformat_buffer": true,
+        "runtime_parse": true,
+        "output_iterator": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "fmt",
+      "client": "codex",
+      "arm": "graphtyn_hook",
+      "repetition": 1,
+      "run_id": "codex_FMT_FORMAT_FLOW_graphtyn_hook_r1",
+      "label": "FMc3f754",
+      "facts": {
+        "compile_string": true,
+        "compile_parse": true,
+        "runtime": true,
+        "public_format": true,
+        "arguments": true,
+        "vformat_buffer": true,
+        "runtime_parse": true,
+        "output_iterator": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "antigravity",
+      "arm": "graphtyn_full",
+      "repetition": 1,
+      "run_id": "antigravity_RAILS_SAVE_FLOW_graphtyn_full_r1",
+      "label": "RAa52c22",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "claude",
+      "arm": "graphtyn",
+      "repetition": 1,
+      "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_r1",
+      "label": "RA15554d",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "claude",
+      "arm": "graphtyn",
+      "repetition": 2,
+      "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_r2",
+      "label": "RA4a0d92",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "claude",
+      "arm": "graphtyn",
+      "repetition": 5,
+      "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_r5",
+      "label": "RA37a540",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "claude",
+      "arm": "graphtyn_hook",
+      "repetition": 3,
+      "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_hook_r3",
+      "label": "RA98c798",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "claude",
+      "arm": "graphtyn_hook",
+      "repetition": 5,
+      "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_hook_r5",
+      "label": "RAee78bc",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "codex",
+      "arm": "baseline",
+      "repetition": 1,
+      "run_id": "codex_RAILS_SAVE_FLOW_baseline_r1",
+      "label": "RA9d2be1",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "codex",
+      "arm": "baseline",
+      "repetition": 2,
+      "run_id": "codex_RAILS_SAVE_FLOW_baseline_r2",
+      "label": "RAc7a8b5",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "codex",
+      "arm": "graphtyn",
+      "repetition": 1,
+      "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_r1",
+      "label": "RAe2b500",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "codex",
+      "arm": "graphtyn",
+      "repetition": 2,
+      "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_r2",
+      "label": "RAcbacae",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "codex",
+      "arm": "graphtyn_full",
+      "repetition": 1,
+      "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_full_r1",
+      "label": "RA7cbc40",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "codex",
+      "arm": "graphtyn_full",
+      "repetition": 2,
+      "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_full_r2",
+      "label": "RAdc58f0",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "codex",
+      "arm": "graphtyn_hook",
+      "repetition": 1,
+      "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_hook_r1",
+      "label": "RA093beb",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "codex",
+      "arm": "graphtyn_hook",
+      "repetition": 2,
+      "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_hook_r2",
+      "label": "RA3a5f3c",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": false,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 7,
+      "notes": "Cita persistence.rb:360-364 sólo como rescate de RecordInvalid; no dice que Persistence#save llame a create_or_update (límite dudoso, se puntúa en contra)."
+    },
+    {
+      "corpus": "rails",
+      "client": "opencode",
+      "arm": "graphtyn",
+      "repetition": 2,
+      "run_id": "opencode_RAILS_SAVE_FLOW_graphtyn_r2",
+      "label": "RA02be98",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "opencode",
+      "arm": "graphtyn_full",
+      "repetition": 2,
+      "run_id": "opencode_RAILS_SAVE_FLOW_graphtyn_full_r2",
+      "label": "RA87a6aa",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "rails",
+      "client": "opencode",
+      "arm": "graphtyn_hook",
+      "repetition": 1,
+      "run_id": "opencode_RAILS_SAVE_FLOW_graphtyn_hook_r1",
+      "label": "RA52c557",
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "redis",
+      "client": "antigravity",
+      "arm": "graphtyn",
+      "repetition": 1,
+      "run_id": "antigravity_REDIS_COMMAND_FLOW_graphtyn_r1",
+      "label": "RE9f001a",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "redis",
+      "client": "claude",
+      "arm": "graphtyn_hook",
+      "repetition": 3,
+      "run_id": "claude_REDIS_COMMAND_FLOW_graphtyn_hook_r3",
+      "label": "RE591d1c",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "redis",
+      "client": "claude",
+      "arm": "graphtyn_hook",
+      "repetition": 5,
+      "run_id": "claude_REDIS_COMMAND_FLOW_graphtyn_hook_r5",
+      "label": "RE1fb2ab",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "redis",
+      "client": "codex",
+      "arm": "baseline",
+      "repetition": 1,
+      "run_id": "codex_REDIS_COMMAND_FLOW_baseline_r1",
+      "label": "REfacbd6",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "redis",
+      "client": "codex",
+      "arm": "baseline",
+      "repetition": 2,
+      "run_id": "codex_REDIS_COMMAND_FLOW_baseline_r2",
+      "label": "RE893931",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "redis",
+      "client": "codex",
+      "arm": "graphtyn",
+      "repetition": 2,
+      "run_id": "codex_REDIS_COMMAND_FLOW_graphtyn_r2",
+      "label": "REcce7ea",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "redis",
+      "client": "codex",
+      "arm": "graphtyn_full",
+      "repetition": 1,
+      "run_id": "codex_REDIS_COMMAND_FLOW_graphtyn_full_r1",
+      "label": "RE0261a8",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": false,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 7,
+      "notes": "Sólo cita rechazos de forma (inexistente, aridad, auth, ACL, CMD_NO_MULTI); ninguna rama operativa concreta (OOM, disco, réplicas, master down, loading, réplica de solo lectura)."
+    },
+    {
+      "corpus": "redis",
+      "client": "codex",
+      "arm": "graphtyn_hook",
+      "repetition": 2,
+      "run_id": "codex_REDIS_COMMAND_FLOW_graphtyn_hook_r2",
+      "label": "RE751a2c",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "notes": ""
+    },
+    {
+      "corpus": "redis",
+      "client": "opencode",
+      "arm": "graphtyn_full",
+      "repetition": 2,
+      "run_id": "opencode_REDIS_COMMAND_FLOW_graphtyn_full_r2",
+      "label": "RE17395c",
+      "facts": {
+        "entry": true,
+        "lookup": true,
+        "shape_checks": true,
+        "auth": true,
+        "acl": true,
+        "operational_rejections": true,
+        "multi": true,
+        "execute": true
+      },
+      "passed": 8,
+      "notes": ""
+    }
+  ]
+}

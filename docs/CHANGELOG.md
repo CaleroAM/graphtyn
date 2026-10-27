@@ -8,6 +8,144 @@ compatibles con PEP 440.
 Los cambios posteriores a `0.10.7` se documentarán aquí antes de la próxima
 versión.
 
+### Añadido
+
+- `graphtyn codex-context` y `graphtyn opencode-context` (`install|uninstall|status|hook`):
+  el hook de primer turno para Codex (`.codex/hooks.json`, `UserPromptSubmit`
+  con `additionalContextLimit`) y OpenCode (plugin `chat.message` en
+  `.opencode/plugins/graphtyn-context.js`). Opcionales, requieren `--consent`.
+- `graphtyn mcp --response-detail lean|debug` fija el detalle por defecto de
+  `graph_query_intent`.
+- El arnés comparativo añade el brazo `graphtyn_full` (mismo MCP con
+  `response_detail=debug`) y el brazo `graphtyn_hook` para Codex y OpenCode.
+  Medición en cuatro clientes y tres corpus (84 sesiones) con adjudicación
+  conceptual ciega: `benchmarks/real_multi_client_hook_2026-10-27/`.
+- `graphtyn claude-context install|uninstall|status|hook`: hook opcional
+  `UserPromptSubmit` de Claude Code que ejecuta `graph_query_intent` antes del
+  primer turno y añade el paquete como `<graphtyn-context>`, repartido en dos
+  hooks paralelos de ≤ 9.800 caracteres (límite por hook de Claude Code); sólo
+  para mensajes de código, sin construir índices y con límite de tiempo.
+- `graph_query_intent` devuelve por defecto un paquete `lean`: sin diagnósticos
+  (`planner`, `timing_ms`, `validation` correcta…), sin entidades desconectadas
+  de los fragmentos de fuente cuando éstos ya cubren la petición y sin repetir
+  firmas u operaciones ya impresas. `response_detail="debug"` conserva el
+  paquete completo.
+- El arnés comparativo añade un brazo `graphify` para Claude Code (`--arm graphify
+  --graphify-bin`): construye el grafo de sólo código de una instalación aislada
+  de Graphify fuera del tiempo medido y expone su `graphify-mcp` oficial. También
+  admite `--repetition` para reintentos auditados y se detiene ante una sesión
+  rechazada sin uso.
+- Integración nativa con Claude Code: skill `.claude/skills/graphtyn`, registro
+  reversible del MCP en el ámbito `local` mediante `claude mcp add` además de
+  `.mcp.json`, y alias de identidad `claude` ↔ `claude-code` en la memoria.
+- El arnés comparativo admite Claude Code como cuarto cliente: MCP aislado con
+  `--strict-mcp-config`, herramientas de edición deshabilitadas, uso normalizado
+  con lectura y escritura de caché por separado, traza por llamada de modelo y
+  prueba de conexión y llamadas al servidor Graphtyn.
+- Nodos de *rationale*: comentarios `WHY:`/`NOTE:`/`RATIONALE:`/`DECISION:`/
+  `HACK:`/`IMPORTANT:` y citas ADR/RFC se adjuntan al símbolo que documentan y
+  aparecen en `explain` y en los paquetes MCP (`why`).
+- Comunidades, *god nodes*, conexiones sorprendentes y preguntas sugeridas en
+  `GRAPHTYN_REPORT.md` y en el `overview` MCP (`structure`).
+- `graphtyn export-html`: grafo autocontenido y sin red para compartir.
+- `graphtyn prs`: triaje de varias ramas o PR con conflictos simulados por
+  `git merge-tree`, símbolos compartidos, acoplamiento llamador/llamado y orden
+  de merge sugerido.
+- `.graphtynignore` con sintaxis de `.gitignore` para indexación y watcher.
+- Códigos de salida en `query`, `path` y `explain` (0 respuesta, 3 ambiguo,
+  4 sin coincidencia); los tres usan el índice cacheado en lugar de reescanear.
+- Hooks Git gestionados para `post-commit`, `post-checkout` y `post-merge` que
+  conservan el contenido del usuario.
+- Paquetes Tree-sitter para Kotlin, Swift y Scala.
+- Campo `citations` con referencias `archivo:línea` reales listas para citar,
+  añadido sólo con el presupuesto sobrante tras acotar la evidencia.
+- `--repetitions` en el arnés comparativo, con orden de brazos alternado.
+- Captura nativa de memoria en Claude Code mediante un hook `Stop`
+  (`graphtyn memory claude-capture install --consent`, o `setup --memory on`):
+  sincroniza el transcript del turno en segundo plano con el mismo cursor
+  idempotente del watcher; `memory_status` lo informa en `client_capture_hooks`.
+- Instrucciones de instalación por cliente y para agentes en el README, con la
+  explicación de un servidor MCP y una entrada por cliente.
+- Contrato declarativo de paquetes Tree-sitter y metadatos del índice que
+  indican qué lenguajes se procesaron realmente.
+- Extracción precisa para C y C++: encabezados, includes, tipos, funciones,
+  métodos, campos, llamadas, espacios de nombres y herencia.
+- Benchmark local determinista para la cobertura y latencia del paquete C/C++.
+- Benchmark exploratorio sobre Redis y fmt con OpenCode, Codex y Antigravity,
+  incluyendo eventos crudos, caché, calidad, tiempos de índice y sesiones fallidas.
+- Paquete Ruby con clases, módulos, métodos, llamadas, `require`, herencia y
+  relaciones explícitas para `include`, `prepend` y `extend`.
+- Benchmark determinista del parser y grafo Ruby, más validación de escala sobre
+  un commit fijado de Ruby on Rails.
+- Benchmark Rails con OpenCode, Codex y Antigravity que conserva por cliente los
+  tokens, caché, calidad, tiempos de índice y artefactos crudos.
+- Perfil MCP `query` que expone sólo `graph_query_intent`, con precarga opcional
+  del índice para separar arranque, recuperación y tiempo de sesión.
+- Repetición aislada Codex/Rails que conserva el primer intento incompleto y una
+  segunda pareja comparable tras corregir la cobertura de evidencia.
+
+### Corregido
+
+- Selección de fuente en modo `precision`: un tipo cuyo nombre exacto aparece en
+  la petición (`format_string/fstring`) pasa a ser símbolo obligatorio; un
+  homónimo de un símbolo ya resuelto en otro archivo ya no lo es; la extensión de
+  una clase o struct se completa con sus llaves cuando el parser la cierra en el
+  primer miembro (cabeceras con macros); y el recorte de cuerpos largos amortigua
+  los términos frecuentes y resta peso a los comentarios, para que las ramas de
+  rechazo de `processCommand` no pierdan frente a palabras raras de comentarios.
+- El bloque `<graphtyn-context>` completo repite la regla de parada al final.
+- El arnés comparativo cierra stdin de cada sesión: `codex exec` esperaba más
+  entrada y agotaba el tiempo.
+- `evidence_result` ya no recorta en sitio los fragmentos del paquete interno. La
+  segunda llamada que guarda el contexto MCP acortaba la respuesta ya construida;
+  el presupuesto efectivo de fragmentos en modo `precision` (el medido en los
+  benchmarks) ahora es explícito.
+- Las llamadas Ruby sin receptor a `require`, `include`, `raise` y otros
+  métodos de `Kernel`/`Module` ya no se resuelven contra métodos homónimos del
+  proyecto; en Rails desaparecen unas 32.000 relaciones falsas.
+- El vocabulario de expansión de consultas es genérico; se eliminaron
+  identificadores de productos y librerías concretas que sobreajustaban los
+  benchmarks.
+- `hook install` ya no sobrescribe un hook Git existente del usuario.
+- La importación de transcripts de Claude Code ya no guarda salida de
+  herramientas, bloques `<system-reminder>`, notificaciones de tareas ni turnos
+  meta, ni duplica cada mensaje como repr de Python.
+- Las obligaciones ligadas a un framework (por ejemplo `validation_gate` de
+  Rails) se marcan como no aplicables cuando ningún nodo del grafo puede
+  cumplirlas, en lugar de dejar el paquete incompleto en otros lenguajes.
+- Los cuerpos largos se entregan como ventanas enfocadas en la petición con
+  números de línea reales, los símbolos camelCase nombrados cuentan como
+  explícitos y el recorte final del payload conserva inicio y final. En Redis el
+  paquete pasa de 3/8 a 8/8 hechos de la rúbrica con tamaño similar.
+- La guía de los paquetes pide citar `archivo:línea` reales, no alias.
+- Indexación: se eliminaron cuatro recorridos cuadráticos con un grafo idéntico;
+  reindexado en frío de Rails 259,7 → 62 s, fmt 33,1 → 5 s y Redis 24,0 → 18 s.
+- Retirar la última entrada Graphtyn de `.mcp.json` conserva `mcpServers: {}`,
+  que Claude Code exige para considerar válido el archivo.
+- La contabilidad de Codex ya no suma `cached_input_tokens` sobre
+  `input_tokens`: la caché es un subconjunto de la entrada y el razonamiento un
+  subconjunto de la salida en el esquema de uso de OpenAI.
+- Las obligaciones de memoria requieren palabras completas, por lo que
+  “aporta” ya no solicita evidencia de un puerto.
+- Una petición explícita de panorama conserva `overview` al evaluar posibles
+  mejoras; las preguntas operativas enumeradas siguen usando `flow`.
+- Los símbolos Tree-sitter con nombres válidos como `Base` ya no se eliminan
+  como ruido léxico.
+- Los encabezados `.h` con sintaxis C++ seleccionan la gramática C++ en vez de
+  quedar degradados por la gramática C; los encabezados C conservan su parser.
+- Los selectores cualificados consideran namespaces y rutas de paquete, evitan
+  métodos homónimos de pruebas y conservan los símbolos tardíos de solicitudes
+  con varias etapas. La evidencia de precisión admite cuerpos de tipos nombrados.
+- Las relaciones ambiguas de llamada, herencia y mixin dejan de expandirse contra
+  cientos de candidatos homónimos. Las consultas CLI reutilizan el índice
+  persistido en lugar de reconstruir el repositorio antes de recuperar contexto.
+- La evidencia de precisión verifica por separado cada obligación y cada símbolo
+  nombrado. Si el presupuesto elimina un fragmento requerido, reabre `missing` y
+  desactiva `do_not_expand` en vez de declarar cobertura completa.
+- Las rutas complejas distinguen validación, callbacks de guardado/creación,
+  entrada y rollback transaccionales, adaptador y semántica de fallo; nombres de
+  proyecto o palabras como “commit” ya no desplazan esos símbolos.
+
 ## [0.10.7] - 2026-10-20
 
 ### Añadido

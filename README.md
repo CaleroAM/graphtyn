@@ -10,7 +10,7 @@ contexto compacto a agentes mediante MCP. También conserva memoria semántica
 compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
 estructurales.
 
-> Última versión estable publicada: [`0.10.4`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.10.4).
+> Última versión estable publicada: [`0.10.7`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.10.7).
 > Graphtyn se distribuye por GitHub Releases; PyPI permanece deshabilitado. El
 > despliegue es self-hosted: los agentes pueden compartir memoria con permisos
 > por token y proyecto, pero no es un servicio SaaS multi-tenant.
@@ -26,8 +26,9 @@ estructurales.
 
 - Grafo determinista de archivos, símbolos, llamadas, herencia y relaciones de
   framework, con evidencia `EXTRACTED`, `INFERRED` o `AMBIGUOUS`.
-- Tree-sitter opcional para C#, JavaScript, TypeScript/TSX, Python, Java, Go,
-  Rust y PHP; extractor integrado para otros lenguajes y activos de Unity.
+- Paquetes Tree-sitter opcionales para C#, JavaScript, TypeScript/TSX, Python,
+  Java, Go, Rust, PHP, C, C++, Ruby, Kotlin, Swift y Scala; contrato y límites en
+  [`docs/language-packs.md`](docs/language-packs.md).
 - Radio de impacto para símbolos, cambios locales, ramas y pull requests.
 - Contexto por intención y presupuesto para evitar lecturas masivas del
   repositorio.
@@ -63,7 +64,7 @@ Graphtyn aún no está publicado en PyPI. Instala el wheel de
 [GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/latest):
 
 ```bash
-python -m pip install "https://github.com/CaleroAM/graphtyn/releases/latest/download/graphtyn-0.10.4-py3-none-any.whl"
+python -m pip install "https://github.com/CaleroAM/graphtyn/releases/download/v0.10.7/graphtyn-0.10.7-py3-none-any.whl"
 ```
 
 También puedes instalarlo en modo desarrollo desde un checkout:
@@ -75,6 +76,15 @@ python -m pip install -e '.[treesitter]'
 graphtyn onboard --path . --agent antigravity --tool-profile full
 graphtyn serve --path .
 ```
+
+Para Claude Code, `graphtyn agent-install claude --path .` escribe `CLAUDE.md`,
+la skill `.claude/skills/graphtyn/SKILL.md` y la entrada compartible
+`.mcp.json`. Si el ejecutable `claude` está disponible, registra además el mismo
+servidor en el ámbito `local` de Claude Code (privado para el usuario y el
+proyecto), porque Claude Code deja pendientes de aprobación interactiva los
+servidores de `.mcp.json`. Verifícalo con `claude mcp list`. La desinstalación
+revierte ambas entradas. Las conversaciones previas se importan con
+`graphtyn memory bootstrap --provider claude` (vista previa por defecto).
 
 El dashboard anuncia su URL al arrancar y escucha por defecto sólo en
 `127.0.0.1:9210`. Para mantenerlo disponible al iniciar sesión:
@@ -131,10 +141,42 @@ graphtyn diff --path .
 graphtyn pr-impact --path . --base main
 graphtyn verify-edit --base HEAD~1 --json --path .
 
+# Explorar símbolos (códigos de salida: 0 respuesta, 3 nombre ambiguo, 4 sin coincidencia)
+graphtyn explain processCommand --path .
+graphtyn path save insert_record --path .
+
+# Triaje de varias ramas o PR abiertos: conflictos, acoplamiento y orden de merge
+graphtyn prs --base main --branch feature/a --branch feature/b --path .
+graphtyn prs --base main --github --path .
+
 # Generar artefactos persistentes
 graphtyn export-md --path .
 graphtyn report --path . --output GRAPHTYN_REPORT.md
+graphtyn export-html --path . --output graph.html
+
+# Reindexar al hacer commit, cambiar de rama o hacer merge
+graphtyn hook install --path .
 ```
+
+- `GRAPHTYN_REPORT.md` incluye comunidades (Louvain con semilla fija si
+  `networkx` está instalado; si no, propagación de etiquetas determinista),
+  *god nodes*, conexiones sorprendentes entre directorios no relacionados y
+  preguntas sugeridas. Excluye tests y código vendorizado, y descarta nombres
+  definidos en varios archivos cuyo grado mide ambigüedad, no centralidad.
+- `export-html` genera un `graph.html` autocontenido, sin red ni CDN, coloreado
+  por comunidad, con búsqueda y detalle `archivo:línea`. Con más símbolos que
+  `--node-limit` conserva los más conectados e indica cuántos omitió.
+- Los comentarios `WHY:`, `NOTE:`, `RATIONALE:`, `DECISION:`, `HACK:` e
+  `IMPORTANT:`, y las citas `ADR-n` o `RFC n`, se adjuntan como *rationale* al
+  símbolo que documentan. `explain` y los paquetes MCP (`why`) los muestran.
+- `prs` simula los merges con `git merge-tree --write-tree` sin tocar el árbol
+  de trabajo. Con `--github` descarga los PR abiertos en `refs/graphtyn/pr/<n>`.
+  Sale con código 2 si algún par tiene conflictos textuales.
+- `.graphtynignore` excluye rutas de la indexación con la sintaxis habitual de
+  `.gitignore` (`*`, `**`, `?`, `!`, `/` inicial y final). Se aplica en el
+  siguiente `reindex` y también al watcher.
+- `hook install` añade un bloque gestionado a `post-commit`, `post-checkout`
+  (sólo cambios de rama) y `post-merge`, conservando el contenido existente.
 
 Configuración y memoria conversacional:
 
@@ -146,6 +188,8 @@ graphtyn agent-install codex --path .
 graphtyn agent-install opencode --path .
 graphtyn integrations status --path .
 graphtyn integrations verify --path .
+# Servidor mínimo para consultas de código; precarga el índice una sola vez
+graphtyn mcp --tool-profile query --preload-index --path .
 # Importar o sincronizar historiales autorizados
 graphtyn memory bootstrap --path .
 graphtyn memory sync --path . --watch --interval 5 --consent
@@ -208,12 +252,114 @@ Graphtyn es un producto independiente. `graphifyy`, `graphify-mcp` y
 registrarse como si fueran Graphtyn. Si `graphtyn --version` no funciona,
 instale el wheel oficial de la release; no use un paquete con nombre parecido.
 
-Instale instrucciones y configuración MCP sin modificar el código del proyecto:
+### Un solo servidor, una entrada por cliente
+
+Graphtyn tiene **un único servidor MCP**: el comando `graphtyn mcp`. Lo que
+cambia entre clientes es dónde y en qué formato cada uno guarda la lista de
+servidores, así que `agent-install` escribe una *entrada* por cliente que
+apunta al mismo ejecutable y al mismo proyecto. OpenClaw es la excepción: una
+instalación de OpenClaw atiende varios proyectos y usa un servidor compartido
+que recibe el proyecto en cada llamada.
+
+| Cliente | Comando | Escribe | Verificar |
+|---|---|---|---|
+| Claude Code | `graphtyn agent-install claude --path .` | `CLAUDE.md`, `.claude/skills/graphtyn/SKILL.md`, `.mcp.json` y registro `local` con `claude mcp add` | `claude mcp list` |
+| Codex | `graphtyn agent-install codex --path .` | `AGENTS.md`, `.codex/config.toml` (requiere proyecto de confianza) | `codex mcp list` |
+| OpenCode | `graphtyn agent-install opencode --path .` | `AGENTS.md`, `opencode.json` | `opencode mcp list` |
+| Antigravity | `graphtyn agent-install antigravity --path .` | `GEMINI.md`, `.agents/skills/graphtyn/SKILL.md`, `.agents/mcp_config.json` | `agy mcp list` |
+| OpenClaw | `graphtyn harness openclaw connect` | servidor compartido de la instalación | ver [conexión OpenClaw](docs/openclaw-native.md) |
+| Cursor, Gemini, Copilot | `graphtyn agent-install <cliente> --path .` | instrucciones (y `.cursor/mcp.json` en Cursor) | inspector MCP del cliente |
+
+Con `--path` cada entrada usa `graphtyn mcp --tool-profile <perfil> --path .`
+desde la raíz del proyecto. `graphtyn integrations status --path .` muestra el
+estado de todas y `graphtyn integrations remove --path . --agent <cliente>`
+retira sólo las que creó Graphtyn.
+
+### Instalación hecha por un agente
+
+Cuando se pide a un agente (Claude Code, Codex, OpenCode, Antigravity u otro)
+que instale Graphtyn en un proyecto, debe seguir estos pasos y no otros:
+
+1. Comprobar `graphtyn --version`. Si falta, instalar sólo el wheel oficial de
+   [GitHub Releases](https://github.com/CaleroAM/graphtyn/releases); nunca
+   `graphifyy` ni paquetes de nombre parecido.
+2. Previsualizar sin escribir nada: `graphtyn setup --path <proyecto>`.
+3. Pedir consentimiento explícito al usuario antes de aplicar, indicando qué
+   archivos cambiarán (la tabla anterior) y, en Claude Code, que también se
+   modificará `~/.claude.json` mediante `claude mcp add --scope local`.
+4. Aplicar sólo para su propio cliente:
+   `graphtyn setup --path <proyecto> --agent <cliente> --apply --memory off`.
+   La memoria conversacional y la importación de historial son opt-in aparte.
+5. Verificar con `graphtyn integrations verify --path <proyecto>` y con el
+   comando de la columna «Verificar»; recargar el cliente si las herramientas
+   no aparecen.
+
+Para instalar todo de una vez sin el asistente:
 
 ```bash
 graphtyn agent-install all --path .
 graphtyn mcp
 ```
+
+### Captura de memoria en Claude Code
+
+Con memoria activa (`graphtyn setup ... --memory on`), o con
+`graphtyn memory claude-capture install --consent --path .`, Graphtyn registra un
+hook `Stop` en `.claude/settings.local.json`. Tras cada turno sincroniza el
+transcript de forma incremental e idempotente, sin bloquear al cliente, y guarda
+sólo los mensajes del usuario y las respuestas del asistente: excluye salida de
+herramientas, razonamiento y contexto inyectado (`<system-reminder>`,
+notificaciones de tareas). `graphtyn memory claude-capture uninstall --path .`
+lo retira conservando los hooks del usuario.
+
+### Contexto en el primer turno de Claude Code (opcional)
+
+Con el MCP, el agente gasta una llamada al modelo en pedir `graph_query_intent` y
+otra en responder, así que el prompt fijo de Claude Code se procesa dos veces.
+`graphtyn claude-context install --consent --path .` registra un hook
+`UserPromptSubmit` en `.claude/settings.local.json` que ejecuta esa misma
+consulta antes del primer turno y añade el resultado como bloque
+`<graphtyn-context>`; el agente responde en una sola llamada. El hook:
+
+- sólo actúa en mensajes sobre código (trazar, explicar, impacto, persistencia…)
+  que nombran un símbolo, archivo o el proyecto; no en saludos, comandos `/` ni
+  preguntas sobre sesiones anteriores, que siguen yendo a `memory_context`;
+- nunca construye el índice (`graphtyn reindex` debe existir) y abandona en
+  silencio si la recuperación supera 12 s (`--budget-seconds`);
+- no inyecta nada si el paquete no trae evidencia suficiente. Claude Code
+  guarda en disco el contexto de un hook que supera 10.000 caracteres y sólo
+  muestra la ruta al modelo, así que se registran dos hooks paralelos que
+  emiten cada uno una mitad (≤ 9.800 caracteres) del mismo paquete;
+- cuando el paquete está completo (`do_not_expand=true`), la cabecera aplica la
+  misma regla de parada que el resultado MCP: responder sin buscar ni releer.
+
+Medido en Redis, fmt y Rails, la sesión pasó con Claude Sonnet de ~61.000
+tokens (MCP) a ~34.000 (n=5, sin herramientas y en una sola llamada al modelo),
+con Codex de 29.000–51.000 a ~12.000 y con OpenCode de 26.000–64.000 a
+16.000–35.000, con la misma calidad
+([informe](benchmarks/real_multi_client_hook_2026-10-27/report.md)).
+
+`graphtyn claude-context status|uninstall --path .` lo consulta o lo retira. La
+captura de memoria descarta estos bloques. El MCP devuelve por defecto el mismo
+paquete `lean` (sin diagnósticos ni entidades ajenas a la evidencia);
+`response_detail="debug"` (o `graphtyn mcp --response-detail debug`) conserva el
+paquete completo.
+
+El mismo hook existe para otros dos clientes, también opcional y reversible:
+
+- **Codex** — `graphtyn codex-context install --consent --path .` añade a
+  `.codex/hooks.json` un hook `UserPromptSubmit` con
+  `additionalContextLimit=8000` (Codex recorta por defecto el contexto de un hook
+  a ~2.500 tokens), así que basta un solo bloque. Codex sólo ejecuta hooks de
+  proyecto si la capa `.codex/` es de confianza y el hook se aprobó con `/hooks`.
+- **OpenCode** — `graphtyn opencode-context install --consent --path .` escribe
+  el plugin `.opencode/plugins/graphtyn-context.js`, que en `chat.message` llama
+  a `graphtyn opencode-context hook` y añade el bloque como parte de texto del
+  mensaje (OpenCode no envía al modelo las partes `synthetic`). `opencode run
+  --pure` desactiva los plugins y, con ellos, el hook.
+
+Antigravity no ofrece un mecanismo equivalente; allí sólo aplica el paquete
+`lean` del MCP.
 
 El repositorio incluye [AGENTS.md](AGENTS.md) para descubrimiento automático y
 una [skill reutilizable](skills/graphtyn/SKILL.md). El patrón recomendado es:
@@ -233,7 +379,7 @@ Ejemplo de prompt:
 ## Memoria compartida
 
 La memoria es opt-in, se almacena por proyecto y puede compartirse entre Codex,
-OpenCode, Antigravity, OpenClaw, Hermes u otros clientes MCP. `memory_context`
+OpenCode, Antigravity, Claude Code, OpenClaw, Hermes u otros clientes MCP. `memory_context`
 puede recuperar trabajo reciente atribuido entre sesiones y agentes; las
 conversaciones ambiguas por proyecto permanecen pendientes:
 

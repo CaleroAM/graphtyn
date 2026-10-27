@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "RAILS_SAVE_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza el flujo exacto cuando ActiveRecord::Persistence#save persiste un registro nuevo: save, create_or_update, _create_record, _insert_record y la llamada final al adaptador. Explica dónde intervienen validaciones, callbacks y transacciones, qué ocurre si una etapa aborta o falla, y cita archivo:línea para cada paso.",
+      "rubric": [
+        {"id": "transaction_wrapper", "any": ["with_transaction_returning_status", "transactions.rb:382", "transactions.rb:430"]},
+        {"id": "validation_layer", "any": ["perform_validations", "validations.rb:47", "validate: false"]},
+        {"id": "save_entry", "any": ["persistence.rb:360", "create_or_update(**options", "RecordInvalid"]},
+        {"id": "callbacks", "any": ["_run_save_callbacks", "_run_create_callbacks", "callbacks.rb:478"]},
+        {"id": "create_branch", "any": ["new_record? ? _create_record", "return false if destroyed?", "_raise_readonly_record_error"]},
+        {"id": "create_record", "any": ["attributes_for_create", "with_connection", "_returning_columns_for_insert"]},
+        {"id": "adapter_insert", "any": ["Arel::InsertManager", "connection.insert", "persistence.rb:203"]},
+        {"id": "failure_semantics", "any": ["ActiveRecord::Rollback unless status", "throws :abort", "retorna false", "RecordNotSaved"]}
+      ]
+    }
+  ]
+}

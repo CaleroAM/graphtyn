@@ -113,6 +113,36 @@ def test_reindex_ast_local_fallback_no_server(git_repo, tmp_path):
     assert "nodos" in res.stdout and "conectores" in res.stdout
 
 
+def test_query_intent_uses_persisted_workspace_graph(tmp_path, monkeypatch, capsys):
+    graph = {"nodes": [{"id": "persisted", "name": "Persisted", "kind": "class"}], "links": []}
+    observed = {}
+
+    def load_graph(root, parser):
+        observed["root"] = root
+        return graph
+
+    def analyze(loaded, request, intent, limit):
+        assert loaded is graph
+        return {"request": request, "intent": intent, "nodes": [], "links": [], "limit": limit}
+
+    monkeypatch.setattr(graphtyn_cli, "get_workspace_graph", load_graph)
+    monkeypatch.setattr(graphtyn_cli, "query_intent", analyze)
+    monkeypatch.setattr(graphtyn_cli, "attach_learning", lambda result, _root: result)
+    monkeypatch.setattr(
+        "graphtyn.core.source_evidence.attach_source_evidence",
+        lambda _root, result, _request, _mode: result,
+    )
+    args = type("Args", (), {
+        "request": "trace Persisted", "intent": "flow", "limit": 10,
+        "evidence_mode": "auto", "response_mode": "full",
+    })()
+
+    graphtyn_cli._command_query_intent(args, tmp_path, None)
+
+    assert observed["root"] == tmp_path
+    assert json.loads(capsys.readouterr().out)["request"] == "trace Persisted"
+
+
 def test_reindex_uses_server_or_safe_local_fallback_when_daemon_is_available(git_repo, tmp_path):
     import socket
     try:
@@ -608,3 +638,37 @@ def test_memory_run_local_and_migration_preview_cli(git_repo, tmp_path):
     assert execution["measured_metrics"] == {"tests_passed": 1}
     assert preview.returncode == 0, preview.stderr
     assert json.loads(preview.stdout)["preview"] is True
+
+
+def test_query_path_and_explain_exit_codes_distinguish_ambiguous_and_missing(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    (tmp_path / "a.py").write_text("def start_fn():\n    return 1\n\ndef run():\n    return 2\n", encoding="utf-8")
+    (tmp_path / "b.py").write_text("def run():\n    return 3\n", encoding="utf-8")
+
+    assert _run_cli(["query", "nothing_like_this", "--path", str(tmp_path)], tmp_path, home).returncode == 4
+    assert _run_cli(["explain", "start_fn", "--path", str(tmp_path)], tmp_path, home).returncode == 0
+    ambiguous = _run_cli(["explain", "run", "--path", str(tmp_path)], tmp_path, home)
+    assert ambiguous.returncode == 3 and "b.py" in ambiguous.stderr
+    assert _run_cli(["explain", "missing_fn", "--path", str(tmp_path)], tmp_path, home).returncode == 4
+    assert _run_cli(["path", "start_fn", "missing_fn", "--path", str(tmp_path)], tmp_path, home).returncode == 4
+    assert _run_cli(["path", "start_fn", "run", "--path", str(tmp_path)], tmp_path, home).returncode == 3
+
+
+def test_hooks_cover_checkout_and_preserve_user_hook_content(git_repo, tmp_path):
+    home = tmp_path / "home-hooks"
+    home.mkdir()
+    hooks = git_repo / ".git" / "hooks"
+    hooks.mkdir(parents=True, exist_ok=True)
+    (hooks / "post-commit").write_text("#!/bin/sh\necho user-hook\n", encoding="utf-8")
+
+    assert _run_cli(["hook", "install", "--path", str(git_repo)], git_repo, home).returncode == 0
+    assert _run_cli(["hook", "install", "--path", str(git_repo)], git_repo, home).returncode == 0
+    commit_hook = (hooks / "post-commit").read_text(encoding="utf-8")
+    checkout_hook = (hooks / "post-checkout").read_text(encoding="utf-8")
+    assert "echo user-hook" in commit_hook and commit_hook.count("BEGIN GRAPHTYN REINDEX") == 1
+    assert '[ "$3" = "1" ] || exit 0; nohup graphtyn' in checkout_hook and (hooks / "post-merge").exists()
+
+    assert _run_cli(["hook", "uninstall", "--path", str(git_repo)], git_repo, home).returncode == 0
+    assert (hooks / "post-commit").read_text(encoding="utf-8") == "#!/bin/sh\necho user-hook\n"
+    assert not (hooks / "post-checkout").exists()

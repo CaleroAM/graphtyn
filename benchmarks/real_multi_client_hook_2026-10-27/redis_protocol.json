@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Repetir el hook de primer turno y el paquete MCP lean tras corregir la selección de fuente (tipos nombrados, homónimos, extensión por llaves, ramas de rechazo) y medirlos en Claude Code, Codex, OpenCode y Antigravity. graphtyn_full = mismo servidor con response_detail=debug (paquete previo al recorte) como control contemporáneo del recorte.",
+  "repository": {
+    "name": "redis/redis",
+    "url": "https://github.com/redis/redis",
+    "commit": "f2a17a8dca1566d2a0f078840fffef5661eab4b1"
+  },
+  "design": {
+    "clients": [
+      "claude",
+      "codex",
+      "opencode",
+      "antigravity"
+    ],
+    "tasks": [
+      "REDIS_COMMAND_FLOW"
+    ],
+    "arms_by_client": {
+      "claude": [
+        "graphtyn",
+        "graphtyn_hook"
+      ],
+      "codex": [
+        "baseline",
+        "graphtyn_full",
+        "graphtyn",
+        "graphtyn_hook"
+      ],
+      "opencode": [
+        "graphtyn_full",
+        "graphtyn",
+        "graphtyn_hook"
+      ],
+      "antigravity": [
+        "graphtyn_full",
+        "graphtyn"
+      ]
+    },
+    "repetitions_by_client": {
+      "claude": 5,
+      "codex": 2,
+      "opencode": 2,
+      "antigravity": 2
+    },
+    "planned_sessions": 28,
+    "order": "Por cliente y repetición: orden de brazos directo en repeticiones impares e inverso en pares.",
+    "direct_file_access": "Permitido por igual en todos los brazos.",
+    "grading": "Rúbrica determinista congelada (idéntica a real_claude_agents_lean_hook_2026-10-26) más adjudicación manual ciega aparte."
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "opencode_step_finish_semantics": "per-step",
+    "fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "cache_write_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "provider_cost",
+      "wall_seconds"
+    ]
+  },
+  "authorization": {
+    "source": "El usuario pidió resolver los puntos pendientes: hook más estable en fmt, más repeticiones, hook en Codex/OpenCode y recorte MCP en los demás clientes (2026-10-27).",
+    "total_token_ceiling": null
+  },
+  "client_config": {
+    "models": {
+      "claude": "claude-sonnet-5-5",
+      "codex": "gpt-5.6-luna",
+      "opencode": "opencode/deepseek-v4.1-flash-free",
+      "antigravity": "gemini-3.8-flash-high"
+    },
+    "claude": "--strict-mcp-config; hook: --settings con dos hooks UserPromptSubmit e instrucciones del brazo por --append-system-prompt",
+    "codex": "--ignore-user-config; MCP por -c; hook: -c hooks.UserPromptSubmit inline con additionalContextLimit=8000 y --dangerously-bypass-hook-trust; instrucciones del brazo hook por -c developer_instructions",
+    "opencode": "OPENCODE_CONFIG_CONTENT; sin --pure en los tres brazos (los plugins de proyecto llevan el hook); hook: .opencode/plugins/graphtyn-context.js (chat.message); instrucciones del brazo hook por config.instructions",
+    "antigravity": "agy mcp add por sesión (serializado); sin mecanismo de hook",
+    "codex_model_note": "gpt-6-astra (ejecuciones del 20-21 oct) ya no está disponible con esta cuenta ChatGPT; se usa el modelo por defecto del usuario y se añade un brazo baseline contemporáneo."
+  },
+  "source_protocol": "benchmarks/real_c_cpp_agents_2026-10-20/redis_protocol.json",
+  "previous_runs": [
+    "benchmarks/real_claude_agents_2026-10-25",
+    "benchmarks/real_claude_agents_postfix_2026-10-25",
+    "benchmarks/real_claude_agents_reps_2026-10-25",
+    "benchmarks/real_claude_agents_graphify_2026-10-26",
+    "real_claude_agents_lean_hook_2026-10-26"
+  ]
+}

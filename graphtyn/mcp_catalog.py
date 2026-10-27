@@ -20,6 +20,7 @@ _BASE_TOOLS: list[dict[str, Any]] = [
                 "limit": {"type": "integer", "description": "Máximo de entidades; default 10"},
                 "evidence_mode": {"type": "string", "enum": ["auto", "compact", "balanced", "precision"], "description": "auto amplía solo preguntas que necesitan evidencia del cuerpo"},
                 "extends_context_id": {"type": "string", "description": "Contexto previo para devolver sólo evidencia nueva"},
+                "response_detail": {"type": "string", "enum": ["lean", "debug"], "description": "lean (default) omite diagnósticos y entidades ajenas a la evidencia; debug devuelve el paquete completo"},
                 "expected_project": {"type": "string", "description": "Guardia opcional para un proyecto elegido deliberadamente; omítala al usar el workspace del servidor. La llamada falla si no coincide"},
                 "path": {"type": "string", "description": "Ruta del proyecto; si se omite usa el workspace del MCP"}
             },
@@ -313,6 +314,8 @@ def mcp_tools(tool_profile: str = "full") -> list[dict[str, Any]]:
             "operation_id": {"type": "string"}
         }, "required": ["operation_id"]},
     }]]
+    if tool_profile == "query":
+        return [tool for tool in tools if tool["name"] == "graph_query_intent"]
     if tool_profile == "intent":
         return [tool for tool in tools if tool["name"] in _INTENT_TOOLS]
     if tool_profile == "memory":

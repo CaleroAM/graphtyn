@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Medir el paquete MCP lean y el hook UserPromptSubmit de Claude Code que adelanta graph_query_intent al primer turno. Mismo commit, tarea, rúbrica congelada, cliente y modelo que real_claude_agents_reps_2026-10-25; base y Graphtyn previo se reutilizan (no contemporáneos).",
+  "repository": {
+    "name": "redis/redis",
+    "url": "https://github.com/redis/redis",
+    "commit": "f2a17a8dca1566d2a0f078840fffef5661eab4b1"
+  },
+  "design": {
+    "clients": [
+      "claude"
+    ],
+    "tasks": [
+      "REDIS_COMMAND_FLOW"
+    ],
+    "arms": [
+      "graphtyn",
+      "graphtyn_hook"
+    ],
+    "repetitions": 3,
+    "planned_sessions": 6,
+    "order": "AB, BA, AB por repetición (graphtyn lean, graphtyn_hook).",
+    "direct_file_access": "Permitido por igual en ambos brazos.",
+    "grading": "Rúbrica determinista congelada antes de ejecutar; revisión final no independiente."
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "opencode_step_finish_semantics": "per-step",
+    "fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "cache_write_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "provider_cost",
+      "wall_seconds"
+    ]
+  },
+  "authorization": {
+    "source": "El usuario pidió implementar el paquete lean y el hook y repetir el benchmark (2026-10-26).",
+    "total_token_ceiling": null
+  },
+  "client_config": {
+    "client": "claude",
+    "model": "claude-sonnet-5-5",
+    "mcp": "--strict-mcp-config; graphtyn_benchmark (perfil query, respuesta lean) en ambos brazos; graphtyn_hook añade --settings con un hook UserPromptSubmit 'graphtyn claude-context hook --path <workspace>'",
+    "disallowed_tools": "Edit,Write,NotebookEdit,WebFetch,WebSearch,Task,Agent",
+    "setting_sources": "project (workspace sin .claude/ ni .mcp.json)",
+    "user_claude_md": "no aislado (--claude-bare no usado: requiere ANTHROPIC_API_KEY)"
+  },
+  "source_protocol": "benchmarks/real_c_cpp_agents_2026-10-20/redis_protocol.json",
+  "previous_runs": [
+    "benchmarks/real_claude_agents_2026-10-25",
+    "benchmarks/real_claude_agents_postfix_2026-10-25",
+    "benchmarks/real_claude_agents_reps_2026-10-25",
+    "benchmarks/real_claude_agents_graphify_2026-10-26"
+  ]
+}

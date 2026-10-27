@@ -338,6 +338,85 @@ def _serialized_tokens(value: dict) -> int:
     return (len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) + 3) // 4
 
 
+def _synchronize_bounded_source_coverage(output: dict) -> None:
+    """Keep the stop contract honest after payload compaction drops excerpts."""
+    coverage = output.get("source_coverage")
+    if not isinstance(coverage, dict):
+        return
+    covered = {
+        str(label)
+        for excerpt in output.get("source_evidence", [])
+        for label in excerpt.get("covers", [])
+    }
+    obligation_state = {
+        label: label in covered
+        for label in (coverage.get("required_obligations") or {})
+    }
+    symbol_state = {
+        symbol: f"source_symbol:{symbol}" in covered
+        for symbol in (coverage.get("required_symbols") or {})
+    }
+    coverage["required_obligations"] = obligation_state
+    coverage["required_symbols"] = symbol_state
+    missing = [label for label, present in obligation_state.items() if not present]
+    missing.extend(f"source_symbol:{symbol}" for symbol, present in symbol_state.items() if not present)
+    coverage["complete"] = not missing
+    if missing:
+        output["missing"] = list(dict.fromkeys([*output.get("missing", []), *missing]))
+        output["complete_for"] = []
+        output["do_not_expand"] = False
+        if output.get("stopping"):
+            output["stopping"]["sufficient_evidence"] = False
+
+
+def _ready_citations(output: dict, matched_aliases: set[str], limit: int = 12) -> list[str]:
+    """Real `path:line` references an answer can cite without expanding aliases.
+
+    Exact source excerpts come first, then declarations and operation lines of
+    the symbols that matched the request, then the remaining entities.
+    """
+    files = output.get("files") or {}
+    citations: list[str] = []
+    for excerpt in output.get("source_evidence") or []:
+        citations.append(f"{excerpt.get('file')}:{excerpt.get('start_line')}-{excerpt.get('end_line')} "
+                         f"{excerpt.get('symbol')}")
+    entities = output.get("entities") or {}
+    ordered = [alias for alias in entities if alias in matched_aliases] + \
+              [alias for alias in entities if alias not in matched_aliases]
+    seen_lines: set[str] = set()
+    for alias in ordered:
+        item = entities[alias]
+        file_alias, _, line = str(item.get("at") or "").partition(":")
+        path = files.get(file_alias)
+        if not path:
+            continue
+        candidates = ([(line, str(item.get("name") or ""))] if line else []) + [
+            (str(op[2]), f"{item.get('name')} → {op[1]}") for op in (item.get("ops") or [])[:2]
+            if op[2] and op[1]]
+        for line_number, label in candidates:
+            if f"{path}:{line_number}" not in seen_lines:
+                seen_lines.add(f"{path}:{line_number}")
+                citations.append(f"{path}:{line_number} {label}")
+    return list(dict.fromkeys(citations))[:limit]
+
+
+def _drop_excerpt_middle(text: str, characters: int) -> str:
+    """Remove about `characters` from the middle of a numbered excerpt.
+
+    A body's entry checks and its final call/return are usually the decisive
+    lines, so they survive; the gap is marked like other omitted ranges.
+    """
+    lines = text.split("\n")
+    if len(lines) < 5:
+        return text[:max(600, len(text) - characters)]
+    middle = len(lines) // 2
+    low, high, removed = middle, middle, 0
+    while removed < characters and low > 1 and high < len(lines) - 2:
+        removed += len(lines[low]) + len(lines[high]) + 2
+        low, high = low - 1, high + 1
+    return "\n".join([*lines[:low + 1], f"…: ({high - low - 1} lines omitted)", *lines[high:]])
+
+
 def _bound_evidence_payload(output: dict, matched_aliases: set[str], token_budget: int) -> None:
     """Shrink optional evidence until the whole serialized response fits."""
     token_budget = max(600, int(token_budget))
@@ -349,7 +428,7 @@ def _bound_evidence_payload(output: dict, matched_aliases: set[str], token_budge
 
     # Details and hints improve recall but declarations and operations are more
     # useful for verification. Remove those fields before dropping evidence.
-    for field in ("detail", "hints", "owner_signature", "imports"):
+    for field in ("detail", "hints", "owner_signature", "imports", "why"):
         for entity in reversed(list(output.get("entities", {}).values())):
             if _serialized_tokens(output) <= token_budget:
                 break
@@ -369,7 +448,12 @@ def _bound_evidence_payload(output: dict, matched_aliases: set[str], token_budge
         excerpt = output["source_evidence"][-1]
         text = str(excerpt.get("text") or "")
         if len(text) > 600:
-            excerpt["text"] = text[:max(600, len(text) - 800)]
+            excerpt["text"] = _drop_excerpt_middle(text, 800)
+            # The decisive line may have been in the removed lines. Reopen the
+            # obligations instead of retaining a coverage claim we can no
+            # longer prove; the named symbol itself is still present.
+            excerpt["covers"] = [label for label in excerpt.get("covers", [])
+                                 if str(label).startswith("source_symbol:")]
         elif len(output["source_evidence"]) > 1:
             output["source_evidence"].pop()
         else:
@@ -395,6 +479,7 @@ def _bound_evidence_payload(output: dict, matched_aliases: set[str], token_budge
                   for item in output.get("entities", {}).values() if item.get("at")}
     output["files"] = {alias: path for alias, path in output.get("files", {}).items()
                        if alias in used_files}
+    _synchronize_bounded_source_coverage(output)
     output["payload_truncated"] = original_tokens > token_budget or bool(output.get("omitted"))
     # Account for the accounting fields themselves. A couple of passes reaches
     # a stable digit width without relying on an approximate character count.
@@ -444,6 +529,10 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
             item["imports"] = node["imports"][:16]
         if node.get("semantic_hints"):
             item["hints"] = node["semantic_hints"][:4]
+        if node.get("rationale"):
+            # Stated design reasons from marked comments; cite them with the file alias.
+            item["why"] = [[entry.get("line"), entry.get("marker"), str(entry.get("text") or "")[:200]]
+                           for entry in node["rationale"][:3]]
         owner_signature = str(node.get("owner_signature") or "")
         container = str(node.get("container") or "")
         if owner_signature and container not in selected_type_names and owner_signature not in emitted_owner_signatures:
@@ -500,6 +589,9 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
 
     output = {key: value for key, value in result.items()
               if key not in ("matched", "matched_ids", "matches", "nodes", "links", "impacted", "estimated_tokens", "intent_terms", "operation_limit")}
+    if "source_evidence" in output:
+        # Bounding edits excerpts in place; never alter the caller's package.
+        output["source_evidence"] = [dict(item) for item in output["source_evidence"]]
     if "obligation_evidence" in output:
         output["obligation_evidence"] = {
             label: [aliases[node_id] for node_id in node_ids if node_id in aliases]
@@ -524,7 +616,7 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
         "files": {alias: path for path, alias in files.items()},
         "entities": entities,
         "relations": relations,
-        "legend": "relation=[source,label,target,E|I|A,line?]; E=extraída,I=inferida,A=ambigua",
+        "legend": "relation=[source,label,target,E|I|A,line?]; E=extraída,I=inferida,A=ambigua; why=[line,marker,text] razón declarada en comentarios",
         "complete": len(unique) <= len(selected) and len(result.get("links", [])) <= len(relations),
     })
     if matched_ids:
@@ -565,9 +657,129 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
         output["next"] = "Solicita response_mode=full sólo si falta evidencia necesaria."
     matched_aliases = {aliases[node_id] for node_id in matched_ids if node_id in aliases}
     _bound_evidence_payload(output, matched_aliases, token_budget)
+    # Ready-made citations are a convenience: they only use budget left over
+    # after the evidence itself has been bounded.
+    citations = _ready_citations(output, matched_aliases)
+    output["citations"] = []
+    for citation in citations:
+        output["citations"].append(citation)
+        if _serialized_tokens(output) > max(600, int(token_budget)):
+            output["citations"].pop()
+            break
+    if not output["citations"]:
+        output.pop("citations")
     for _ in range(2):
         output["estimated_tokens"] = _serialized_tokens(output)
         output["payload_tokens"] = output["estimated_tokens"]
+    return output
+
+
+# Planner and diagnostics fields: useful to debug retrieval, not to answer.
+_DEBUG_FIELDS = ("request", "planner", "budget", "source_retrieval", "timing_ms", "evidence_mode",
+                 "format", "estimated_tokens", "payload_token_budget", "complete")
+_RELATION_INTENTS = {"impact", "bindings", "tests"}
+
+
+def _excerpt_lines(excerpts: list[dict]) -> dict[str, set[int]]:
+    """Line numbers actually printed in each file's excerpts (gaps excluded)."""
+    printed: dict[str, set[int]] = {}
+    for excerpt in excerpts:
+        lines = printed.setdefault(str(excerpt.get("file") or ""), set())
+        for line in str(excerpt.get("text") or "").split("\n"):
+            number, separator, _ = line.partition(": ")
+            if separator and number.isdigit():
+                lines.add(int(number))
+    return printed
+
+
+def lean_payload(result: dict) -> dict:
+    """Answer-ready subset of an intent package.
+
+    When exact source excerpts already satisfy the request, entities that are
+    not connected to that evidence are dropped, operations and signatures
+    already printed in an excerpt are not repeated, and diagnostics fields are
+    removed. Every omission is counted so the agent knows evidence was pruned.
+    """
+    output = {key: value for key, value in result.items() if key not in _DEBUG_FIELDS}
+    if result.get("format") not in (None, "evidence-v1"):
+        output["format"] = result["format"]  # a delta must stay recognisable
+    excerpts = output.get("source_evidence") or []
+    entities = dict(output.get("entities") or {})
+    files = output.get("files") or {}
+    relations = output.get("relations") or []
+    relational = output.get("intent") in _RELATION_INTENTS or bool(output.get("answer_checks"))
+    settled = (excerpts and output.get("do_not_expand")
+               and (output.get("source_coverage") or {}).get("complete", True) and not relational)
+    if settled and entities:
+        text = "\n".join(str(item.get("text") or "") for item in excerpts)
+        excerpt_symbols = {str(item.get("symbol") or "") for item in excerpts}
+        anchored = set(output.get("matches") or [])
+        for aliases in (output.get("obligation_evidence") or {}).values():
+            anchored.update(aliases)
+        for alias, item in entities.items():
+            name = str(item.get("name") or "")
+            if name in excerpt_symbols or (name and re.search(rf"\b{re.escape(name)}\b", text)):
+                anchored.add(alias)
+        kept = set(anchored)
+        for relation in relations:
+            if relation[0] in anchored or relation[2] in anchored:
+                kept.update((relation[0], relation[2]))
+        if kept:
+            entities = {alias: item for alias, item in entities.items() if alias in kept}
+            relations = [relation for relation in relations if relation[0] in kept and relation[2] in kept]
+            omitted = len(output.get("entities") or {}) - len(entities)
+            if omitted:
+                output["omitted_unrelated_entities"] = omitted
+    printed = _excerpt_lines(excerpts)
+    for alias, item in list(entities.items()):
+        file_alias, _, line = str(item.get("at") or "").partition(":")
+        shown = printed.get(str(files.get(file_alias) or ""), set())
+        if not shown:
+            continue
+        item = dict(item)
+        if line.isdigit() and int(line) in shown:
+            item.pop("signature", None)
+        ops = [op for op in item.get("ops") or [] if not (isinstance(op[2], int) and op[2] in shown)]
+        if ops:
+            item["ops"] = ops
+        else:
+            item.pop("ops", None)
+        entities[alias] = item
+    if "entities" in output:
+        output["entities"] = entities
+        output["relations"] = relations
+        used_files = {str(item.get("at") or "").partition(":")[0] for item in entities.values()}
+        output["files"] = {alias: path for alias, path in files.items() if alias in used_files}
+        names = {str(item.get("name") or "") for item in entities.values()} | {
+            str(item.get("symbol") or "") for item in excerpts}
+        if output.get("citations"):
+            output["citations"] = [citation for citation in output["citations"]
+                                   if citation.rsplit(" ", 1)[-1] in names
+                                   or citation.split(" ", 1)[-1].split(" → ")[0] in names]
+    if relations:
+        output["legend"] = "relation=[source,label,target,E|I|A,line?]; why=[line,marker,text]"
+    else:
+        output.pop("legend", None)
+    if not relational:
+        output.pop("coverage", None)
+        output.pop("negative_evidence", None)
+    validation = output.pop("validation", None) or {}
+    if not validation.get("ok", True) or validation.get("ambiguous_relations"):
+        output["validation"] = {key: validation.get(key) for key in ("ok", "ambiguous_relations", "policy")}
+    stopping = output.pop("stopping", None) or {}
+    if not output.get("do_not_expand") and stopping:
+        output["stopping"] = stopping
+    if output.get("guidance"):
+        sentences = re.split(r"(?<=[.;])\s+", str(output["guidance"]).strip())
+        output["guidance"] = " ".join(dict.fromkeys(sentence for sentence in sentences if sentence))
+    context = output.get("project_context")
+    if isinstance(context, dict):
+        output["project_context"] = {key: context[key] for key in ("workspace", "project_id", "project_name")
+                                     if context.get(key)}
+    for key in ("not_applicable_obligations", "obligation_evidence", "requested_obligations"):
+        if not output.get(key):
+            output.pop(key, None)
+    output["payload_tokens"] = _serialized_tokens(output)
     return output
 
 
@@ -600,6 +812,37 @@ def _source_evidence_identities(evidence: dict) -> set[tuple[str, int, int, str]
         )
         for item in evidence.get("source_evidence", [])
     }
+
+
+def build_intent_package(workspace: Path, graph: dict, request: str, intent: str = "auto",
+                         limit: int = 10, evidence_mode: str = "auto",
+                         stages: dict[str, float] | None = None) -> tuple[dict, dict, str]:
+    """One-round intent retrieval shared by the MCP tool and client prompt hooks.
+
+    Returns the internal package, its `evidence-v1` rendering and a context id
+    derived from that rendering. `stages` receives retrieval/coverage times in ms.
+    """
+    started = time.perf_counter()
+    raw = query_intent(graph, request, intent, limit)
+    retrieval_ms = (time.perf_counter() - started) * 1000
+    started = time.perf_counter()
+    raw = attach_source_evidence(workspace, raw, request, evidence_mode)
+    raw = attach_learning(raw, workspace)
+    _synchronize_stopping(raw)
+    coverage_ms = (time.perf_counter() - started) * 1000
+    started = time.perf_counter()
+    result = evidence_result(raw, max_nodes=limit,
+                             token_budget=6000 if raw.get("evidence_mode") == "precision" else 4000)
+    if raw.get("evidence_mode") == "precision" and result.get("source_evidence"):
+        # Precision keeps more entities, but excerpts stay within the default
+        # budget: this is the configuration measured in the agent benchmarks.
+        result["source_evidence"] = evidence_result(raw, max_nodes=limit).get("source_evidence", [])
+        _synchronize_bounded_source_coverage(result)
+    if stages is not None:
+        stages.update(retrieval=retrieval_ms, coverage=coverage_ms,
+                      render=(time.perf_counter() - started) * 1000)
+    context_id = hashlib.sha256(json.dumps(result, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:12]
+    return raw, result, context_id
 
 
 def _synchronize_stopping(result: dict[str, Any]) -> None:
@@ -843,7 +1086,8 @@ def blast_radius(graph: dict, symbol: str, depth: int = 2) -> dict:
         "ambiguous_relations": sum(item["confidence"] == "AMBIGUOUS" for item in impacted),
     }
 
-def run_mcp_server(workspace: Path, tool_profile: str = "full"):
+def run_mcp_server(workspace: Path, tool_profile: str = "full", *, preload_index: bool = False,
+                   response_detail: str = "lean"):
     server_started_at = time.perf_counter()
     configure_utf8_stdio()
     """
@@ -856,6 +1100,11 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
     history = HistoryTracker(workspace)
     memory = SharedMemoryStore(workspace)
     intent_contexts: dict[str, dict] = {}
+    preload_index_ms = 0.0
+    if preload_index:
+        preload_started_at = time.perf_counter()
+        get_workspace_graph_with_meta(workspace, parser)
+        preload_index_ms = (time.perf_counter() - preload_started_at) * 1000
     server_startup_ms = round((time.perf_counter() - server_started_at) * 1000, 3)
 
     def _handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
@@ -904,17 +1153,12 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     return {"jsonrpc": "2.0", "id": req_id,
                             "error": {"code": -32602,
                                       "message": "extends_context_id pertenece a otro workspace; inicia una nueva consulta"}}
+                stages: dict[str, float] = {}
+                raw, result, context_id = build_intent_package(
+                    graph_workspace, graph, request, str(args.get("intent") or "auto"), limit,
+                    str(args.get("evidence_mode") or "auto"), stages)
+                retrieval_ms, coverage_ms = stages["retrieval"], stages["coverage"]
                 stage_started_at = time.perf_counter()
-                raw = query_intent(graph, request, str(args.get("intent") or "auto"), limit)
-                retrieval_ms = (time.perf_counter() - stage_started_at) * 1000
-                stage_started_at = time.perf_counter()
-                raw = attach_source_evidence(graph_workspace, raw, request, str(args.get("evidence_mode") or "auto"))
-                raw = attach_learning(raw, graph_workspace)
-                _synchronize_stopping(raw)
-                coverage_ms = (time.perf_counter() - stage_started_at) * 1000
-                stage_started_at = time.perf_counter()
-                result = evidence_result(raw, max_nodes=limit)
-                context_id = hashlib.sha256(json.dumps(result, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:12]
                 previous = previous_entry["evidence"] if previous_entry else None
                 if previous:
                     old_entity_ids, old_relations, _old_files = _evidence_identities(previous)
@@ -966,13 +1210,14 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                     fallback = result.get("anchor_fallback")
                     if isinstance(fallback, dict):
                         fallback["extends_context_id"] = context_id
-                render_ms = (time.perf_counter() - stage_started_at) * 1000
+                render_ms = stages["render"] + (time.perf_counter() - stage_started_at) * 1000
                 intent_contexts[context_id] = {
                     "evidence": evidence_result(raw, max_nodes=limit),
                     "workspace": str(graph_workspace),
                 }
                 result["timing_ms"] = {
                     "server_startup": server_startup_ms,
+                    "preload_index": round(preload_index_ms, 3),
                     "load_index": round(load_index_ms, 3),
                     "retrieval": round(retrieval_ms, 3),
                     "coverage": round(coverage_ms, 3),
@@ -982,7 +1227,9 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full"):
                 }
                 result["estimated_tokens"] = _serialized_tokens(result)
                 _tag_graph_result(result, graph_workspace)
-                history.log_event("mcp", "query_intent", f"Consulta {raw['intent']} de una ronda", {"request": request[:240], "context_id": context_id, "workspace": str(graph_workspace), "estimated_tokens": result["estimated_tokens"]})
+                if str(args.get("response_detail") or response_detail) != "debug":
+                    result = lean_payload(result)
+                history.log_event("mcp", "query_intent", f"Consulta {raw['intent']} de una ronda", {"request": request[:240], "context_id": context_id, "workspace": str(graph_workspace), "estimated_tokens": result.get("estimated_tokens", result.get("payload_tokens"))})
                 return {"jsonrpc": "2.0", "id": req_id,
                         "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
             elif name == "graph_validate_answer":

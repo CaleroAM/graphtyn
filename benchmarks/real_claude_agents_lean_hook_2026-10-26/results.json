@@ -1,0 +1,2141 @@
+{
+  "schema_version": "1.0",
+  "new_runs": 18,
+  "complete_new_runs": 18,
+  "cells": [
+    {
+      "repository": "redis",
+      "repetition": 1,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 60561,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 26275,
+            "cache_write_input_tokens": 32058,
+            "output_tokens": 2224,
+            "reasoning_tokens": null,
+            "total_tokens": 60561,
+            "provider_cost": 0.1531075
+          },
+          "seconds": 18.005,
+          "quality": 7,
+          "missed": [
+            "operational_rejections"
+          ],
+          "citations": 4,
+          "cost_usd": 0.1531075,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 33610,
+          "usage": {
+            "input_tokens": 2,
+            "cached_input_tokens": 23673,
+            "cache_write_input_tokens": 7904,
+            "output_tokens": 2031,
+            "reasoning_tokens": null,
+            "total_tokens": 33610,
+            "provider_cost": 0.05429729999999999
+          },
+          "seconds": 19.237,
+          "quality": 8,
+          "missed": [],
+          "citations": 1,
+          "cost_usd": 0.05429729999999999,
+          "tool_counts": {},
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 1,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 166601,
+          "usage": {
+            "input_tokens": 10,
+            "cached_input_tokens": 147151,
+            "cache_write_input_tokens": 15556,
+            "output_tokens": 3884,
+            "reasoning_tokens": null,
+            "total_tokens": 166601,
+            "provider_cost": 0.1157991
+          },
+          "seconds": 29.158,
+          "quality": 8,
+          "missed": [],
+          "citations": 51,
+          "cost_usd": 0.1157991,
+          "tool_counts": {
+            "Bash": 3,
+            "Read": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 5,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 62544,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49718,
+            "cache_write_input_tokens": 10686,
+            "output_tokens": 2136,
+            "reasoning_tokens": null,
+            "total_tokens": 62544,
+            "provider_cost": 0.0690838
+          },
+          "seconds": 18.228,
+          "quality": 8,
+          "missed": [],
+          "citations": 3,
+          "cost_usd": 0.0690838,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "3db7eaac384c",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 5995,
+            "payload_truncated": true,
+            "total_ms": 1492.957
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 196652,
+          "usage": {
+            "input_tokens": 10,
+            "cached_input_tokens": 147799,
+            "cache_write_input_tokens": 45066,
+            "output_tokens": 3777,
+            "reasoning_tokens": null,
+            "total_tokens": 196652,
+            "provider_cost": 0.2328339
+          },
+          "seconds": 34.546,
+          "quality": 8,
+          "missed": [],
+          "citations": 22,
+          "cost_usd": 0.2328339,
+          "tool_counts": {
+            "Bash": 3,
+            "Read": 1,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 5,
+          "retrieval": null
+        }
+      }
+    },
+    {
+      "repository": "redis",
+      "repetition": 2,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 60519,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49869,
+            "cache_write_input_tokens": 8441,
+            "output_tokens": 2205,
+            "reasoning_tokens": null,
+            "total_tokens": 60519,
+            "provider_cost": 0.0608089
+          },
+          "seconds": 19.122,
+          "quality": 7,
+          "missed": [
+            "operational_rejections"
+          ],
+          "citations": 2,
+          "cost_usd": 0.0608089,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 33767,
+          "usage": {
+            "input_tokens": 2,
+            "cached_input_tokens": 23673,
+            "cache_write_input_tokens": 7904,
+            "output_tokens": 2188,
+            "reasoning_tokens": null,
+            "total_tokens": 33767,
+            "provider_cost": 0.055867299999999995
+          },
+          "seconds": 19.129,
+          "quality": 8,
+          "missed": [],
+          "citations": 3,
+          "cost_usd": 0.055867299999999995,
+          "tool_counts": {},
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 1,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 170359,
+          "usage": {
+            "input_tokens": 10,
+            "cached_input_tokens": 148598,
+            "cache_write_input_tokens": 17584,
+            "output_tokens": 4167,
+            "reasoning_tokens": null,
+            "total_tokens": 170359,
+            "provider_cost": 0.1268858
+          },
+          "seconds": 30.715,
+          "quality": 8,
+          "missed": [],
+          "citations": 60,
+          "cost_usd": 0.1268858,
+          "tool_counts": {
+            "Bash": 3,
+            "Read": 2
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 5,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 62900,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49718,
+            "cache_write_input_tokens": 10686,
+            "output_tokens": 2492,
+            "reasoning_tokens": null,
+            "total_tokens": 62900,
+            "provider_cost": 0.0726438
+          },
+          "seconds": 21.511,
+          "quality": 8,
+          "missed": [],
+          "citations": 29,
+          "cost_usd": 0.0726438,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "3db7eaac384c",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 5995,
+            "payload_truncated": true,
+            "total_ms": 1541.151
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 190734,
+          "usage": {
+            "input_tokens": 10,
+            "cached_input_tokens": 170457,
+            "cache_write_input_tokens": 16815,
+            "output_tokens": 3452,
+            "reasoning_tokens": null,
+            "total_tokens": 190734,
+            "provider_cost": 0.11884570000000001
+          },
+          "seconds": 26.779,
+          "quality": 8,
+          "missed": [],
+          "citations": 47,
+          "cost_usd": 0.11884570000000001,
+          "tool_counts": {
+            "Bash": 3,
+            "Read": 1,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 5,
+          "retrieval": null
+        }
+      }
+    },
+    {
+      "repository": "redis",
+      "repetition": 3,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 60781,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49869,
+            "cache_write_input_tokens": 8441,
+            "output_tokens": 2467,
+            "reasoning_tokens": null,
+            "total_tokens": 60781,
+            "provider_cost": 0.0634289
+          },
+          "seconds": 21.201,
+          "quality": 8,
+          "missed": [],
+          "citations": 4,
+          "cost_usd": 0.0634289,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 34052,
+          "usage": {
+            "input_tokens": 2,
+            "cached_input_tokens": 23673,
+            "cache_write_input_tokens": 7904,
+            "output_tokens": 2473,
+            "reasoning_tokens": null,
+            "total_tokens": 34052,
+            "provider_cost": 0.0587173
+          },
+          "seconds": 21.475,
+          "quality": 7,
+          "missed": [
+            "operational_rejections"
+          ],
+          "citations": 31,
+          "cost_usd": 0.0587173,
+          "tool_counts": {},
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 1,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 208690,
+          "usage": {
+            "input_tokens": 12,
+            "cached_input_tokens": 186882,
+            "cache_write_input_tokens": 17909,
+            "output_tokens": 3887,
+            "reasoning_tokens": null,
+            "total_tokens": 208690,
+            "provider_cost": 0.1292182
+          },
+          "seconds": 35.654,
+          "quality": 8,
+          "missed": [],
+          "citations": 49,
+          "cost_usd": 0.1292182,
+          "tool_counts": {
+            "Bash": 4,
+            "Read": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 6,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 63123,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49718,
+            "cache_write_input_tokens": 10686,
+            "output_tokens": 2715,
+            "reasoning_tokens": null,
+            "total_tokens": 63123,
+            "provider_cost": 0.0748738
+          },
+          "seconds": 22.613,
+          "quality": 8,
+          "missed": [],
+          "citations": 6,
+          "cost_usd": 0.0748738,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "3db7eaac384c",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 5995,
+            "payload_truncated": true,
+            "total_ms": 1421.649
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 107110,
+          "usage": {
+            "input_tokens": 6,
+            "cached_input_tokens": 89612,
+            "cache_write_input_tokens": 14106,
+            "output_tokens": 3386,
+            "reasoning_tokens": null,
+            "total_tokens": 107110,
+            "provider_cost": 0.0992572
+          },
+          "seconds": 24.607,
+          "quality": 8,
+          "missed": [],
+          "citations": 39,
+          "cost_usd": 0.0992572,
+          "tool_counts": {
+            "Bash": 2,
+            "Read": 3,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 3,
+          "retrieval": null
+        }
+      }
+    },
+    {
+      "repository": "fmt",
+      "repetition": 1,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 60536,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 48959,
+            "cache_write_input_tokens": 8955,
+            "output_tokens": 2618,
+            "reasoning_tokens": null,
+            "total_tokens": 60536,
+            "provider_cost": 0.0669039
+          },
+          "seconds": 20.145,
+          "quality": 8,
+          "missed": [],
+          "citations": 15,
+          "cost_usd": 0.0669039,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 32740,
+          "usage": {
+            "input_tokens": 2,
+            "cached_input_tokens": 23693,
+            "cache_write_input_tokens": 7006,
+            "output_tokens": 2039,
+            "reasoning_tokens": null,
+            "total_tokens": 32740,
+            "provider_cost": 0.0507873
+          },
+          "seconds": 16.329,
+          "quality": 8,
+          "missed": [],
+          "citations": 13,
+          "cost_usd": 0.0507873,
+          "tool_counts": {},
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 1,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 310168,
+          "usage": {
+            "input_tokens": 18,
+            "cached_input_tokens": 282508,
+            "cache_write_input_tokens": 21870,
+            "output_tokens": 5772,
+            "reasoning_tokens": null,
+            "total_tokens": 310168,
+            "provider_cost": 0.1734868
+          },
+          "seconds": 45.363,
+          "quality": 8,
+          "missed": [],
+          "citations": 48,
+          "cost_usd": 0.1734868,
+          "tool_counts": {
+            "Bash": 9
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 9,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 62933,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49758,
+            "cache_write_input_tokens": 10239,
+            "output_tokens": 2932,
+            "reasoning_tokens": null,
+            "total_tokens": 62933,
+            "provider_cost": 0.0752598
+          },
+          "seconds": 22.26,
+          "quality": 8,
+          "missed": [],
+          "citations": 17,
+          "cost_usd": 0.0752598,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "9c32d548e9ff",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 3949,
+            "payload_truncated": false,
+            "total_ms": 340.968
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 343123,
+          "usage": {
+            "input_tokens": 16,
+            "cached_input_tokens": 311582,
+            "cache_write_input_tokens": 25536,
+            "output_tokens": 5989,
+            "reasoning_tokens": null,
+            "total_tokens": 343123,
+            "provider_cost": 0.1932242
+          },
+          "seconds": 55.391,
+          "quality": 8,
+          "missed": [],
+          "citations": 57,
+          "cost_usd": 0.1932242,
+          "tool_counts": {
+            "Bash": 6,
+            "Read": 1,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 8,
+          "retrieval": null
+        }
+      }
+    },
+    {
+      "repository": "fmt",
+      "repetition": 2,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 60388,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 57914,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 2470,
+            "reasoning_tokens": null,
+            "total_tokens": 60388,
+            "provider_cost": 0.030499400000000003
+          },
+          "seconds": 25.042,
+          "quality": 8,
+          "missed": [],
+          "citations": 13,
+          "cost_usd": 0.030499400000000003,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 134115,
+          "usage": {
+            "input_tokens": 8,
+            "cached_input_tokens": 119739,
+            "cache_write_input_tokens": 10581,
+            "output_tokens": 3787,
+            "reasoning_tokens": null,
+            "total_tokens": 134115,
+            "provider_cost": 0.09218389999999999
+          },
+          "seconds": 34.94,
+          "quality": 8,
+          "missed": [],
+          "citations": 33,
+          "cost_usd": 0.09218389999999999,
+          "tool_counts": {
+            "Bash": 3,
+            "Read": 2
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 4,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 344531,
+          "usage": {
+            "input_tokens": 20,
+            "cached_input_tokens": 293681,
+            "cache_write_input_tokens": 43771,
+            "output_tokens": 7059,
+            "reasoning_tokens": null,
+            "total_tokens": 344531,
+            "provider_cost": 0.27508210000000005
+          },
+          "seconds": 54.922,
+          "quality": 8,
+          "missed": [],
+          "citations": 78,
+          "cost_usd": 0.27508210000000005,
+          "tool_counts": {
+            "Bash": 10
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 10,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 62622,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49758,
+            "cache_write_input_tokens": 10216,
+            "output_tokens": 2644,
+            "reasoning_tokens": null,
+            "total_tokens": 62622,
+            "provider_cost": 0.0722878
+          },
+          "seconds": 20.631,
+          "quality": 8,
+          "missed": [],
+          "citations": 18,
+          "cost_usd": 0.0722878,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "9c32d548e9ff",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 3949,
+            "payload_truncated": false,
+            "total_ms": 310.502
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 236317,
+          "usage": {
+            "input_tokens": 12,
+            "cached_input_tokens": 213393,
+            "cache_write_input_tokens": 18985,
+            "output_tokens": 3927,
+            "reasoning_tokens": null,
+            "total_tokens": 236317,
+            "provider_cost": 0.1365733
+          },
+          "seconds": 40.051,
+          "quality": 8,
+          "missed": [],
+          "citations": 26,
+          "cost_usd": 0.1365733,
+          "tool_counts": {
+            "Bash": 4,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 6,
+          "retrieval": null
+        }
+      }
+    },
+    {
+      "repository": "fmt",
+      "repetition": 3,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 59994,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49909,
+            "cache_write_input_tokens": 7993,
+            "output_tokens": 2088,
+            "reasoning_tokens": null,
+            "total_tokens": 59994,
+            "provider_cost": 0.0578509
+          },
+          "seconds": 18.182,
+          "quality": 8,
+          "missed": [],
+          "citations": 13,
+          "cost_usd": 0.0578509,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 98645,
+          "usage": {
+            "input_tokens": 6,
+            "cached_input_tokens": 86019,
+            "cache_write_input_tokens": 9253,
+            "output_tokens": 3367,
+            "reasoning_tokens": null,
+            "total_tokens": 98645,
+            "provider_cost": 0.0792959
+          },
+          "seconds": 25.165,
+          "quality": 8,
+          "missed": [],
+          "citations": 34,
+          "cost_usd": 0.0792959,
+          "tool_counts": {
+            "Bash": 1,
+            "Read": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 3,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 232972,
+          "usage": {
+            "input_tokens": 14,
+            "cached_input_tokens": 207347,
+            "cache_write_input_tokens": 19906,
+            "output_tokens": 5705,
+            "reasoning_tokens": null,
+            "total_tokens": 232972,
+            "provider_cost": 0.1574367
+          },
+          "seconds": 41.959,
+          "quality": 8,
+          "missed": [],
+          "citations": 52,
+          "cost_usd": 0.1574367,
+          "tool_counts": {
+            "Bash": 7
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 7,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 63245,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 26218,
+            "cache_write_input_tokens": 33782,
+            "output_tokens": 3241,
+            "reasoning_tokens": null,
+            "total_tokens": 63245,
+            "provider_cost": 0.1701678
+          },
+          "seconds": 25.701,
+          "quality": 8,
+          "missed": [],
+          "citations": 30,
+          "cost_usd": 0.1701678,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "5754e82c6238",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 3956,
+            "payload_truncated": false,
+            "total_ms": 340.414
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 228559,
+          "usage": {
+            "input_tokens": 12,
+            "cached_input_tokens": 205926,
+            "cache_write_input_tokens": 17972,
+            "output_tokens": 4649,
+            "reasoning_tokens": null,
+            "total_tokens": 228559,
+            "provider_cost": 0.1389946
+          },
+          "seconds": 41.753,
+          "quality": 8,
+          "missed": [],
+          "citations": 39,
+          "cost_usd": 0.1389946,
+          "tool_counts": {
+            "Bash": 5,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 6,
+          "retrieval": null
+        }
+      }
+    },
+    {
+      "repository": "rails",
+      "repetition": 1,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 60811,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 48944,
+            "cache_write_input_tokens": 9476,
+            "output_tokens": 2387,
+            "reasoning_tokens": null,
+            "total_tokens": 60811,
+            "provider_cost": 0.0666764
+          },
+          "seconds": 22.57,
+          "quality": 7,
+          "missed": [
+            "create_branch"
+          ],
+          "citations": 16,
+          "cost_usd": 0.0666764,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 32905,
+          "usage": {
+            "input_tokens": 2,
+            "cached_input_tokens": 22981,
+            "cache_write_input_tokens": 7714,
+            "output_tokens": 2208,
+            "reasoning_tokens": null,
+            "total_tokens": 32905,
+            "provider_cost": 0.0552381
+          },
+          "seconds": 28.564,
+          "quality": 6,
+          "missed": [
+            "create_branch",
+            "failure_semantics"
+          ],
+          "citations": 13,
+          "cost_usd": 0.0552381,
+          "tool_counts": {},
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 1,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 228903,
+          "usage": {
+            "input_tokens": 14,
+            "cached_input_tokens": 207812,
+            "cache_write_input_tokens": 15577,
+            "output_tokens": 5500,
+            "reasoning_tokens": null,
+            "total_tokens": 228903,
+            "provider_cost": 0.1381172
+          },
+          "seconds": 50.29,
+          "quality": 6,
+          "missed": [
+            "create_branch",
+            "failure_semantics"
+          ],
+          "citations": 16,
+          "cost_usd": 0.1381172,
+          "tool_counts": {
+            "Bash": 6
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 7,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 62568,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 48793,
+            "cache_write_input_tokens": 11530,
+            "output_tokens": 2241,
+            "reasoning_tokens": null,
+            "total_tokens": 62568,
+            "provider_cost": 0.0734173
+          },
+          "seconds": 29.031,
+          "quality": 7,
+          "missed": [
+            "create_branch"
+          ],
+          "citations": 15,
+          "cost_usd": 0.0734173,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "ce7b6599b709",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 4795,
+            "payload_truncated": false,
+            "total_ms": 4236.971
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 251447,
+          "usage": {
+            "input_tokens": 14,
+            "cached_input_tokens": 233190,
+            "cache_write_input_tokens": 13899,
+            "output_tokens": 4344,
+            "reasoning_tokens": null,
+            "total_tokens": 251447,
+            "provider_cost": 0.12238299999999999
+          },
+          "seconds": 53.92,
+          "quality": 8,
+          "missed": [],
+          "citations": 18,
+          "cost_usd": 0.12238299999999999,
+          "tool_counts": {
+            "Bash": 5,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 7,
+          "retrieval": null
+        }
+      }
+    },
+    {
+      "repository": "rails",
+      "repetition": 2,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 60970,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49880,
+            "cache_write_input_tokens": 8540,
+            "output_tokens": 2546,
+            "reasoning_tokens": null,
+            "total_tokens": 60970,
+            "provider_cost": 0.06461599999999999
+          },
+          "seconds": 25.702,
+          "quality": 8,
+          "missed": [],
+          "citations": 17,
+          "cost_usd": 0.06461599999999999,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 32951,
+          "usage": {
+            "input_tokens": 2,
+            "cached_input_tokens": 23679,
+            "cache_write_input_tokens": 7016,
+            "output_tokens": 2254,
+            "reasoning_tokens": null,
+            "total_tokens": 32951,
+            "provider_cost": 0.05297589999999999
+          },
+          "seconds": 30.582,
+          "quality": 8,
+          "missed": [],
+          "citations": 12,
+          "cost_usd": 0.05297589999999999,
+          "tool_counts": {},
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 1,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 195226,
+          "usage": {
+            "input_tokens": 12,
+            "cached_input_tokens": 175539,
+            "cache_write_input_tokens": 14050,
+            "output_tokens": 5625,
+            "reasoning_tokens": null,
+            "total_tokens": 195226,
+            "provider_cost": 0.13002789999999997
+          },
+          "seconds": 44.53,
+          "quality": 7,
+          "missed": [
+            "create_branch"
+          ],
+          "citations": 21,
+          "cost_usd": 0.13002789999999997,
+          "tool_counts": {
+            "Bash": 6
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 6,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 62930,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49729,
+            "cache_write_input_tokens": 10594,
+            "output_tokens": 2603,
+            "reasoning_tokens": null,
+            "total_tokens": 62930,
+            "provider_cost": 0.0733869
+          },
+          "seconds": 28.309,
+          "quality": 8,
+          "missed": [],
+          "citations": 11,
+          "cost_usd": 0.0733869,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "ce7b6599b709",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 4795,
+            "payload_truncated": false,
+            "total_ms": 3901.689
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 258187,
+          "usage": {
+            "input_tokens": 14,
+            "cached_input_tokens": 240149,
+            "cache_write_input_tokens": 13126,
+            "output_tokens": 4898,
+            "reasoning_tokens": null,
+            "total_tokens": 258187,
+            "provider_cost": 0.1255269
+          },
+          "seconds": 45.788,
+          "quality": 8,
+          "missed": [],
+          "citations": 11,
+          "cost_usd": 0.1255269,
+          "tool_counts": {
+            "Bash": 6,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 7,
+          "retrieval": null
+        }
+      }
+    },
+    {
+      "repository": "rails",
+      "repetition": 3,
+      "arms": {
+        "graphtyn_lean": {
+          "status": "complete",
+          "tokens": 60998,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49880,
+            "cache_write_input_tokens": 8540,
+            "output_tokens": 2574,
+            "reasoning_tokens": null,
+            "total_tokens": 60998,
+            "provider_cost": 0.064896
+          },
+          "seconds": 30.512,
+          "quality": 8,
+          "missed": [],
+          "citations": 15,
+          "cost_usd": 0.064896,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": null
+        },
+        "graphtyn_hook": {
+          "status": "complete",
+          "tokens": 32926,
+          "usage": {
+            "input_tokens": 2,
+            "cached_input_tokens": 23679,
+            "cache_write_input_tokens": 7016,
+            "output_tokens": 2229,
+            "reasoning_tokens": null,
+            "total_tokens": 32926,
+            "provider_cost": 0.0527259
+          },
+          "seconds": 29.423,
+          "quality": 6,
+          "missed": [
+            "create_branch",
+            "failure_semantics"
+          ],
+          "citations": 15,
+          "cost_usd": 0.0527259,
+          "tool_counts": {},
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": []
+          },
+          "prompt_hook": {
+            "hook_events": 0,
+            "context_injected": false
+          },
+          "model_calls": 1,
+          "retrieval": null
+        },
+        "baseline": {
+          "status": "complete",
+          "tokens": 217576,
+          "usage": {
+            "input_tokens": 14,
+            "cached_input_tokens": 202156,
+            "cache_write_input_tokens": 10659,
+            "output_tokens": 4747,
+            "reasoning_tokens": null,
+            "total_tokens": 217576,
+            "provider_cost": 0.11034959999999998
+          },
+          "seconds": 39.868,
+          "quality": 7,
+          "missed": [
+            "create_branch"
+          ],
+          "citations": 16,
+          "cost_usd": 0.11034959999999998,
+          "tool_counts": {
+            "Bash": 6
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": null,
+            "tool_calls": []
+          },
+          "prompt_hook": null,
+          "model_calls": 7,
+          "retrieval": null
+        },
+        "graphtyn_previous": {
+          "status": "complete",
+          "tokens": 62701,
+          "usage": {
+            "input_tokens": 4,
+            "cached_input_tokens": 49729,
+            "cache_write_input_tokens": 10594,
+            "output_tokens": 2374,
+            "reasoning_tokens": null,
+            "total_tokens": 62701,
+            "provider_cost": 0.0710969
+          },
+          "seconds": 26.643,
+          "quality": 8,
+          "missed": [],
+          "citations": 12,
+          "cost_usd": 0.0710969,
+          "tool_counts": {
+            "mcp__graphtyn_benchmark__graph_query_intent": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "graph_query_intent"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 2,
+          "retrieval": {
+            "context_id": "ce7b6599b709",
+            "selected_nodes": 10,
+            "missing": [],
+            "do_not_expand": true,
+            "payload_tokens": 4795,
+            "payload_truncated": false,
+            "total_ms": 4169.601
+          }
+        },
+        "graphify": {
+          "status": "complete",
+          "tokens": 249769,
+          "usage": {
+            "input_tokens": 14,
+            "cached_input_tokens": 232947,
+            "cache_write_input_tokens": 12480,
+            "output_tokens": 4328,
+            "reasoning_tokens": null,
+            "total_tokens": 249769,
+            "provider_cost": 0.1165227
+          },
+          "seconds": 43.637,
+          "quality": 6,
+          "missed": [
+            "create_branch",
+            "failure_semantics"
+          ],
+          "citations": 12,
+          "cost_usd": 0.1165227,
+          "tool_counts": {
+            "Bash": 5,
+            "mcp__graphify_benchmark__query_graph": 1
+          },
+          "forbidden_tools": [],
+          "mcp": {
+            "server_status": "connected",
+            "tool_calls": [
+              "query_graph"
+            ]
+          },
+          "prompt_hook": null,
+          "model_calls": 7,
+          "retrieval": null
+        }
+      }
+    }
+  ],
+  "corpora": {
+    "redis": {
+      "repetitions": 3,
+      "tokens": {
+        "baseline": {
+          "n": 3,
+          "mean": 181883.33,
+          "stdev": 23291.17,
+          "min": 166601,
+          "max": 208690
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 164832.0,
+          "stdev": 50076.22,
+          "min": 107110,
+          "max": 196652
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 62855.67,
+          "stdev": 292.03,
+          "min": 62544,
+          "max": 63123
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 60620.33,
+          "stdev": 140.72,
+          "min": 60519,
+          "max": 60781
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 33809.67,
+          "stdev": 224.07,
+          "min": 33610,
+          "max": 34052
+        }
+      },
+      "quality": {
+        "baseline": [
+          8,
+          8,
+          8
+        ],
+        "graphify": [
+          8,
+          8,
+          8
+        ],
+        "graphtyn_previous": [
+          8,
+          8,
+          8
+        ],
+        "graphtyn_lean": [
+          7,
+          7,
+          8
+        ],
+        "graphtyn_hook": [
+          8,
+          8,
+          7
+        ]
+      },
+      "cost_usd": {
+        "baseline": {
+          "n": 3,
+          "mean": 0.12,
+          "stdev": 0.01,
+          "min": 0.12,
+          "max": 0.13
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 0.15,
+          "stdev": 0.07,
+          "min": 0.1,
+          "max": 0.23
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 0.07,
+          "stdev": 0.0,
+          "min": 0.07,
+          "max": 0.07
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 0.09,
+          "stdev": 0.05,
+          "min": 0.06,
+          "max": 0.15
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 0.06,
+          "stdev": 0.0,
+          "min": 0.05,
+          "max": 0.06
+        }
+      },
+      "seconds": {
+        "baseline": {
+          "n": 3,
+          "mean": 31.84,
+          "stdev": 3.39,
+          "min": 29.16,
+          "max": 35.65
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 28.64,
+          "stdev": 5.23,
+          "min": 24.61,
+          "max": 34.55
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 20.78,
+          "stdev": 2.28,
+          "min": 18.23,
+          "max": 22.61
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 19.44,
+          "stdev": 1.62,
+          "min": 18.0,
+          "max": 21.2
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 19.95,
+          "stdev": 1.32,
+          "min": 19.13,
+          "max": 21.48
+        }
+      },
+      "model_calls": {
+        "baseline": [
+          5,
+          5,
+          6
+        ],
+        "graphify": [
+          5,
+          5,
+          3
+        ],
+        "graphtyn_previous": [
+          2,
+          2,
+          2
+        ],
+        "graphtyn_lean": [
+          2,
+          2,
+          2
+        ],
+        "graphtyn_hook": [
+          1,
+          1,
+          1
+        ]
+      },
+      "hook_vs_lean_tokens_percent": {
+        "n": 3,
+        "mean": -44.23,
+        "stdev": 0.26,
+        "min": -44.5,
+        "max": -43.98
+      },
+      "lean_vs_previous_tokens_percent": {
+        "n": 3,
+        "mean": -3.56,
+        "stdev": 0.34,
+        "min": -3.79,
+        "max": -3.17
+      },
+      "hook_vs_baseline_tokens_percent": {
+        "n": 3,
+        "mean": -81.23,
+        "stdev": 2.13,
+        "min": -83.68,
+        "max": -79.83
+      },
+      "hook_vs_graphify_tokens_percent": {
+        "n": 3,
+        "mean": -77.81,
+        "stdev": 8.32,
+        "min": -82.91,
+        "max": -68.21
+      }
+    },
+    "fmt": {
+      "repetitions": 3,
+      "tokens": {
+        "baseline": {
+          "n": 3,
+          "mean": 295890.33,
+          "stdev": 57133.54,
+          "min": 232972,
+          "max": 344531
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 269333.0,
+          "stdev": 64021.63,
+          "min": 228559,
+          "max": 343123
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 62933.33,
+          "stdev": 311.5,
+          "min": 62622,
+          "max": 63245
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 60306.0,
+          "stdev": 280.15,
+          "min": 59994,
+          "max": 60536
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 88500.0,
+          "stdev": 51443.3,
+          "min": 32740,
+          "max": 134115
+        }
+      },
+      "quality": {
+        "baseline": [
+          8,
+          8,
+          8
+        ],
+        "graphify": [
+          8,
+          8,
+          8
+        ],
+        "graphtyn_previous": [
+          8,
+          8,
+          8
+        ],
+        "graphtyn_lean": [
+          8,
+          8,
+          8
+        ],
+        "graphtyn_hook": [
+          8,
+          8,
+          8
+        ]
+      },
+      "cost_usd": {
+        "baseline": {
+          "n": 3,
+          "mean": 0.2,
+          "stdev": 0.06,
+          "min": 0.16,
+          "max": 0.28
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 0.16,
+          "stdev": 0.03,
+          "min": 0.14,
+          "max": 0.19
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 0.11,
+          "stdev": 0.06,
+          "min": 0.07,
+          "max": 0.17
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 0.05,
+          "stdev": 0.02,
+          "min": 0.03,
+          "max": 0.07
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 0.07,
+          "stdev": 0.02,
+          "min": 0.05,
+          "max": 0.09
+        }
+      },
+      "seconds": {
+        "baseline": {
+          "n": 3,
+          "mean": 47.41,
+          "stdev": 6.72,
+          "min": 41.96,
+          "max": 54.92
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 45.73,
+          "stdev": 8.41,
+          "min": 40.05,
+          "max": 55.39
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 22.86,
+          "stdev": 2.59,
+          "min": 20.63,
+          "max": 25.7
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 21.12,
+          "stdev": 3.53,
+          "min": 18.18,
+          "max": 25.04
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 25.48,
+          "stdev": 9.31,
+          "min": 16.33,
+          "max": 34.94
+        }
+      },
+      "model_calls": {
+        "baseline": [
+          9,
+          10,
+          7
+        ],
+        "graphify": [
+          8,
+          6,
+          6
+        ],
+        "graphtyn_previous": [
+          2,
+          2,
+          2
+        ],
+        "graphtyn_lean": [
+          2,
+          2,
+          2
+        ],
+        "graphtyn_hook": [
+          1,
+          4,
+          3
+        ]
+      },
+      "hook_vs_lean_tokens_percent": {
+        "n": 3,
+        "mean": 46.86,
+        "stdev": 85.37,
+        "min": -45.92,
+        "max": 122.09
+      },
+      "lean_vs_previous_tokens_percent": {
+        "n": 3,
+        "mean": -4.17,
+        "stdev": 0.85,
+        "min": -5.14,
+        "max": -3.57
+      },
+      "hook_vs_baseline_tokens_percent": {
+        "n": 3,
+        "mean": -69.39,
+        "stdev": 17.45,
+        "min": -89.44,
+        "max": -57.66
+      },
+      "hook_vs_graphify_tokens_percent": {
+        "n": 3,
+        "mean": -63.52,
+        "stdev": 24.3,
+        "min": -90.46,
+        "max": -43.25
+      }
+    },
+    "rails": {
+      "repetitions": 3,
+      "tokens": {
+        "baseline": {
+          "n": 3,
+          "mean": 213901.67,
+          "stdev": 17136.53,
+          "min": 195226,
+          "max": 228903
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 253134.33,
+          "stdev": 4455.45,
+          "min": 249769,
+          "max": 258187
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 62733.0,
+          "stdev": 183.11,
+          "min": 62568,
+          "max": 62930
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 60926.33,
+          "stdev": 100.86,
+          "min": 60811,
+          "max": 60998
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 32927.33,
+          "stdev": 23.03,
+          "min": 32905,
+          "max": 32951
+        }
+      },
+      "quality": {
+        "baseline": [
+          6,
+          7,
+          7
+        ],
+        "graphify": [
+          8,
+          8,
+          6
+        ],
+        "graphtyn_previous": [
+          7,
+          8,
+          8
+        ],
+        "graphtyn_lean": [
+          7,
+          8,
+          8
+        ],
+        "graphtyn_hook": [
+          6,
+          8,
+          6
+        ]
+      },
+      "cost_usd": {
+        "baseline": {
+          "n": 3,
+          "mean": 0.13,
+          "stdev": 0.01,
+          "min": 0.11,
+          "max": 0.14
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 0.12,
+          "stdev": 0.0,
+          "min": 0.12,
+          "max": 0.13
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 0.07,
+          "stdev": 0.0,
+          "min": 0.07,
+          "max": 0.07
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 0.07,
+          "stdev": 0.0,
+          "min": 0.06,
+          "max": 0.07
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 0.05,
+          "stdev": 0.0,
+          "min": 0.05,
+          "max": 0.06
+        }
+      },
+      "seconds": {
+        "baseline": {
+          "n": 3,
+          "mean": 44.9,
+          "stdev": 5.22,
+          "min": 39.87,
+          "max": 50.29
+        },
+        "graphify": {
+          "n": 3,
+          "mean": 47.78,
+          "stdev": 5.42,
+          "min": 43.64,
+          "max": 53.92
+        },
+        "graphtyn_previous": {
+          "n": 3,
+          "mean": 27.99,
+          "stdev": 1.22,
+          "min": 26.64,
+          "max": 29.03
+        },
+        "graphtyn_lean": {
+          "n": 3,
+          "mean": 26.26,
+          "stdev": 4.0,
+          "min": 22.57,
+          "max": 30.51
+        },
+        "graphtyn_hook": {
+          "n": 3,
+          "mean": 29.52,
+          "stdev": 1.01,
+          "min": 28.56,
+          "max": 30.58
+        }
+      },
+      "model_calls": {
+        "baseline": [
+          7,
+          6,
+          7
+        ],
+        "graphify": [
+          7,
+          7,
+          7
+        ],
+        "graphtyn_previous": [
+          2,
+          2,
+          2
+        ],
+        "graphtyn_lean": [
+          2,
+          2,
+          2
+        ],
+        "graphtyn_hook": [
+          1,
+          1,
+          1
+        ]
+      },
+      "hook_vs_lean_tokens_percent": {
+        "n": 3,
+        "mean": -45.96,
+        "stdev": 0.07,
+        "min": -46.02,
+        "max": -45.89
+      },
+      "lean_vs_previous_tokens_percent": {
+        "n": 3,
+        "mean": -2.88,
+        "stdev": 0.2,
+        "min": -3.11,
+        "max": -2.72
+      },
+      "hook_vs_baseline_tokens_percent": {
+        "n": 3,
+        "mean": -84.54,
+        "stdev": 1.28,
+        "min": -85.62,
+        "max": -83.12
+      },
+      "hook_vs_graphify_tokens_percent": {
+        "n": 3,
+        "mean": -86.99,
+        "stdev": 0.22,
+        "min": -87.24,
+        "max": -86.82
+      }
+    }
+  },
+  "comparison_warning": "graphtyn_lean and graphtyn_hook ran together (counterbalanced); baseline, graphtyn_previous and graphify come from earlier runs on the same commits, tasks, model and client. Token totals are the primary metric.",
+  "raw_artifacts_preserved": true
+}
