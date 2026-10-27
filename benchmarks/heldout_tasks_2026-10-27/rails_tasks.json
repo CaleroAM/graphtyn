@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-27, antes de cualquier ejecución; rúbrica escrita leyendo la fuente directamente, sin consultar Graphtyn",
+  "tasks": [
+    {
+      "id": "RAILS_DESTROY_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza qué ocurre cuando se llama a destroy sobre un registro persistido de ActiveRecord: transacción, callbacks de destroy, borrado de asociaciones dependientes, construcción del DELETE y llamada al adaptador, bloqueo optimista, y qué pasa cuando un callback aborta o se usa destroy!. Cita archivo:línea para cada paso.",
+      "rubric": [
+        {
+          "id": "transaction",
+          "any": [
+            "with_transaction_returning_status"
+          ]
+        },
+        {
+          "id": "callbacks",
+          "any": [
+            "_run_destroy_callbacks"
+          ]
+        },
+        {
+          "id": "readonly",
+          "any": [
+            "_raise_readonly_record_error",
+            "readonly?"
+          ]
+        },
+        {
+          "id": "associations",
+          "any": [
+            "destroy_associations"
+          ]
+        },
+        {
+          "id": "delete_row",
+          "any": [
+            "destroy_row",
+            "_delete_row"
+          ]
+        },
+        {
+          "id": "delete_manager",
+          "any": [
+            "Arel::DeleteManager",
+            "_delete_record"
+          ]
+        },
+        {
+          "id": "locking",
+          "any": [
+            "StaleObjectError",
+            "locking_enabled?"
+          ]
+        },
+        {
+          "id": "failure",
+          "any": [
+            "RecordNotDestroyed",
+            "_raise_record_not_destroyed"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_RELATION_LOAD_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza qué ocurre al convertir una relación en array, por ejemplo Post.where(published: true).to_a: cómo se carga la relación una sola vez, cómo se ejecuta la consulta (casos sin resultados posibles, eager loading o consulta normal), la llamada final al adaptador, cómo se instancian los registros (incluida la herencia de tabla única) y qué se aplica después (preload, readonly, strict_loading). Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "to_a_entry",
+          "any": [
+            "to_ary",
+            "def records",
+            "records.dup"
+          ]
+        },
+        {
+          "id": "load_once",
+          "any": [
+            "loaded?",
+            "@loaded = true"
+          ]
+        },
+        {
+          "id": "exec_queries",
+          "any": [
+            "exec_queries",
+            "exec_main_query"
+          ]
+        },
+        {
+          "id": "short_circuit",
+          "any": [
+            "contradiction?",
+            "@none",
+            "null_relation?"
+          ]
+        },
+        {
+          "id": "eager",
+          "any": [
+            "eager_loading?",
+            "apply_join_dependency",
+            "Eager Load"
+          ]
+        },
+        {
+          "id": "adapter",
+          "any": [
+            "_query_by_sql",
+            "select_all"
+          ]
+        },
+        {
+          "id": "instantiate",
+          "any": [
+            "_load_from_sql",
+            "instantiate_instance_of",
+            "inheritance_column",
+            "instantiate_records"
+          ]
+        },
+        {
+          "id": "post_load",
+          "any": [
+            "preload_associations",
+            "readonly!",
+            "strict_loading!"
+          ]
+        }
+      ]
+    }
+  ]
+}

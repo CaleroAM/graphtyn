@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-27, antes de cualquier ejecución; rúbrica escrita leyendo la fuente directamente, sin consultar Graphtyn",
+  "tasks": [
+    {
+      "id": "FMT_PRINT_FLOW",
+      "request": "Traza cómo fmt::print escribe en stdout: cuándo usa la ruta sin UTF-8, qué decide is_locking, cómo vprint elige entre vprint_buffered y escribir directamente en el búfer del FILE (bloqueo y flush), y cómo se escribe finalmente el texto en el archivo. Cita evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "entry",
+          "any": [
+            "print(format_string",
+            "FMT_INLINE void print"
+          ]
+        },
+        {
+          "id": "non_utf8",
+          "any": [
+            "vprint_mojibake",
+            "use_utf8"
+          ]
+        },
+        {
+          "id": "locking",
+          "any": [
+            "is_locking"
+          ]
+        },
+        {
+          "id": "vprint_choice",
+          "any": [
+            "is_buffered",
+            "has_flockfile"
+          ]
+        },
+        {
+          "id": "buffered",
+          "any": [
+            "vprint_buffered"
+          ]
+        },
+        {
+          "id": "file_buffer",
+          "any": [
+            "file_print_buffer"
+          ]
+        },
+        {
+          "id": "lock_flush",
+          "any": [
+            "flockfile",
+            "funlockfile",
+            "needs_flush",
+            "fflush"
+          ]
+        },
+        {
+          "id": "final_write",
+          "any": [
+            "fwrite_all",
+            "detail::print(f"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_INT_SPEC_FLOW",
+      "request": "Explica qué ocurre en fmt al formatear un entero con especificaciones, por ejemplo fmt::format(\"{:#010x}\", 255): cómo el manejador detecta las especificaciones del campo de reemplazo, cómo se analizan, cómo se resuelven ancho y precisión dinámicos, cómo se elige el formateador del argumento y cómo write_int produce los dígitos hexadecimales, el prefijo 0x y el relleno con ceros. Cita evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "replacement_field",
+          "any": [
+            "parse_replacement_field",
+            "on_format_specs"
+          ]
+        },
+        {
+          "id": "parse_specs",
+          "any": [
+            "parse_format_specs"
+          ]
+        },
+        {
+          "id": "dynamic",
+          "any": [
+            "handle_dynamic_spec",
+            "dynamic_width",
+            "width_ref"
+          ]
+        },
+        {
+          "id": "visit_formatter",
+          "any": [
+            "arg_formatter"
+          ]
+        },
+        {
+          "id": "hex_digits",
+          "any": [
+            "do_format_base2e",
+            "format_base2e",
+            "presentation_type::hex"
+          ]
+        },
+        {
+          "id": "prefix",
+          "any": [
+            "prefix_append",
+            "specs.alt()"
+          ]
+        },
+        {
+          "id": "padding",
+          "any": [
+            "write_padded",
+            "size_padding",
+            "fill_n"
+          ]
+        }
+      ]
+    }
+  ]
+}
