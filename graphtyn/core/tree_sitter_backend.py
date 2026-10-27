@@ -280,6 +280,233 @@ def _call_binding_metadata(source: bytes, node, name: str, callable_types: set[s
     }
 
 
+@dataclass(frozen=True)
+class _FileContext:
+    """What every node handler needs to know about the file being parsed."""
+    source: bytes
+    rel_path: str
+    ext: str
+    pack: Any
+    type_declarations: frozenset
+    callable_declarations: frozenset
+
+
+def _member_facts(ctx: _FileContext, node, line: int, end_line: int, evidence: str,
+                  members: list, symbols: list) -> None:
+    """Fields, properties and events of a type, plus C++ in-class method declarations."""
+    type_node = node.child_by_field_name("type")
+    variable_declaration = None
+    if node.type in {"field_declaration", "event_field_declaration"}:
+        variable_declaration = next((child for child in node.named_children if child.type == "variable_declaration"), None)
+        if type_node is None and variable_declaration is not None:
+            type_node = variable_declaration.child_by_field_name("type")
+    type_name = _text(ctx.source, type_node) if type_node is not None else ""
+    container = _ancestor_name(ctx.source, node, ctx.type_declarations)
+    if container and type_name:
+        if node.type in {"property_declaration", "event_declaration"}:
+            name_node = node.child_by_field_name("name")
+            names = [_text(ctx.source, name_node)] if name_node is not None else []
+        else:
+            names = []
+            if variable_declaration is not None:
+                for declaration in variable_declaration.named_children:
+                    if declaration.type == "variable_declarator":
+                        name_node = declaration.child_by_field_name("name")
+                        if name_node is not None:
+                            names.append(_text(ctx.source, name_node))
+            else:
+                declarator = node.child_by_field_name("declarator")
+                if declarator is not None and declarator.type != "function_declarator":
+                    member_name = _name(ctx.source, node)
+                    if member_name:
+                        names.append(member_name)
+        for member_name in names:
+            kind = "event" if node.type.startswith("event_") else ("property" if node.type == "property_declaration" else "field")
+            members.append({
+                "container": container, "name": member_name, "kind": kind,
+                "type": type_name, "file": ctx.rel_path, "line": line,
+                "end_line": end_line, "signature": evidence,
+                "evidence": evidence, "parser": "tree-sitter",
+            })
+    declarator = node.child_by_field_name("declarator")
+    if (container and declarator is not None
+            and declarator.type == "function_declarator"):
+        method_name = _name(ctx.source, node)
+        parameters = _parameters(node)
+        if method_name:
+            symbols.append({
+                "name": method_name, "kind": "method", "file": ctx.rel_path,
+                "line": line, "end_line": end_line, "evidence": evidence,
+                "bases": [], "parser": "tree-sitter", "container": container,
+                "scope": "", "namespace": _ancestor_namespace(ctx.source, node),
+                "parameter_count": parameters.named_child_count if parameters is not None else None,
+                "required_parameter_count": parameters.named_child_count if parameters is not None else None,
+                "is_constructor": False, "signature": evidence,
+            })
+
+
+def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: str) -> Optional[dict[str, Any]]:
+    """A declared class, function, method or similar, with bases and signature."""
+    name = _name(ctx.source, node)
+    if node.type in {"class_specifier", "struct_specifier", "union_specifier", "enum_specifier"} \
+            and node.child_by_field_name("body") is None:
+        name = ""
+    if not name and node.type == "constructor_declaration":
+        name_node = node.child_by_field_name("name")
+        name = _text(ctx.source, name_node) if name_node else "constructor"
+    if name:
+        kind = _SYMBOL_TYPES[node.type]
+        if ctx.pack.name in _JVM_APPLE_PACKS:
+            kind = _jvm_apple_kind(ctx.source, node, kind)
+        if node.type == "function_definition" or (
+                ctx.pack.name in _JVM_APPLE_PACKS and node.type == "function_declaration"):
+            ancestor = node.parent
+            while ancestor is not None:
+                if ancestor.type in ctx.type_declarations:
+                    kind = "method"
+                    break
+                ancestor = ancestor.parent
+        bases = []
+        base_node = node.child_by_field_name("bases") or node.child_by_field_name("superclass")
+        if base_node is None:
+            base_node = next((c for c in node.named_children if c.type in (
+                "base_list", "superclass", "base_class_clause", "delegation_specifiers", "extends_clause")), None)
+        if base_node is not None:
+            if ctx.pack.name == "ruby":
+                qualified = re.findall(
+                    r"[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*",
+                    _text(ctx.source, base_node),
+                )
+                bases = [qualified[-1].rsplit("::", 1)[-1]] if qualified else []
+            else:
+                bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", _text(ctx.source, base_node))
+                bases = [base for base in bases if base not in {"public", "protected", "private", "virtual", "final", "extends", "with"}]
+        if ctx.pack.name == "swift":
+            bases = [_text(ctx.source, child.child_by_field_name("inherits_from") or child).split("<", 1)[0]
+                     for child in node.named_children if child.type == "inheritance_specifier"]
+        parameters = _parameters(node)
+        parameter_count = parameters.named_child_count if parameters is not None else None
+        required_parameter_count = None
+        if parameters is not None:
+            required_parameter_count = sum(
+                child.type not in ("optional_parameter", "default_parameter")
+                and "=" not in _text(ctx.source, child)
+                for child in parameters.named_children
+            )
+        body = node.child_by_field_name("body")
+        declaration_text = ctx.source[node.start_byte:body.start_byte].decode("utf-8", errors="replace") if body is not None else _text(ctx.source, node)
+        signature = " ".join(declaration_text.split())
+        signature = signature.split("{", 1)[0].split("=>", 1)[0].strip()[:300]
+        return {
+            "name": name,
+            "kind": kind,
+            "file": ctx.rel_path,
+            "line": line,
+            "end_line": end_line,
+            "evidence": evidence,
+            "bases": bases,
+            "parser": "tree-sitter",
+            "container": _ancestor_name(ctx.source, node, ctx.type_declarations), "scope": _ancestor_name(ctx.source, node, ctx.callable_declarations),
+            "namespace": _ancestor_namespace(ctx.source, node),
+            "parameter_count": parameter_count,
+            "required_parameter_count": required_parameter_count,
+            "is_constructor": node.type == "constructor_declaration",
+            "signature": signature or evidence,
+        }
+    return None
+
+
+def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, operations: list,
+                imports: list, ruby_mixins: list) -> None:
+    """A call or instantiation, its operation and Ruby require/mixin side facts."""
+    name = _call_name(ctx.source, node)
+    if name:
+        target = node.child_by_field_name("function") or node.child_by_field_name("method")
+        raw_target = _text(ctx.source, target) if target is not None else ""
+        target_names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", raw_target)
+        chain = target_names[:-1]
+        receiver_node = node.child_by_field_name("receiver")
+        receiver = (_text(ctx.source, receiver_node) if receiver_node is not None
+                    else (chain[-1] if chain else ""))
+        args = node.child_by_field_name("arguments")
+        calls.append({
+            "name": name, "line": line, "evidence": evidence,
+            "receiver": receiver,
+            "receiver_chain": chain,
+            "argument_count": args.named_child_count if args is not None else None,
+            "caller": _ancestor_name(ctx.source, node, ctx.callable_declarations),
+            "container": _ancestor_name(ctx.source, node, ctx.type_declarations),
+            **_call_binding_metadata(ctx.source, node, name, ctx.callable_declarations, ctx.ext),
+        })
+        operation_text = " ".join(_text(ctx.source, node).split())[:300]
+        operations.append({
+            "kind": "new" if node.type in ("new_expression", "object_creation_expression") else "call",
+            "name": name, "line": line, "text": operation_text,
+            "caller": _ancestor_name(ctx.source, node, ctx.callable_declarations),
+            "container": _ancestor_name(ctx.source, node, ctx.type_declarations),
+        })
+        if ctx.pack.name == "ruby" and name in {"require", "require_relative", "load", "autoload"}:
+            imports.append({"text": evidence, "line": line})
+        if ctx.pack.name == "ruby" and name in {"include", "prepend", "extend"}:
+            argument_text = _text(ctx.source, args) if args is not None else ""
+            mixin_names = re.findall(r"\b[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*\b", argument_text)
+            container = _ancestor_name(ctx.source, node, ctx.type_declarations)
+            for mixin_name in mixin_names:
+                ruby_mixins.append({
+                    "container": container,
+                    "name": mixin_name.rsplit("::", 1)[-1],
+                    "qualified_name": mixin_name,
+                    "kind": name,
+                    "line": line,
+                    "evidence": evidence,
+                })
+
+
+# Node types per role, shared by every grammar; packs add their own below.
+_SYMBOL_TYPES = {
+    "class_declaration": "class",
+    "interface_declaration": "interface",
+    "struct_declaration": "struct",
+    "enum_declaration": "enum",
+    "record_declaration": "class",
+    "function_declaration": "function",
+    "method_declaration": "method",
+    "method_definition": "method",
+    "constructor_declaration": "method",
+    "interface_declaration": "interface",
+    "type_alias_declaration": "type",
+    "class_definition": "class",
+    "function_definition": "function",
+    "constructor_declaration": "method",
+    "record_declaration": "class",
+    "function_item": "function",
+    "struct_item": "struct",
+    "enum_item": "enum",
+    "trait_item": "interface",
+    "type_declaration": "type",
+    "trait_declaration": "interface",
+    "class_specifier": "class",
+    "struct_specifier": "struct",
+    "union_specifier": "union",
+    "enum_specifier": "enum",
+    "class": "class",
+    "module": "module",
+    "method": "method",
+    "singleton_method": "method",
+    "object_declaration": "class",
+    "protocol_declaration": "interface",
+    "protocol_function_declaration": "method",
+    "init_declaration": "method",
+    "trait_definition": "interface",
+    "object_definition": "class",
+}
+
+_CALL_TYPES = frozenset({"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression", "function_call_expression", "member_call_expression", "scoped_call_expression"})
+_IMPORT_TYPES = frozenset({"using_directive", "import_statement", "import_from_statement", "import_declaration", "package_clause", "use_declaration", "namespace_use_declaration", "preproc_include"})
+_TYPE_DECLARATIONS = frozenset({"class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item", "trait_declaration", "class_specifier", "struct_specifier", "union_specifier", "class"})
+_CALLABLE_DECLARATIONS = frozenset({"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item", "method", "singleton_method"})
+
+
 def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     """Return structural facts or ``None`` when tree-sitter is unavailable."""
     ext = file_path.suffix.lower()
@@ -302,54 +529,20 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     ruby_mixins: list[dict[str, Any]] = []
     namespace = ""
 
-    symbol_types = {
-        "class_declaration": "class",
-        "interface_declaration": "interface",
-        "struct_declaration": "struct",
-        "enum_declaration": "enum",
-        "record_declaration": "class",
-        "function_declaration": "function",
-        "method_declaration": "method",
-        "method_definition": "method",
-        "constructor_declaration": "method",
-        "interface_declaration": "interface",
-        "type_alias_declaration": "type",
-        "class_definition": "class",
-        "function_definition": "function",
-        "constructor_declaration": "method",
-        "record_declaration": "class",
-        "function_item": "function",
-        "struct_item": "struct",
-        "enum_item": "enum",
-        "trait_item": "interface",
-        "type_declaration": "type",
-        "trait_declaration": "interface",
-        "class_specifier": "class",
-        "struct_specifier": "struct",
-        "union_specifier": "union",
-        "enum_specifier": "enum",
-        "class": "class",
-        "module": "module",
-        "method": "method",
-        "singleton_method": "method",
-        "object_declaration": "class",
-        "protocol_declaration": "interface",
-        "protocol_function_declaration": "method",
-        "init_declaration": "method",
-        "trait_definition": "interface",
-        "object_definition": "class",
-    }
-    call_types = {"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression", "function_call_expression", "member_call_expression", "scoped_call_expression"}
-    import_types = {"using_directive", "import_statement", "import_from_statement", "import_declaration", "package_clause", "use_declaration", "namespace_use_declaration", "preproc_include"}
+    symbol_types = _SYMBOL_TYPES
+    call_types = _CALL_TYPES
+    import_types = set(_IMPORT_TYPES)
     if pack.name == "kotlin":
         import_types |= {"import", "package_header"}
-    type_declarations = {"class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item", "trait_declaration", "class_specifier", "struct_specifier", "union_specifier", "class"}
+    type_declarations = set(_TYPE_DECLARATIONS)
     if pack.name == "ruby":
         type_declarations.add("module")
-    callable_declarations = {"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item", "method", "singleton_method"}
+    callable_declarations = set(_CALLABLE_DECLARATIONS)
     if pack.name in _JVM_APPLE_PACKS:
         type_declarations |= {"object_declaration", "protocol_declaration", "trait_definition", "object_definition"}
         callable_declarations |= {"init_declaration", "protocol_function_declaration"}
+
+    ctx = _FileContext(source, rel_path, ext, pack, frozenset(type_declarations), frozenset(callable_declarations))
 
     def visit(node) -> None:
         nonlocal namespace
@@ -363,55 +556,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         evidence = node_lines[0].strip()[:240] if node_lines else ""
 
         if node.type in {"field_declaration", "property_declaration", "event_declaration", "event_field_declaration"}:
-            type_node = node.child_by_field_name("type")
-            variable_declaration = None
-            if node.type in {"field_declaration", "event_field_declaration"}:
-                variable_declaration = next((child for child in node.named_children if child.type == "variable_declaration"), None)
-                if type_node is None and variable_declaration is not None:
-                    type_node = variable_declaration.child_by_field_name("type")
-            type_name = _text(source, type_node) if type_node is not None else ""
-            container = _ancestor_name(source, node, type_declarations)
-            if container and type_name:
-                if node.type in {"property_declaration", "event_declaration"}:
-                    name_node = node.child_by_field_name("name")
-                    names = [_text(source, name_node)] if name_node is not None else []
-                else:
-                    names = []
-                    if variable_declaration is not None:
-                        for declaration in variable_declaration.named_children:
-                            if declaration.type == "variable_declarator":
-                                name_node = declaration.child_by_field_name("name")
-                                if name_node is not None:
-                                    names.append(_text(source, name_node))
-                    else:
-                        declarator = node.child_by_field_name("declarator")
-                        if declarator is not None and declarator.type != "function_declarator":
-                            member_name = _name(source, node)
-                            if member_name:
-                                names.append(member_name)
-                for member_name in names:
-                    kind = "event" if node.type.startswith("event_") else ("property" if node.type == "property_declaration" else "field")
-                    members.append({
-                        "container": container, "name": member_name, "kind": kind,
-                        "type": type_name, "file": rel_path, "line": line,
-                        "end_line": end_line, "signature": evidence,
-                        "evidence": evidence, "parser": "tree-sitter",
-                    })
-            declarator = node.child_by_field_name("declarator")
-            if (container and declarator is not None
-                    and declarator.type == "function_declarator"):
-                method_name = _name(source, node)
-                parameters = _parameters(node)
-                if method_name:
-                    symbols.append({
-                        "name": method_name, "kind": "method", "file": rel_path,
-                        "line": line, "end_line": end_line, "evidence": evidence,
-                        "bases": [], "parser": "tree-sitter", "container": container,
-                        "scope": "", "namespace": _ancestor_namespace(source, node),
-                        "parameter_count": parameters.named_child_count if parameters is not None else None,
-                        "required_parameter_count": parameters.named_child_count if parameters is not None else None,
-                        "is_constructor": False, "signature": evidence,
-                    })
+            _member_facts(ctx, node, line, end_line, evidence, members, symbols)
         elif node.type == "variable_declarator":
             value = node.child_by_field_name("value")
             name_node = node.child_by_field_name("name")
@@ -424,114 +569,11 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                     "namespace": _ancestor_namespace(source, node),
                 })
         elif node.type in symbol_types:
-            name = _name(source, node)
-            if node.type in {"class_specifier", "struct_specifier", "union_specifier", "enum_specifier"} \
-                    and node.child_by_field_name("body") is None:
-                name = ""
-            if not name and node.type == "constructor_declaration":
-                name_node = node.child_by_field_name("name")
-                name = _text(source, name_node) if name_node else "constructor"
-            if name:
-                kind = symbol_types[node.type]
-                if pack.name in _JVM_APPLE_PACKS:
-                    kind = _jvm_apple_kind(source, node, kind)
-                if node.type == "function_definition" or (
-                        pack.name in _JVM_APPLE_PACKS and node.type == "function_declaration"):
-                    ancestor = node.parent
-                    while ancestor is not None:
-                        if ancestor.type in type_declarations:
-                            kind = "method"
-                            break
-                        ancestor = ancestor.parent
-                bases = []
-                base_node = node.child_by_field_name("bases") or node.child_by_field_name("superclass")
-                if base_node is None:
-                    base_node = next((c for c in node.named_children if c.type in (
-                        "base_list", "superclass", "base_class_clause", "delegation_specifiers", "extends_clause")), None)
-                if base_node is not None:
-                    if pack.name == "ruby":
-                        qualified = re.findall(
-                            r"[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*",
-                            _text(source, base_node),
-                        )
-                        bases = [qualified[-1].rsplit("::", 1)[-1]] if qualified else []
-                    else:
-                        bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", _text(source, base_node))
-                        bases = [base for base in bases if base not in {"public", "protected", "private", "virtual", "final", "extends", "with"}]
-                if pack.name == "swift":
-                    bases = [_text(source, child.child_by_field_name("inherits_from") or child).split("<", 1)[0]
-                             for child in node.named_children if child.type == "inheritance_specifier"]
-                parameters = _parameters(node)
-                parameter_count = parameters.named_child_count if parameters is not None else None
-                required_parameter_count = None
-                if parameters is not None:
-                    required_parameter_count = sum(
-                        child.type not in ("optional_parameter", "default_parameter")
-                        and "=" not in _text(source, child)
-                        for child in parameters.named_children
-                    )
-                body = node.child_by_field_name("body")
-                declaration_text = source[node.start_byte:body.start_byte].decode("utf-8", errors="replace") if body is not None else _text(source, node)
-                signature = " ".join(declaration_text.split())
-                signature = signature.split("{", 1)[0].split("=>", 1)[0].strip()[:300]
-                symbols.append({
-                    "name": name,
-                    "kind": kind,
-                    "file": rel_path,
-                    "line": line,
-                    "end_line": end_line,
-                    "evidence": evidence,
-                    "bases": bases,
-                    "parser": "tree-sitter",
-                    "container": _ancestor_name(source, node, type_declarations), "scope": _ancestor_name(source, node, callable_declarations),
-                    "namespace": _ancestor_namespace(source, node),
-                    "parameter_count": parameter_count,
-                    "required_parameter_count": required_parameter_count,
-                    "is_constructor": node.type == "constructor_declaration",
-                    "signature": signature or evidence,
-                })
+            symbol = _symbol_fact(ctx, node, line, end_line, evidence)
+            if symbol:
+                symbols.append(symbol)
         elif node.type in call_types:
-            name = _call_name(source, node)
-            if name:
-                target = node.child_by_field_name("function") or node.child_by_field_name("method")
-                raw_target = _text(source, target) if target is not None else ""
-                target_names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", raw_target)
-                chain = target_names[:-1]
-                receiver_node = node.child_by_field_name("receiver")
-                receiver = (_text(source, receiver_node) if receiver_node is not None
-                            else (chain[-1] if chain else ""))
-                args = node.child_by_field_name("arguments")
-                calls.append({
-                    "name": name, "line": line, "evidence": evidence,
-                    "receiver": receiver,
-                    "receiver_chain": chain,
-                    "argument_count": args.named_child_count if args is not None else None,
-                    "caller": _ancestor_name(source, node, callable_declarations),
-                    "container": _ancestor_name(source, node, type_declarations),
-                    **_call_binding_metadata(source, node, name, callable_declarations, ext),
-                })
-                operation_text = " ".join(_text(source, node).split())[:300]
-                operations.append({
-                    "kind": "new" if node.type in ("new_expression", "object_creation_expression") else "call",
-                    "name": name, "line": line, "text": operation_text,
-                    "caller": _ancestor_name(source, node, callable_declarations),
-                    "container": _ancestor_name(source, node, type_declarations),
-                })
-                if pack.name == "ruby" and name in {"require", "require_relative", "load", "autoload"}:
-                    imports.append({"text": evidence, "line": line})
-                if pack.name == "ruby" and name in {"include", "prepend", "extend"}:
-                    argument_text = _text(source, args) if args is not None else ""
-                    mixin_names = re.findall(r"\b[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*\b", argument_text)
-                    container = _ancestor_name(source, node, type_declarations)
-                    for mixin_name in mixin_names:
-                        ruby_mixins.append({
-                            "container": container,
-                            "name": mixin_name.rsplit("::", 1)[-1],
-                            "qualified_name": mixin_name,
-                            "kind": name,
-                            "line": line,
-                            "evidence": evidence,
-                        })
+            _call_facts(ctx, node, line, evidence, calls, operations, imports, ruby_mixins)
         elif node.type in {"assignment_expression", "assignment", "augmented_assignment_expression"}:
             left = node.child_by_field_name("left")
             operations.append({

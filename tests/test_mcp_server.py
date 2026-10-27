@@ -759,7 +759,7 @@ def test_source_evidence_prioritizes_symbol_covering_more_obligations(tmp_path):
 
 
 def test_evidence_identities_ignore_local_alias_order():
-    from graphtyn.mcp_server import _evidence_identities
+    from graphtyn.core.intent_delta import _evidence_identities
     first = {
         "files": {"F1": "a.py", "F2": "b.py"},
         "entities": {

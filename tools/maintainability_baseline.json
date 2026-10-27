@@ -145,17 +145,12 @@
     {
       "key": "graphtyn/core/tree_sitter_backend.py::parse_file",
       "kind": "function",
-      "max_lines": 409
-    },
-    {
-      "key": "graphtyn/core/tree_sitter_backend.py::parse_file.visit",
-      "kind": "function",
-      "max_lines": 229
+      "max_lines": 224
     },
     {
       "key": "graphtyn/mcp_server.py",
       "kind": "module",
-      "max_lines": 1443
+      "max_lines": 1371
     },
     {
       "key": "graphtyn/mcp_server.py::evidence_result",
@@ -165,12 +160,12 @@
     {
       "key": "graphtyn/mcp_server.py::run_mcp_server",
       "kind": "function",
-      "max_lines": 465
+      "max_lines": 423
     },
     {
       "key": "graphtyn/mcp_server.py::run_mcp_server._handle_request",
       "kind": "function",
-      "max_lines": 406
+      "max_lines": 364
     }
   ]
 }

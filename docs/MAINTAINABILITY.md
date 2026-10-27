@@ -59,8 +59,18 @@ justificación explícita:
 - **Memoria:** `history_import` y `SharedMemoryStore`, por la identidad
   `claude`/`claude-code` y la captura de Claude Code.
 
-La próxima extracción debe separar el recorrido de tree-sitter por familia de
-lenguaje y los handlers MCP por herramienta.
+Después de esa revisión se hicieron dos extracciones:
+
+- **Recorrido de tree-sitter:** las tablas de tipos de nodo pasaron a
+  constantes de módulo, y las ramas de miembros, símbolos y llamadas a
+  `_member_facts`, `_symbol_fact` y `_call_facts`. `visit` sale del baseline y
+  `parse_file` baja de 409 a 224 líneas. Los grafos de Redis, fmt y Rails
+  resultan idénticos nodo a nodo.
+- **Consultas MCP incrementales:** el cálculo de deltas de `extends_context_id`
+  vive en `graphtyn/core/intent_delta.py`. `mcp_server.py` baja a 1.371 líneas y
+  `run_mcp_server` a 423.
+
+Queda pendiente repartir los handlers de memoria del MCP por familia.
 
 ## Escala
 
