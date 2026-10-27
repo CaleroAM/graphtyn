@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-27, antes de cualquier ejecución; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; ninguna tarea se usó para ajustar la recuperación",
+  "tasks": [
+    {
+      "id": "REDIS_EVICTION_FLOW",
+      "request": "Explica cómo Redis libera memoria cuando supera maxmemory: desde dónde se invoca la evicción, cómo calcula cuánta memoria debe liberar, qué ocurre con la política noeviction, cómo elige la clave víctima con políticas LRU, LFU o TTL frente a las aleatorias, cómo borra y propaga la clave, qué hace cuando se agota el tiempo de evicción y cómo influye lazyfree. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "entry",
+          "any": [
+            "performEvictions"
+          ]
+        },
+        {
+          "id": "state",
+          "any": [
+            "getMaxmemoryState",
+            "freeMemoryGetNotCountedMemory",
+            "tofree"
+          ]
+        },
+        {
+          "id": "noeviction",
+          "any": [
+            "MAXMEMORY_NO_EVICTION"
+          ]
+        },
+        {
+          "id": "pool",
+          "any": [
+            "evictionPoolPopulate",
+            "EvictionPoolLRU",
+            "evictionPoolEntry"
+          ]
+        },
+        {
+          "id": "random",
+          "any": [
+            "MAXMEMORY_ALLKEYS_RANDOM",
+            "MAXMEMORY_VOLATILE_RANDOM"
+          ]
+        },
+        {
+          "id": "delete",
+          "any": [
+            "deleteEvictedKeyAndPropagate"
+          ]
+        },
+        {
+          "id": "time_limit",
+          "any": [
+            "evictionTimeLimitUs",
+            "startEvictionTimeProc",
+            "EVICT_RUNNING"
+          ]
+        },
+        {
+          "id": "lazyfree",
+          "any": [
+            "lazyfree_lazy_eviction",
+            "bioPendingJobsOfType",
+            "BIO_LAZY_FREE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_OUTPUT_LIMIT_FLOW",
+      "request": "En Redis, explica cómo se desconecta a un cliente cuyo búfer de salida crece demasiado: dónde se comprueba al añadir respuestas, cómo se mide el tamaño usado, el caso de los clientes no autenticados, cómo se elige la clase de cliente y qué pasa con las réplicas y el backlog, la diferencia entre el límite duro y el blando con su tiempo, y cómo se cierra el cliente de forma asíncrona. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "check_site",
+          "any": [
+            "closeClientOnOutputBufferLimitReached"
+          ]
+        },
+        {
+          "id": "limits",
+          "any": [
+            "checkClientOutputBufferLimits"
+          ]
+        },
+        {
+          "id": "size",
+          "any": [
+            "getClientOutputBufferLogicalSize"
+          ]
+        },
+        {
+          "id": "unauth",
+          "any": [
+            "authRequired"
+          ]
+        },
+        {
+          "id": "client_class",
+          "any": [
+            "getClientType",
+            "CLIENT_TYPE_MASTER",
+            "CLIENT_TYPE_SLAVE",
+            "CLIENT_TYPE_PUBSUB"
+          ]
+        },
+        {
+          "id": "backlog",
+          "any": [
+            "repl_backlog_size"
+          ]
+        },
+        {
+          "id": "soft_hard",
+          "any": [
+            "soft_limit_bytes",
+            "hard_limit_bytes",
+            "obuf_soft_limit_reached_time",
+            "soft_limit_seconds"
+          ]
+        },
+        {
+          "id": "async_close",
+          "any": [
+            "freeClientAsync",
+            "CLIENT_CLOSE_ASAP"
+          ]
+        }
+      ]
+    }
+  ]
+}
