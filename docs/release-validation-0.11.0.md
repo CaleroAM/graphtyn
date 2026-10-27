@@ -1,0 +1,56 @@
+# Validación de `0.11.0`
+
+Fecha: 2026-10-27. Esta versión añade paquetes de lenguaje (C/C++, Ruby,
+Kotlin, Swift, Scala), la integración nativa con Claude Code, comunidades,
+exportación HTML y triaje de PR, el paquete MCP `lean`, hooks de primer turno
+para Claude Code, Codex y OpenCode, la separación de las skills `graphtyn` y
+`graphtyn-memory`, y el registro MCP de Copilot en VS Code.
+
+## Validación reproducible
+
+Entorno observado: Linux 6.18.35 x86_64.
+
+| Comprobación | Resultado |
+|---|---|
+| Suite completa, Python 3.13.13 (`.venv/bin/pytest -q`) | 693 pasaron, 3 omitidas |
+| Suite completa, Python 3.10.20, 3.11.15 y 3.12.13 (entornos `uv` con `.[dev,treesitter]`) | 693 pasaron, 3 omitidas en cada versión |
+| Puerta de mantenibilidad (`tools/check_maintainability.py`) | pasa: 33 hotspots, ninguno nuevo; revisión en `docs/MAINTAINABILITY.md` |
+| `uv build` | `graphtyn-0.11.0-py3-none-any.whl` y `graphtyn-0.11.0.tar.gz` |
+| Wheel en entorno vacío (Python 3.13) | `--version` 0.11.0; recursos empaquetados (dashboard y las dos skills); `setup` en vista previa; `reindex`; `report`; `query-intent`; MCP por stdio (`initialize` 0.11.0 y `tools/list` del perfil `query`); `codex-context hook`; `agent-install antigravity` instala las 5 rutas de skills y `integrations remove` las retira |
+| `pip-audit` sobre las 29 dependencias instaladas del wheel | sin vulnerabilidades conocidas (el propio paquete no existe en PyPI) |
+| Docker | la imagen construye; `--version` 0.11.0; `/health` responde `{"status":"ok","version":"0.11.0"}`; el proceso corre como `graphtyn` |
+| Smoke de Chromium | **no ejecutado**: Playwright no encontró `libstdc++.so.6`. No es un pase; lo cubre el job `browser` de CI |
+
+El CI comprueba además que el wheel contiene las skills empaquetadas.
+
+## Evidencia de benchmarks
+
+| Medición | Informe | Alcance |
+|---|---|---|
+| Hook y MCP lean en cuatro clientes | `benchmarks/real_multi_client_hook_2026-10-27/report.md` | Tres tareas, 84 sesiones. El hook baja la sesión a ~34k (Claude), ~12k (Codex) y 16–35k (OpenCode) |
+| Tareas no vistas | `benchmarks/heldout_tasks_2026-10-27/report.md` | Seis tareas nuevas, 54 sesiones. **El ahorro no generaliza** cuando el paquete se declara completo sin cubrir lo pedido |
+
+## Límites de las afirmaciones
+
+- **Generalidad del ahorro:** las cifras de ahorro valen para las tareas
+  medidas. Con tareas no vistas, en tres de seis el paquete declara
+  `do_not_expand=true` sin cubrir lo pedido. Los agentes respondieron
+  incompletos (fmt, entero con especificaciones: 3/7 con Graphtyn frente a 7/7
+  sin grafo). La calibración de `do_not_expand` queda pendiente.
+- **Hook opcional:** el hook de primer turno sigue siendo opcional (`--consent`)
+  y no se recomienda por defecto.
+- **Copilot:** el registro en `.vscode/mcp.json` está cubierto por tests, pero
+  no se probó con un cliente Copilot real.
+- **Hooks de Codex:** en uso real, los hooks de proyecto exigen confiar en la
+  capa `.codex/` y aprobar el hook con `/hooks`.
+- **Commits intermedios:** la suite se ejecutó sobre el commit final, no sobre
+  cada commit intermedio de la rama.
+
+## Requisitos antes de etiquetar
+
+La etiqueta `v0.11.0` sólo se publicará después de que el CI pase sobre el
+commit final, incluidos los jobs `browser` y `docker`. Además hay que construir
+wheel y sdist desde ese SHA, instalarlos en un entorno vacío y comprobar que sus
+metadatos coinciden con la etiqueta. Una afirmación pública de ahorro de tokens
+debe citar el alcance de las tareas medidas y el resultado de las tareas no
+vistas.
