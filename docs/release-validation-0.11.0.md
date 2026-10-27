@@ -46,6 +46,20 @@ El CI comprueba además que el wheel contiene las skills empaquetadas.
 - **Commits intermedios:** la suite se ejecutó sobre el commit final, no sobre
   cada commit intermedio de la rama.
 
+## Cambios posteriores a esta validación
+
+Después de la validación anterior se añadieron:
+
+- el filtro multilingüe de los hooks;
+- la limpieza de mantenibilidad;
+- la regla de parada dirigida;
+- las llamadas Ruby sin paréntesis y los filtros de candidatos;
+- el segundo conjunto de tareas no vistas (`benchmarks/heldout_v2_2026-10-27/`).
+
+La suite local pasa con 701 pruebas en Python 3.13 sobre `f93e029`. La matriz
+3.10–3.12, el wheel, Docker y `pip-audit` deben repetirse sobre el commit que se
+etiquete.
+
 ## Requisitos antes de etiquetar
 
 La etiqueta `v0.11.0` sólo se publicará después de que el CI pase sobre el
