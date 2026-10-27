@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
+
 
 _STOP = {
     "para", "como", "esta", "este", "esto", "that", "with", "from", "the",
@@ -752,12 +754,15 @@ def classify_intent(request: str, requested: str = "auto") -> str:
         return "flow"
     def marker_matches(marker: str) -> bool:
         if marker == "registr":
-            return marker in text
+            # "registrar/register" a service, not "registro(s)", Spanish for a record.
+            return bool(re.search(r"registr(?!os?\b)", text))
         return bool(re.search(rf"(?<!\w){re.escape(marker)}(?!\w)", text))
 
     scores = {intent: sum(marker_matches(marker) for marker in markers)
               for intent, markers in _INTENT_MARKERS.items()}
     best = max(scores, key=lambda intent: scores[intent])
+    if scores[best] and scores.get("flow") == scores[best]:
+        return "flow"  # a tie with an explicit trace/flow request is a flow
     return best if scores[best] else "flow"
 
 
@@ -904,6 +909,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         for node in qualified_nodes
         if "/" in str(node.get("file") or "").replace("\\", "/")
     }
+    qualified_package_roots |= _named_package_roots(all_nodes, request)
     explicit_names = {
         str(node.get("name") or "").lower()
         for node in all_nodes
@@ -1046,9 +1052,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         path = str(node.get("file") or "").replace("\\", "/")
         primary_bonus = 50 if path.startswith(("src/", "backend/", "app/")) else 0
         package_bonus = 180 if qualified_package_roots and path.split("/", 1)[0] in qualified_package_roots else 0
-        test_penalty = -250 if selected_intent != "tests" and not tests_requested and re.search(
-            r"(?:^|/)(?:tests?|fixtures?)(?:/|$|[_.])", path, re.I
-        ) else 0
+        test_penalty = -250 if selected_intent != "tests" and not tests_requested and _TEST_PATH.search(path) else 0
+        vendored_penalty = -400 if _VENDORED_PATH.search(path) else 0
         benchmark_penalty = -400 if "benchmark" not in request_lower and re.search(
             r"(?:^|/)benchmarks?(?:/|$)", path, re.I
         ) else 0
@@ -1069,7 +1074,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         ) else 0
         score = (min(6, len(filtered_ops)) * 25 + min(4, operation_request_hits) * 300
                  + lexical_hits * 10 + concept_hits * 45 + exact_hits * 400 + qualified_bonus
-                 + int(bool(kind_relevant)) * 100 + primary_bonus + test_penalty + benchmark_penalty
+                 + int(bool(kind_relevant)) * 100 + primary_bonus + test_penalty + benchmark_penalty + vendored_penalty
                  + anchor_bonus + container_bonus + package_bonus
                  + entry_bonus + capture_bonus
                  + docker_bonus + verifier_bonus + generation_bonus

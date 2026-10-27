@@ -25,12 +25,12 @@
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser",
       "kind": "class",
-      "max_lines": 963
+      "max_lines": 966
     },
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser.scan_directory",
       "kind": "function",
-      "max_lines": 855
+      "max_lines": 858
     },
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser.scan_directory._add_tree_symbols",
@@ -40,7 +40,7 @@
     {
       "key": "graphtyn/core/change_analyst.py",
       "kind": "module",
-      "max_lines": 1689
+      "max_lines": 1694
     },
     {
       "key": "graphtyn/core/change_analyst.py::_implementation_context",
@@ -145,7 +145,7 @@
     {
       "key": "graphtyn/core/tree_sitter_backend.py::parse_file",
       "kind": "function",
-      "max_lines": 224
+      "max_lines": 217
     },
     {
       "key": "graphtyn/mcp_server.py",

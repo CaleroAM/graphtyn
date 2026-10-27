@@ -106,10 +106,11 @@ def _explicit_source_symbols(request: str, candidates: list[dict[str, Any]]) -> 
     camel = [token.lower() for token in re.findall(r"(?<!\w)[A-Za-z]+[a-z][A-Z][A-Za-z0-9]*", request)]
     # A selected type whose exact name the request spells ("format_string/fstring")
     # is named on purpose; plain function names stay ambiguous with prose.
-    words = {word.lower() for word in re.findall(r"[A-Za-z_]\w{3,}", request)}
+    # Case must match exactly: prose "array" or "true" is not the class `Array`.
+    words = set(re.findall(r"[A-Za-z_]\w{3,}", request))
     types = [str(node.get("name") or "").lower() for node in candidates
              if node.get("kind") in {"class", "struct", "interface", "type", "union"}
-             and str(node.get("name") or "").lower() in words]
+             and str(node.get("name") or "") in words]
     return list(dict.fromkeys(
         symbol for symbol in [*qualified_members, *underscored, *camel, *types] if symbol in available
     ))
@@ -275,7 +276,7 @@ def _collect_candidates(result: dict[str, Any], request: str) -> tuple[list[dict
             node_id = str(node.get("id") or "")
             source_kinds = {"method", "function", "constructor"}
             named_type = (node.get("kind") in {"class", "struct", "interface", "type", "union"}
-                          and str(node.get("name") or "").lower() in request_terms)
+                          and re.search(rf"(?<!\w){re.escape(str(node.get('name') or ''))}(?!\w)", request) is not None)
             if node_id in seen or (node.get("kind") not in source_kinds and not named_type):
                 continue
             if not node.get("file") or not node.get("line"):
@@ -450,7 +451,8 @@ def _record_source_coverage(result: dict[str, Any], excerpts: list[dict[str, Any
         )
         source_guidance = (
             "Answer from relations, operations and exact source excerpts. Cite file:line. "
-            "Use excerpt order for conditions and control flow; do not call another tool."
+            "Use excerpt order for conditions and control flow; do not re-read these excerpts. "
+            "Look up only a part of the request they do not address."
         )
         # Source evidence strengthens factual claims.  It must not erase the
         # implementation order and exploration limits chosen by the planner.

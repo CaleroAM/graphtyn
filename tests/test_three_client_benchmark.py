@@ -347,3 +347,12 @@ def test_opencode_hook_arm_installs_the_plugin_and_keeps_plugins_enabled(tmp_pat
     with pytest.raises(ValueError):
         _MODULE.command_for("antigravity", "m", "q", workspace, 30, treatment=True,
                             graphtyn_executable=Path("/opt/graphtyn"), prefetch=True)
+
+
+def test_stop_rule_variants_keep_earlier_prompts_reproducible():
+    task = {"request": "Traza processCommand"}
+    strict = _MODULE.benchmark_prompt(task, True)
+    assert "no ejecutes búsquedas, comandos ni lecturas adicionales" in strict
+    targeted = _MODULE.benchmark_prompt(task, True, stop_rule="targeted")
+    assert "no releas lo que ya muestra" in targeted and "consulta sólo esa parte" in targeted
+    assert _MODULE.benchmark_messages(task, True, prefetch=True, stop_rule="targeted")[1].count("sólo esa parte") == 1

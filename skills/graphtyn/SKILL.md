@@ -54,6 +54,9 @@ With the CLI, use `graphtyn query-intent "<request>" --intent <intent> --path <p
 - When `do_not_expand=true` and `missing` is empty, answer from the returned
   entities, relations and `source_evidence`. Do not reopen those files, grep, or
   read an entire file to re-verify evidence already supplied.
+- Graph retrieval can miss part of a multi-part request. For a part the evidence
+  does not address, look up only that part (one targeted search or its exact
+  range); do not broaden the search or re-check the parts already covered.
 - When `missing` names an obligation, read only the returned line range or call
   again with `extends_context_id` set to the preserved `context_id`. Expand at
   most once per named gap.

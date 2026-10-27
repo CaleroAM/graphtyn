@@ -697,3 +697,31 @@ def test_structural_cache_reuses_unchanged_tree_sitter_result(tmp_path, monkeypa
     source.write_text("public class Service { public void Run() {} }", encoding="utf-8")
     ASTParser().scan_directory(tmp_path, respect_git=False, cache_path=cache_path)
     assert len(calls) == 2
+
+
+def test_ruby_bare_method_calls_link_without_locals_or_other_languages(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    (tmp_path / "record.rb").write_text(
+        "class Record\n"
+        "  def destroy(force = false)\n"
+        "    destroy_associations\n"
+        "    total = 1\n"
+        "    persisted? && destroy_row > total + force\n"
+        "  end\n\n"
+        "  def destroy_associations; end\n"
+        "  def destroy_row; 1; end\n"
+        "  def total; 0; end\n"
+        "  def force; end\n"
+        "end\n", encoding="utf-8")
+    (tmp_path / "asset.js").write_text("function destroy_row() { return 2 }\n", encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    calls = {(nodes[link["source"]]["name"], nodes[link["target"]]["name"], nodes[link["target"]]["file"])
+             for link in graph["links"] if link.get("label") == "llama"}
+    assert ("destroy", "destroy_associations", "record.rb") in calls
+    assert ("destroy", "destroy_row", "record.rb") in calls
+    # `total` is a local and `force` a parameter of destroy; JS homonyms are another language.
+    assert not {call for call in calls if call[0] == "destroy" and call[1] in {"total", "force"}}
+    assert not {call for call in calls if call[2] == "asset.js"}

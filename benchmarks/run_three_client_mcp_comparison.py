@@ -475,7 +475,17 @@ def opencode_config(treatment: bool, source: Path, graphtyn_executable: Path,
     return json.dumps(config)
 
 
-def benchmark_prompt(task: dict, treatment: bool, graphify: bool = False, prefetch: bool = False) -> str:
+# How the arm instructions phrase the stop rule. `strict` reproduces the runs up
+# to 2026-10-27; `targeted` lets the agent look up a part the evidence misses.
+STOP_RULES = {
+    "strict": "no ejecutes búsquedas, comandos ni lecturas adicionales. ",
+    "targeted": ("no releas lo que ya muestra. Si una parte de la pregunta no está cubierta por la evidencia, "
+                 "consulta sólo esa parte con una búsqueda o lectura acotada. "),
+}
+
+
+def benchmark_prompt(task: dict, treatment: bool, graphify: bool = False, prefetch: bool = False,
+                     stop_rule: str = "strict") -> str:
     common = ("Evaluación de solo lectura. Investiga el repositorio actual y responde en español "
               "con evidencia archivo:línea. No modifiques archivos, no uses red, otros agentes, "
               "memorias ni artefactos del benchmark. Puedes usar búsqueda y lectura local. ")
@@ -491,21 +501,21 @@ def benchmark_prompt(task: dict, treatment: bool, graphify: bool = False, prefet
                      "de graph_query_intent: no vuelvas a llamarlo. Si no lo incluye, usa primero "
                      "graph_query_intent del MCP Graphtyn con la pregunta completa. "
                      "Si el resultado tiene missing=[] y do_not_expand=true, responde directamente con sus entidades, "
-                     "operaciones y source_evidence: no ejecutes búsquedas, comandos ni lecturas adicionales. "
+                     "operaciones y source_evidence: " + STOP_RULES[stop_rule] +
                      "Si falta una obligación nombrada, verifica únicamente su rango exacto en fuente. ")
         return common + condition + "Entrega solo la respuesta final.\n\n" + task["request"]
     condition = ("Usa primero graph_query_intent del MCP Graphtyn con la pregunta completa. "
                  "Si devuelve missing=[] y do_not_expand=true, responde directamente con sus entidades, "
-                 "operaciones y source_evidence: no ejecutes búsquedas, comandos ni lecturas adicionales. "
+                 "operaciones y source_evidence: " + STOP_RULES[stop_rule] +
                  "Si falta una obligación nombrada, verifica únicamente su rango exacto en fuente. " if treatment else
                  "No uses Graphtyn, Graphify, MCP ni índices generados. ")
     return common + condition + "Entrega solo la respuesta final.\n\n" + task["request"]
 
 
 def benchmark_messages(task: dict, treatment: bool, graphify: bool = False,
-                       prefetch: bool = False) -> tuple[str, str | None]:
+                       prefetch: bool = False, stop_rule: str = "strict") -> tuple[str, str | None]:
     """User message and optional appended system prompt for one arm."""
-    prompt = benchmark_prompt(task, treatment, graphify=graphify, prefetch=prefetch)
+    prompt = benchmark_prompt(task, treatment, graphify=graphify, prefetch=prefetch, stop_rule=stop_rule)
     if not prefetch:
         return prompt, None
     return task["request"], prompt[:-len(task["request"])].rstrip()
@@ -543,10 +553,12 @@ def run_cell(client: str, model: str, task: dict, treatment: bool, workspace: Pa
              graphtyn_executable: Path, index_setup: dict | None = None,
              claude_bare: bool = False, repetition: int = 1,
              graphify_bin: Path | None = None, prefetch: bool = False,
-             full_payload: bool = False, opencode_plugins: bool = False) -> dict:
+             full_payload: bool = False, opencode_plugins: bool = False,
+             stop_rule: str = "strict") -> dict:
     arm = ("graphify" if graphify_bin is not None else "graphtyn_hook" if prefetch
            else "graphtyn_full" if full_payload else "graphtyn" if treatment else "baseline")
     prompt, system_prompt = benchmark_messages(task, treatment, graphify=graphify_bin is not None,
+                                               stop_rule=stop_rule,
                                                prefetch=prefetch)
     command = command_for(client, model, prompt, workspace, timeout, treatment=treatment,
                           graphtyn_executable=graphtyn_executable, claude_bare=claude_bare,
@@ -614,6 +626,7 @@ def run_cell(client: str, model: str, task: dict, treatment: bool, workspace: Pa
                "answer_present": bool(answer), "index_setup": index_setup,
                "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
                "system_prompt_sha256": hashlib.sha256(system_prompt.encode()).hexdigest() if system_prompt else None,
+               "stop_rule": stop_rule,
                "raw_event_count": len(events),
                "antigravity_mcp_registration": antigravity_mcp,
                "claude_mcp": (claude_mcp_evidence(events, SERVER_NAMES.get(arm, "graphtyn_benchmark"))
@@ -673,6 +686,8 @@ def main() -> int:
                         help="Ejecuta sólo estas repeticiones (repetible); para reintentos auditados")
     parser.add_argument("--claude-bare", action="store_true",
                         help="Run Claude Code with --bare (skips user CLAUDE.md; requires ANTHROPIC_API_KEY)")
+    parser.add_argument("--stop-rule", choices=sorted(STOP_RULES), default="strict",
+                        help="How the arm instructions phrase the stop rule (strict reproduces earlier runs)")
     parser.add_argument("--opencode-plugins", action="store_true",
                         help="Run OpenCode without --pure in every arm (the hook arm always needs plugins)")
     parser.add_argument("--execute", action="store_true")
@@ -756,7 +771,7 @@ def main() -> int:
                                   claude_bare=args.claude_bare, repetition=repetition,
                                   graphify_bin=graphify_bin if arm == "graphify" else None,
                                   prefetch=arm == "graphtyn_hook", full_payload=arm == "graphtyn_full",
-                                  opencode_plugins=args.opencode_plugins)
+                                  opencode_plugins=args.opencode_plugins, stop_rule=args.stop_rule)
             finally:
                 shutil.rmtree(workspace, ignore_errors=True)
             results.append(result)

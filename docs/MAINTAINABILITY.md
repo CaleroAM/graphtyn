@@ -72,6 +72,12 @@ Después de esa revisión se hicieron dos extracciones:
 
 Queda pendiente repartir los handlers de memoria del MCP por familia.
 
+Después crecen, con revisión, `ASTParser.scan_directory` (+3 líneas: las
+llamadas Ruby sin paréntesis sólo se resuelven dentro del mismo lenguaje y sin
+ambigüedad) y el módulo `change_analyst` (+5: el desempate de intención a favor
+de `flow`). Las señales de ruta y paquete pasaron a `path_signals.py`, y el
+recorrido de tree-sitter se reparte en funciones auxiliares de ese módulo.
+
 ## Escala
 
 SQLite con WAL es el backend local soportado. RF07 midió cinco repeticiones en

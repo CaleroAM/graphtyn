@@ -280,6 +280,58 @@ def _call_binding_metadata(source: bytes, node, name: str, callable_types: set[s
     }
 
 
+# Ruby calls a zero-argument method without parentheses or receiver
+# (`destroy_associations`, `persisted? && destroy_row`); tree-sitter reports a
+# bare identifier. It is a call when used as a statement or condition operand
+# and is neither a parameter nor a local assigned in the enclosing method.
+_RUBY_BARE_CALL_PARENTS = frozenset({
+    "body_statement", "then", "else", "begin", "if_modifier", "unless_modifier", "while_modifier",
+    "until_modifier", "binary", "unary", "conditional", "parenthesized_statements", "return"})
+
+
+def _ruby_method_locals(source: bytes, method) -> set[str]:
+    names: set[str] = set()
+    stack = [method]
+    while stack:
+        current = stack.pop()
+        if current.type in {"assignment", "operator_assignment"}:
+            left = current.child_by_field_name("left")
+            if left is not None and left.type == "identifier":
+                names.add(_text(source, left))
+        elif current.type in {"identifier"} and current.parent is not None and current.parent.type in {
+                "method_parameters", "optional_parameter", "keyword_parameter", "splat_parameter",
+                "hash_splat_parameter", "block_parameter", "block_parameters", "lambda_parameters"}:
+            names.add(_text(source, current))
+        stack.extend(current.named_children)
+    return names
+
+
+def _is_ruby_bare_call(ctx: "_FileContext", node, locals_cache: dict[int, set[str]]) -> bool:
+    parent = node.parent
+    if parent is None or parent.type not in _RUBY_BARE_CALL_PARENTS:
+        return False
+    method = parent
+    while method is not None and method.type not in {"method", "singleton_method"}:
+        method = method.parent
+    if method is None:
+        return False
+    if method.start_byte not in locals_cache:
+        locals_cache[method.start_byte] = _ruby_method_locals(ctx.source, method)
+    return _text(ctx.source, node) not in locals_cache[method.start_byte]
+
+
+def _ruby_bare_call_facts(ctx: "_FileContext", node, line: int, evidence: str,
+                          calls: list, operations: list) -> None:
+    name = _text(ctx.source, node)
+    caller = _ancestor_name(ctx.source, node, ctx.callable_declarations)
+    container = _ancestor_name(ctx.source, node, ctx.type_declarations)
+    calls.append({"name": name, "line": line, "evidence": evidence, "receiver": "", "receiver_chain": [],
+                  "argument_count": 0, "caller": caller, "container": container,
+                  **_call_binding_metadata(ctx.source, node, name, ctx.callable_declarations, ctx.ext)})
+    operations.append({"kind": "call", "name": name, "line": line, "text": name,
+                       "caller": caller, "container": container})
+
+
 @dataclass(frozen=True)
 class _FileContext:
     """What every node handler needs to know about the file being parsed."""
@@ -507,6 +559,21 @@ _TYPE_DECLARATIONS = frozenset({"class_declaration", "class_definition", "interf
 _CALLABLE_DECLARATIONS = frozenset({"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item", "method", "singleton_method"})
 
 
+def _declaration_types(pack_name: str) -> tuple[set[str], set[str], set[str]]:
+    """Import, type and callable node types, with the additions of one language pack."""
+    import_types = set(_IMPORT_TYPES)
+    if pack_name == "kotlin":
+        import_types |= {"import", "package_header"}
+    type_declarations = set(_TYPE_DECLARATIONS)
+    if pack_name == "ruby":
+        type_declarations.add("module")
+    callable_declarations = set(_CALLABLE_DECLARATIONS)
+    if pack_name in _JVM_APPLE_PACKS:
+        type_declarations |= {"object_declaration", "protocol_declaration", "trait_definition", "object_definition"}
+        callable_declarations |= {"init_declaration", "protocol_function_declaration"}
+    return import_types, type_declarations, callable_declarations
+
+
 def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     """Return structural facts or ``None`` when tree-sitter is unavailable."""
     ext = file_path.suffix.lower()
@@ -529,20 +596,11 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     ruby_mixins: list[dict[str, Any]] = []
     namespace = ""
 
-    symbol_types = _SYMBOL_TYPES
-    call_types = _CALL_TYPES
-    import_types = set(_IMPORT_TYPES)
-    if pack.name == "kotlin":
-        import_types |= {"import", "package_header"}
-    type_declarations = set(_TYPE_DECLARATIONS)
-    if pack.name == "ruby":
-        type_declarations.add("module")
-    callable_declarations = set(_CALLABLE_DECLARATIONS)
-    if pack.name in _JVM_APPLE_PACKS:
-        type_declarations |= {"object_declaration", "protocol_declaration", "trait_definition", "object_definition"}
-        callable_declarations |= {"init_declaration", "protocol_function_declaration"}
+    symbol_types, call_types = _SYMBOL_TYPES, _CALL_TYPES
+    import_types, type_declarations, callable_declarations = _declaration_types(pack.name)
 
     ctx = _FileContext(source, rel_path, ext, pack, frozenset(type_declarations), frozenset(callable_declarations))
+    ruby_locals: dict[int, set[str]] = {}
 
     def visit(node) -> None:
         nonlocal namespace
@@ -574,6 +632,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                 symbols.append(symbol)
         elif node.type in call_types:
             _call_facts(ctx, node, line, evidence, calls, operations, imports, ruby_mixins)
+        elif pack.name == "ruby" and node.type == "identifier" and _is_ruby_bare_call(ctx, node, ruby_locals):
+            _ruby_bare_call_facts(ctx, node, line, evidence, calls, operations)
         elif node.type in {"assignment_expression", "assignment", "augmented_assignment_expression"}:
             left = node.child_by_field_name("left")
             operations.append({

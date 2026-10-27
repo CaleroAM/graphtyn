@@ -217,8 +217,10 @@ def test_header_states_the_stop_rule_only_for_complete_evidence():
     partial = prompt_context.render_context({**lean_payload(_package(do_not_expand=False, missing=["x"])),
                                              "context_id": "b"})
 
-    assert "do not run searches, commands or file reads" in complete
-    assert "do not run searches" not in partial and "facts listed in missing" in partial
+    assert "do not re-read or re-verify what it shows" in complete
+    # Retrieval can miss a part of the request: the agent may look up that part only.
+    assert "look up only that part" in complete
+    assert "re-verify" not in partial and "facts listed in missing" in partial
 
 
 def test_codex_hook_install_is_reversible_and_preserves_user_hooks(tmp_path):

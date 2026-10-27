@@ -106,6 +106,24 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Corregido
 
+- Regla de parada dirigida: un paquete con `do_not_expand=true` ya no prohíbe
+  buscar. El hook, la guía del paquete, la skill y `AGENTS.md` piden responder
+  con la evidencia sin releerla y consultar sólo la parte de la petición que no
+  cubre, porque la recuperación por grafo puede omitir parte de una petición con
+  varias preguntas (benchmark de tareas no vistas). El arnés conserva la regla
+  estricta anterior (`--stop-rule strict`) para reproducir las ejecuciones previas.
+- Ruby: una llamada sin paréntesis ni receptor (`destroy_associations`,
+  `persisted? && destroy_row`) se registra como llamada si no es un parámetro ni
+  una variable local; sólo se resuelve dentro del mismo lenguaje y sin
+  ambigüedad (+2.022 relaciones en Rails, 1.322 `EXTRACTED`).
+- «Traza qué ocurre…» ya no se clasifica como `bindings` porque «registro»
+  coincidía con el marcador de registro de servicios; los empates con `flow`
+  se resuelven a favor de `flow`.
+- Los tipos nombrados en la petición deben coincidir en mayúsculas (`array` en
+  prosa no es la clase `Array`); los archivos `_test`/`_spec` cuentan como tests y
+  el código vendorizado o minificado se penaliza; nombrar un paquete de primer
+  nivel de un monorepo (`ActiveRecord`) acota los homónimos como un nombre
+  cualificado.
 - El filtro de los hooks de primer turno reconoce peticiones en portugués,
   francés, italiano y alemán además de español e inglés, y un identificador de
   código (`snake_case`, `camelCase`, `a::b`, un archivo fuente) basta por sí

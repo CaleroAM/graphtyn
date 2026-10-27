@@ -105,6 +105,15 @@ VALID_EXTS = (
     ".yaml", ".yml", ".toml", ".ini", ".cfg",
 )
 
+def _same_language_targets(call: Dict[str, Any], targets: set, rel_file: str, node_by_id: Dict[str, Any]) -> set:
+    """A bare Ruby identifier is only a probable call: keep targets in its own language."""
+    if call.get("call_kind") != "identifier":
+        return targets
+    suffix = Path(rel_file).suffix
+    return {target for target in targets
+            if Path(str(node_by_id.get(target, {}).get("file") or "")).suffix == suffix}
+
+
 class ASTParser:
     """
     Deterministic zero-token multi-language code graph parser for Graphtyn.
@@ -851,6 +860,9 @@ class ASTParser:
                 if call.get("bound_locally"):
                     suppressed_relations["bound_calls"] += 1
                     continue
+                targets = _same_language_targets(call, targets, rel_file, node_by_id)
+                if not targets:
+                    continue
                 local_targets = {
                     target for target in targets
                     if node_by_id.get(target, {}).get("file") == rel_file
@@ -869,7 +881,7 @@ class ASTParser:
                     continue
                 best_score = ranked[0][0]
                 best = [target for score, target in ranked if score == best_score]
-                if len(best) > 4:
+                if len(best) > 4 or (len(best) > 1 and call.get("call_kind") == "identifier"):
                     suppressed_relations["ambiguous_calls"] += 1
                     continue
                 for target_id in best:

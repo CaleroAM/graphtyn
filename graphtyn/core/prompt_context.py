@@ -150,10 +150,11 @@ def render_context(package: dict[str, Any], limit: int | None = None) -> str | N
     limit = limit or MAX_CONTEXT_CHARACTERS * PARTS
     if package.get("do_not_expand") and not package.get("missing"):
         # The same stop rule an agent applies to the MCP result it requested itself.
-        instruction = ("This evidence is complete for the request (do_not_expand=true, missing=[]). Answer now "
-                       "from this block, citing the real file:line shown here; do not run searches, commands or "
-                       "file reads to re-verify it. If a detail the user asked for is not shown, say the "
-                       "evidence does not cover it instead of searching for it.")
+        instruction = ("No further graph query is needed (do_not_expand=true, missing=[]). Answer from this "
+                       "block, citing the real file:line shown here, and do not re-read or re-verify what it "
+                       "shows. Graph retrieval can miss part of a multi-part request: for a part this block "
+                       "does not address, look up only that part (one targeted search or its exact range), "
+                       "then answer.")
     else:
         instruction = ("This evidence is partial: query or read only the facts listed in missing, then answer.")
     header = [
@@ -184,8 +185,8 @@ def render_context(package: dict[str, Any], limit: int | None = None) -> str | N
     if package.get("do_not_expand") and not package.get("missing"):
         # Repeated last, next to the user message: injected context weighs less
         # than a tool result the model requested, and a closing reminder holds.
-        tail.append("End of complete evidence: answer from it without searching or reading files; name any "
-                    "detail it does not show as not covered.")
+        tail.append("End of evidence: answer from it without re-reading what it shows; look up only a part "
+                    "of the request it does not address.")
     tail.append("</graphtyn-context>")
     excerpts =[dict(item) for item in package.get("source_evidence") or []]
 
