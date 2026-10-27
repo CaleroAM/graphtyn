@@ -22,6 +22,7 @@
 | Claude Code / Sonnet, base vs Graphtyn vs Graphify 0.9.96 | PARTIAL; tres tareas, n=3, brazo Graphify no contemporáneo |
 | Claude Code / Sonnet, MCP lean y hook de primer turno | PARTIAL; tres tareas, n=3, 18 sesiones; comparación con brazos previos |
 | Hook de primer turno y MCP lean en Claude, Codex, OpenCode y Antigravity | PARTIAL; tres tareas, 84 sesiones (n=5 Claude, n=2 resto); adjudicación ciega parcial |
+| Tareas no vistas (held-out) para MCP lean y hook | NEGATIVE para generalización; seis tareas nuevas, 54 sesiones; rúbricas congeladas antes de ejecutar |
 | 36 tareas multilenguaje | PENDING |
 
 La medición de la release 0.8.0 está en
@@ -98,6 +99,17 @@ lectura directa, −93 a −95 %. El recorte lean apenas cambia el gasto en Code
 OpenCode y Antigravity (dentro del ruido). Una adjudicación conceptual ciega de
 todas las respuestas con fallo literal más una muestra de control encontró 2
 fallos reales en 29 respuestas; los 5/8 de Codex en Rails son paráfrasis.
+
+Con seis tareas nuevas, escritas y congeladas antes de ejecutar
+([`benchmarks/heldout_tasks_2026-10-27/report.md`](../benchmarks/heldout_tasks_2026-10-27/report.md)),
+el resultado no generaliza. Las correcciones de fuente no quitaron cobertura,
+pero en tres de las seis tareas el paquete se declara completo aunque omite
+partes de lo pedido. Ahí los agentes obedecen la regla de parada y pierden
+hechos: en fmt, entero con especificaciones, Graphtyn sacó 3/7 frente a 7/7 de
+Codex sin grafo. Donde el paquete no se declara completo (Rails), la calidad se
+mantiene pero el ahorro desaparece. Las cifras de ahorro anteriores valen sólo
+para las tareas medidas; la calibración de `do_not_expand` queda como trabajo
+pendiente.
 
 La validación Ruby/Rails está en
 [`benchmarks/real_ruby_agents_2026-10-20/report.md`](../benchmarks/real_ruby_agents_2026-10-20/report.md).

@@ -139,6 +139,9 @@ Conservadas en `failed_attempts/` y `pilot/` del directorio de ejecución:
 
 ## Limitaciones
 
+- **Generalización:** con seis tareas no vistas el resultado no se sostiene;
+  ver [`../heldout_tasks_2026-10-27/report.md`](../heldout_tasks_2026-10-27/report.md).
+
 - **Repeticiones:** n=5 en Claude y n=2 en los demás clientes.
 - **Comparaciones no contemporáneas:**
   - La referencia sin grafo de Claude es del 25 oct.

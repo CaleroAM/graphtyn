@@ -10,6 +10,10 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
+- Benchmark de tareas no vistas (`benchmarks/heldout_tasks_2026-10-27/`): seis
+  tareas nuevas con rúbricas congeladas antes de ejecutar. Muestra que el ahorro
+  del hook y del MCP lean no generaliza cuando el paquete se declara completo
+  (`do_not_expand=true`) sin cubrir lo pedido.
 - `graphtyn agent-install copilot` registra además el servidor MCP del proyecto
   en `.vscode/mcp.json` (`servers`, `type: stdio`, `cwd: ${workspaceFolder}`)
   para el modo agente de Copilot en VS Code. Está cubierto por tests pero no se

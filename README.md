@@ -338,8 +338,13 @@ consulta antes del primer turno y añade el resultado como bloque
 Medido en Redis, fmt y Rails, la sesión pasó con Claude Sonnet de ~61.000
 tokens (MCP) a ~34.000 (n=5, sin herramientas y en una sola llamada al modelo),
 con Codex de 29.000–51.000 a ~12.000 y con OpenCode de 26.000–64.000 a
-16.000–35.000, con la misma calidad
-([informe](benchmarks/real_multi_client_hook_2026-10-27/report.md)).
+16.000–35.000, con la misma calidad en esas tres tareas
+([informe](benchmarks/real_multi_client_hook_2026-10-27/report.md)). Con seis
+tareas nuevas no se sostiene en general
+([informe](benchmarks/heldout_tasks_2026-10-27/report.md)). Cuando la
+recuperación omite parte de lo pedido pero el paquete se declara completo
+(`do_not_expand=true`), el agente responde sin buscar y pierde hechos. Por eso
+el hook es opcional y conviene usarlo sabiendo ese límite.
 
 `graphtyn claude-context status|uninstall --path .` lo consulta o lo retira. La
 captura de memoria descarta estos bloques. El MCP devuelve por defecto el mismo

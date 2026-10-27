@@ -53,6 +53,7 @@ jobs:
       - run: /tmp/graphtyn-release-venv/bin/pip install dist/*.whl
       - run: /tmp/graphtyn-release-venv/bin/graphtyn --version
       - run: /tmp/graphtyn-release-venv/bin/python -c "import importlib.resources as r; assert r.files('graphtyn').joinpath('web/dashboard.html').is_file()"
+      - run: /tmp/graphtyn-release-venv/bin/python -c "import importlib.resources as r; s = r.files('graphtyn').joinpath('skills'); assert all(s.joinpath(p).is_file() for p in ('graphtyn/SKILL.md', 'graphtyn/references/change-workflow.md', 'graphtyn-memory/SKILL.md'))"
       - uses: actions/upload-artifact@v7
         with:
           name: python-distributions
