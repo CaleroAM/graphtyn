@@ -167,6 +167,9 @@ def remove_installed_skills(root: Path, platforms: list[str],
                     folder.rmdir()
             if directory.is_dir() and not any(directory.iterdir()):
                 directory.rmdir()
+        skills_root = root / base
+        if skills_root.is_dir() and not any(skills_root.iterdir()):
+            skills_root.rmdir()  # only when nothing else lives there
     return removed, preserved, remaining
 
 

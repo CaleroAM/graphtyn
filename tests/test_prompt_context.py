@@ -72,8 +72,14 @@ def test_lean_payload_keeps_relational_evidence_and_open_packages():
 
 
 @pytest.mark.parametrize("prompt, expected", [
-    ("Traza cómo Redis procesa un comando desde processCommand", (True, "code_request")),
-    ("Explain how ActiveRecord::Base#save persists a record", (True, "code_request")),
+    ("Traza cómo Redis procesa un comando desde processCommand", (True, "code_anchor")),
+    ("Explain how ActiveRecord::Base#save persists a record", (True, "code_anchor")),
+    ("Wie funktioniert der Ablauf in handle_request genau?", (True, "code_anchor")),
+    ("Explique o fluxo de pagamento deste projeto, por favor", (True, "code_request")),
+    ("Où est appelée la fonction de validation du panier ?", (True, "code_request")),
+    ("Erkläre die Architektur dieses Projekts im Detail", (True, "code_request")),
+    ("Cosa hai fatto nella sessione precedente con validate_cart?", (False, "history_question")),
+    ("Bonjour, comment allez-vous aujourd'hui ?", (False, "not_a_code_request")),
     ("¿Qué hace el módulo de pagos y dónde valida la tarjeta?", (True, "code_request")),
     ("hola, ¿cómo estás hoy?", (False, "not_a_code_request")),
     ("/review este cambio por favor", (False, "client_command")),

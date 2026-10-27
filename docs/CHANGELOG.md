@@ -106,6 +106,11 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Corregido
 
+- El filtro de los hooks de primer turno reconoce peticiones en portugués,
+  francés, italiano y alemán además de español e inglés, y un identificador de
+  código (`snake_case`, `camelCase`, `a::b`, un archivo fuente) basta por sí
+  solo en cualquier idioma.
+- `graphtyn integrations remove` ya no deja vacía la carpeta `skills` del cliente.
 - Selección de fuente en modo `precision`: un tipo cuyo nombre exacto aparece en
   la petición (`format_string/fstring`) pasa a ser símbolo obligatorio; un
   homónimo de un símbolo ya resuelto en otro archivo ya no lo es; la extensión de

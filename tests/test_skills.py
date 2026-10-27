@@ -117,10 +117,13 @@ def test_removing_an_integration_deletes_only_unedited_skills(tmp_path, monkeypa
     assert ".claude/skills/graphtyn/SKILL.md" in result["removed_skills"]
     assert result["preserved_skills"] == [".claude/skills/graphtyn-memory/SKILL.md"]
     assert not (root / ".claude/skills/graphtyn").exists() and edited.is_file()
-    # The other client's skills and their records are untouched.
     assert (root / ".agents/skills/graphtyn/SKILL.md").is_file()
     hashes = json.loads((root / ".graphtyn/agent-install.json").read_text())["skill_hashes"]
     assert hashes and all(key.startswith(".agents/") for key in hashes)
+    # Removing the last Graphtyn skill of a client leaves no empty skills folder behind.
+    remove_project_integrations(root, ["antigravity"])
+    assert not (root / ".agents/skills").exists()
+
 
 
 def test_copilot_gets_a_workspace_mcp_server_that_round_trips(tmp_path, monkeypatch):

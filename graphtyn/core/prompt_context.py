@@ -32,24 +32,36 @@ CODEX_HOOK_COMMAND = "graphtyn codex-context hook"
 CODEX_MAX_CONTEXT_CHARACTERS = MAX_CONTEXT_CHARACTERS * PARTS
 CODEX_CONTEXT_TOKEN_LIMIT = 8_000
 
+# A code identifier (camelCase, snake_case, `a::b`, a source file...) is the
+# same in every language, so it anchors a code request on its own. Without one,
+# the prompt needs a code verb and a code noun; these word lists cover Spanish,
+# English, Portuguese, French, German and Italian.
 _CODE_REQUEST = re.compile(
     r"\b(?:traza\w*|trace\w*|flujo|flow|funciona|works?|dónde|donde|where|impact\w*|romp\w*|break\w*|"
     r"persist\w*|guard\w*|sav\w*|llam\w*|calls?|callers?|consum\w*|depend\w*|expl[ií]ca\w*|explain\w*|"
     r"arquitectura|architecture|qué hace|what does|tests?|prueba\w*|valid\w*|refactor\w*|implement\w*|"
     r"bug|error\w*|fall\w*|fails?|crash\w*|lifecycle|ciclo de vida|ruta|route\w*|endpoint\w*|"
-    r"controlador\w*|controller\w*|modelo|model|esquema|schema|migraci\w*|transacci\w*|transaction\w*)\b",
+    r"controlador\w*|controller\w*|modelo|model|esquema|schema|migraci\w*|transacci\w*|transaction\w*|"
+    # Portuguese / French / Italian
+    r"rastre\w*|fluxo|explique\w*|onde|chama\w*|quebra\w*|arquitetura|trac\w*|flux|expliqu\w*|"
+    r"où|appel\w*|cass\w*|fonctionne\w*|spiega\w*|dove|chiama\w*|flusso|architettura|"
+    # German
+    r"erkl[äa]r\w*|ablauf|wo|aufruf\w*|funktioniert|architektur|fehler)\b",
     re.IGNORECASE)
 # Identifier shapes are case-sensitive (camelCase, PascalCase with an inner capital).
 _IDENTIFIER = re.compile(
     r"`[^`]+`|\b[a-z]+[A-Z]\w*|\b[A-Z][a-z0-9]+[A-Z]\w*|\b\w+_\w+\b|\w::\w|\w#\w|\w\.\w+\(|"
     r"\b[\w./-]+\.(?:py|rb|js|jsx|ts|tsx|go|rs|java|kt|swift|scala|cs|php|c|h|cc|cpp|hpp)\b")
 _CODE_NOUN = re.compile(
-    r"\b(?:repositori\w*|repo|proyecto|project|codebase|código|code|clase|class|función|function|"
-    r"método|method|módulo|module)\b", re.IGNORECASE)
+    r"\b(?:repositori\w*|repo|proyecto|project|projeto|projet|progetto|projekt\w*|codebase|código|code|codice|"
+    r"clase|class|classe|klasse\w*|función|function|função|fonction|funzione|funktion\w*|método|method|méthode|"
+    r"metodo|methode\w*|módulo|module|modulo|modul\w*)\b", re.IGNORECASE)
 # Questions about past conversations belong to memory_context, not the code graph.
 _HISTORY_REQUEST = re.compile(
     r"\b(?:qué hiciste|que hiciste|what did you|sesión anterior|previous session|recuerdas|remember|"
-    r"lo que me dijiste|what you told|historial|history)\b", re.IGNORECASE)
+    r"lo que me dijiste|what you told|historial|history|o que você fez|sessão anterior|lembra\w*|"
+    r"qu'as-tu fait|session précédente|souviens|cosa hai fatto|sessione precedente|ricordi|"
+    r"was hast du|letzte sitzung|erinnerst)\b", re.IGNORECASE)
 
 
 def should_prefetch(prompt: str) -> tuple[bool, str]:
@@ -60,9 +72,11 @@ def should_prefetch(prompt: str) -> tuple[bool, str]:
         return False, "client_command"
     if _HISTORY_REQUEST.search(text):
         return False, "history_question"
+    if _IDENTIFIER.search(text):
+        return True, "code_anchor"
     if not _CODE_REQUEST.search(text):
         return False, "not_a_code_request"
-    if not (_IDENTIFIER.search(text) or _CODE_NOUN.search(text)):
+    if not _CODE_NOUN.search(text):
         return False, "no_code_anchor"
     return True, "code_request"
 
