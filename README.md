@@ -268,7 +268,7 @@ que recibe el proyecto en cada llamada.
 | OpenCode | `graphtyn agent-install opencode --path .` | `AGENTS.md`, `opencode.json` | `opencode mcp list` |
 | Antigravity | `graphtyn agent-install antigravity --path .` | `GEMINI.md`, `.agents/skills/graphtyn{,-memory}/`, `.agents/mcp_config.json` | `agy mcp list` |
 | OpenClaw | `graphtyn harness openclaw connect` | servidor compartido de la instalación | ver [conexión OpenClaw](docs/openclaw-native.md) |
-| Copilot (VS Code) | `graphtyn agent-install copilot --path .` | `.github/copilot-instructions.md`, `.vscode/mcp.json` (sin verificar con un cliente real) | vista MCP de VS Code |
+| Copilot (VS Code) | `graphtyn agent-install copilot --path .` | `.github/copilot-instructions.md`, `.vscode/mcp.json` (formato contrastado con la referencia de VS Code; sin probar con un cliente real) | vista MCP de VS Code |
 | Cursor, Gemini | `graphtyn agent-install <cliente> --path .` | instrucciones (y `.cursor/mcp.json` en Cursor) | inspector MCP del cliente |
 
 Con `--path` cada entrada usa `graphtyn mcp --tool-profile <perfil> --path .`
@@ -276,6 +276,12 @@ desde la raíz del proyecto. `graphtyn integrations status --path .` muestra el
 estado de todas y `graphtyn integrations remove --path . --agent <cliente>`
 retira sólo las que creó Graphtyn, junto con las skills que instaló para ese
 cliente y que nadie editó después.
+
+Para Copilot, la entrada sigue el formato de la
+[referencia MCP de VS Code](https://code.visualstudio.com/docs/agents/reference/mcp-configuration):
+`servers`, `type: "stdio"`, `command`, `args` y `cwd: ${workspaceFolder}`. VS Code
+mantiene `.vscode/mcp.json` por compatibilidad, aunque su asistente lo marca como
+obsoleto; no se ha probado con un cliente Copilot real.
 
 ### Instalación hecha por un agente
 
