@@ -23,6 +23,7 @@
 | Claude Code / Sonnet, MCP lean y hook de primer turno | PARTIAL; tres tareas, n=3, 18 sesiones; comparación con brazos previos |
 | Hook de primer turno y MCP lean en Claude, Codex, OpenCode y Antigravity | PARTIAL; tres tareas, 84 sesiones (n=5 Claude, n=2 resto); adjudicación ciega parcial |
 | Tareas no vistas (held-out) para MCP lean y hook | NEGATIVE para generalización; seis tareas nuevas, 54 sesiones; rúbricas congeladas antes de ejecutar |
+| Segundo conjunto no visto y regla de parada dirigida | MIXED; seis tareas nuevas más repetición del primer conjunto, 114 sesiones (100 completas) |
 | 36 tareas multilenguaje | PENDING |
 
 La medición de la release 0.8.0 está en
@@ -110,6 +111,18 @@ Codex sin grafo. Donde el paquete no se declara completo (Rails), la calidad se
 mantiene pero el ahorro desaparece. Las cifras de ahorro anteriores valen sólo
 para las tareas medidas; la calibración de `do_not_expand` queda como trabajo
 pendiente.
+
+Con la regla de parada dirigida y un segundo conjunto no visto
+([`benchmarks/heldout_v2_2026-10-27/report.md`](../benchmarks/heldout_v2_2026-10-27/report.md)),
+la calidad se recupera, pero el ahorro baja:
+
+- **Primer conjunto:** Claude con hook pasa del 85 % al 98 % y Codex del 63 % al
+  79 %, gastando más.
+- **Segundo conjunto:** Claude mantiene el 98 % con y sin hook, y el hook gasta
+  un 22 % menos que el MCP lean. Codex con Graphtyn gasta un 9–31 % menos que
+  sin grafo, pero con peor rúbrica (55–57 % frente a 65 %).
+- **Cobertura:** en cuatro de las seis tareas nuevas el paquete cubre 0–1 hechos
+  y se declara completo; la recuperación es el cuello de botella.
 
 La validación Ruby/Rails está en
 [`benchmarks/real_ruby_agents_2026-10-20/report.md`](../benchmarks/real_ruby_agents_2026-10-20/report.md).

@@ -350,7 +350,11 @@ tareas nuevas no se sostiene en general
 ([informe](benchmarks/heldout_tasks_2026-10-27/report.md)). Cuando la
 recuperación omite parte de lo pedido pero el paquete se declara completo
 (`do_not_expand=true`), el agente responde sin buscar y pierde hechos. Por eso
-el hook es opcional y conviene usarlo sabiendo ese límite.
+el hook es opcional y conviene usarlo sabiendo ese límite. Desde la regla de
+parada dirigida, el agente busca lo que falta. La calidad se mantiene (Claude,
+98 % en tareas nuevas), pero en esas tareas el ahorro es moderado: un 22 %
+menos con hook que con MCP lean
+([informe](benchmarks/heldout_v2_2026-10-27/report.md)).
 
 `graphtyn claude-context status|uninstall --path .` lo consulta o lo retira. La
 captura de memoria descarta estos bloques. El MCP devuelve por defecto el mismo

@@ -10,6 +10,10 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
+- Segundo conjunto de tareas no vistas (`benchmarks/heldout_v2_2026-10-27/`):
+  con la regla de parada dirigida la calidad se recupera, pero el ahorro en
+  tareas nuevas es moderado. En cuatro de seis, el paquete cubre 0–1 hechos de la
+  rúbrica, así que la recuperación sigue siendo el cuello de botella.
 - Benchmark de tareas no vistas (`benchmarks/heldout_tasks_2026-10-27/`): seis
   tareas nuevas con rúbricas congeladas antes de ejecutar. Muestra que el ahorro
   del hook y del MCP lean no generaliza cuando el paquete se declara completo
