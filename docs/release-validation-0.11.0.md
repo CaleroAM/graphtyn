@@ -57,10 +57,12 @@ Después de la validación anterior se añadieron:
 - el segundo conjunto de tareas no vistas (`benchmarks/heldout_v2_2026-10-27/`);
 - los cambios de recuperación y la regla de completitud por evidencia escasa,
   medidos con el banco de tareas (`benchmarks/task_bank_2026-10-28/`). Con ellos,
-  la cobertura del conjunto de prueba pasa del 20 % al 37,5 %. No se repitieron
-  sesiones de agentes.
+  la cobertura del conjunto de prueba pasa del 20 % al 37,5 %;
+- una segunda ronda (completitud por identificadores y homónimos), medida en un
+  segundo conjunto de prueba con Flask y en 75 sesiones reales de Claude y
+  Codex (véase el informe del banco de tareas).
 
-La suite local pasa con 711 pruebas en Python 3.13 tras esos cambios. La matriz
+La suite local pasa con 716 pruebas en Python 3.13 tras esos cambios. La matriz
 3.10–3.12, el wheel, Docker y `pip-audit` deben repetirse sobre el commit que se
 etiquete.
 

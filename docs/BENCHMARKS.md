@@ -134,8 +134,25 @@ medido por la cobertura del paquete y sin agentes:
   falsas completitudes de 8 a 3.
 
 La mejora generaliza sólo en parte. La regla de completitud detecta paquetes
-escasos, pero no paquetes grandes centrados en otra parte del código. No se han
-repetido sesiones de agentes con estos cambios.
+escasos, pero no paquetes grandes centrados en otra parte del código.
+
+Una segunda ronda añadió la completitud por identificadores nombrados y las
+pistas de homónimos. Se midió sobre un segundo conjunto de prueba congelado
+antes, que incluye Flask, un corpus nunca usado para ajustar:
+
+- **Cobertura:** 51,4 % con el código original, 61,2 % tras la ronda 1 y
+  59,7 % tras la ronda 2.
+- **Falsas completitudes:** de 6 a 2.
+
+En 75 sesiones reales sobre esas tareas:
+
+- **Claude con hook:** misma rúbrica que sin grafo (93,8 %) con un 14 % menos
+  de tokens.
+- **Codex con hook:** 72,3 % frente a 69,9 % sin grafo, con un 26 % menos.
+- **Codex con MCP lean:** queda por debajo (64,9 %).
+
+Con una repetición por celda, estas diferencias pequeñas están dentro del
+ruido.
 
 La validación Ruby/Rails está en
 [`benchmarks/real_ruby_agents_2026-10-20/report.md`](../benchmarks/real_ruby_agents_2026-10-20/report.md).

@@ -18,6 +18,9 @@ tras la validación de release (`docs/release-checklist.md`).
   escasa para una petición de varias partes (menos de 250 tokens por parte):
   devuelve `missing=["request_parts"]` y pide buscar sólo las partes que la
   evidencia no aborda. El hook usa la misma indicación.
+- Tampoco lo declara completo cuando la petición nombra un identificador
+  (`BLPOP`, `TRYAGAIN`) que la evidencia no contiene:
+  `missing=["named_identifiers"]` y `evidence_sufficiency` lista los que faltan.
 - Segundo conjunto de tareas no vistas (`benchmarks/heldout_v2_2026-10-27/`):
   con la regla de parada dirigida la calidad se recupera, pero el ahorro en
   tareas nuevas es moderado. En cuatro de seis, el paquete cubre 0–1 hechos de la
@@ -127,6 +130,13 @@ tras la validación de release (`docs/release-checklist.md`).
   - como mucho dos homónimos;
   - las funciones llamadas por el punto de entrada entran en el paquete.
   En el banco de tareas, la cobertura de prueba pasa del 20 % al 37,5 %.
+- «registra» ya no clasifica una petición como `bindings` sin vocabulario de
+  inyección de dependencias.
+- Entre homónimos de un método nombrado se prefiere el dueño o la firma que
+  describe la petición (`update(attributes)` → `Persistence#update`).
+- Las palabras españolas en prosa y los nombres de directorio ya no puntúan
+  como términos.
+- La cadena de llamadas sigue hasta tres saltos por métodos hermanos.
 
 - Regla de parada dirigida: un paquete con `do_not_expand=true` ya no prohíbe
   buscar. El hook, la guía del paquete, la skill y `AGENTS.md` piden responder
