@@ -9,6 +9,7 @@ from typing import Any
 
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
+from .ranking_weights import weighted_score
 from .vocabulary import COMMON_WORDS, is_prose_word, translated_terms
 
 
@@ -1071,39 +1072,34 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         distinctive_hits = (name_frequency.hits(str(node.get("name") or ""))
                             if node.get("kind") in _BEHAVIOR_KINDS else 0)
         path = str(node.get("file") or "").replace("\\", "/")
-        primary_bonus = 50 if path.startswith(("src/", "backend/", "app/")) else 0
-        package_bonus = 180 if qualified_package_roots and path.split("/", 1)[0] in qualified_package_roots else 0
-        test_penalty = -700 if selected_intent != "tests" and not tests_requested and _TEST_PATH.search(path) else 0
-        vendored_penalty = -400 if _VENDORED_PATH.search(path) else 0
-        benchmark_penalty = -400 if "benchmark" not in request_lower and re.search(
-            r"(?:^|/)benchmarks?(?:/|$)", path, re.I
-        ) else 0
-        anchor_bonus = 90 if path in anchor_files else 0
-        container_bonus = 160 if str(node.get("container") or "").lower() in explicit_names else 0
-        homonym_bonus = homonym_hints.bonus(node) if exact_hits else 0
-        qualified_bonus = 900 if node.get("id") in qualified_node_ids else 0
+        identity_text = f"{path} {node.get('name', '')}"
+        docker_bonus = bool(docker_requested and re.search(r"(?:^|/)(?:dockerfile|docker-compose[^/]*)$", path, re.I))
+        verifier_bonus = bool(verifier_requested and re.search(r"verif|comprob|instala|backup|respaldo",
+                                                               identity_text, re.I))
+        generation_bonus = any(pattern.search(identity_text) for label, pattern in requested_concerns.items()
+                               if label.endswith("_generation"))
         entry_name = str(node.get("name") or "").lower() in {"__call__", "servehttp", "main", "run"}
         entry_file = bool(re.search(r"(?:^|/)(?:applications?|app|main|server)\.[^.]+$", path, re.I))
-        entry_bonus = 1_200 if entry_request and entry_name and entry_file else 0
-        capture_bonus = 700 if capture_request and str(node.get("name") or "").lower() == "findroute" else 0
-        docker_bonus = 1_200 if docker_requested and re.search(r"(?:^|/)(?:dockerfile|docker-compose[^/]*)$", path, re.I) else 0
-        verifier_bonus = 700 if verifier_requested and re.search(
-            r"verif|comprob|instala|backup|respaldo", f"{path} {node.get('name', '')}", re.I
-        ) else 0
-        generation_bonus = 900 if any(
-            pattern.search(f"{path} {node.get('name', '')}")
-            for label, pattern in requested_concerns.items() if label.endswith("_generation")
-        ) else 0
-        score = (min(6, len(filtered_ops)) * 25 + min(4, operation_request_hits) * 300
-                 + lexical_hits * 10 + concept_hits * 45 + exact_hits * 400 + qualified_bonus
-                 + distinctive_hits * 350
-                 + int(bool(kind_relevant)) * 100 + primary_bonus + test_penalty + benchmark_penalty + vendored_penalty
-                 + anchor_bonus + container_bonus + homonym_bonus + package_bonus
-                 + entry_bonus + capture_bonus
-                 + docker_bonus + verifier_bonus + generation_bonus
-                 + int(node.get("kind") == "route" and lexical_hits > 0) * 180
-                 + int(node.get("kind") in ("method", "class", "interface")) * 10
-                 + min(10, int(node.get("degree") or 0)))
+        score = weighted_score({
+            "operations": min(6, len(filtered_ops)), "operation_request_hits": min(4, operation_request_hits),
+            "lexical_hits": lexical_hits, "concept_hits": concept_hits, "exact_hits": exact_hits,
+            "qualified": node.get("id") in qualified_node_ids, "distinctive_hits": distinctive_hits,
+            "tests_intent_file": bool(kind_relevant), "primary_path": path.startswith(("src/", "backend/", "app/")),
+            "test_file": selected_intent != "tests" and not tests_requested and bool(_TEST_PATH.search(path)),
+            "benchmark_file": "benchmark" not in request_lower and bool(
+                re.search(r"(?:^|/)benchmarks?(?:/|$)", path, re.I)),
+            "vendored_file": bool(_VENDORED_PATH.search(path)), "anchor_file": path in anchor_files,
+            "named_container": str(node.get("container") or "").lower() in explicit_names,
+            "described_owner": bool(exact_hits) and homonym_hints.owner_match(node),
+            "written_signature": bool(exact_hits) and homonym_hints.signature_match(node),
+            "named_package": bool(qualified_package_roots) and path.split("/", 1)[0] in qualified_package_roots,
+            "entry_point": entry_request and entry_name and entry_file,
+            "route_capture": capture_request and str(node.get("name") or "").lower() == "findroute",
+            "docker_file": docker_bonus, "verifier": verifier_bonus, "generator": generation_bonus,
+            "lexical_route": node.get("kind") == "route" and lexical_hits > 0,
+            "callable_kind": node.get("kind") in ("method", "class", "interface"),
+            "degree": min(10, int(node.get("degree") or 0)),
+        }, copy)
         concept_allowed = selected_intent in ("flow", "tests", "impact")
         # Flow requests often name the exact framework component (for example
         # ``SessionMiddleware``) without using one of our domain operation

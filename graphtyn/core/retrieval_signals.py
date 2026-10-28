@@ -54,11 +54,13 @@ class HomonymHints:
         self.call_forms = {re.sub(r"\s+", "", form).lower()
                            for form in re.findall(r"\b[A-Za-z_]\w*\([^()]{1,60}\)", str(request or ""))}
 
-    def bonus(self, node: dict[str, Any]) -> int:
+    def owner_match(self, node: dict[str, Any]) -> bool:
         owner = f"{node.get('container') or ''} {node.get('namespace') or ''}".lower()
+        return any(term in owner for term in self.owner_terms)
+
+    def signature_match(self, node: dict[str, Any]) -> bool:
         signature = re.sub(r"\s+", "", str(node.get("signature") or "")).lower()
-        return (250 * any(term in owner for term in self.owner_terms)
-                + 600 * any(form in signature for form in self.call_forms))
+        return any(form in signature for form in self.call_forms)
 
 
 def _normalized(term: str) -> str:

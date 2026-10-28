@@ -22,7 +22,7 @@
       "total": 8
     },
     "FLASK_SESSION_COOKIE_FLOW": {
-      "covered": 7,
+      "covered": 6,
       "do_not_expand": true,
       "total": 8
     },
@@ -77,8 +77,8 @@
       "total": 8
     },
     "FMT_OSTREAM_FLOW": {
-      "covered": 4,
-      "do_not_expand": false,
+      "covered": 6,
+      "do_not_expand": true,
       "total": 7
     },
     "FMT_PRINTF_FLOW": {
