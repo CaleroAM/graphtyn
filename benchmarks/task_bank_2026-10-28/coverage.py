@@ -1,7 +1,7 @@
 """Rubric facts present in the graph_query_intent package, without agents.
 
 usage: GRAPHTYN_HOME=<home with indexes> PYTHONPATH=<graphtyn tree> \
-       python coverage.py dev|test <dir with indexed redis/ fmt/ rails/ copies> [--jsonl out]
+       python coverage.py dev|test|test2 <dir with indexed redis/ fmt/ rails/ copies> [--jsonl out]
 
 A package is a false completion when it sets do_not_expand=true while covering
 less than half of the rubric.
@@ -16,22 +16,26 @@ from graphtyn.core.storage import data_home, project_store_dir
 from graphtyn.mcp_server import build_intent_package
 
 HERE = Path(__file__).resolve().parent
-CORPORA = ("redis", "fmt", "rails")
+CORPORA = ("redis", "fmt", "rails", "flask")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("split", choices=("dev", "test"))
+    parser.add_argument("split", choices=("dev", "test", "test2"))
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--jsonl", type=Path)
     args = parser.parse_args()
     patterns = json.loads((HERE / "split.json").read_text())[args.split]
     rows = []
     for corpus in CORPORA:
+        task_files = [HERE / pattern.format(corpus=corpus) for pattern in patterns]
+        task_files = [path for path in task_files if path.exists()]
+        if not task_files:
+            continue
         root = args.workspace / corpus
         graph = json.loads((project_store_dir(data_home(), root) / "index.json").read_text())
-        for pattern in patterns:
-            for task in json.loads((HERE / pattern.format(corpus=corpus)).read_text())["tasks"]:
+        for path in task_files:
+            for task in json.loads(path.read_text())["tasks"]:
                 _raw, result, _ = build_intent_package(root, graph, task["request"])
                 result = lean_payload(result)
                 text = json.dumps(result, ensure_ascii=False)

@@ -1,0 +1,169 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-28, segundo conjunto de prueba, congelado antes de corregir los fallos vistos en el primero; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; flask es un corpus nunca usado para ajustar",
+  "tasks": [
+    {
+      "id": "FMT_PRINTF_FLOW",
+      "request": "Explica cómo fmt::sprintf(\"%-08.3d\", x) procesa una cadena de estilo printf: cómo se analizan índice, flags y ancho, cómo se obtiene un ancho o precisión con asterisco, cómo se interpretan los modificadores de longitud y se convierte el argumento, cómo se mapea el tipo de conversión y qué formateador escribe el valor. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "vprintf",
+          "any": [
+            "vprintf"
+          ]
+        },
+        {
+          "id": "header",
+          "any": [
+            "parse_header"
+          ]
+        },
+        {
+          "id": "flags",
+          "any": [
+            "parse_flags"
+          ]
+        },
+        {
+          "id": "width",
+          "any": [
+            "printf_width_handler"
+          ]
+        },
+        {
+          "id": "precision",
+          "any": [
+            "printf_precision_handler"
+          ]
+        },
+        {
+          "id": "convert",
+          "any": [
+            "convert_arg"
+          ]
+        },
+        {
+          "id": "type",
+          "any": [
+            "parse_printf_presentation_type"
+          ]
+        },
+        {
+          "id": "writer",
+          "any": [
+            "printf_arg_formatter"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_OSTREAM_FLOW",
+      "request": "En fmt, explica cómo se formatea un tipo que sólo define operator<< usando fmt::streamed o basic_ostream_formatter, y cómo fmt::print(std::ostream&, ...) escribe el resultado: el búfer intermedio, el streambuf adaptador, cuándo se escribe directamente en el FILE subyacente y cómo se vuelca al ostream. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "streamed",
+          "any": [
+            "streamed_view",
+            "streamed("
+          ]
+        },
+        {
+          "id": "formatter",
+          "any": [
+            "basic_ostream_formatter"
+          ]
+        },
+        {
+          "id": "formatbuf",
+          "any": [
+            "formatbuf"
+          ]
+        },
+        {
+          "id": "format_value",
+          "any": [
+            "output << value",
+            "imbue(std::locale::classic())"
+          ]
+        },
+        {
+          "id": "print",
+          "any": [
+            "print(std::ostream",
+            "vprint(std::ostream"
+          ]
+        },
+        {
+          "id": "file",
+          "any": [
+            "get_file"
+          ]
+        },
+        {
+          "id": "write",
+          "any": [
+            "write_buffer"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_COMPILE_FLOW",
+      "request": "Explica cómo funciona FMT_COMPILE en fmt: qué tipo crea la macro, cómo compile analiza la cadena en tiempo de compilación y la convierte en una cadena de piezas (texto, campos con y sin especificaciones, argumentos con nombre), cómo se encadenan esas piezas y cómo format_to ejecuta el formato compilado. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "macro",
+          "any": [
+            "FMT_COMPILE"
+          ]
+        },
+        {
+          "id": "string",
+          "any": [
+            "compiled_string",
+            "is_compiled_string"
+          ]
+        },
+        {
+          "id": "compile",
+          "any": [
+            "compile("
+          ]
+        },
+        {
+          "id": "parse",
+          "any": [
+            "compile_format_string"
+          ]
+        },
+        {
+          "id": "tail",
+          "any": [
+            "parse_tail"
+          ]
+        },
+        {
+          "id": "pieces",
+          "any": [
+            "struct text",
+            "struct field",
+            "spec_field"
+          ]
+        },
+        {
+          "id": "named",
+          "any": [
+            "runtime_named_field"
+          ]
+        },
+        {
+          "id": "concat",
+          "any": [
+            "concat",
+            "make_concat"
+          ]
+        }
+      ]
+    }
+  ]
+}

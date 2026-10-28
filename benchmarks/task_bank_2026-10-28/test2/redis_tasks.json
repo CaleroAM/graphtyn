@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-28, segundo conjunto de prueba, congelado antes de corregir los fallos vistos en el primero; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; flask es un corpus nunca usado para ajustar",
+  "tasks": [
+    {
+      "id": "REDIS_KEYSPACE_NOTIFY_FLOW",
+      "request": "Explica cómo Redis emite notificaciones de keyspace cuando se modifica una clave: cómo se configuran las clases de eventos, qué se avisa primero a los módulos, cuándo no se envía nada, cómo se construyen los canales __keyspace@ y __keyevent@ y cómo se publican los mensajes. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "entry",
+          "any": [
+            "notifyKeyspaceEvent"
+          ]
+        },
+        {
+          "id": "config",
+          "any": [
+            "keyspaceEventsStringToFlags",
+            "notify_keyspace_events"
+          ]
+        },
+        {
+          "id": "modules",
+          "any": [
+            "moduleNotifyKeyspaceEvent"
+          ]
+        },
+        {
+          "id": "keyspace",
+          "any": [
+            "NOTIFY_KEYSPACE",
+            "__keyspace@"
+          ]
+        },
+        {
+          "id": "keyevent",
+          "any": [
+            "NOTIFY_KEYEVENT",
+            "__keyevent@"
+          ]
+        },
+        {
+          "id": "publish",
+          "any": [
+            "pubsubPublishMessage"
+          ]
+        },
+        {
+          "id": "filter",
+          "any": [
+            "server.notify_keyspace_events & type"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_INCR_FLOW",
+      "request": "En Redis, traza qué hace INCRBY sobre una clave: cómo se busca la clave y se comprueba su tipo, cómo se interpreta el valor actual y el incremento como enteros, cómo se detecta el desbordamiento, cuándo se reutiliza el objeto existente y cuándo se crea uno nuevo, y qué se notifica y se responde al final. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "command",
+          "any": [
+            "incrDecrCommand",
+            "incrbyCommand"
+          ]
+        },
+        {
+          "id": "lookup",
+          "any": [
+            "lookupKeyWriteWithLink"
+          ]
+        },
+        {
+          "id": "type",
+          "any": [
+            "checkType"
+          ]
+        },
+        {
+          "id": "parse",
+          "any": [
+            "getLongLongFromObjectOrReply"
+          ]
+        },
+        {
+          "id": "overflow",
+          "any": [
+            "would overflow"
+          ]
+        },
+        {
+          "id": "reuse",
+          "any": [
+            "OBJ_ENCODING_INT",
+            "refcount == 1"
+          ]
+        },
+        {
+          "id": "create",
+          "any": [
+            "createStringObjectFromLongLongForValue",
+            "dbAddByLink"
+          ]
+        },
+        {
+          "id": "notify",
+          "any": [
+            "\"incrby\"",
+            "addReplyLongLongFromStr"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_SCAN_FLOW",
+      "request": "Explica cómo funciona SCAN en Redis: cómo se valida el cursor, cómo se leen las opciones MATCH, COUNT y TYPE, qué ocurre con objetos pequeños codificados de forma compacta, cómo se recorre la tabla con un límite de iteraciones, cómo se filtran las claves (patrón, tipo, expiradas) y cómo se construye la respuesta. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "generic",
+          "any": [
+            "scanGenericCommand"
+          ]
+        },
+        {
+          "id": "cursor",
+          "any": [
+            "parseScanCursorOrReply"
+          ]
+        },
+        {
+          "id": "type",
+          "any": [
+            "getObjectTypeByName",
+            "unknown type name"
+          ]
+        },
+        {
+          "id": "compact",
+          "any": [
+            "listpack",
+            "intset"
+          ]
+        },
+        {
+          "id": "iterate",
+          "any": [
+            "kvstoreScan",
+            "dictScan"
+          ]
+        },
+        {
+          "id": "limit",
+          "any": [
+            "maxiterations"
+          ]
+        },
+        {
+          "id": "callback",
+          "any": [
+            "scanCallback"
+          ]
+        },
+        {
+          "id": "filter",
+          "any": [
+            "stringmatchlen",
+            "expireIfNeeded"
+          ]
+        }
+      ]
+    }
+  ]
+}

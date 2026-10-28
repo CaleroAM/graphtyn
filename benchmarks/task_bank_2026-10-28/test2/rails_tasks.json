@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-28, segundo conjunto de prueba, congelado antes de corregir los fallos vistos en el primero; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; flask es un corpus nunca usado para ajustar",
+  "tasks": [
+    {
+      "id": "RAILS_HAS_MANY_LOAD_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza qué ocurre al acceder a author.posts y recorrer la colección: qué devuelve el lector de la asociación, cuándo se recarga un objetivo obsoleto, cuándo hace falta consultar la base de datos, cómo se construye y ejecuta la consulta con la caché de sentencias, qué pasa con strict_loading y cómo se combinan los registros cargados con los que están en memoria. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "reader",
+          "any": [
+            "def reader"
+          ]
+        },
+        {
+          "id": "proxy",
+          "any": [
+            "CollectionProxy"
+          ]
+        },
+        {
+          "id": "stale",
+          "any": [
+            "stale_target?"
+          ]
+        },
+        {
+          "id": "load",
+          "any": [
+            "load_target"
+          ]
+        },
+        {
+          "id": "find_q",
+          "any": [
+            "find_target?"
+          ]
+        },
+        {
+          "id": "find",
+          "any": [
+            "find_target"
+          ]
+        },
+        {
+          "id": "cache",
+          "any": [
+            "association_scope_cache",
+            "sc.execute"
+          ]
+        },
+        {
+          "id": "strict",
+          "any": [
+            "violates_strict_loading?",
+            "strict_loading_violation!"
+          ]
+        },
+        {
+          "id": "merge",
+          "any": [
+            "merge_target_lists"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_ENUM_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, explica qué hace enum :status, [:active, :archived] en un modelo: cómo se validan los valores, cómo se define el atributo y el tipo que convierte entre etiqueta y valor, qué métodos y scopes se generan, qué pasa al asignar un valor no válido y cómo cambia con validate: true. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "enum",
+          "any": [
+            "def enum"
+          ]
+        },
+        {
+          "id": "impl",
+          "any": [
+            "def _enum"
+          ]
+        },
+        {
+          "id": "type",
+          "any": [
+            "EnumType"
+          ]
+        },
+        {
+          "id": "decorate",
+          "any": [
+            "decorate_attributes"
+          ]
+        },
+        {
+          "id": "cast",
+          "any": [
+            "def cast",
+            "def serialize"
+          ]
+        },
+        {
+          "id": "methods",
+          "any": [
+            "define_enum_methods"
+          ]
+        },
+        {
+          "id": "invalid",
+          "any": [
+            "assert_valid_value",
+            "is not a valid"
+          ]
+        },
+        {
+          "id": "validate",
+          "any": [
+            "validates_inclusion_of"
+          ]
+        },
+        {
+          "id": "values",
+          "any": [
+            "must not be empty",
+            "must be either a non-empty hash"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_RENDER_JSON_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza qué ocurre cuando una acción hace render json: @post: la protección contra doble render, cómo se normalizan las opciones, cómo render_to_body elige un renderer, cómo el renderer json serializa el objeto y fija el tipo de contenido (incluido el caso con callback) y cómo se asigna el cuerpo de la respuesta. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "double",
+          "any": [
+            "DoubleRenderError"
+          ]
+        },
+        {
+          "id": "normalize",
+          "any": [
+            "_normalize_render"
+          ]
+        },
+        {
+          "id": "body",
+          "any": [
+            "render_to_body"
+          ]
+        },
+        {
+          "id": "renderer",
+          "any": [
+            "_render_to_body_with_renderer"
+          ]
+        },
+        {
+          "id": "method",
+          "any": [
+            "_render_with_renderer_"
+          ]
+        },
+        {
+          "id": "json",
+          "any": [
+            "add :json",
+            "to_json"
+          ]
+        },
+        {
+          "id": "callback",
+          "any": [
+            "options[:callback]"
+          ]
+        },
+        {
+          "id": "content",
+          "any": [
+            "content_type = :json",
+            "Mime[:json]"
+          ]
+        },
+        {
+          "id": "assign",
+          "any": [
+            "response_body"
+          ]
+        }
+      ]
+    }
+  ]
+}

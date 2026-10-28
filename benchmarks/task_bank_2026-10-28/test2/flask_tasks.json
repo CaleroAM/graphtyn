@@ -1,0 +1,339 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-28, segundo conjunto de prueba, congelado antes de corregir los fallos vistos en el primero; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; flask es un corpus nunca usado para ajustar",
+  "tasks": [
+    {
+      "id": "FLASK_REQUEST_DISPATCH_FLOW",
+      "request": "In Flask, trace how a WSGI request reaches a view function and becomes a response: where the request context is created and pushed, how routing exceptions and automatic OPTIONS responses are handled, how before-request functions can short-circuit, how the view is called, and how the return value is turned into a response and post-processed. Cite file:line.",
+      "rubric": [
+        {
+          "id": "wsgi",
+          "any": [
+            "wsgi_app"
+          ]
+        },
+        {
+          "id": "ctx",
+          "any": [
+            "request_context",
+            "ctx.push"
+          ]
+        },
+        {
+          "id": "full",
+          "any": [
+            "full_dispatch_request"
+          ]
+        },
+        {
+          "id": "routing",
+          "any": [
+            "raise_routing_exception",
+            "routing_exception"
+          ]
+        },
+        {
+          "id": "options",
+          "any": [
+            "provide_automatic_options",
+            "make_default_options_response"
+          ]
+        },
+        {
+          "id": "before",
+          "any": [
+            "preprocess_request"
+          ]
+        },
+        {
+          "id": "view",
+          "any": [
+            "dispatch_request",
+            "view_functions"
+          ]
+        },
+        {
+          "id": "finalize",
+          "any": [
+            "finalize_request",
+            "make_response",
+            "process_response"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLASK_ERROR_HANDLING_FLOW",
+      "request": "In Flask, explain what happens when a view raises an exception: how user exceptions and HTTP exceptions are routed to error handlers, how a handler is looked up across blueprints and the exception class hierarchy, when HTTP exceptions are trapped, and what happens for an unhandled exception (signal, propagation in debug, logging, 500 response). Cite file:line.",
+      "rubric": [
+        {
+          "id": "user",
+          "any": [
+            "handle_user_exception"
+          ]
+        },
+        {
+          "id": "http",
+          "any": [
+            "handle_http_exception"
+          ]
+        },
+        {
+          "id": "find",
+          "any": [
+            "_find_error_handler"
+          ]
+        },
+        {
+          "id": "trap",
+          "any": [
+            "trap_http_exception"
+          ]
+        },
+        {
+          "id": "unhandled",
+          "any": [
+            "handle_exception"
+          ]
+        },
+        {
+          "id": "signal",
+          "any": [
+            "got_request_exception"
+          ]
+        },
+        {
+          "id": "propagate",
+          "any": [
+            "PROPAGATE_EXCEPTIONS"
+          ]
+        },
+        {
+          "id": "server_error",
+          "any": [
+            "InternalServerError",
+            "log_exception"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLASK_SESSION_COOKIE_FLOW",
+      "request": "In Flask, explain how the default cookie session is loaded and saved: when the session is opened during the request, how the signing serializer is built from the secret key, what happens with a bad signature, and when saving the response sets, refreshes or deletes the cookie, including the Vary header and expiration. Cite file:line.",
+      "rubric": [
+        {
+          "id": "interface",
+          "any": [
+            "SecureCookieSessionInterface"
+          ]
+        },
+        {
+          "id": "open",
+          "any": [
+            "open_session"
+          ]
+        },
+        {
+          "id": "serializer",
+          "any": [
+            "get_signing_serializer",
+            "URLSafeTimedSerializer"
+          ]
+        },
+        {
+          "id": "bad",
+          "any": [
+            "BadSignature"
+          ]
+        },
+        {
+          "id": "save",
+          "any": [
+            "save_session"
+          ]
+        },
+        {
+          "id": "should",
+          "any": [
+            "should_set_cookie",
+            "SESSION_REFRESH_EACH_REQUEST"
+          ]
+        },
+        {
+          "id": "delete",
+          "any": [
+            "delete_cookie"
+          ]
+        },
+        {
+          "id": "vary",
+          "any": [
+            "vary.add",
+            "get_expiration_time"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLASK_BLUEPRINT_REGISTER_FLOW",
+      "request": "In Flask, trace app.register_blueprint(bp, url_prefix='/api'): how the blueprint name is computed and duplicate names rejected, how the setup state is created, how deferred functions recorded by the blueprint run, how url rules get the prefix and endpoint name, and how the blueprint's CLI commands are attached. Cite file:line.",
+      "rubric": [
+        {
+          "id": "app",
+          "any": [
+            "register_blueprint"
+          ]
+        },
+        {
+          "id": "register",
+          "any": [
+            "def register"
+          ]
+        },
+        {
+          "id": "duplicate",
+          "any": [
+            "already registered"
+          ]
+        },
+        {
+          "id": "state",
+          "any": [
+            "make_setup_state",
+            "BlueprintSetupState"
+          ]
+        },
+        {
+          "id": "deferred",
+          "any": [
+            "deferred_functions"
+          ]
+        },
+        {
+          "id": "rule",
+          "any": [
+            "add_url_rule"
+          ]
+        },
+        {
+          "id": "prefix",
+          "any": [
+            "url_prefix"
+          ]
+        },
+        {
+          "id": "cli",
+          "any": [
+            "cli_group"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLASK_URL_FOR_FLOW",
+      "request": "In Flask, explain how url_for('.index', page=2, _external=True) builds a URL: how the helper delegates to the app, how a relative endpoint is resolved against the current blueprint, which URL adapter is used inside and outside a request, how URL defaults are injected, and what happens when building fails. Cite file:line.",
+      "rubric": [
+        {
+          "id": "helper",
+          "any": [
+            "current_app.url_for"
+          ]
+        },
+        {
+          "id": "relative",
+          "any": [
+            "blueprint_name"
+          ]
+        },
+        {
+          "id": "adapter",
+          "any": [
+            "url_adapter",
+            "create_url_adapter"
+          ]
+        },
+        {
+          "id": "external",
+          "any": [
+            "_external"
+          ]
+        },
+        {
+          "id": "defaults",
+          "any": [
+            "inject_url_defaults",
+            "url_default_functions"
+          ]
+        },
+        {
+          "id": "build",
+          "any": [
+            "BuildError"
+          ]
+        },
+        {
+          "id": "handler",
+          "any": [
+            "handle_url_build_error",
+            "url_build_error_handlers"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLASK_CONTEXT_TEARDOWN_FLOW",
+      "request": "In Flask, explain how the application context is pushed and popped around a request: what push does with the context variable, signals, session and URL matching, how nested pushes are counted, and what pop runs on teardown (request teardown functions, closing the request, app context teardown) before resetting the context. Cite file:line.",
+      "rubric": [
+        {
+          "id": "push",
+          "any": [
+            "def push"
+          ]
+        },
+        {
+          "id": "cv",
+          "any": [
+            "_cv_app"
+          ]
+        },
+        {
+          "id": "signal_push",
+          "any": [
+            "appcontext_pushed"
+          ]
+        },
+        {
+          "id": "session",
+          "any": [
+            "_get_session"
+          ]
+        },
+        {
+          "id": "match",
+          "any": [
+            "match_request"
+          ]
+        },
+        {
+          "id": "count",
+          "any": [
+            "_push_count"
+          ]
+        },
+        {
+          "id": "teardown",
+          "any": [
+            "do_teardown_request",
+            "do_teardown_appcontext"
+          ]
+        },
+        {
+          "id": "signal_pop",
+          "any": [
+            "appcontext_popped"
+          ]
+        }
+      ]
+    }
+  ]
+}
