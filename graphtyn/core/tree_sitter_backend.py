@@ -634,6 +634,9 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
             _call_facts(ctx, node, line, evidence, calls, operations, imports, ruby_mixins)
         elif pack.name == "ruby" and node.type == "identifier" and _is_ruby_bare_call(ctx, node, ruby_locals):
             _ruby_bare_call_facts(ctx, node, line, evidence, calls, operations)
+        elif pack.name == "ruby" and node.type == "super" and (node.parent is None or node.parent.type != "call"):
+            # A bare `super` forwards the arguments; `super(...)` arrives as a call.
+            _ruby_bare_call_facts(ctx, node, line, evidence, calls, operations)
         elif node.type in {"assignment_expression", "assignment", "augmented_assignment_expression"}:
             left = node.child_by_field_name("left")
             operations.append({

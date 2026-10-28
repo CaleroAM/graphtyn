@@ -13,6 +13,7 @@ from .tree_sitter_backend import (
 from .overview_report import collect_project_evidence
 from .graph_hygiene import normalize_graph
 from .relation_resolution import CandidateRanker, unique_symbol_id
+from .ruby_mro import RubyAncestry, lexical_candidates as ruby_lexical_candidates
 from .source_files import git_visible_files
 from .type_evidence import apply_type_evidence
 
@@ -794,6 +795,11 @@ class ASTParser:
                              for target in candidates if target != source_id), reverse=True)
             if not ranked:
                 continue
+            if rel_file.endswith(".rb"):
+                # Ruby's own constant lookup outranks name similarity.
+                scoped = set(ruby_lexical_candidates(node_by_id.get(source_id, {}), qualified_name or mixin_name,
+                                                     [target for _score, target in ranked], node_by_id))
+                ranked = [(score, target) for score, target in ranked if target in scoped]
             best_score = ranked[0][0]
             best = [target for score, target in ranked if score == best_score]
             if len(best) > 4:
@@ -818,6 +824,7 @@ class ASTParser:
                 target_file = node_by_id.get(target, {}).get("file")
                 if target_file is not None:
                     symbols_by_file_name.setdefault((target_file, symbol_name), []).append(target)
+        ruby_ancestry = RubyAncestry(nodes, links) if any(path.endswith(".rb") for path in tree_calls) else None
         for rel_file, calls in tree_calls.items():
             f_id = f"file:{rel_file}"
             seen_calls = set()
@@ -829,6 +836,12 @@ class ASTParser:
                     if not call.get("container") or node_by_id.get(target, {}).get("container") == call.get("container")
                 ]
                 source_id = caller_ids[0] if len(caller_ids) == 1 else f_id
+                if ruby_ancestry and rel_file.endswith(".rb") and not call.get("receiver") and source_id != f_id:
+                    # Ruby dispatches self calls and `super` along the includers' ancestors.
+                    dispatched = ruby_ancestry.call_links(source_id, call, rel_file)
+                    if dispatched or call["name"] == "super":
+                        links.extend(dispatched)
+                        continue
                 lexical_candidates = set(targets)
                 if call["name"] != target_name:
                     lexical_candidates.update(symbol_name_ids.get(call["name"], set()))

@@ -725,3 +725,40 @@ def test_ruby_bare_method_calls_link_without_locals_or_other_languages(tmp_path)
     # `total` is a local and `force` a parameter of destroy; JS homonyms are another language.
     assert not {call for call in calls if call[0] == "destroy" and call[1] in {"total", "force"}}
     assert not {call for call in calls if call[2] == "asset.js"}
+
+
+def test_ruby_mixins_resolve_lexically_and_super_follows_the_ancestor_chain(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    lib = tmp_path / "lib"
+    lib.mkdir()
+    (lib / "persistence.rb").write_text(
+        "module ActiveRecord\n  module Persistence\n    def save(**options)\n      create_or_update\n    end\n\n"
+        "    def create_or_update; end\n  end\nend\n", encoding="utf-8")
+    (lib / "validations.rb").write_text(
+        "module ActiveRecord\n  module Validations\n    def save(**options)\n      valid? ? super : false\n    end\n\n"
+        "    def valid?; true; end\n  end\nend\n", encoding="utf-8")
+    (lib / "transactions.rb").write_text(
+        "module ActiveRecord\n  module Transactions\n    def save(**options)\n      with_transaction { super(**options) }\n"
+        "    end\n\n    def with_transaction; yield; end\n  end\nend\n", encoding="utf-8")
+    (lib / "translation.rb").write_text("module ActiveRecord\n  module Translation; end\nend\n", encoding="utf-8")
+    (lib / "other_translation.rb").write_text("module ActiveModel\n  module Translation; end\nend\n", encoding="utf-8")
+    (lib / "base.rb").write_text(
+        "module ActiveRecord\n  class Base\n    include Persistence\n    include Translation\n"
+        "    include Validations\n    include Transactions\n  end\nend\n", encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    def label(node_id):
+        node = nodes[node_id]
+        return f"{node.get('container') or node.get('namespace')}#{node['name']}"
+    mixins = {(label(link["source"]), nodes[link["target"]]["file"], link["confidence"])
+              for link in graph["links"] if link.get("label") == "incluye"}
+    # `include Translation` inside ActiveRecord is ActiveRecord::Translation only.
+    assert ("ActiveRecord#Base", "lib/translation.rb", "INFERRED") in mixins or \
+        ("ActiveRecord#Base", "lib/translation.rb", "EXTRACTED") in mixins
+    assert not {mixin for mixin in mixins if mixin[1] == "lib/other_translation.rb"}
+    supers = {(label(link["source"]), label(link["target"]))
+              for link in graph["links"] if (link.get("resolution") or {}).get("strategy") == "ruby-super-ancestors"}
+    # Ancestors of Base: Transactions, Validations, Translation, Persistence.
+    assert supers == {("Transactions#save", "Validations#save"), ("Validations#save", "Persistence#save")}

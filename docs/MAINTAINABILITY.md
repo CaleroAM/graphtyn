@@ -92,6 +92,11 @@ de dependencias que exige el marcador `registr`) y `query_intent` (+3: las
 pistas de homónimos). Las pistas de dueño y firma (`HomonymHints`) y la cadena
 de llamadas de varios saltos viven en `retrieval_signals.py`.
 
+La composición de módulos Ruby crece, con revisión, `ASTParser.scan_directory`
+(+12 líneas: el ámbito léxico de `include` y el despacho de llamadas sin
+receptor y `super`) y `tree_sitter_backend.parse_file` (+3: el nodo `super`).
+La lógica vive en `graphtyn/core/ruby_mro.py` (`RubyAncestry`).
+
 ## Escala
 
 SQLite con WAL es el backend local soportado. RF07 midió cinco repeticiones en
