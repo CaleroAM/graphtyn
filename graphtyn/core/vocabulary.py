@@ -87,3 +87,11 @@ def translated_terms(request: str) -> list[str]:
         if any(word.startswith(stem) for word in words)
         for fragment in fragments
     ))
+
+
+def is_prose_word(word: str) -> bool:
+    """A Spanish word the glossary translates; its English fragments stand in for it."""
+    lowered = word.lower()
+    # English words sharing a Spanish stem (`validates`) start with their fragment.
+    return any(lowered.startswith(stem) and not lowered.startswith(fragments)
+               for stem, fragments in _ES_EN.items())

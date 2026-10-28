@@ -21,7 +21,7 @@ from .core.memory_scope import resolve_memory_scope
 from .core.history_import import configured_sources, _agent_id_matches
 from .core.source_evidence import attach_source_evidence
 from .core.lean_package import lean_payload, serialized_tokens as _serialized_tokens
-from .core.evidence_sufficiency import mark_thin_evidence
+from .core.evidence_sufficiency import mark_insufficient_evidence
 from .core.intent_delta import _intent_delta
 from .core.answer_validation import validate_answer
 from .core.ambiguity_review import apply_decisions
@@ -699,7 +699,7 @@ def build_intent_package(workspace: Path, graph: dict, request: str, intent: str
         # budget: this is the configuration measured in the agent benchmarks.
         result["source_evidence"] = evidence_result(raw, max_nodes=limit).get("source_evidence", [])
         _synchronize_bounded_source_coverage(result)
-    mark_thin_evidence(result, request, mirror=raw)
+    mark_insufficient_evidence(result, request, mirror=raw)
     if stages is not None:
         stages.update(retrieval=retrieval_ms, coverage=coverage_ms,
                       render=(time.perf_counter() - started) * 1000)

@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
-from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
-from .vocabulary import COMMON_WORDS, translated_terms
+from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
+from .vocabulary import COMMON_WORDS, is_prose_word, translated_terms
 
 
 _STOP = {
@@ -26,6 +26,9 @@ _INTENT_MARKERS = {
     "impact": ("impact", "impacto", "consumer", "consumidor", "blast", "afecta"),
     "flow": ("flow", "flujo", "trace", "traza", "desde", "hasta", "event", "evento"),
 }
+
+_DI_CONTEXT = re.compile(
+    r"servic|service|dependen|inyecci|inject|contenedor|container|provider|proveedor|binding|singleton|scoped|transient")
 
 _INTENT_OPERATIONS = {
     "overview": (),
@@ -756,8 +759,10 @@ def classify_intent(request: str, requested: str = "auto") -> str:
         return "flow"
     def marker_matches(marker: str) -> bool:
         if marker == "registr":
-            # "registrar/register" a service, not "registro(s)", Spanish for a record.
-            return bool(re.search(r"registr(?!os?\b)", text))
+            # "registrar/register" a service, not "registro(s)" (a record) nor a
+            # function that records keys or names: the verb only signals
+            # bindings next to dependency-injection vocabulary.
+            return bool(re.search(r"registr(?!os?\b)", text) and _DI_CONTEXT.search(text))
         return bool(re.search(rf"(?<!\w){re.escape(marker)}(?!\w)", text))
 
     scores = {intent: sum(marker_matches(marker) for marker in markers)
@@ -1010,7 +1015,9 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     name_frequency = _NameFrequency(all_nodes, [*direct_terms, *translations], generic_symbol_terms)
     request_term_match = _literal_matcher(request_terms)
     long_symbol_terms = [term for term in dict.fromkeys([*symbol_terms, *name_frequency.distinctive])
-                         if len(term) >= 5 and term not in COMMON_WORDS and not name_frequency.pervasive(term)]
+                         if len(term) >= 5 and term not in COMMON_WORDS and not is_prose_word(term)
+                         and not name_frequency.pervasive(term)]
+    homonym_hints = HomonymHints(request, [*direct_terms, *translations], generic_symbol_terms)
     long_symbol_match = _literal_matcher(long_symbol_terms)
     for node in all_nodes:
         operations = node.get("operations") or []
@@ -1066,13 +1073,14 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         path = str(node.get("file") or "").replace("\\", "/")
         primary_bonus = 50 if path.startswith(("src/", "backend/", "app/")) else 0
         package_bonus = 180 if qualified_package_roots and path.split("/", 1)[0] in qualified_package_roots else 0
-        test_penalty = -250 if selected_intent != "tests" and not tests_requested and _TEST_PATH.search(path) else 0
+        test_penalty = -700 if selected_intent != "tests" and not tests_requested and _TEST_PATH.search(path) else 0
         vendored_penalty = -400 if _VENDORED_PATH.search(path) else 0
         benchmark_penalty = -400 if "benchmark" not in request_lower and re.search(
             r"(?:^|/)benchmarks?(?:/|$)", path, re.I
         ) else 0
         anchor_bonus = 90 if path in anchor_files else 0
         container_bonus = 160 if str(node.get("container") or "").lower() in explicit_names else 0
+        homonym_bonus = homonym_hints.bonus(node) if exact_hits else 0
         qualified_bonus = 900 if node.get("id") in qualified_node_ids else 0
         entry_name = str(node.get("name") or "").lower() in {"__call__", "servehttp", "main", "run"}
         entry_file = bool(re.search(r"(?:^|/)(?:applications?|app|main|server)\.[^.]+$", path, re.I))
@@ -1090,7 +1098,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                  + lexical_hits * 10 + concept_hits * 45 + exact_hits * 400 + qualified_bonus
                  + distinctive_hits * 350
                  + int(bool(kind_relevant)) * 100 + primary_bonus + test_penalty + benchmark_penalty + vendored_penalty
-                 + anchor_bonus + container_bonus + package_bonus
+                 + anchor_bonus + container_bonus + homonym_bonus + package_bonus
                  + entry_bonus + capture_bonus
                  + docker_bonus + verifier_bonus + generation_bonus
                  + int(node.get("kind") == "route" and lexical_hits > 0) * 180

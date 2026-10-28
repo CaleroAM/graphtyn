@@ -2,9 +2,10 @@ import copy
 
 from graphtyn.core import prompt_context
 from graphtyn.core.change_analyst import query_intent
-from graphtyn.core.evidence_sufficiency import mark_thin_evidence, request_parts
+from graphtyn.core.change_analyst import classify_intent
+from graphtyn.core.evidence_sufficiency import mark_insufficient_evidence, named_identifiers, request_parts
 from graphtyn.core.retrieval_signals import NameFrequency, cap_homonyms, flow_markers, with_call_chain
-from graphtyn.core.vocabulary import translated_terms
+from graphtyn.core.vocabulary import is_prose_word, translated_terms
 from graphtyn.mcp_server import lean_payload
 
 
@@ -48,7 +49,8 @@ def test_homonym_cap_keeps_two_per_name_and_every_mandatory_candidate():
 def test_call_chain_places_distinctive_callees_after_the_seed_and_mandatory_items():
     graph = {
         "nodes": [_function("a", "format_to_n"), _function("b", "vformat_to_n"),
-                  _function("log", "serverLog"), _function("m", "parse_args"), _function("z", "other")],
+                  _function("log", "serverLog", file="src/server.c"), _function("m", "parse_args"),
+                  _function("z", "other")],
         "links": [{"source": "a", "target": "b", "label": "llama", "confidence": "EXTRACTED"},
                   {"source": "a", "target": "log", "label": "llama", "confidence": "EXTRACTED"}],
     }
@@ -94,23 +96,23 @@ def test_thin_evidence_for_a_multi_part_request_withdraws_completeness():
     request = "Explica el flujo: la entrada, el cálculo del tamaño, la política, la elección, el borrado."
     result, mirror = _thin_package(), _thin_package()
 
-    assert mark_thin_evidence(result, request, mirror=mirror)
+    assert mark_insufficient_evidence(result, request, mirror=mirror)
 
     assert result["do_not_expand"] is False and result["complete_for"] == []
     assert result["missing"] == ["request_parts"]
     assert result["evidence_sufficiency"]["request_parts"] == 6
-    assert "look up only the parts it does not address" in result["guidance"]
+    assert "look up only what it does not address" in result["guidance"]
     assert mirror["do_not_expand"] is False and mirror["missing"] == ["request_parts"]
 
 
 def test_thin_evidence_leaves_narrow_requests_and_open_packages_alone():
     narrow = _thin_package()
-    assert not mark_thin_evidence(narrow, "Traza processCommand.")
+    assert not mark_insufficient_evidence(narrow, "Traza la función f.")
     assert narrow["do_not_expand"] is True
 
     open_package = {**_thin_package(), "do_not_expand": False, "missing": ["x"]}
     before = copy.deepcopy(open_package)
-    assert not mark_thin_evidence(open_package, "Uno, dos, tres partes, cuatro partes, cinco partes.")
+    assert not mark_insufficient_evidence(open_package, "Uno, dos, tres partes, cuatro partes, cinco partes.")
     assert open_package == before
 
 
@@ -119,6 +121,59 @@ def test_hook_header_for_thin_evidence_asks_for_targeted_lookups_only():
 
     text = prompt_context.render_context(lean_payload(package))
 
-    assert "thin for a request with several parts" in text
-    assert "look up only the parts it does not address" in text
+    assert "does not cover the whole request" in text
+    assert "look up only what it does not address" in text
     assert "No further graph query is needed" not in text
+
+
+def test_call_chain_follows_sibling_methods_of_the_entry_point_across_hops():
+    def method(node_id, name, container="Persistence", file="lib/persistence.rb"):
+        return {"id": node_id, "name": name, "kind": "method", "file": file, "container": container, "line": 1}
+    nodes = [method("u", "update"), method("s", "save"), method("c", "create_or_update"),
+             method("r", "_update_record"), method("t", "with_transaction", "Transactions", "lib/transactions.rb"),
+             method("x", "unrelated")]
+    calls = [("u", "s"), ("u", "t"), ("s", "c"), ("c", "r")]
+    graph = {"nodes": nodes, "links": [{"source": a, "target": b, "label": "llama", "confidence": "EXTRACTED"}
+                                       for a, b in calls]}
+    frequency = NameFrequency(nodes, [], generic=set())
+
+    chained = with_call_chain(graph, [(50, nodes[0]), (10, nodes[5])], frequency, keep_first=set())
+
+    # The entry point's own class first, nearest stage first; a wrapper from
+    # another owner is not a stage unless it spells a request term.
+    assert [node["id"] for _, node in chained] == ["u", "s", "c", "r", "x"]
+
+
+def test_registering_keys_or_names_is_not_a_bindings_request():
+    assert classify_intent("Explica cómo WATCH registra claves y cómo EXEC aborta la transacción") == "flow"
+    assert classify_intent("¿Dónde se registra el servicio de pagos en el contenedor de dependencias?") == "bindings"
+
+
+def test_spanish_prose_words_are_not_matched_but_shared_english_stems_are():
+    assert is_prose_word("transacción") and is_prose_word("registro")
+    assert not is_prose_word("validates") and not is_prose_word("update")
+
+
+def test_the_homonym_whose_signature_or_owner_the_request_describes_ranks_first():
+    graph = {"nodes": [
+        {"id": "rel", "name": "update", "kind": "method", "file": "lib/relation.rb", "container": "Relation",
+         "signature": "def update(id = :all, attributes)", "line": 1,
+         "operations": [{"name": "call", "text": "records.each { |r| r.update(attributes) }", "line": 2}]},
+        {"id": "per", "name": "update", "kind": "method", "file": "lib/persistence.rb", "container": "Persistence",
+         "signature": "def update(attributes)", "line": 1},
+    ], "links": []}
+
+    result = query_intent(graph, "Traza update(attributes) sobre un registro persistido", "flow", 10)
+
+    assert result["nodes"][0]["id"] == "per"
+
+
+def test_identifiers_named_by_the_request_must_appear_in_complete_evidence():
+    request = "Explica cómo BLPOP bloquea al cliente y cómo LPUSH lo despierta."
+    assert named_identifiers(request) == ["BLPOP", "LPUSH"]
+    package = {**_thin_package(), "entities": {"N1": {"name": "lpushCommand", "kind": "function", "at": "F1:1"}}}
+
+    assert mark_insufficient_evidence(package, request)
+
+    assert package["missing"] == ["named_identifiers"]
+    assert package["evidence_sufficiency"] == {"unmatched_identifiers": ["BLPOP"]}

@@ -87,6 +87,11 @@ señales nuevas viven fuera: `retrieval_signals.py` (frecuencia de nombres,
 cadena de llamadas, límite de homónimos), `vocabulary.py` (glosario
 español→inglés) y `evidence_sufficiency.py`.
 
+La segunda ronda crece `change_analyst` (+8 líneas: el contexto de inyección
+de dependencias que exige el marcador `registr`) y `query_intent` (+3: las
+pistas de homónimos). Las pistas de dueño y firma (`HomonymHints`) y la cadena
+de llamadas de varios saltos viven en `retrieval_signals.py`.
+
 ## Escala
 
 SQLite con WAL es el backend local soportado. RF07 midió cinco repeticiones en

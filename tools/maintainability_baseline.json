@@ -40,7 +40,7 @@
     {
       "key": "graphtyn/core/change_analyst.py",
       "kind": "module",
-      "max_lines": 1712
+      "max_lines": 1720
     },
     {
       "key": "graphtyn/core/change_analyst.py::_implementation_context",
@@ -50,7 +50,7 @@
     {
       "key": "graphtyn/core/change_analyst.py::query_intent",
       "kind": "function",
-      "max_lines": 796
+      "max_lines": 799
     },
     {
       "key": "graphtyn/core/history_import.py",
