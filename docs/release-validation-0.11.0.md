@@ -54,9 +54,13 @@ Después de la validación anterior se añadieron:
 - la limpieza de mantenibilidad;
 - la regla de parada dirigida;
 - las llamadas Ruby sin paréntesis y los filtros de candidatos;
-- el segundo conjunto de tareas no vistas (`benchmarks/heldout_v2_2026-10-27/`).
+- el segundo conjunto de tareas no vistas (`benchmarks/heldout_v2_2026-10-27/`);
+- los cambios de recuperación y la regla de completitud por evidencia escasa,
+  medidos con el banco de tareas (`benchmarks/task_bank_2026-10-28/`). Con ellos,
+  la cobertura del conjunto de prueba pasa del 20 % al 37,5 %. No se repitieron
+  sesiones de agentes.
 
-La suite local pasa con 701 pruebas en Python 3.13 sobre `f93e029`. La matriz
+La suite local pasa con 711 pruebas en Python 3.13 tras esos cambios. La matriz
 3.10–3.12, el wheel, Docker y `pip-audit` deben repetirse sobre el commit que se
 etiquete.
 

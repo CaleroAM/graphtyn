@@ -10,6 +10,14 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
+- Banco de 30 tareas con división desarrollo/prueba
+  (`benchmarks/task_bank_2026-10-28/`), medido por la cobertura del paquete sin
+  agentes. Las 15 tareas de prueba se congelaron antes de cambiar la
+  recuperación.
+- `graph_query_intent` deja de declarar completo un paquete cuya evidencia es
+  escasa para una petición de varias partes (menos de 250 tokens por parte):
+  devuelve `missing=["request_parts"]` y pide buscar sólo las partes que la
+  evidencia no aborda. El hook usa la misma indicación.
 - Segundo conjunto de tareas no vistas (`benchmarks/heldout_v2_2026-10-27/`):
   con la regla de parada dirigida la calidad se recupera, pero el ahorro en
   tareas nuevas es moderado. En cuatro de seis, el paquete cubre 0–1 hechos de la
@@ -109,6 +117,16 @@ tras la validación de release (`docs/release-checklist.md`).
   segunda pareja comparable tras corregir la cobertura de evidencia.
 
 ### Corregido
+
+- Recuperación para `flow`:
+  - un glosario de programación español→inglés (`evicción`→`evict`) y la
+    puntuación de términos poco frecuentes dentro de nombres de función;
+  - los marcadores de operaciones web (`save`, `send`…) sólo cuentan si la
+    petición los nombra;
+  - los campos de struct ya no anclan el paquete;
+  - como mucho dos homónimos;
+  - las funciones llamadas por el punto de entrada entran en el paquete.
+  En el banco de tareas, la cobertura de prueba pasa del 20 % al 37,5 %.
 
 - Regla de parada dirigida: un paquete con `do_not_expand=true` ya no prohíbe
   buscar. El hook, la guía del paquete, la skill y `AGENTS.md` piden responder

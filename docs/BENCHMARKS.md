@@ -124,6 +124,19 @@ la calidad se recupera, pero el ahorro baja:
 - **Cobertura:** en cuatro de las seis tareas nuevas el paquete cubre 0–1 hechos
   y se declara completo; la recuperación es el cuello de botella.
 
+Para corregir la recuperación sin sobreajustar se usó un banco de 30 tareas con
+división desarrollo/prueba
+([`benchmarks/task_bank_2026-10-28/report.md`](../benchmarks/task_bank_2026-10-28/report.md)),
+medido por la cobertura del paquete y sin agentes:
+
+- **Desarrollo:** de 46,6 % a 73,1 %, con las falsas completitudes de 5 a 0.
+- **Prueba** (congelada antes de los cambios): de 20,0 % a 37,5 %, con las
+  falsas completitudes de 8 a 3.
+
+La mejora generaliza sólo en parte. La regla de completitud detecta paquetes
+escasos, pero no paquetes grandes centrados en otra parte del código. No se han
+repetido sesiones de agentes con estos cambios.
+
 La validación Ruby/Rails está en
 [`benchmarks/real_ruby_agents_2026-10-20/report.md`](../benchmarks/real_ruby_agents_2026-10-20/report.md).
 Con calidad comparable de 8/8, Graphtyn cambió el total informado en −67,30 %
