@@ -1,0 +1,299 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-28, antes de cualquier cambio de recuperación; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; conjunto de prueba: no se mira su cobertura hasta terminar los cambios",
+  "tasks": [
+    {
+      "id": "RAILS_VALIDATION_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza qué ocurre al llamar a save! sobre un registro con validates :title, presence: true que no tiene título: cómo save! decide validar, qué contexto de validación se usa, cómo valid? limpia y ejecuta las validaciones y sus callbacks, cómo el validador de presencia añade el error y qué excepción se lanza. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "save_bang",
+          "any": [
+            "def save!"
+          ]
+        },
+        {
+          "id": "perform",
+          "any": [
+            "perform_validations"
+          ]
+        },
+        {
+          "id": "context",
+          "any": [
+            "default_validation_context"
+          ]
+        },
+        {
+          "id": "valid",
+          "any": [
+            "valid?"
+          ]
+        },
+        {
+          "id": "run",
+          "any": [
+            "run_validations!",
+            "_run_validate_callbacks"
+          ]
+        },
+        {
+          "id": "presence",
+          "any": [
+            "PresenceValidator",
+            "validate_each"
+          ]
+        },
+        {
+          "id": "errors",
+          "any": [
+            "errors.add",
+            "def add("
+          ]
+        },
+        {
+          "id": "raise",
+          "any": [
+            "RecordInvalid",
+            "raise_validation_error"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_AFTER_COMMIT_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, explica cómo se ejecuta un callback after_commit tras guardar un registro: cómo save se envuelve en una transacción, cómo el registro se añade a la transacción actual, qué estado se recuerda para un posible rollback, cómo al confirmar la transacción real se recorren los registros y se disparan los callbacks de commit, y qué ocurre si hay rollback. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "wrap",
+          "any": [
+            "with_transaction_returning_status"
+          ]
+        },
+        {
+          "id": "add",
+          "any": [
+            "add_to_transaction",
+            "add_transaction_record",
+            "add_record"
+          ]
+        },
+        {
+          "id": "remember",
+          "any": [
+            "remember_transaction_record_state"
+          ]
+        },
+        {
+          "id": "commit_tx",
+          "any": [
+            "commit_transaction"
+          ]
+        },
+        {
+          "id": "records",
+          "any": [
+            "commit_records"
+          ]
+        },
+        {
+          "id": "committed",
+          "any": [
+            "committed!"
+          ]
+        },
+        {
+          "id": "callbacks",
+          "any": [
+            "_run_commit_callbacks"
+          ]
+        },
+        {
+          "id": "rollback",
+          "any": [
+            "rolledback!",
+            "_run_rollback_callbacks",
+            "rollback_records"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_STRONG_PARAMS_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza qué ocurre con params.require(:post).permit(:title, tags: []) en un controlador: qué devuelve require y qué error lanza si falta la clave, cómo permit filtra escalares permitidos y arrays, qué tipos escalares se aceptan, qué se hace con los parámetros no permitidos según la configuración y cómo queda marcado el resultado como permitido. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "require",
+          "any": [
+            "def require("
+          ]
+        },
+        {
+          "id": "missing",
+          "any": [
+            "ParameterMissing"
+          ]
+        },
+        {
+          "id": "permit",
+          "any": [
+            "def permit(",
+            "permit_filters"
+          ]
+        },
+        {
+          "id": "scalar",
+          "any": [
+            "permitted_scalar_filter",
+            "permitted_scalar?"
+          ]
+        },
+        {
+          "id": "types",
+          "any": [
+            "PERMITTED_SCALAR_TYPES"
+          ]
+        },
+        {
+          "id": "hash",
+          "any": [
+            "hash_filter",
+            "EMPTY_ARRAY"
+          ]
+        },
+        {
+          "id": "unpermitted",
+          "any": [
+            "unpermitted_parameters!",
+            "action_on_unpermitted_parameters"
+          ]
+        },
+        {
+          "id": "flag",
+          "any": [
+            "@permitted",
+            "permit!"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_MIGRATION_RUN_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, explica qué ocurre al ejecutar las migraciones pendientes hacia arriba: cómo el migrador toma el bloqueo consultivo y qué error lanza si otro proceso lo tiene, cómo decide qué migraciones ejecutar, cuándo envuelve cada una en una transacción DDL, cómo se ejecuta la migración y cómo se registra su versión en schema_migrations, y qué pasa si falla. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "migrator",
+          "any": [
+            "class Migrator"
+          ]
+        },
+        {
+          "id": "lock",
+          "any": [
+            "with_advisory_lock"
+          ]
+        },
+        {
+          "id": "concurrent",
+          "any": [
+            "ConcurrentMigrationError"
+          ]
+        },
+        {
+          "id": "runnable",
+          "any": [
+            "runnable",
+            "pending_migrations"
+          ]
+        },
+        {
+          "id": "execute",
+          "any": [
+            "execute_migration_in_transaction"
+          ]
+        },
+        {
+          "id": "ddl",
+          "any": [
+            "ddl_transaction",
+            "use_transaction?",
+            "supports_ddl_transactions"
+          ]
+        },
+        {
+          "id": "record",
+          "any": [
+            "record_version_state_after_migrating",
+            "create_version"
+          ]
+        },
+        {
+          "id": "migrate",
+          "any": [
+            "migration.migrate",
+            "exec_migration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_ROUTING_DISPATCH_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza cómo una petición GET /posts/1 llega a PostsController#show: cómo el conjunto de rutas recibe la petición y normaliza la ruta, cómo el router de Journey busca rutas candidatas (incluido el atajo para rutas estáticas), cómo se rellenan los parámetros de ruta, qué responde si no hay coincidencia y cómo el despachador instancia el controlador y llama a la acción. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "call",
+          "any": [
+            "def call(env)",
+            "make_request"
+          ]
+        },
+        {
+          "id": "normalize",
+          "any": [
+            "normalize_path"
+          ]
+        },
+        {
+          "id": "serve",
+          "any": [
+            "def serve(req)"
+          ]
+        },
+        {
+          "id": "static",
+          "any": [
+            "static_exact_map"
+          ]
+        },
+        {
+          "id": "recognize",
+          "any": [
+            "def recognize",
+            "filter_routes",
+            "simulator"
+          ]
+        },
+        {
+          "id": "params",
+          "any": [
+            "path_parameters"
+          ]
+        },
+        {
+          "id": "notfound",
+          "any": [
+            "X_CASCADE",
+            "Not Found"
+          ]
+        },
+        {
+          "id": "dispatch",
+          "any": [
+            "make_response!",
+            "controller.dispatch"
+          ]
+        }
+      ]
+    }
+  ]
+}

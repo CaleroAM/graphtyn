@@ -1,0 +1,288 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-28, antes de cualquier cambio de recuperación; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; conjunto de prueba: no se mira su cobertura hasta terminar los cambios",
+  "tasks": [
+    {
+      "id": "REDIS_AOF_REWRITE_FLOW",
+      "request": "Explica cómo Redis reescribe el AOF en segundo plano (BGREWRITEAOF): qué pasa si ya hay un proceso hijo activo, cómo se abre un nuevo fichero incremental antes del fork, qué escribe el hijo en el fichero temporal, cómo el padre detecta que el hijo terminó y cómo renombra el fichero base y actualiza el manifiesto. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "command",
+          "any": [
+            "bgrewriteaofCommand"
+          ]
+        },
+        {
+          "id": "background",
+          "any": [
+            "rewriteAppendOnlyFileBackground"
+          ]
+        },
+        {
+          "id": "scheduled",
+          "any": [
+            "aof_rewrite_scheduled",
+            "hasActiveChildProcess"
+          ]
+        },
+        {
+          "id": "incr",
+          "any": [
+            "openNewIncrAofForAppend"
+          ]
+        },
+        {
+          "id": "fork",
+          "any": [
+            "redisFork"
+          ]
+        },
+        {
+          "id": "child",
+          "any": [
+            "rewriteAppendOnlyFile(",
+            "rewriteAppendOnlyFileRio",
+            "temp-rewriteaof-bg"
+          ]
+        },
+        {
+          "id": "done",
+          "any": [
+            "backgroundRewriteDoneHandler"
+          ]
+        },
+        {
+          "id": "manifest",
+          "any": [
+            "persistAofManifest",
+            "aofManifestDup"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_PUBLISH_FLOW",
+      "request": "En Redis, traza qué ocurre cuando un cliente ejecuta PUBLISH canal mensaje: cómo se entrega a los suscriptores del canal, cómo se comprueban los suscriptores por patrón, qué formato tiene el mensaje que reciben, cómo se propaga en modo cluster y qué número se devuelve al cliente. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "command",
+          "any": [
+            "publishCommand"
+          ]
+        },
+        {
+          "id": "publish",
+          "any": [
+            "pubsubPublishMessage"
+          ]
+        },
+        {
+          "id": "internal",
+          "any": [
+            "pubsubPublishMessageInternal"
+          ]
+        },
+        {
+          "id": "channel_reply",
+          "any": [
+            "addReplyPubsubMessage"
+          ]
+        },
+        {
+          "id": "pattern_match",
+          "any": [
+            "stringmatchlen",
+            "pubsub_patterns"
+          ]
+        },
+        {
+          "id": "pattern_reply",
+          "any": [
+            "addReplyPubsubPatMessage"
+          ]
+        },
+        {
+          "id": "cluster",
+          "any": [
+            "clusterPropagatePublish"
+          ]
+        },
+        {
+          "id": "receivers",
+          "any": [
+            "receivers"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_BLPOP_FLOW",
+      "request": "Explica cómo funciona BLPOP en Redis: qué hace si alguna lista ya tiene elementos, cómo se bloquea el cliente cuando todas están vacías (y el caso en que el bloqueo no está permitido), cómo un LPUSH posterior marca la clave como lista, cómo se atienden los clientes bloqueados en esa clave y qué ocurre cuando vence el timeout. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "command",
+          "any": [
+            "blpopCommand",
+            "blockingPopGenericCommand"
+          ]
+        },
+        {
+          "id": "immediate",
+          "any": [
+            "listPopRangeAndReplyWithKey"
+          ]
+        },
+        {
+          "id": "deny",
+          "any": [
+            "CLIENT_DENY_BLOCKING"
+          ]
+        },
+        {
+          "id": "block",
+          "any": [
+            "blockForKeys"
+          ]
+        },
+        {
+          "id": "keys",
+          "any": [
+            "blocking_keys"
+          ]
+        },
+        {
+          "id": "ready",
+          "any": [
+            "signalKeyAsReady",
+            "ready_keys"
+          ]
+        },
+        {
+          "id": "serve",
+          "any": [
+            "handleClientsBlockedOnKeys",
+            "handleClientsBlockedOnKey"
+          ]
+        },
+        {
+          "id": "timeout",
+          "any": [
+            "replyToBlockedClientTimedOut"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_MULTI_EXEC_FLOW",
+      "request": "En Redis, explica una transacción MULTI/EXEC con WATCH: cómo se encolan los comandos tras MULTI, cómo WATCH registra claves y cómo una escritura posterior invalida la transacción, qué comprueba EXEC antes de ejecutar (claves vigiladas, errores al encolar), cómo responde si se aborta y cómo ejecuta los comandos encolados, incluidas las comprobaciones de ACL. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "multi",
+          "any": [
+            "multiCommand"
+          ]
+        },
+        {
+          "id": "queue",
+          "any": [
+            "queueMultiCommand"
+          ]
+        },
+        {
+          "id": "watch",
+          "any": [
+            "watchCommand"
+          ]
+        },
+        {
+          "id": "touch",
+          "any": [
+            "touchWatchedKey"
+          ]
+        },
+        {
+          "id": "dirty",
+          "any": [
+            "CLIENT_DIRTY_CAS"
+          ]
+        },
+        {
+          "id": "exec",
+          "any": [
+            "execCommand"
+          ]
+        },
+        {
+          "id": "abort",
+          "any": [
+            "CLIENT_DIRTY_EXEC",
+            "EXECABORT",
+            "execCommandAbort"
+          ]
+        },
+        {
+          "id": "acl",
+          "any": [
+            "ACLCheckAllPerm"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_CLUSTER_REDIRECT_FLOW",
+      "request": "En Redis Cluster, explica cómo decide el servidor si atiende un comando con claves o redirige al cliente: cómo calcula el slot de cada clave, qué pasa con claves de slots distintos, cuándo responde MOVED, cuándo ASK durante una migración, cuándo TRYAGAIN, y qué cambia si el cliente envió ASKING. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "query",
+          "any": [
+            "getNodeByQuery"
+          ]
+        },
+        {
+          "id": "slot",
+          "any": [
+            "keyHashSlot"
+          ]
+        },
+        {
+          "id": "crossslot",
+          "any": [
+            "CLUSTER_REDIR_CROSS_SLOT"
+          ]
+        },
+        {
+          "id": "moved",
+          "any": [
+            "CLUSTER_REDIR_MOVED"
+          ]
+        },
+        {
+          "id": "ask",
+          "any": [
+            "CLUSTER_REDIR_ASK",
+            "getMigratingSlotDest"
+          ]
+        },
+        {
+          "id": "tryagain",
+          "any": [
+            "CLUSTER_REDIR_UNSTABLE",
+            "TRYAGAIN"
+          ]
+        },
+        {
+          "id": "asking",
+          "any": [
+            "CLIENT_ASKING"
+          ]
+        },
+        {
+          "id": "redirect",
+          "any": [
+            "clusterRedirectClient"
+          ]
+        }
+      ]
+    }
+  ]
+}

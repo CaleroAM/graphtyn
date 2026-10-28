@@ -1,0 +1,293 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-28, antes de cualquier cambio de recuperación; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; conjunto de prueba: no se mira su cobertura hasta terminar los cambios",
+  "tasks": [
+    {
+      "id": "FMT_NAMED_ARGS_FLOW",
+      "request": "Explica cómo funcionan los argumentos con nombre en fmt, por ejemplo fmt::format(\"{answer}\", fmt::arg(\"answer\", 42)): qué objeto crea fmt::arg, cómo se registran los nombres al empaquetar los argumentos (incluida la detección de duplicados), cómo el analizador reconoce un nombre en el campo de reemplazo y cómo se busca el índice del argumento por nombre, con el error si no existe. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "arg",
+          "any": [
+            "fmt::arg",
+            "inline auto arg("
+          ]
+        },
+        {
+          "id": "named_arg",
+          "any": [
+            "named_arg"
+          ]
+        },
+        {
+          "id": "init",
+          "any": [
+            "init_named_arg",
+            "named_arg_info"
+          ]
+        },
+        {
+          "id": "duplicate",
+          "any": [
+            "check_for_duplicate",
+            "duplicate named arg"
+          ]
+        },
+        {
+          "id": "parse",
+          "any": [
+            "on_name",
+            "arg_id_kind::name"
+          ]
+        },
+        {
+          "id": "lookup",
+          "any": [
+            "get_id"
+          ]
+        },
+        {
+          "id": "flag",
+          "any": [
+            "has_named_args"
+          ]
+        },
+        {
+          "id": "error",
+          "any": [
+            "argument not found"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_DYNAMIC_WIDTH_FLOW",
+      "request": "En fmt, explica cómo se resuelven un ancho y una precisión dinámicos como en fmt::format(\"{:{}.{}}\", x, 10, 3): cómo se analizan las llaves anidadas, cómo se asigna el identificador del argumento (automático o manual y el error al mezclarlos), cómo se recupera el valor en tiempo de formateo y qué errores hay si no es entero o está fuera de rango. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "parse",
+          "any": [
+            "parse_dynamic_spec"
+          ]
+        },
+        {
+          "id": "width",
+          "any": [
+            "parse_width"
+          ]
+        },
+        {
+          "id": "precision",
+          "any": [
+            "parse_precision"
+          ]
+        },
+        {
+          "id": "ref",
+          "any": [
+            "width_ref",
+            "precision_ref",
+            "arg_ref"
+          ]
+        },
+        {
+          "id": "indexing",
+          "any": [
+            "cannot switch from",
+            "next_arg_id",
+            "check_arg_id"
+          ]
+        },
+        {
+          "id": "handle",
+          "any": [
+            "handle_dynamic_spec"
+          ]
+        },
+        {
+          "id": "getter",
+          "any": [
+            "dynamic_spec_getter",
+            "is not integer"
+          ]
+        },
+        {
+          "id": "range",
+          "any": [
+            "out of range"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_RANGES_FLOW",
+      "request": "Explica cómo fmt formatea un std::vector<int> o lo une con fmt::join(v, \", \"): cómo detecta que el tipo es un rango y qué clase de rango es, qué formateador se usa, cómo se analizan los especificadores n, s y ?s, cómo se escriben corchetes y separadores, y cómo join_view lo cambia. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "detect",
+          "any": [
+            "is_range"
+          ]
+        },
+        {
+          "id": "kind",
+          "any": [
+            "range_format_kind",
+            "range_format::"
+          ]
+        },
+        {
+          "id": "formatter",
+          "any": [
+            "range_formatter"
+          ]
+        },
+        {
+          "id": "spec_n",
+          "any": [
+            "'n'",
+            "set_brackets"
+          ]
+        },
+        {
+          "id": "debug",
+          "any": [
+            "is_debug",
+            "write_debug_string",
+            "maybe_set_debug_format"
+          ]
+        },
+        {
+          "id": "separator",
+          "any": [
+            "separator_",
+            "set_separator"
+          ]
+        },
+        {
+          "id": "iterate",
+          "any": [
+            "range_begin"
+          ]
+        },
+        {
+          "id": "join",
+          "any": [
+            "join_view"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_CHRONO_DURATION_FLOW",
+      "request": "Explica cómo fmt formatea una std::chrono::duration, por ejemplo fmt::format(\"{:%H:%M}\", d) o \"{}\" con 1500ms: cómo se analizan ancho, precisión y la especificación de formato, cuándo se permite la precisión, qué pasa sin especificación (valor y sufijo de unidad), cómo se interpreta la especificación con %Q, %q y los demás campos, y cómo se rellena al final. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "formatter",
+          "any": [
+            "formatter<std::chrono::duration"
+          ]
+        },
+        {
+          "id": "parse_spec",
+          "any": [
+            "parse_chrono_format"
+          ]
+        },
+        {
+          "id": "checker",
+          "any": [
+            "chrono_format_checker",
+            "precision not allowed"
+          ]
+        },
+        {
+          "id": "value",
+          "any": [
+            "format_duration_value"
+          ]
+        },
+        {
+          "id": "unit",
+          "any": [
+            "format_duration_unit",
+            "get_units"
+          ]
+        },
+        {
+          "id": "writer",
+          "any": [
+            "duration_formatter"
+          ]
+        },
+        {
+          "id": "dynamic",
+          "any": [
+            "handle_dynamic_spec"
+          ]
+        },
+        {
+          "id": "pad",
+          "any": [
+            "detail::write("
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_COLOR_STYLE_FLOW",
+      "request": "Explica cómo fmt::print(fg(fmt::color::red) | fmt::emphasis::bold, \"{}\", x) escribe texto con color: cómo se combinan los estilos, cómo se generan las secuencias de escape ANSI para primer plano, fondo y énfasis, dónde se formatea el mensaje, cuándo se restablece el color y cómo funciona fmt::styled para un único argumento. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "style",
+          "any": [
+            "text_style"
+          ]
+        },
+        {
+          "id": "combine",
+          "any": [
+            "operator|"
+          ]
+        },
+        {
+          "id": "escape",
+          "any": [
+            "ansi_color_escape"
+          ]
+        },
+        {
+          "id": "foreground",
+          "any": [
+            "make_foreground_color"
+          ]
+        },
+        {
+          "id": "emphasis",
+          "any": [
+            "make_emphasis"
+          ]
+        },
+        {
+          "id": "vformat",
+          "any": [
+            "vformat_to(buffer<Char>& buf, text_style",
+            "vprint(FILE* f, text_style"
+          ]
+        },
+        {
+          "id": "reset",
+          "any": [
+            "reset_color"
+          ]
+        },
+        {
+          "id": "styled",
+          "any": [
+            "styled_arg"
+          ]
+        }
+      ]
+    }
+  ]
+}

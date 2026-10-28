@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "note": "dev: tareas ya vistas antes de este banco, usadas para iterar la recuperación. test: congeladas el 2026-10-28 antes de los cambios; su cobertura sólo se mide al final.",
+  "dev": [
+    "../real_multi_client_hook_2026-10-27/{corpus}_tasks.json",
+    "../heldout_tasks_2026-10-27/{corpus}_tasks.json",
+    "../heldout_v2_2026-10-27/{corpus}_tasks.json"
+  ],
+  "test": [
+    "test/{corpus}_tasks.json"
+  ]
+}
