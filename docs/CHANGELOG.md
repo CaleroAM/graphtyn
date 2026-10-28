@@ -10,6 +10,16 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
+- Job `retrieval` de CI (`tools/check_retrieval_coverage.py`): mide la cobertura
+  de los paquetes en 19 tareas sobre fmt y Flask fijados. Falla si la media
+  baja, si una tarea pierde dos hechos o si aparece una falsa completitud.
+- Ruby: `include`/`prepend`/`extend` se resuelven por la búsqueda léxica de
+  constantes, y las llamadas sin receptor y `super` por la cadena de ancestros
+  de cada clase que incluye el módulo (`graphtyn/core/ruby_mro.py`). En Rails,
+  los `include` ambiguos pasan de 1.166 a 54 y aparecen 527 relaciones `super`.
+- La puntuación de candidatos es una tabla de rasgos con nombre
+  (`graphtyn/core/ranking_weights.py`), con pesos ajustados por
+  `tools/learn_ranking_weights.py` sobre el conjunto de desarrollo.
 - Banco de 30 tareas con división desarrollo/prueba
   (`benchmarks/task_bank_2026-10-28/`), medido por la cobertura del paquete sin
   agentes. Las 15 tareas de prueba se congelaron antes de cambiar la

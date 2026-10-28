@@ -61,8 +61,10 @@ Después de la validación anterior se añadieron:
 - una segunda ronda (completitud por identificadores y homónimos), medida en un
   segundo conjunto de prueba con Flask y en 75 sesiones reales de Claude y
   Codex (véase el informe del banco de tareas).
+- la prueba de cobertura de CI, la composición de módulos Ruby y los pesos de
+  ranking ajustados.
 
-La suite local pasa con 716 pruebas en Python 3.13 tras esos cambios. La matriz
+La suite local pasa con 725 pruebas en Python 3.13 tras esos cambios. La matriz
 3.10–3.12, el wheel, Docker y `pip-audit` deben repetirse sobre el commit que se
 etiquete.
 

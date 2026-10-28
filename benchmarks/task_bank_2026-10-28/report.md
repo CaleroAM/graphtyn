@@ -251,3 +251,76 @@ no poda sus entidades. Donde la completitud no cambia, el tamaño es el mismo
    render json: tareas cuyo paquete cubre poco.
 3. **Alcance:** con n=1 por celda, las diferencias de unos pocos puntos están
    dentro del ruido. La rúbrica es literal, sin adjudicación ciega.
+
+## Tercera ronda: CI, composición Ruby y pesos aprendidos
+
+### Prueba de regresión en CI
+
+`tools/check_retrieval_coverage.py` clona fmt y Flask en commits fijados,
+los indexa y construye el paquete lean de sus 19 tareas del banco, sin
+agentes. Tarda unos segundos.
+
+El job `retrieval` del CI falla si ocurre cualquiera de estas cosas:
+
+- la cobertura media baja más de un punto;
+- una tarea pierde dos hechos o más;
+- aparece una falsa completitud nueva.
+
+La línea base está en `tools/retrieval_coverage_baseline.json`.
+
+### Composición de módulos Ruby (`graphtyn/core/ruby_mro.py`)
+
+- **Búsqueda de constantes:** `include`/`prepend`/`extend` se resuelven como lo
+  hace Ruby, por ámbito léxico. Un módulo reabierto en varios archivos cuenta
+  como una sola constante.
+- **Despacho de llamadas:** las llamadas sin receptor y `super` dentro de un
+  módulo se resuelven por la cadena de ancestros de cada clase que lo incluye.
+
+Efecto en Rails:
+
+| Relación | Antes | Después |
+|---|---:|---:|
+| `include` ambiguos | 1.166 | 54 |
+| Llamadas resueltas por despacho | 0 | 16.181 |
+| Relaciones `super` | 0 | 527 |
+
+Por ejemplo, ahora existe la cadena
+`Suppressor#save`→`Transactions#save`→`Validations#save`→`Persistence#save`.
+
+**La cobertura de los paquetes no cambia** (56,1 % en desarrollo). Las
+aristas están en el grafo, pero la cadena de llamadas de la recuperación arranca
+desde el primer símbolo nombrado (`Transactions#save` en Rails `update`), no
+desde `Persistence#update`. Seguir esas aristas o sembrar desde el candidato
+mejor puntuado empeoraba Redis y fmt (53,8–55,3 %), así que se revirtió. El
+grafo queda corregido para los agentes que recorren relaciones.
+
+### Pesos aprendidos (`graphtyn/core/ranking_weights.py`)
+
+La puntuación de candidatos de `query_intent` es ahora una tabla de 25 rasgos
+con nombre y pesos. Antes de cambiar ningún peso se comprobó que la conversión
+daba resultados idénticos en las 30 tareas de desarrollo.
+
+`tools/learn_ranking_weights.py` ajusta los pesos:
+
+- **Objetivo:** hechos de la rúbrica que cubren los 10 primeros candidatos de
+  cada tarea de desarrollo.
+- **Búsqueda:** por coordenadas, con multiplicadores de los pesos actuales.
+- **Primer intento, sin restricción:** sobreajustó. El objetivo subía en
+  desarrollo de 0,408 a 0,501 y bajaba en test2 de 0,631 a 0,573.
+- **Regla añadida:** un paso sólo se acepta si no empeora ningún corpus.
+- **Resultado:** el objetivo pasa de 0,408 a 0,474 en desarrollo y de 0,631 a
+  0,635 en test2.
+
+| Pesos | Desarrollo (30) | Test2 (15) |
+|---|---:|---:|
+| Manuales | 56,1 % | 59,7 % |
+| Ajustados | 55,7 % | 60,8 % |
+
+Con el pipeline completo, los pesos ajustados empatan con los manuales: un
+hecho menos en desarrollo y uno más en test2. Se adoptan porque no pierden en
+tareas no vistas y apagan dos rasgos que no aportaban (`concept_hits` y
+`described_owner`).
+
+La lección: **el ranking ya no es el cuello de botella**. Lo que decide la
+cobertura es la selección posterior (representantes obligatorios, archivos
+ancla, cadena de llamadas), que sigue siendo heurística.

@@ -154,6 +154,17 @@ En 75 sesiones reales sobre esas tareas:
 Con una repetición por celda, estas diferencias pequeñas están dentro del
 ruido.
 
+Una tercera ronda añadió tres cosas:
+
+- **Prueba de regresión de cobertura en CI**, sobre fmt y Flask.
+- **Composición de módulos Ruby en el indexador:** en Rails, los `include`
+  ambiguos bajan de 1.166 a 54 y aparecen 527 relaciones `super`.
+- **Pesos de ranking ajustados** sobre el conjunto de desarrollo.
+
+Ninguno de los dos últimos cambia la cobertura de forma apreciable: desarrollo
+55,7 %, test2 60,8 %. El cuello de botella está en la selección posterior al
+ranking.
+
 La validación Ruby/Rails está en
 [`benchmarks/real_ruby_agents_2026-10-20/report.md`](../benchmarks/real_ruby_agents_2026-10-20/report.md).
 Con calidad comparable de 8/8, Graphtyn cambió el total informado en −67,30 %
