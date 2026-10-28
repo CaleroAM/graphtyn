@@ -19,6 +19,20 @@ jobs:
           python-version: "3.12"
       - run: python tools/check_maintainability.py
 
+  retrieval:
+    name: Retrieval coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[treesitter]'
+      - run: python tools/check_retrieval_coverage.py
+
   tests:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
