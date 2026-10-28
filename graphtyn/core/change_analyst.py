@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
+from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
+from .vocabulary import COMMON_WORDS, translated_terms
 
 
 _STOP = {
@@ -825,8 +827,9 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     complexity = min(3, len(re.findall(r"\b(?:and|y|then|después|también|además)\b", str(request), re.I)))
     intent_node_cap = {"bindings": 7, "persistence": 7, "tests": 8, "impact": 10, "flow": 9}[selected_intent]
     max_nodes = min(requested_ceiling, intent_node_cap + complexity)
-    markers = _INTENT_OPERATIONS[selected_intent]
     request_lower = str(request or "").lower()
+    markers = flow_markers(_INTENT_OPERATIONS[selected_intent], request_lower) if selected_intent == "flow" \
+        else _INTENT_OPERATIONS[selected_intent]
     tests_requested = bool(re.search(r"\b(?:tests?|pruebas?|coverage|cobertura)\b", request_lower))
     docker_requested = "docker" in request_lower
     verifier_requested = bool(re.search(
@@ -910,11 +913,16 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         if "/" in str(node.get("file") or "").replace("\\", "/")
     }
     qualified_package_roots |= _named_package_roots(all_nodes, request)
+    # A struct member that shares a request word (`lru`, `maxmemory`) is data,
+    # not the component a flow asks about; outside impact analysis it must not
+    # anchor the package to the header that declares it.
+    anchor_excluded_kinds = {"file", "module", "documentation_section", "doc", "image", "media",
+                             *(() if selected_intent == "impact" else ("field",))}
     explicit_names = {
         str(node.get("name") or "").lower()
         for node in all_nodes
         if str(node.get("name") or "").lower() in symbol_terms
-        and node.get("kind") not in {"file", "module", "documentation_section", "doc", "image", "media"}
+        and node.get("kind") not in anchor_excluded_kinds
     }
     anchor_files = ({str(node.get("file") or "") for node in qualified_nodes if node.get("file")}
                     if qualified_nodes else
@@ -998,8 +1006,11 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         literals = sorted({str(term) for term in terms}, key=len, reverse=True)
         return re.compile("|".join(map(re.escape, literals))).search if literals else None
     operation_marker = _literal_matcher(operation_filters)
+    translations = translated_terms(request)
+    name_frequency = _NameFrequency(all_nodes, [*direct_terms, *translations], generic_symbol_terms)
     request_term_match = _literal_matcher(request_terms)
-    long_symbol_terms = [term for term in symbol_terms if len(term) >= 5]
+    long_symbol_terms = [term for term in dict.fromkeys([*symbol_terms, *name_frequency.distinctive])
+                         if len(term) >= 5 and term not in COMMON_WORDS and not name_frequency.pervasive(term)]
     long_symbol_match = _literal_matcher(long_symbol_terms)
     for node in all_nodes:
         operations = node.get("operations") or []
@@ -1008,7 +1019,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         for op in operations:
             searchable = f"{op.get('name', '')} {op.get('text', '')}".lower()
             operation_name = str(op.get("name") or "").lower()
-            if (not operation_filters or operation_marker(searchable)
+            if ((not operation_filters and not _INTENT_OPERATIONS[selected_intent])
+                    or (operation_marker is not None and operation_marker(searchable))
                     or operation_name in request_terms
                     or (request_term_match is not None and request_term_match(searchable))):
                 filtered_ops.append(op)
@@ -1049,6 +1061,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
             # (encode, append, assign, return, etc.).
             filtered_ops = operations
             copy["operations"] = operations
+        distinctive_hits = (name_frequency.hits(str(node.get("name") or ""))
+                            if node.get("kind") in _BEHAVIOR_KINDS else 0)
         path = str(node.get("file") or "").replace("\\", "/")
         primary_bonus = 50 if path.startswith(("src/", "backend/", "app/")) else 0
         package_bonus = 180 if qualified_package_roots and path.split("/", 1)[0] in qualified_package_roots else 0
@@ -1074,6 +1088,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         ) else 0
         score = (min(6, len(filtered_ops)) * 25 + min(4, operation_request_hits) * 300
                  + lexical_hits * 10 + concept_hits * 45 + exact_hits * 400 + qualified_bonus
+                 + distinctive_hits * 350
                  + int(bool(kind_relevant)) * 100 + primary_bonus + test_penalty + benchmark_penalty + vendored_penalty
                  + anchor_bonus + container_bonus + package_bonus
                  + entry_bonus + capture_bonus
@@ -1086,7 +1101,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         # ``SessionMiddleware``) without using one of our domain operation
         # markers. Exact lexical evidence must remain eligible; otherwise
         # generic high-degree call sites crowd the requested component out.
-        if (filtered_ops or kind_relevant or docker_bonus or verifier_bonus or generation_bonus
+        if (filtered_ops or kind_relevant or docker_bonus or verifier_bonus or generation_bonus or distinctive_hits
                 or (concept_allowed and (concept_hits or lexical_hits))
                 or (selected_intent in ("tests", "impact") and lexical_hits)):
             ranked.append((score, copy))
@@ -1311,9 +1326,10 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         )
         mandatory.append(representative)
         remaining -= hits
+    mandatory_ids = {item[1].get("id") for item in mandatory}
     if mandatory:
-        mandatory_ids = {item[1].get("id") for item in mandatory}
         ranked = mandatory + [item for item in ranked if item[1].get("id") not in mandatory_ids]
+    ranked = cap_homonyms(ranked, mandatory_ids)
     selection_cap = max_nodes
     if requested_concerns and not remaining:
         # Once every explicit obligation has a representative, a few nearby
@@ -1354,6 +1370,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                     else [] if len(anchored) >= reserve else fallback_candidates)
         ranked = (anchored[:reserve] + fallback + connected + anchored[reserve:]
                   if cross_file_flow else anchored[:reserve] + connected + fallback + anchored[reserve:])
+    if selected_intent == "flow":
+        ranked = with_call_chain(graph, ranked, name_frequency, mandatory_ids)
     nodes = []
     seen_roles = set()
     laravel_labels = {"despacha", "invoca ruta", "valida con", "crea", "despacha evento"}

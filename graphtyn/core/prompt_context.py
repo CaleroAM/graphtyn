@@ -155,6 +155,10 @@ def render_context(package: dict[str, Any], limit: int | None = None) -> str | N
                        "shows. Graph retrieval can miss part of a multi-part request: for a part this block "
                        "does not address, look up only that part (one targeted search or its exact range), "
                        "then answer.")
+    elif "request_parts" in (package.get("missing") or []):
+        instruction = ("This evidence is thin for a request with several parts: answer the parts it shows from "
+                       "this block without re-reading them, and look up only the parts it does not address "
+                       "(one targeted search or exact range each), then answer.")
     else:
         instruction = ("This evidence is partial: query or read only the facts listed in missing, then answer.")
     header = [

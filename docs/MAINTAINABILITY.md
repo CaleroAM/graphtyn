@@ -78,6 +78,15 @@ ambigüedad) y el módulo `change_analyst` (+5: el desempate de intención a fav
 de `flow`). Las señales de ruta y paquete pasaron a `path_signals.py`, y el
 recorrido de tree-sitter se reparte en funciones auxiliares de ese módulo.
 
+El trabajo de recuperación del banco de tareas (`benchmarks/task_bank_2026-10-28/`)
+crece, con revisión, `change_analyst` (+18 líneas), `query_intent` (+16) y
+`mcp_server.py` (+2). En `query_intent` se añaden la exclusión de campos como
+anclas, la frecuencia de nombres y el bonus de término distintivo. En el
+servidor MCP, la retirada de la completitud cuando la evidencia es escasa. Las
+señales nuevas viven fuera: `retrieval_signals.py` (frecuencia de nombres,
+cadena de llamadas, límite de homónimos), `vocabulary.py` (glosario
+español→inglés) y `evidence_sufficiency.py`.
+
 ## Escala
 
 SQLite con WAL es el backend local soportado. RF07 midió cinco repeticiones en
