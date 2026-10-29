@@ -66,3 +66,24 @@ def collect_features() -> Iterator[list]:
         yield collected
     finally:
         _COLLECTOR.reset(token)
+
+
+_TRACE: ContextVar[dict | None] = ContextVar("selection_trace", default=None)
+
+
+def trace_stage(stage: str, items: list) -> None:
+    """Record the candidate order after a selection stage while `trace_selection` is active."""
+    trace = _TRACE.get()
+    if trace is not None:
+        trace[stage] = [item[1] if isinstance(item, tuple) else item for item in items]
+
+
+@contextmanager
+def trace_selection() -> Iterator[dict]:
+    """Candidate order after each selection stage of `query_intent` (for diagnosis)."""
+    trace: dict = {}
+    token = _TRACE.set(trace)
+    try:
+        yield trace
+    finally:
+        _TRACE.reset(token)

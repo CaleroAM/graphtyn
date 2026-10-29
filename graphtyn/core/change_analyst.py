@@ -9,7 +9,7 @@ from typing import Any
 
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
-from .ranking_weights import weighted_score
+from .ranking_weights import trace_stage, weighted_score
 from .vocabulary import COMMON_WORDS, is_prose_word, translated_terms
 
 
@@ -1110,6 +1110,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                 or (selected_intent in ("tests", "impact") and lexical_hits)):
             ranked.append((score, copy))
     ranked.sort(key=lambda item: (-item[0], str(item[1].get("id") or "")))
+    trace_stage("scored", ranked)
     if not anchor_files and any(term in direct_terms for term in ("entry", "entrypoint", "entry-point")):
         entry_anchor = next((node for _, node in ranked
                              if str(node.get("name") or "").lower() in {"__call__", "servehttp", "main", "run"}
@@ -1227,7 +1228,9 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     # Multi-stage flow questions often name several concrete functions. Keep
     # one production declaration for each name so a prolific homonym cannot
     # consume the complete budget.
-    for explicit_name in sorted(explicit_names):
+    # In the order the request names them: the entry point is usually first.
+    for explicit_name in sorted(explicit_names, key=lambda name: (request_lower.find(name) % (len(request_lower) + 1),
+                                                                 name)):
         if any(str(item[1].get("name") or "").lower() == explicit_name for item in mandatory):
             continue
         candidates = [
@@ -1330,10 +1333,12 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         )
         mandatory.append(representative)
         remaining -= hits
+    trace_stage("pre_mandatory", ranked)
     mandatory_ids = {item[1].get("id") for item in mandatory}
     if mandatory:
         ranked = mandatory + [item for item in ranked if item[1].get("id") not in mandatory_ids]
     ranked = cap_homonyms(ranked, mandatory_ids)
+    trace_stage("homonyms", ranked)
     selection_cap = max_nodes
     if requested_concerns and not remaining:
         # Once every explicit obligation has a representative, a few nearby
@@ -1374,8 +1379,10 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                     else [] if len(anchored) >= reserve else fallback_candidates)
         ranked = (anchored[:reserve] + fallback + connected + anchored[reserve:]
                   if cross_file_flow else anchored[:reserve] + connected + fallback + anchored[reserve:])
+    trace_stage("anchors", ranked)
     if selected_intent == "flow":
         ranked = with_call_chain(graph, ranked, name_frequency, mandatory_ids)
+    trace_stage("chain", ranked)
     nodes = []
     seen_roles = set()
     laravel_labels = {"despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
@@ -1481,6 +1488,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                 break
     else:
         projected_links = []
+    trace_stage("selected", nodes)
     node_ids = {node.get("id") for node in nodes}
     links = [link for link in graph.get("links", [])
              if link.get("source") in node_ids and link.get("target") in node_ids]

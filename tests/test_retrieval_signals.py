@@ -177,3 +177,28 @@ def test_identifiers_named_by_the_request_must_appear_in_complete_evidence():
 
     assert package["missing"] == ["named_identifiers"]
     assert package["evidence_sufficiency"] == {"unmatched_identifiers": ["BLPOP"]}
+
+
+def test_call_chain_follows_ruby_dispatch_across_module_files():
+    def method(node_id, name, container, file):
+        return {"id": node_id, "name": name, "kind": "method", "file": file, "container": container, "line": 1}
+    nodes = [method("u", "update", "Persistence", "persistence.rb"), method("s", "save", "Validations", "validations.rb"),
+             method("x", "unrelated", "Other", "other.rb")]
+    graph = {"nodes": nodes, "links": [{"source": "u", "target": "s", "label": "llama", "confidence": "INFERRED",
+                                        "resolution": {"strategy": "ruby-ancestors"}}]}
+
+    chained = with_call_chain(graph, [(50, nodes[0]), (10, nodes[2])], NameFrequency(nodes, [], set()), set())
+
+    assert [node["id"] for _, node in chained] == ["u", "s", "x"]
+
+
+def test_selection_trace_records_every_stage_and_named_symbols_follow_the_request():
+    from graphtyn.core.ranking_weights import trace_selection
+    graph = {"nodes": [_function("s", "save"), _function("u", "update")], "links": []}
+
+    with trace_selection() as trace:
+        query_intent(graph, "Traza update y luego save", "flow", 10)
+
+    assert {"scored", "homonyms", "anchors", "chain", "selected"} <= set(trace)
+    # Named symbols lead in the order the request names them, not alphabetically.
+    assert [node["id"] for node in trace["homonyms"][:2]] == ["u", "s"]

@@ -324,3 +324,96 @@ tareas no vistas y apagan dos rasgos que no aportaban (`concept_hits` y
 La lección: **el ranking ya no es el cuello de botella**. Lo que decide la
 cobertura es la selección posterior (representantes obligatorios, archivos
 ancla, cadena de llamadas), que sigue siendo heurística.
+
+## Cuarta ronda: dónde se pierde la evidencia
+
+### Diagnóstico por etapas
+
+`selection_diagnosis.py` traza cada etapa de selección de `query_intent`
+(`ranking_weights.trace_selection`). Para cada una cuenta los hechos de la
+rúbrica que deletrean sus N primeros candidatos, donde N es el número de nodos
+seleccionados. En las 30 tareas de desarrollo (`selection_diagnosis_dev.jsonl`):
+
+| Etapa | Hechos alcanzables |
+|---|---:|
+| En algún nodo del grafo | 99,6 % |
+| N primeros del ranking | 46,6 % |
+| Tras ordenar símbolos cualificados (antes de los obligatorios) | 33,3 % |
+| Tras representantes obligatorios y límite de homónimos | 49,9 % |
+| Tras archivos ancla | 48,8 % |
+| Tras cadena de llamadas | 54,0 % |
+| Nodos seleccionados | 54,9 % |
+| Paquete lean (con fragmentos de fuente) | 55,7 % |
+
+**El índice no es el problema; el ranking sí.** La ronda anterior concluyó lo
+contrario porque sólo ajustaba pesos de rasgos existentes.
+
+De los hechos perdidos, 52 quedan por debajo del puesto 100 y 7 ni siquiera son
+candidatos. Casi todos son etapas a las que llama el punto de entrada y que no
+comparten ninguna palabra con la petición: `_update_record` y `_update_row` en
+Rails `update`, `handleClientsBlockedOnKeys` en BLPOP. Ningún rasgo léxico puede
+encontrarlas.
+
+### Cambios
+
+- **Orden de los símbolos nombrados:** los representantes obligatorios siguen
+  el orden en que la petición los nombra, no el alfabético. Antes, Rails
+  `update` sembraba la cadena desde `Transactions#save` (alfabéticamente,
+  `save` va antes que `update`).
+- **Despacho Ruby en la cadena:** las llamadas resueltas por despacho Ruby
+  cuentan como llamadas entre hermanos del mismo objeto. Ahora la cadena de
+  Rails `update` recorre `Persistence#save`→`create_or_update`.
+
+### Probado y descartado: proximidad en el grafo de llamadas
+
+Se añadió como rasgo de ranking una activación que se propaga por las llamadas
+desde los cinco mejores candidatos, con decaimiento por salto y sin coste entre
+overrides del mismo nombre.
+
+| Peso | Desarrollo |
+|---:|---:|
+| 0 | 55,7 % |
+| 300 | 55,4 % |
+| 600 | 56,2 % |
+| 1000 | 55,0 % |
+| 1500 | 52,3 % |
+
+A tres saltos la activación aporta unos 200 puntos frente a los ~1.400 del ruido
+léxico; subirla desplaza evidencia buena en fmt y Redis. Se retiró.
+
+### Presupuesto de nodos
+
+`query_intent` limita los flujos a 9 nodos más uno por cada «y» de la petición
+(máximo 12), dentro del límite de 10 que pide el MCP.
+
+| Nodos | Cobertura en desarrollo | Tokens del paquete |
+|---:|---:|---:|
+| 10 | 56,2 % | 2.833 |
+| 18 (con el tope de flujo en 14) | 60,0 % | 3.092 |
+
+Es la palanca más barata medida: +3,8 puntos por un 9 % más de tokens. No se
+aplicó, porque cambia el presupuesto por defecto que documentan `AGENTS.md` y la
+skill.
+
+### Resultado
+
+| Conjunto | Ronda 3 | Ronda 4 |
+|---|---:|---:|
+| Desarrollo | 55,7 % | 56,2 % |
+| Test2 | 60,8 % | 60,8 % (ninguna tarea cambia) |
+
+- **Rails `update`:** de 1/8 a 2/8.
+- **Rails `destroy`:** de 6/8 a 7/8.
+- **Redis `expire`:** de 6/8 a 5/8.
+
+Rails ya usa las aristas nuevas, pero la mejora es pequeña. Las etapas
+profundas (`_update_record`, `_update_row`) quedan fuera del presupuesto de
+nodos, ocupado por coincidencias léxicas como `Attributes`, `update_all` o
+`cache_sql`.
+
+### Próximo paso con más efecto
+
+Con estos datos, lo que más rendiría es reemplazar el relleno léxico por la
+cadena de llamadas: una vez identificado el punto de entrada, dedicar la mitad
+del presupuesto a sus etapas en el grafo. Habría que validarlo con un tercer
+conjunto de prueba, porque test2 ya se ha medido cuatro veces.

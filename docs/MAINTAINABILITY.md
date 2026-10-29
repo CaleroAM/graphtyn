@@ -97,6 +97,10 @@ La composición de módulos Ruby crece, con revisión, `ASTParser.scan_directory
 receptor y `super`) y `tree_sitter_backend.parse_file` (+3: el nodo `super`).
 La lógica vive en `graphtyn/core/ruby_mro.py` (`RubyAncestry`).
 
+El diagnóstico de selección crece `change_analyst` (+4 líneas) y `query_intent`
+(+3): seis puntos `trace_stage` y el orden de los símbolos nombrados según la
+petición. El trazado vive en `ranking_weights.trace_selection`.
+
 ## Escala
 
 SQLite con WAL es el backend local soportado. RF07 midió cinco repeticiones en

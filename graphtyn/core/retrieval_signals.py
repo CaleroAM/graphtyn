@@ -117,9 +117,12 @@ def with_call_chain(graph: dict[str, Any], ranked: list[tuple[int, dict[str, Any
                         or VENDORED_PATH.search(str(node.get("file") or ""))):
                     continue
                 hits = name_frequency.hits(str(node.get("name") or ""))
-                sibling = (str(link.get("confidence") or "EXTRACTED") == "EXTRACTED"
-                           and node.get("file") == caller.get("file")
-                           and node.get("container") == caller.get("container"))
+                # Another method of the same object: an extracted same-class call,
+                # or a Ruby self call or `super` resolved along the ancestors.
+                sibling = (str((link.get("resolution") or {}).get("strategy") or "").startswith("ruby-")
+                           or (str(link.get("confidence") or "EXTRACTED") == "EXTRACTED"
+                               and node.get("file") == caller.get("file")
+                               and node.get("container") == caller.get("container")))
                 if hits or target in ranked_ids or sibling:
                     stages[target] = (level, hits)
                     following.append(target)
@@ -167,3 +170,4 @@ def cap_homonyms(ranked: list[tuple[int, dict[str, Any]]], keep: set[Any]) -> li
         seen[name] = seen.get(name, 0) + 1
         capped.append(item)
     return capped
+
