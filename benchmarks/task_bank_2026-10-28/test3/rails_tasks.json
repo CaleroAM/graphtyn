@@ -1,0 +1,169 @@
+{
+ "schema_version": "1.0",
+ "frozen": "2026-10-29, tercer conjunto de prueba, congelado antes de implementar el presupuesto de flujo y las plazas reservadas para la cadena de llamadas; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; lua es un corpus nunca usado para ajustar",
+ "tasks": [
+  {
+   "id": "RAILS_TOUCH_FLOW",
+   "request": "En el commit fijado de Ruby on Rails, traza qué ocurre al llamar a record.touch: la transacción que lo envuelve, los callbacks que se ejecutan, qué columnas de marca de tiempo se actualizan, cómo se escribe la fila y qué añaden el seguimiento de cambios y el bloqueo optimista. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "tx",
+     "any": [
+      "with_transaction_returning_status"
+     ]
+    },
+    {
+     "id": "callbacks",
+     "any": [
+      "_run_touch_callbacks"
+     ]
+    },
+    {
+     "id": "columns",
+     "any": [
+      "timestamp_attributes_for_update_in_model"
+     ]
+    },
+    {
+     "id": "row",
+     "any": [
+      "_touch_row"
+     ]
+    },
+    {
+     "id": "write",
+     "any": [
+      "_write_attribute"
+     ]
+    },
+    {
+     "id": "update_row",
+     "any": [
+      "_update_row"
+     ]
+    },
+    {
+     "id": "dirty",
+     "any": [
+      "@_touch_attr_names"
+     ]
+    },
+    {
+     "id": "locking",
+     "any": [
+      "locking_column",
+      "_skip_locking_column_on_touch?"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RAILS_RELOAD_FLOW",
+   "request": "En el commit fijado de Ruby on Rails, traza qué ocurre al llamar a record.reload: cómo se vuelve a leer la fila de la base de datos y con qué alcance, qué estado del objeto se sustituye y qué limpian además las capas de agregaciones, autosave y seguimiento de cambios. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "query_cache",
+     "any": [
+      "clear_query_cache"
+     ]
+    },
+    {
+     "id": "scoping",
+     "any": [
+      "apply_scoping?"
+     ]
+    },
+    {
+     "id": "find",
+     "any": [
+      "_find_record"
+     ]
+    },
+    {
+     "id": "find_by",
+     "any": [
+      "find_by!"
+     ]
+    },
+    {
+     "id": "assoc",
+     "any": [
+      "@association_cache"
+     ]
+    },
+    {
+     "id": "aggregation",
+     "any": [
+      "clear_aggregation_cache"
+     ]
+    },
+    {
+     "id": "autosave",
+     "any": [
+      "@marked_for_destruction"
+     ]
+    },
+    {
+     "id": "dirty",
+     "any": [
+      "@mutations_from_database"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "RAILS_COUNTER_CACHE_FLOW",
+   "request": "En el commit fijado de Ruby on Rails, traza qué ocurre al crear un comentario con belongs_to :post, counter_cache: true: dónde se engancha la creación del registro, qué asociaciones tienen contador, cuándo hace falta actualizarlo, y cómo se incrementa en la base de datos, tanto si el post está cargado como si no. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "hook",
+     "any": [
+      "_create_record"
+     ]
+    },
+    {
+     "id": "names",
+     "any": [
+      "counter_cached_association_names"
+     ]
+    },
+    {
+     "id": "increment",
+     "any": [
+      "increment_counters"
+     ]
+    },
+    {
+     "id": "update",
+     "any": [
+      "def update_counters"
+     ]
+    },
+    {
+     "id": "require",
+     "any": [
+      "require_counter_update?"
+     ]
+    },
+    {
+     "id": "loaded",
+     "any": [
+      "increment!"
+     ]
+    },
+    {
+     "id": "scope",
+     "any": [
+      "update_counters_via_scope"
+     ]
+    },
+    {
+     "id": "column",
+     "any": [
+      "counter_cache_column"
+     ]
+    }
+   ]
+  }
+ ]
+}

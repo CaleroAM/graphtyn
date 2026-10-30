@@ -1,0 +1,230 @@
+{
+ "schema_version": "1.0",
+ "frozen": "2026-10-29, tercer conjunto de prueba, congelado antes de implementar el presupuesto de flujo y las plazas reservadas para la cadena de llamadas; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; lua es un corpus nunca usado para ajustar",
+ "tasks": [
+  {
+   "id": "REDIS_SET_OPTIONS_FLOW",
+   "request": "En el commit fijado de Redis, traza el comando SET con opciones como EX, NX o GET: cómo se analizan los argumentos, cómo se calcula la expiración, cómo se comprueban las condiciones de existencia, cómo se guarda el valor y la expiración y qué notificaciones y reescrituras para la propagación se generan. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "cmd",
+     "any": [
+      "setCommand"
+     ]
+    },
+    {
+     "id": "parse",
+     "any": [
+      "parseExtendedStringArgumentsOrReply"
+     ]
+    },
+    {
+     "id": "generic",
+     "any": [
+      "setGenericCommand"
+     ]
+    },
+    {
+     "id": "expire",
+     "any": [
+      "getExpireMillisecondsOrReply"
+     ]
+    },
+    {
+     "id": "lookup",
+     "any": [
+      "lookupKeyWriteWithLink"
+     ]
+    },
+    {
+     "id": "store",
+     "any": [
+      "setKey"
+     ]
+    },
+    {
+     "id": "ttl",
+     "any": [
+      "setExpireByLink"
+     ]
+    },
+    {
+     "id": "notify",
+     "any": [
+      "notifyKeyspaceEvent"
+     ]
+    },
+    {
+     "id": "rewrite",
+     "any": [
+      "rewriteClientCommandArgument"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "REDIS_DEL_LAZYFREE_FLOW",
+   "request": "En el commit fijado de Redis, traza el comando DEL cuando la liberación diferida está activada: cómo se elige entre borrado síncrono y asíncrono, cómo se desvincula la clave del diccionario, cómo se decide si liberar el valor en un hilo de fondo y cómo se encola ese trabajo. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "cmd",
+     "any": [
+      "delCommand"
+     ]
+    },
+    {
+     "id": "generic",
+     "any": [
+      "delGenericCommand"
+     ]
+    },
+    {
+     "id": "expired",
+     "any": [
+      "expireIfNeeded"
+     ]
+    },
+    {
+     "id": "async",
+     "any": [
+      "dbAsyncDelete"
+     ]
+    },
+    {
+     "id": "delete",
+     "any": [
+      "dbGenericDelete"
+     ]
+    },
+    {
+     "id": "unlink",
+     "any": [
+      "kvstoreDictTwoPhaseUnlinkFind"
+     ]
+    },
+    {
+     "id": "free",
+     "any": [
+      "freeObjAsync"
+     ]
+    },
+    {
+     "id": "effort",
+     "any": [
+      "lazyfreeGetFreeEffort"
+     ]
+    },
+    {
+     "id": "bio",
+     "any": [
+      "bioCreateLazyFreeJob"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "REDIS_LPUSH_FLOW",
+   "request": "En el commit fijado de Redis, traza el comando LPUSH: cómo se busca o se crea la lista, en qué codificación nace, cuándo se convierte de codificación, cómo se insertan los elementos y cómo se avisa a los clientes bloqueados y a los suscriptores de eventos. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "generic",
+     "any": [
+      "pushGenericCommand"
+     ]
+    },
+    {
+     "id": "lookup",
+     "any": [
+      "lookupKeyWriteWithLink"
+     ]
+    },
+    {
+     "id": "create",
+     "any": [
+      "createListListpackObject"
+     ]
+    },
+    {
+     "id": "add",
+     "any": [
+      "dbAddByLink"
+     ]
+    },
+    {
+     "id": "convert",
+     "any": [
+      "listTypeTryConversionAppend"
+     ]
+    },
+    {
+     "id": "push",
+     "any": [
+      "listTypePush"
+     ]
+    },
+    {
+     "id": "blocked",
+     "any": [
+      "signalKeyAsReadyNonEmptyList",
+      "signalKeyAsReady"
+     ]
+    },
+    {
+     "id": "notify",
+     "any": [
+      "notifyKeyspaceEvent"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "REDIS_HSET_FLOW",
+   "request": "En el commit fijado de Redis, traza el comando HSET: cómo se busca o se crea el hash, cuándo se convierte de listpack a tabla hash, cómo se escribe cada campo y qué notificaciones genera. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "cmd",
+     "any": [
+      "hsetCommand"
+     ]
+    },
+    {
+     "id": "lookup",
+     "any": [
+      "hashTypeLookupWriteOrCreate"
+     ]
+    },
+    {
+     "id": "try",
+     "any": [
+      "hashTypeTryConversion"
+     ]
+    },
+    {
+     "id": "set",
+     "any": [
+      "hashTypeSet"
+     ]
+    },
+    {
+     "id": "convert",
+     "any": [
+      "hashTypeConvert"
+     ]
+    },
+    {
+     "id": "notify",
+     "any": [
+      "notifyKeyspaceEvent"
+     ]
+    },
+    {
+     "id": "modified",
+     "any": [
+      "keyModified",
+      "signalModifiedKey"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,311 @@
+{
+ "schema_version": "1.0",
+ "frozen": "2026-10-29, tercer conjunto de prueba, congelado antes de implementar el presupuesto de flujo y las plazas reservadas para la cadena de llamadas; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; lua es un corpus nunca usado para ajustar",
+ "tasks": [
+  {
+   "id": "LUA_PCALL_FLOW",
+   "request": "En el commit fijado de Lua, traza una llamada protegida desde lua_pcall: cómo la API prepara la llamada y el manejador de errores, cómo se instala el punto de recuperación ante errores, cómo se invoca finalmente la función (de C o de Lua) y qué estado se restaura cuando la llamada falla. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "api",
+     "any": [
+      "lua_pcallk"
+     ]
+    },
+    {
+     "id": "pcall",
+     "any": [
+      "luaD_pcall"
+     ]
+    },
+    {
+     "id": "protect",
+     "any": [
+      "luaD_rawrunprotected",
+      "LUAI_TRY"
+     ]
+    },
+    {
+     "id": "fcall",
+     "any": [
+      "f_call"
+     ]
+    },
+    {
+     "id": "call",
+     "any": [
+      "luaD_callnoyield",
+      "luaD_call"
+     ]
+    },
+    {
+     "id": "precall",
+     "any": [
+      "luaD_precall",
+      "precallC"
+     ]
+    },
+    {
+     "id": "close",
+     "any": [
+      "luaD_closeprotected"
+     ]
+    },
+    {
+     "id": "errobj",
+     "any": [
+      "luaD_seterrorobj"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "LUA_LOAD_FLOW",
+   "request": "En el commit fijado de Lua, traza cómo luaL_loadfilex carga un chunk desde un archivo: cómo se lee el archivo y se saltan la cabecera y el BOM, cómo se distingue un chunk binario de uno de texto y se comprueba el modo permitido, cómo se compila o se deserializa y cómo queda inicializada la closure resultante. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "reader",
+     "any": [
+      "getF"
+     ]
+    },
+    {
+     "id": "skip",
+     "any": [
+      "skipcomment",
+      "skipBOM"
+     ]
+    },
+    {
+     "id": "load",
+     "any": [
+      "lua_load"
+     ]
+    },
+    {
+     "id": "protected",
+     "any": [
+      "luaD_protectedparser"
+     ]
+    },
+    {
+     "id": "parser",
+     "any": [
+      "f_parser"
+     ]
+    },
+    {
+     "id": "mode",
+     "any": [
+      "checkmode"
+     ]
+    },
+    {
+     "id": "undump",
+     "any": [
+      "luaU_undump"
+     ]
+    },
+    {
+     "id": "compile",
+     "any": [
+      "luaY_parser"
+     ]
+    },
+    {
+     "id": "upvals",
+     "any": [
+      "luaF_initupvals"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "LUA_GC_STEP_FLOW",
+   "request": "En el commit fijado de Lua, traza un paso incremental del recolector de basura desde luaC_step: cómo decide entre el modo incremental y el generacional, cuánto trabajo hace en cada paso y qué hace en cada fase del ciclo (reinicio, marcado, fase atómica, barrido y finalizadores) hasta volver a la pausa. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "inc",
+     "any": [
+      "incstep"
+     ]
+    },
+    {
+     "id": "young",
+     "any": [
+      "youngcollection"
+     ]
+    },
+    {
+     "id": "single",
+     "any": [
+      "singlestep"
+     ]
+    },
+    {
+     "id": "restart",
+     "any": [
+      "restartcollection"
+     ]
+    },
+    {
+     "id": "mark",
+     "any": [
+      "propagatemark"
+     ]
+    },
+    {
+     "id": "atomic",
+     "any": [
+      "atomic(L)",
+      "static void atomic"
+     ]
+    },
+    {
+     "id": "sweep",
+     "any": [
+      "sweepstep",
+      "entersweep"
+     ]
+    },
+    {
+     "id": "fin",
+     "any": [
+      "GCTM"
+     ]
+    },
+    {
+     "id": "pause",
+     "any": [
+      "setpause"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "LUA_TABLE_SET_FLOW",
+   "request": "En el commit fijado de Lua, traza qué ocurre cuando lua_setfield asigna un campo nuevo a una tabla: cómo se obtiene la clave de cadena, el intento de asignación rápida, cuándo se consulta el metamétodo __newindex, cómo se inserta una clave que no existe y cómo crece la tabla cuando no queda hueco. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "aux",
+     "any": [
+      "auxsetstr"
+     ]
+    },
+    {
+     "id": "intern",
+     "any": [
+      "luaS_new"
+     ]
+    },
+    {
+     "id": "finishset",
+     "any": [
+      "luaV_finishset"
+     ]
+    },
+    {
+     "id": "newindex",
+     "any": [
+      "TM_NEWINDEX"
+     ]
+    },
+    {
+     "id": "hfinish",
+     "any": [
+      "luaH_finishset"
+     ]
+    },
+    {
+     "id": "newkey",
+     "any": [
+      "luaH_newkey"
+     ]
+    },
+    {
+     "id": "insert",
+     "any": [
+      "insertkey",
+      "getfreepos"
+     ]
+    },
+    {
+     "id": "rehash",
+     "any": [
+      "rehash"
+     ]
+    },
+    {
+     "id": "resize",
+     "any": [
+      "luaH_resize",
+      "computesizes"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "LUA_STRING_INTERN_FLOW",
+   "request": "En el commit fijado de Lua, traza cómo luaS_new crea o reutiliza una cadena: la caché por dirección, la diferencia entre cadenas cortas y largas, cómo se busca una cadena corta ya internada y se resucita si estaba muerta, y cuándo y cómo crece la tabla de cadenas. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "cache",
+     "any": [
+      "strcache",
+      "STRCACHE_M"
+     ]
+    },
+    {
+     "id": "newlstr",
+     "any": [
+      "luaS_newlstr"
+     ]
+    },
+    {
+     "id": "short",
+     "any": [
+      "internshrstr"
+     ]
+    },
+    {
+     "id": "hash",
+     "any": [
+      "luaS_hash"
+     ]
+    },
+    {
+     "id": "dead",
+     "any": [
+      "isdead",
+      "changewhite"
+     ]
+    },
+    {
+     "id": "grow",
+     "any": [
+      "growstrtab"
+     ]
+    },
+    {
+     "id": "resize",
+     "any": [
+      "luaS_resize",
+      "tablerehash"
+     ]
+    },
+    {
+     "id": "create",
+     "any": [
+      "createstrobj"
+     ]
+    },
+    {
+     "id": "long",
+     "any": [
+      "luaS_createlngstrobj"
+     ]
+    }
+   ]
+  }
+ ]
+}

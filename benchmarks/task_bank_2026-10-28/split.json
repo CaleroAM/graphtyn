@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "note": "dev: tareas ya vistas, usadas para iterar la recuperación (incluye el primer conjunto de prueba desde que se midió). test: el primer conjunto, congelado el 2026-10-28 y medido una vez. test2: congelado el 2026-10-28 antes de corregir los fallos vistos en test; incluye flask, corpus nunca usado para ajustar.",
+  "note": "dev: tareas ya vistas, usadas para iterar la recuperación (incluye el primer conjunto de prueba desde que se midió). test: el primer conjunto, congelado el 2026-10-28 y medido una vez. test2: congelado el 2026-10-28 antes de corregir los fallos vistos en test; incluye flask, corpus nunca usado para ajustar. test3: congelado el 2026-10-29 antes de implementar el presupuesto de flujo y la cadena reservada; incluye lua, corpus nunca usado para ajustar.",
   "dev": [
     "../real_multi_client_hook_2026-10-27/{corpus}_tasks.json",
     "../heldout_tasks_2026-10-27/{corpus}_tasks.json",
@@ -12,5 +12,8 @@
   ],
   "test2": [
     "test2/{corpus}_tasks.json"
+  ],
+  "test3": [
+    "test3/{corpus}_tasks.json"
   ]
 }
