@@ -90,6 +90,7 @@ def lean_payload(result: dict) -> dict:
         output["entities"] = entities
         output["relations"] = relations
         used_files = {str(item.get("at") or "").partition(":")[0] for item in entities.values()}
+        used_files |= {str(entry[2]).partition(":")[0] for entry in output.get("call_outline") or []}
         output["files"] = {alias: path for alias, path in files.items() if alias in used_files}
         names = {str(item.get("name") or "") for item in entities.values()} | {
             str(item.get("symbol") or "") for item in excerpts}

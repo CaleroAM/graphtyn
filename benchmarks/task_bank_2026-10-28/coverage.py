@@ -24,6 +24,7 @@ def main() -> int:
     parser.add_argument("split", choices=("dev", "test", "test2", "test3"))
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--jsonl", type=Path)
+    parser.add_argument("--limit", type=int, default=10, help="graph_query_intent entity budget")
     args = parser.parse_args()
     patterns = json.loads((HERE / "split.json").read_text())[args.split]
     rows = []
@@ -36,7 +37,7 @@ def main() -> int:
         graph = json.loads((project_store_dir(data_home(), root) / "index.json").read_text())
         for path in task_files:
             for task in json.loads(path.read_text())["tasks"]:
-                _raw, result, _ = build_intent_package(root, graph, task["request"])
+                _raw, result, _ = build_intent_package(root, graph, task["request"], limit=args.limit)
                 result = lean_payload(result)
                 text = json.dumps(result, ensure_ascii=False)
                 hits = [r["id"] for r in task["rubric"] if any(a in text for a in r["any"])]

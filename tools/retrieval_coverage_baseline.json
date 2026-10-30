@@ -16,6 +16,16 @@
       "do_not_expand": true,
       "total": 8
     },
+    "FLASK_JSONIFY_FLOW": {
+      "covered": 4,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_RENDER_TEMPLATE_FLOW": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 9
+    },
     "FLASK_REQUEST_DISPATCH_FLOW": {
       "covered": 7,
       "do_not_expand": true,
@@ -23,6 +33,11 @@
     },
     "FLASK_SESSION_COOKIE_FLOW": {
       "covered": 6,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_TEST_CLIENT_FLOW": {
+      "covered": 2,
       "do_not_expand": true,
       "total": 8
     },
@@ -47,12 +62,12 @@
       "total": 8
     },
     "FMT_DYNAMIC_WIDTH_FLOW": {
-      "covered": 5,
+      "covered": 6,
       "do_not_expand": false,
       "total": 8
     },
     "FMT_FLOAT_FLOW": {
-      "covered": 6,
+      "covered": 7,
       "do_not_expand": true,
       "total": 7
     },
@@ -62,7 +77,7 @@
       "total": 8
     },
     "FMT_FORMAT_TO_N_FLOW": {
-      "covered": 5,
+      "covered": 4,
       "do_not_expand": false,
       "total": 8
     },
@@ -82,7 +97,7 @@
       "total": 7
     },
     "FMT_PRINTF_FLOW": {
-      "covered": 5,
+      "covered": 6,
       "do_not_expand": false,
       "total": 8
     },
@@ -92,7 +107,7 @@
       "total": 8
     },
     "FMT_RANGES_FLOW": {
-      "covered": 3,
+      "covered": 4,
       "do_not_expand": false,
       "total": 8
     }

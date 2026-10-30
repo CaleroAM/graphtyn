@@ -4,9 +4,11 @@ from graphtyn.core import prompt_context
 from graphtyn.core.change_analyst import query_intent
 from graphtyn.core.change_analyst import classify_intent
 from graphtyn.core.evidence_sufficiency import mark_insufficient_evidence, named_identifiers, request_parts
-from graphtyn.core.retrieval_signals import NameFrequency, cap_homonyms, flow_markers, with_call_chain
+from graphtyn.core import retrieval_signals
+from graphtyn.core.retrieval_signals import (NameFrequency, call_outline, cap_homonyms, command_handlers, flow_markers,
+                                            with_call_chain)
 from graphtyn.core.vocabulary import is_prose_word, translated_terms
-from graphtyn.mcp_server import lean_payload
+from graphtyn.mcp_server import evidence_result, lean_payload
 
 
 def _function(node_id, name, file="src/evict.c", **extra):
@@ -202,3 +204,80 @@ def test_selection_trace_records_every_stage_and_named_symbols_follow_the_reques
     assert {"scored", "homonyms", "anchors", "chain", "selected"} <= set(trace)
     # Named symbols lead in the order the request names them, not alphabetically.
     assert [node["id"] for node in trace["homonyms"][:2]] == ["u", "s"]
+
+
+def _c_flow():
+    """lua_pcallk → luaD_pcall → luaD_rawrunprotected → f_call, with a utility called from everywhere."""
+    nodes = [_function("api", "lua_pcallk", "lapi.c"), _function("pcall", "luaD_pcall", "ldo.c"),
+             _function("raw", "luaD_rawrunprotected", "ldo.c"), _function("fcall", "f_call", "lapi.c"),
+             _function("err", "luaG_runerror", "ldebug.c"), _function("m1", "lua_settop", "lapi.c"),
+             _function("m2", "lua_gettop", "lapi.c")]
+    calls = [("api", "pcall"), ("api", "err"), ("pcall", "raw"), ("raw", "fcall")]
+    calls += [(f"u{index}", "err") for index in range(retrieval_signals.UTILITY_FAN_IN + 1)]
+    links = [{"source": a, "target": b, "label": "llama", "confidence": "EXTRACTED", "line": 1} for a, b in calls]
+    return {"nodes": nodes, "links": links}
+
+
+def test_a_reserved_chain_takes_unnamed_callees_ahead_of_overflowing_representatives(monkeypatch):
+    monkeypatch.setattr(retrieval_signals, "CHAIN_SEEDS", 1)
+    graph = _c_flow()
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    frequency = NameFrequency(graph["nodes"], [], generic=set())
+    ranked = [(50, nodes["api"]), (40, nodes["m1"]), (30, nodes["m2"])]
+
+    legacy = with_call_chain(graph, ranked, frequency, keep_first={"m1", "m2"})
+    reserved = with_call_chain(graph, ranked, frequency, keep_first={"m1", "m2"}, reserved=2, budget=3)
+
+    # Without a reservation a callee needs a request term; with one, the
+    # entry point's stages come before representatives beyond the budget, and
+    # the utility called from everywhere is never a stage.
+    assert [node["id"] for _, node in legacy] == ["api", "m1", "m2"]
+    # Same-file stages first (C has no class), then the nearest.
+    assert [node["id"] for _, node in reserved] == ["api", "fcall", "pcall", "m1", "m2"]
+
+
+def test_call_outline_lists_deeper_stages_by_location_only():
+    graph = _c_flow()
+    frequency = NameFrequency(graph["nodes"], [], generic=set())
+    selected = [graph["nodes"][0], graph["nodes"][1]]
+
+    outline = call_outline(graph, selected, frequency, limit=5)
+
+    assert [(item["caller"], item["callee"]) for item in outline] == [
+        ("luaD_pcall", "luaD_rawrunprotected"), ("luaD_rawrunprotected", "f_call")]
+    assert outline[0]["file"] == "ldo.c"
+
+
+def test_call_outline_is_rendered_with_file_aliases_and_kept_by_the_lean_package():
+    package = {"intent": "flow", "nodes": [_function("api", "lua_pcallk", "lapi.c")],
+               "call_outline": [{"caller": "lua_pcallk", "callee": "luaD_pcall", "file": "ldo.c", "line": 1083,
+                                 "confidence": "EXTRACTED"}]}
+
+    lean = lean_payload(evidence_result(package))
+
+    assert lean["call_outline"] == [["lua_pcallk", "luaD_pcall", "F2:1083", "E"]]
+    assert lean["files"]["F2"] == "ldo.c"
+
+
+def test_commands_written_in_capitals_name_their_handlers():
+    nodes = [_function("b", "blpopCommand"), _function("t", "ttlCommand"), _function("g", "cmd_get"),
+             _function("x", "lruCommandHelper")]
+
+    handlers = command_handlers("Explica BLPOP y GET; la política LRU usa el TTL", nodes, set())
+
+    assert handlers == {"blpopcommand", "ttlcommand", "cmd_get"}
+
+
+def test_a_command_handler_joins_the_package_without_pinning_it_to_its_file(monkeypatch):
+    monkeypatch.setattr(retrieval_signals, "COMMAND_NAMES", True)
+    graph = {"nodes": [
+        _function("ttl", "ttlCommand", "src/expire.c"),
+        _function("evict", "performEvictions", "src/evict.c",
+                  operations=[{"name": "call", "text": "evictionPoolPopulate(db)", "line": 2}]),
+        _function("pool", "evictionPoolPopulate", "src/evict.c"),
+    ], "links": []}
+
+    result = query_intent(graph, "Explica cómo Redis ejecuta la evicción con LRU y TTL", "flow", 10)
+
+    names = [node["name"] for node in result["nodes"]]
+    assert "ttlCommand" in names and "performEvictions" in names

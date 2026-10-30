@@ -10,8 +10,23 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
+- Peticiones de flujo (`graph_query_intent`, hook): la mitad del presupuesto de
+  entidades se reserva para las etapas a las que llama el punto de entrada,
+  aunque no compartan palabras con la petición; las utilidades llamadas desde
+  todas partes no cuentan. `call_outline` lista hasta 12 etapas más como
+  `[caller, callee, F:línea, E|I]`, sin su código. Un comando escrito en
+  mayúsculas (`BLPOP`) incluye su función (`blpopCommand`). El presupuesto por
+  defecto sigue en 10 entidades. Cobertura del paquete: desarrollo 56,2 → 62,8 %,
+  test2 60,8 → 66,6 %, test3 (nuevo, con Lua) 35,9 → 48,8 %, sin más tokens.
+  En 300 sesiones reales, el coste ponderado baja un 19–21 % frente a no usar
+  Graphtyn, con la misma calidad.
+- Tercer conjunto de prueba (`benchmarks/task_bank_2026-10-28/test3/`, 15 tareas
+  con Lua como corpus nuevo) y `analyze_variants.py`, que separa los tokens por
+  tipo (lectura y escritura de caché, entrada sin caché, salida) y los pondera
+  por precio.
+
 - Job `retrieval` de CI (`tools/check_retrieval_coverage.py`): mide la cobertura
-  de los paquetes en 19 tareas sobre fmt y Flask fijados. Falla si la media
+  de los paquetes en 22 tareas sobre fmt y Flask fijados. Falla si la media
   baja, si una tarea pierde dos hechos o si aparece una falsa completitud.
 - Ruby: `include`/`prepend`/`extend` se resuelven por la búsqueda léxica de
   constantes, y las llamadas sin receptor y `super` por la cadena de ancestros
@@ -131,6 +146,8 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Corregido
 
+- Los fragmentos de `source_evidence` que empatan conservan el orden de
+  selección del paquete (el punto de entrada primero), no el de sus rutas.
 - Recuperación para `flow`:
   - un glosario de programación español→inglés (`evicción`→`evict`) y la
     puntuación de términos poco frecuentes dentro de nombres de función;

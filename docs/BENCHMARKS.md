@@ -165,6 +165,21 @@ Ninguno de los dos últimos cambia la cobertura de forma apreciable: desarrollo
 55,7 %, test2 60,8 %. El cuello de botella está en la selección posterior al
 ranking.
 
+Una quinta ronda reserva la mitad del presupuesto de un flujo para las etapas a
+las que llama el punto de entrada, añade `call_outline` y reconoce comandos en
+mayúsculas. Se midió en un tercer conjunto de prueba con Lua:
+
+- **Cobertura del paquete:** desarrollo 56,2 → 62,8 %, test2 60,8 → 66,6 %,
+  test3 35,9 → 48,8 %, con los mismos tokens.
+- **300 sesiones reales** (Claude y Codex, tres repeticiones): frente a no usar
+  Graphtyn, el coste ponderado por tipo de token baja un 18,7 % en Claude y un
+  20,5 % en Codex, sin perder calidad.
+- **Más presupuesto de nodos no generaliza:** empata o empeora fuera de
+  desarrollo.
+
+El total de tokens infravalora el ahorro: la mayor parte son lecturas de caché
+del prompt fijo del cliente, que valen una décima parte.
+
 La validación Ruby/Rails está en
 [`benchmarks/real_ruby_agents_2026-10-20/report.md`](../benchmarks/real_ruby_agents_2026-10-20/report.md).
 Con calidad comparable de 8/8, Graphtyn cambió el total informado en −67,30 %

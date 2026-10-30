@@ -10,6 +10,22 @@ from .vocabulary import COMMON_WORDS, is_prose_word
 
 BEHAVIOR_KINDS = {"function", "method", "def"}
 HOMONYM_CAP = 2
+# Flow package policy, measured on benchmarks/task_bank_2026-10-28 (fifth
+# round). A flow keeps FLOW_NODE_CAP entities: a larger cap squeezes the source
+# excerpts out of the fixed token budget and lost coverage on held-out tasks.
+# Half of it (CHAIN_SHARE) is reserved for the stages the leading entry point
+# (CHAIN_SEEDS) calls up to CHAIN_DEPTH hops away, skipping utilities with more
+# than UTILITY_FAN_IN callers; OUTLINE_LIMIT further stages are listed by name
+# and location only. COMMAND_NAMES maps a command written in capitals (BLPOP)
+# to its handler (blpopCommand). The benchmarks switch these to compare policies.
+FLOW_NODE_CAP = 9
+CHAIN_SHARE = 0.5
+CHAIN_SEEDS = 1
+CHAIN_DEPTH = 3
+UTILITY_FAN_IN = 12
+OUTLINE_LIMIT = 12
+COMMAND_NAMES = True
+_HANDLER_FORMS = ("{}command", "{}_command", "cmd_{}", "{}cmd", "{}_cmd")
 
 
 class NameFrequency:
@@ -80,7 +96,8 @@ def _structural_segments(nodes: list[dict[str, Any]], share: int = 20) -> set[st
 
 def with_call_chain(graph: dict[str, Any], ranked: list[tuple[int, dict[str, Any]]],
                     name_frequency: NameFrequency, keep_first: set[Any],
-                    seeds: int = 1, limit: int = 4, depth: int = 3) -> list[tuple[int, dict[str, Any]]]:
+                    seeds: int = 1, limit: int = 4, depth: int = 3,
+                    reserved: int = 0, budget: int = 0) -> list[tuple[int, dict[str, Any]]]:
     """Place the stages a leading entry point calls right after it.
 
     A flow continues through the functions its entry point calls even when
@@ -96,6 +113,12 @@ def with_call_chain(graph: dict[str, Any], ranked: list[tuple[int, dict[str, Any
     for link in graph.get("links", []):
         if link.get("label") == "llama" and str(link.get("confidence") or "") != "AMBIGUOUS":
             calls.setdefault(link.get("source"), []).append(link)
+    if reserved:
+        seeds, limit, depth = CHAIN_SEEDS, reserved, CHAIN_DEPTH
+    callers: dict[Any, set[Any]] = {}
+    for caller_id, links in calls.items():
+        for link in links:
+            callers.setdefault(link.get("target"), set()).add(caller_id)
     seed_items = [item for item in ranked[:4]
                   if item[1].get("kind") in BEHAVIOR_KINDS and item[1].get("id") in calls
                   and not TEST_PATH.search(str(item[1].get("file") or ""))][:seeds]
@@ -123,7 +146,10 @@ def with_call_chain(graph: dict[str, Any], ranked: list[tuple[int, dict[str, Any
                            or (str(link.get("confidence") or "EXTRACTED") == "EXTRACTED"
                                and node.get("file") == caller.get("file")
                                and node.get("container") == caller.get("container")))
-                if hits or target in ranked_ids or sibling:
+                # With a reserved budget any callee is a stage unless it is a
+                # utility called from everywhere (logging, allocation, replies).
+                open_stage = reserved and len(callers.get(target, ())) <= UTILITY_FAN_IN
+                if hits or target in ranked_ids or sibling or open_stage:
                     stages[target] = (level, hits)
                     following.append(target)
         frontier = following
@@ -139,11 +165,101 @@ def with_call_chain(graph: dict[str, Any], ranked: list[tuple[int, dict[str, Any
     # obligation never loses its slot to a stage the graph inferred.
     last_seed = max(index for index, item in enumerate(ranked)
                     if item[1].get("id") in seed_ids or item[1].get("id") in keep_first)
+    if reserved:
+        # A reserved share comes before the representatives that do not fit
+        # the rest of the budget: they are lexical guesses, the stages are
+        # what the entry point executes.
+        last_seed = min(last_seed, max(max(budget - reserved, 1) - 1,
+                                       max(index for index, item in enumerate(ranked)
+                                           if item[1].get("id") in seed_ids)))
     chain = [(ranked[last_seed][0], dict(by_id[node_id])) for node_id in chosen]
     chosen_ids = set(chosen)
     head = [item for item in ranked[:last_seed + 1] if item[1].get("id") not in chosen_ids]
     tail = [item for item in ranked[last_seed + 1:] if item[1].get("id") not in chosen_ids]
     return head + chain + tail
+
+
+def call_outline(graph: dict[str, Any], selected: list[dict[str, Any]], name_frequency: NameFrequency,
+                 limit: int, seeds: int = 2, depth: int = 3) -> list[dict[str, Any]]:
+    """Call stages beyond the package, by name and location only.
+
+    A flow's deeper stages rarely share a word with the request; listing them
+    as `caller → callee @ file:line` costs a few tokens each and lets the agent
+    read exactly the range it needs instead of searching. Breadth-first from
+    the leading entry points, skipping utilities called from everywhere and
+    the stages already in the package.
+    """
+    by_id = {node.get("id"): node for node in graph.get("nodes", [])}
+    calls: dict[Any, list[dict[str, Any]]] = {}
+    callers: dict[Any, set[Any]] = {}
+    for link in graph.get("links", []):
+        if link.get("label") == "llama" and str(link.get("confidence") or "") != "AMBIGUOUS":
+            calls.setdefault(link.get("source"), []).append(link)
+            callers.setdefault(link.get("target"), set()).add(link.get("source"))
+    selected_ids = {node.get("id") for node in selected}
+    frontier = [node.get("id") for node in selected
+                if node.get("kind") in BEHAVIOR_KINDS and node.get("id") in calls
+                and not TEST_PATH.search(str(node.get("file") or ""))][:seeds]
+    seen = set(frontier)
+    outline: list[dict[str, Any]] = []
+    for _level in range(depth):
+        following = []
+        for caller_id in frontier:
+            for link in sorted(calls.get(caller_id, []), key=lambda item: int(item.get("line") or 0)):
+                target = link.get("target")
+                node = by_id.get(target)
+                if (not node or target in seen or node.get("kind") not in BEHAVIOR_KINDS
+                        or TEST_PATH.search(str(node.get("file") or ""))
+                        or VENDORED_PATH.search(str(node.get("file") or ""))):
+                    continue
+                if len(callers.get(target, ())) > UTILITY_FAN_IN and not name_frequency.hits(str(node.get("name") or "")):
+                    continue
+                seen.add(target)
+                following.append(target)
+                if target not in selected_ids and len(outline) < limit:
+                    outline.append({"caller": str(by_id.get(caller_id, {}).get("name") or ""),
+                                    "callee": str(node.get("name") or ""), "file": str(node.get("file") or ""),
+                                    "line": node.get("line"),
+                                    "confidence": str(link.get("confidence") or "EXTRACTED")})
+        frontier = following
+    return outline
+
+
+def command_handlers(request: str, nodes: list[dict[str, Any]], excluded_kinds: set[str]) -> set[str]:
+    """Handler names of the commands a request writes in capitals.
+
+    Servers name a command's entry point after it (`BLPOP` → `blpopCommand`,
+    `GET` → `cmd_get`), so the request names the handler without spelling it.
+    Capitals also spell policies (`TTL`, `LRU`), so the caller must not pin
+    the package to a handler's file.
+    """
+    if not COMMAND_NAMES:
+        return set()
+    words = {word.lower() for word in re.findall(r"(?<![\w.])[A-Z][A-Z0-9]{1,19}(?![\w.])", str(request or ""))}
+    forms = {form.format(word) for word in words for form in _HANDLER_FORMS}
+    return {name for name in (str(node.get("name") or "").lower() for node in nodes
+                              if node.get("kind") in BEHAVIOR_KINDS and node.get("kind") not in excluded_kinds)
+            if name in forms}
+
+
+def flow_outline(graph: dict[str, Any], selected: list[dict[str, Any]],
+                 name_frequency: NameFrequency) -> dict[str, Any]:
+    """`{"call_outline": [...]}` for a flow package, or nothing."""
+    outline = call_outline(graph, selected, name_frequency, OUTLINE_LIMIT) if OUTLINE_LIMIT and selected else []
+    return {"call_outline": outline} if outline else {}
+
+
+def render_call_outline(items: list[dict[str, Any]], file_alias: Any) -> dict[str, Any]:
+    """Package fields for `call_outline`, with files referenced by alias."""
+    outline = [[item["caller"], item["callee"],
+                file_alias(item["file"]) + (f":{item['line']}" if item.get("line") else ""),
+                str(item.get("confidence") or "EXTRACTED")[:1]]
+               for item in items if item.get("file")]
+    if not outline:
+        return {}
+    return {"call_outline": outline,
+            "call_outline_legend": ("[caller, callee, F:line, E|I]: further stages of the flow, outside "
+                                    "entities; read only the ranges the answer needs")}
 
 
 def flow_markers(markers: tuple[str, ...], request_lower: str) -> tuple[str, ...]:

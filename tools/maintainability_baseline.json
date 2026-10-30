@@ -40,7 +40,7 @@
     {
       "key": "graphtyn/core/change_analyst.py",
       "kind": "module",
-      "max_lines": 1724
+      "max_lines": 1730
     },
     {
       "key": "graphtyn/core/change_analyst.py::_implementation_context",
@@ -50,7 +50,7 @@
     {
       "key": "graphtyn/core/change_analyst.py::query_intent",
       "kind": "function",
-      "max_lines": 802
+      "max_lines": 807
     },
     {
       "key": "graphtyn/core/history_import.py",
@@ -150,12 +150,12 @@
     {
       "key": "graphtyn/mcp_server.py",
       "kind": "module",
-      "max_lines": 1373
+      "max_lines": 1377
     },
     {
       "key": "graphtyn/mcp_server.py::evidence_result",
       "kind": "function",
-      "max_lines": 183
+      "max_lines": 185
     },
     {
       "key": "graphtyn/mcp_server.py::run_mcp_server",

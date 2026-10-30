@@ -13,6 +13,7 @@ from . import __version__
 
 from .core.ast_parser import ASTParser
 from .core.change_analyst import analyze_change, query_intent
+from .core.retrieval_signals import render_call_outline
 from .core.work_memory import attach_learning
 from .core.history import HistoryTracker
 from .core.shared_memory import SharedMemoryStore
@@ -478,6 +479,7 @@ def _bound_evidence_payload(output: dict, matched_aliases: set[str], token_budge
                                if removable not in (relation[0], relation[2])]
     used_files = {str(item.get("at") or "").split(":", 1)[0]
                   for item in output.get("entities", {}).values() if item.get("at")}
+    used_files |= {str(entry[2]).split(":", 1)[0] for entry in output.get("call_outline") or []}
     output["files"] = {alias: path for alias, path in output.get("files", {}).items()
                        if alias in used_files}
     _synchronize_bounded_source_coverage(output)
@@ -588,8 +590,10 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
         if alias:
             impacted.append([alias, item.get("hop"), item.get("label"), item.get("via")])
 
+    outline = render_call_outline(result.get("call_outline", []), file_alias)
     output = {key: value for key, value in result.items()
-              if key not in ("matched", "matched_ids", "matches", "nodes", "links", "impacted", "estimated_tokens", "intent_terms", "operation_limit")}
+              if key not in ("matched", "matched_ids", "matches", "nodes", "links", "impacted", "estimated_tokens", "intent_terms", "operation_limit", "call_outline")}
+    output.update(outline)
     if "source_evidence" in output:
         # Bounding edits excerpts in place; never alter the caller's package.
         output["source_evidence"] = [dict(item) for item in output["source_evidence"]]

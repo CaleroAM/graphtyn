@@ -296,6 +296,9 @@ def _rank_candidates(result: dict[str, Any], request: str, candidates: list[dict
         for node_id in node_ids:
             obligation_counts[str(node_id)] = obligation_counts.get(str(node_id), 0) + 1
             obligation_weights[str(node_id)] = obligation_weights.get(str(node_id), 0) + priority.get(label, 1)
+    # Ties keep the package's selection order: the entry point before the
+    # stages it calls, whatever their paths.
+    position = {str(node.get("id") or ""): index for index, node in enumerate(result.get("nodes") or [])}
     candidates.sort(key=lambda node: (
         -int(str(node.get("name") or "").lower() in required_symbols),
         -obligation_weights.get(str(node.get("id") or ""), 0),
@@ -307,6 +310,7 @@ def _rank_candidates(result: dict[str, Any], request: str, candidates: list[dict
             + " " + " ".join(f"{op.get('name', '')} {op.get('text', '')}"
                                  for op in node.get("operations", []))
         ).lower() for term in request_terms if len(term) >= 5),
+        position.get(str(node.get("id") or ""), len(position)),
         str(node.get("file") or ""), int(node.get("line") or 0),
     ))
 

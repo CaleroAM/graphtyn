@@ -1,0 +1,30 @@
+{"split": "dev", "task": "REDIS_COMMAND_FLOW", "covered": 8, "total": 8, "missing": [], "intent": "flow", "tokens": 3356, "do_not_expand": true}
+{"split": "dev", "task": "REDIS_EXPIRE_FLOW", "covered": 5, "total": 8, "missing": ["propagation", "lazyfree", "active_cycle"], "intent": "flow", "tokens": 3120, "do_not_expand": false}
+{"split": "dev", "task": "REDIS_PSYNC_FLOW", "covered": 8, "total": 8, "missing": [], "intent": "flow", "tokens": 3471, "do_not_expand": true}
+{"split": "dev", "task": "REDIS_EVICTION_FLOW", "covered": 6, "total": 8, "missing": ["noeviction", "random"], "intent": "flow", "tokens": 3416, "do_not_expand": true}
+{"split": "dev", "task": "REDIS_OUTPUT_LIMIT_FLOW", "covered": 5, "total": 8, "missing": ["size", "unauth", "async_close"], "intent": "flow", "tokens": 2393, "do_not_expand": false}
+{"split": "dev", "task": "REDIS_AOF_REWRITE_FLOW", "covered": 7, "total": 8, "missing": ["done"], "intent": "flow", "tokens": 1600, "do_not_expand": true}
+{"split": "dev", "task": "REDIS_PUBLISH_FLOW", "covered": 8, "total": 8, "missing": [], "intent": "flow", "tokens": 3539, "do_not_expand": true}
+{"split": "dev", "task": "REDIS_BLPOP_FLOW", "covered": 5, "total": 8, "missing": ["keys", "serve", "timeout"], "intent": "flow", "tokens": 3343, "do_not_expand": true}
+{"split": "dev", "task": "REDIS_MULTI_EXEC_FLOW", "covered": 6, "total": 8, "missing": ["queue", "acl"], "intent": "flow", "tokens": 2195, "do_not_expand": false}
+{"split": "dev", "task": "REDIS_CLUSTER_REDIRECT_FLOW", "covered": 1, "total": 8, "missing": ["query", "slot", "crossslot", "moved", "ask", "asking", "redirect"], "intent": "flow", "tokens": 3482, "do_not_expand": false}
+{"split": "dev", "task": "FMT_FORMAT_FLOW", "covered": 8, "total": 8, "missing": [], "intent": "flow", "tokens": 3351, "do_not_expand": true}
+{"split": "dev", "task": "FMT_PRINT_FLOW", "covered": 8, "total": 8, "missing": [], "intent": "flow", "tokens": 2658, "do_not_expand": true}
+{"split": "dev", "task": "FMT_INT_SPEC_FLOW", "covered": 5, "total": 7, "missing": ["dynamic", "visit_formatter"], "intent": "flow", "tokens": 2460, "do_not_expand": false}
+{"split": "dev", "task": "FMT_FLOAT_FLOW", "covered": 6, "total": 7, "missing": ["fixed_exp"], "intent": "flow", "tokens": 3162, "do_not_expand": true}
+{"split": "dev", "task": "FMT_FORMAT_TO_N_FLOW", "covered": 5, "total": 8, "missing": ["limit", "pointer_variant", "flush"], "intent": "flow", "tokens": 1282, "do_not_expand": false}
+{"split": "dev", "task": "FMT_NAMED_ARGS_FLOW", "covered": 1, "total": 8, "missing": ["arg", "named_arg", "init", "duplicate", "parse", "lookup", "flag"], "intent": "flow", "tokens": 1142, "do_not_expand": false}
+{"split": "dev", "task": "FMT_DYNAMIC_WIDTH_FLOW", "covered": 6, "total": 8, "missing": ["indexing", "getter"], "intent": "flow", "tokens": 1917, "do_not_expand": false}
+{"split": "dev", "task": "FMT_RANGES_FLOW", "covered": 3, "total": 8, "missing": ["detect", "kind", "formatter", "spec_n", "iterate"], "intent": "flow", "tokens": 2069, "do_not_expand": false}
+{"split": "dev", "task": "FMT_CHRONO_DURATION_FLOW", "covered": 1, "total": 8, "missing": ["formatter", "parse_spec", "checker", "value", "unit", "writer", "pad"], "intent": "flow", "tokens": 2071, "do_not_expand": false}
+{"split": "dev", "task": "FMT_COLOR_STYLE_FLOW", "covered": 5, "total": 8, "missing": ["combine", "emphasis", "vformat"], "intent": "flow", "tokens": 2147, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_SAVE_FLOW", "covered": 8, "total": 8, "missing": [], "intent": "flow", "tokens": 3695, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_DESTROY_FLOW", "covered": 7, "total": 8, "missing": ["delete_manager"], "intent": "flow", "tokens": 3461, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_RELATION_LOAD_FLOW", "covered": 1, "total": 8, "missing": ["to_a_entry", "load_once", "exec_queries", "short_circuit", "eager", "adapter", "instantiate"], "intent": "flow", "tokens": 2683, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_UPDATE_FLOW", "covered": 5, "total": 8, "missing": ["partial", "timestamps", "locking"], "intent": "flow", "tokens": 3627, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_FIND_FLOW", "covered": 7, "total": 9, "missing": ["fast_path_guard", "relation_fallback"], "intent": "flow", "tokens": 1577, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_VALIDATION_FLOW", "covered": 3, "total": 8, "missing": ["save_bang", "context", "valid", "run", "errors"], "intent": "flow", "tokens": 3769, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_AFTER_COMMIT_FLOW", "covered": 3, "total": 8, "missing": ["commit_tx", "records", "committed", "callbacks", "rollback"], "intent": "flow", "tokens": 2421, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_STRONG_PARAMS_FLOW", "covered": 7, "total": 8, "missing": ["types"], "intent": "flow", "tokens": 2785, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_MIGRATION_RUN_FLOW", "covered": 0, "total": 8, "missing": ["migrator", "lock", "concurrent", "runnable", "execute", "ddl", "record", "migrate"], "intent": "flow", "tokens": 3458, "do_not_expand": false}
+{"split": "dev", "task": "RAILS_ROUTING_DISPATCH_FLOW", "covered": 1, "total": 8, "missing": ["call", "normalize", "serve", "static", "recognize", "notfound", "dispatch"], "intent": "flow", "tokens": 3550, "do_not_expand": false}

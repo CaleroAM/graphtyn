@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
+from . import retrieval_signals as _signals
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
 from .ranking_weights import trace_stage, weighted_score
 from .vocabulary import COMMON_WORDS, is_prose_word, translated_terms
@@ -831,7 +832,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         return _overview_package(graph, request, max_nodes)
     requested_ceiling = max(4, max_nodes)
     complexity = min(3, len(re.findall(r"\b(?:and|y|then|después|también|además)\b", str(request), re.I)))
-    intent_node_cap = {"bindings": 7, "persistence": 7, "tests": 8, "impact": 10, "flow": 9}[selected_intent]
+    intent_node_cap = {"bindings": 7, "persistence": 7, "tests": 8, "impact": 10, "flow": _signals.FLOW_NODE_CAP}[selected_intent]
     max_nodes = min(requested_ceiling, intent_node_cap + complexity)
     request_lower = str(request or "").lower()
     markers = flow_markers(_INTENT_OPERATIONS[selected_intent], request_lower) if selected_intent == "flow" \
@@ -934,6 +935,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                     if qualified_nodes else
                     {str(node.get("file") or "") for node in all_nodes
                      if str(node.get("name") or "").lower() in explicit_names and node.get("file")})
+    # Handlers of commands written in capitals; they do not pin anchor files.
+    explicit_names |= _signals.command_handlers(request, all_nodes, anchor_excluded_kinds)
     if selected_intent == "impact" and explicit_names:
         anchors = [node for node in all_nodes if str(node.get("name") or "").lower() in explicit_names]
         by_id = {node.get("id"): node for node in all_nodes}
@@ -1381,7 +1384,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                   if cross_file_flow else anchored[:reserve] + connected + fallback + anchored[reserve:])
     trace_stage("anchors", ranked)
     if selected_intent == "flow":
-        ranked = with_call_chain(graph, ranked, name_frequency, mandatory_ids)
+        ranked = with_call_chain(graph, ranked, name_frequency, mandatory_ids,
+                                 reserved=round(max_nodes * _signals.CHAIN_SHARE), budget=max_nodes)
     trace_stage("chain", ranked)
     nodes = []
     seen_roles = set()
@@ -1599,6 +1603,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                                 else "no relevant anchor selected")},
         "operation_limit": {"bindings": 10, "persistence": 6, "tests": 5, "impact": 5, "flow": 5}[selected_intent],
     }
+    if selected_intent == "flow":
+        result.update(_signals.flow_outline(graph, nodes, name_frequency))
     if "relevant_anchor" in missing:
         exact_queries = list(dict.fromkeys([
             *explicit_identifiers,

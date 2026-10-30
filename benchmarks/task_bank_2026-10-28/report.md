@@ -417,3 +417,104 @@ Con estos datos, lo que más rendiría es reemplazar el relleno léxico por la
 cadena de llamadas: una vez identificado el punto de entrada, dedicar la mitad
 del presupuesto a sus etapas en el grafo. Habría que validarlo con un tercer
 conjunto de prueba, porque test2 ya se ha medido cuatro veces.
+
+## Quinta ronda: presupuesto de flujo, cadena reservada y coste por tipo de token
+
+### Diseño
+
+Antes de cambiar código se congeló un tercer conjunto de prueba (`test3/`,
+commit `a2cd6f6`): 15 tareas sobre Redis, Rails, Flask y **Lua**, un corpus
+nunca usado para ajustar. Las variantes se ajustaron sólo en desarrollo y se
+midieron una vez en test2 y test3.
+
+| Variante | Qué cambia |
+|---|---|
+| A | Más presupuesto: tope de flujo 14 y 18 entidades |
+| B | La mitad del presupuesto se reserva para las etapas a las que llama el punto de entrada, aunque no compartan palabras con la petición; se excluyen las utilidades con más de 12 llamadores |
+| C | `call_outline`: hasta 12 etapas más, sólo nombre y `archivo:línea` |
+| D | Un comando escrito en mayúsculas (`BLPOP`) incluye su función (`blpopCommand`) |
+| E | Anclaje sin código de terceros y con los obligatorios conservados |
+
+D surgió al ver que Redis SET/DEL/HSET no encontraban su `…Command` en la línea
+base de test3; se validó en desarrollo (MULTI/EXEC 1/8 → 6/8), pero su cifra en
+test3 no está limpia. B+C, sin D, sí lo está.
+
+### Cobertura del paquete
+
+| Variante | Desarrollo | test2 | test3 | Tokens test3 |
+|---|---:|---:|---:|---:|
+| Anterior | 56,2 % | 60,8 % | 35,9 % | 2.780 |
+| A | 60,0 % | 58,5 % | 35,9 % | 2.936 |
+| B | 58,7 % | 59,9 % | 40,5 % | 2.783 |
+| C | 57,1 % | 62,4 % | 43,6 % | 2.814 |
+| D | 59,1 % | 62,4 % | 36,8 % | 2.747 |
+| B+C | 59,1 % | 61,6 % | 44,4 % | 2.840 |
+| **B+C+D (adoptada)** | **62,8 %** | **66,6 %** | **48,8 %** | 2.809 |
+| B+C+D+E | 60,5 % | 66,6 % | 50,2 % | 2.863 |
+
+- **A no generaliza.** El paquete tiene un tope de 4.000 tokens: con más nodos se
+  recortan los fragmentos de código (Flask teardown 8/8 → 4/8).
+- **E se descartó:** baja desarrollo 2,4 puntos.
+- Siguen a cero en todas las variantes: Redis HSET («hash» ancla el paquete al
+  `hash.h` de jemalloc), Redis DEL y Rails `reload` (homónimo equivocado).
+
+Los resultados por variante están en `round5_variants/`.
+
+### Sesiones con agentes
+
+300 sesiones en test3: Claude (Sonnet 5.5) y Codex (gpt-5.6-luna), sin Graphtyn,
+con la política anterior y con B+C+D, tres repeticiones por tarea (45 sesiones
+por celda), más una repetición de A. Las sesiones que fallaron por límites de
+uso (Claude) o errores 429 (Codex) se repitieron; los intentos fallidos se
+conservan en `failed_attempts/`.
+
+El total de tokens mezcla tipos con precios muy distintos. En Claude, unos
+125.000 de los ~150.000 tokens de una sesión son lecturas de caché del prompt y
+las herramientas del cliente, que Graphtyn no puede reducir. `analyze_variants.py`
+separa los tipos y los pondera por precio relativo a un token de entrada sin
+caché (lectura de caché 0,1; escritura 1,25; salida 5 en Claude y 8 en Codex).
+
+| Cliente y variante | Calidad | Total | Escritura de caché | Entrada sin caché | Salida | Ponderado |
+|---|---:|---:|---:|---:|---:|---:|
+| Claude, sin Graphtyn | 93,5 % | 159.425 | 17.604 | — | 3.634 | 54.002 |
+| Claude, anterior | 94,8 % | 151.922 | 15.943 | — | 3.040 | 48.428 |
+| Claude, B+C+D | 94,9 % | 139.025 | 13.544 | — | 2.945 | 43.916 |
+| Codex, sin Graphtyn | 69,3 % | 141.269 | — | 29.909 | 2.415 | 60.126 |
+| Codex, anterior | 66,6 % | 135.894 | — | 25.013 | 2.181 | 53.328 |
+| Codex, B+C+D | 71,2 % | 115.167 | — | 22.604 | 2.018 | 47.805 |
+
+Diferencias emparejadas por tarea, con intervalo bootstrap del 95 %:
+
+| Comparación | Coste ponderado | Calidad |
+|---|---:|---:|
+| Claude, B+C+D frente a sin Graphtyn | −18,7 % [−31,4; −7,5] | +1,3 pt [0,0; +3,0] |
+| Claude, B+C+D frente a anterior | −9,3 % [−15,6; −2,9] | +0,1 pt [−0,7; +1,0] |
+| Codex, B+C+D frente a sin Graphtyn | −20,5 % [−28,5; −12,7] | +1,9 pt [−4,4; +7,4] |
+| Codex, B+C+D frente a anterior | −10,4 % [−19,4; −2,2] | +4,6 pt [+0,8; +7,7] |
+| Codex, anterior frente a sin Graphtyn | −11,3 % [−20,6; −2,4] | −2,6 pt [−8,0; +2,3] |
+
+- **B+C+D reduce el coste ponderado en torno a un 20 % frente a no usar
+  Graphtyn en ambos clientes, sin perder calidad.**
+- Frente a la política anterior ahorra un 9–10 % y, en Codex, recupera la
+  calidad que aquélla perdía.
+- La calidad depende sobre todo del modelo. En la primera repetición, Claude respondía con unas 600
+  palabras y omite el 4 % de los hechos que el paquete le dio; Codex, con unas 300, y omite el 26 %. La rúbrica cuenta nombres literales, lo que
+  penaliza las respuestas breves.
+
+### Cambios adoptados
+
+- `graphtyn/core/retrieval_signals.py`: `with_call_chain(reserved=…)`,
+  `call_outline`, `flow_outline`, `render_call_outline`, `command_handlers` y
+  la política por defecto (`CHAIN_SHARE=0.5`, `CHAIN_SEEDS=1`,
+  `OUTLINE_LIMIT=12`, `COMMAND_NAMES=True`, `FLOW_NODE_CAP=9`).
+- `source_evidence`: los fragmentos que empatan conservan el orden de
+  selección, no el de sus rutas.
+- `analyze_variants.py`: tokens por tipo y coste ponderado.
+- Prueba de cobertura de CI con 22 tareas (incluye las de Flask de test3).
+
+### Pendiente
+
+- Anclaje en dependencias incluidas (`deps/jemalloc`) y homónimos de Ruby sin
+  pista de propietario. Habría que validarlo con un cuarto conjunto nuevo.
+- Que Codex use lo recuperado: una guía que pida citar cada etapa de `entities`
+  y `call_outline`.
