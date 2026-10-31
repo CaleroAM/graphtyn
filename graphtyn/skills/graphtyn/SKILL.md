@@ -62,6 +62,11 @@ With the CLI, use `graphtyn query-intent "<request>" --intent <intent> --path <p
   most once per named gap.
 - When `missing` contains `relevant_anchor`, run only the exact queries in
   `anchor_fallback`, once; if nothing matches, report the gap.
+- A flow package may list deeper stages in `call_outline` as
+  `[caller, callee, F:line, E|I|S]`, without their code. `S` means the callee
+  shares the state field written after `~` instead of being called. When the
+  answer needs one of those stages, read only its line range (`F` aliases
+  resolve through `files`); do not search for it.
 
 ## Read the evidence correctly
 

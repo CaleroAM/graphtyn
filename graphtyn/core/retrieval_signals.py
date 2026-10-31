@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import re
+import sys
 from typing import Any
 
 from .path_signals import TEST_PATH, VENDORED_PATH
@@ -25,6 +27,42 @@ CHAIN_DEPTH = 3
 UTILITY_FAN_IN = 12
 OUTLINE_LIMIT = 12
 COMMAND_NAMES = True
+# STATE_LIMIT outline entries join a stage to functions that use the same rare
+# state field (`server.ready_keys`): flows handed over through shared state.
+STATE_LIMIT = 4
+# CITE_STAGES asks the agent to name every stage of the flow it relies on.
+CITE_STAGES = False
+CITE_STAGES_GUIDANCE = (" Name every stage of the flow your answer relies on, from entities and call_outline,"
+                        " each with its file:line; a stage you leave out is a gap in the answer.")
+STATE_FAN = 6
+_POLICY_KEYS = ("FLOW_NODE_CAP", "CHAIN_SHARE", "CHAIN_SEEDS", "CHAIN_DEPTH", "UTILITY_FAN_IN", "OUTLINE_LIMIT",
+                "COMMAND_NAMES", "STATE_LIMIT", "STATE_FAN", "FOREIGN_ANCHORS", "KEEP_HANDLERS_OUTSIDE_ANCHORS",
+                "CITE_STAGES")
+
+
+def apply_flow_policy(spec: str) -> dict[str, Any]:
+    """Override the flow policy from `KEY=VALUE,...` (GRAPHTYN_FLOW_POLICY); returns what changed."""
+    changed: dict[str, Any] = {}
+    for pair in filter(None, (part.strip() for part in str(spec or "").split(","))):
+        key, _, value = pair.partition("=")
+        key = key.strip().upper()
+        if key not in _POLICY_KEYS:
+            raise ValueError(f"unknown flow policy key {key!r}; expected one of {', '.join(_POLICY_KEYS)}")
+        current = globals()[key]
+        converted = (value.strip().lower() in ("1", "true", "yes") if isinstance(current, bool)
+                     else type(current)(float(value)) if isinstance(current, (int, float)) else value)
+        globals()[key] = changed[key] = converted
+    return changed
+
+
+_FIELD = re.compile(r"(?:->|\.)([A-Za-z_]\w{3,})\b(?!\s*\()|@([A-Za-z_]\w{3,})")
+_FIELD_INDEX: dict[int, tuple[int, dict[str, set[Any]]]] = {}
+# Bundled third-party code (`deps/jemalloc/…`) never anchors a package unless
+# the request names it; KEEP_HANDLERS_OUTSIDE_ANCHORS keeps command handlers of
+# other files through the anchor-file partition.
+FOREIGN_ANCHORS = True
+KEEP_HANDLERS_OUTSIDE_ANCHORS = True
+_FOREIGN_DIR = re.compile(r"(?:^|/)(?:deps|vendor|vendored|third_party|third-party|external|node_modules)/([^/]+)/", re.I)
 _HANDLER_FORMS = ("{}command", "{}_command", "cmd_{}", "{}cmd", "{}_cmd")
 
 
@@ -71,8 +109,13 @@ class HomonymHints:
                            for form in re.findall(r"\b[A-Za-z_]\w*\([^()]{1,60}\)", str(request or ""))}
 
     def owner_match(self, node: dict[str, Any]) -> bool:
-        owner = f"{node.get('container') or ''} {node.get('namespace') or ''}".lower()
-        return any(term in owner for term in self.owner_terms)
+        return self.owner_score(node) > 0
+
+    def owner_score(self, node: dict[str, Any]) -> int:
+        """Request terms in the owner: the class itself (`AutosaveAssociation`) counts twice its namespace."""
+        container = str(node.get("container") or "").lower()
+        namespace = str(node.get("namespace") or "").lower()
+        return sum(2 * (term in container) + (term in namespace) for term in self.owner_terms)
 
     def signature_match(self, node: dict[str, Any]) -> bool:
         signature = re.sub(r"\s+", "", str(node.get("signature") or "")).lower()
@@ -201,6 +244,7 @@ def call_outline(graph: dict[str, Any], selected: list[dict[str, Any]], name_fre
                 if node.get("kind") in BEHAVIOR_KINDS and node.get("id") in calls
                 and not TEST_PATH.search(str(node.get("file") or ""))][:seeds]
     seen = set(frontier)
+    reached: list[Any] = []
     outline: list[dict[str, Any]] = []
     for _level in range(depth):
         following = []
@@ -216,12 +260,59 @@ def call_outline(graph: dict[str, Any], selected: list[dict[str, Any]], name_fre
                     continue
                 seen.add(target)
                 following.append(target)
+                reached.append(target)
                 if target not in selected_ids and len(outline) < limit:
                     outline.append({"caller": str(by_id.get(caller_id, {}).get("name") or ""),
                                     "callee": str(node.get("name") or ""), "file": str(node.get("file") or ""),
                                     "line": node.get("line"),
                                     "confidence": str(link.get("confidence") or "EXTRACTED")})
         frontier = following
+    # Stages the entry point reaches first: their state is the flow's hand-over.
+    stages = reached + [node.get("id") for node in selected]
+    return outline + state_outline(graph, stages, {*selected_ids, *seen}, by_id)
+
+
+def _field_users(graph: dict[str, Any]) -> dict[str, set[Any]]:
+    """Behaviour nodes per state field their operations read or write, cached per graph."""
+    nodes = graph.get("nodes", [])
+    cached = _FIELD_INDEX.get(id(graph))
+    if cached and cached[0] == len(nodes):
+        return cached[1]
+    users: dict[str, set[Any]] = {}
+    for node in nodes:
+        if node.get("kind") in BEHAVIOR_KINDS:
+            for operation in node.get("operations") or []:
+                for match in _FIELD.finditer(str(operation.get("text") or "")):
+                    users.setdefault(match.group(1) or match.group(2), set()).add(node.get("id"))
+    _FIELD_INDEX.clear()
+    _FIELD_INDEX[id(graph)] = (len(nodes), users)
+    return users
+
+
+def state_outline(graph: dict[str, Any], stage_ids: list[Any], known: set[Any],
+                  by_id: dict[Any, dict[str, Any]]) -> list[dict[str, Any]]:
+    """Functions that share a rare state field with a stage (`server.ready_keys`)."""
+    if not STATE_LIMIT:
+        return []
+    users = _field_users(graph)
+    fields_of: dict[Any, set[str]] = {}
+    for field, ids in users.items():
+        if 2 <= len(ids) <= STATE_FAN:
+            for node_id in ids:
+                fields_of.setdefault(node_id, set()).add(field)
+    outline: list[dict[str, Any]] = []
+    for stage_id in stage_ids:
+        for field in sorted(fields_of.get(stage_id, ())):
+            for other in sorted(users[field] - known, key=str):
+                node = by_id.get(other) or {}
+                if TEST_PATH.search(str(node.get("file") or "")) or not node.get("file"):
+                    continue
+                known.add(other)
+                outline.append({"caller": f"{by_id.get(stage_id, {}).get('name')}~{field}",
+                                "callee": str(node.get("name") or ""), "file": str(node.get("file") or ""),
+                                "line": node.get("line"), "confidence": "STATE"})
+                if len(outline) >= STATE_LIMIT:
+                    return outline
     return outline
 
 
@@ -243,10 +334,13 @@ def command_handlers(request: str, nodes: list[dict[str, Any]], excluded_kinds: 
 
 
 def flow_outline(graph: dict[str, Any], selected: list[dict[str, Any]],
-                 name_frequency: NameFrequency) -> dict[str, Any]:
-    """`{"call_outline": [...]}` for a flow package, or nothing."""
+                 name_frequency: NameFrequency, guidance: str = "") -> dict[str, Any]:
+    """Flow package fields: `call_outline` and, under CITE_STAGES, the citation guidance."""
     outline = call_outline(graph, selected, name_frequency, OUTLINE_LIMIT) if OUTLINE_LIMIT and selected else []
-    return {"call_outline": outline} if outline else {}
+    fields: dict[str, Any] = {"call_outline": outline} if outline else {}
+    if CITE_STAGES and selected:
+        fields["guidance"] = guidance + CITE_STAGES_GUIDANCE
+    return fields
 
 
 def render_call_outline(items: list[dict[str, Any]], file_alias: Any) -> dict[str, Any]:
@@ -258,8 +352,52 @@ def render_call_outline(items: list[dict[str, Any]], file_alias: Any) -> dict[st
     if not outline:
         return {}
     return {"call_outline": outline,
-            "call_outline_legend": ("[caller, callee, F:line, E|I]: further stages of the flow, outside "
-                                    "entities; read only the ranges the answer needs")}
+            "call_outline_legend": ("[caller, callee, F:line, E|I|S]: further stages of the flow, outside "
+                                    "entities; S = shares the state field after ~ with that stage instead of "
+                                    "being called; read only the ranges the answer needs")}
+
+
+def foreign_code(path: str, request_lower: str) -> bool:
+    """A file of a bundled dependency (`deps/jemalloc/…`) whose name the request does not mention."""
+    match = _FOREIGN_DIR.search(str(path or "").replace("\\", "/"))
+    return bool(match) and match.group(1).lower() not in request_lower
+
+
+def written_identifiers(request: str) -> list[str]:
+    """Identifiers the request writes in code form: camelCase, snake_case or a call."""
+    return re.findall(r"\b(?:[a-z]+[A-Z]\w*|[A-Za-z]\w*_\w+|\w+\(\))", str(request or ""))
+
+
+_TYPE_KINDS = {"class", "module", "struct", "interface", "trait", "enum", "type"}
+
+
+def named_nodes(nodes: list[dict[str, Any]], symbol_terms: list[str], excluded_kinds: set[str],
+                request: str) -> list[dict[str, Any]]:
+    """Nodes the request names. A type is named only as written (`Record`); `record.reload` names a variable."""
+    return [node for node in nodes
+            if str(node.get("name") or "").lower() in symbol_terms and node.get("kind") not in excluded_kinds
+            and (node.get("kind") not in _TYPE_KINDS or str(node.get("name") or "") in str(request))]
+
+
+def local_anchor_files(files: set[str], request_lower: str) -> set[str]:
+    """Anchor files outside bundled dependencies the request does not name."""
+    return {path for path in files if not foreign_code(path, request_lower)} if FOREIGN_ANCHORS else files
+
+
+def keep_handlers(request: str, handlers: set[str], mandatory_ids: set[Any], external: list, anchored: list,
+                  connected: list, fallback: list, reserve: int) -> tuple[list, list, list, int]:
+    """Keep command handlers of other files through the anchor-file partition.
+
+    A command's handler outranks an anchor reached through a plain word ("el
+    hash"), not one the request writes as an identifier (`syncCommand`).
+    """
+    if not KEEP_HANDLERS_OUTSIDE_ANCHORS or written_identifiers(request):
+        return anchored, connected, fallback, reserve
+    kept = [item for item in external if item[1].get("id") in mandatory_ids
+            and str(item[1].get("name") or "").lower() in handlers]
+    connected = [item for item in connected if item[1].get("id") not in mandatory_ids]
+    fallback = [item for item in fallback if item[1].get("id") not in mandatory_ids]
+    return kept + anchored, connected, fallback, max(1, reserve - len(kept))
 
 
 def flow_markers(markers: tuple[str, ...], request_lower: str) -> tuple[str, ...]:
@@ -287,3 +425,9 @@ def cap_homonyms(ranked: list[tuple[int, dict[str, Any]]], keep: set[Any]) -> li
         capped.append(item)
     return capped
 
+
+if os.environ.get("GRAPHTYN_FLOW_POLICY"):
+    try:
+        apply_flow_policy(os.environ["GRAPHTYN_FLOW_POLICY"])
+    except ValueError as error:  # a typo must not stop the MCP server
+        print(f"graphtyn: GRAPHTYN_FLOW_POLICY ignored: {error}", file=sys.stderr)

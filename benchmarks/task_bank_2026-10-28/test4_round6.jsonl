@@ -1,0 +1,16 @@
+{"split": "test4", "task": "REDIS_RDB_SAVE_PERSISTENCE", "covered": 1, "total": 7, "missing": ["internal", "rio", "db", "kv", "rename", "fsync"], "intent": "persistence", "tokens": 1808, "do_not_expand": true}
+{"split": "test4", "task": "JQ_MAIN_FILTER_FLOW", "covered": 7, "total": 8, "missing": ["load"], "intent": "flow", "tokens": 3594, "do_not_expand": true}
+{"split": "test4", "task": "JQ_NUMBER_LITERAL_FLOW", "covered": 3, "total": 8, "missing": ["scan", "token", "literal", "value", "next"], "intent": "flow", "tokens": 3020, "do_not_expand": false}
+{"split": "test4", "task": "JQ_PATH_UPDATE_FLOW", "covered": 2, "total": 8, "missing": ["modify", "begin", "intact", "get", "set", "builtin"], "intent": "flow", "tokens": 3343, "do_not_expand": true}
+{"split": "test4", "task": "JQ_TRY_CATCH_FLOW", "covered": 1, "total": 8, "missing": ["begin", "end", "error_builtin", "set", "raising", "msg", "save"], "intent": "flow", "tokens": 3543, "do_not_expand": true}
+{"split": "test4", "task": "JQ_MODULE_IMPORT_FLOW", "covered": 5, "total": 8, "missing": ["chain", "default", "bind"], "intent": "flow", "tokens": 3553, "do_not_expand": true}
+{"split": "test4", "task": "JQ_START_IMPACT", "covered": 4, "total": 4, "missing": [], "intent": "impact", "tokens": 1387, "do_not_expand": true}
+{"split": "test4", "task": "SINATRA_REQUEST_FLOW", "covered": 6, "total": 8, "missing": ["bang", "invoke"], "intent": "flow", "tokens": 3348, "do_not_expand": true}
+{"split": "test4", "task": "SINATRA_ROUTE_DEFINE_FLOW", "covered": 8, "total": 8, "missing": [], "intent": "flow", "tokens": 3317, "do_not_expand": true}
+{"split": "test4", "task": "SINATRA_TEMPLATE_FLOW", "covered": 7, "total": 7, "missing": [], "intent": "flow", "tokens": 3498, "do_not_expand": true}
+{"split": "test4", "task": "SINATRA_HALT_REDIRECT_FLOW", "covered": 5, "total": 7, "missing": ["catch", "invoke"], "intent": "flow", "tokens": 2780, "do_not_expand": false}
+{"split": "test4", "task": "SINATRA_STATIC_FLOW", "covered": 5, "total": 7, "missing": ["send", "dispatch"], "intent": "flow", "tokens": 3423, "do_not_expand": true}
+{"split": "test4", "task": "SINATRA_PROCESS_ROUTE_IMPACT", "covered": 4, "total": 4, "missing": [], "intent": "impact", "tokens": 1002, "do_not_expand": true}
+{"split": "test4", "task": "SINATRA_FILTER_TESTS", "covered": 3, "total": 4, "missing": ["file"], "intent": "tests", "tokens": 1116, "do_not_expand": true}
+{"split": "test4", "task": "SINATRA_EXTENSION_BINDINGS", "covered": 3, "total": 6, "missing": ["registered", "hook", "added"], "intent": "bindings", "tokens": 3023, "do_not_expand": true}
+{"split": "test4", "task": "SINATRA_STATIC_TESTS", "covered": 0, "total": 3, "missing": ["file", "static", "send"], "intent": "tests", "tokens": 929, "do_not_expand": true}

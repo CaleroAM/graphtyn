@@ -8,9 +8,11 @@ where variant `none` holds the sessions without Graphtyn. Sessions under a
 Total tokens mix kinds with very different prices: cached reads (the client's
 fixed prompt and tool definitions, re-read on every turn), cache writes,
 uncached input and output. Each session is also reported by kind and as
-`weighted`, input-equivalent tokens under PRICE_RATIOS (relative to one
-uncached input token; Anthropic and OpenAI publish these ratios for their
-current models, adjust them if the price list changes).
+`cost_usd` under PRICES, the list prices in USD per million tokens checked on
+2026-10-31 (platform.claude.com/docs/en/about-claude/pricing and
+developers.openai.com/api/docs/pricing). Claude Code writes its prompt cache
+with the one-hour TTL ($4.00 on Sonnet 5.5). `weighted` is the same cost in
+uncached-input tokens.
 
 usage: python analyze_variants.py test3 <run-root> [<run-root of another repetition> ...] [--json out]
 """
@@ -27,9 +29,9 @@ from analyze_results import grader
 HERE = Path(__file__).resolve().parent
 CORPORA = ("redis", "fmt", "rails", "flask", "lua", "jq", "sinatra")
 KINDS = ("uncached_input", "cache_read", "cache_write", "output")
-PRICE_RATIOS = {
-    "claude": {"uncached_input": 1.0, "cache_read": 0.1, "cache_write": 1.25, "output": 5.0},
-    "codex": {"uncached_input": 1.0, "cache_read": 0.1, "cache_write": 1.0, "output": 8.0},
+PRICES = {  # USD per million tokens
+    "claude": {"uncached_input": 2.00, "cache_read": 0.10, "cache_write": 4.00, "output": 10.00},  # Sonnet 5.5
+    "codex": {"uncached_input": 0.20, "cache_read": 0.02, "cache_write": 0.20, "output": 1.20},  # gpt-5.6-luna
 }
 
 
@@ -40,8 +42,10 @@ def token_kinds(client: str, usage: dict) -> dict[str, int]:
     kinds = {"uncached_input": raw_input - cached if client == "codex" else raw_input,
              "cache_read": cached, "cache_write": int(usage.get("cache_write_input_tokens") or 0),
              "output": int(usage.get("output_tokens") or 0)}
-    ratios = PRICE_RATIOS.get(client, PRICE_RATIOS["claude"])
-    kinds["weighted"] = round(sum(kinds[kind] * ratios[kind] for kind in KINDS))
+    prices = PRICES.get(client, PRICES["claude"])
+    cost = sum(kinds[kind] * prices[kind] for kind in KINDS) / 1_000_000
+    kinds["weighted"] = round(cost * 1_000_000 / prices["uncached_input"])
+    kinds["cost_usd"] = round(cost, 6)
     return kinds
 
 
@@ -58,7 +62,10 @@ def load_runs(split: str, root: Path, repetition: int = 1) -> list[dict]:
         answer = answer_path.read_text(encoding="utf-8", errors="replace") if answer_path.exists() else ""
         events = [json.loads(line) for line in (run_dir / "events.jsonl").read_text().splitlines() if line.strip()]
         facts = {fact["id"]: any(term.casefold() in answer.casefold() for term in fact["any"]) for fact in task["rubric"]}
-        rows.append({"variant": variant, "repetition": repetition, "task_id": summary["task_id"], "client": summary["client"],
+        judged_path = run_dir / "judge.json"
+        judged = json.loads(judged_path.read_text())["facts"] if judged_path.exists() else None
+        rows.append({"judged": sum(judged.values()) / len(judged) if judged else None,
+                     "variant": variant, "repetition": repetition, "task_id": summary["task_id"], "client": summary["client"],
                      "arm": summary["arm"], "session_status": summary["session_status"],
                      "tokens": summary["usage"].get("total_tokens"), "seconds": summary["wall_seconds"],
                      **token_kinds(summary["client"], summary["usage"]),
@@ -83,6 +90,9 @@ def main() -> int:
         "mean_tokens": round(statistics.fmean(row["tokens"] for row in group)),
         "median_tokens": round(statistics.median(row["tokens"] for row in group)),
         **{f"mean_{kind}": round(statistics.fmean(row[kind] for row in group)) for kind in (*KINDS, "weighted")},
+        "mean_judged_quality": (round(statistics.fmean(row["judged"] for row in group if row["judged"] is not None), 4)
+                                if any(row["judged"] is not None for row in group) else None),
+        "mean_cost_usd": round(statistics.fmean(row["cost_usd"] for row in group), 5),
         "mean_quality": round(statistics.fmean(row["passed"] / row["total"] for row in group), 4),
         "mean_tool_calls": round(statistics.fmean(row["tool_calls"] for row in group), 1),
         "mean_seconds": round(statistics.fmean(row["seconds"] for row in group), 1)}

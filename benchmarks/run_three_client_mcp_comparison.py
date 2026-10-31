@@ -390,6 +390,8 @@ def make_workspace(source: Path, destination: Path, treatment: bool,
             target.symlink_to(os.readlink(source_path))
         elif source_path.is_file():
             shutil.copy2(source_path, target)
+        elif source_path.is_dir() and not any(source_path.iterdir()):
+            target.mkdir(exist_ok=True)  # submodule that was not checked out (jq's vendor/oniguruma)
         else:
             raise RuntimeError(f"tracked path is neither file nor symlink: {relative}")
     command = [str(graphtyn_executable), *graphtyn_mcp_args(destination, full_payload)]
@@ -758,6 +760,7 @@ def main() -> int:
             if args.repetitions > 1:
                 run_id += f"_r{repetition}"
             workspace = args.output_dir / "workspaces" / run_id
+            shutil.rmtree(workspace, ignore_errors=True)  # left by an attempt that failed while copying
             make_workspace(args.repo.resolve(), workspace, treatment,
                            args.graphtyn_executable.resolve(), full_payload=arm == "graphtyn_full",
                            opencode_hook=client == "opencode" and arm == "graphtyn_hook")

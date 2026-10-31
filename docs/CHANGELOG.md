@@ -10,6 +10,19 @@ tras la validación de release (`docs/release-checklist.md`).
 
 ### Añadido
 
+- `GRAPHTYN_FLOW_POLICY` (`KEY=VALUE,...`) ajusta la política de los paquetes
+  de flujo sin tocar el código; una clave desconocida se avisa por stderr y se
+  ignora. `coverage.py --policy` y `run_variants.py` la usan para comparar
+  políticas.
+- `call_outline` incluye, con la marca `S`, funciones que comparten con una
+  etapa un campo de estado poco usado (`server.ready_keys`): flujos que pasan
+  por estado compartido y no por llamadas. Redis BLPOP en desarrollo: 5 → 7/8.
+- Banco de tareas: cuarto conjunto de prueba (jq y Sinatra, más tareas
+  `impact`, `tests`, `bindings` y `persistence`), `run_variants.py`,
+  `judge_answers.py` (juez semántico) y `paired_ci.py`. `analyze_variants.py`
+  calcula el coste en USD con los precios de lista de cada modelo.
+- `AGENTS.md`, la skill y la política del instalador explican `call_outline`.
+
 - Peticiones de flujo (`graph_query_intent`, hook): la mitad del presupuesto de
   entidades se reserva para las etapas a las que llama el punto de entrada,
   aunque no compartan palabras con la petición; las utilidades llamadas desde
@@ -145,6 +158,21 @@ tras la validación de release (`docs/release-checklist.md`).
   segunda pareja comparable tras corregir la cobertura de evidencia.
 
 ### Corregido
+
+- Clasificación de intenciones: cuentan las formas flexionadas («afectado»,
+  «consumidores», «persiste») y una pasiva refleja («cuando se añade una ruta»)
+  ya no se toma por una petición de edición. Las peticiones de impacto y de
+  registro de extensiones se clasifican bien y sus paquetes son más pequeños.
+- El código de dependencias incluidas (`deps/`, `vendor/`, `third_party/`…) no
+  ancla un paquete salvo que la petición nombre la dependencia, y el handler de
+  un comando en mayúsculas se conserva fuera de los archivos de anclaje.
+- Un tipo sólo cuenta como nombrado si la petición lo escribe con su mayúscula
+  (`record.reload` no nombra la clase `Record`); entre homónimos, el
+  propietario que describe la petición (`autosave` → `AutosaveAssociation`)
+  pesa más en la clase que en su espacio de nombres.
+- La completitud exige identificadores completos: `lua_pcallk` ya no demuestra
+  que se encontró `lua_pcall`; un nombre en mayúsculas sólo tiene que empezar
+  una palabra (`BLPOP` → `blpopCommand`).
 
 - Los fragmentos de `source_evidence` que empatan conservan el orden de
   selección del paquete (el punto de entrada primero), no el de sus rutas.

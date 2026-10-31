@@ -54,7 +54,10 @@ def _verdict(result: dict[str, Any], request: str) -> dict[str, Any]:
     if parts >= MIN_PARTS and tokens < MIN_TOKENS_PER_PART * parts:
         verdict.update(request_parts=parts, evidence_tokens=tokens, required_tokens=MIN_TOKENS_PER_PART * parts)
     text = json.dumps(lean, ensure_ascii=False).lower()
-    unmatched = [name for name in named_identifiers(request) if name.lower() not in text]
+    # Whole identifiers: `lua_pcallk` does not show that `lua_pcall` was found.
+    # A name in capitals only has to start a word (`BLPOP` → `blpopCommand`, `UTF` → `utf8`).
+    unmatched = [name for name in named_identifiers(request)
+                 if not re.search(rf"(?<![\w]){re.escape(name.lower())}{'' if name.isupper() else '(?![\\w])'}", text)]
     if unmatched:
         verdict["unmatched_identifiers"] = unmatched
     return verdict

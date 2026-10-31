@@ -30,7 +30,10 @@ _INTENT_MARKERS = {
 }
 
 _DI_CONTEXT = re.compile(
-    r"servic|service|dependen|inyecci|inject|contenedor|container|provider|proveedor|binding|singleton|scoped|transient")
+    r"servic|service|dependen|inyecci|inject|contenedor|container|provider|proveedor|binding|singleton|scoped|transient"
+    r"|extensi|plugin|middleware|helper")
+_INFLECTION = r"(?:s|es|e|en|n|r|do|da|dos|das|ría)?"
+_INFLECTED_MARKERS = {"afecta", "consumidor", "consumer", "persist", "prueba", "test"}
 
 _INTENT_OPERATIONS = {
     "overview": (),
@@ -74,7 +77,8 @@ def _intent_can_stop(result: dict[str, Any]) -> bool:
 def _is_change_request(request: str) -> bool:
     """Identify requests where an agent is expected to edit the repository."""
     return bool(re.search(
-        r"\b(?:implement(?:a|ar|e)|a(?:ñ|n)ad(?:e|ir)|agreg(?:a|ar)|modific(?:a|ar)|"
+        # A reflexive passive describes behaviour ("cuando se añade una ruta").
+        r"(?<!\bse )\b(?:implement(?:a|ar|e)|a(?:ñ|n)ad(?:e|ir)|agreg(?:a|ar)|modific(?:a|ar)|"
         r"corrig(?:e|ir)|cambi(?:a|ar)|refactor(?:iza|izar)?|fix|edit|update|remove|elimina)\b",
         str(request or ""),
         re.I,
@@ -765,7 +769,9 @@ def classify_intent(request: str, requested: str = "auto") -> str:
             # function that records keys or names: the verb only signals
             # bindings next to dependency-injection vocabulary.
             return bool(re.search(r"registr(?!os?\b)", text) and _DI_CONTEXT.search(text))
-        return bool(re.search(rf"(?<!\w){re.escape(marker)}(?!\w)", text))
+        # Inflected forms count: "afectado", "consumidores", "persiste".
+        inflection = _INFLECTION if marker in _INFLECTED_MARKERS else ""
+        return bool(re.search(rf"(?<!\w){re.escape(marker)}{inflection}(?!\w)", text))
 
     scores = {intent: sum(marker_matches(marker) for marker in markers)
               for intent, markers in _INTENT_MARKERS.items()}
@@ -925,18 +931,15 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     # anchor the package to the header that declares it.
     anchor_excluded_kinds = {"file", "module", "documentation_section", "doc", "image", "media",
                              *(() if selected_intent == "impact" else ("field",))}
-    explicit_names = {
-        str(node.get("name") or "").lower()
-        for node in all_nodes
-        if str(node.get("name") or "").lower() in symbol_terms
-        and node.get("kind") not in anchor_excluded_kinds
-    }
+    named_nodes = _signals.named_nodes(all_nodes, symbol_terms, anchor_excluded_kinds, request)
+    explicit_names = {str(node.get("name") or "").lower() for node in named_nodes}
     anchor_files = ({str(node.get("file") or "") for node in qualified_nodes if node.get("file")}
                     if qualified_nodes else
-                    {str(node.get("file") or "") for node in all_nodes
-                     if str(node.get("name") or "").lower() in explicit_names and node.get("file")})
+                    {str(node.get("file") or "") for node in named_nodes if node.get("file")})
+    anchor_files = _signals.local_anchor_files(anchor_files, request_lower)
     # Handlers of commands written in capitals; they do not pin anchor files.
-    explicit_names |= _signals.command_handlers(request, all_nodes, anchor_excluded_kinds)
+    command_names = _signals.command_handlers(request, all_nodes, anchor_excluded_kinds)
+    explicit_names |= command_names
     if selected_intent == "impact" and explicit_names:
         anchors = [node for node in all_nodes if str(node.get("name") or "").lower() in explicit_names]
         by_id = {node.get("id"): node for node in all_nodes}
@@ -1243,7 +1246,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                               str(item[1].get("file") or ""), re.I)
         ]
         if candidates:
-            def explicit_declaration_score(item: tuple[int, dict[str, Any]]) -> tuple[int, int, int, int]:
+            def explicit_declaration_score(item: tuple[int, dict[str, Any]]) -> tuple[int, int, int, int, int]:
                 score, node = item
                 path = str(node.get("file") or "").lower().replace("\\", "/")
                 signature = str(node.get("signature") or "").lower()
@@ -1255,7 +1258,9 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                     marker not in request_lower and marker in f"{path} {signature}"
                     for marker in ("wchar", "wstring", "text_style", "locale_ref", "compiledformat")
                 )
-                return (-specialization_penalty, int(main_header), int(type_declaration), score)
+                # The owner the request describes (`record` → ActiveRecord) breaks ties.
+                return (-specialization_penalty, int(main_header), int(type_declaration),
+                        homonym_hints.owner_score(node), score)
             mandatory.append(max(candidates, key=explicit_declaration_score))
         if len(mandatory) >= max_nodes:
             break
@@ -1380,6 +1385,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         cross_file_flow = any(marker in request_lower for marker in ("capture", "captured", "through", "across", "handoff"))
         fallback = (fallback_candidates[:2] if selected_intent == "flow" and cross_file_flow
                     else [] if len(anchored) >= reserve else fallback_candidates)
+        anchored, connected, fallback, reserve = _signals.keep_handlers(
+            request, command_names, mandatory_ids, external, anchored, connected, fallback, reserve)
         ranked = (anchored[:reserve] + fallback + connected + anchored[reserve:]
                   if cross_file_flow else anchored[:reserve] + connected + fallback + anchored[reserve:])
     trace_stage("anchors", ranked)
@@ -1604,7 +1611,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         "operation_limit": {"bindings": 10, "persistence": 6, "tests": 5, "impact": 5, "flow": 5}[selected_intent],
     }
     if selected_intent == "flow":
-        result.update(_signals.flow_outline(graph, nodes, name_frequency))
+        result.update(_signals.flow_outline(graph, nodes, name_frequency, result["guidance"]))
     if "relevant_anchor" in missing:
         exact_queries = list(dict.fromkeys([
             *explicit_identifiers,

@@ -1,7 +1,7 @@
 """Rubric facts present in the graph_query_intent package, without agents.
 
 usage: GRAPHTYN_HOME=<home with indexes> PYTHONPATH=<graphtyn tree> \
-       python coverage.py dev|test|test2|test3|test4 <dir with indexed redis/ fmt/ rails/ copies> [--jsonl out]
+       python coverage.py dev|test|test2|test3|test4 <dir with indexed corpus copies> [--jsonl out] [--policy KEY=VALUE,...]
 
 A package is a false completion when it sets do_not_expand=true while covering
 less than half of the rubric.
@@ -12,6 +12,7 @@ import statistics
 from pathlib import Path
 
 from graphtyn.core.lean_package import lean_payload
+from graphtyn.core.retrieval_signals import apply_flow_policy
 from graphtyn.core.storage import data_home, project_store_dir
 from graphtyn.mcp_server import build_intent_package
 
@@ -25,7 +26,9 @@ def main() -> int:
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--jsonl", type=Path)
     parser.add_argument("--limit", type=int, default=10, help="graph_query_intent entity budget")
+    parser.add_argument("--policy", default="", help="flow policy override, KEY=VALUE,... (GRAPHTYN_FLOW_POLICY)")
     args = parser.parse_args()
+    apply_flow_policy(args.policy)
     patterns = json.loads((HERE / "split.json").read_text())[args.split]
     rows = []
     for corpus in CORPORA:

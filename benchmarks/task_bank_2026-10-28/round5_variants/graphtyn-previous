@@ -1,7 +1,0 @@
-#!/home/calero/Documentos/docker/PROYECTOS/graphtyn/.venv/bin/python3
-"""Graphtyn CLI with the flow policy before the fifth round (benchmark only)."""
-import sys
-from graphtyn.core import retrieval_signals as rs
-rs.CHAIN_SHARE, rs.CHAIN_SEEDS, rs.COMMAND_NAMES, rs.OUTLINE_LIMIT = 0.0, 2, False, 0
-from graphtyn.cli import main
-sys.exit(main())

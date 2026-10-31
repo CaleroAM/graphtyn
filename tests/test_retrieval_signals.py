@@ -281,3 +281,59 @@ def test_a_command_handler_joins_the_package_without_pinning_it_to_its_file(monk
 
     names = [node["name"] for node in result["nodes"]]
     assert "ttlCommand" in names and "performEvictions" in names
+
+
+def test_bundled_dependencies_do_not_anchor_a_package_unless_named():
+    assert retrieval_signals.foreign_code("deps/jemalloc/include/jemalloc/internal/hash.h", "cómo se escribe el hash")
+    assert not retrieval_signals.foreign_code("deps/jemalloc/src/arena.c", "la arena de jemalloc")
+    assert not retrieval_signals.foreign_code("src/t_hash.c", "el hash")
+
+
+def test_written_identifiers_are_code_forms_only():
+    assert retrieval_signals.written_identifiers("desde syncCommand, si BGSAVE") == ["syncCommand"]
+    assert retrieval_signals.written_identifiers("el comando HSET y el hash") == []
+
+
+def test_owner_score_prefers_the_class_the_request_names_over_its_namespace():
+    hints = retrieval_signals.HomonymHints("record.reload y la capa autosave", ["record", "reload", "autosave"], set())
+
+    autosave = {"container": "AutosaveAssociation", "namespace": "ActiveRecord::AutosaveAssociation"}
+    proxy = {"container": "CollectionProxy", "namespace": "ActiveRecord::Associations"}
+
+    assert hints.owner_score(autosave) > hints.owner_score(proxy) > 0
+
+
+def test_a_lowercase_receiver_does_not_name_a_class():
+    graph = {"nodes": [
+        {"id": "rec", "name": "Record", "kind": "class", "file": "mailbox/record.rb", "line": 1},
+        {"id": "rel", "name": "reload", "kind": "method", "file": "lib/persistence.rb", "line": 5,
+         "container": "Persistence", "namespace": "ActiveRecord::Persistence"},
+    ], "links": []}
+
+    result = query_intent(graph, "Traza qué ocurre al llamar a record.reload", "flow", 10)
+
+    assert result["nodes"][0]["name"] == "reload"
+
+
+def test_state_outline_joins_stages_through_a_rare_shared_field(monkeypatch):
+    monkeypatch.setattr(retrieval_signals, "STATE_LIMIT", 4)
+    retrieval_signals._FIELD_INDEX.clear()
+    def op(text):
+        return [{"kind": "call", "text": text, "line": 2}]
+    nodes = [_function("sig", "signalKeyAsReady", operations=op("listAddNodeTail(server.ready_keys, rl)")),
+             _function("handle", "handleClientsBlockedOnKeys", operations=op("listLength(server.ready_keys)")),
+             _function("other", "unrelated", operations=op("x = server.hz"))]
+    graph = {"nodes": nodes, "links": []}
+    by_id = {node["id"]: node for node in nodes}
+
+    outline = retrieval_signals.state_outline(graph, ["sig"], {"sig"}, by_id)
+
+    assert [(item["caller"], item["callee"], item["confidence"]) for item in outline] == [
+        ("signalKeyAsReady~ready_keys", "handleClientsBlockedOnKeys", "STATE")]
+
+
+def test_impact_and_persistence_requests_are_recognised_in_inflected_spanish():
+    assert classify_intent("¿Qué se ve afectado si cambio la firma de process_route? Indica sus consumidores directos") == "impact"
+    assert classify_intent("¿Cómo persiste SAVE el conjunto de datos en un archivo RDB?") == "persistence"
+    # A reflexive passive describes behaviour; it is not a request to edit.
+    assert classify_intent("¿Cómo se registran las extensiones y dónde se notifica cuando se añade una ruta?") == "bindings"
