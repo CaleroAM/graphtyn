@@ -1,7 +1,7 @@
 """Rubric facts present in the graph_query_intent package, without agents.
 
 usage: GRAPHTYN_HOME=<home with indexes> PYTHONPATH=<graphtyn tree> \
-       python coverage.py dev|test|test2|test3 <dir with indexed redis/ fmt/ rails/ copies> [--jsonl out]
+       python coverage.py dev|test|test2|test3|test4 <dir with indexed redis/ fmt/ rails/ copies> [--jsonl out]
 
 A package is a false completion when it sets do_not_expand=true while covering
 less than half of the rubric.
@@ -16,12 +16,12 @@ from graphtyn.core.storage import data_home, project_store_dir
 from graphtyn.mcp_server import build_intent_package
 
 HERE = Path(__file__).resolve().parent
-CORPORA = ("redis", "fmt", "rails", "flask", "lua")
+CORPORA = ("redis", "fmt", "rails", "flask", "lua", "jq", "sinatra")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("split", choices=("dev", "test", "test2", "test3"))
+    parser.add_argument("split", choices=("dev", "test", "test2", "test3", "test4"))
     parser.add_argument("workspace", type=Path)
     parser.add_argument("--jsonl", type=Path)
     parser.add_argument("--limit", type=int, default=10, help="graph_query_intent entity budget")

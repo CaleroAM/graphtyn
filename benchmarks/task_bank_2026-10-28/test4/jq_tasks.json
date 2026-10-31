@@ -1,0 +1,313 @@
+{
+ "schema_version": "1.0",
+ "frozen": "2026-10-31, cuarto conjunto de prueba, congelado antes de corregir el anclaje en dependencias incluidas, los homónimos y las falsas completitudes de la quinta ronda; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; jq y sinatra son corpus nunca usados; incluye tareas impact, tests, bindings y persistence",
+ "tasks": [
+  {
+   "id": "JQ_MAIN_FILTER_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de jq, traza qué ocurre al ejecutar jq '.a' sobre un archivo: cómo main crea el estado, compila el programa y sus argumentos, carga el programa con sus dependencias, lee cada entrada, ejecuta el filtro y imprime cada resultado. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "init",
+     "any": [
+      "jq_init"
+     ]
+    },
+    {
+     "id": "compile",
+     "any": [
+      "jq_compile_args"
+     ]
+    },
+    {
+     "id": "load",
+     "any": [
+      "load_program"
+     ]
+    },
+    {
+     "id": "input",
+     "any": [
+      "jq_util_input_next_input"
+     ]
+    },
+    {
+     "id": "process",
+     "any": [
+      "static int process"
+     ]
+    },
+    {
+     "id": "start",
+     "any": [
+      "jq_start"
+     ]
+    },
+    {
+     "id": "next",
+     "any": [
+      "jq_next"
+     ]
+    },
+    {
+     "id": "print",
+     "any": [
+      "jv_dump"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JQ_NUMBER_LITERAL_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de jq, traza cómo el analizador JSON lee un número de la entrada: cómo se acumulan los caracteres del token, cuándo se reconoce un literal, cómo se crea el número conservando su literal decimal y qué biblioteca decimal lo convierte. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "scan",
+     "any": [
+      "static pfunc scan"
+     ]
+    },
+    {
+     "id": "token",
+     "any": [
+      "tokenadd"
+     ]
+    },
+    {
+     "id": "literal",
+     "any": [
+      "check_literal"
+     ]
+    },
+    {
+     "id": "number",
+     "any": [
+      "jv_number_with_literal"
+     ]
+    },
+    {
+     "id": "new",
+     "any": [
+      "jvp_literal_number_new"
+     ]
+    },
+    {
+     "id": "decimal",
+     "any": [
+      "decNumberFromString"
+     ]
+    },
+    {
+     "id": "value",
+     "any": [
+      "static pfunc value"
+     ]
+    },
+    {
+     "id": "next",
+     "any": [
+      "jv_parser_next"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JQ_PATH_UPDATE_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de jq, traza cómo se evalúa una actualización .a |= f: cómo se define el operador en la biblioteca jq, cómo se obtienen las rutas, cómo el intérprete registra la ruta recorrida y comprueba que sigue intacta, y cómo se leen y escriben valores por ruta. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "modify",
+     "any": [
+      "def _modify"
+     ]
+    },
+    {
+     "id": "path",
+     "any": [
+      "path("
+     ]
+    },
+    {
+     "id": "begin",
+     "any": [
+      "PATH_BEGIN"
+     ]
+    },
+    {
+     "id": "intact",
+     "any": [
+      "path_intact"
+     ]
+    },
+    {
+     "id": "append",
+     "any": [
+      "path_append"
+     ]
+    },
+    {
+     "id": "get",
+     "any": [
+      "jv_getpath"
+     ]
+    },
+    {
+     "id": "set",
+     "any": [
+      "jv_setpath"
+     ]
+    },
+    {
+     "id": "builtin",
+     "any": [
+      "f_setpath",
+      "f_getpath"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JQ_TRY_CATCH_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de jq, traza cómo funciona try ... catch: cómo se compila, qué opcodes delimitan el bloque, cómo se registra un error con error(), cómo el intérprete detecta que está propagando un error y retrocede hasta el manejador. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "gen",
+     "any": [
+      "gen_try"
+     ]
+    },
+    {
+     "id": "begin",
+     "any": [
+      "TRY_BEGIN"
+     ]
+    },
+    {
+     "id": "end",
+     "any": [
+      "TRY_END"
+     ]
+    },
+    {
+     "id": "error_builtin",
+     "any": [
+      "f_error"
+     ]
+    },
+    {
+     "id": "set",
+     "any": [
+      "set_error"
+     ]
+    },
+    {
+     "id": "raising",
+     "any": [
+      "raising"
+     ]
+    },
+    {
+     "id": "msg",
+     "any": [
+      "jv_invalid_with_msg"
+     ]
+    },
+    {
+     "id": "save",
+     "any": [
+      "stack_save"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JQ_MODULE_IMPORT_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de jq, traza cómo se resuelve import \"foo\" as f; al cargar un programa: cómo se recorren las dependencias, cómo se construye la cadena de búsqueda de bibliotecas, cómo se encuentra el archivo, cómo se carga y cómo se enlazan sus definiciones. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "program",
+     "any": [
+      "load_program"
+     ]
+    },
+    {
+     "id": "deps",
+     "any": [
+      "process_dependencies"
+     ]
+    },
+    {
+     "id": "chain",
+     "any": [
+      "build_lib_search_chain"
+     ]
+    },
+    {
+     "id": "default",
+     "any": [
+      "default_search"
+     ]
+    },
+    {
+     "id": "find",
+     "any": [
+      "find_lib"
+     ]
+    },
+    {
+     "id": "load",
+     "any": [
+      "load_library"
+     ]
+    },
+    {
+     "id": "file",
+     "any": [
+      "jv_load_file"
+     ]
+    },
+    {
+     "id": "bind",
+     "any": [
+      "block_bind_library"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "JQ_START_IMPACT",
+   "intent": "impact",
+   "request": "En el commit fijado de jq, ¿qué se ve afectado si cambio la firma de jq_start? Indica sus consumidores directos y cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "def",
+     "any": [
+      "jq_start"
+     ]
+    },
+    {
+     "id": "main",
+     "any": [
+      "main.c"
+     ]
+    },
+    {
+     "id": "process",
+     "any": [
+      "static int process"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "jq_test.c"
+     ]
+    }
+   ]
+  }
+ ]
+}

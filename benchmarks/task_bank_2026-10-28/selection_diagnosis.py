@@ -6,7 +6,7 @@ each selection stage of query_intent (N = the number of nodes finally selected),
 the facts the selected nodes spell and the facts present in the lean package.
 
 usage: GRAPHTYN_HOME=<home with indexes> PYTHONPATH=. \
-       python selection_diagnosis.py dev|test|test2|test3 <dir with indexed corpora> [--jsonl out]
+       python selection_diagnosis.py dev|test|test2|test3|test4 <dir with indexed corpora> [--jsonl out]
 """
 
 import argparse
@@ -20,7 +20,7 @@ from graphtyn.core.storage import data_home, project_store_dir
 from graphtyn.mcp_server import build_intent_package
 
 HERE = Path(__file__).resolve().parent
-CORPORA = ("redis", "fmt", "rails", "flask", "lua")
+CORPORA = ("redis", "fmt", "rails", "flask", "lua", "jq", "sinatra")
 STAGES = ("scored", "pre_mandatory", "homonyms", "anchors", "chain")
 
 

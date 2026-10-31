@@ -1,0 +1,55 @@
+{
+ "schema_version": "1.0",
+ "frozen": "2026-10-31, cuarto conjunto de prueba, congelado antes de corregir el anclaje en dependencias incluidas, los homónimos y las falsas completitudes de la quinta ronda; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; jq y sinatra son corpus nunca usados; incluye tareas impact, tests, bindings y persistence",
+ "tasks": [
+  {
+   "id": "REDIS_RDB_SAVE_PERSISTENCE",
+   "intent": "persistence",
+   "request": "En el commit fijado de Redis, ¿cómo persiste SAVE el conjunto de datos en un archivo RDB? Indica qué funciones escriben las bases de datos y cada clave, cómo se usa un archivo temporal y cómo se garantiza que llega al disco. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "save",
+     "any": [
+      "rdbSave("
+     ]
+    },
+    {
+     "id": "internal",
+     "any": [
+      "rdbSaveInternal"
+     ]
+    },
+    {
+     "id": "rio",
+     "any": [
+      "rdbSaveRio"
+     ]
+    },
+    {
+     "id": "db",
+     "any": [
+      "rdbSaveDb"
+     ]
+    },
+    {
+     "id": "kv",
+     "any": [
+      "rdbSaveKeyValuePair"
+     ]
+    },
+    {
+     "id": "rename",
+     "any": [
+      "rename(tmpfile"
+     ]
+    },
+    {
+     "id": "fsync",
+     "any": [
+      "fsyncFileDir"
+     ]
+    }
+   ]
+  }
+ ]
+}

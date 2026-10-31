@@ -25,7 +25,7 @@ from pathlib import Path
 from analyze_results import grader
 
 HERE = Path(__file__).resolve().parent
-CORPORA = ("redis", "fmt", "rails", "flask", "lua")
+CORPORA = ("redis", "fmt", "rails", "flask", "lua", "jq", "sinatra")
 KINDS = ("uncached_input", "cache_read", "cache_write", "output")
 PRICE_RATIOS = {
     "claude": {"uncached_input": 1.0, "cache_read": 0.1, "cache_write": 1.25, "output": 5.0},
