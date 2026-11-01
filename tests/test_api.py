@@ -1,5 +1,7 @@
 import json
+import os
 import re
+import sys
 import asyncio
 import socket
 import subprocess
@@ -616,6 +618,21 @@ def test_dashboard_scripts_are_bundled_not_loaded_from_a_cdn(tmp_path, monkeypat
     assert client.get("/vendor/../api/main.py").status_code == 404
     assert client.get("/vendor/LICENSES.md").status_code == 404
     assert client.get("/vendor/noexiste.min.js").status_code == 404
+
+
+def test_api_state_paths_follow_graphtyn_home_set_after_import(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    monkeypatch.setattr(api_main, "INDEX_STORE", None)
+    monkeypatch.setattr(api_main, "REGISTRATION_FILE", None)
+    monkeypatch.setenv("GRAPHTYN_HOME", str(home))
+    assert api_main._index_store() == home.resolve()
+    assert api_main._registration_file() == home.resolve() / "registered_projects.json"
+    assert api_main._memory_watch_config().parent == home.resolve()
+    assert api_main.reindex_jobs.root == home.resolve() / "reindex-jobs"
+    untouched = tmp_path / "untouched"
+    env = {**os.environ, "GRAPHTYN_HOME": str(untouched)}
+    subprocess.run([sys.executable, "-c", "import graphtyn.api.main"], env=env, check=True, timeout=120)
+    assert not untouched.exists(), "importing the API must not create state directories"
 
 
 def test_project_config_roundtrip_api(tmp_path, monkeypatch):

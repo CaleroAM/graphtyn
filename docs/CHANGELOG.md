@@ -18,11 +18,13 @@ compatibles con PEP 440.
   simulación seguía redibujando fuera de pantalla; con un grafo grande dibujado
   antes del cambio, la página quedaba bloqueada decenas de segundos. Esta era la
   causa principal del fallo intermitente del smoke test de navegador en CI.
+- La API (`graphtyn.api.main`) y los gestores de trabajos resuelven
+  `GRAPHTYN_HOME` al usarlo y no al importarse: un `GRAPHTYN_HOME` fijado
+  después de importar se respeta, e importar el módulo ya no crea
+  `~/.graphtyn`. Por eso los tests escribían en el directorio real del usuario,
+  incluido `registered_projects.json`.
 
-## [0.11.0] - sin publicar
-
-Versión preparada en el repositorio; la etiqueta y los artefactos se publican
-tras la validación de release (`docs/release-checklist.md`).
+## [0.11.0] - 2026-11-01
 
 ### Añadido
 

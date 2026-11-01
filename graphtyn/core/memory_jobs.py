@@ -13,10 +13,15 @@ from .storage import data_home
 
 
 class MemoryJobManager:
-    def __init__(self, root: Path | None = None):
-        self.root = root or data_home() / "memory-jobs"
+    def __init__(self, root: Path | None = None, name: str = "memory-jobs"):
+        self._root, self._name = root, name
         self._lock = threading.Lock()
         self._cancelled: set[str] = set()
+
+    @property
+    def root(self) -> Path:
+        # Resolved on use, so GRAPHTYN_HOME set after import still applies.
+        return self._root or data_home() / self._name
 
     def _path(self, job_id: str) -> Path:
         if not job_id.startswith("job_") or not job_id[4:].isalnum(): raise ValueError("job_id inválido")
