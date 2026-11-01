@@ -214,7 +214,18 @@ def main():
                 assert page.evaluate(f"typeof window.{name}") == "function", f"{name} no expuesto en window"
 
             canvas = page.locator("#graph-container canvas")
-            canvas.first.wait_for(state="visible", timeout=30000)
+            try:
+                canvas.first.wait_for(state="visible", timeout=30000)
+            except Exception:
+                # The page state says which branch of loadGraph ran instead of drawing.
+                snapshot = page.evaluate("""async () => {
+                  const {state} = await import('/js/state.js');
+                  return {stats: document.getElementById('stats')?.textContent,
+                          container: document.getElementById('graph-container')?.innerText?.slice(0, 300),
+                          activeView: state.activeView, activePath: state.activePath,
+                          libraries: {d3: typeof d3, ForceGraph: typeof ForceGraph, ForceGraph3D: typeof ForceGraph3D}};
+                }""")
+                raise AssertionError(f"canvas del grafo no renderizado: {snapshot}")
             assert canvas.count() >= 1, "canvas del grafo no renderizado"
 
             # Primary navigation is grouped by task instead of exposing every view as a top-level button.
