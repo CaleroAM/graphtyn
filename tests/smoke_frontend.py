@@ -220,8 +220,15 @@ def main():
                 # The page state says which branch of loadGraph ran instead of drawing.
                 snapshot = page.evaluate("""async () => {
                   const {state} = await import('/js/state.js');
+                  const box = document.getElementById('graph-container');
                   return {stats: document.getElementById('stats')?.textContent,
-                          container: document.getElementById('graph-container')?.innerText?.slice(0, 300),
+                          html: box?.innerHTML?.slice(0, 300),
+                          box: box && [box.clientWidth, box.clientHeight, getComputedStyle(box).display],
+                          canvases: [...(box?.querySelectorAll('canvas') || [])].map(c => {
+                            const r = c.getBoundingClientRect();
+                            return [c.width, c.height, Math.round(r.width), Math.round(r.height), getComputedStyle(c).visibility];
+                          }),
+                          graphInst: Boolean(state.graphInst), loadId: state.graphLoadId, dim: state.activeDim,
                           activeView: state.activeView, activePath: state.activePath,
                           libraries: {d3: typeof d3, ForceGraph: typeof ForceGraph, ForceGraph3D: typeof ForceGraph3D}};
                 }""")
