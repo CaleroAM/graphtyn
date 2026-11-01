@@ -65,8 +65,14 @@ Después de la validación anterior se añadieron:
   ranking ajustados.
 - una quinta ronda (cadena de llamadas reservada, `call_outline` y comandos en
   mayúsculas), medida en un tercer conjunto de prueba y en 300 sesiones reales.
+- una sexta ronda (anclajes, homónimos, intenciones y estado compartido),
+  medida en un cuarto conjunto de prueba y en 192 sesiones reales.
+- validación local del commit candidato: wheel y sdist construidos, el wheel
+  instalado en un entorno vacío responde a `--version` y `query-intent`, la
+  imagen Docker responde `/health` como usuario 10001 y `pip-audit` no encuentra
+  vulnerabilidades en las dependencias de Graphtyn.
 
-La suite local pasa con 732 pruebas en Python 3.13 tras esos cambios. La matriz
+La suite local pasa con 738 pruebas en Python 3.13 tras esos cambios. La matriz
 3.10–3.12, el wheel, Docker y `pip-audit` deben repetirse sobre el commit que se
 etiquete.
 
