@@ -229,6 +229,9 @@ def main():
                             return [c.width, c.height, Math.round(r.width), Math.round(r.height), getComputedStyle(c).visibility];
                           }),
                           graphInst: Boolean(state.graphInst), loadId: state.graphLoadId, dim: state.activeDim,
+                          api: performance.getEntriesByType('resource').filter(e => e.name.includes('/api/'))
+                            .map(e => [e.name.replace(location.origin, '').slice(0, 70), Math.round(e.startTime),
+                                       Math.round(e.duration)]),
                           activeView: state.activeView, activePath: state.activePath,
                           libraries: {d3: typeof d3, ForceGraph: typeof ForceGraph, ForceGraph3D: typeof ForceGraph3D}};
                 }""")
@@ -404,9 +407,11 @@ def main():
             print("browser errors:", console_errors[-8:])
         slog = tmp / "server.log"
         if slog.exists():
-            lines = [l for l in slog.read_text(encoding="utf-8", errors="replace").splitlines() if " 404 " in l or " 500 " in l]
-            if lines:
-                print("server 4xx/5xx:", lines[-8:])
+            lines = slog.read_text(encoding="utf-8", errors="replace").splitlines()
+            errors = [l for l in lines if " 404 " in l or " 500 " in l]
+            if errors:
+                print("server 4xx/5xx:", errors[-8:])
+            print("server log tail:", lines[-25:])
         return 1
     finally:
         server.terminate()
