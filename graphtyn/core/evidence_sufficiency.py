@@ -57,7 +57,7 @@ def _verdict(result: dict[str, Any], request: str) -> dict[str, Any]:
     # Whole identifiers: `lua_pcallk` does not show that `lua_pcall` was found.
     # A name in capitals only has to start a word (`BLPOP` → `blpopCommand`, `UTF` → `utf8`).
     unmatched = [name for name in named_identifiers(request)
-                 if not re.search(rf"(?<![\w]){re.escape(name.lower())}{'' if name.isupper() else '(?![\\w])'}", text)]
+                 if not re.search(r"(?<![\w])" + re.escape(name.lower()) + ("" if name.isupper() else r"(?![\w])"), text)]
     if unmatched:
         verdict["unmatched_identifiers"] = unmatched
     return verdict
