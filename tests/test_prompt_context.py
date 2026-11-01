@@ -188,6 +188,18 @@ def test_rendered_context_fits_the_client_cap_and_trims_secondary_excerpts_first
     assert prompt_context.render_context(package, limit=300) is None
 
 
+def test_rendered_call_outline_names_real_files_instead_of_aliases():
+    package = lean_payload(_package(call_outline=[["processCommand", "genInfoString", "F2:5", "E"]],
+                                    call_outline_legend="[caller, callee, F:line, E|I|S]: further stages"))
+    package["context_id"] = "abc"
+
+    text = prompt_context.render_context(package)
+
+    # The files map is not part of the rendered context, so an alias could not be resolved.
+    assert '["processCommand","genInfoString","src/debug.c:5","E"]' in text
+    assert "F2:" not in text and "[caller, callee, file:line" in text
+
+
 def test_evidence_result_does_not_mutate_the_internal_package():
     from graphtyn.mcp_server import evidence_result
     excerpt = {"symbol": "f", "file": "a.py", "start_line": 1, "end_line": 400, "covers": [],
