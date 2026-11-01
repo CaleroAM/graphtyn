@@ -94,6 +94,7 @@ def main():
          "--host", "127.0.0.1", "--port", str(PORT), "--path", str(proj)],
         cwd=str(ROOT), env=env, stdout=subprocess.DEVNULL, stderr=open(str(tmp / "server.log"), "w"))
     failures = []
+    console_errors = []
     try:
         if not wait_server(BASE):
             print("FAIL: servidor no levantó")
@@ -381,6 +382,8 @@ def main():
         failures.append(str(exc))
         print(f"FAIL: {exc}")
         traceback.print_exc()
+        if console_errors:
+            print("browser errors:", console_errors[-8:])
         slog = tmp / "server.log"
         if slog.exists():
             lines = [l for l in slog.read_text(encoding="utf-8", errors="replace").splitlines() if " 404 " in l or " 500 " in l]

@@ -3,6 +3,17 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [Sin publicar]
+
+### Corregido
+
+- El dashboard ya no carga d3, force-graph ni 3d-force-graph desde
+  cdn.jsdelivr.net: el paquete incluye versiones fijas (`graphtyn/web/vendor/`,
+  verificadas contra la integridad publicada en npm). Sin conexión, o cuando el
+  CDN fallaba, el grafo no se dibujaba; era la causa del fallo intermitente del
+  smoke test de navegador en CI. El smoke test imprime ahora los errores de
+  consola cuando falla.
+
 ## [0.11.0] - sin publicar
 
 Versión preparada en el repositorio; la etiqueta y los artefactos se publican

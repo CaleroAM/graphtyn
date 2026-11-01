@@ -3202,6 +3202,18 @@ def dashboard_js():
     return HTMLResponse(content=js_path.read_text(encoding="utf-8"), media_type="application/javascript", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
 
 
+@app.get("/vendor/{file}")
+def vendor_script(file: str):
+    # Bundled third-party builds carry their version in the name, so they are immutable.
+    if not file.endswith(".min.js") or "/" in file or "\\" in file or ".." in file:
+        return JSONResponse({"error": "invalid path"}, status_code=404)
+    js_path = Path(__file__).resolve().parent.parent / "web" / "vendor" / file
+    if not js_path.is_file():
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return Response(content=js_path.read_bytes(), media_type="application/javascript",
+                    headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+
 @app.get("/js/{file}")
 def js_module(file: str):
     if not file.endswith(".js") or "/" in file or "\\" in file or ".." in file:

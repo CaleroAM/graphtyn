@@ -1,4 +1,5 @@
 import json
+import re
 import asyncio
 import socket
 import subprocess
@@ -598,6 +599,20 @@ def test_js_route_rejects_traversal(tmp_path, monkeypatch):
     assert client.get("/js/../main.py").status_code == 404
     assert client.get("/js/noexiste.js").status_code == 404
     assert client.get("/js/state.py").status_code == 404
+
+
+def test_dashboard_scripts_are_bundled_not_loaded_from_a_cdn(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    html = client.get("/").text
+    scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
+    assert scripts and all(src.startswith("/") for src in scripts), scripts
+    for src in [s for s in scripts if s.startswith("/vendor/")]:
+        r = client.get(src)
+        assert r.status_code == 200 and len(r.content) > 10_000, src
+        assert "immutable" in r.headers["cache-control"]
+    assert client.get("/vendor/../api/main.py").status_code == 404
+    assert client.get("/vendor/LICENSES.md").status_code == 404
+    assert client.get("/vendor/noexiste.min.js").status_code == 404
 
 
 def test_project_config_roundtrip_api(tmp_path, monkeypatch):
