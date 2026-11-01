@@ -576,6 +576,9 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     assert "nearestNodeAtPointer" in graph_js
     assert ".onNodeClick(handleGraphNodeClick)" in graph_js
     assert "installReliableNodeDrag" in graph_js
+    # A replaced graph must be disposed, or its simulation keeps redrawing off screen.
+    load_graph = graph_js.split("export function loadGraph", 1)[1]
+    assert load_graph.index("disposeGraphInstance()") < load_graph.index("showGraphSpinner(")
     assert "screen2GraphCoords" in graph_js
     assert "grid-template-columns:minmax(0,1fr)" in graph_js
     assert "EVIDENCIA " in graph_js

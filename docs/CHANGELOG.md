@@ -13,6 +13,11 @@ compatibles con PEP 440.
   CDN fallaba, el grafo no se dibujaba; era la causa del fallo intermitente del
   smoke test de navegador en CI. El smoke test imprime ahora los errores de
   consola cuando falla.
+- Dashboard: al cambiar de proyecto o recargar el grafo, la instancia anterior
+  de ForceGraph se destruye. Antes solo se quitaba su canvas del DOM y su
+  simulación seguía redibujando fuera de pantalla; con un grafo grande dibujado
+  antes del cambio, la página quedaba bloqueada decenas de segundos. Esta era la
+  causa principal del fallo intermitente del smoke test de navegador en CI.
 
 ## [0.11.0] - sin publicar
 
