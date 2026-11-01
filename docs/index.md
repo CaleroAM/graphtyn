@@ -4,6 +4,7 @@
 - [Política de seguridad](SECURITY.md)
 - [Guía de contribución](CONTRIBUTING.md)
 - [Checklist de release](release-checklist.md)
+- [Validación de release 0.11.0](release-validation-0.11.0.md)
 - [Validación de release 0.10.7](release-validation-0.10.7.md)
 - [Validación de release 0.10.1](release-validation-0.10.1.md)
 - [Validación de release 0.10.0](release-validation-0.10.0.md)
@@ -19,7 +20,8 @@ experimentales y comparaciones comerciales.
 
 - [`README.md`](../README.md): instalación, comandos y flujo inicial.
 - [`AGENTS.md`](../AGENTS.md): contrato operativo para agentes de código.
-- [`skills/graphtyn/SKILL.md`](../skills/graphtyn/SKILL.md): skill reutilizable.
+- [`skills/graphtyn/SKILL.md`](../skills/graphtyn/SKILL.md): skill de contexto e impacto de código.
+- [`skills/graphtyn-memory/SKILL.md`](../skills/graphtyn-memory/SKILL.md): skill de memoria compartida y brains.
 
 ## Diseño y operación
 

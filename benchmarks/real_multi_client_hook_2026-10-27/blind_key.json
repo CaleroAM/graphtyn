@@ -1,0 +1,205 @@
+{
+  "REfacbd6": {
+    "corpus": "redis",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "run_id": "codex_REDIS_COMMAND_FLOW_baseline_r1"
+  },
+  "RE751a2c": {
+    "corpus": "redis",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "run_id": "codex_REDIS_COMMAND_FLOW_graphtyn_hook_r2"
+  },
+  "RE591d1c": {
+    "corpus": "redis",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 3,
+    "run_id": "claude_REDIS_COMMAND_FLOW_graphtyn_hook_r3"
+  },
+  "RE0261a8": {
+    "corpus": "redis",
+    "client": "codex",
+    "arm": "graphtyn_full",
+    "repetition": 1,
+    "run_id": "codex_REDIS_COMMAND_FLOW_graphtyn_full_r1"
+  },
+  "RE9f001a": {
+    "corpus": "redis",
+    "client": "antigravity",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "antigravity_REDIS_COMMAND_FLOW_graphtyn_r1"
+  },
+  "REcce7ea": {
+    "corpus": "redis",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "codex_REDIS_COMMAND_FLOW_graphtyn_r2"
+  },
+  "RE17395c": {
+    "corpus": "redis",
+    "client": "opencode",
+    "arm": "graphtyn_full",
+    "repetition": 2,
+    "run_id": "opencode_REDIS_COMMAND_FLOW_graphtyn_full_r2"
+  },
+  "RE1fb2ab": {
+    "corpus": "redis",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 5,
+    "run_id": "claude_REDIS_COMMAND_FLOW_graphtyn_hook_r5"
+  },
+  "RE893931": {
+    "corpus": "redis",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 2,
+    "run_id": "codex_REDIS_COMMAND_FLOW_baseline_r2"
+  },
+  "FM6defcd": {
+    "corpus": "fmt",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "codex_FMT_FORMAT_FLOW_graphtyn_r1"
+  },
+  "FMc3f754": {
+    "corpus": "fmt",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "codex_FMT_FORMAT_FLOW_graphtyn_hook_r1"
+  },
+  "FM0a91d8": {
+    "corpus": "fmt",
+    "client": "antigravity",
+    "arm": "graphtyn_full",
+    "repetition": 2,
+    "run_id": "antigravity_FMT_FORMAT_FLOW_graphtyn_full_r2"
+  },
+  "RA4a0d92": {
+    "corpus": "rails",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_r2"
+  },
+  "RA093beb": {
+    "corpus": "rails",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_hook_r1"
+  },
+  "RA7cbc40": {
+    "corpus": "rails",
+    "client": "codex",
+    "arm": "graphtyn_full",
+    "repetition": 1,
+    "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_full_r1"
+  },
+  "RA15554d": {
+    "corpus": "rails",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_r1"
+  },
+  "RA3a5f3c": {
+    "corpus": "rails",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_hook_r2"
+  },
+  "RAe2b500": {
+    "corpus": "rails",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_r1"
+  },
+  "RAa52c22": {
+    "corpus": "rails",
+    "client": "antigravity",
+    "arm": "graphtyn_full",
+    "repetition": 1,
+    "run_id": "antigravity_RAILS_SAVE_FLOW_graphtyn_full_r1"
+  },
+  "RAdc58f0": {
+    "corpus": "rails",
+    "client": "codex",
+    "arm": "graphtyn_full",
+    "repetition": 2,
+    "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_full_r2"
+  },
+  "RAee78bc": {
+    "corpus": "rails",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 5,
+    "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_hook_r5"
+  },
+  "RA98c798": {
+    "corpus": "rails",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 3,
+    "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_hook_r3"
+  },
+  "RA87a6aa": {
+    "corpus": "rails",
+    "client": "opencode",
+    "arm": "graphtyn_full",
+    "repetition": 2,
+    "run_id": "opencode_RAILS_SAVE_FLOW_graphtyn_full_r2"
+  },
+  "RA9d2be1": {
+    "corpus": "rails",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "run_id": "codex_RAILS_SAVE_FLOW_baseline_r1"
+  },
+  "RA52c557": {
+    "corpus": "rails",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "opencode_RAILS_SAVE_FLOW_graphtyn_hook_r1"
+  },
+  "RAcbacae": {
+    "corpus": "rails",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "codex_RAILS_SAVE_FLOW_graphtyn_r2"
+  },
+  "RA37a540": {
+    "corpus": "rails",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 5,
+    "run_id": "claude_RAILS_SAVE_FLOW_graphtyn_r5"
+  },
+  "RA02be98": {
+    "corpus": "rails",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "opencode_RAILS_SAVE_FLOW_graphtyn_r2"
+  },
+  "RAc7a8b5": {
+    "corpus": "rails",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 2,
+    "run_id": "codex_RAILS_SAVE_FLOW_baseline_r2"
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Graphtyn"
+  short_description: "Consulta impacto y flujos con evidencia estructural compacta"
+  default_prompt: "Usa Graphtyn para analizar esta tarea antes de explorar ampliamente el repositorio."

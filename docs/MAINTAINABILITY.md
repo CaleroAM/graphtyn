@@ -43,6 +43,64 @@ planes de edición, el ranking y recorte de mensajes, y los handlers MCP por
 familia. Este baseline documenta la deuda y prohíbe crecimiento adicional; no
 afirma que esas responsabilidades ya estén separadas.
 
+La revisión de `0.11.0` registra 33 hotspots, ninguno nuevo. Sale del baseline
+`attach_source_evidence`, dividido en recopilación, ranking, selección de
+fragmentos y registro de cobertura. El paquete `lean` pasó a
+`graphtyn/core/lean_package.py`, fuera de `mcp_server.py`. Crecen con
+justificación explícita:
+
+- **Paquetes de lenguaje:** `tree_sitter_backend.parse_file` y `visit` (C/C++,
+  Ruby, Kotlin, Swift y Scala comparten un único recorrido) y
+  `ASTParser.scan_directory` (registro de paquetes, rationale e ignore rules).
+- **Planificación de intenciones:** `change_analyst.query_intent` y el módulo
+  (precisión por símbolo nombrado y capas de Rails).
+- **Servidor MCP:** el módulo, `evidence_result` (copia de fragmentos y
+  presupuesto explícito) y `run_mcp_server` (`--response-detail`).
+- **Memoria:** `history_import` y `SharedMemoryStore`, por la identidad
+  `claude`/`claude-code` y la captura de Claude Code.
+
+Después de esa revisión se hicieron dos extracciones:
+
+- **Recorrido de tree-sitter:** las tablas de tipos de nodo pasaron a
+  constantes de módulo, y las ramas de miembros, símbolos y llamadas a
+  `_member_facts`, `_symbol_fact` y `_call_facts`. `visit` sale del baseline y
+  `parse_file` baja de 409 a 224 líneas. Los grafos de Redis, fmt y Rails
+  resultan idénticos nodo a nodo.
+- **Consultas MCP incrementales:** el cálculo de deltas de `extends_context_id`
+  vive en `graphtyn/core/intent_delta.py`. `mcp_server.py` baja a 1.371 líneas y
+  `run_mcp_server` a 423.
+
+Queda pendiente repartir los handlers de memoria del MCP por familia.
+
+Después crecen, con revisión, `ASTParser.scan_directory` (+3 líneas: las
+llamadas Ruby sin paréntesis sólo se resuelven dentro del mismo lenguaje y sin
+ambigüedad) y el módulo `change_analyst` (+5: el desempate de intención a favor
+de `flow`). Las señales de ruta y paquete pasaron a `path_signals.py`, y el
+recorrido de tree-sitter se reparte en funciones auxiliares de ese módulo.
+
+El trabajo de recuperación del banco de tareas (`benchmarks/task_bank_2026-10-28/`)
+crece, con revisión, `change_analyst` (+18 líneas), `query_intent` (+16) y
+`mcp_server.py` (+2). En `query_intent` se añaden la exclusión de campos como
+anclas, la frecuencia de nombres y el bonus de término distintivo. En el
+servidor MCP, la retirada de la completitud cuando la evidencia es escasa. Las
+señales nuevas viven fuera: `retrieval_signals.py` (frecuencia de nombres,
+cadena de llamadas, límite de homónimos), `vocabulary.py` (glosario
+español→inglés) y `evidence_sufficiency.py`.
+
+La segunda ronda crece `change_analyst` (+8 líneas: el contexto de inyección
+de dependencias que exige el marcador `registr`) y `query_intent` (+3: las
+pistas de homónimos). Las pistas de dueño y firma (`HomonymHints`) y la cadena
+de llamadas de varios saltos viven en `retrieval_signals.py`.
+
+La composición de módulos Ruby crece, con revisión, `ASTParser.scan_directory`
+(+12 líneas: el ámbito léxico de `include` y el despacho de llamadas sin
+receptor y `super`) y `tree_sitter_backend.parse_file` (+3: el nodo `super`).
+La lógica vive en `graphtyn/core/ruby_mro.py` (`RubyAncestry`).
+
+El diagnóstico de selección crece `change_analyst` (+4 líneas) y `query_intent`
+(+3): seis puntos `trace_stage` y el orden de los símbolos nombrados según la
+petición. El trazado vive en `ranking_weights.trace_selection`.
+
 ## Escala
 
 SQLite con WAL es el backend local soportado. RF07 midió cinco repeticiones en

@@ -155,6 +155,17 @@ def test_mcp_intent_profile_exposes_context_and_topic_expansion(workspace):
     assert {tool["name"] for tool in response["result"]["tools"]} == {"graph_query_intent", "graph_validate_answer", "project_doctor", "memory_context", "memory_project_context", "memory_status", "memory_evidence_status", "memory_entities", "memory_entity", "memory_topics", "memory_topic", "memory_message_window", "memory_topic_update", "memory_node", "memory_relation_candidates", "memory_relation_review"}
 
 
+def test_mcp_query_profile_exposes_only_one_shot_retrieval(workspace):
+    runner = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'query')\n"
+    res = subprocess.run(
+        [sys.executable, "-c", runner % str(workspace)],
+        input=json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}) + "\n",
+        capture_output=True, text=True, timeout=60, cwd=str(workspace), env=dict(os.environ),
+    )
+    response = json.loads(res.stdout.strip())
+    assert [tool["name"] for tool in response["result"]["tools"]] == ["graph_query_intent"]
+
+
 def test_mcp_memory_profile_exposes_memory_lifecycle_without_legacy_graph_catalog(workspace):
     runner = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r), 'memory')\n"
     res = subprocess.run([sys.executable, "-c", runner % str(workspace)],
@@ -258,7 +269,7 @@ def test_mcp_query_intent_supports_one_shot_and_delta(workspace):
     (workspace / "flow.py").write_text("def run():\n    return helper()\n", encoding="utf-8")
     _, first_response = _mcp_call(workspace, [{"jsonrpc": "2.0", "id": 34, "method": "tools/call",
         "params": {"name": "graph_query_intent", "arguments": {
-            "request": "Explica el orden exacto del flujo helper", "limit": 8,
+            "request": "Explica el orden exacto del flujo helper", "limit": 8, "response_detail": "debug",
         }}}])
     first = json.loads(first_response[0]["result"]["content"][0]["text"])
     assert first["planner"] == "adaptive-intent-v2"
@@ -267,20 +278,20 @@ def test_mcp_query_intent_supports_one_shot_and_delta(workspace):
     assert first["source_evidence"]
     assert set(first["timing_ms"]) == {
         "server_startup", "load_index", "retrieval", "coverage", "render", "total",
-        "index_cache_hit",
+        "index_cache_hit", "preload_index",
     }
     # Delta must be exercised in the same MCP process because contexts are
     # intentionally session-local and never persisted to the repository.
     requests = [
-        {"jsonrpc": "2.0", "id": 35, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8}}},
+        {"jsonrpc": "2.0", "id": 35, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8, "response_detail": "debug"}}},
     ]
     _, seed_response = _mcp_call(workspace, requests)
     seed = json.loads(seed_response[0]["result"]["content"][0]["text"])
     # Use a direct server transcript with two calls so the second can extend
     # the first; obtain the deterministic context id from an equivalent call.
     _, responses = _mcp_call(workspace, [
-        {"jsonrpc": "2.0", "id": 36, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8}}},
-        {"jsonrpc": "2.0", "id": 37, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8, "extends_context_id": seed["context_id"]}}},
+        {"jsonrpc": "2.0", "id": 36, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8, "response_detail": "debug"}}},
+        {"jsonrpc": "2.0", "id": 37, "method": "tools/call", "params": {"name": "graph_query_intent", "arguments": {"request": "Explica el orden exacto del flujo helper", "limit": 8, "response_detail": "debug", "extends_context_id": seed["context_id"]}}},
     ])
     delta = json.loads(responses[1]["result"]["content"][0]["text"])
     assert delta["format"] == "evidence-delta-v1"
@@ -383,6 +394,7 @@ def test_mcp_query_intent_auto_adds_bounded_source_for_exact_flow(workspace):
         "jsonrpc": "2.0", "id": 39, "method": "tools/call",
         "params": {"name": "graph_query_intent", "arguments": {
             "request": "Explica el orden exacto y las condiciones de run", "intent": "flow", "limit": 8,
+            "response_detail": "debug",
         }},
     }])
     result = json.loads(responses[0]["result"]["content"][0]["text"])
@@ -399,6 +411,7 @@ def test_mcp_query_intent_overview_preserves_project_profile(workspace):
         "jsonrpc": "2.0", "id": 38, "method": "tools/call",
         "params": {"name": "graph_query_intent", "arguments": {
             "request": "Utiliza Graphtyn y dime de qué trata este repositorio", "limit": 10,
+            "response_detail": "debug",
         }},
     }])
     result = json.loads(responses[0]["result"]["content"][0]["text"])
@@ -650,6 +663,59 @@ def test_evidence_budget_applies_to_complete_serialized_payload():
     assert compact["source_evidence"][0]["text"]
 
 
+def test_evidence_budget_reopens_context_when_required_excerpt_is_dropped():
+    from graphtyn.mcp_server import evidence_result
+    node = {"id": "save", "name": "save", "kind": "function",
+            "file": "service.py", "line": 1}
+    compact = evidence_result({
+        "matched": [node], "nodes": [node], "links": [],
+        "complete_for": ["flow"], "missing": [], "do_not_expand": True,
+        "stopping": {"sufficient_evidence": True},
+        "source_coverage": {
+            "required_obligations": {"validation_gate": True, "transaction_entry": True},
+            "required_symbols": {}, "complete": True,
+        },
+        "source_evidence": [
+            {"symbol": "save", "file": "service.py", "start_line": 1, "end_line": 2,
+             "text": "v" * 1500, "covers": ["validation_gate"]},
+            {"symbol": "save", "file": "transactions.py", "start_line": 1, "end_line": 2,
+             "text": "t" * 1500, "covers": ["transaction_entry"]},
+        ],
+        "source_retrieval": {"enabled": True, "snippets": 2, "characters": 3000},
+    }, max_nodes=1, token_budget=800)
+
+    assert compact["source_coverage"]["complete"] is False
+    assert compact["missing"]
+    assert compact["complete_for"] == []
+    assert compact["do_not_expand"] is False
+    assert compact["stopping"]["sufficient_evidence"] is False
+
+
+def test_evidence_budget_reopens_context_when_required_excerpt_is_shortened():
+    from graphtyn.mcp_server import evidence_result
+    node = {"id": "save", "name": "save", "kind": "function",
+            "file": "service.py", "line": 1}
+    compact = evidence_result({
+        "matched": [node], "nodes": [node], "links": [],
+        "complete_for": ["flow"], "missing": [], "do_not_expand": True,
+        "stopping": {"sufficient_evidence": True},
+        "source_coverage": {
+            "required_obligations": {"transaction_entry": True},
+            "required_symbols": {}, "complete": True,
+        },
+        "source_evidence": [
+            {"symbol": "save", "file": "service.py", "start_line": 1, "end_line": 200,
+             "text": "x" * 5000, "covers": ["transaction_entry"]},
+        ],
+        "source_retrieval": {"enabled": True, "snippets": 1, "characters": 5000},
+    }, max_nodes=1, token_budget=800)
+
+    assert compact["source_evidence"]
+    assert compact["source_coverage"]["complete"] is False
+    assert compact["missing"] == ["transaction_entry"]
+    assert compact["do_not_expand"] is False
+
+
 def test_source_evidence_preserves_planner_obligations(tmp_path):
     from graphtyn.core.source_evidence import attach_source_evidence
     source = tmp_path / "loader.py"
@@ -693,7 +759,7 @@ def test_source_evidence_prioritizes_symbol_covering_more_obligations(tmp_path):
 
 
 def test_evidence_identities_ignore_local_alias_order():
-    from graphtyn.mcp_server import _evidence_identities
+    from graphtyn.core.intent_delta import _evidence_identities
     first = {
         "files": {"F1": "a.py", "F2": "b.py"},
         "entities": {

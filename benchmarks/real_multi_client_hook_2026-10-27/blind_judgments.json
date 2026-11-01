@@ -1,0 +1,379 @@
+{
+  "REfacbd6": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": true,
+      "multi": true,
+      "execute": true
+    },
+    "notes": ""
+  },
+  "RE751a2c": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": true,
+      "multi": true,
+      "execute": true
+    },
+    "notes": ""
+  },
+  "RE591d1c": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": true,
+      "multi": true,
+      "execute": true
+    },
+    "notes": ""
+  },
+  "RE0261a8": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": false,
+      "multi": true,
+      "execute": true
+    },
+    "notes": "Sólo cita rechazos de forma (inexistente, aridad, auth, ACL, CMD_NO_MULTI); ninguna rama operativa concreta (OOM, disco, réplicas, master down, loading, réplica de solo lectura)."
+  },
+  "RE9f001a": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": true,
+      "multi": true,
+      "execute": true
+    },
+    "notes": ""
+  },
+  "REcce7ea": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": true,
+      "multi": true,
+      "execute": true
+    },
+    "notes": ""
+  },
+  "RE17395c": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": true,
+      "multi": true,
+      "execute": true
+    },
+    "notes": ""
+  },
+  "RE1fb2ab": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": true,
+      "multi": true,
+      "execute": true
+    },
+    "notes": ""
+  },
+  "RE893931": {
+    "facts": {
+      "entry": true,
+      "lookup": true,
+      "shape_checks": true,
+      "auth": true,
+      "acl": true,
+      "operational_rejections": true,
+      "multi": true,
+      "execute": true
+    },
+    "notes": ""
+  },
+  "FM6defcd": {
+    "facts": {
+      "compile_string": true,
+      "compile_parse": true,
+      "runtime": true,
+      "public_format": true,
+      "arguments": true,
+      "vformat_buffer": true,
+      "runtime_parse": true,
+      "output_iterator": true
+    },
+    "notes": ""
+  },
+  "FMc3f754": {
+    "facts": {
+      "compile_string": true,
+      "compile_parse": true,
+      "runtime": true,
+      "public_format": true,
+      "arguments": true,
+      "vformat_buffer": true,
+      "runtime_parse": true,
+      "output_iterator": true
+    },
+    "notes": ""
+  },
+  "FM0a91d8": {
+    "facts": {
+      "compile_string": true,
+      "compile_parse": true,
+      "runtime": true,
+      "public_format": true,
+      "arguments": true,
+      "vformat_buffer": true,
+      "runtime_parse": true,
+      "output_iterator": true
+    },
+    "notes": ""
+  },
+  "RA4a0d92": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA093beb": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA7cbc40": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA15554d": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA3a5f3c": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": false,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": "Cita persistence.rb:360-364 sólo como rescate de RecordInvalid; no dice que Persistence#save llame a create_or_update (límite dudoso, se puntúa en contra)."
+  },
+  "RAe2b500": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RAa52c22": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RAdc58f0": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RAee78bc": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA98c798": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA87a6aa": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA9d2be1": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA52c557": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RAcbacae": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA37a540": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RA02be98": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  },
+  "RAc7a8b5": {
+    "facts": {
+      "transaction_wrapper": true,
+      "validation_layer": true,
+      "save_entry": true,
+      "callbacks": true,
+      "create_branch": true,
+      "create_record": true,
+      "adapter_insert": true,
+      "failure_semantics": true
+    },
+    "notes": ""
+  }
+}

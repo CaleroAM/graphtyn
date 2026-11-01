@@ -1,0 +1,1488 @@
+{
+  "schema_version": "1.0",
+  "sessions": 84,
+  "complete_sessions": 84,
+  "incomplete": [],
+  "cells": {
+    "redis/claude/graphtyn": {
+      "model": "claude-sonnet-5-5",
+      "tokens": {
+        "n": 5,
+        "mean": 61136.0,
+        "median": 61120,
+        "stdev": 284.6,
+        "min": 60817,
+        "max": 61589
+      },
+      "tokens_by_repetition": [
+        61120,
+        61589,
+        60817,
+        61007,
+        61147
+      ],
+      "quality": [
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "model_calls": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "seconds": {
+        "n": 5,
+        "mean": 22.4,
+        "median": 22.2,
+        "stdev": 1.5,
+        "min": 20.362,
+        "max": 24.346
+      },
+      "hook_injected": null
+    },
+    "redis/claude/graphtyn_hook": {
+      "model": "claude-sonnet-5-5",
+      "tokens": {
+        "n": 5,
+        "mean": 34157.6,
+        "median": 34141,
+        "stdev": 103.4,
+        "min": 34038,
+        "max": 34312
+      },
+      "tokens_by_repetition": [
+        34103,
+        34194,
+        34141,
+        34312,
+        34038
+      ],
+      "quality": [
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "tool_calls": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "model_calls": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "seconds": {
+        "n": 5,
+        "mean": 20.3,
+        "median": 19.1,
+        "stdev": 2.4,
+        "min": 18.42,
+        "max": 24.087
+      },
+      "hook_injected": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "redis/codex/baseline": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 171639.5,
+        "median": 171639.5,
+        "stdev": 54835.4,
+        "min": 132865,
+        "max": 210414
+      },
+      "tokens_by_repetition": [
+        132865,
+        210414
+      ],
+      "quality": [
+        7,
+        7
+      ],
+      "tool_calls": [
+        5,
+        7
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 26.7,
+        "median": 26.7,
+        "stdev": 5.7,
+        "min": 22.679,
+        "max": 30.711
+      },
+      "hook_injected": null
+    },
+    "redis/codex/graphtyn_full": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 29461.5,
+        "median": 29461.5,
+        "stdev": 352.8,
+        "min": 29212,
+        "max": 29711
+      },
+      "tokens_by_repetition": [
+        29212,
+        29711
+      ],
+      "quality": [
+        7,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 16.2,
+        "median": 16.2,
+        "stdev": 1.2,
+        "min": 15.39,
+        "max": 17.105
+      },
+      "hook_injected": null
+    },
+    "redis/codex/graphtyn": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 29331.0,
+        "median": 29331.0,
+        "stdev": 195.2,
+        "min": 29193,
+        "max": 29469
+      },
+      "tokens_by_repetition": [
+        29193,
+        29469
+      ],
+      "quality": [
+        8,
+        7
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 17.4,
+        "median": 17.4,
+        "stdev": 0.2,
+        "min": 17.218,
+        "max": 17.5
+      },
+      "hook_injected": null
+    },
+    "redis/codex/graphtyn_hook": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 12150.0,
+        "median": 12150.0,
+        "stdev": 2.8,
+        "min": 12148,
+        "max": 12152
+      },
+      "tokens_by_repetition": [
+        12148,
+        12152
+      ],
+      "quality": [
+        8,
+        7
+      ],
+      "tool_calls": [
+        0,
+        0
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 12.6,
+        "median": 12.6,
+        "stdev": 0.3,
+        "min": 12.434,
+        "max": 12.848
+      },
+      "hook_injected": [
+        true,
+        true
+      ]
+    },
+    "redis/opencode/graphtyn_full": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 64630.5,
+        "median": 64630.5,
+        "stdev": 1352.7,
+        "min": 63674,
+        "max": 65587
+      },
+      "tokens_by_repetition": [
+        63674,
+        65587
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        2,
+        2
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 30.5,
+        "median": 30.5,
+        "stdev": 7.3,
+        "min": 25.3,
+        "max": 35.626
+      },
+      "hook_injected": null
+    },
+    "redis/opencode/graphtyn": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 63913.0,
+        "median": 63913.0,
+        "stdev": 401.6,
+        "min": 63629,
+        "max": 64197
+      },
+      "tokens_by_repetition": [
+        64197,
+        63629
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        2,
+        2
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 30.4,
+        "median": 30.4,
+        "stdev": 1.5,
+        "min": 29.399,
+        "max": 31.463
+      },
+      "hook_injected": null
+    },
+    "redis/opencode/graphtyn_hook": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 34832.5,
+        "median": 34832.5,
+        "stdev": 225.6,
+        "min": 34673,
+        "max": 34992
+      },
+      "tokens_by_repetition": [
+        34673,
+        34992
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        0,
+        0
+      ],
+      "model_calls": [
+        1,
+        1
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 30.2,
+        "median": 30.2,
+        "stdev": 7.4,
+        "min": 24.926,
+        "max": 35.425
+      },
+      "hook_injected": [
+        true,
+        true
+      ]
+    },
+    "redis/antigravity/graphtyn_full": {
+      "model": "gemini-3.8-flash-high",
+      "tokens": {
+        "n": 2,
+        "mean": 48764.5,
+        "median": 48764.5,
+        "stdev": 652.7,
+        "min": 48303,
+        "max": 49226
+      },
+      "tokens_by_repetition": [
+        49226,
+        48303
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        3,
+        3
+      ],
+      "model_calls": [
+        4,
+        4
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 62.4,
+        "median": 62.4,
+        "stdev": 11.3,
+        "min": 54.331,
+        "max": 70.381
+      },
+      "hook_injected": null
+    },
+    "redis/antigravity/graphtyn": {
+      "model": "gemini-3.8-flash-high",
+      "tokens": {
+        "n": 2,
+        "mean": 46502.0,
+        "median": 46502.0,
+        "stdev": 1279.9,
+        "min": 45597,
+        "max": 47407
+      },
+      "tokens_by_repetition": [
+        45597,
+        47407
+      ],
+      "quality": [
+        7,
+        8
+      ],
+      "tool_calls": [
+        3,
+        3
+      ],
+      "model_calls": [
+        4,
+        4
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 59.7,
+        "median": 59.7,
+        "stdev": 6.0,
+        "min": 55.494,
+        "max": 63.963
+      },
+      "hook_injected": null
+    },
+    "fmt/claude/graphtyn": {
+      "model": "claude-sonnet-5-5",
+      "tokens": {
+        "n": 5,
+        "mean": 61752.4,
+        "median": 61740,
+        "stdev": 239.4,
+        "min": 61408,
+        "max": 61991
+      },
+      "tokens_by_repetition": [
+        61408,
+        61991,
+        61659,
+        61740,
+        61964
+      ],
+      "quality": [
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "model_calls": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "seconds": {
+        "n": 5,
+        "mean": 21.0,
+        "median": 21.2,
+        "stdev": 2.3,
+        "min": 18.395,
+        "max": 24.259
+      },
+      "hook_injected": null
+    },
+    "fmt/claude/graphtyn_hook": {
+      "model": "claude-sonnet-5-5",
+      "tokens": {
+        "n": 5,
+        "mean": 34420.0,
+        "median": 34460,
+        "stdev": 243.6,
+        "min": 34067,
+        "max": 34659
+      },
+      "tokens_by_repetition": [
+        34659,
+        34617,
+        34460,
+        34297,
+        34067
+      ],
+      "quality": [
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "tool_calls": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "model_calls": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "seconds": {
+        "n": 5,
+        "mean": 22.9,
+        "median": 22.0,
+        "stdev": 2.9,
+        "min": 19.934,
+        "max": 26.485
+      },
+      "hook_injected": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "fmt/codex/baseline": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 172200.0,
+        "median": 172200.0,
+        "stdev": 13879.1,
+        "min": 162386,
+        "max": 182014
+      },
+      "tokens_by_repetition": [
+        162386,
+        182014
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        5,
+        7
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 31.2,
+        "median": 31.2,
+        "stdev": 5.9,
+        "min": 27.038,
+        "max": 35.371
+      },
+      "hook_injected": null
+    },
+    "fmt/codex/graphtyn_full": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 29819.0,
+        "median": 29819.0,
+        "stdev": 15.6,
+        "min": 29808,
+        "max": 29830
+      },
+      "tokens_by_repetition": [
+        29830,
+        29808
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 14.5,
+        "median": 14.5,
+        "stdev": 1.8,
+        "min": 13.256,
+        "max": 15.808
+      },
+      "hook_injected": null
+    },
+    "fmt/codex/graphtyn": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 30095.0,
+        "median": 30095.0,
+        "stdev": 158.4,
+        "min": 29983,
+        "max": 30207
+      },
+      "tokens_by_repetition": [
+        29983,
+        30207
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 14.6,
+        "median": 14.6,
+        "stdev": 0.8,
+        "min": 14.106,
+        "max": 15.175
+      },
+      "hook_injected": null
+    },
+    "fmt/codex/graphtyn_hook": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 12425.0,
+        "median": 12425.0,
+        "stdev": 315.4,
+        "min": 12202,
+        "max": 12648
+      },
+      "tokens_by_repetition": [
+        12648,
+        12202
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        0,
+        0
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 11.6,
+        "median": 11.6,
+        "stdev": 1.9,
+        "min": 10.208,
+        "max": 12.906
+      },
+      "hook_injected": [
+        true,
+        true
+      ]
+    },
+    "fmt/opencode/graphtyn_full": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 65918.5,
+        "median": 65918.5,
+        "stdev": 371.2,
+        "min": 65656,
+        "max": 66181
+      },
+      "tokens_by_repetition": [
+        66181,
+        65656
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        2,
+        2
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 21.9,
+        "median": 21.9,
+        "stdev": 2.7,
+        "min": 20.037,
+        "max": 23.855
+      },
+      "hook_injected": null
+    },
+    "fmt/opencode/graphtyn": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 64377.0,
+        "median": 64377.0,
+        "stdev": 330.9,
+        "min": 64143,
+        "max": 64611
+      },
+      "tokens_by_repetition": [
+        64143,
+        64611
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        2,
+        2
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 22.8,
+        "median": 22.8,
+        "stdev": 4.0,
+        "min": 19.95,
+        "max": 25.565
+      },
+      "hook_injected": null
+    },
+    "fmt/opencode/graphtyn_hook": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 34525.0,
+        "median": 34525.0,
+        "stdev": 148.5,
+        "min": 34420,
+        "max": 34630
+      },
+      "tokens_by_repetition": [
+        34630,
+        34420
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        0,
+        0
+      ],
+      "model_calls": [
+        1,
+        1
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 31.3,
+        "median": 31.3,
+        "stdev": 0.0,
+        "min": 31.278,
+        "max": 31.316
+      },
+      "hook_injected": [
+        true,
+        true
+      ]
+    },
+    "fmt/antigravity/graphtyn_full": {
+      "model": "gemini-3.8-flash-high",
+      "tokens": {
+        "n": 2,
+        "mean": 50365.0,
+        "median": 50365.0,
+        "stdev": 421.4,
+        "min": 50067,
+        "max": 50663
+      },
+      "tokens_by_repetition": [
+        50663,
+        50067
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        3,
+        3
+      ],
+      "model_calls": [
+        4,
+        4
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 70.3,
+        "median": 70.3,
+        "stdev": 3.6,
+        "min": 67.716,
+        "max": 72.813
+      },
+      "hook_injected": null
+    },
+    "fmt/antigravity/graphtyn": {
+      "model": "gemini-3.8-flash-high",
+      "tokens": {
+        "n": 2,
+        "mean": 50254.5,
+        "median": 50254.5,
+        "stdev": 393.9,
+        "min": 49976,
+        "max": 50533
+      },
+      "tokens_by_repetition": [
+        49976,
+        50533
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        3,
+        3
+      ],
+      "model_calls": [
+        4,
+        4
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 82.3,
+        "median": 82.3,
+        "stdev": 3.0,
+        "min": 80.191,
+        "max": 84.5
+      },
+      "hook_injected": null
+    },
+    "rails/claude/graphtyn": {
+      "model": "claude-sonnet-5-5",
+      "tokens": {
+        "n": 5,
+        "mean": 60932.4,
+        "median": 60930,
+        "stdev": 250.7,
+        "min": 60627,
+        "max": 61288
+      },
+      "tokens_by_repetition": [
+        61032,
+        61288,
+        60627,
+        60930,
+        60785
+      ],
+      "quality": [
+        7,
+        7,
+        8,
+        8,
+        8
+      ],
+      "tool_calls": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "model_calls": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "seconds": {
+        "n": 5,
+        "mean": 27.1,
+        "median": 27.0,
+        "stdev": 2.2,
+        "min": 23.661,
+        "max": 29.042
+      },
+      "hook_injected": null
+    },
+    "rails/claude/graphtyn_hook": {
+      "model": "claude-sonnet-5-5",
+      "tokens": {
+        "n": 5,
+        "mean": 33303.8,
+        "median": 33291,
+        "stdev": 165.7,
+        "min": 33137,
+        "max": 33573
+      },
+      "tokens_by_repetition": [
+        33573,
+        33311,
+        33137,
+        33291,
+        33207
+      ],
+      "quality": [
+        8,
+        8,
+        7,
+        8,
+        7
+      ],
+      "tool_calls": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "model_calls": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "seconds": {
+        "n": 5,
+        "mean": 32.2,
+        "median": 31.3,
+        "stdev": 1.8,
+        "min": 30.569,
+        "max": 35.004
+      },
+      "hook_injected": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    "rails/codex/baseline": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 217558.5,
+        "median": 217558.5,
+        "stdev": 33189.5,
+        "min": 194090,
+        "max": 241027
+      },
+      "tokens_by_repetition": [
+        241027,
+        194090
+      ],
+      "quality": [
+        5,
+        7
+      ],
+      "tool_calls": [
+        8,
+        10
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 44.5,
+        "median": 44.5,
+        "stdev": 5.1,
+        "min": 40.941,
+        "max": 48.123
+      },
+      "hook_injected": null
+    },
+    "rails/codex/graphtyn_full": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 50719.0,
+        "median": 50719.0,
+        "stdev": 441.2,
+        "min": 50407,
+        "max": 51031
+      },
+      "tokens_by_repetition": [
+        50407,
+        51031
+      ],
+      "quality": [
+        5,
+        5
+      ],
+      "tool_calls": [
+        2,
+        2
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 23.2,
+        "median": 23.2,
+        "stdev": 0.3,
+        "min": 22.998,
+        "max": 23.364
+      },
+      "hook_injected": null
+    },
+    "rails/codex/graphtyn": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 50711.0,
+        "median": 50711.0,
+        "stdev": 551.5,
+        "min": 50321,
+        "max": 51101
+      },
+      "tokens_by_repetition": [
+        51101,
+        50321
+      ],
+      "quality": [
+        5,
+        5
+      ],
+      "tool_calls": [
+        2,
+        2
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 22.5,
+        "median": 22.5,
+        "stdev": 1.8,
+        "min": 21.243,
+        "max": 23.787
+      },
+      "hook_injected": null
+    },
+    "rails/codex/graphtyn_hook": {
+      "model": "gpt-5.6-luna",
+      "tokens": {
+        "n": 2,
+        "mean": 11751.0,
+        "median": 11751.0,
+        "stdev": 463.9,
+        "min": 11423,
+        "max": 12079
+      },
+      "tokens_by_repetition": [
+        12079,
+        11423
+      ],
+      "quality": [
+        5,
+        6
+      ],
+      "tool_calls": [
+        0,
+        0
+      ],
+      "model_calls": [
+        null,
+        null
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 20.9,
+        "median": 20.9,
+        "stdev": 1.1,
+        "min": 20.074,
+        "max": 21.642
+      },
+      "hook_injected": [
+        true,
+        true
+      ]
+    },
+    "rails/opencode/graphtyn_full": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 36224.5,
+        "median": 36224.5,
+        "stdev": 11052.8,
+        "min": 28409,
+        "max": 44040
+      },
+      "tokens_by_repetition": [
+        44040,
+        28409
+      ],
+      "quality": [
+        8,
+        7
+      ],
+      "tool_calls": [
+        2,
+        1
+      ],
+      "model_calls": [
+        3,
+        2
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 36.5,
+        "median": 36.5,
+        "stdev": 10.6,
+        "min": 29.035,
+        "max": 43.995
+      },
+      "hook_injected": null
+    },
+    "rails/opencode/graphtyn": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 25959.0,
+        "median": 25959.0,
+        "stdev": 353.6,
+        "min": 25709,
+        "max": 26209
+      },
+      "tokens_by_repetition": [
+        26209,
+        25709
+      ],
+      "quality": [
+        8,
+        7
+      ],
+      "tool_calls": [
+        1,
+        1
+      ],
+      "model_calls": [
+        2,
+        2
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 29.6,
+        "median": 29.6,
+        "stdev": 7.0,
+        "min": 24.64,
+        "max": 34.545
+      },
+      "hook_injected": null
+    },
+    "rails/opencode/graphtyn_hook": {
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "tokens": {
+        "n": 2,
+        "mean": 15667.5,
+        "median": 15667.5,
+        "stdev": 644.2,
+        "min": 15212,
+        "max": 16123
+      },
+      "tokens_by_repetition": [
+        16123,
+        15212
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        0,
+        0
+      ],
+      "model_calls": [
+        1,
+        1
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 33.5,
+        "median": 33.5,
+        "stdev": 5.0,
+        "min": 29.991,
+        "max": 36.999
+      },
+      "hook_injected": [
+        true,
+        true
+      ]
+    },
+    "rails/antigravity/graphtyn_full": {
+      "model": "gemini-3.8-flash-high",
+      "tokens": {
+        "n": 2,
+        "mean": 49100.5,
+        "median": 49100.5,
+        "stdev": 878.9,
+        "min": 48479,
+        "max": 49722
+      },
+      "tokens_by_repetition": [
+        49722,
+        48479
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        3,
+        3
+      ],
+      "model_calls": [
+        4,
+        4
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 68.9,
+        "median": 68.9,
+        "stdev": 0.3,
+        "min": 68.65,
+        "max": 69.124
+      },
+      "hook_injected": null
+    },
+    "rails/antigravity/graphtyn": {
+      "model": "gemini-3.8-flash-high",
+      "tokens": {
+        "n": 2,
+        "mean": 51149.5,
+        "median": 51149.5,
+        "stdev": 342.9,
+        "min": 50907,
+        "max": 51392
+      },
+      "tokens_by_repetition": [
+        50907,
+        51392
+      ],
+      "quality": [
+        8,
+        8
+      ],
+      "tool_calls": [
+        3,
+        3
+      ],
+      "model_calls": [
+        4,
+        4
+      ],
+      "seconds": {
+        "n": 2,
+        "mean": 90.9,
+        "median": 90.9,
+        "stdev": 4.6,
+        "min": 87.696,
+        "max": 94.196
+      },
+      "hook_injected": null
+    }
+  },
+  "references": {
+    "fmt/claude/baseline": {
+      "tokens": {
+        "n": 3,
+        "mean": 295890.3,
+        "median": 310168,
+        "stdev": 57133.5,
+        "min": 232972,
+        "max": 344531
+      },
+      "quality": [
+        8,
+        8,
+        8
+      ]
+    },
+    "rails/claude/baseline": {
+      "tokens": {
+        "n": 3,
+        "mean": 213901.7,
+        "median": 217576,
+        "stdev": 17136.5,
+        "min": 195226,
+        "max": 228903
+      },
+      "quality": [
+        6,
+        7,
+        7
+      ]
+    },
+    "redis/claude/baseline": {
+      "tokens": {
+        "n": 3,
+        "mean": 181883.3,
+        "median": 170359,
+        "stdev": 23291.2,
+        "min": 166601,
+        "max": 208690
+      },
+      "quality": [
+        8,
+        8,
+        8
+      ]
+    },
+    "fmt/claude/graphtyn_previous": {
+      "tokens": {
+        "n": 3,
+        "mean": 62933.3,
+        "median": 62933,
+        "stdev": 311.5,
+        "min": 62622,
+        "max": 63245
+      },
+      "quality": [
+        8,
+        8,
+        8
+      ]
+    },
+    "rails/claude/graphtyn_previous": {
+      "tokens": {
+        "n": 3,
+        "mean": 62733.0,
+        "median": 62701,
+        "stdev": 183.1,
+        "min": 62568,
+        "max": 62930
+      },
+      "quality": [
+        7,
+        8,
+        8
+      ]
+    },
+    "redis/claude/graphtyn_previous": {
+      "tokens": {
+        "n": 3,
+        "mean": 62855.7,
+        "median": 62900,
+        "stdev": 292.0,
+        "min": 62544,
+        "max": 63123
+      },
+      "quality": [
+        8,
+        8,
+        8
+      ]
+    },
+    "fmt/claude/graphtyn_lean_2026-10-26": {
+      "tokens": {
+        "n": 3,
+        "mean": 60306.0,
+        "median": 60388,
+        "stdev": 280.1,
+        "min": 59994,
+        "max": 60536
+      },
+      "quality": [
+        8,
+        8,
+        8
+      ]
+    },
+    "rails/claude/graphtyn_lean_2026-10-26": {
+      "tokens": {
+        "n": 3,
+        "mean": 60926.3,
+        "median": 60970,
+        "stdev": 100.9,
+        "min": 60811,
+        "max": 60998
+      },
+      "quality": [
+        7,
+        8,
+        8
+      ]
+    },
+    "redis/claude/graphtyn_lean_2026-10-26": {
+      "tokens": {
+        "n": 3,
+        "mean": 60620.3,
+        "median": 60561,
+        "stdev": 140.7,
+        "min": 60519,
+        "max": 60781
+      },
+      "quality": [
+        7,
+        7,
+        8
+      ]
+    },
+    "fmt/claude/graphtyn_hook_2026-10-26": {
+      "tokens": {
+        "n": 3,
+        "mean": 88500.0,
+        "median": 98645,
+        "stdev": 51443.3,
+        "min": 32740,
+        "max": 134115
+      },
+      "quality": [
+        8,
+        8,
+        8
+      ]
+    },
+    "rails/claude/graphtyn_hook_2026-10-26": {
+      "tokens": {
+        "n": 3,
+        "mean": 32927.3,
+        "median": 32926,
+        "stdev": 23.0,
+        "min": 32905,
+        "max": 32951
+      },
+      "quality": [
+        6,
+        8,
+        6
+      ]
+    },
+    "redis/claude/graphtyn_hook_2026-10-26": {
+      "tokens": {
+        "n": 3,
+        "mean": 33809.7,
+        "median": 33767,
+        "stdev": 224.1,
+        "min": 33610,
+        "max": 34052
+      },
+      "quality": [
+        8,
+        8,
+        7
+      ]
+    }
+  },
+  "comparison_warning": "Arms of one client are contemporaneous and counterbalanced. References are earlier sessions with the same task and Claude model.",
+  "raw_artifacts_preserved": true
+}

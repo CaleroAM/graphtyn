@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-27, antes de cualquier ejecución; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; ninguna tarea se usó para ajustar la recuperación",
+  "tasks": [
+    {
+      "id": "FMT_FLOAT_FLOW",
+      "request": "Explica cómo fmt escribe un número de coma flotante con especificaciones, por ejemplo fmt::format(\"{:.2f}\", 3.14159): el caso con localización, el signo y los valores no finitos (NaN e infinito), cuándo usa Dragonbox para el formato más corto, cómo trata hexfloat, cómo genera los dígitos con una precisión dada y cómo decide entre notación fija y exponencial. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "localization",
+          "any": [
+            "write_loc",
+            "localized"
+          ]
+        },
+        {
+          "id": "nonfinite",
+          "any": [
+            "write_nonfinite",
+            "isfinite"
+          ]
+        },
+        {
+          "id": "dragonbox",
+          "any": [
+            "to_decimal",
+            "dragonbox"
+          ]
+        },
+        {
+          "id": "hexfloat",
+          "any": [
+            "format_hexfloat"
+          ]
+        },
+        {
+          "id": "digits",
+          "any": [
+            "format_float"
+          ]
+        },
+        {
+          "id": "dragon",
+          "any": [
+            "format_dragon"
+          ]
+        },
+        {
+          "id": "fixed_exp",
+          "any": [
+            "do_write_float",
+            "use_fixed",
+            "write_fixed"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_FORMAT_TO_N_FLOW",
+      "request": "Explica cómo fmt::format_to_n escribe como máximo n caracteres: qué devuelve, cómo se prepara un búfer con límite, cómo el búfer cuenta los caracteres y descarta lo que excede el límite al vaciarse, la variante para punteros con su arreglo interno, y en qué se diferencia de fmt::formatted_size. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "result",
+          "any": [
+            "format_to_n_result"
+          ]
+        },
+        {
+          "id": "vformat_to_n",
+          "any": [
+            "vformat_to_n"
+          ]
+        },
+        {
+          "id": "traits",
+          "any": [
+            "fixed_buffer_traits"
+          ]
+        },
+        {
+          "id": "limit",
+          "any": [
+            "limit_ - count_",
+            "count_ += size",
+            "limit("
+          ]
+        },
+        {
+          "id": "iterator_buffer",
+          "any": [
+            "iterator_buffer"
+          ]
+        },
+        {
+          "id": "pointer_variant",
+          "any": [
+            "buffer_size = 256",
+            "data_[buffer_size]",
+            "iterator_buffer<T*, T, fixed_buffer_traits>"
+          ]
+        },
+        {
+          "id": "flush",
+          "any": [
+            "flush()"
+          ]
+        },
+        {
+          "id": "formatted_size",
+          "any": [
+            "counting_buffer"
+          ]
+        }
+      ]
+    }
+  ]
+}

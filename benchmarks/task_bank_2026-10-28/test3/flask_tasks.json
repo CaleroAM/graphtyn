@@ -1,0 +1,175 @@
+{
+ "schema_version": "1.0",
+ "frozen": "2026-10-29, tercer conjunto de prueba, congelado antes de implementar el presupuesto de flujo y las plazas reservadas para la cadena de llamadas; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; lua es un corpus nunca usado para ajustar",
+ "tasks": [
+  {
+   "id": "FLASK_RENDER_TEMPLATE_FLOW",
+   "request": "En el commit fijado de Flask, traza render_template: cómo se obtiene el entorno de plantillas, cómo el cargador busca la plantilla en la aplicación y en los blueprints, cómo se completa el contexto con los procesadores de contexto y qué señales se emiten antes y después de renderizar. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "select",
+     "any": [
+      "get_or_select_template"
+     ]
+    },
+    {
+     "id": "env",
+     "any": [
+      "create_jinja_environment",
+      "jinja_env"
+     ]
+    },
+    {
+     "id": "loader",
+     "any": [
+      "DispatchingJinjaLoader"
+     ]
+    },
+    {
+     "id": "iter",
+     "any": [
+      "_iter_loaders"
+     ]
+    },
+    {
+     "id": "render",
+     "any": [
+      "def _render"
+     ]
+    },
+    {
+     "id": "context",
+     "any": [
+      "update_template_context"
+     ]
+    },
+    {
+     "id": "processors",
+     "any": [
+      "template_context_processors"
+     ]
+    },
+    {
+     "id": "before",
+     "any": [
+      "before_render_template"
+     ]
+    },
+    {
+     "id": "after",
+     "any": [
+      "template_rendered"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "FLASK_JSONIFY_FLOW",
+   "request": "En el commit fijado de Flask, traza jsonify: qué proveedor JSON usa, cómo se combinan argumentos posicionales y con nombre, cómo se serializan fechas, decimales, dataclasses y objetos con __html__, cuándo se indenta la salida y cómo se construye la respuesta. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "provider",
+     "any": [
+      "DefaultJSONProvider"
+     ]
+    },
+    {
+     "id": "response",
+     "any": [
+      "def response"
+     ]
+    },
+    {
+     "id": "prepare",
+     "any": [
+      "_prepare_response_obj"
+     ]
+    },
+    {
+     "id": "dumps",
+     "any": [
+      "def dumps"
+     ]
+    },
+    {
+     "id": "default",
+     "any": [
+      "def _default"
+     ]
+    },
+    {
+     "id": "date",
+     "any": [
+      "http_date"
+     ]
+    },
+    {
+     "id": "indent",
+     "any": [
+      "compact"
+     ]
+    },
+    {
+     "id": "class",
+     "any": [
+      "response_class"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "FLASK_TEST_CLIENT_FLOW",
+   "request": "En el commit fijado de Flask, traza una petición hecha con app.test_client() dentro de un bloque with: cómo se crea el cliente, cómo se construye la petición y su entorno WSGI, cómo se conservan los contextos de la petición para inspeccionarlos después y cómo se cierran. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "client",
+     "any": [
+      "test_client_class"
+     ]
+    },
+    {
+     "id": "open",
+     "any": [
+      "def open"
+     ]
+    },
+    {
+     "id": "builder",
+     "any": [
+      "_request_from_builder_args"
+     ]
+    },
+    {
+     "id": "environ",
+     "any": [
+      "_copy_environ"
+     ]
+    },
+    {
+     "id": "env_builder",
+     "any": [
+      "EnvironBuilder"
+     ]
+    },
+    {
+     "id": "preserve",
+     "any": [
+      "preserve_context"
+     ]
+    },
+    {
+     "id": "contexts",
+     "any": [
+      "_new_contexts"
+     ]
+    },
+    {
+     "id": "stack",
+     "any": [
+      "_context_stack"
+     ]
+    }
+   ]
+  }
+ ]
+}

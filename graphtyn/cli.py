@@ -3,6 +3,7 @@ import sqlite3
 import sys
 import json
 import subprocess
+import shutil
 import urllib.request
 import time
 import re
@@ -31,10 +32,25 @@ from .core.agent_installer import install_agent, install_ci
 from .core.answer_validation import validate_answer
 from .core.ambiguity_review import ambiguity_queue, apply_decisions, save_decision
 from .core.change_report import render_change_report
-from .mcp_server import context_bundle, run_mcp_server
+from .mcp_server import context_bundle, get_workspace_graph, run_mcp_server
 from .core.console import configure_utf8_stdio
 
+# Exit codes shared by query, path and explain so agents and scripts can branch
+# without parsing output: 0 answered, 3 ambiguous name, 4 no match or route.
+EXIT_AMBIGUOUS = 3
+EXIT_NO_MATCH = 4
+
+
+def resolve_symbol(graph: dict, name: str) -> list[dict]:
+    """Return exact (case-insensitive) name matches, else substring matches."""
+    wanted = name.lower()
+    nodes = graph.get("nodes", [])
+    exact = [node for node in nodes if str(node.get("name") or "").lower() == wanted]
+    return exact or [node for node in nodes if wanted in str(node.get("name") or "").lower()]
+
+
 def bfs_path(graph: dict, start_sym: str, end_sym: str):
+    from collections import deque
     nodes = {n['id']: n for n in graph.get('nodes', [])}
     name_to_id = {}
     for n in graph.get('nodes', []):
@@ -52,10 +68,10 @@ def bfs_path(graph: dict, start_sym: str, end_sym: str):
         adj.setdefault(src, []).append(tgt)
         adj.setdefault(tgt, []).append(src)
 
-    queue = [[s_id]]
+    queue = deque([[s_id]])
     visited = {s_id}
     while queue:
-        path = queue.pop(0)
+        path = queue.popleft()
         curr = path[-1]
         if curr == e_id:
             return [nodes[nid]['name'] for nid in path]
@@ -64,6 +80,13 @@ def bfs_path(graph: dict, start_sym: str, end_sym: str):
                 visited.add(nxt)
                 queue.append(path + [nxt])
     return None
+
+
+def _print_candidates(name: str, matches: list[dict]) -> None:
+    print(f"'{name}' es ambiguo ({len(matches)} símbolos):", file=sys.stderr)
+    for node in matches[:10]:
+        print(f"  {node.get('name')} ({node.get('kind')}) {node.get('file', '')}:{node.get('line', '')}",
+              file=sys.stderr)
 
 
 def _install_openclaw_capture_service(installation_id: str, interval: float = 300) -> dict:
@@ -321,6 +344,14 @@ def _command_setup(args, root: Path, parser) -> None:
                                  "historical_imported": False,
                                  "continuous_capture_active": False}
         if memory_choice == "on":
+            if "claude" in agents:
+                # Claude Code's native capture path: a Stop hook per turn.
+                from .core.agent_installer import update_agent_manifest
+                from .core.claude_capture import install_claude_capture
+                hook = install_claude_capture(root)
+                update_agent_manifest(root, claude_capture={"enabled": True, "hook": "Stop",
+                                                            "settings": hook["settings"]})
+                configured["memory"]["claude_capture"] = hook
             if args.import_history:
                 discovered_rows = []
                 discovery_errors = []
@@ -528,14 +559,15 @@ def _command_reindex(args, root: Path, parser) -> None:
         print(json.dumps(verify_python_edits(root), ensure_ascii=False))
 
 def _command_query(args, root: Path, parser) -> None:
-    ast_p = ASTParser()
-    graph = ast_p.scan_directory(root)
+    graph = get_workspace_graph(root, ASTParser())
     q = args.query_text.lower()
     matches = [n for n in graph["nodes"] if q in n["name"].lower() or q in n.get("details", "").lower()]
     print(json.dumps({"query": args.query_text, "matches": matches}, indent=2))
+    if not matches:
+        raise SystemExit(EXIT_NO_MATCH)
 
 def _command_query_intent(args, root: Path, parser) -> None:
-    graph = ASTParser().scan_directory(root, respect_git=True)
+    graph = get_workspace_graph(root, ASTParser())
     from .core.source_evidence import attach_source_evidence
     result = query_intent(graph, args.request, args.intent, args.limit)
     result = attach_source_evidence(root, result, args.request, args.evidence_mode)
@@ -556,25 +588,37 @@ def _command_context(args, root: Path, parser) -> None:
     print(json.dumps(result, ensure_ascii=False))
 
 def _command_path(args, root: Path, parser) -> None:
-    ast_p = ASTParser()
-    graph = ast_p.scan_directory(root)
+    graph = get_workspace_graph(root, ASTParser())
+    for name in (args.start_symbol, args.end_symbol):
+        matches = resolve_symbol(graph, name)
+        if not matches:
+            print(f"No se encontró el símbolo '{name}'.")
+            raise SystemExit(EXIT_NO_MATCH)
+        if len({node.get("id") for node in matches}) > 1:
+            _print_candidates(name, matches)
+            raise SystemExit(EXIT_AMBIGUOUS)
     found_path = bfs_path(graph, args.start_symbol, args.end_symbol)
     if found_path:
         print(" -> ".join(found_path))
     else:
         print(f"No se encontró ruta entre '{args.start_symbol}' y '{args.end_symbol}'.")
+        raise SystemExit(EXIT_NO_MATCH)
 
 def _command_explain(args, root: Path, parser) -> None:
-    ast_p = ASTParser()
-    graph = ast_p.scan_directory(root)
-    matches = [n for n in graph["nodes"] if args.symbol.lower() in n["name"].lower()]
-    if matches:
-        target = matches[0]
-        print(f"📌 {target['name']} ({target.get('kind')})")
-        print(f"   Detalle: {target.get('details', 'Sin detalle')}")
-        print(f"   Conexiones: {target.get('degree', 0)}")
-    else:
+    graph = get_workspace_graph(root, ASTParser())
+    matches = resolve_symbol(graph, args.symbol)
+    if not matches:
         print(f"No se encontró el símbolo '{args.symbol}'.")
+        raise SystemExit(EXIT_NO_MATCH)
+    if len(matches) > 1:
+        _print_candidates(args.symbol, matches)
+        raise SystemExit(EXIT_AMBIGUOUS)
+    target = matches[0]
+    print(f"📌 {target['name']} ({target.get('kind')})")
+    print(f"   Detalle: {target.get('details', 'Sin detalle')}")
+    print(f"   Conexiones: {target.get('degree', 0)}")
+    for rationale in target.get("rationale", [])[:5]:
+        print(f"   Por qué: {rationale.get('text')} ({target.get('file')}:{rationale.get('line')})")
 
 def _command_diff(args, root: Path, parser) -> None:
     graph = ASTParser().scan_directory(root)
@@ -698,6 +742,94 @@ def _command_benchmark_graphify(args, root: Path, parser) -> None:
         Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
+def _command_prs(args, root: Path, parser) -> None:
+    from .core.pr_triage import render_markdown, triage
+    branches = list(args.branch)
+    if args.github:
+        listed = subprocess.run(["gh", "pr", "list", "--state", "open", "--limit", "30",
+                                 "--json", "number"], cwd=root, capture_output=True, text=True)
+        if listed.returncode != 0:
+            raise SystemExit(f"gh no pudo listar los PR: {listed.stderr.strip()[:300]}")
+        for item in json.loads(listed.stdout or "[]"):
+            ref = f"refs/graphtyn/pr/{int(item['number'])}"
+            fetched = subprocess.run(["git", "fetch", "--quiet", "origin", f"pull/{int(item['number'])}/head:{ref}"],
+                                     cwd=root, capture_output=True, text=True)
+            if fetched.returncode == 0:
+                branches.append(ref)
+    if len(branches) < 1:
+        raise SystemExit("Indica al menos una rama con --branch o usa --github")
+    result = triage(root, get_workspace_graph(root, ASTParser()), args.base, branches)
+    print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else render_markdown(result))
+    if any(pair["risk"] == "high" for pair in result["pairs"]):
+        raise SystemExit(2)
+
+def _command_claude_context(args, root: Path, parser, client: str = "claude") -> None:
+    from .core import prompt_context
+    name = f"graphtyn {client}-context"
+    if args.action == "hook":
+        # A hook must never break the user's turn: report on stderr and exit 0.
+        try:
+            payload = json.loads(sys.stdin.read() or "{}")
+            outcome = prompt_context.handle_prompt_hook(
+                payload if isinstance(payload, dict) else {}, root if args.path else None,
+                args.budget_seconds or prompt_context.DEFAULT_BUDGET_SECONDS,
+                part=max(1, args.part), parts=max(1, args.parts),
+                part_limit=(prompt_context.MAX_CONTEXT_CHARACTERS if client == "claude"
+                            else prompt_context.CODEX_MAX_CONTEXT_CHARACTERS))
+            output = prompt_context.hook_output(outcome)
+            if output:
+                print(output)
+            elif outcome.get("reason") in {"error", "time_budget_exceeded"}:
+                print(f"{name}: {outcome.get('error') or outcome['reason']}", file=sys.stderr)
+        except Exception as exc:  # noqa: BLE001 - surfaced only on stderr
+            print(f"{name}: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return
+    from .core.agent_installer import update_agent_manifest
+    installed, install, uninstall = {
+        "claude": (prompt_context.prompt_hook_installed, prompt_context.install_prompt_hook,
+                   prompt_context.uninstall_prompt_hook),
+        "codex": (prompt_context.codex_prompt_hook_installed, prompt_context.install_codex_prompt_hook,
+                  prompt_context.uninstall_codex_prompt_hook),
+        "opencode": (prompt_context.opencode_prompt_plugin_installed,
+                     lambda target: prompt_context.install_opencode_prompt_plugin(
+                         target, shutil.which("graphtyn") or "graphtyn"),
+                     prompt_context.uninstall_opencode_prompt_plugin),
+    }[client]
+    manifest_key = f"{client}_context"
+    if args.action == "status":
+        result = {"ok": True, "installed": installed(root), "index": prompt_context._index_path(root).is_file()}
+    elif args.action == "install":
+        if not args.consent:
+            label = {"claude": "Claude Code", "codex": "Codex", "opencode": "OpenCode"}[client]
+            raise SystemExit(f"El hook de contexto de {label} requiere --consent explícito")
+        result = install(root)
+        update_agent_manifest(root, **{manifest_key: {
+            "enabled": True, "hook": "UserPromptSubmit",
+            "settings": result.get("settings") or result.get("hooks_file") or result.get("plugin")}})
+        if not prompt_context._index_path(root).is_file():
+            result["warning"] = "Sin índice: ejecuta 'graphtyn reindex' o el hook no añadirá contexto"
+    else:
+        result = uninstall(root)
+        update_agent_manifest(root, **{manifest_key: {"enabled": False}})
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
+def _command_codex_context(args, root: Path, parser) -> None:
+    _command_claude_context(args, root, parser, client="codex")
+
+def _command_opencode_context(args, root: Path, parser) -> None:
+    _command_claude_context(args, root, parser, client="opencode")
+
+def _command_export_html(args, root: Path, parser) -> None:
+    from .core.html_export import render_html
+    out_path = (root / args.output).resolve()
+    try:
+        out_path.relative_to(root)
+    except ValueError:
+        raise SystemExit("El HTML debe escribirse dentro del proyecto")
+    graph = get_workspace_graph(root, ASTParser())
+    out_path.write_text(render_html(graph, root.name, args.node_limit), encoding="utf-8")
+    print(f"✓ Grafo HTML autocontenido generado en: {out_path}")
+
 def _command_export_md(args, root: Path, parser) -> None:
     ast_p = ASTParser()
     graph = ast_p.scan_directory(root)
@@ -720,7 +852,7 @@ def _command_export_md(args, root: Path, parser) -> None:
     print(f"✓ Mapa de arquitectura exportado exitosamente en: {out_path}")
 
 def _command_report(args, root: Path, parser) -> None:
-    graph = ASTParser().scan_directory(root, respect_git=True)
+    graph = get_workspace_graph(root, ASTParser())
     comparison = Path(args.graphify_report).resolve() if args.graphify_report else None
     report, metrics = render_report(root, graph, comparison)
     out_path = (root / args.output).resolve()
@@ -795,7 +927,8 @@ def _command_timeline(args, root: Path, parser) -> None:
             print(f"  [{ev['id']}] {ev['action_type'].upper()} — {ev['summary']}")
 
 def _command_mcp(args, root: Path, parser) -> None:
-    run_mcp_server(root, args.tool_profile)
+    run_mcp_server(root, args.tool_profile, preload_index=args.preload_index,
+                   response_detail=args.response_detail)
 
 def _command_serve(args, root: Path, parser) -> None:
     import uvicorn
@@ -826,23 +959,53 @@ def _command_gitignore(args, root: Path, parser) -> None:
     print(f"✓ .gitignore por proyecto: {state} para {root}")
     print("  Reindexa para aplicar: graphtyn reindex --path .")
 
+_HOOK_START = "# BEGIN GRAPHTYN REINDEX"
+_HOOK_END = "# END GRAPHTYN REINDEX"
+# post-checkout receives "<old> <new> <flag>"; flag=1 is a branch checkout,
+# flag=0 a file checkout that does not change the indexed revision.
+_GIT_HOOKS = {
+    "post-commit": "",
+    "post-checkout": '[ "$3" = "1" ] || exit 0\n',
+    "post-merge": "",
+}
+
+
 def _command_hook(args, root: Path, parser) -> None:
-    hook_path = root / ".git" / "hooks" / "post-commit"
+    hooks_dir = root / ".git" / "hooks"
+    managed = re.compile(rf"\n?{re.escape(_HOOK_START)}\n.*?{re.escape(_HOOK_END)}\n?", re.S)
     if args.action == "install":
-        hook_path.parent.mkdir(parents=True, exist_ok=True)
-        hook_script = (
-            "#!/bin/sh\n"
-            "# Graphtyn: reindexado incremental automatico post-commit (AST + IA local)\n"
-            f"( nohup graphtyn reindex --path '{root}' --engine ast_local_llm > /dev/null 2>&1 & ) || true\n"
-        )
-        hook_path.write_text(hook_script, encoding="utf-8")
-        hook_path.chmod(0o755)
-        print(f"✓ Hook post-commit instalado en {hook_path}")
-        print("  Cada commit lanzará un reindexado incremental en background (solo nodos cambiados).")
+        hooks_dir.mkdir(parents=True, exist_ok=True)
+        for name, guard in _GIT_HOOKS.items():
+            hook_path = hooks_dir / name
+            current = hook_path.read_text(encoding="utf-8") if hook_path.exists() else "#!/bin/sh\n"
+            current = managed.sub("\n", current).rstrip("\n") + "\n"
+            # A subshell keeps the guard's `exit` from ending the user's own hook.
+            block = (f"{_HOOK_START}\n# Graphtyn: reindexado incremental en background (sólo nodos cambiados)\n"
+                     f"( {guard.strip() + '; ' if guard else ''}"
+                     f"nohup graphtyn reindex --path '{root}' --engine ast_local_llm > /dev/null 2>&1 & ) || true\n"
+                     f"{_HOOK_END}\n")
+            hook_path.write_text(current + block, encoding="utf-8")
+            hook_path.chmod(0o755)
+        print(f"✓ Hooks {', '.join(_GIT_HOOKS)} instalados en {hooks_dir}")
+        print("  Commits, cambios de rama y merges lanzan un reindexado incremental en background.")
     else:
-        if hook_path.exists() and "Graphtyn" in hook_path.read_text(encoding="utf-8"):
-            hook_path.unlink()
-            print(f"✓ Hook post-commit de Graphtyn eliminado")
+        removed = []
+        for name in _GIT_HOOKS:
+            hook_path = hooks_dir / name
+            if not hook_path.exists():
+                continue
+            text = hook_path.read_text(encoding="utf-8")
+            legacy = "Graphtyn" in text and _HOOK_START not in text and text.count("\n") <= 3
+            updated = "" if legacy else managed.sub("\n", text)
+            if updated == text:
+                continue
+            if updated.strip() in {"", "#!/bin/sh"}:
+                hook_path.unlink()
+            else:
+                hook_path.write_text(updated.rstrip("\n") + "\n", encoding="utf-8")
+            removed.append(name)
+        if removed:
+            print(f"✓ Hooks de Graphtyn eliminados: {', '.join(removed)}")
         else:
             print("✗ No hay hook de Graphtyn instalado en este repositorio.")
 
@@ -883,6 +1046,11 @@ def main():
         'agent-grade': _command_agent_grade,
         'benchmark-graphify': _command_benchmark_graphify,
         'export-md': _command_export_md,
+        'export-html': _command_export_html,
+        'claude-context': _command_claude_context,
+        'codex-context': _command_codex_context,
+        'opencode-context': _command_opencode_context,
+        'prs': _command_prs,
         'report': _command_report,
         'global': _command_global,
         'memory': _command_memory,

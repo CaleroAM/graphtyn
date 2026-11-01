@@ -163,7 +163,9 @@ _OBLIGATION_PATTERNS: dict[str, tuple[tuple[str, ...], re.Pattern[str]]] = {
 def _memory_query_obligations(query: str) -> list[str]:
     normalized = _message_search_text(query)
     return [name for name, (cues, _pattern) in _OBLIGATION_PATTERNS.items()
-            if any(_message_search_text(cue) in normalized for cue in cues)]
+            if any(re.search(
+                rf"(?<!\w){re.escape(_message_search_text(cue))}(?!\w)", normalized,
+            ) for cue in cues)]
 
 
 def _covered_obligations(content: str, requested: list[str]) -> list[str]:
@@ -3158,10 +3160,17 @@ class SharedMemoryStore(TopicMemoryMixin):
                 "memory_space": {key: self.memory_scope()[key] for key in ("space_type", "agent_ids", "restricted", "configured")},
                 "capture_watchers": [*watchers, *sync_watchers], "sync_watchers": sync_watchers,
                 "continuous_capture_active": any(w["active"] for w in [*watchers, *sync_watchers]),
+                "client_capture_hooks": self._client_capture_hooks(),
                 "last_context_retrieval": last_context_retrieval,
                 "embedding_provider": self._provider(), "telemetry_events": telemetry_events,
                 "topic_enrichment": enrichment,
                 "telemetry": self.telemetry_summary(agent_ids=authorized_agents)}
+
+    def _client_capture_hooks(self) -> list[dict[str, Any]]:
+        """Clients whose own hooks capture each turn (no MCP ingestion needed)."""
+        from .claude_capture import capture_enabled
+        return ([{"client": "claude", "hook": "Stop", "enabled": True}]
+                if capture_enabled(self.workspace) else [])
 
     def attribution_graph(self, requester_agent: str | None = None, limit: int = 300,
                           agent_ids=None) -> dict[str, Any]:

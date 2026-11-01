@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Repetir el primer conjunto no visto con la regla de parada dirigida.",
+  "repository": {
+    "name": "fmtlib/fmt",
+    "url": "https://github.com/fmtlib/fmt",
+    "commit": "0fc31633e7d53ac895ae0a688b83b7d44f0b0c1f"
+  },
+  "design": {
+    "clients": [
+      "claude",
+      "codex"
+    ],
+    "tasks": [
+      "FMT_INT_SPEC_FLOW"
+    ],
+    "arms_by_client": {
+      "claude": [
+        "graphtyn_hook"
+      ],
+      "codex": [
+        "graphtyn",
+        "graphtyn_hook"
+      ]
+    },
+    "repetitions_by_client": {
+      "claude": 1,
+      "codex": 1
+    },
+    "grading": "Rúbrica literal congelada en a4d5aa8."
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "opencode_step_finish_semantics": "per-step",
+    "fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "cache_write_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "provider_cost",
+      "wall_seconds"
+    ]
+  },
+  "authorization": {
+    "source": "El usuario pidió resolver los puntos pendientes de generalización (2026-10-27).",
+    "total_token_ceiling": null
+  },
+  "client_config": {
+    "models": {
+      "claude": "claude-sonnet-5-5",
+      "codex": "gpt-5.6-luna",
+      "opencode": "opencode/deepseek-v4.1-flash-free",
+      "antigravity": "gemini-3.8-flash-high"
+    },
+    "claude": "--strict-mcp-config; hook: --settings con dos hooks UserPromptSubmit e instrucciones del brazo por --append-system-prompt",
+    "codex": "--ignore-user-config; MCP por -c; hook: -c hooks.UserPromptSubmit inline con additionalContextLimit=8000 y --dangerously-bypass-hook-trust; instrucciones del brazo hook por -c developer_instructions",
+    "opencode": "OPENCODE_CONFIG_CONTENT; sin --pure en los tres brazos (los plugins de proyecto llevan el hook); hook: .opencode/plugins/graphtyn-context.js (chat.message); instrucciones del brazo hook por config.instructions",
+    "antigravity": "agy mcp add por sesión (serializado); sin mecanismo de hook",
+    "codex_model_note": "gpt-6-astra (ejecuciones del 20-21 oct) ya no está disponible con esta cuenta ChatGPT; se usa el modelo por defecto del usuario y se añade un brazo baseline contemporáneo."
+  },
+  "source_protocol": "benchmarks/real_c_cpp_agents_2026-10-20/redis_protocol.json",
+  "previous_runs": [
+    "benchmarks/real_claude_agents_2026-10-25",
+    "benchmarks/real_claude_agents_postfix_2026-10-25",
+    "benchmarks/real_claude_agents_reps_2026-10-25",
+    "benchmarks/real_claude_agents_graphify_2026-10-26",
+    "real_claude_agents_lean_hook_2026-10-26"
+  ],
+  "stop_rule": "targeted"
+}

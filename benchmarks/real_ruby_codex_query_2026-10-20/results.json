@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "runs": 2,
+  "complete_runs": 2,
+  "incomplete_runs": 0,
+  "pairs": [
+    {
+      "client": "codex",
+      "model": "gpt-6-astra",
+      "baseline": {
+        "status": "complete",
+        "tokens": 192172,
+        "technical_tokens_including_cache": 192172,
+        "seconds": 94.515,
+        "quality": 8,
+        "task_complete": true
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 47919,
+        "technical_tokens_including_cache": 47919,
+        "seconds": 37.709,
+        "quality": 8,
+        "task_complete": false,
+        "index_seconds": 177.762,
+        "first_use_seconds": 215.471
+      },
+      "quality_total": 8,
+      "quality_comparable": false,
+      "token_delta_percent": null,
+      "technical_token_delta_percent": null,
+      "component_deltas_percent": {
+        "input_tokens": null,
+        "cached_input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null
+      },
+      "session_time_delta_percent": null,
+      "first_use_time_delta_percent": null
+    }
+  ],
+  "aggregation_warning": "Do not pool token totals across clients or models.",
+  "monetary_warning": "Provider cost is zero only for the free OpenCode model and unavailable for the other clients.",
+  "raw_artifacts_preserved": true
+}

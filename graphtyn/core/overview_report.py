@@ -238,6 +238,23 @@ def render_report(root: Path, graph: dict, graphify_report: Path | None = None) 
         lines.append(f"- **{risk['signal']}** ({risk['level']}): {detail or ''} {risk.get('note', '')}".rstrip())
     lines.extend(["", "## Key symbols"])
     lines.extend(f"- `{item}`" for item in profile.get("key_symbols", []))
+    from .communities import analyze_communities
+    structure = analyze_communities(graph)
+    lines.extend(["", f"## Communities ({structure['community_count']} · {structure['algorithm']})"])
+    lines.extend(f"- **{item['label']}** — {item['files']} archivos, {item['internal_relations']} relaciones internas"
+                 + (f"; centrales: {', '.join(f'`{name}`' for name in item['central_symbols'])}"
+                    if item["central_symbols"] else "")
+                 for item in structure["communities"])
+    lines.extend(["", "## God nodes"])
+    lines.extend(f"- `{row['name']}` ({row['kind']}) `{row['file']}:{row['line']}` — {row['degree']} relaciones"
+                 for row in structure["god_nodes"])
+    lines.extend(["", "## Surprising connections"])
+    lines.extend(f"- `{item['from']}` ↔ `{item['to']}` — {item['relations']} relaciones "
+                 f"({' / '.join(item['communities'])})" for item in structure["surprising_connections"])
+    if not structure["surprising_connections"]:
+        lines.append("- Ninguna relación une directorios no relacionados.")
+    lines.extend(["", "## Suggested questions"])
+    lines.extend(f"- {question}" for question in structure["suggested_questions"])
     base = "\n".join(lines).rstrip() + "\n"
     source_chars = sum(len(_safe_text(Path(root), path)) for path in profile.get("read_first", []))
     metrics = {"estimated_tokens": len(base.encode("utf-8")) // 4,

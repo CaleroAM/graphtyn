@@ -6,6 +6,7 @@ import json
 import os
 import re
 import signal
+import sys
 import sqlite3
 import threading
 import time
@@ -630,6 +631,41 @@ def _memory_sync(args, root: Path, parser) -> None:
     else:
         print(json.dumps(_memory_sync_once(args), ensure_ascii=False, indent=2))
 
+def _memory_claude_hook(args, root: Path, parser) -> None:
+    from .core.claude_capture import handle_stop_hook, run_capture_worker
+    if args.worker:
+        result = run_capture_worker(root, args.transcript)
+        print(json.dumps(_sync_cycle_log_summary(result), ensure_ascii=False,
+                         separators=(",", ":")), flush=True)
+        return
+    # A hook must never break the user's Claude Code turn: report and exit 0.
+    try:
+        payload = json.loads(sys.stdin.read() or "{}")
+        handle_stop_hook(payload if isinstance(payload, dict) else {})
+    except Exception as exc:  # noqa: BLE001 - surfaced only on stderr
+        print(f"graphtyn claude-hook: {type(exc).__name__}: {exc}", file=sys.stderr)
+
+def _memory_claude_capture(args, root: Path, parser) -> None:
+    from .core.agent_installer import update_agent_manifest
+    from .core.claude_capture import (capture_enabled, install_claude_capture,
+                                      uninstall_claude_capture)
+    if args.action == "status":
+        result = {"ok": True, "enabled": capture_enabled(root)}
+    elif args.action == "install":
+        if not args.consent:
+            raise SystemExit("La captura de Claude Code requiere --consent explícito")
+        from .core.memory_scope import ensure_project_memory_scope
+        from .core.project_integrations import ensure_project_identity
+        ensure_project_identity(root)
+        ensure_project_memory_scope(root, agent_ids=["claude"])
+        result = install_claude_capture(root)
+        update_agent_manifest(root, claude_capture={"enabled": True, "hook": "Stop",
+                                                    "settings": result["settings"]})
+    else:
+        result = uninstall_claude_capture(root)
+        update_agent_manifest(root, claude_capture={"enabled": False})
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
 def _handle_memory_command(args, root: Path, parser) -> None:
     handlers = {
         "brain-init": _memory_brain_init, "consolidate": _memory_consolidate,
@@ -638,5 +674,6 @@ def _handle_memory_command(args, root: Path, parser) -> None:
         "projects": _memory_projects, "sync": _memory_sync,
         "sources": _memory_sources, "agents": _memory_agents,
         "save": _memory_save, "reflect": _memory_reflect,
+        "claude-hook": _memory_claude_hook, "claude-capture": _memory_claude_capture,
     }
     handlers.get(args.memory_action, _memory_store_action)(args, root, parser)

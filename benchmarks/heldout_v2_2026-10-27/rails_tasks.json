@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-27, antes de cualquier ejecución; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; ninguna tarea se usó para ajustar la recuperación",
+  "tasks": [
+    {
+      "id": "RAILS_UPDATE_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza qué ocurre cuando se llama a update(attributes) sobre un registro persistido de ActiveRecord: la transacción y la asignación de atributos, cómo save llega a la rama de actualización, cómo se calculan los atributos que se escriben con actualizaciones parciales, la marca de tiempo de actualización, el bloqueo optimista, la construcción del UPDATE y la llamada al adaptador, y qué ocurre si no hay cambios. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "assign",
+          "any": [
+            "assign_attributes"
+          ]
+        },
+        {
+          "id": "update_branch",
+          "any": [
+            "_update_record"
+          ]
+        },
+        {
+          "id": "partial",
+          "any": [
+            "attribute_names_for_partial_updates",
+            "changed_attribute_names_to_save",
+            "partial_updates?"
+          ]
+        },
+        {
+          "id": "timestamps",
+          "any": [
+            "record_update_timestamps",
+            "timestamp_attributes_for_update_in_model",
+            "should_record_timestamps?"
+          ]
+        },
+        {
+          "id": "locking",
+          "any": [
+            "locking_column",
+            "StaleObjectError"
+          ]
+        },
+        {
+          "id": "update_row",
+          "any": [
+            "_update_row"
+          ]
+        },
+        {
+          "id": "update_manager",
+          "any": [
+            "_build_update_manager",
+            "c.update(",
+            "update_with_result"
+          ]
+        },
+        {
+          "id": "no_changes",
+          "any": [
+            "attribute_names.empty?",
+            "affected_rows = 0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_FIND_FLOW",
+      "request": "En el commit fijado de Ruby on Rails, traza qué ocurre al llamar a Post.find(id) con un único id: cuándo se usa el camino rápido con caché de sentencias y cuándo se delega a la implementación general de la relación, cómo se construye y reutiliza la sentencia en caché con parámetros enlazados, cómo se ejecuta y qué devuelve, y qué excepción se lanza si el registro no existe. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "fast_path_guard",
+          "any": [
+            "scope_attributes?",
+            "ids.length == 1"
+          ]
+        },
+        {
+          "id": "unsupported",
+          "any": [
+            "unsupported_value?"
+          ]
+        },
+        {
+          "id": "cached_find_by",
+          "any": [
+            "cached_find_by"
+          ]
+        },
+        {
+          "id": "statement_cache",
+          "any": [
+            "cached_find_by_statement",
+            "StatementCache"
+          ]
+        },
+        {
+          "id": "bind",
+          "any": [
+            "params.bind"
+          ]
+        },
+        {
+          "id": "where_limit",
+          "any": [
+            "limit(1)",
+            "where(wheres)"
+          ]
+        },
+        {
+          "id": "execute",
+          "any": [
+            "statement.execute"
+          ]
+        },
+        {
+          "id": "not_found",
+          "any": [
+            "RecordNotFound"
+          ]
+        },
+        {
+          "id": "relation_fallback",
+          "any": [
+            "finder_methods.rb",
+            "find_with_ids",
+            "find_one"
+          ]
+        }
+      ]
+    }
+  ]
+}

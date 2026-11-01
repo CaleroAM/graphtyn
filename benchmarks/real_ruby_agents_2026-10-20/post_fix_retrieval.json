@@ -1,0 +1,450 @@
+{
+  "request": "En el commit fijado de Ruby on Rails, traza el flujo exacto cuando ActiveRecord::Persistence#save persiste un registro nuevo: save, create_or_update, _create_record, _insert_record y la llamada final al adaptador. Explica dónde intervienen validaciones, callbacks y transacciones, qué ocurre si una etapa aborta o falla, y cita archivo:línea para cada paso.",
+  "intent": "flow",
+  "requested_obligations": [
+    "validations",
+    "callbacks",
+    "transactions",
+    "persistence_adapter",
+    "failure_semantics",
+    "order_and_control_flow",
+    "conditions_and_branches"
+  ],
+  "obligation_evidence": {
+    "validations": [
+      "N5"
+    ],
+    "callbacks": [
+      "N9"
+    ],
+    "transactions": [
+      "N10"
+    ],
+    "persistence_adapter": [
+      "N6",
+      "N7"
+    ],
+    "failure_semantics": [
+      "N10",
+      "N2"
+    ]
+  },
+  "complete_for": [
+    "flow",
+    "validations",
+    "callbacks",
+    "transactions",
+    "persistence_adapter",
+    "failure_semantics",
+    "order_and_control_flow",
+    "conditions_and_branches"
+  ],
+  "missing": [],
+  "do_not_expand": true,
+  "guidance": "Answer now from ops and relations. Cite aliases. Do not call another graph tool when do_not_expand=true. Answer from relations, operations and exact source excerpts. Cite file:line. Use excerpt order for conditions and control flow; do not call another tool.",
+  "planner": "adaptive-intent-v2",
+  "budget": {
+    "requested_ceiling": 10,
+    "max_nodes": 10,
+    "selected_nodes": 10,
+    "complexity": 3
+  },
+  "stopping": {
+    "sufficient_evidence": true,
+    "reason": "relevant exact or semantic anchor selected"
+  },
+  "validation": {
+    "ok": true,
+    "nodes": 10,
+    "relations": 2,
+    "located_relations": 2,
+    "ambiguous_relations": 0,
+    "dangling_nodes": [],
+    "dangling_links": [],
+    "missing_node_locations": [],
+    "policy": "AMBIGUOUS relations may be shown but must not be asserted as fact"
+  },
+  "evidence_mode": "precision",
+  "source_evidence": [
+    {
+      "symbol": "with_transaction_returning_status",
+      "file": "activerecord/lib/active_record/transactions.rb",
+      "start_line": 430,
+      "end_line": 447,
+      "text": "430:     def with_transaction_returning_status # :nodoc:\n431:       self.class.with_connection do |connection|\n432:         connection.pool.with_pool_transaction_isolation_level(ActiveRecord.default_transaction_isolation_level, connection.transaction_open?) do\n433:           status = nil\n434:           ensure_finalize = !connection.transaction_open?\n435: \n436:           implicit_persistence_transaction(connection) do\n437:             add_to_transaction(ensure_finalize || has_transactional_callbacks?)\n438:             remember_transaction_record_state\n439: \n440:             status = yield\n441:             raise ActiveRecord::Rollback unless status\n442:           end\n443:           @_last_transaction_return_status = status\n444:           status\n445:         end\n446:       end\n447:     end"
+    },
+    {
+      "symbol": "create_or_update",
+      "file": "activerecord/lib/active_record/callbacks.rb",
+      "start_line": 478,
+      "end_line": 480,
+      "text": "478:     def create_or_update(**)\n479:       _run_save_callbacks { super }\n480:     end"
+    },
+    {
+      "symbol": "_insert_record",
+      "file": "activerecord/lib/active_record/persistence.rb",
+      "start_line": 203,
+      "end_line": 219,
+      "text": "203:       def _insert_record(connection, values, returning) # :nodoc:\n204:         primary_key = self.primary_key\n205: \n206:         if prefetch_primary_key? && primary_key\n207:           values[primary_key] ||= _default_attributes[primary_key].with_cast_value(next_sequence_value)\n208:         end\n209: \n210:         im = Arel::InsertManager.new(arel_table)\n211: \n212:         if values.empty?\n213:           im.insert(connection.empty_insert_statement_value(primary_key))\n214:         else\n215:           im.insert(values.transform_keys { |name| arel_table[name] })\n216:         end\n217: \n218:         connection.insert(im, \"#{self} Create\", returning: returning)\n219:       end"
+    }
+  ],
+  "source_retrieval": {
+    "enabled": true,
+    "mode": "precision",
+    "snippets": 3,
+    "characters": 1565,
+    "max_snippets": 3,
+    "line_budget_per_symbol": 120,
+    "scope": "only graph-selected symbol bodies"
+  },
+  "format": "evidence-v1",
+  "files": {
+    "F1": "activerecord/lib/active_record/persistence.rb",
+    "F2": "activerecord/lib/active_record/associations/collection_association.rb",
+    "F3": "activerecord/lib/active_record/validations.rb",
+    "F4": "activerecord/lib/active_record/connection_adapters/abstract/transaction.rb",
+    "F5": "actionmailbox/app/controllers/rails/conductor/action_mailbox/reroutes_controller.rb",
+    "F6": "activerecord/lib/active_record/callbacks.rb",
+    "F7": "activerecord/lib/active_record/transactions.rb"
+  },
+  "entities": {
+    "N1": {
+      "name": "save",
+      "kind": "method",
+      "at": "F1:360",
+      "signature": "def save(**options, &block)",
+      "container": "Persistence",
+      "namespace": "ActiveRecord::Persistence",
+      "ops": [
+        [
+          "call",
+          "create_or_update",
+          361,
+          "create_or_update(**options, &block)"
+        ]
+      ]
+    },
+    "N2": {
+      "name": "_create_record",
+      "kind": "method",
+      "at": "F2:353",
+      "signature": "def _create_record(attributes, raise = false, &block)",
+      "container": "CollectionAssociation",
+      "namespace": "ActiveRecord::Associations",
+      "owner_signature": "class CollectionAssociation < Association # :nodoc:",
+      "ops": [
+        [
+          "call",
+          "persisted",
+          354,
+          "owner.persisted?"
+        ],
+        [
+          "call",
+          "new",
+          355,
+          "ActiveRecord::RecordNotSaved.new(\"You cannot call create unless the parent is saved\", owner)"
+        ],
+        [
+          "call",
+          "raise",
+          355,
+          "raise ActiveRecord::RecordNotSaved.new(\"You cannot call create unless the parent is saved\", owner)"
+        ],
+        [
+          "call",
+          "_create_record",
+          359,
+          "_create_record(attr, raise, &block)"
+        ],
+        [
+          "call",
+          "collect",
+          359,
+          "attributes.collect { |attr| _create_record(attr, raise, &block) }"
+        ]
+      ]
+    },
+    "N3": {
+      "name": "_create_record",
+      "kind": "method",
+      "at": "F1:957",
+      "signature": "def _create_record(attribute_names = self.attribute_names)",
+      "container": "Persistence",
+      "namespace": "ActiveRecord::Persistence",
+      "owner_signature": "module Persistence",
+      "ops": [
+        [
+          "assign",
+          "attribute_names",
+          958,
+          "attribute_names = attributes_for_create(attribute_names)"
+        ],
+        [
+          "call",
+          "with_connection",
+          960,
+          "self.class.with_connection do |connection| returning_columns = self.class._returning_columns_for_insert(connection) returning_values = self.class._insert_record( connection, attributes_with_values(attribute_names), returning_columns ) returning_columns.zip(returning_values).each do |column, value| _"
+        ],
+        [
+          "assign",
+          "returning_columns",
+          961,
+          "returning_columns = self.class._returning_columns_for_insert(connection)"
+        ],
+        [
+          "assign",
+          "returning_values",
+          963,
+          "returning_values = self.class._insert_record( connection, attributes_with_values(attribute_names), returning_columns )"
+        ],
+        [
+          "call",
+          "_insert_record",
+          963,
+          "self.class._insert_record( connection, attributes_with_values(attribute_names), returning_columns )"
+        ]
+      ]
+    },
+    "N4": {
+      "name": "create_or_update",
+      "kind": "method",
+      "at": "F1:928",
+      "signature": "def create_or_update(**, &block)",
+      "container": "Persistence",
+      "namespace": "ActiveRecord::Persistence",
+      "ops": [
+        [
+          "call",
+          "readonly",
+          929,
+          "readonly?"
+        ],
+        [
+          "call",
+          "destroyed",
+          930,
+          "destroyed?"
+        ],
+        [
+          "assign",
+          "result",
+          931,
+          "result = new_record? ? _create_record(&block) : _update_record(&block)"
+        ],
+        [
+          "call",
+          "_create_record",
+          931,
+          "_create_record(&block)"
+        ],
+        [
+          "call",
+          "_update_record",
+          931,
+          "_update_record(&block)"
+        ]
+      ]
+    },
+    "N5": {
+      "name": "save",
+      "kind": "method",
+      "at": "F3:47",
+      "signature": "def save(**options)",
+      "container": "Validations",
+      "namespace": "ActiveRecord::Validations",
+      "owner_signature": "module Validations",
+      "ops": [
+        [
+          "call",
+          "perform_validations",
+          48,
+          "perform_validations(options)"
+        ]
+      ]
+    },
+    "N6": {
+      "name": "_insert_record",
+      "kind": "method",
+      "at": "F1:203",
+      "signature": "def _insert_record(connection, values, returning) # :nodoc:",
+      "container": "ClassMethods",
+      "namespace": "ActiveRecord::Persistence::ClassMethods",
+      "owner_signature": "module ClassMethods # Creates an object (or multiple objects) and saves it to the database, if validations pass. # The resulting object is returned whether the object was saved successfully to the database or not. # # The +attributes+ parameter can be either a Hash or an Array of Hashes. These Hashe",
+      "ops": [
+        [
+          "assign",
+          "primary_key",
+          204,
+          "primary_key = self.primary_key"
+        ],
+        [
+          "call",
+          "primary_key",
+          204,
+          "self.primary_key"
+        ],
+        [
+          "call",
+          "prefetch_primary_key",
+          206,
+          "prefetch_primary_key?"
+        ],
+        [
+          "call",
+          "with_cast_value",
+          207,
+          "_default_attributes[primary_key].with_cast_value(next_sequence_value)"
+        ],
+        [
+          "assign",
+          "im",
+          210,
+          "im = Arel::InsertManager.new(arel_table)"
+        ]
+      ]
+    },
+    "N7": {
+      "name": "commit",
+      "kind": "method",
+      "at": "F4:476",
+      "signature": "def commit",
+      "container": "SavepointTransaction",
+      "namespace": "ActiveRecord::ConnectionAdapters",
+      "owner_signature": "class SavepointTransaction < Transaction",
+      "ops": [
+        [
+          "call",
+          "commit_savepoint_transaction",
+          477,
+          "connection.commit_savepoint_transaction(savepoint_name)"
+        ],
+        [
+          "call",
+          "materialized",
+          477,
+          "materialized?"
+        ],
+        [
+          "call",
+          "commit",
+          478,
+          "@state.commit!"
+        ],
+        [
+          "call",
+          "finish",
+          479,
+          "@instrumenter.finish(:commit)"
+        ],
+        [
+          "call",
+          "materialized",
+          479,
+          "materialized?"
+        ]
+      ]
+    },
+    "N8": {
+      "name": "Rails",
+      "kind": "module",
+      "at": "F5:5",
+      "signature": "module Rails # Rerouting will run routing and processing on an email that has already been, or attempted to be, processed.",
+      "detail": "Module en actionmailbox/app/controllers/rails/conductor/action_mailbox/reroutes_controller.rb:5"
+    },
+    "N9": {
+      "name": "create_or_update",
+      "kind": "method",
+      "at": "F6:478",
+      "signature": "def create_or_update(**)",
+      "container": "Callbacks",
+      "namespace": "ActiveRecord::Callbacks",
+      "owner_signature": "module Callbacks",
+      "ops": [
+        [
+          "call",
+          "_run_save_callbacks",
+          479,
+          "_run_save_callbacks { super }"
+        ]
+      ]
+    },
+    "N10": {
+      "name": "with_transaction_returning_status",
+      "kind": "method",
+      "at": "F7:430",
+      "signature": "def with_transaction_returning_status # :nodoc:",
+      "container": "Transactions",
+      "namespace": "ActiveRecord::Transactions",
+      "owner_signature": "module Transactions",
+      "ops": [
+        [
+          "call",
+          "with_connection",
+          431,
+          "self.class.with_connection do |connection| connection.pool.with_pool_transaction_isolation_level(ActiveRecord.default_transaction_isolation_level, connection.transaction_open?) do status = nil ensure_finalize = !connection.transaction_open? implicit_persistence_transaction(connection) do add_to_tran"
+        ],
+        [
+          "call",
+          "with_pool_transaction_isolation_level",
+          432,
+          "connection.pool.with_pool_transaction_isolation_level(ActiveRecord.default_transaction_isolation_level, connection.transaction_open?) do status = nil ensure_finalize = !connection.transaction_open? implicit_persistence_transaction(connection) do add_to_transaction(ensure_finalize || has_transactiona"
+        ],
+        [
+          "assign",
+          "ensure_finalize",
+          434,
+          "ensure_finalize = !connection.transaction_open?"
+        ],
+        [
+          "call",
+          "implicit_persistence_transaction",
+          436,
+          "implicit_persistence_transaction(connection) do add_to_transaction(ensure_finalize || has_transactional_callbacks?) remember_transaction_record_state status = yield raise ActiveRecord::Rollback unless status end"
+        ],
+        [
+          "call",
+          "add_to_transaction",
+          437,
+          "add_to_transaction(ensure_finalize || has_transactional_callbacks?)"
+        ]
+      ]
+    }
+  },
+  "relations": [
+    [
+      "N1",
+      "llama",
+      "N4",
+      "E",
+      361
+    ],
+    [
+      "N4",
+      "llama",
+      "N3",
+      "E",
+      931
+    ]
+  ],
+  "legend": "relation=[source,label,target,E|I|A,line?]; E=extraída,I=inferida,A=ambigua",
+  "complete": true,
+  "coverage": {
+    "incoming_calls_or_uses": 2,
+    "outgoing_calls_or_uses": 2,
+    "implementations": 0,
+    "inheritance": 0,
+    "relations_by_label": {
+      "llama": 2
+    },
+    "zero_is_evidence_when_complete": true
+  },
+  "negative_evidence": [
+    "no implementa relation for matched symbol",
+    "no hereda relation for matched symbol"
+  ],
+  "payload_token_budget": 4000,
+  "estimated_tokens": 2756,
+  "payload_tokens": 2756,
+  "payload_truncated": false
+}

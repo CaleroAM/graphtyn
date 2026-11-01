@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "tasks": {
+    "FLASK_BLUEPRINT_REGISTER_FLOW": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_CONTEXT_TEARDOWN_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_ERROR_HANDLING_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_JSONIFY_FLOW": {
+      "covered": 4,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_RENDER_TEMPLATE_FLOW": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "FLASK_REQUEST_DISPATCH_FLOW": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_SESSION_COOKIE_FLOW": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_TEST_CLIENT_FLOW": {
+      "covered": 2,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FLASK_URL_FOR_FLOW": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "FMT_CHRONO_DURATION_FLOW": {
+      "covered": 1,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "FMT_COLOR_STYLE_FLOW": {
+      "covered": 5,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "FMT_COMPILE_FLOW": {
+      "covered": 5,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "FMT_DYNAMIC_WIDTH_FLOW": {
+      "covered": 6,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "FMT_FLOAT_FLOW": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "FMT_FORMAT_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FMT_FORMAT_TO_N_FLOW": {
+      "covered": 4,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "FMT_INT_SPEC_FLOW": {
+      "covered": 5,
+      "do_not_expand": false,
+      "total": 7
+    },
+    "FMT_NAMED_ARGS_FLOW": {
+      "covered": 1,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "FMT_OSTREAM_FLOW": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "FMT_PRINTF_FLOW": {
+      "covered": 6,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "FMT_PRINT_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "FMT_RANGES_FLOW": {
+      "covered": 4,
+      "do_not_expand": false,
+      "total": 8
+    }
+  }
+}

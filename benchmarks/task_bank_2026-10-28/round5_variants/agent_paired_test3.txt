@@ -1,0 +1,6 @@
+claude BCD vs none (15 tareas): coste USD -20.5 % [-34.4; -8.0] | calidad literal +1.3 pt [+0.0; +3.0] | calidad juzgada -0.1 pt [-1.9; +1.5] | tokens totales -12.8 % [-26.6; -1.7]
+claude BCD vs current (15 tareas): coste USD -10.8 % [-17.8; -3.8] | calidad literal +0.1 pt [-0.7; +1.0] | calidad juzgada -0.6 pt [-1.4; +0.0] | tokens totales -8.5 % [-17.4; +0.1]
+claude current vs none (15 tareas): coste USD -10.9 % [-24.2; +2.1] | calidad literal +1.2 pt [+0.0; +3.5] | calidad juzgada +0.4 pt [-1.0; +2.2] | tokens totales -4.7 % [-17.5; +6.9]
+codex BCD vs none (15 tareas): coste USD -20.8 % [-29.2; -12.8] | calidad literal +1.9 pt [-4.1; +7.5] | calidad juzgada +0.3 pt [-3.2; +4.0] | tokens totales -18.5 % [-32.7; -2.7]
+codex BCD vs current (15 tareas): coste USD -10.6 % [-19.8; -2.1] | calidad literal +4.6 pt [+0.9; +7.7] | calidad juzgada +1.2 pt [-1.0; +3.4] | tokens totales -15.3 % [-32.2; -0.3]
+codex current vs none (15 tareas): coste USD -11.4 % [-20.7; -1.9] | calidad literal -2.6 pt [-8.0; +2.3] | calidad juzgada -0.9 pt [-4.3; +2.6] | tokens totales -3.8 % [-19.2; +12.2]

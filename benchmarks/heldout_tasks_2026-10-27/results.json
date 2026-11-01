@@ -1,0 +1,720 @@
+{
+  "schema_version": "1.0",
+  "sessions": 54,
+  "complete_sessions": 54,
+  "incomplete": [],
+  "cells": {
+    "FMT_INT_SPEC_FLOW/claude/graphtyn": {
+      "tokens": [
+        56856,
+        56893
+      ],
+      "mean_tokens": 56874,
+      "quality": [
+        3,
+        3
+      ],
+      "total": 7,
+      "tool_calls": [
+        1,
+        1
+      ],
+      "missed": [
+        "dynamic",
+        "parse_specs",
+        "replacement_field",
+        "visit_formatter"
+      ]
+    },
+    "FMT_INT_SPEC_FLOW/claude/graphtyn_hook": {
+      "tokens": [
+        30375,
+        30307
+      ],
+      "mean_tokens": 30341,
+      "quality": [
+        3,
+        4
+      ],
+      "total": 7,
+      "tool_calls": [
+        0,
+        0
+      ],
+      "missed": [
+        "dynamic",
+        "parse_specs",
+        "replacement_field",
+        "visit_formatter"
+      ]
+    },
+    "FMT_INT_SPEC_FLOW/codex/baseline": {
+      "tokens": [
+        139221
+      ],
+      "mean_tokens": 139221,
+      "quality": [
+        7
+      ],
+      "total": 7,
+      "tool_calls": [
+        5
+      ],
+      "missed": []
+    },
+    "FMT_INT_SPEC_FLOW/codex/graphtyn": {
+      "tokens": [
+        27104
+      ],
+      "mean_tokens": 27104,
+      "quality": [
+        3
+      ],
+      "total": 7,
+      "tool_calls": [
+        1
+      ],
+      "missed": [
+        "dynamic",
+        "parse_specs",
+        "replacement_field",
+        "visit_formatter"
+      ]
+    },
+    "FMT_INT_SPEC_FLOW/codex/graphtyn_hook": {
+      "tokens": [
+        9683
+      ],
+      "mean_tokens": 9683,
+      "quality": [
+        3
+      ],
+      "total": 7,
+      "tool_calls": [
+        0
+      ],
+      "missed": [
+        "dynamic",
+        "parse_specs",
+        "replacement_field",
+        "visit_formatter"
+      ]
+    },
+    "FMT_INT_SPEC_FLOW/opencode/graphtyn": {
+      "tokens": [
+        25041
+      ],
+      "mean_tokens": 25041,
+      "quality": [
+        3
+      ],
+      "total": 7,
+      "tool_calls": [
+        1
+      ],
+      "missed": [
+        "dynamic",
+        "parse_specs",
+        "replacement_field",
+        "visit_formatter"
+      ]
+    },
+    "FMT_INT_SPEC_FLOW/opencode/graphtyn_hook": {
+      "tokens": [
+        215097
+      ],
+      "mean_tokens": 215097,
+      "quality": [
+        7
+      ],
+      "total": 7,
+      "tool_calls": [
+        16
+      ],
+      "missed": []
+    },
+    "FMT_PRINT_FLOW/claude/graphtyn": {
+      "tokens": [
+        61107,
+        60834
+      ],
+      "mean_tokens": 60970,
+      "quality": [
+        7,
+        7
+      ],
+      "total": 8,
+      "tool_calls": [
+        1,
+        1
+      ],
+      "missed": [
+        "entry"
+      ]
+    },
+    "FMT_PRINT_FLOW/claude/graphtyn_hook": {
+      "tokens": [
+        33342,
+        33569
+      ],
+      "mean_tokens": 33456,
+      "quality": [
+        7,
+        7
+      ],
+      "total": 8,
+      "tool_calls": [
+        0,
+        0
+      ],
+      "missed": [
+        "entry"
+      ]
+    },
+    "FMT_PRINT_FLOW/codex/baseline": {
+      "tokens": [
+        215483
+      ],
+      "mean_tokens": 215483,
+      "quality": [
+        6
+      ],
+      "total": 8,
+      "tool_calls": [
+        7
+      ],
+      "missed": [
+        "entry",
+        "vprint_choice"
+      ]
+    },
+    "FMT_PRINT_FLOW/codex/graphtyn": {
+      "tokens": [
+        29978
+      ],
+      "mean_tokens": 29978,
+      "quality": [
+        5
+      ],
+      "total": 8,
+      "tool_calls": [
+        1
+      ],
+      "missed": [
+        "entry",
+        "file_buffer",
+        "vprint_choice"
+      ]
+    },
+    "FMT_PRINT_FLOW/codex/graphtyn_hook": {
+      "tokens": [
+        12133
+      ],
+      "mean_tokens": 12133,
+      "quality": [
+        6
+      ],
+      "total": 8,
+      "tool_calls": [
+        0
+      ],
+      "missed": [
+        "entry",
+        "vprint_choice"
+      ]
+    },
+    "FMT_PRINT_FLOW/opencode/graphtyn": {
+      "tokens": [
+        27837
+      ],
+      "mean_tokens": 27837,
+      "quality": [
+        7
+      ],
+      "total": 8,
+      "tool_calls": [
+        1
+      ],
+      "missed": [
+        "entry"
+      ]
+    },
+    "FMT_PRINT_FLOW/opencode/graphtyn_hook": {
+      "tokens": [
+        15243
+      ],
+      "mean_tokens": 15243,
+      "quality": [
+        7
+      ],
+      "total": 8,
+      "tool_calls": [
+        0
+      ],
+      "missed": [
+        "entry"
+      ]
+    },
+    "RAILS_DESTROY_FLOW/claude/graphtyn": {
+      "tokens": [
+        169565,
+        281282
+      ],
+      "mean_tokens": 225424,
+      "quality": [
+        8,
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        4,
+        7
+      ],
+      "missed": []
+    },
+    "RAILS_DESTROY_FLOW/claude/graphtyn_hook": {
+      "tokens": [
+        183344,
+        143212
+      ],
+      "mean_tokens": 163278,
+      "quality": [
+        8,
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        4,
+        3
+      ],
+      "missed": []
+    },
+    "RAILS_DESTROY_FLOW/codex/baseline": {
+      "tokens": [
+        343854
+      ],
+      "mean_tokens": 343854,
+      "quality": [
+        6
+      ],
+      "total": 8,
+      "tool_calls": [
+        11
+      ],
+      "missed": [
+        "associations",
+        "readonly"
+      ]
+    },
+    "RAILS_DESTROY_FLOW/codex/graphtyn": {
+      "tokens": [
+        263005
+      ],
+      "mean_tokens": 263005,
+      "quality": [
+        6
+      ],
+      "total": 8,
+      "tool_calls": [
+        9
+      ],
+      "missed": [
+        "associations",
+        "readonly"
+      ]
+    },
+    "RAILS_DESTROY_FLOW/codex/graphtyn_hook": {
+      "tokens": [
+        12894
+      ],
+      "mean_tokens": 12894,
+      "quality": [
+        5
+      ],
+      "total": 8,
+      "tool_calls": [
+        0
+      ],
+      "missed": [
+        "delete_manager",
+        "delete_row",
+        "readonly"
+      ]
+    },
+    "RAILS_DESTROY_FLOW/opencode/graphtyn": {
+      "tokens": [
+        520959
+      ],
+      "mean_tokens": 520959,
+      "quality": [
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        45
+      ],
+      "missed": []
+    },
+    "RAILS_DESTROY_FLOW/opencode/graphtyn_hook": {
+      "tokens": [
+        733178
+      ],
+      "mean_tokens": 733178,
+      "quality": [
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        43
+      ],
+      "missed": []
+    },
+    "RAILS_RELATION_LOAD_FLOW/claude/graphtyn": {
+      "tokens": [
+        406697,
+        132674
+      ],
+      "mean_tokens": 269686,
+      "quality": [
+        8,
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        10,
+        3
+      ],
+      "missed": []
+    },
+    "RAILS_RELATION_LOAD_FLOW/claude/graphtyn_hook": {
+      "tokens": [
+        249260,
+        283066
+      ],
+      "mean_tokens": 266163,
+      "quality": [
+        8,
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        6,
+        7
+      ],
+      "missed": []
+    },
+    "RAILS_RELATION_LOAD_FLOW/codex/baseline": {
+      "tokens": [
+        179377
+      ],
+      "mean_tokens": 179377,
+      "quality": [
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        10
+      ],
+      "missed": []
+    },
+    "RAILS_RELATION_LOAD_FLOW/codex/graphtyn": {
+      "tokens": [
+        98967
+      ],
+      "mean_tokens": 98967,
+      "quality": [
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        4
+      ],
+      "missed": []
+    },
+    "RAILS_RELATION_LOAD_FLOW/codex/graphtyn_hook": {
+      "tokens": [
+        101919
+      ],
+      "mean_tokens": 101919,
+      "quality": [
+        7
+      ],
+      "total": 8,
+      "tool_calls": [
+        4
+      ],
+      "missed": [
+        "short_circuit"
+      ]
+    },
+    "RAILS_RELATION_LOAD_FLOW/opencode/graphtyn": {
+      "tokens": [
+        630874
+      ],
+      "mean_tokens": 630874,
+      "quality": [
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        32
+      ],
+      "missed": []
+    },
+    "RAILS_RELATION_LOAD_FLOW/opencode/graphtyn_hook": {
+      "tokens": [
+        257946
+      ],
+      "mean_tokens": 257946,
+      "quality": [
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        12
+      ],
+      "missed": []
+    },
+    "REDIS_EXPIRE_FLOW/claude/graphtyn": {
+      "tokens": [
+        127440,
+        163276
+      ],
+      "mean_tokens": 145358,
+      "quality": [
+        8,
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        3,
+        4
+      ],
+      "missed": []
+    },
+    "REDIS_EXPIRE_FLOW/claude/graphtyn_hook": {
+      "tokens": [
+        32171,
+        32073
+      ],
+      "mean_tokens": 32122,
+      "quality": [
+        7,
+        6
+      ],
+      "total": 8,
+      "tool_calls": [
+        0,
+        0
+      ],
+      "missed": [
+        "lazyfree",
+        "propagation"
+      ]
+    },
+    "REDIS_EXPIRE_FLOW/codex/baseline": {
+      "tokens": [
+        100734
+      ],
+      "mean_tokens": 100734,
+      "quality": [
+        7
+      ],
+      "total": 8,
+      "tool_calls": [
+        4
+      ],
+      "missed": [
+        "expired_check"
+      ]
+    },
+    "REDIS_EXPIRE_FLOW/codex/graphtyn": {
+      "tokens": [
+        28070
+      ],
+      "mean_tokens": 28070,
+      "quality": [
+        4
+      ],
+      "total": 8,
+      "tool_calls": [
+        1
+      ],
+      "missed": [
+        "active_cycle",
+        "expired_check",
+        "lazyfree",
+        "propagation"
+      ]
+    },
+    "REDIS_EXPIRE_FLOW/codex/graphtyn_hook": {
+      "tokens": [
+        10583
+      ],
+      "mean_tokens": 10583,
+      "quality": [
+        4
+      ],
+      "total": 8,
+      "tool_calls": [
+        0
+      ],
+      "missed": [
+        "active_cycle",
+        "expired_check",
+        "lazyfree",
+        "propagation"
+      ]
+    },
+    "REDIS_EXPIRE_FLOW/opencode/graphtyn": {
+      "tokens": [
+        97505
+      ],
+      "mean_tokens": 97505,
+      "quality": [
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        13
+      ],
+      "missed": []
+    },
+    "REDIS_EXPIRE_FLOW/opencode/graphtyn_hook": {
+      "tokens": [
+        14125
+      ],
+      "mean_tokens": 14125,
+      "quality": [
+        7
+      ],
+      "total": 8,
+      "tool_calls": [
+        0
+      ],
+      "missed": [
+        "propagation"
+      ]
+    },
+    "REDIS_PSYNC_FLOW/claude/graphtyn": {
+      "tokens": [
+        174114,
+        134573
+      ],
+      "mean_tokens": 154344,
+      "quality": [
+        8,
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        6,
+        4
+      ],
+      "missed": []
+    },
+    "REDIS_PSYNC_FLOW/claude/graphtyn_hook": {
+      "tokens": [
+        34183,
+        144230
+      ],
+      "mean_tokens": 89206,
+      "quality": [
+        7,
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        0,
+        4
+      ],
+      "missed": [
+        "full_conditions"
+      ]
+    },
+    "REDIS_PSYNC_FLOW/codex/baseline": {
+      "tokens": [
+        256737
+      ],
+      "mean_tokens": 256737,
+      "quality": [
+        6
+      ],
+      "total": 8,
+      "tool_calls": [
+        8
+      ],
+      "missed": [
+        "backlog",
+        "bgsave_reuse"
+      ]
+    },
+    "REDIS_PSYNC_FLOW/codex/graphtyn": {
+      "tokens": [
+        29923
+      ],
+      "mean_tokens": 29923,
+      "quality": [
+        4
+      ],
+      "total": 8,
+      "tool_calls": [
+        1
+      ],
+      "missed": [
+        "backlog",
+        "bgsave_reuse",
+        "continue_reply",
+        "full_conditions"
+      ]
+    },
+    "REDIS_PSYNC_FLOW/codex/graphtyn_hook": {
+      "tokens": [
+        12300
+      ],
+      "mean_tokens": 12300,
+      "quality": [
+        5
+      ],
+      "total": 8,
+      "tool_calls": [
+        0
+      ],
+      "missed": [
+        "backlog",
+        "bgsave_reuse",
+        "full_conditions"
+      ]
+    },
+    "REDIS_PSYNC_FLOW/opencode/graphtyn": {
+      "tokens": [
+        45801
+      ],
+      "mean_tokens": 45801,
+      "quality": [
+        8
+      ],
+      "total": 8,
+      "tool_calls": [
+        1
+      ],
+      "missed": []
+    },
+    "REDIS_PSYNC_FLOW/opencode/graphtyn_hook": {
+      "tokens": [
+        16285
+      ],
+      "mean_tokens": 16285,
+      "quality": [
+        7
+      ],
+      "total": 8,
+      "tool_calls": [
+        0
+      ],
+      "missed": [
+        "full_conditions"
+      ]
+    }
+  }
+}

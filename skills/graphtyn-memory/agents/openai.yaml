@@ -1,0 +1,4 @@
+interface:
+  display_name: "Graphtyn Memory"
+  short_description: "Recupera y registra lo que otros agentes hicieron y decidieron en el proyecto"
+  default_prompt: "Usa la memoria de Graphtyn para recuperar el contexto previo de esta tarea."

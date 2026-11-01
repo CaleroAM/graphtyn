@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "REDIS_COMMAND_FLOW",
+      "request": "Traza cómo Redis procesa un comando de cliente desde processCommand. Explica: reutilización o lookup del comando; validación de existencia, aridad y comandos protegidos; autenticación y ACL; al menos dos ramas operativas de rechazo; qué ocurre dentro de MULTI; y el punto donde finalmente se ejecuta el comando. Cita evidencia archivo:línea.",
+      "rubric": [
+        {"id": "entry", "any": ["processCommand", "src/server.c"]},
+        {"id": "lookup", "any": ["lookupCommand", "isCommandReusable"]},
+        {"id": "shape_checks", "any": ["commandCheckExistence", "commandCheckArity", "CMD_PROTECTED"]},
+        {"id": "auth", "any": ["authRequired", "CMD_NO_AUTH"]},
+        {"id": "acl", "any": ["ACLCheckAllPerm", "NOPERM", "addACLLogEntry"]},
+        {"id": "operational_rejections", "any": ["performEvictions", "writeCommandsDeniedByDiskError", "checkGoodReplicasStatus", "masterdownerr", "loadingerr"]},
+        {"id": "multi", "any": ["queueMultiCommand", "CLIENT_MULTI", "shared.queued"]},
+        {"id": "execute", "any": ["call(c", "CMD_CALL_FULL", "handleClientsBlockedOnKeys"]}
+      ]
+    }
+  ]
+}

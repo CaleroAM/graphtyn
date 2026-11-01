@@ -137,8 +137,112 @@ def test_enumerated_operational_question_overrides_requested_overview():
     assert classify_intent(request, "overview") == "flow"
 
 
+def test_explicit_overview_is_preserved_for_a_language_support_evaluation():
+    request = (
+        "Evaluar si la siguiente mejora debe añadir más lenguajes, "
+        "qué cobertura existe y cuáles son sus limitaciones"
+    )
+
+    assert classify_intent(request, "overview") == "overview"
+
+
+def test_qualified_namespace_prefers_public_api_over_test_homonyms():
+    data = {
+        "nodes": [
+            {"id": "public", "name": "format", "kind": "function",
+             "namespace": "fmt", "file": "include/fmt/format.h", "line": 100,
+             "signature": "format(format_string<T...> fmt, T&&... args)"},
+            {"id": "test", "name": "format", "kind": "method",
+             "namespace": "adl_test", "container": "test_format",
+             "file": "test/format-test.cc", "line": 20,
+             "signature": "format(fmt::string_view fmt)"},
+            {"id": "formatter", "name": "format", "kind": "method",
+             "namespace": "fmt", "container": "formatter<custom_type>",
+             "file": "include/fmt/custom.h", "line": 30,
+             "signature": "format(custom_type value, format_context& ctx)"},
+        ],
+        "links": [],
+    }
+
+    result = query_intent(data, "Traza fmt::format desde la API pública", "flow", 4)
+
+    assert result["nodes"][0]["id"] == "public"
+    assert all(node["id"] != "test" for node in result["nodes"])
+
+
+def test_qualified_symbol_prefers_same_package_flow_over_framework_homonym():
+    data = {
+        "nodes": [
+            {"id": "save", "name": "save", "kind": "method", "container": "Persistence",
+             "namespace": "ActiveRecord::Persistence", "file": "activerecord/lib/active_record/persistence.rb",
+             "line": 360, "signature": "def save", "operations": [{"name": "create_or_update", "text": "create_or_update"}]},
+            {"id": "ar-callbacks", "name": "create_or_update", "kind": "method", "container": "Callbacks",
+             "namespace": "ActiveRecord", "file": "activerecord/lib/active_record/callbacks.rb",
+             "line": 478, "signature": "def create_or_update", "operations": [{"name": "_run_save_callbacks", "text": "_run_save_callbacks { super }"}]},
+            {"id": "dispatch-callbacks", "name": "Callbacks", "kind": "class", "container": "ActionDispatch",
+             "namespace": "ActionDispatch", "file": "actionpack/lib/action_dispatch/middleware/callbacks.rb",
+             "line": 9, "signature": "class Callbacks", "operations": [{"name": "call", "text": "run_callbacks"}]},
+        ],
+        "links": [{"source": "save", "target": "ar-callbacks", "label": "llama", "confidence": "EXTRACTED"}],
+    }
+
+    result = query_intent(
+        data,
+        "Traza ActiveRecord::Persistence#save, create_or_update y callbacks",
+        "flow",
+        3,
+    )
+
+    assert result["nodes"][0]["id"] == "save"
+    assert result["nodes"][1]["id"] == "ar-callbacks"
+
+
+def test_complex_rails_flow_keeps_required_layers_ahead_of_project_words():
+    def method(node_id, name, container, namespace, file, line, operation):
+        return {
+            "id": node_id, "name": name, "kind": "method", "container": container,
+            "namespace": namespace, "file": file, "line": line,
+            "signature": f"def {name}",
+            "operations": [{"kind": "call", "name": operation.split("(", 1)[0],
+                            "text": operation, "line": line + 1}],
+        }
+
+    nodes = [
+        method("p-save", "save", "Persistence", "ActiveRecord::Persistence", "persistence.rb", 360, "create_or_update()"),
+        method("p-cu", "create_or_update", "Persistence", "ActiveRecord::Persistence", "persistence.rb", 928, "new_record? ? _create_record() : _update_record()"),
+        method("p-create", "_create_record", "Persistence", "ActiveRecord::Persistence", "persistence.rb", 957, "_insert_record()"),
+        method("p-insert", "_insert_record", "ClassMethods", "ActiveRecord::Persistence::ClassMethods", "persistence.rb", 203, "connection.insert(im)"),
+        method("v-save", "save", "Validations", "ActiveRecord::Validations", "validations.rb", 47, "perform_validations(options) ? super : false"),
+        method("c-save", "create_or_update", "Callbacks", "ActiveRecord::Callbacks", "callbacks.rb", 478, "_run_save_callbacks { super }"),
+        method("c-create", "_create_record", "Callbacks", "ActiveRecord::Callbacks", "callbacks.rb", 482, "_run_create_callbacks { super }"),
+        method("t-save", "save", "Transactions", "ActiveRecord::Transactions", "transactions.rb", 382, "with_transaction_returning_status { super }"),
+        method("t-wrap", "with_transaction_returning_status", "Transactions", "ActiveRecord::Transactions", "transactions.rb", 430, "raise ActiveRecord::Rollback unless status"),
+        method("noise-commit", "commit", "SavepointTransaction", "ActiveRecord::ConnectionAdapters", "transaction.rb", 476, "connection.commit_savepoint_transaction()"),
+        {"id": "noise-rails", "name": "Rails", "kind": "module", "file": "rails.rb", "line": 1},
+    ]
+    request = (
+        "En el commit fijado de Ruby on Rails, traza ActiveRecord::Persistence#save, "
+        "create_or_update, _create_record, _insert_record y el adaptador. Explica "
+        "validaciones, callbacks, transacciones y qué ocurre si aborta o falla."
+    )
+
+    result = query_intent({"nodes": nodes, "links": []}, request, "flow", 10)
+    selected = {node["id"] for node in result["nodes"]}
+
+    assert {"c-create", "t-save", "t-wrap", "p-insert"} <= selected
+    assert len({"p-save", "p-cu", "p-create", "p-insert", "v-save",
+                "c-save", "c-create", "t-save", "t-wrap"} & selected) == 9
+    assert "noise-rails" not in selected
+
+
 def test_query_terms_strip_sentence_punctuation_from_identifiers():
     assert "feature_store_path" in _terms("Usa FEATURE_STORE_PATH. Después valida.")
+
+
+def test_query_terms_keep_late_symbols_in_multi_part_requests():
+    request = " ".join(f"etapa_{index}" for index in range(30)) + " vformat_to"
+
+    assert "vformat_to" in _terms(request)
 
 
 def test_filename_suffix_does_not_anchor_same_named_method():
@@ -451,6 +555,27 @@ def test_adaptive_source_evidence_reads_only_selected_symbol_body(tmp_path):
     assert result["do_not_expand"] is True
 
 
+def test_precision_evidence_can_include_an_explicitly_named_type_body(tmp_path):
+    source = tmp_path / "core.h"
+    source.write_text(
+        "template <typename T> struct fstring {\n"
+        "  fstring(const char* value) { parse_format_string(value); }\n"
+        "};\n",
+        encoding="utf-8",
+    )
+    node = {"id": "type:fstring", "name": "fstring", "kind": "struct",
+            "file": "core.h", "line": 1, "end_line": 3}
+    package = {"intent": "flow", "matched": [node], "nodes": [node],
+               "complete_for": ["flow"], "missing": [], "do_not_expand": False}
+
+    result = attach_source_evidence(
+        tmp_path, package, "Traza cómo fstring valida la cadena", "precision",
+    )
+
+    assert result["source_evidence"][0]["symbol"] == "fstring"
+    assert "parse_format_string" in result["source_evidence"][0]["text"]
+
+
 def test_source_evidence_keeps_stopping_consistent_with_missing_obligations(tmp_path):
     source = tmp_path / "service.py"
     source.write_text("def run():\n    return 1\n", encoding="utf-8")
@@ -499,6 +624,67 @@ def test_source_evidence_preserves_edit_execution_guidance(tmp_path):
     assert result["source_evidence"]
     assert result["guidance"].startswith("Open only implementation_context.read_first")
     assert "exact source excerpts" in result["guidance"]
+
+
+def test_precision_source_evidence_does_not_close_uncovered_obligations(tmp_path):
+    (tmp_path / "service.py").write_text(
+        "def save():\n    return connection.insert(row)\n",
+        encoding="utf-8",
+    )
+    node = {"id": "save", "name": "save", "kind": "function",
+            "file": "service.py", "line": 1, "end_line": 2}
+    package = {
+        "intent": "flow", "matched": [node], "nodes": [node],
+        "requested_obligations": ["persistence_adapter", "transaction_entry"],
+        "obligation_evidence": {"persistence_adapter": ["save"], "transaction_entry": []},
+        "complete_for": [], "missing": ["transaction_entry"], "do_not_expand": False,
+        "validation": {"ok": True}, "stopping": {"sufficient_evidence": True},
+    }
+
+    result = attach_source_evidence(
+        tmp_path, package, "Traza el orden exacto de Service#save y la transacción", "precision",
+    )
+
+    assert result["source_coverage"]["required_obligations"] == {
+        "persistence_adapter": True,
+        "transaction_entry": False,
+    }
+    assert "transaction_entry" in result["missing"]
+    assert result["complete_for"] == []
+    assert result["do_not_expand"] is False
+    assert result["stopping"]["sufficient_evidence"] is False
+
+
+def test_precision_source_evidence_requires_each_explicit_symbol(tmp_path):
+    (tmp_path / "flow.py").write_text(
+        "def save():\n    return create_or_update()\n\n"
+        "def create_or_update():\n    return True\n",
+        encoding="utf-8",
+    )
+    save = {"id": "save", "name": "save", "kind": "function",
+            "file": "flow.py", "line": 1, "end_line": 2}
+    create = {"id": "create", "name": "create_or_update", "kind": "function",
+              "file": "flow.py", "line": 4, "end_line": 5}
+    insert = {"id": "insert", "name": "_insert_record", "kind": "function",
+              "file": "missing.py", "line": 1, "end_line": 2}
+    package = {
+        "intent": "flow", "matched": [save], "nodes": [save, create, insert],
+        "complete_for": ["flow"], "missing": [], "do_not_expand": True,
+        "validation": {"ok": True}, "stopping": {"sufficient_evidence": True},
+    }
+
+    result = attach_source_evidence(
+        tmp_path, package,
+        "Traza exacto Service#save, create_or_update y _insert_record",
+        "precision",
+    )
+
+    assert result["source_coverage"]["required_symbols"] == {
+        "save": True, "create_or_update": True, "_insert_record": False,
+    }
+    assert "source_symbol:_insert_record" in result["missing"]
+    assert result["source_coverage"]["complete"] is False
+    assert result["do_not_expand"] is False
 
 
 def test_compact_source_mode_never_reads_files(tmp_path):

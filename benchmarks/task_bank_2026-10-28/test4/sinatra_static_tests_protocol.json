@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Comparar con agentes reales, sobre el cuarto conjunto de prueba, la política de la sexta ronda con y sin la guía de citar cada etapa (CITE_STAGES) frente a no usar Graphtyn, en calidad literal y semántica y en coste por tipo de token.",
+  "repository": {
+    "name": "sinatra/sinatra",
+    "url": "https://github.com/sinatra/sinatra",
+    "commit": "cb22afd7902b566b6eaba6c4ea89739494a65d12"
+  },
+  "design": {
+    "clients": [
+      "claude",
+      "codex"
+    ],
+    "tasks": [
+      "SINATRA_STATIC_TESTS"
+    ],
+    "arms_by_client": {
+      "claude": [
+        "baseline",
+        "graphtyn_hook"
+      ],
+      "codex": [
+        "baseline",
+        "graphtyn_hook"
+      ]
+    },
+    "repetitions_by_client": {
+      "claude": 1,
+      "codex": 1
+    },
+    "grading": "Rúbrica literal congelada en c049b65 y juez semántico (judge_answers.py).",
+    "graphtyn_variants": {
+      "current": "política por defecto de la sexta ronda",
+      "cite": "política por defecto con CITE_STAGES=1"
+    }
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "opencode_step_finish_semantics": "per-step",
+    "fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "cache_write_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "provider_cost",
+      "wall_seconds"
+    ]
+  },
+  "authorization": {
+    "source": "El usuario pidió resolver todos los puntos pendientes (2026-10-31).",
+    "total_token_ceiling": null
+  },
+  "client_config": {
+    "models": {
+      "claude": "claude-sonnet-5-5",
+      "codex": "gpt-5.6-luna",
+      "opencode": "opencode/deepseek-v4.1-flash-free",
+      "antigravity": "gemini-3.8-flash-high"
+    },
+    "claude": "--strict-mcp-config; hook: --settings con dos hooks UserPromptSubmit e instrucciones del brazo por --append-system-prompt",
+    "codex": "--ignore-user-config; MCP por -c; hook: -c hooks.UserPromptSubmit inline con additionalContextLimit=8000 y --dangerously-bypass-hook-trust; instrucciones del brazo hook por -c developer_instructions",
+    "opencode": "OPENCODE_CONFIG_CONTENT; sin --pure en los tres brazos (los plugins de proyecto llevan el hook); hook: .opencode/plugins/graphtyn-context.js (chat.message); instrucciones del brazo hook por config.instructions",
+    "antigravity": "agy mcp add por sesión (serializado); sin mecanismo de hook",
+    "codex_model_note": "gpt-6-astra (ejecuciones del 20-21 oct) ya no está disponible con esta cuenta ChatGPT; se usa el modelo por defecto del usuario y se añade un brazo baseline contemporáneo."
+  },
+  "source_protocol": "benchmarks/task_bank_2026-10-28/test3/lua_gc_step_flow_protocol.json",
+  "previous_runs": [
+    "benchmarks/task_bank_2026-10-28/test3"
+  ],
+  "stop_rule": "targeted"
+}

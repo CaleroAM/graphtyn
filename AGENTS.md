@@ -25,9 +25,14 @@ Use Graphtyn before broad repository exploration when a task asks for implementa
 
 Do not list the repository, grep broadly, or open files before this first query. If
 `do_not_expand=true` and `source_evidence` covers the requested obligations, answer
-from that bounded evidence without reading files again. If one named obligation is
+from that bounded evidence without reading files again. Retrieval can still miss
+part of a multi-part request: look up only a part the evidence does not address,
+with one targeted search or its exact range. If one named obligation is
 missing, open only the exact returned line range or extend the existing `context_id`;
 never load an entire file merely to reconfirm evidence Graphtyn already supplied.
+A flow package may list deeper stages in `call_outline` as
+`[caller, callee, F:line, E|I|S]` without their code (`S`: shares the state field
+after `~`); when the answer needs one, read only that line range instead of searching.
 
 Interpret confidence strictly: `EXTRACTED` is structural evidence, `INFERRED` requires source verification, and `AMBIGUOUS` must not be stated as fact. A nearby node or shared subsystem is not a consumer without a directed incoming relation.
 

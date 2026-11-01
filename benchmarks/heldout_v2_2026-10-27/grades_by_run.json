@@ -1,0 +1,3681 @@
+[
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FLOAT_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 144345,
+    "seconds": 34.294,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/claude/runs/claude_FMT_FLOAT_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FLOAT_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 143893,
+    "seconds": 35.387,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 4
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/claude/runs/claude_FMT_FLOAT_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FLOAT_FLOW_graphtyn_hook_r3",
+    "session_status": "complete",
+    "tokens": 184093,
+    "seconds": 33.339,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 5,
+    "tools": {
+      "Bash": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/claude/runs/claude_FMT_FLOAT_FLOW_graphtyn_hook_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FLOAT_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 211436,
+    "seconds": 35.088,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 6,
+    "tools": {
+      "Bash": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/claude/runs/claude_FMT_FLOAT_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FLOAT_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 167235,
+    "seconds": 35.002,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/claude/runs/claude_FMT_FLOAT_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FLOAT_FLOW_graphtyn_r3",
+    "session_status": "complete",
+    "tokens": 242331,
+    "seconds": 47.195,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 6,
+    "tools": {
+      "Bash": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/claude/runs/claude_FMT_FLOAT_FLOW_graphtyn_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FLOAT_FLOW_baseline_r1",
+    "session_status": "complete",
+    "tokens": 242274,
+    "seconds": 34.225,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": false,
+        "dragonbox": true,
+        "hexfloat": false,
+        "digits": true,
+        "dragon": false,
+        "fixed_exp": true
+      },
+      "passed": 4,
+      "total": 7
+    },
+    "tool_calls": 8,
+    "tools": {
+      "command_execution": 8
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/codex/runs/codex_FMT_FLOAT_FLOW_baseline_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FLOAT_FLOW_baseline_r2",
+    "session_status": "complete",
+    "tokens": 207034,
+    "seconds": 27.49,
+    "quality": {
+      "facts": {
+        "localization": false,
+        "nonfinite": false,
+        "dragonbox": true,
+        "hexfloat": false,
+        "digits": true,
+        "dragon": false,
+        "fixed_exp": false
+      },
+      "passed": 2,
+      "total": 7
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 7
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/codex/runs/codex_FMT_FLOAT_FLOW_baseline_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FLOAT_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 188174,
+    "seconds": 25.755,
+    "quality": {
+      "facts": {
+        "localization": false,
+        "nonfinite": false,
+        "dragonbox": true,
+        "hexfloat": false,
+        "digits": true,
+        "dragon": false,
+        "fixed_exp": true
+      },
+      "passed": 3,
+      "total": 7
+    },
+    "tool_calls": 8,
+    "tools": {
+      "command_execution": 8
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/codex/runs/codex_FMT_FLOAT_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FLOAT_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 199662,
+    "seconds": 36.701,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": false,
+        "dragonbox": true,
+        "hexfloat": false,
+        "digits": true,
+        "dragon": false,
+        "fixed_exp": true
+      },
+      "passed": 4,
+      "total": 7
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 7
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/codex/runs/codex_FMT_FLOAT_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FLOAT_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 226194,
+    "seconds": 31.448,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": false,
+        "dragonbox": true,
+        "hexfloat": false,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 5,
+      "total": 7
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 6,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/codex/runs/codex_FMT_FLOAT_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FLOAT_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 224544,
+    "seconds": 28.415,
+    "quality": {
+      "facts": {
+        "localization": false,
+        "nonfinite": false,
+        "dragonbox": true,
+        "hexfloat": false,
+        "digits": true,
+        "dragon": false,
+        "fixed_exp": false
+      },
+      "passed": 2,
+      "total": 7
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 6,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/codex/runs/codex_FMT_FLOAT_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_FMT_FLOAT_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 151244,
+    "seconds": 49.171,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 10,
+    "tools": {
+      "bash": 3,
+      "grep": 2,
+      "read": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/opencode/runs/opencode_FMT_FLOAT_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_FMT_FLOAT_FLOW_graphtyn_hook_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.14,
+    "quality": {
+      "facts": {
+        "localization": false,
+        "nonfinite": false,
+        "dragonbox": false,
+        "hexfloat": false,
+        "digits": false,
+        "dragon": false,
+        "fixed_exp": false
+      },
+      "passed": 0,
+      "total": 7
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/opencode/runs/opencode_FMT_FLOAT_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_FMT_FLOAT_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 692055,
+    "seconds": 133.503,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 38,
+    "tools": {
+      "bash": 12,
+      "grep": 1,
+      "mcp:graph_query_intent": 1,
+      "read": 24
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/opencode/runs/opencode_FMT_FLOAT_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FLOAT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_FMT_FLOAT_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 423081,
+    "seconds": 90.227,
+    "quality": {
+      "facts": {
+        "localization": true,
+        "nonfinite": true,
+        "dragonbox": true,
+        "hexfloat": true,
+        "digits": true,
+        "dragon": true,
+        "fixed_exp": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 24,
+    "tools": {
+      "bash": 7,
+      "grep": 1,
+      "mcp:graph_query_intent": 1,
+      "read": 15
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_float_flow/opencode/runs/opencode_FMT_FLOAT_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 124652,
+    "seconds": 21.978,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 2,
+      "Read": 2
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/claude/runs/claude_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 124807,
+    "seconds": 26.032,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/claude/runs/claude_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r3",
+    "session_status": "complete",
+    "tokens": 90569,
+    "seconds": 28.037,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 2,
+    "tools": {
+      "Bash": 2
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/claude/runs/claude_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FORMAT_TO_N_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 150068,
+    "seconds": 38.58,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/claude/runs/claude_FMT_FORMAT_TO_N_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FORMAT_TO_N_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 149271,
+    "seconds": 18.758,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/claude/runs/claude_FMT_FORMAT_TO_N_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_FORMAT_TO_N_FLOW_graphtyn_r3",
+    "session_status": "complete",
+    "tokens": 149361,
+    "seconds": 21.484,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/claude/runs/claude_FMT_FORMAT_TO_N_FLOW_graphtyn_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FORMAT_TO_N_FLOW_baseline_r1",
+    "session_status": "complete",
+    "tokens": 133571,
+    "seconds": 19.809,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": false,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": false,
+        "formatted_size": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "command_execution": 4
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/codex/runs/codex_FMT_FORMAT_TO_N_FLOW_baseline_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FORMAT_TO_N_FLOW_baseline_r2",
+    "session_status": "complete",
+    "tokens": 112181,
+    "seconds": 25.594,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": false,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "command_execution": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/codex/runs/codex_FMT_FORMAT_TO_N_FLOW_baseline_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 42165,
+    "seconds": 12.823,
+    "quality": {
+      "facts": {
+        "result": false,
+        "vformat_to_n": false,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": false,
+        "formatted_size": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tool_calls": 2,
+    "tools": {
+      "command_execution": 2
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/codex/runs/codex_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 80210,
+    "seconds": 19.941,
+    "quality": {
+      "facts": {
+        "result": false,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": false,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 3,
+    "tools": {
+      "command_execution": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/codex/runs/codex_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FORMAT_TO_N_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 94920,
+    "seconds": 21.656,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": false,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": false,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "command_execution": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/codex/runs/codex_FMT_FORMAT_TO_N_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_FORMAT_TO_N_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 76280,
+    "seconds": 20.916,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": false,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "command_execution": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/codex/runs/codex_FMT_FORMAT_TO_N_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 136518,
+    "seconds": 38.823,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": true,
+        "formatted_size": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 10,
+    "tools": {
+      "bash": 4,
+      "read": 6
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/opencode/runs/opencode_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.143,
+    "quality": {
+      "facts": {
+        "result": false,
+        "vformat_to_n": false,
+        "traits": false,
+        "limit": false,
+        "iterator_buffer": false,
+        "pointer_variant": false,
+        "flush": false,
+        "formatted_size": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/opencode/runs/opencode_FMT_FORMAT_TO_N_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_FMT_FORMAT_TO_N_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 93052,
+    "seconds": 43.492,
+    "quality": {
+      "facts": {
+        "result": true,
+        "vformat_to_n": true,
+        "traits": true,
+        "limit": true,
+        "iterator_buffer": true,
+        "pointer_variant": true,
+        "flush": false,
+        "formatted_size": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 9,
+    "tools": {
+      "bash": 3,
+      "mcp:graph_query_intent": 1,
+      "read": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/opencode/runs/opencode_FMT_FORMAT_TO_N_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "fmt",
+    "task_id": "FMT_FORMAT_TO_N_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_FMT_FORMAT_TO_N_FLOW_graphtyn_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.143,
+    "quality": {
+      "facts": {
+        "result": false,
+        "vformat_to_n": false,
+        "traits": false,
+        "limit": false,
+        "iterator_buffer": false,
+        "pointer_variant": false,
+        "flush": false,
+        "formatted_size": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/fmt/fmt_format_to_n_flow/opencode/runs/opencode_FMT_FORMAT_TO_N_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_FIND_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 128214,
+    "seconds": 53.092,
+    "quality": {
+      "facts": {
+        "fast_path_guard": true,
+        "unsupported": true,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": true,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 9,
+      "total": 9
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/claude/runs/claude_RAILS_FIND_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_FIND_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 131636,
+    "seconds": 32.526,
+    "quality": {
+      "facts": {
+        "fast_path_guard": true,
+        "unsupported": true,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": true,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 9,
+      "total": 9
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/claude/runs/claude_RAILS_FIND_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_FIND_FLOW_graphtyn_hook_r3",
+    "session_status": "complete",
+    "tokens": 134735,
+    "seconds": 39.798,
+    "quality": {
+      "facts": {
+        "fast_path_guard": true,
+        "unsupported": true,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": true,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 9,
+      "total": 9
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/claude/runs/claude_RAILS_FIND_FLOW_graphtyn_hook_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_FIND_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 205143,
+    "seconds": 29.622,
+    "quality": {
+      "facts": {
+        "fast_path_guard": true,
+        "unsupported": true,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": true,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 9,
+      "total": 9
+    },
+    "tool_calls": 5,
+    "tools": {
+      "Bash": 4,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/claude/runs/claude_RAILS_FIND_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_FIND_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 235319,
+    "seconds": 78.582,
+    "quality": {
+      "facts": {
+        "fast_path_guard": true,
+        "unsupported": true,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": true,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 9,
+      "total": 9
+    },
+    "tool_calls": 6,
+    "tools": {
+      "Bash": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/claude/runs/claude_RAILS_FIND_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_FIND_FLOW_graphtyn_r3",
+    "session_status": "complete",
+    "tokens": 193889,
+    "seconds": 55.601,
+    "quality": {
+      "facts": {
+        "fast_path_guard": true,
+        "unsupported": true,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": true,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 9,
+      "total": 9
+    },
+    "tool_calls": 5,
+    "tools": {
+      "Bash": 4,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/claude/runs/claude_RAILS_FIND_FLOW_graphtyn_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_FIND_FLOW_baseline_r1",
+    "session_status": "complete",
+    "tokens": 143285,
+    "seconds": 22.771,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": false,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 6,
+      "total": 9
+    },
+    "tool_calls": 5,
+    "tools": {
+      "command_execution": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/codex/runs/codex_RAILS_FIND_FLOW_baseline_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_FIND_FLOW_baseline_r2",
+    "session_status": "complete",
+    "tokens": 168491,
+    "seconds": 35.477,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": false,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 6,
+      "total": 9
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 7
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/codex/runs/codex_RAILS_FIND_FLOW_baseline_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_FIND_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 105039,
+    "seconds": 31.799,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": false,
+        "execute": false,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 5,
+      "total": 9
+    },
+    "tool_calls": 8,
+    "tools": {
+      "command_execution": 8
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/codex/runs/codex_RAILS_FIND_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_FIND_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 95982,
+    "seconds": 30.082,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": true,
+        "statement_cache": false,
+        "bind": true,
+        "where_limit": false,
+        "execute": false,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 4,
+      "total": 9
+    },
+    "tool_calls": 5,
+    "tools": {
+      "command_execution": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/codex/runs/codex_RAILS_FIND_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_FIND_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 137597,
+    "seconds": 33.356,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": false,
+        "execute": false,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 5,
+      "total": 9
+    },
+    "tool_calls": 6,
+    "tools": {
+      "command_execution": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/codex/runs/codex_RAILS_FIND_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_FIND_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 327522,
+    "seconds": 37.238,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": true,
+        "statement_cache": true,
+        "bind": true,
+        "where_limit": true,
+        "execute": false,
+        "not_found": true,
+        "relation_fallback": true
+      },
+      "passed": 6,
+      "total": 9
+    },
+    "tool_calls": 10,
+    "tools": {
+      "command_execution": 9,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/codex/runs/codex_RAILS_FIND_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_RAILS_FIND_FLOW_graphtyn_hook_r1",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.144,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": false,
+        "statement_cache": false,
+        "bind": false,
+        "where_limit": false,
+        "execute": false,
+        "not_found": false,
+        "relation_fallback": false
+      },
+      "passed": 0,
+      "total": 9
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/opencode/runs/opencode_RAILS_FIND_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_RAILS_FIND_FLOW_graphtyn_hook_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.142,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": false,
+        "statement_cache": false,
+        "bind": false,
+        "where_limit": false,
+        "execute": false,
+        "not_found": false,
+        "relation_fallback": false
+      },
+      "passed": 0,
+      "total": 9
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/opencode/runs/opencode_RAILS_FIND_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_RAILS_FIND_FLOW_graphtyn_r1",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.147,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": false,
+        "statement_cache": false,
+        "bind": false,
+        "where_limit": false,
+        "execute": false,
+        "not_found": false,
+        "relation_fallback": false
+      },
+      "passed": 0,
+      "total": 9
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/opencode/runs/opencode_RAILS_FIND_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_FIND_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_RAILS_FIND_FLOW_graphtyn_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.119,
+    "quality": {
+      "facts": {
+        "fast_path_guard": false,
+        "unsupported": false,
+        "cached_find_by": false,
+        "statement_cache": false,
+        "bind": false,
+        "where_limit": false,
+        "execute": false,
+        "not_found": false,
+        "relation_fallback": false
+      },
+      "passed": 0,
+      "total": 9
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_find_flow/opencode/runs/opencode_RAILS_FIND_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_UPDATE_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 219507,
+    "seconds": 57.667,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "Bash": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/claude/runs/claude_RAILS_UPDATE_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_UPDATE_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 145566,
+    "seconds": 47.112,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 4
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/claude/runs/claude_RAILS_UPDATE_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_UPDATE_FLOW_graphtyn_hook_r3",
+    "session_status": "complete",
+    "tokens": 184778,
+    "seconds": 57.756,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 4
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/claude/runs/claude_RAILS_UPDATE_FLOW_graphtyn_hook_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_UPDATE_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 249490,
+    "seconds": 41.851,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "Bash": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/claude/runs/claude_RAILS_UPDATE_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_UPDATE_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 172103,
+    "seconds": 45.334,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/claude/runs/claude_RAILS_UPDATE_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_UPDATE_FLOW_graphtyn_r3",
+    "session_status": "complete",
+    "tokens": 211502,
+    "seconds": 42.052,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "Bash": 4,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/claude/runs/claude_RAILS_UPDATE_FLOW_graphtyn_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_UPDATE_FLOW_baseline_r1",
+    "session_status": "complete",
+    "tokens": 193942,
+    "seconds": 33.486,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": false,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": false
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 8,
+    "tools": {
+      "command_execution": 8
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/codex/runs/codex_RAILS_UPDATE_FLOW_baseline_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_UPDATE_FLOW_baseline_r2",
+    "session_status": "complete",
+    "tokens": 295064,
+    "seconds": 47.381,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": false
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 11,
+    "tools": {
+      "command_execution": 11
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/codex/runs/codex_RAILS_UPDATE_FLOW_baseline_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_UPDATE_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 125062,
+    "seconds": 36.886,
+    "quality": {
+      "facts": {
+        "assign": false,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": false,
+        "no_changes": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "command_execution": 6
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/codex/runs/codex_RAILS_UPDATE_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_UPDATE_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 87770,
+    "seconds": 36.951,
+    "quality": {
+      "facts": {
+        "assign": false,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "command_execution": 4
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/codex/runs/codex_RAILS_UPDATE_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_UPDATE_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 187089,
+    "seconds": 39.995,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": false,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": false
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 19,
+    "tools": {
+      "command_execution": 18,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/codex/runs/codex_RAILS_UPDATE_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_UPDATE_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 173572,
+    "seconds": 38.133,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": false,
+        "no_changes": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 6,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/codex/runs/codex_RAILS_UPDATE_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_RAILS_UPDATE_FLOW_graphtyn_hook_r1",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.15,
+    "quality": {
+      "facts": {
+        "assign": false,
+        "update_branch": false,
+        "partial": false,
+        "timestamps": false,
+        "locking": false,
+        "update_row": false,
+        "update_manager": false,
+        "no_changes": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/opencode/runs/opencode_RAILS_UPDATE_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_RAILS_UPDATE_FLOW_graphtyn_hook_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.152,
+    "quality": {
+      "facts": {
+        "assign": false,
+        "update_branch": false,
+        "partial": false,
+        "timestamps": false,
+        "locking": false,
+        "update_row": false,
+        "update_manager": false,
+        "no_changes": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/opencode/runs/opencode_RAILS_UPDATE_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_RAILS_UPDATE_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 436562,
+    "seconds": 91.278,
+    "quality": {
+      "facts": {
+        "assign": true,
+        "update_branch": true,
+        "partial": true,
+        "timestamps": true,
+        "locking": true,
+        "update_row": true,
+        "update_manager": true,
+        "no_changes": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 26,
+    "tools": {
+      "bash": 22,
+      "mcp:graph_query_intent": 1,
+      "read": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/opencode/runs/opencode_RAILS_UPDATE_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "rails",
+    "task_id": "RAILS_UPDATE_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_RAILS_UPDATE_FLOW_graphtyn_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.139,
+    "quality": {
+      "facts": {
+        "assign": false,
+        "update_branch": false,
+        "partial": false,
+        "timestamps": false,
+        "locking": false,
+        "update_row": false,
+        "update_manager": false,
+        "no_changes": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/rails/rails_update_flow/opencode/runs/opencode_RAILS_UPDATE_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_EVICTION_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 263795,
+    "seconds": 40.438,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": true,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "Bash": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/claude/runs/claude_REDIS_EVICTION_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_EVICTION_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 131876,
+    "seconds": 33.591,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": true,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 2,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/claude/runs/claude_REDIS_EVICTION_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_EVICTION_FLOW_graphtyn_hook_r3",
+    "session_status": "complete",
+    "tokens": 239891,
+    "seconds": 40.971,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": true,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "Bash": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/claude/runs/claude_REDIS_EVICTION_FLOW_graphtyn_hook_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_EVICTION_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 263238,
+    "seconds": 94.994,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": true,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 7,
+    "tools": {
+      "Bash": 6,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/claude/runs/claude_REDIS_EVICTION_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_EVICTION_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 306845,
+    "seconds": 48.952,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": true,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 7,
+    "tools": {
+      "Bash": 6,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/claude/runs/claude_REDIS_EVICTION_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_EVICTION_FLOW_graphtyn_r3",
+    "session_status": "complete",
+    "tokens": 271405,
+    "seconds": 57.579,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": true,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 7,
+    "tools": {
+      "Bash": 4,
+      "Read": 2,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/claude/runs/claude_REDIS_EVICTION_FLOW_graphtyn_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_EVICTION_FLOW_baseline_r1",
+    "session_status": "complete",
+    "tokens": 143370,
+    "seconds": 24.758,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": false,
+        "pool": false,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "command_execution": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/codex/runs/codex_REDIS_EVICTION_FLOW_baseline_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_EVICTION_FLOW_baseline_r2",
+    "session_status": "complete",
+    "tokens": 229298,
+    "seconds": 28.526,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": false,
+        "pool": false,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 7
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/codex/runs/codex_REDIS_EVICTION_FLOW_baseline_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_EVICTION_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 166741,
+    "seconds": 31.003,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": false,
+        "pool": false,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": false
+      },
+      "passed": 4,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "command_execution": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/codex/runs/codex_REDIS_EVICTION_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_EVICTION_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 183672,
+    "seconds": 28.246,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": false,
+        "pool": false,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": false
+      },
+      "passed": 4,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "command_execution": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/codex/runs/codex_REDIS_EVICTION_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_EVICTION_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 212019,
+    "seconds": 40.351,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": false,
+        "pool": false,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": false
+      },
+      "passed": 4,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "command_execution": 4,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/codex/runs/codex_REDIS_EVICTION_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_EVICTION_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 261953,
+    "seconds": 35.633,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": false,
+        "pool": false,
+        "random": false,
+        "delete": true,
+        "time_limit": false,
+        "lazyfree": false
+      },
+      "passed": 3,
+      "total": 8
+    },
+    "tool_calls": 14,
+    "tools": {
+      "command_execution": 13,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/codex/runs/codex_REDIS_EVICTION_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_REDIS_EVICTION_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 376540,
+    "seconds": 64.948,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": true,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 15,
+    "tools": {
+      "bash": 11,
+      "mcp:graph_query_intent": 1,
+      "read": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/opencode/runs/opencode_REDIS_EVICTION_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_REDIS_EVICTION_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 193269,
+    "seconds": 52.428,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": true,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 14,
+    "tools": {
+      "bash": 3,
+      "grep": 1,
+      "mcp:graph_query_intent": 1,
+      "read": 9
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/opencode/runs/opencode_REDIS_EVICTION_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_REDIS_EVICTION_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 284782,
+    "seconds": 54.245,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": false,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 17,
+    "tools": {
+      "bash": 7,
+      "glob": 1,
+      "mcp:graph_query_intent": 1,
+      "read": 8
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/opencode/runs/opencode_REDIS_EVICTION_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_EVICTION_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_REDIS_EVICTION_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 171772,
+    "seconds": 42.104,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "state": true,
+        "noeviction": true,
+        "pool": false,
+        "random": false,
+        "delete": true,
+        "time_limit": true,
+        "lazyfree": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 13,
+    "tools": {
+      "bash": 4,
+      "mcp:graph_query_intent": 1,
+      "read": 8
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_eviction_flow/opencode/runs/opencode_REDIS_EVICTION_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 172692,
+    "seconds": 30.59,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": true,
+        "size": true,
+        "unauth": true,
+        "client_class": true,
+        "backlog": true,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 4
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/claude/runs/claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 135774,
+    "seconds": 26.61,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": true,
+        "size": true,
+        "unauth": true,
+        "client_class": true,
+        "backlog": true,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/claude/runs/claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r3",
+    "session_status": "complete",
+    "tokens": 172708,
+    "seconds": 37.605,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": true,
+        "size": true,
+        "unauth": true,
+        "client_class": true,
+        "backlog": true,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 4
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/claude/runs/claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 160712,
+    "seconds": 29.018,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": true,
+        "size": true,
+        "unauth": true,
+        "client_class": true,
+        "backlog": true,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/claude/runs/claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 163058,
+    "seconds": 48.725,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": true,
+        "size": true,
+        "unauth": true,
+        "client_class": true,
+        "backlog": true,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/claude/runs/claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 3,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r3",
+    "session_status": "complete",
+    "tokens": 203183,
+    "seconds": 32.286,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": true,
+        "size": true,
+        "unauth": true,
+        "client_class": true,
+        "backlog": true,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "Bash": 4,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/claude/runs/claude_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r3"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_OUTPUT_LIMIT_FLOW_baseline_r1",
+    "session_status": "complete",
+    "tokens": 231519,
+    "seconds": 28.227,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": true,
+        "size": true,
+        "unauth": false,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": false,
+        "async_close": true
+      },
+      "passed": 4,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "command_execution": 6
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/codex/runs/codex_REDIS_OUTPUT_LIMIT_FLOW_baseline_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_OUTPUT_LIMIT_FLOW_baseline_r2",
+    "session_status": "complete",
+    "tokens": 372580,
+    "seconds": 29.036,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": false,
+        "size": true,
+        "unauth": true,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tool_calls": 9,
+    "tools": {
+      "command_execution": 9
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/codex/runs/codex_REDIS_OUTPUT_LIMIT_FLOW_baseline_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 229786,
+    "seconds": 31.023,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": false,
+        "size": false,
+        "unauth": false,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 3,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "command_execution": 6
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/codex/runs/codex_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 209437,
+    "seconds": 28.503,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": false,
+        "size": false,
+        "unauth": false,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": false,
+        "async_close": true
+      },
+      "passed": 2,
+      "total": 8
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 7
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/codex/runs/codex_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 28251,
+    "seconds": 13.409,
+    "quality": {
+      "facts": {
+        "check_site": false,
+        "limits": false,
+        "size": false,
+        "unauth": false,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": false,
+        "async_close": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 1,
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/codex/runs/codex_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 288934,
+    "seconds": 32.648,
+    "quality": {
+      "facts": {
+        "check_site": true,
+        "limits": false,
+        "size": false,
+        "unauth": true,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": true,
+        "async_close": true
+      },
+      "passed": 4,
+      "total": 8
+    },
+    "tool_calls": 8,
+    "tools": {
+      "command_execution": 7,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/codex/runs/codex_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r1",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.146,
+    "quality": {
+      "facts": {
+        "check_site": false,
+        "limits": false,
+        "size": false,
+        "unauth": false,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": false,
+        "async_close": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/opencode/runs/opencode_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.147,
+    "quality": {
+      "facts": {
+        "check_site": false,
+        "limits": false,
+        "size": false,
+        "unauth": false,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": false,
+        "async_close": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/opencode/runs/opencode_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "opencode_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r1",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.147,
+    "quality": {
+      "facts": {
+        "check_site": false,
+        "limits": false,
+        "size": false,
+        "unauth": false,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": false,
+        "async_close": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/opencode/runs/opencode_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r1"
+  },
+  {
+    "set": "v2",
+    "repository": "redis",
+    "task_id": "REDIS_OUTPUT_LIMIT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "stop_rule": "targeted",
+    "run_id": "opencode_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r2",
+    "session_status": "timeout",
+    "tokens": null,
+    "seconds": 615.075,
+    "quality": {
+      "facts": {
+        "check_site": false,
+        "limits": false,
+        "size": false,
+        "unauth": false,
+        "client_class": false,
+        "backlog": false,
+        "soft_hard": false,
+        "async_close": false
+      },
+      "passed": 0,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/v2/redis/redis_output_limit_flow/opencode/runs/opencode_REDIS_OUTPUT_LIMIT_FLOW_graphtyn_r2"
+  },
+  {
+    "set": "set1",
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_INT_SPEC_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 311821,
+    "seconds": 39.672,
+    "quality": {
+      "facts": {
+        "replacement_field": true,
+        "parse_specs": true,
+        "dynamic": true,
+        "visit_formatter": true,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 7,
+    "tools": {
+      "Bash": 7
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/fmt/fmt_int_spec_flow/claude/runs/claude_FMT_INT_SPEC_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_INT_SPEC_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 148238,
+    "seconds": 28.294,
+    "quality": {
+      "facts": {
+        "replacement_field": true,
+        "parse_specs": true,
+        "dynamic": true,
+        "visit_formatter": true,
+        "hex_digits": true,
+        "prefix": false,
+        "padding": false
+      },
+      "passed": 5,
+      "total": 7
+    },
+    "tool_calls": 6,
+    "tools": {
+      "command_execution": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/fmt/fmt_int_spec_flow/codex/runs/codex_FMT_INT_SPEC_FLOW_graphtyn"
+  },
+  {
+    "set": "set1",
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_INT_SPEC_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 194150,
+    "seconds": 33.8,
+    "quality": {
+      "facts": {
+        "replacement_field": true,
+        "parse_specs": true,
+        "dynamic": true,
+        "visit_formatter": true,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tool_calls": 8,
+    "tools": {
+      "command_execution": 8
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/fmt/fmt_int_spec_flow/codex/runs/codex_FMT_INT_SPEC_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_FMT_PRINT_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 101149,
+    "seconds": 23.302,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": true,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 2,
+    "tools": {
+      "Bash": 2
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/fmt/fmt_print_flow/claude/runs/claude_FMT_PRINT_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_PRINT_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 31436,
+    "seconds": 14.536,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": true,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 1,
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/fmt/fmt_print_flow/codex/runs/codex_FMT_PRINT_FLOW_graphtyn"
+  },
+  {
+    "set": "set1",
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_FMT_PRINT_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 12596,
+    "seconds": 9.848,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": false,
+        "buffered": true,
+        "file_buffer": false,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tool_calls": 0,
+    "tools": {},
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/fmt/fmt_print_flow/codex/runs/codex_FMT_PRINT_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_DESTROY_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 215276,
+    "seconds": 55.084,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": true,
+        "associations": true,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "Bash": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/rails/rails_destroy_flow/claude/runs/claude_RAILS_DESTROY_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_DESTROY_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 268676,
+    "seconds": 41.19,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": false,
+        "associations": true,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 10,
+    "tools": {
+      "command_execution": 9,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/rails/rails_destroy_flow/codex/runs/codex_RAILS_DESTROY_FLOW_graphtyn"
+  },
+  {
+    "set": "set1",
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_DESTROY_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 149402,
+    "seconds": 34.727,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": false,
+        "associations": false,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 7,
+    "tools": {
+      "command_execution": 7
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/rails/rails_destroy_flow/codex/runs/codex_RAILS_DESTROY_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_RAILS_RELATION_LOAD_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 246931,
+    "seconds": 48.697,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "Bash": 6
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/rails/rails_relation_load_flow/claude/runs/claude_RAILS_RELATION_LOAD_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_RELATION_LOAD_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 262352,
+    "seconds": 38.602,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": false,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tool_calls": 20,
+    "tools": {
+      "command_execution": 19,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/rails/rails_relation_load_flow/codex/runs/codex_RAILS_RELATION_LOAD_FLOW_graphtyn"
+  },
+  {
+    "set": "set1",
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_RAILS_RELATION_LOAD_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 109108,
+    "seconds": 31.826,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "command_execution": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/rails/rails_relation_load_flow/codex/runs/codex_RAILS_RELATION_LOAD_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_EXPIRE_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 143174,
+    "seconds": 35.44,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": true,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": true,
+        "lazyfree": true,
+        "active_cycle": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/redis/redis_expire_flow/claude/runs/claude_REDIS_EXPIRE_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_EXPIRE_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 177059,
+    "seconds": 27.474,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": false,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": true,
+        "lazyfree": true,
+        "active_cycle": false
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 6,
+    "tools": {
+      "command_execution": 5,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/redis/redis_expire_flow/codex/runs/codex_REDIS_EXPIRE_FLOW_graphtyn"
+  },
+  {
+    "set": "set1",
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_EXPIRE_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 115538,
+    "seconds": 24.452,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": false,
+        "replica_branch": true,
+        "force_flag": false,
+        "delete": true,
+        "propagation": true,
+        "lazyfree": true,
+        "active_cycle": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tool_calls": 5,
+    "tools": {
+      "command_execution": 5
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/redis/redis_expire_flow/codex/runs/codex_REDIS_EXPIRE_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "claude_REDIS_PSYNC_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 144249,
+    "seconds": 33.814,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": true,
+        "fullresync_reply": true,
+        "backlog": true,
+        "bgsave_reuse": true,
+        "start_bgsave": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tool_calls": 3,
+    "tools": {
+      "Bash": 3
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/redis/redis_psync_flow/claude/runs/claude_REDIS_PSYNC_FLOW_graphtyn_hook"
+  },
+  {
+    "set": "set1",
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_PSYNC_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 96459,
+    "seconds": 22.162,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": false,
+        "fullresync_reply": true,
+        "backlog": false,
+        "bgsave_reuse": false,
+        "start_bgsave": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "command_execution": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/redis/redis_psync_flow/codex/runs/codex_REDIS_PSYNC_FLOW_graphtyn"
+  },
+  {
+    "set": "set1",
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "stop_rule": "targeted",
+    "run_id": "codex_REDIS_PSYNC_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 121404,
+    "seconds": 31.657,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": false,
+        "fullresync_reply": true,
+        "backlog": false,
+        "bgsave_reuse": false,
+        "start_bgsave": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tool_calls": 4,
+    "tools": {
+      "command_execution": 4
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-v2-2026-10-27/set1/redis/redis_psync_flow/codex/runs/codex_REDIS_PSYNC_FLOW_graphtyn_hook"
+  }
+]

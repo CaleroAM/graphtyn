@@ -3,10 +3,278 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
-## [Unreleased]
+## [0.11.0] - sin publicar
 
-Los cambios posteriores a `0.10.7` se documentarán aquí antes de la próxima
-versión.
+Versión preparada en el repositorio; la etiqueta y los artefactos se publican
+tras la validación de release (`docs/release-checklist.md`).
+
+### Añadido
+
+- `GRAPHTYN_FLOW_POLICY` (`KEY=VALUE,...`) ajusta la política de los paquetes
+  de flujo sin tocar el código; una clave desconocida se avisa por stderr y se
+  ignora. `coverage.py --policy` y `run_variants.py` la usan para comparar
+  políticas.
+- `call_outline` incluye, con la marca `S`, funciones que comparten con una
+  etapa un campo de estado poco usado (`server.ready_keys`): flujos que pasan
+  por estado compartido y no por llamadas. Redis BLPOP en desarrollo: 5 → 7/8.
+- Banco de tareas: cuarto conjunto de prueba (jq y Sinatra, más tareas
+  `impact`, `tests`, `bindings` y `persistence`), `run_variants.py`,
+  `judge_answers.py` (juez semántico) y `paired_ci.py`. `analyze_variants.py`
+  calcula el coste en USD con los precios de lista de cada modelo.
+- `AGENTS.md`, la skill y la política del instalador explican `call_outline`.
+
+- Peticiones de flujo (`graph_query_intent`, hook): la mitad del presupuesto de
+  entidades se reserva para las etapas a las que llama el punto de entrada,
+  aunque no compartan palabras con la petición; las utilidades llamadas desde
+  todas partes no cuentan. `call_outline` lista hasta 12 etapas más como
+  `[caller, callee, F:línea, E|I]`, sin su código. Un comando escrito en
+  mayúsculas (`BLPOP`) incluye su función (`blpopCommand`). El presupuesto por
+  defecto sigue en 10 entidades. Cobertura del paquete: desarrollo 56,2 → 62,8 %,
+  test2 60,8 → 66,6 %, test3 (nuevo, con Lua) 35,9 → 48,8 %, sin más tokens.
+  En 300 sesiones reales, el coste ponderado baja un 19–21 % frente a no usar
+  Graphtyn, con la misma calidad.
+- Tercer conjunto de prueba (`benchmarks/task_bank_2026-10-28/test3/`, 15 tareas
+  con Lua como corpus nuevo) y `analyze_variants.py`, que separa los tokens por
+  tipo (lectura y escritura de caché, entrada sin caché, salida) y los pondera
+  por precio.
+
+- Job `retrieval` de CI (`tools/check_retrieval_coverage.py`): mide la cobertura
+  de los paquetes en 22 tareas sobre fmt y Flask fijados. Falla si la media
+  baja, si una tarea pierde dos hechos o si aparece una falsa completitud.
+- Ruby: `include`/`prepend`/`extend` se resuelven por la búsqueda léxica de
+  constantes, y las llamadas sin receptor y `super` por la cadena de ancestros
+  de cada clase que incluye el módulo (`graphtyn/core/ruby_mro.py`). En Rails,
+  los `include` ambiguos pasan de 1.166 a 54 y aparecen 527 relaciones `super`.
+- La puntuación de candidatos es una tabla de rasgos con nombre
+  (`graphtyn/core/ranking_weights.py`), con pesos ajustados por
+  `tools/learn_ranking_weights.py` sobre el conjunto de desarrollo.
+- Banco de 30 tareas con división desarrollo/prueba
+  (`benchmarks/task_bank_2026-10-28/`), medido por la cobertura del paquete sin
+  agentes. Las 15 tareas de prueba se congelaron antes de cambiar la
+  recuperación.
+- `graph_query_intent` deja de declarar completo un paquete cuya evidencia es
+  escasa para una petición de varias partes (menos de 250 tokens por parte):
+  devuelve `missing=["request_parts"]` y pide buscar sólo las partes que la
+  evidencia no aborda. El hook usa la misma indicación.
+- Tampoco lo declara completo cuando la petición nombra un identificador
+  (`BLPOP`, `TRYAGAIN`) que la evidencia no contiene:
+  `missing=["named_identifiers"]` y `evidence_sufficiency` lista los que faltan.
+- Segundo conjunto de tareas no vistas (`benchmarks/heldout_v2_2026-10-27/`):
+  con la regla de parada dirigida la calidad se recupera, pero el ahorro en
+  tareas nuevas es moderado. En cuatro de seis, el paquete cubre 0–1 hechos de la
+  rúbrica, así que la recuperación sigue siendo el cuello de botella.
+- Benchmark de tareas no vistas (`benchmarks/heldout_tasks_2026-10-27/`): seis
+  tareas nuevas con rúbricas congeladas antes de ejecutar. Muestra que el ahorro
+  del hook y del MCP lean no generaliza cuando el paquete se declara completo
+  (`do_not_expand=true`) sin cubrir lo pedido.
+- `graphtyn agent-install copilot` registra además el servidor MCP del proyecto
+  en `.vscode/mcp.json` (`servers`, `type: stdio`, `cwd: ${workspaceFolder}`)
+  para el modo agente de Copilot en VS Code. Está cubierto por tests pero no se
+  verificó con un cliente Copilot real.
+- `graphtyn integrations remove` retira también las skills que `agent-install`
+  escribió para ese cliente y que nadie editó después (según el hash registrado);
+  las editadas se conservan y se informan en `preserved_skills`.
+- La skill publicada se divide en `skills/graphtyn` (contexto e impacto de
+  código, con el flujo de cambios en `references/change-workflow.md`) y
+  `skills/graphtyn-memory` (memoria compartida, brains y OpenClaw), cada una con
+  una descripción acotada que remite a la otra. La skill de código reconoce el
+  bloque `<graphtyn-context>` de los hooks; la de memoria lleva la política
+  gestionada vigente, verificada por tests. `graphtyn agent-install` instala las
+  dos desde los datos del paquete, registra el hash de cada archivo escrito para
+  actualizar sólo los no editados y migra la skill combinada anterior con copia
+  en `.graphtyn/legacy-skills/`.
+- `graphtyn codex-context` y `graphtyn opencode-context` (`install|uninstall|status|hook`):
+  el hook de primer turno para Codex (`.codex/hooks.json`, `UserPromptSubmit`
+  con `additionalContextLimit`) y OpenCode (plugin `chat.message` en
+  `.opencode/plugins/graphtyn-context.js`). Opcionales, requieren `--consent`.
+- `graphtyn mcp --response-detail lean|debug` fija el detalle por defecto de
+  `graph_query_intent`.
+- El arnés comparativo añade el brazo `graphtyn_full` (mismo MCP con
+  `response_detail=debug`) y el brazo `graphtyn_hook` para Codex y OpenCode.
+  Medición en cuatro clientes y tres corpus (84 sesiones) con adjudicación
+  conceptual ciega: `benchmarks/real_multi_client_hook_2026-10-27/`.
+- `graphtyn claude-context install|uninstall|status|hook`: hook opcional
+  `UserPromptSubmit` de Claude Code que ejecuta `graph_query_intent` antes del
+  primer turno y añade el paquete como `<graphtyn-context>`, repartido en dos
+  hooks paralelos de ≤ 9.800 caracteres (límite por hook de Claude Code); sólo
+  para mensajes de código, sin construir índices y con límite de tiempo.
+- `graph_query_intent` devuelve por defecto un paquete `lean`: sin diagnósticos
+  (`planner`, `timing_ms`, `validation` correcta…), sin entidades desconectadas
+  de los fragmentos de fuente cuando éstos ya cubren la petición y sin repetir
+  firmas u operaciones ya impresas. `response_detail="debug"` conserva el
+  paquete completo.
+- El arnés comparativo añade un brazo `graphify` para Claude Code (`--arm graphify
+  --graphify-bin`): construye el grafo de sólo código de una instalación aislada
+  de Graphify fuera del tiempo medido y expone su `graphify-mcp` oficial. También
+  admite `--repetition` para reintentos auditados y se detiene ante una sesión
+  rechazada sin uso.
+- Integración nativa con Claude Code: skill `.claude/skills/graphtyn`, registro
+  reversible del MCP en el ámbito `local` mediante `claude mcp add` además de
+  `.mcp.json`, y alias de identidad `claude` ↔ `claude-code` en la memoria.
+- El arnés comparativo admite Claude Code como cuarto cliente: MCP aislado con
+  `--strict-mcp-config`, herramientas de edición deshabilitadas, uso normalizado
+  con lectura y escritura de caché por separado, traza por llamada de modelo y
+  prueba de conexión y llamadas al servidor Graphtyn.
+- Nodos de *rationale*: comentarios `WHY:`/`NOTE:`/`RATIONALE:`/`DECISION:`/
+  `HACK:`/`IMPORTANT:` y citas ADR/RFC se adjuntan al símbolo que documentan y
+  aparecen en `explain` y en los paquetes MCP (`why`).
+- Comunidades, *god nodes*, conexiones sorprendentes y preguntas sugeridas en
+  `GRAPHTYN_REPORT.md` y en el `overview` MCP (`structure`).
+- `graphtyn export-html`: grafo autocontenido y sin red para compartir.
+- `graphtyn prs`: triaje de varias ramas o PR con conflictos simulados por
+  `git merge-tree`, símbolos compartidos, acoplamiento llamador/llamado y orden
+  de merge sugerido.
+- `.graphtynignore` con sintaxis de `.gitignore` para indexación y watcher.
+- Códigos de salida en `query`, `path` y `explain` (0 respuesta, 3 ambiguo,
+  4 sin coincidencia); los tres usan el índice cacheado en lugar de reescanear.
+- Hooks Git gestionados para `post-commit`, `post-checkout` y `post-merge` que
+  conservan el contenido del usuario.
+- Paquetes Tree-sitter para Kotlin, Swift y Scala.
+- Campo `citations` con referencias `archivo:línea` reales listas para citar,
+  añadido sólo con el presupuesto sobrante tras acotar la evidencia.
+- `--repetitions` en el arnés comparativo, con orden de brazos alternado.
+- Captura nativa de memoria en Claude Code mediante un hook `Stop`
+  (`graphtyn memory claude-capture install --consent`, o `setup --memory on`):
+  sincroniza el transcript del turno en segundo plano con el mismo cursor
+  idempotente del watcher; `memory_status` lo informa en `client_capture_hooks`.
+- Instrucciones de instalación por cliente y para agentes en el README, con la
+  explicación de un servidor MCP y una entrada por cliente.
+- Contrato declarativo de paquetes Tree-sitter y metadatos del índice que
+  indican qué lenguajes se procesaron realmente.
+- Extracción precisa para C y C++: encabezados, includes, tipos, funciones,
+  métodos, campos, llamadas, espacios de nombres y herencia.
+- Benchmark local determinista para la cobertura y latencia del paquete C/C++.
+- Benchmark exploratorio sobre Redis y fmt con OpenCode, Codex y Antigravity,
+  incluyendo eventos crudos, caché, calidad, tiempos de índice y sesiones fallidas.
+- Paquete Ruby con clases, módulos, métodos, llamadas, `require`, herencia y
+  relaciones explícitas para `include`, `prepend` y `extend`.
+- Benchmark determinista del parser y grafo Ruby, más validación de escala sobre
+  un commit fijado de Ruby on Rails.
+- Benchmark Rails con OpenCode, Codex y Antigravity que conserva por cliente los
+  tokens, caché, calidad, tiempos de índice y artefactos crudos.
+- Perfil MCP `query` que expone sólo `graph_query_intent`, con precarga opcional
+  del índice para separar arranque, recuperación y tiempo de sesión.
+- Repetición aislada Codex/Rails que conserva el primer intento incompleto y una
+  segunda pareja comparable tras corregir la cobertura de evidencia.
+
+### Corregido
+
+- Clasificación de intenciones: cuentan las formas flexionadas («afectado»,
+  «consumidores», «persiste») y una pasiva refleja («cuando se añade una ruta»)
+  ya no se toma por una petición de edición. Las peticiones de impacto y de
+  registro de extensiones se clasifican bien y sus paquetes son más pequeños.
+- El código de dependencias incluidas (`deps/`, `vendor/`, `third_party/`…) no
+  ancla un paquete salvo que la petición nombre la dependencia, y el handler de
+  un comando en mayúsculas se conserva fuera de los archivos de anclaje.
+- Un tipo sólo cuenta como nombrado si la petición lo escribe con su mayúscula
+  (`record.reload` no nombra la clase `Record`); entre homónimos, el
+  propietario que describe la petición (`autosave` → `AutosaveAssociation`)
+  pesa más en la clase que en su espacio de nombres.
+- La completitud exige identificadores completos: `lua_pcallk` ya no demuestra
+  que se encontró `lua_pcall`; un nombre en mayúsculas sólo tiene que empezar
+  una palabra (`BLPOP` → `blpopCommand`).
+
+- Los fragmentos de `source_evidence` que empatan conservan el orden de
+  selección del paquete (el punto de entrada primero), no el de sus rutas.
+- Recuperación para `flow`:
+  - un glosario de programación español→inglés (`evicción`→`evict`) y la
+    puntuación de términos poco frecuentes dentro de nombres de función;
+  - los marcadores de operaciones web (`save`, `send`…) sólo cuentan si la
+    petición los nombra;
+  - los campos de struct ya no anclan el paquete;
+  - como mucho dos homónimos;
+  - las funciones llamadas por el punto de entrada entran en el paquete.
+  En el banco de tareas, la cobertura de prueba pasa del 20 % al 37,5 %.
+- «registra» ya no clasifica una petición como `bindings` sin vocabulario de
+  inyección de dependencias.
+- Entre homónimos de un método nombrado se prefiere el dueño o la firma que
+  describe la petición (`update(attributes)` → `Persistence#update`).
+- Las palabras españolas en prosa y los nombres de directorio ya no puntúan
+  como términos.
+- La cadena de llamadas sigue hasta tres saltos por métodos hermanos.
+
+- Regla de parada dirigida: un paquete con `do_not_expand=true` ya no prohíbe
+  buscar. El hook, la guía del paquete, la skill y `AGENTS.md` piden responder
+  con la evidencia sin releerla y consultar sólo la parte de la petición que no
+  cubre, porque la recuperación por grafo puede omitir parte de una petición con
+  varias preguntas (benchmark de tareas no vistas). El arnés conserva la regla
+  estricta anterior (`--stop-rule strict`) para reproducir las ejecuciones previas.
+- Ruby: una llamada sin paréntesis ni receptor (`destroy_associations`,
+  `persisted? && destroy_row`) se registra como llamada si no es un parámetro ni
+  una variable local; sólo se resuelve dentro del mismo lenguaje y sin
+  ambigüedad (+2.022 relaciones en Rails, 1.322 `EXTRACTED`).
+- «Traza qué ocurre…» ya no se clasifica como `bindings` porque «registro»
+  coincidía con el marcador de registro de servicios; los empates con `flow`
+  se resuelven a favor de `flow`.
+- Los tipos nombrados en la petición deben coincidir en mayúsculas (`array` en
+  prosa no es la clase `Array`); los archivos `_test`/`_spec` cuentan como tests y
+  el código vendorizado o minificado se penaliza; nombrar un paquete de primer
+  nivel de un monorepo (`ActiveRecord`) acota los homónimos como un nombre
+  cualificado.
+- El filtro de los hooks de primer turno reconoce peticiones en portugués,
+  francés, italiano y alemán además de español e inglés, y un identificador de
+  código (`snake_case`, `camelCase`, `a::b`, un archivo fuente) basta por sí
+  solo en cualquier idioma.
+- `graphtyn integrations remove` ya no deja vacía la carpeta `skills` del cliente.
+- Selección de fuente en modo `precision`: un tipo cuyo nombre exacto aparece en
+  la petición (`format_string/fstring`) pasa a ser símbolo obligatorio; un
+  homónimo de un símbolo ya resuelto en otro archivo ya no lo es; la extensión de
+  una clase o struct se completa con sus llaves cuando el parser la cierra en el
+  primer miembro (cabeceras con macros); y el recorte de cuerpos largos amortigua
+  los términos frecuentes y resta peso a los comentarios, para que las ramas de
+  rechazo de `processCommand` no pierdan frente a palabras raras de comentarios.
+- El bloque `<graphtyn-context>` completo repite la regla de parada al final.
+- El arnés comparativo cierra stdin de cada sesión: `codex exec` esperaba más
+  entrada y agotaba el tiempo.
+- `evidence_result` ya no recorta en sitio los fragmentos del paquete interno. La
+  segunda llamada que guarda el contexto MCP acortaba la respuesta ya construida;
+  el presupuesto efectivo de fragmentos en modo `precision` (el medido en los
+  benchmarks) ahora es explícito.
+- Las llamadas Ruby sin receptor a `require`, `include`, `raise` y otros
+  métodos de `Kernel`/`Module` ya no se resuelven contra métodos homónimos del
+  proyecto; en Rails desaparecen unas 32.000 relaciones falsas.
+- El vocabulario de expansión de consultas es genérico; se eliminaron
+  identificadores de productos y librerías concretas que sobreajustaban los
+  benchmarks.
+- `hook install` ya no sobrescribe un hook Git existente del usuario.
+- La importación de transcripts de Claude Code ya no guarda salida de
+  herramientas, bloques `<system-reminder>`, notificaciones de tareas ni turnos
+  meta, ni duplica cada mensaje como repr de Python.
+- Las obligaciones ligadas a un framework (por ejemplo `validation_gate` de
+  Rails) se marcan como no aplicables cuando ningún nodo del grafo puede
+  cumplirlas, en lugar de dejar el paquete incompleto en otros lenguajes.
+- Los cuerpos largos se entregan como ventanas enfocadas en la petición con
+  números de línea reales, los símbolos camelCase nombrados cuentan como
+  explícitos y el recorte final del payload conserva inicio y final. En Redis el
+  paquete pasa de 3/8 a 8/8 hechos de la rúbrica con tamaño similar.
+- La guía de los paquetes pide citar `archivo:línea` reales, no alias.
+- Indexación: se eliminaron cuatro recorridos cuadráticos con un grafo idéntico;
+  reindexado en frío de Rails 259,7 → 62 s, fmt 33,1 → 5 s y Redis 24,0 → 18 s.
+- Retirar la última entrada Graphtyn de `.mcp.json` conserva `mcpServers: {}`,
+  que Claude Code exige para considerar válido el archivo.
+- La contabilidad de Codex ya no suma `cached_input_tokens` sobre
+  `input_tokens`: la caché es un subconjunto de la entrada y el razonamiento un
+  subconjunto de la salida en el esquema de uso de OpenAI.
+- Las obligaciones de memoria requieren palabras completas, por lo que
+  “aporta” ya no solicita evidencia de un puerto.
+- Una petición explícita de panorama conserva `overview` al evaluar posibles
+  mejoras; las preguntas operativas enumeradas siguen usando `flow`.
+- Los símbolos Tree-sitter con nombres válidos como `Base` ya no se eliminan
+  como ruido léxico.
+- Los encabezados `.h` con sintaxis C++ seleccionan la gramática C++ en vez de
+  quedar degradados por la gramática C; los encabezados C conservan su parser.
+- Los selectores cualificados consideran namespaces y rutas de paquete, evitan
+  métodos homónimos de pruebas y conservan los símbolos tardíos de solicitudes
+  con varias etapas. La evidencia de precisión admite cuerpos de tipos nombrados.
+- Las relaciones ambiguas de llamada, herencia y mixin dejan de expandirse contra
+  cientos de candidatos homónimos. Las consultas CLI reutilizan el índice
+  persistido en lugar de reconstruir el repositorio antes de recuperar contexto.
+- La evidencia de precisión verifica por separado cada obligación y cada símbolo
+  nombrado. Si el presupuesto elimina un fragmento requerido, reabre `missing` y
+  desactiva `do_not_expand` en vez de declarar cobertura completa.
+- Las rutas complejas distinguen validación, callbacks de guardado/creación,
+  entrada y rollback transaccionales, adaptador y semántica de fallo; nombres de
+  proyecto o palabras como “commit” ya no desplazan esos símbolos.
 
 ## [0.10.7] - 2026-10-20
 

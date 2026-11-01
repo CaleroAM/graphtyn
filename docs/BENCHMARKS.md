@@ -14,12 +14,207 @@
 | ZERP, Laravel/React | PARTIAL; diagnóstico y una tarea dirigida |
 | Memoria compartida | FULL para el protocolo local RF07 de 1k/10k/50k; no extrapola a embeddings remotos |
 | Comparativa Graphtyn 0.8.0 vs Graphify 0.9.58 | PARTIAL; cuatro tareas, una repetición; sin afirmación de superioridad |
+| Redis C y fmt C++ con tres clientes | PARTIAL; dos tareas, una repetición, una celda incompleta |
+| Rails Ruby con tres clientes | PARTIAL; una tarea, una repetición, seis sesiones completas |
+| Redis, fmt y Rails con Claude Code / Sonnet | PARTIAL; tres tareas, una repetición, seis sesiones completas |
+| Claude Code / Sonnet tras correcciones | PARTIAL; mismas tres tareas, una repetición, seis sesiones completas |
+| Claude Code / Sonnet, tres repeticiones | PARTIAL; tres tareas, n=3 por corpus, 18 sesiones completas |
+| Claude Code / Sonnet, base vs Graphtyn vs Graphify 0.9.96 | PARTIAL; tres tareas, n=3, brazo Graphify no contemporáneo |
+| Claude Code / Sonnet, MCP lean y hook de primer turno | PARTIAL; tres tareas, n=3, 18 sesiones; comparación con brazos previos |
+| Hook de primer turno y MCP lean en Claude, Codex, OpenCode y Antigravity | PARTIAL; tres tareas, 84 sesiones (n=5 Claude, n=2 resto); adjudicación ciega parcial |
+| Tareas no vistas (held-out) para MCP lean y hook | NEGATIVE para generalización; seis tareas nuevas, 54 sesiones; rúbricas congeladas antes de ejecutar |
+| Segundo conjunto no visto y regla de parada dirigida | MIXED; seis tareas nuevas más repetición del primer conjunto, 114 sesiones (100 completas) |
 | 36 tareas multilenguaje | PENDING |
 
 La medición de la release 0.8.0 está en
 [`competitive-validation-0.8.0.md`](competitive-validation-0.8.0.md). Separa
 conteos estructurales de cobertura factual y documenta que el piloto de cuatro
 tareas no permite declarar un ganador general.
+
+La validación real de los nuevos paquetes C/C++ está en
+[`benchmarks/real_c_cpp_agents_2026-10-20/report.md`](../benchmarks/real_c_cpp_agents_2026-10-20/report.md).
+Con calidad 8/8, Redis redujo el total informado entre 22,48 % y 52,01 % en los
+tres clientes. fmt fue mixto: +11,24 % con Codex, −12,55 % con Antigravity y una
+sesión Graphtyn de OpenCode sin consumo reconstruible tras timeout. Son resultados
+por cliente; los totales de sus proveedores no tienen la misma composición y una
+sola repetición no acredita ahorro general.
+La verificación local posterior corrigió el tratamiento de encabezados `.h` de
+C++, ancló `fmt::format` en su API pública y eliminó símbolos de pruebas de los
+diez primeros resultados. No se volvieron a ejecutar modelos, de modo que esa
+mejora estructural aún no tiene un delta nuevo de tokens.
+
+La réplica con Claude Code 2.1.310 y `claude-sonnet-5-5` está en
+[`benchmarks/real_claude_agents_2026-10-25/report.md`](../benchmarks/real_claude_agents_2026-10-25/report.md).
+Con calidad 8/8 en ambos brazos y el MCP llamado en cada tratamiento, el total
+informado cambió −39,99 % en Redis, −83,19 % en fmt y −72,43 % en Rails; el
+coste informado, −6,76 %, −60,86 % y −47,62 %. En Redis el paquete quedó
+truncado y sin `validation_gate`, el mismo hueco ya visto con otros clientes.
+Una repetición, calificación automática no independiente.
+
+Tras corregir la recuperación de cuerpos largos, las obligaciones no aplicables
+y el índice frío, la repetición en
+[`benchmarks/real_claude_agents_postfix_2026-10-25/report.md`](../benchmarks/real_claude_agents_postfix_2026-10-25/report.md)
+mantuvo 8/8 en ambos brazos con −69,25 % en Redis, −82,60 % en fmt y −76,04 % en
+Rails. En Redis el brazo Graphtyn bajó de 104.063 a 63.373 tokens, dejó de leer
+archivos y pasó de 2 a 35 citas válidas; el índice frío bajó a 19,0, 3,9 y
+61,5 s. Los brazos base variaron hasta un 19 % entre corridas, así que con una
+repetición los deltas son indicativos.
+
+Con tres repeticiones contrabalanceadas
+([`benchmarks/real_claude_agents_reps_2026-10-25/report.md`](../benchmarks/real_claude_agents_reps_2026-10-25/report.md)),
+Graphtyn redujo los tokens en las 9 parejas: −65,1 % de media en Redis
+(rango −62,5 a −69,8), −78,1 % en fmt (−72,9 a −81,8) y −70,5 % en Rails
+(−67,8 a −72,7), con calidad 8/8 en Redis y fmt y calidad igual o mayor que la
+base en Rails (7–8 frente a 6–7). El coste medio bajó un 41–42 %; varía con la
+temperatura de la caché de prompt. Nueve sesiones rechazadas por el límite de uso
+se conservan aparte y se repitieron con el mismo código.
+
+El brazo Graphify 0.9.96 sobre esas mismas tareas
+([`benchmarks/real_claude_agents_graphify_2026-10-26/report.md`](../benchmarks/real_claude_agents_graphify_2026-10-26/report.md))
+usó de media 164.832 tokens en Redis, 269.333 en fmt y 253.134 en Rails, frente
+a 181.883 / 295.890 / 213.902 de la lectura directa y 62.856 / 62.933 / 62.733
+de Graphtyn. Graphify ahorró frente a la base en 3 de 9 parejas y Graphtyn usó
+entre un 41 % y un 82 % menos tokens que Graphify en las 9. La calidad de
+Graphify fue 8/8 salvo Rails r3 (6/8). Grafo sólo de código con el `graphify-mcp`
+oficial; el brazo se ejecutó después de los otros dos, así que el coste no es
+estrictamente comparable.
+
+Con el paquete MCP `lean` y el hook opcional `graphtyn claude-context`
+([`benchmarks/real_claude_agents_lean_hook_2026-10-26/report.md`](../benchmarks/real_claude_agents_lean_hook_2026-10-26/report.md)),
+el MCP lean bajó la sesión a ~60.600 tokens (−3 a −4 % frente al paquete
+anterior). El hook, que inyecta el mismo paquete antes del primer turno, dejó
+Redis y Rails en ~33.000 tokens con una sola llamada al modelo (−44 a −46 %
+frente a lean, −81 a −85 % frente a lectura directa). En fmt fue inestable:
+32.740 tokens en r1, y 98.645 y 134.115 en r2 y r3, porque el agente verificó en
+fuente piezas que el paquete no mostraba. Las notas del hook en Rails r1 y r3
+(6/8) se deben a respuestas que parafrasean evidencia presente en el contexto;
+la rúbrica es literal.
+
+Tras corregir la selección de fuente (tipos nombrados, homónimos, extensión por
+llaves y ramas de rechazo), el run multicliente
+([`benchmarks/real_multi_client_hook_2026-10-27/report.md`](../benchmarks/real_multi_client_hook_2026-10-27/report.md))
+dejó el hook estable en fmt (Claude, 5/5 sesiones: 34.420 ± 244 tokens, sin
+herramientas). Hook frente a MCP lean: −44 a −45 % en Claude (~34.000 tokens),
+−59 a −77 % en Codex (~12.000) y −40 a −46 % en OpenCode. En Codex, frente a
+lectura directa, −93 a −95 %. El recorte lean apenas cambia el gasto en Codex,
+OpenCode y Antigravity (dentro del ruido). Una adjudicación conceptual ciega de
+todas las respuestas con fallo literal más una muestra de control encontró 2
+fallos reales en 29 respuestas; los 5/8 de Codex en Rails son paráfrasis.
+
+Con seis tareas nuevas, escritas y congeladas antes de ejecutar
+([`benchmarks/heldout_tasks_2026-10-27/report.md`](../benchmarks/heldout_tasks_2026-10-27/report.md)),
+el resultado no generaliza. Las correcciones de fuente no quitaron cobertura,
+pero en tres de las seis tareas el paquete se declara completo aunque omite
+partes de lo pedido. Ahí los agentes obedecen la regla de parada y pierden
+hechos: en fmt, entero con especificaciones, Graphtyn sacó 3/7 frente a 7/7 de
+Codex sin grafo. Donde el paquete no se declara completo (Rails), la calidad se
+mantiene pero el ahorro desaparece. Las cifras de ahorro anteriores valen sólo
+para las tareas medidas; la calibración de `do_not_expand` queda como trabajo
+pendiente.
+
+Con la regla de parada dirigida y un segundo conjunto no visto
+([`benchmarks/heldout_v2_2026-10-27/report.md`](../benchmarks/heldout_v2_2026-10-27/report.md)),
+la calidad se recupera, pero el ahorro baja:
+
+- **Primer conjunto:** Claude con hook pasa del 85 % al 98 % y Codex del 63 % al
+  79 %, gastando más.
+- **Segundo conjunto:** Claude mantiene el 98 % con y sin hook, y el hook gasta
+  un 22 % menos que el MCP lean. Codex con Graphtyn gasta un 9–31 % menos que
+  sin grafo, pero con peor rúbrica (55–57 % frente a 65 %).
+- **Cobertura:** en cuatro de las seis tareas nuevas el paquete cubre 0–1 hechos
+  y se declara completo; la recuperación es el cuello de botella.
+
+Para corregir la recuperación sin sobreajustar se usó un banco de 30 tareas con
+división desarrollo/prueba
+([`benchmarks/task_bank_2026-10-28/report.md`](../benchmarks/task_bank_2026-10-28/report.md)),
+medido por la cobertura del paquete y sin agentes:
+
+- **Desarrollo:** de 46,6 % a 73,1 %, con las falsas completitudes de 5 a 0.
+- **Prueba** (congelada antes de los cambios): de 20,0 % a 37,5 %, con las
+  falsas completitudes de 8 a 3.
+
+La mejora generaliza sólo en parte. La regla de completitud detecta paquetes
+escasos, pero no paquetes grandes centrados en otra parte del código.
+
+Una segunda ronda añadió la completitud por identificadores nombrados y las
+pistas de homónimos. Se midió sobre un segundo conjunto de prueba congelado
+antes, que incluye Flask, un corpus nunca usado para ajustar:
+
+- **Cobertura:** 51,4 % con el código original, 61,2 % tras la ronda 1 y
+  59,7 % tras la ronda 2.
+- **Falsas completitudes:** de 6 a 2.
+
+En 75 sesiones reales sobre esas tareas:
+
+- **Claude con hook:** misma rúbrica que sin grafo (93,8 %) con un 14 % menos
+  de tokens.
+- **Codex con hook:** 72,3 % frente a 69,9 % sin grafo, con un 26 % menos.
+- **Codex con MCP lean:** queda por debajo (64,9 %).
+
+Con una repetición por celda, estas diferencias pequeñas están dentro del
+ruido.
+
+Una tercera ronda añadió tres cosas:
+
+- **Prueba de regresión de cobertura en CI**, sobre fmt y Flask.
+- **Composición de módulos Ruby en el indexador:** en Rails, los `include`
+  ambiguos bajan de 1.166 a 54 y aparecen 527 relaciones `super`.
+- **Pesos de ranking ajustados** sobre el conjunto de desarrollo.
+
+Ninguno de los dos últimos cambia la cobertura de forma apreciable: desarrollo
+55,7 %, test2 60,8 %. El cuello de botella está en la selección posterior al
+ranking.
+
+Una quinta ronda reserva la mitad del presupuesto de un flujo para las etapas a
+las que llama el punto de entrada, añade `call_outline` y reconoce comandos en
+mayúsculas. Se midió en un tercer conjunto de prueba con Lua:
+
+- **Cobertura del paquete:** desarrollo 56,2 → 62,8 %, test2 60,8 → 66,6 %,
+  test3 35,9 → 48,8 %, con los mismos tokens.
+- **300 sesiones reales** (Claude y Codex, tres repeticiones): frente a no usar
+  Graphtyn, el coste ponderado por tipo de token baja un 18,7 % en Claude y un
+  20,5 % en Codex, sin perder calidad.
+- **Más presupuesto de nodos no generaliza:** empata o empeora fuera de
+  desarrollo.
+
+El total de tokens infravalora el ahorro: la mayor parte son lecturas de caché
+del prompt fijo del cliente, que valen una décima parte.
+
+Una sexta ronda corrigió anclajes, homónimos y la clasificación de intenciones,
+y se midió en un cuarto conjunto con jq y Sinatra, corpus nunca usados:
+
+- **Cobertura del paquete en el cuarto conjunto:** 61,3 → 61,4 %. Las
+  correcciones de recuperación no generalizan; sí la intención correcta, con
+  paquetes más pequeños.
+- **192 sesiones reales con precios de lista:** frente a no usar Graphtyn, el
+  coste baja un 27,6 % en Codex [−38,9; −15,3] y un 9,0 % en Claude, este último
+  sin significación, sin perder calidad.
+- **Juez semántico:** la calidad de Codex es ~90 %, no el ~67 % de la rúbrica
+  literal, que penaliza describir una etapa sin nombrarla.
+
+La validación Ruby/Rails está en
+[`benchmarks/real_ruby_agents_2026-10-20/report.md`](../benchmarks/real_ruby_agents_2026-10-20/report.md).
+Con calidad comparable de 8/8, Graphtyn cambió el total informado en −67,30 %
+con OpenCode, +86,52 % con Codex y −38,79 % con Antigravity. La discrepancia de
+Codex coincidió con 179,972 s dedicados a cargar un índice sobredimensionado.
+Una corrección posterior redujo las relaciones 64,65 %, el archivo de índice
+56,45 % y la consulta local 45,07 %, conservando la cobertura.
+
+La primera repetición aislada de Codex con ese índice y perfil MCP mínimo produjo
+47.919 tokens frente a 192.172 (−75,07 % bruto), pero quedó **invalidada para la
+comparación de calidad**: Graphtyn marcó cobertura completa sin incluir callbacks
+de creación ni toda la ruta transaccional. El resultado se conserva en
+[`real_ruby_codex_query_2026-10-20/report.md`](../benchmarks/real_ruby_codex_query_2026-10-20/report.md)
+y no se presenta como ahorro comparable.
+
+Después de exigir cobertura por obligación y por símbolo nombrado, una pareja A/B
+nueva obtuvo 8/8 y completitud manual en ambos brazos: 137.077 tokens con lectura
+directa y 50.326 con Graphtyn (**−63,29 %**); 96,006 y 48,268 s de sesión
+(**−49,72 %**). El índice inicial añadió 173,603 s, por lo que el primer uso de
+Graphtyn fue 221,871 s (**+131,10 %** frente al baseline). Es una sola repetición,
+con adjudicación no independiente y sin coste monetario informado; acredita esta
+tarea caliente, no un ahorro universal. Informe y crudos:
+[`real_ruby_codex_query_v2_2026-10-21/report.md`](../benchmarks/real_ruby_codex_query_v2_2026-10-21/report.md).
 
 ## Memoria compartida RF07 — 9 oct 2026
 

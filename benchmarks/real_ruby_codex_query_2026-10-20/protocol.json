@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION_COMPLETE",
+  "purpose": "Repetición aislada de Codex/Rails tras perfil MCP query, precarga y cierre obligatorio.",
+  "repository": {
+    "name": "rails/rails",
+    "url": "https://github.com/rails/rails",
+    "commit": "3f0b675158e8284241bb1213c00375bc1fb9c52f"
+  },
+  "design": {
+    "clients": [
+      "codex"
+    ],
+    "tasks": [
+      "RAILS_SAVE_FLOW"
+    ],
+    "arms": [
+      "baseline",
+      "graphtyn"
+    ],
+    "repetitions": 1,
+    "planned_sessions": 2,
+    "order": "AB fresco: baseline y Graphtyn; conservar ambas celdas sin reemplazos.",
+    "direct_file_access": "Permitido por igual en ambos brazos.",
+    "grading": "Rúbrica determinista congelada antes de ejecutar; revisión final no independiente."
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "opencode_step_finish_semantics": "per-step",
+    "fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "cache_write_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "provider_cost",
+      "wall_seconds"
+    ]
+  },
+  "authorization": {
+    "source": "El usuario respondió “Hazlo” a la propuesta de optimizar la ruta Codex y repetir el benchmark.",
+    "total_token_ceiling": null
+  },
+  "optimization_under_test": {
+    "mcp_tool_profile": "query: graph_query_intent only",
+    "preload_index": true,
+    "stop_contract": "missing=[] and do_not_expand=true forbids additional repository reads",
+    "usage_trace": "preserve every client usage record; Codex exposes aggregate session usage only",
+    "graph": "post ambiguous-fanout suppression"
+  }
+}

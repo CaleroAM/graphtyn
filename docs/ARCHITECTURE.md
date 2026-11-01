@@ -1,7 +1,7 @@
 # Arquitectura de Graphtyn
 
 Este documento es la fuente canónica de la arquitectura vigente de Graphtyn
-`0.10.7`. Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
+`0.11.0`. Los conteos variables se publican en `GRAPHTYN_REPORT.md`; no se
 mantienen manualmente aquí.
 
 ## Mapa del sistema
@@ -59,6 +59,12 @@ gramáticas opcionales están instaladas. Los resolutores especializados —como
 `laravel_resolver.py` y `type_evidence.py`— enriquecen frameworks y evidencia
 externa sin convertir heurísticas en hechos.
 
+Los paquetes de gramática usan un contrato declarativo y el índice registra
+cuáles procesaron archivos. C y C++ cubren fuentes y encabezados mediante sus
+gramáticas propias; Ruby distingue módulos, mixins, herencia y métodos de
+instancia o clase. Las capacidades, criterios de aceptación y límites se
+detallan en [language-packs.md](language-packs.md).
+
 Esta capa es determinista y no necesita un modelo. Una relación estructural se
 marca `EXTRACTED` o `TYPED`; una heurística conserva `INFERRED` o `AMBIGUOUS`.
 
@@ -77,7 +83,16 @@ radio de impacto, seleccionan contexto acotado y analizan Git:
 
 `graph_query_intent` clasifica la tarea y entrega contexto presupuestado. Sólo
 incorpora cuerpos fuente cuando la pregunta exige orden, ramas, seguridad o
-ciclo de vida. El código fuente continúa siendo la autoridad final.
+ciclo de vida. En modo de precisión, el cierre exige evidencia para cada
+obligación y símbolo nombrado; si el límite del payload elimina una pieza,
+`missing` vuelve a abrir la consulta. El perfil MCP `query` expone únicamente
+esta herramienta y `--preload-index` evita cargar el índice dentro de la primera
+consulta. La respuesta es `lean` por defecto (sin diagnósticos ni entidades
+ajenas a la evidencia); `response_detail=debug` conserva el paquete completo.
+`prompt_context.py` ejecuta esa misma consulta como hook de primer turno en
+Claude Code, Codex y OpenCode (`graphtyn <cliente>-context`), de modo que el
+agente responde sin la ronda de herramienta. El código fuente continúa siendo la
+autoridad final.
 
 ### 3. Memoria compartida
 

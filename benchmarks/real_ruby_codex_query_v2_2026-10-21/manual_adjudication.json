@@ -1,0 +1,19 @@
+{
+  "codex_RAILS_SAVE_FLOW_baseline": {
+    "reviewer": "same investigator; non-independent",
+    "task_complete": true,
+    "task_complete_reason": "Cubre el flujo, las capas y los fallos pedidos con fuentes directas.",
+    "facts": {
+      "create_branch": {"value": true, "reason": "Explica que new_record? selecciona _create_record.", "evidence": ["answer.txt"]},
+      "failure_semantics": {"value": true, "reason": "Explica validación, abortos, excepciones y rollback.", "evidence": ["answer.txt"]}
+    }
+  },
+  "codex_RAILS_SAVE_FLOW_graphtyn": {
+    "reviewer": "same investigator; non-independent",
+    "task_complete": true,
+    "task_complete_reason": "Cubre las validaciones, ambos callbacks, la entrada transaccional, el rollback, la rama de creación y la llamada al adaptador; delimita lo que no aporta el paquete.",
+    "facts": {
+      "create_branch": {"value": true, "reason": "Explica readonly?, destroyed? y que new_record? selecciona _create_record.", "evidence": ["answer.txt:9"]}
+    }
+  }
+}

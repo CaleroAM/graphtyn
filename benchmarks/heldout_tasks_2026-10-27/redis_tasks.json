@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0",
+  "frozen": "2026-10-27, antes de cualquier ejecución; rúbrica escrita leyendo la fuente directamente, sin consultar Graphtyn",
+  "tasks": [
+    {
+      "id": "REDIS_EXPIRE_FLOW",
+      "request": "Explica cómo Redis elimina las claves expiradas: la expiración perezosa al acceder a una clave desde lookupKey, qué hace expireIfNeeded en un master y en una réplica, cómo se propaga el borrado a réplicas y AOF, y la expiración activa periódica (rápida y lenta). Cita evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "lazy_entry",
+          "any": [
+            "lookupKey",
+            "expireIfNeeded"
+          ]
+        },
+        {
+          "id": "expired_check",
+          "any": [
+            "keyIsExpired"
+          ]
+        },
+        {
+          "id": "replica_branch",
+          "any": [
+            "masterhost",
+            "KEY_EXPIRED",
+            "CLIENT_MASTER"
+          ]
+        },
+        {
+          "id": "force_flag",
+          "any": [
+            "EXPIRE_FORCE_DELETE_EXPIRED",
+            "LOOKUP_WRITE"
+          ]
+        },
+        {
+          "id": "delete",
+          "any": [
+            "deleteExpiredKeyAndPropagate",
+            "deleteKeyAndPropagate",
+            "dbGenericDelete"
+          ]
+        },
+        {
+          "id": "propagation",
+          "any": [
+            "propagateDeletion",
+            "alsoPropagateForced",
+            "PROPAGATE_REPL"
+          ]
+        },
+        {
+          "id": "lazyfree",
+          "any": [
+            "lazyfree_lazy_expire",
+            "shared.unlink",
+            "UNLINK"
+          ]
+        },
+        {
+          "id": "active_cycle",
+          "any": [
+            "activeExpireCycle",
+            "ACTIVE_EXPIRE_CYCLE_FAST",
+            "ACTIVE_EXPIRE_CYCLE_SLOW",
+            "databasesCron"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_PSYNC_FLOW",
+      "request": "En Redis, traza qué hace el master cuando una réplica envía PSYNC: desde syncCommand, cuándo puede hacer una resincronización parcial y qué responde, qué condiciones fuerzan una resincronización completa, cómo se prepara la réplica para la sincronización completa (respuesta y backlog) y cómo se decide reutilizar un BGSAVE en curso o iniciar uno nuevo. Cita evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "entry",
+          "any": [
+            "syncCommand"
+          ]
+        },
+        {
+          "id": "partial",
+          "any": [
+            "masterTryPartialResynchronization"
+          ]
+        },
+        {
+          "id": "continue_reply",
+          "any": [
+            "+CONTINUE",
+            "addReplyReplicationBacklog"
+          ]
+        },
+        {
+          "id": "full_conditions",
+          "any": [
+            "repl_backlog->offset",
+            "second_replid_offset",
+            "histlen",
+            "need_full_resync"
+          ]
+        },
+        {
+          "id": "fullresync_reply",
+          "any": [
+            "+FULLRESYNC",
+            "replicationSetupSlaveForFullResync"
+          ]
+        },
+        {
+          "id": "backlog",
+          "any": [
+            "createReplicationBacklogIfNeeded",
+            "createReplicationBacklog"
+          ]
+        },
+        {
+          "id": "bgsave_reuse",
+          "any": [
+            "SLAVE_STATE_WAIT_BGSAVE_END",
+            "copyReplicaOutputBuffer",
+            "Waiting for end of BGSAVE"
+          ]
+        },
+        {
+          "id": "start_bgsave",
+          "any": [
+            "startBgsaveForReplication"
+          ]
+        }
+      ]
+    }
+  ]
+}

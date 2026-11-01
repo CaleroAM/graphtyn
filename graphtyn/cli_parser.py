@@ -13,7 +13,7 @@ def _add_setup_commands(subparsers: argparse._SubParsersAction) -> None:
     setup_p.add_argument("--agent", action="append", default=[])
     setup_p.add_argument("--apply", action="store_true")
     setup_p.add_argument("--no-token", action="store_true")
-    setup_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default=None,
+    setup_p.add_argument("--tool-profile", choices=["query", "intent", "memory", "full"], default=None,
                          help="Perfil MCP; si se omite conserva el existente o usa full con memoria activa")
     setup_p.add_argument("--memory", choices=["ask", "on", "off"], default="ask",
                          help="Memoria conversacional: preguntar, activar o desactivar")
@@ -68,7 +68,7 @@ def _add_setup_commands(subparsers: argparse._SubParsersAction) -> None:
     onboard_p = subparsers.add_parser("onboard", help="Configura agentes, índice, MCP y dashboard en una sola orden")
     onboard_p.add_argument("--path", default=".")
     onboard_p.add_argument("--agent", action="append", default=[])
-    onboard_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="full")
+    onboard_p.add_argument("--tool-profile", choices=["query", "intent", "memory", "full"], default="full")
     onboard_p.add_argument("--start-dashboard", action="store_true")
     onboard_p.add_argument("--watch", action="store_true")
     onboard_p.add_argument("--no-token", action="store_true")
@@ -232,6 +232,33 @@ def _add_benchmark_commands(subparsers: argparse._SubParsersAction) -> None:
     external_p.add_argument("--ground-truth", required=True, help="Ground truth Graphtyn")
     external_p.add_argument("--output", default=None, help="Guarda resultado JSON")
 
+    prs_p = subparsers.add_parser(
+        "prs", help="Triaje de varias ramas o PR: conflictos, símbolos compartidos y orden de merge")
+    prs_p.add_argument("--base", default="main", help="Rama base contra la que se integran las ramas")
+    prs_p.add_argument("--branch", action="append", default=[], help="Rama o ref a evaluar (repetible)")
+    prs_p.add_argument("--github", action="store_true",
+                       help="Evalúa los PR abiertos con gh; los descarga en refs/graphtyn/pr/<n>")
+    prs_p.add_argument("--json", action="store_true", help="Salida JSON en lugar de Markdown")
+    prs_p.add_argument("--path", default=".", help="Ruta del proyecto")
+    for client, label in (("claude", "Claude Code"), ("codex", "Codex"), ("opencode", "OpenCode")):
+        context_p = subparsers.add_parser(
+            f"{client}-context",
+            help=f"Hook UserPromptSubmit de {label}: adelanta graph_query_intent al primer turno")
+        context_p.add_argument("action", choices=["install", "uninstall", "status", "hook"])
+        context_p.add_argument("--consent", action="store_true",
+                               help="Autoriza añadir contexto de Graphtyn a los mensajes de código en este proyecto")
+        context_p.add_argument("--budget-seconds", type=float, default=None,
+                               help="Tiempo máximo de recuperación del hook (por defecto 12 s)")
+        context_p.add_argument("--part", type=int, default=1, help=argparse.SUPPRESS)
+        context_p.add_argument("--parts", type=int, default=1, help=argparse.SUPPRESS)
+        context_p.add_argument("--path", default="",
+                               help="Raíz del proyecto; el hook usa el índice más cercano al cwd si se omite")
+    export_html_p = subparsers.add_parser(
+        "export-html", help="Exporta un graph.html autocontenido y sin red para compartir el grafo")
+    export_html_p.add_argument("--output", default="graph.html", help="Archivo de salida dentro del proyecto")
+    export_html_p.add_argument("--node-limit", type=int, default=1000,
+                               help="Símbolos más conectados a incluir (el resto se informa como omitido)")
+    export_html_p.add_argument("--path", default=".", help="Ruta del proyecto")
     # export-md
     export_p = subparsers.add_parser("export-md", help="Exporta un mapa de arquitectura conciso en Markdown para Agentes de IA")
     export_p.add_argument("--output", default="ARCHITECTURE.md", help="Archivo de salida")
@@ -527,6 +554,17 @@ def _add_memory_registry_commands(memory_sub: argparse._SubParsersAction) -> Non
     sync_p.add_argument("--path", default=".")
     sync_p.add_argument("--agent-id", default=None,
                         help="Identidad propietaria de la fuente (requerida para una raíz compartida)")
+    claude_hook_p = memory_sub.add_parser("claude-hook",
+        help="Hook Stop de Claude Code: sincroniza el transcript del turno (lee JSON por stdin)")
+    claude_hook_p.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
+    claude_hook_p.add_argument("--transcript", default=None, help=argparse.SUPPRESS)
+    claude_hook_p.add_argument("--path", default=".")
+    claude_capture_p = memory_sub.add_parser("claude-capture",
+        help="Instala o retira el hook de captura nativa de Claude Code")
+    claude_capture_p.add_argument("action", choices=["install", "uninstall", "status"])
+    claude_capture_p.add_argument("--consent", action="store_true",
+                                  help="Autoriza capturar las conversaciones de Claude Code en este proyecto")
+    claude_capture_p.add_argument("--path", default=".")
     export_p = memory_sub.add_parser("export", help="Exporta memoria saneada sin vectores")
     export_p.add_argument("--output", required=True)
     export_p.add_argument("--include-messages", action="store_true")
@@ -567,7 +605,7 @@ def _add_integration_commands(subparsers: argparse._SubParsersAction) -> None:
     install_p = subparsers.add_parser("agent-install", help="Configura el MCP de Graphtyn para un proyecto; el ejecutable es global")
     install_p.add_argument("platform", choices=["all", "codex", "opencode", "openclaw", "hermes", "claude", "cursor", "gemini", "antigravity", "copilot"])
     install_p.add_argument("--path", default=".")
-    install_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default=None,
+    install_p.add_argument("--tool-profile", choices=["query", "intent", "memory", "full"], default=None,
                            help="Perfil MCP; si se omite conserva el existente")
 
     integrations_p = subparsers.add_parser("integrations", help="Consulta o retira conexiones MCP por proyecto")
@@ -594,7 +632,11 @@ def _add_integration_commands(subparsers: argparse._SubParsersAction) -> None:
     # mcp
     mcp_p = subparsers.add_parser("mcp", help="Inicia el servidor Model Context Protocol (MCP) por stdio")
     mcp_p.add_argument("--path", default=".", help="Ruta del proyecto")
-    mcp_p.add_argument("--tool-profile", choices=["intent", "memory", "full"], default="intent", help="intent expone consulta+contexto; memory añade escritura compartida; full conserva todo")
+    mcp_p.add_argument("--tool-profile", choices=["query", "intent", "memory", "full"], default="intent", help="query expone sólo graph_query_intent; intent añade contexto; memory añade escritura compartida; full conserva todo")
+    mcp_p.add_argument("--preload-index", action="store_true",
+                       help="Carga el índice persistido al iniciar el proceso MCP")
+    mcp_p.add_argument("--response-detail", choices=["lean", "debug"], default="lean",
+                       help="Detalle por defecto de graph_query_intent; debug conserva diagnósticos")
 
     # serve
     serve_p = subparsers.add_parser("serve", help="Inicia el demonio HTTP local")

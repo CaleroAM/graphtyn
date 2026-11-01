@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "sessions": 75,
+  "complete_sessions": 75,
+  "incomplete": [],
+  "arms": {
+    "claude/baseline": {
+      "n": 15,
+      "mean_tokens": 145898,
+      "mean_quality": 0.938,
+      "mean_tool_calls": 3.9
+    },
+    "claude/graphtyn_hook": {
+      "n": 15,
+      "mean_tokens": 124813,
+      "mean_quality": 0.9377,
+      "mean_tool_calls": 2.9
+    },
+    "codex/baseline": {
+      "n": 15,
+      "mean_tokens": 144407,
+      "mean_quality": 0.6989,
+      "mean_tool_calls": 5.4
+    },
+    "codex/graphtyn": {
+      "n": 15,
+      "mean_tokens": 115945,
+      "mean_quality": 0.6487,
+      "mean_tool_calls": 5.0
+    },
+    "codex/graphtyn_hook": {
+      "n": 15,
+      "mean_tokens": 106241,
+      "mean_quality": 0.723,
+      "mean_tool_calls": 4.1
+    }
+  }
+}

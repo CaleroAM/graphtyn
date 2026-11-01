@@ -1,0 +1,18 @@
+{"mode": "old", "set": "heldout", "task": "REDIS_EXPIRE_FLOW", "covered": 5, "total": 8, "missing": ["propagation", "lazyfree", "active_cycle"], "tokens": 3935, "do_not_expand": true}
+{"mode": "old", "set": "heldout", "task": "REDIS_PSYNC_FLOW", "covered": 5, "total": 8, "missing": ["continue_reply", "full_conditions", "bgsave_reuse"], "tokens": 3974, "do_not_expand": true}
+{"mode": "old", "set": "original", "task": "REDIS_COMMAND_FLOW", "covered": 6, "total": 8, "missing": ["operational_rejections", "execute"], "tokens": 3984, "do_not_expand": true}
+{"mode": "old", "set": "heldout", "task": "FMT_PRINT_FLOW", "covered": 8, "total": 8, "missing": [], "tokens": 2026, "do_not_expand": true}
+{"mode": "old", "set": "heldout", "task": "FMT_INT_SPEC_FLOW", "covered": 3, "total": 7, "missing": ["replacement_field", "parse_specs", "dynamic", "visit_formatter"], "tokens": 2665, "do_not_expand": true}
+{"mode": "old", "set": "original", "task": "FMT_FORMAT_FLOW", "covered": 8, "total": 8, "missing": [], "tokens": 2234, "do_not_expand": true}
+{"mode": "old", "set": "heldout", "task": "RAILS_DESTROY_FLOW", "covered": 2, "total": 8, "missing": ["readonly", "associations", "delete_row", "delete_manager", "locking", "failure"], "tokens": 3085, "do_not_expand": false}
+{"mode": "old", "set": "heldout", "task": "RAILS_RELATION_LOAD_FLOW", "covered": 1, "total": 8, "missing": ["to_a_entry", "load_once", "exec_queries", "short_circuit", "eager", "adapter", "instantiate"], "tokens": 2757, "do_not_expand": true}
+{"mode": "old", "set": "original", "task": "RAILS_SAVE_FLOW", "covered": 8, "total": 8, "missing": [], "tokens": 2504, "do_not_expand": true}
+{"mode": "new", "set": "heldout", "task": "REDIS_EXPIRE_FLOW", "covered": 5, "total": 8, "missing": ["propagation", "lazyfree", "active_cycle"], "tokens": 2066, "do_not_expand": true}
+{"mode": "new", "set": "heldout", "task": "REDIS_PSYNC_FLOW", "covered": 6, "total": 8, "missing": ["continue_reply", "full_conditions"], "tokens": 3223, "do_not_expand": true}
+{"mode": "new", "set": "original", "task": "REDIS_COMMAND_FLOW", "covered": 8, "total": 8, "missing": [], "tokens": 2919, "do_not_expand": true}
+{"mode": "new", "set": "heldout", "task": "FMT_PRINT_FLOW", "covered": 8, "total": 8, "missing": [], "tokens": 3122, "do_not_expand": true}
+{"mode": "new", "set": "heldout", "task": "FMT_INT_SPEC_FLOW", "covered": 3, "total": 7, "missing": ["replacement_field", "parse_specs", "dynamic", "visit_formatter"], "tokens": 1024, "do_not_expand": true}
+{"mode": "new", "set": "original", "task": "FMT_FORMAT_FLOW", "covered": 8, "total": 8, "missing": [], "tokens": 3314, "do_not_expand": true}
+{"mode": "new", "set": "heldout", "task": "RAILS_DESTROY_FLOW", "covered": 3, "total": 8, "missing": ["readonly", "associations", "delete_row", "delete_manager", "locking"], "tokens": 3879, "do_not_expand": false}
+{"mode": "new", "set": "heldout", "task": "RAILS_RELATION_LOAD_FLOW", "covered": 1, "total": 8, "missing": ["to_a_entry", "load_once", "exec_queries", "short_circuit", "eager", "adapter", "instantiate"], "tokens": 3067, "do_not_expand": false}
+{"mode": "new", "set": "original", "task": "RAILS_SAVE_FLOW", "covered": 8, "total": 8, "missing": [], "tokens": 3556, "do_not_expand": true}

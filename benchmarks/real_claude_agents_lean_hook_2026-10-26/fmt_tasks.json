@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "FMT_FORMAT_FLOW",
+      "request": "Traza el flujo de fmt::format desde la API pública hasta el buffer de salida. Explica cómo format_string/fstring valida literales en compilación, qué cambia con fmt::runtime, cómo se empaquetan los argumentos, cómo format delega en vformat, cómo detail::vformat_to analiza la cadena y maneja el caso rápido de {}, y cómo format_to adapta un iterador de salida. Cita evidencia archivo:línea.",
+      "rubric": [
+        {"id": "compile_string", "any": ["fstring", "format_string_checker", "FMT_CONSTEVAL"]},
+        {"id": "compile_parse", "any": ["parse_format_string", "enforce_compile_checks"]},
+        {"id": "runtime", "any": ["runtime_format_string", "fmt::runtime", "runtime("]},
+        {"id": "public_format", "any": ["format(format_string", "include/fmt/format.h"]},
+        {"id": "arguments", "any": ["vargs", "format_args", "make_format_args"]},
+        {"id": "vformat_buffer", "any": ["memory_buffer", "to_string(buffer)", "vformat(string_view"]},
+        {"id": "runtime_parse", "any": ["format_handler", "detail::vformat_to", "default_arg_formatter"]},
+        {"id": "output_iterator", "any": ["format_to", "get_buffer", "get_iterator"]}
+      ]
+    }
+  ]
+}

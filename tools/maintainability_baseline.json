@@ -25,22 +25,22 @@
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser",
       "kind": "class",
-      "max_lines": 886
+      "max_lines": 978
     },
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser.scan_directory",
       "kind": "function",
-      "max_lines": 778
+      "max_lines": 870
     },
     {
       "key": "graphtyn/core/ast_parser.py::ASTParser.scan_directory._add_tree_symbols",
       "kind": "function",
-      "max_lines": 138
+      "max_lines": 149
     },
     {
       "key": "graphtyn/core/change_analyst.py",
       "kind": "module",
-      "max_lines": 1522
+      "max_lines": 1737
     },
     {
       "key": "graphtyn/core/change_analyst.py::_implementation_context",
@@ -50,12 +50,12 @@
     {
       "key": "graphtyn/core/change_analyst.py::query_intent",
       "kind": "function",
-      "max_lines": 654
+      "max_lines": 808
     },
     {
       "key": "graphtyn/core/history_import.py",
       "kind": "module",
-      "max_lines": 1470
+      "max_lines": 1495
     },
     {
       "key": "graphtyn/core/history_import.py::parse_history_database",
@@ -105,12 +105,12 @@
     {
       "key": "graphtyn/core/shared_memory.py",
       "kind": "module",
-      "max_lines": 4054
+      "max_lines": 4063
     },
     {
       "key": "graphtyn/core/shared_memory.py::SharedMemoryStore",
       "kind": "class",
-      "max_lines": 3412
+      "max_lines": 3419
     },
     {
       "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.search_messages",
@@ -135,7 +135,7 @@
     {
       "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.status",
       "kind": "function",
-      "max_lines": 173
+      "max_lines": 174
     },
     {
       "key": "graphtyn/core/shared_memory.py::SharedMemoryStore.attribution_graph",
@@ -143,39 +143,29 @@
       "max_lines": 209
     },
     {
-      "key": "graphtyn/core/source_evidence.py::attach_source_evidence",
-      "kind": "function",
-      "max_lines": 151
-    },
-    {
       "key": "graphtyn/core/tree_sitter_backend.py::parse_file",
       "kind": "function",
-      "max_lines": 254
-    },
-    {
-      "key": "graphtyn/core/tree_sitter_backend.py::parse_file.visit",
-      "kind": "function",
-      "max_lines": 170
+      "max_lines": 220
     },
     {
       "key": "graphtyn/mcp_server.py",
       "kind": "module",
-      "max_lines": 1306
+      "max_lines": 1377
     },
     {
       "key": "graphtyn/mcp_server.py::evidence_result",
       "kind": "function",
-      "max_lines": 165
+      "max_lines": 185
     },
     {
       "key": "graphtyn/mcp_server.py::run_mcp_server",
       "kind": "function",
-      "max_lines": 461
+      "max_lines": 423
     },
     {
       "key": "graphtyn/mcp_server.py::run_mcp_server._handle_request",
       "kind": "function",
-      "max_lines": 408
+      "max_lines": 364
     }
   ]
 }

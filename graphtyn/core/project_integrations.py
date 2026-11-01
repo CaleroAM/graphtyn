@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import time
 import unicodedata
 from pathlib import Path
@@ -24,7 +25,15 @@ SUPPORTED_CONFIGS = {
     "claude": ".mcp.json",
     "cursor": ".cursor/mcp.json",
     "antigravity": ".agents/mcp_config.json",
+    # VS Code (GitHub Copilot agent mode) reads workspace servers from here.
+    "copilot": ".vscode/mcp.json",
 }
+# Top-level key holding the servers in each JSON configuration.
+_JSON_SECTIONS = {"opencode": "mcp", "copilot": "servers"}
+
+
+def _json_section(platform: str) -> str:
+    return _JSON_SECTIONS.get(platform, "mcpServers")
 _MANAGED_START = "# BEGIN GRAPHTYN MCP PROJECT "
 _MANAGED_END = "# END GRAPHTYN MCP PROJECT"
 
@@ -207,6 +216,34 @@ def _merge_json_config(path: Path, section: str, name: str,
     _write_json(path, data)
 
 
+def _claude_executable() -> str | None:
+    return shutil.which("claude")
+
+
+def _register_claude_local(root: Path, name: str, server: dict[str, Any] | None) -> dict[str, Any]:
+    """Add (or remove, when server is None) the alias in Claude Code's local scope.
+
+    Claude Code keeps servers from a shared .mcp.json pending until the user
+    approves them interactively; the local scope is private to this user and
+    project, starts without that prompt and is reverted by `claude mcp remove`.
+    """
+    executable = _claude_executable()
+    if not executable:
+        return {"status": "claude_cli_unavailable"}
+    command = ([executable, "mcp", "add", "--scope", "local", name, "--", server["command"], *server["args"]]
+               if server else [executable, "mcp", "remove", "--scope", "local", name])
+    try:
+        process = subprocess.run(command, cwd=root, text=True, capture_output=True, timeout=30)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"status": "failed", "error": str(exc)[:300]}
+    output = (process.stdout + process.stderr).strip()
+    if process.returncode == 0 or (server and "already exists" in output):
+        return {"status": "registered" if server else "removed"}
+    if not server and "No MCP server named" in output:
+        return {"status": "absent"}
+    return {"status": "failed", "error": output[-300:]}
+
+
 def _toml_string(value: str) -> str:
     # JSON basic strings use escapes accepted by TOML for these characters.
     return json.dumps(value, ensure_ascii=False)
@@ -259,8 +296,8 @@ def _migrate_legacy_antigravity_mcp(root: Path) -> bool:
 def configure_project_integrations(project: str | Path, platforms: list[str], *,
                                    tool_profile: str = "intent") -> dict[str, Any]:
     root = Path(project).expanduser().resolve()
-    if tool_profile not in {"intent", "memory", "full"}:
-        raise ValueError("tool_profile debe ser intent, memory o full")
+    if tool_profile not in {"query", "intent", "memory", "full"}:
+        raise ValueError("tool_profile debe ser query, intent, memory o full")
     identity = ensure_project_identity(root)
     name = project_server_name(root, identity["id"])
     server = _command(tool_profile, root)
@@ -268,7 +305,8 @@ def configure_project_integrations(project: str | Path, platforms: list[str], *,
     for old in previous.get("clients", []):
         if (old.get("platform") in platforms and old.get("status") in {"configured", "command_unavailable"}
                 and old.get("alias") != name):
-            remove_project_integrations(root, [str(old["platform"])])
+            # Only the stale server entry: the skills were just (re)installed.
+            remove_project_integrations(root, [str(old["platform"])], skills=False)
     clients = []
     files = []
     for platform in dict.fromkeys(platforms):
@@ -293,6 +331,10 @@ def configure_project_integrations(project: str | Path, platforms: list[str], *,
                 local = {"type": "local", "command": [server["command"], *server["args"]],
                          "enabled": True}
                 _merge_json_config(path, "mcp", name, local)
+            elif platform == "copilot":
+                # `--path .` resolves against the workspace folder VS Code opened.
+                _merge_json_config(path, "servers", name,
+                                   {"type": "stdio", **server, "cwd": "${workspaceFolder}"})
             else:
                 _merge_json_config(path, "mcpServers", name, server)
         except (OSError, ValueError) as exc:
@@ -300,11 +342,18 @@ def configure_project_integrations(project: str | Path, platforms: list[str], *,
                             "configuration": str(path), "note": str(exc)})
             continue
         files.append(str(path))
-        clients.append({"platform": platform, "status": "configured", "alias": name,
-                        "configuration": str(path), "restart_recommended": True,
-                        "command_available": bool(shutil.which("graphtyn")),
-                        "note": ("Codex sólo carga la configuración del proyecto cuando éste es de confianza."
-                                 if platform == "codex" else "Reinicia o recarga el cliente para descubrir el MCP.")})
+        client = {"platform": platform, "status": "configured", "alias": name,
+                  "configuration": str(path), "restart_recommended": True,
+                  "command_available": bool(shutil.which("graphtyn")),
+                  "note": ("Codex sólo carga la configuración del proyecto cuando éste es de confianza."
+                           if platform == "codex" else "Reinicia o recarga el cliente para descubrir el MCP.")}
+        if platform == "claude":
+            local = _register_claude_local(root, name, server)
+            client["local_registration"] = local
+            client["note"] = ("Registrado también en el ámbito local de Claude Code; verifica con `claude mcp list`."
+                              if local["status"] == "registered" else
+                              "Claude Code pedirá aprobar el servidor de .mcp.json al abrir el proyecto.")
+        clients.append(client)
     return {"project_id": identity["id"], "project_name": identity.get("canonical_name", root.name),
             "mcp_server": name, "clients": clients, "files": files}
 
@@ -337,7 +386,7 @@ def project_integration_status(project: str | Path) -> dict[str, Any]:
                                and '"--path", "."' in text)
                 else:
                     platform = str(client.get("platform"))
-                    section = "mcp" if platform == "opencode" else "mcpServers"
+                    section = _json_section(platform)
                     data = json.loads(path.read_text(encoding="utf-8"))
                     item = data.get(section, {}).get(str(client.get("alias")))
                     if platform == "opencode":
@@ -500,8 +549,9 @@ def verify_project_mcp(project: str | Path) -> dict[str, Any]:
     return result
 
 
-def remove_project_integrations(project: str | Path, platforms: list[str]) -> dict[str, Any]:
-    """Remove only MCP entries previously generated by Graphtyn for this project."""
+def remove_project_integrations(project: str | Path, platforms: list[str], *,
+                                skills: bool = True) -> dict[str, Any]:
+    """Remove only MCP entries (and, with `skills`, unedited skills) Graphtyn generated here."""
     root = Path(project).expanduser().resolve()
     metadata = _read_metadata(root)
     project_id = str(metadata.get("project_id") or "")
@@ -534,7 +584,7 @@ def remove_project_integrations(project: str | Path, platforms: list[str]) -> di
                 else:
                     preserved.append(platform)
                 continue
-            section = "mcp" if platform == "opencode" else "mcpServers"
+            section = _json_section(platform)
             data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
             servers = data.get(section) if isinstance(data, dict) else None
             alias = str(item.get("alias") or "")
@@ -548,9 +598,12 @@ def remove_project_integrations(project: str | Path, platforms: list[str]) -> di
                        else command == "graphtyn" and args == expected_args)
             if managed:
                 del servers[alias]
-                if not servers:
+                # Claude Code rejects a .mcp.json without an mcpServers record.
+                if not servers and platform != "claude":
                     data.pop(section, None)
                 _write_json(path, data)
+                if platform == "claude":
+                    _register_claude_local(root, alias, None)
                 removed.append(platform)
             else:
                 preserved.append(platform)
@@ -560,8 +613,15 @@ def remove_project_integrations(project: str | Path, platforms: list[str]) -> di
         if client.get("platform") in removed:
             client["status"] = "removed"
             client["configuration_present"] = False
+    from .agent_installer import remove_installed_skills
+    hashes = manifest.get("skill_hashes") if isinstance(manifest.get("skill_hashes"), dict) else {}
+    removed_skills, preserved_skills, hashes = (remove_installed_skills(root, platforms, hashes)
+                                                if skills else ([], [], hashes))
     if manifest:
         if removed:
             manifest.pop("mcp_verification", None)
+        if "skill_hashes" in manifest:
+            manifest["skill_hashes"] = hashes
         _write_json(manifest_path, manifest)
-    return {"ok": True, "removed": removed, "preserved": preserved}
+    return {"ok": True, "removed": removed, "preserved": preserved,
+            "removed_skills": removed_skills, "preserved_skills": preserved_skills}

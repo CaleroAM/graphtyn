@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "runs": 6,
+  "complete_runs": 6,
+  "incomplete_runs": 0,
+  "pairs": [
+    {
+      "client": "opencode",
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "baseline": {
+        "status": "complete",
+        "tokens": 1233520,
+        "technical_tokens_including_cache": 1233520,
+        "seconds": 267.756,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 403413,
+        "technical_tokens_including_cache": 403413,
+        "seconds": 67.953,
+        "quality": 8,
+        "index_seconds": 187.377,
+        "first_use_seconds": 255.33
+      },
+      "quality_total": 8,
+      "quality_comparable": true,
+      "token_delta_percent": -67.3,
+      "technical_token_delta_percent": -67.3,
+      "component_deltas_percent": {
+        "input_tokens": -40.83,
+        "cached_input_tokens": -69.17,
+        "output_tokens": -52.16,
+        "reasoning_tokens": -77.67
+      },
+      "session_time_delta_percent": -74.62,
+      "first_use_time_delta_percent": -4.64
+    },
+    {
+      "client": "codex",
+      "model": "gpt-6-astra",
+      "baseline": {
+        "status": "complete",
+        "tokens": 203645,
+        "technical_tokens_including_cache": 203645,
+        "seconds": 98.841,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 379839,
+        "technical_tokens_including_cache": 379839,
+        "seconds": 285.888,
+        "quality": 8,
+        "index_seconds": 185.675,
+        "first_use_seconds": 471.563
+      },
+      "quality_total": 8,
+      "quality_comparable": true,
+      "token_delta_percent": 86.52,
+      "technical_token_delta_percent": 86.52,
+      "component_deltas_percent": {
+        "input_tokens": 87.84,
+        "cached_input_tokens": 125.9,
+        "output_tokens": 15.57,
+        "reasoning_tokens": 991.67
+      },
+      "session_time_delta_percent": 189.24,
+      "first_use_time_delta_percent": 377.09
+    },
+    {
+      "client": "antigravity",
+      "model": "gemini-3.8-flash-high",
+      "baseline": {
+        "status": "complete",
+        "tokens": 319618,
+        "technical_tokens_including_cache": 1932386,
+        "seconds": 392.924,
+        "quality": 8
+      },
+      "graphtyn": {
+        "status": "complete",
+        "tokens": 195629,
+        "technical_tokens_including_cache": 796143,
+        "seconds": 188.96,
+        "quality": 8,
+        "index_seconds": 180.478,
+        "first_use_seconds": 369.438
+      },
+      "quality_total": 8,
+      "quality_comparable": true,
+      "token_delta_percent": -38.79,
+      "technical_token_delta_percent": -58.8,
+      "component_deltas_percent": {
+        "input_tokens": -38.28,
+        "cached_input_tokens": -62.77,
+        "output_tokens": -43.39,
+        "reasoning_tokens": -38.52
+      },
+      "session_time_delta_percent": -51.91,
+      "first_use_time_delta_percent": -5.98
+    }
+  ],
+  "aggregation_warning": "Do not pool token totals across clients or models.",
+  "monetary_warning": "Provider cost is zero only for the free OpenCode model and unavailable for the other clients.",
+  "raw_artifacts_preserved": true
+}

@@ -1,0 +1,1267 @@
+[
+  {
+    "client": "antigravity",
+    "model": "gemini-3.8-flash-high",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "baseline",
+    "started_at": "2026-10-21T05:02:05.500961+00:00",
+    "wall_seconds": 392.924,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 287280,
+      "cached_input_tokens": 1612768,
+      "cache_write_input_tokens": null,
+      "output_tokens": 32338,
+      "reasoning_tokens": 17085,
+      "total_tokens": 319618,
+      "provider_cost": null
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "reasoning_is_separate_or_subcomponent": true,
+      "technical_total_including_cache": 1932386,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "answer_present": true,
+    "index_setup": null,
+    "prompt_sha256": "4e6a12c899cca438355c9772683e59f49f27bff35087b70df730c778484ac610",
+    "raw_event_count": 1251,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": [],
+    "run_id": "antigravity_RAILS_SAVE_FLOW_baseline",
+    "quality": {
+      "automatic_facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "automatic_passed": 8,
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "coverage": 1.0,
+      "citations": {
+        "total": 108,
+        "resolved": 78,
+        "valid": 78,
+        "invalid": [],
+        "unresolved_short_or_ambiguous": [
+          {
+            "file": "base.rb",
+            "line": 345,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 352,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 353,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 355,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 358,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 360,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 361,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 366,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 375,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 90,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 83,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 69,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "dirty.rb",
+            "line": 249,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 300,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 302,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 304,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 1012,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 737,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 757,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 765,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 766,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "postgresql/database_statements.rb",
+            "line": 179,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "sqlite3/database_statements.rb",
+            "line": 113,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "mysql2/database_statements.rb",
+            "line": 36,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 794,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 483,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 479,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 48,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 772,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 773,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          }
+        ]
+      },
+      "answer_bytes": 30478,
+      "adjudication": null,
+      "grader": "deterministic frozen rubric plus disclosed non-independent adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_names": [
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file"
+      ],
+      "forbidden_tools": [],
+      "answer_sha256": "6e24740cf857edbfb3045ae386840dd2aa49cbde6373072effcb3b3e7e08f3d0",
+      "events_sha256": "dee3ca3259ce901a97fd88f47b4b4e72121d89fcb1975f79dec3bb8231e84d61",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-ruby-2026-10-20/runs/antigravity_RAILS_SAVE_FLOW_baseline"
+    }
+  },
+  {
+    "client": "antigravity",
+    "model": "gemini-3.8-flash-high",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "graphtyn",
+    "started_at": "2026-10-21T05:11:39.854124+00:00",
+    "wall_seconds": 188.96,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 177321,
+      "cached_input_tokens": 600514,
+      "cache_write_input_tokens": null,
+      "output_tokens": 18308,
+      "reasoning_tokens": 10504,
+      "total_tokens": 195629,
+      "provider_cost": null
+    },
+    "usage_accounting": {
+      "source": "result.usage",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input",
+        "output"
+      ],
+      "cached_input_is_separate": true,
+      "reasoning_is_separate_or_subcomponent": true,
+      "technical_total_including_cache": 796143,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 180.478,
+      "stdout": "✓ Reindexado AST local completado (fast): 63719 nodos, 691855 conectores.",
+      "stderr": "",
+      "included_in_session_time": false
+    },
+    "prompt_sha256": "7d653fb928fe7c7b0d929cf997cb354f9884807381b40621a0d1ff335aec7a15",
+    "raw_event_count": 782,
+    "antigravity_mcp_registration": "Added MCP server \"graphtyn_benchmark\" (stdio)",
+    "terminal_errors": [],
+    "run_id": "antigravity_RAILS_SAVE_FLOW_graphtyn",
+    "quality": {
+      "automatic_facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "automatic_passed": 8,
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "coverage": 1.0,
+      "citations": {
+        "total": 25,
+        "resolved": 25,
+        "valid": 25,
+        "invalid": [],
+        "unresolved_short_or_ambiguous": []
+      },
+      "answer_bytes": 14813,
+      "adjudication": null,
+      "grader": "deterministic frozen rubric plus disclosed non-independent adjudication"
+    },
+    "retrieval": {
+      "output_captured": false,
+      "total_ms": 10920.349,
+      "unavailable_fields": [
+        "context_id",
+        "selected_nodes",
+        "missing",
+        "do_not_expand",
+        "payload_tokens",
+        "payload_truncated",
+        "source_characters",
+        "source_snippets"
+      ]
+    },
+    "audit": {
+      "tool_names": [
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "call_mcp_tool",
+        "call_mcp_tool",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "read_file",
+        "read_file",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command"
+      ],
+      "forbidden_tools": [],
+      "answer_sha256": "2544ce75027ac2f00de5d8581413fa8d83bdbb6f6f58f2f5b26707aabdc2a581",
+      "events_sha256": "900edffe3b2a0a04570b81a2ce7cb58ac7a8c07e605f310d646e21c0947210a6",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-ruby-2026-10-20/runs/antigravity_RAILS_SAVE_FLOW_graphtyn"
+    }
+  },
+  {
+    "client": "codex",
+    "model": "gpt-6-astra",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "baseline",
+    "started_at": "2026-10-21T05:00:25.939455+00:00",
+    "wall_seconds": 98.841,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 199919,
+      "cached_input_tokens": 146304,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3726,
+      "reasoning_tokens": 12,
+      "total_tokens": 203645,
+      "provider_cost": null
+    },
+    "usage_accounting": {
+      "source": "turn.completed",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input_including_cached",
+        "output_including_reasoning"
+      ],
+      "cached_input_is_separate": false,
+      "reasoning_is_separate_or_subcomponent": true,
+      "technical_total_including_cache": 203645,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed",
+      "cached_input_is_subset_of_input": true,
+      "reasoning_is_subset_of_output": true,
+      "normalization_correction": "cached input is a subset of Codex input_tokens"
+    },
+    "answer_present": true,
+    "index_setup": null,
+    "prompt_sha256": "4e6a12c899cca438355c9772683e59f49f27bff35087b70df730c778484ac610",
+    "raw_event_count": 20,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": [],
+    "run_id": "codex_RAILS_SAVE_FLOW_baseline",
+    "quality": {
+      "automatic_facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": false,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "automatic_passed": 7,
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "coverage": 1.0,
+      "citations": {
+        "total": 39,
+        "resolved": 39,
+        "valid": 39,
+        "invalid": [],
+        "unresolved_short_or_ambiguous": []
+      },
+      "answer_bytes": 9898,
+      "adjudication": {
+        "reviewer": "same investigator; non-independent",
+        "facts": {
+          "create_branch": {
+            "value": true,
+            "reason": "The answer states that a new record selects _create_record, but does not use the frozen grader's exact ternary wording.",
+            "evidence": [
+              "answer.txt:17"
+            ]
+          }
+        }
+      },
+      "grader": "deterministic frozen rubric plus disclosed non-independent adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_names": [],
+      "forbidden_tools": [],
+      "answer_sha256": "f2be218aa1b387fc1fa53dd4ea39ad80ffc23283598c2fab295bd389faf0aacb",
+      "events_sha256": "bca93f2500718c5f12d36c7baa4336080a84f6f791476ac3e080c2664a4df4e1",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-ruby-2026-10-20/runs/codex_RAILS_SAVE_FLOW_baseline"
+    }
+  },
+  {
+    "client": "codex",
+    "model": "gpt-6-astra",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "graphtyn",
+    "started_at": "2026-10-21T04:55:39.016599+00:00",
+    "wall_seconds": 285.888,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 375533,
+      "cached_input_tokens": 330496,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4306,
+      "reasoning_tokens": 131,
+      "total_tokens": 379839,
+      "provider_cost": null
+    },
+    "usage_accounting": {
+      "source": "turn.completed",
+      "record_count": 1,
+      "reported_total_includes": [
+        "input_including_cached",
+        "output_including_reasoning"
+      ],
+      "cached_input_is_separate": false,
+      "reasoning_is_separate_or_subcomponent": true,
+      "technical_total_including_cache": 379839,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed",
+      "cached_input_is_subset_of_input": true,
+      "reasoning_is_subset_of_output": true,
+      "normalization_correction": "cached input is a subset of Codex input_tokens"
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 185.675,
+      "stdout": "✓ Reindexado AST local completado (fast): 63719 nodos, 691855 conectores.",
+      "stderr": "",
+      "included_in_session_time": false
+    },
+    "prompt_sha256": "7d653fb928fe7c7b0d929cf997cb354f9884807381b40621a0d1ff335aec7a15",
+    "raw_event_count": 21,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": [],
+    "run_id": "codex_RAILS_SAVE_FLOW_graphtyn",
+    "quality": {
+      "automatic_facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": false,
+        "create_record": false,
+        "adapter_insert": true,
+        "failure_semantics": false
+      },
+      "automatic_passed": 5,
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "coverage": 1.0,
+      "citations": {
+        "total": 36,
+        "resolved": 36,
+        "valid": 36,
+        "invalid": [],
+        "unresolved_short_or_ambiguous": []
+      },
+      "answer_bytes": 8570,
+      "adjudication": {
+        "reviewer": "same investigator; non-independent",
+        "facts": {
+          "create_branch": {
+            "value": true,
+            "reason": "The answer explicitly checks readonly/destroyed state and says new_record? selects _create_record.",
+            "evidence": [
+              "answer.txt:27"
+            ]
+          },
+          "create_record": {
+            "value": true,
+            "reason": "The answer describes filtering insert attributes, acquiring the connection, selecting returning columns and invoking _insert_record.",
+            "evidence": [
+              "answer.txt:31",
+              "answer.txt:41"
+            ]
+          },
+          "failure_semantics": {
+            "value": true,
+            "reason": "The answer covers invalid validation, callback abort, readonly/destroyed state, SQL exceptions and false-result rollback.",
+            "evidence": [
+              "answer.txt:57",
+              "answer.txt:61"
+            ]
+          }
+        }
+      },
+      "grader": "deterministic frozen rubric plus disclosed non-independent adjudication"
+    },
+    "retrieval": {
+      "output_captured": true,
+      "context_id": "6c27eae6b033",
+      "selected_nodes": 10,
+      "missing": [],
+      "do_not_expand": true,
+      "payload_tokens": 2756,
+      "payload_truncated": false,
+      "source_characters": 1565,
+      "source_snippets": 3,
+      "total_ms": 184065.384
+    },
+    "audit": {
+      "tool_names": [
+        "graph_query_intent",
+        "graph_query_intent"
+      ],
+      "forbidden_tools": [],
+      "answer_sha256": "e8894228cc55bbeee8dc134c80735e7e39ab02bb6702539ea078690a3b46a00e",
+      "events_sha256": "025f528aafcfa88f6f3501b15ced608c1596670dedc30335bb722a7007d54675",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-ruby-2026-10-20/runs/codex_RAILS_SAVE_FLOW_graphtyn"
+    }
+  },
+  {
+    "client": "opencode",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "baseline",
+    "started_at": "2026-10-21T04:43:48.726153+00:00",
+    "wall_seconds": 267.756,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 78531,
+      "cached_input_tokens": 1133568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 10682,
+      "reasoning_tokens": 10739,
+      "total_tokens": 1233520,
+      "provider_cost": 0
+    },
+    "usage_accounting": {
+      "source": "step_finish",
+      "record_count": 35,
+      "reported_total_includes": [
+        "input",
+        "cached_input",
+        "output",
+        "reasoning"
+      ],
+      "cached_input_is_separate": false,
+      "reasoning_is_separate_or_subcomponent": false,
+      "technical_total_including_cache": 1233520,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "answer_present": true,
+    "index_setup": null,
+    "prompt_sha256": "4e6a12c899cca438355c9772683e59f49f27bff35087b70df730c778484ac610",
+    "raw_event_count": 136,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": [],
+    "run_id": "opencode_RAILS_SAVE_FLOW_baseline",
+    "quality": {
+      "automatic_facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "automatic_passed": 8,
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "coverage": 1.0,
+      "citations": {
+        "total": 86,
+        "resolved": 86,
+        "valid": 86,
+        "invalid": [],
+        "unresolved_short_or_ambiguous": []
+      },
+      "answer_bytes": 14744,
+      "adjudication": null,
+      "grader": "deterministic frozen rubric plus disclosed non-independent adjudication"
+    },
+    "retrieval": null,
+    "audit": {
+      "tool_names": [
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "read",
+        "read",
+        "bash",
+        "bash",
+        "bash",
+        "read",
+        "read",
+        "read",
+        "bash",
+        "bash",
+        "read",
+        "read",
+        "read",
+        "read",
+        "read",
+        "bash",
+        "read",
+        "bash",
+        "bash",
+        "bash",
+        "read",
+        "read",
+        "read",
+        "bash",
+        "read",
+        "read",
+        "bash",
+        "bash",
+        "read",
+        "read",
+        "read",
+        "read",
+        "bash",
+        "read",
+        "read",
+        "bash",
+        "bash",
+        "read",
+        "read",
+        "read",
+        "bash",
+        "bash",
+        "read",
+        "read",
+        "read",
+        "bash",
+        "bash",
+        "read",
+        "read",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "read",
+        "bash",
+        "bash",
+        "bash",
+        "read",
+        "bash",
+        "bash"
+      ],
+      "forbidden_tools": [],
+      "answer_sha256": "4b48bcca941ce152ea407d68281f861c5977e6c2999164be16723d851c61c8b7",
+      "events_sha256": "508ce85733741e3a29c8fb85437a08c90bdc1d02e6145d15c1b8d79d897a7853",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-ruby-2026-10-20/runs/opencode_RAILS_SAVE_FLOW_baseline"
+    }
+  },
+  {
+    "client": "opencode",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "task_id": "RAILS_SAVE_FLOW",
+    "arm": "graphtyn",
+    "started_at": "2026-10-21T04:51:24.526422+00:00",
+    "wall_seconds": 67.953,
+    "returncode": 0,
+    "timed_out": false,
+    "session_status": "complete",
+    "usage": {
+      "input_tokens": 46465,
+      "cached_input_tokens": 349440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5110,
+      "reasoning_tokens": 2398,
+      "total_tokens": 403413,
+      "provider_cost": 0
+    },
+    "usage_accounting": {
+      "source": "step_finish",
+      "record_count": 18,
+      "reported_total_includes": [
+        "input",
+        "cached_input",
+        "output",
+        "reasoning"
+      ],
+      "cached_input_is_separate": false,
+      "reasoning_is_separate_or_subcomponent": false,
+      "technical_total_including_cache": 403413,
+      "observed_retry_events": 0,
+      "retry_coverage": "explicit_events_only; null retries cannot be reconstructed"
+    },
+    "answer_present": true,
+    "index_setup": {
+      "returncode": 0,
+      "seconds": 187.377,
+      "stdout": "✓ Reindexado AST local completado (fast): 63719 nodos, 691855 conectores.",
+      "stderr": "",
+      "included_in_session_time": false
+    },
+    "prompt_sha256": "7d653fb928fe7c7b0d929cf997cb354f9884807381b40621a0d1ff335aec7a15",
+    "raw_event_count": 66,
+    "antigravity_mcp_registration": null,
+    "terminal_errors": [],
+    "run_id": "opencode_RAILS_SAVE_FLOW_graphtyn",
+    "quality": {
+      "automatic_facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "automatic_passed": 8,
+      "facts": {
+        "transaction_wrapper": true,
+        "validation_layer": true,
+        "save_entry": true,
+        "callbacks": true,
+        "create_branch": true,
+        "create_record": true,
+        "adapter_insert": true,
+        "failure_semantics": true
+      },
+      "passed": 8,
+      "total": 8,
+      "coverage": 1.0,
+      "citations": {
+        "total": 52,
+        "resolved": 29,
+        "valid": 29,
+        "invalid": [],
+        "unresolved_short_or_ambiguous": [
+          {
+            "file": "base.rb",
+            "line": 345,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 352,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 360,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 361,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "base.rb",
+            "line": 366,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 47,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 90,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 478,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 482,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 453,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "callbacks.rb",
+            "line": 14,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "timestamp.rb",
+            "line": 95,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "attribute_methods.rb",
+            "line": 550,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 254,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 300,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 302,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 212,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "postgresql/database_statements.rb",
+            "line": 34,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "postgresql/database_statements.rb",
+            "line": 44,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 737,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "database_statements.rb",
+            "line": 765,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 48,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          },
+          {
+            "file": "validations.rb",
+            "line": 53,
+            "line_count": null,
+            "resolved": false,
+            "valid": false
+          }
+        ]
+      },
+      "answer_bytes": 8402,
+      "adjudication": null,
+      "grader": "deterministic frozen rubric plus disclosed non-independent adjudication"
+    },
+    "retrieval": {
+      "output_captured": true,
+      "context_id": "e4f96c2f485d",
+      "selected_nodes": 11,
+      "missing": [],
+      "do_not_expand": true,
+      "payload_tokens": 3035,
+      "payload_truncated": false,
+      "source_characters": 1565,
+      "source_snippets": 3,
+      "total_ms": 12459.748
+    },
+    "audit": {
+      "tool_names": [
+        "graphtyn_benchmark_graph_query_intent",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash",
+        "bash"
+      ],
+      "forbidden_tools": [],
+      "answer_sha256": "d015a9716a2f6071a7466848302cae8ac5e31975e32a9f470f9fb10ccfe9aa37",
+      "events_sha256": "16b13a22fcc888392e7f16b34e963f3dfb043b7db8b32a25bd9538f5b31c5156",
+      "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-ruby-2026-10-20/runs/opencode_RAILS_SAVE_FLOW_graphtyn"
+    }
+  }
+]

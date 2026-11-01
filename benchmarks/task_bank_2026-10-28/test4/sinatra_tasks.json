@@ -1,0 +1,393 @@
+{
+ "schema_version": "1.0",
+ "frozen": "2026-10-31, cuarto conjunto de prueba, congelado antes de corregir el anclaje en dependencias incluidas, los homónimos y las falsas completitudes de la quinta ronda; rúbrica escrita leyendo la fuente, sin consultar Graphtyn; jq y sinatra son corpus nunca usados; incluye tareas impact, tests, bindings y persistence",
+ "tasks": [
+  {
+   "id": "SINATRA_REQUEST_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de Sinatra, traza una petición desde call(env): cómo se duplica la aplicación, qué estado se prepara, cómo se despacha con los ficheros estáticos, los filtros before y after y las rutas, cómo se evalúa la ruta que coincide y cómo se tratan las excepciones. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "call",
+     "any": [
+      "def call(env)"
+     ]
+    },
+    {
+     "id": "bang",
+     "any": [
+      "call!"
+     ]
+    },
+    {
+     "id": "invoke",
+     "any": [
+      "def invoke"
+     ]
+    },
+    {
+     "id": "dispatch",
+     "any": [
+      "dispatch!"
+     ]
+    },
+    {
+     "id": "filter",
+     "any": [
+      "filter!"
+     ]
+    },
+    {
+     "id": "route",
+     "any": [
+      "route!"
+     ]
+    },
+    {
+     "id": "process",
+     "any": [
+      "process_route"
+     ]
+    },
+    {
+     "id": "exception",
+     "any": [
+      "handle_exception!"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SINATRA_ROUTE_DEFINE_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de Sinatra, traza qué ocurre al declarar get '/hola' do ... end: qué rutas se registran, cómo se compila el patrón, cómo el bloque se convierte en método, dónde se guarda la firma y qué hook se avisa. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "get",
+     "any": [
+      "def get"
+     ]
+    },
+    {
+     "id": "head",
+     "any": [
+      "'HEAD'"
+     ]
+    },
+    {
+     "id": "route",
+     "any": [
+      "def route"
+     ]
+    },
+    {
+     "id": "compile_bang",
+     "any": [
+      "compile!"
+     ]
+    },
+    {
+     "id": "pattern",
+     "any": [
+      "Mustermann.new"
+     ]
+    },
+    {
+     "id": "method",
+     "any": [
+      "generate_method"
+     ]
+    },
+    {
+     "id": "routes",
+     "any": [
+      "@routes"
+     ]
+    },
+    {
+     "id": "hook",
+     "any": [
+      "invoke_hook"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SINATRA_TEMPLATE_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de Sinatra, traza erb :index: cómo se resuelven las opciones y el layout, cómo se compila y se cachea la plantilla, cómo se busca el archivo en las vistas y cómo se renderiza dentro del layout. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "erb",
+     "any": [
+      "def erb"
+     ]
+    },
+    {
+     "id": "render",
+     "any": [
+      "def render"
+     ]
+    },
+    {
+     "id": "layout",
+     "any": [
+      "layout"
+     ]
+    },
+    {
+     "id": "compile",
+     "any": [
+      "compile_template"
+     ]
+    },
+    {
+     "id": "cache",
+     "any": [
+      "template_cache"
+     ]
+    },
+    {
+     "id": "find",
+     "any": [
+      "find_template"
+     ]
+    },
+    {
+     "id": "tilt",
+     "any": [
+      "Tilt"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SINATRA_HALT_REDIRECT_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de Sinatra, traza redirect '/login' dentro de una ruta: cómo se construye la URL absoluta, qué estado HTTP se usa, cómo halt interrumpe la ruta y dónde se captura para fijar estado, cabeceras y cuerpo. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "redirect",
+     "any": [
+      "def redirect"
+     ]
+    },
+    {
+     "id": "uri",
+     "any": [
+      "def uri"
+     ]
+    },
+    {
+     "id": "status",
+     "any": [
+      "def status"
+     ]
+    },
+    {
+     "id": "halt",
+     "any": [
+      "def halt"
+     ]
+    },
+    {
+     "id": "throw",
+     "any": [
+      "throw :halt"
+     ]
+    },
+    {
+     "id": "catch",
+     "any": [
+      "catch(:halt"
+     ]
+    },
+    {
+     "id": "invoke",
+     "any": [
+      "def invoke"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SINATRA_STATIC_FLOW",
+   "intent": "flow",
+   "request": "En el commit fijado de Sinatra, traza cómo se sirve un fichero estático: cuándo se intenta, cómo se valida la ruta dentro de la carpeta pública, qué cabeceras de caché se ponen y cómo se envía el archivo. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "static",
+     "any": [
+      "def static!"
+     ]
+    },
+    {
+     "id": "public",
+     "any": [
+      "public_folder"
+     ]
+    },
+    {
+     "id": "valid",
+     "any": [
+      "valid_path?"
+     ]
+    },
+    {
+     "id": "cache",
+     "any": [
+      "static_cache_control"
+     ]
+    },
+    {
+     "id": "headers",
+     "any": [
+      "static_headers"
+     ]
+    },
+    {
+     "id": "send",
+     "any": [
+      "def send_file"
+     ]
+    },
+    {
+     "id": "dispatch",
+     "any": [
+      "dispatch!"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SINATRA_PROCESS_ROUTE_IMPACT",
+   "intent": "impact",
+   "request": "En el commit fijado de Sinatra, ¿qué se ve afectado si cambio la firma de process_route? Indica sus consumidores directos y cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "def",
+     "any": [
+      "def process_route"
+     ]
+    },
+    {
+     "id": "filter",
+     "any": [
+      "filter!"
+     ]
+    },
+    {
+     "id": "route",
+     "any": [
+      "route!"
+     ]
+    },
+    {
+     "id": "error",
+     "any": [
+      "error_block!"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SINATRA_FILTER_TESTS",
+   "intent": "tests",
+   "request": "En el commit fijado de Sinatra, ¿qué pruebas cubren los filtros before y after, y qué código de producción ejercitan?",
+   "rubric": [
+    {
+     "id": "file",
+     "any": [
+      "filter_test.rb"
+     ]
+    },
+    {
+     "id": "filter",
+     "any": [
+      "filter!"
+     ]
+    },
+    {
+     "id": "before",
+     "any": [
+      "def before"
+     ]
+    },
+    {
+     "id": "after",
+     "any": [
+      "def after"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SINATRA_EXTENSION_BINDINGS",
+   "intent": "bindings",
+   "request": "En el commit fijado de Sinatra, ¿cómo se registran las extensiones y los helpers, y dónde se notifica a las extensiones registradas cuando se añade una ruta?",
+   "rubric": [
+    {
+     "id": "register",
+     "any": [
+      "def register"
+     ]
+    },
+    {
+     "id": "registered",
+     "any": [
+      "registered"
+     ]
+    },
+    {
+     "id": "helpers",
+     "any": [
+      "def helpers"
+     ]
+    },
+    {
+     "id": "extensions",
+     "any": [
+      "@extensions"
+     ]
+    },
+    {
+     "id": "hook",
+     "any": [
+      "invoke_hook"
+     ]
+    },
+    {
+     "id": "added",
+     "any": [
+      "route_added"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "SINATRA_STATIC_TESTS",
+   "intent": "tests",
+   "request": "En el commit fijado de Sinatra, ¿qué pruebas cubren el servicio de ficheros estáticos?",
+   "rubric": [
+    {
+     "id": "file",
+     "any": [
+      "static_test.rb"
+     ]
+    },
+    {
+     "id": "static",
+     "any": [
+      "static!"
+     ]
+    },
+    {
+     "id": "send",
+     "any": [
+      "send_file"
+     ]
+    }
+   ]
+  }
+ ]
+}

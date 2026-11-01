@@ -1,0 +1,74 @@
+{
+  "protocol": {
+    "name": "language-pack-ruby-v1",
+    "scope": "local parser and graph coverage; no agent, model, network or token measurement",
+    "repetitions": 30,
+    "warmup_runs": 1
+  },
+  "environment": {
+    "parser_version": "treesitter-v19-ruby-pack",
+    "tree_sitter_ruby": "0.23.1"
+  },
+  "measurement": {
+    "facts": {
+      "clean_parse": true,
+      "requires": true,
+      "module": true,
+      "class": true,
+      "inheritance": true,
+      "mixin": true,
+      "instance_method": true,
+      "singleton_method": true,
+      "call": true,
+      "inheritance_edge": true,
+      "mixin_edge": true,
+      "call_edge": true
+    },
+    "facts_passed": 12,
+    "facts_total": 12,
+    "median_ms": 0.398,
+    "p95_ms": 0.488,
+    "samples_ms": [
+      0.459,
+      0.467,
+      0.408,
+      0.405,
+      0.399,
+      0.378,
+      0.396,
+      0.391,
+      0.457,
+      0.437,
+      0.488,
+      0.652,
+      0.471,
+      0.415,
+      0.386,
+      0.407,
+      0.385,
+      0.381,
+      0.386,
+      0.368,
+      0.404,
+      0.396,
+      0.39,
+      0.378,
+      0.394,
+      0.402,
+      0.389,
+      0.38,
+      0.426,
+      0.397
+    ]
+  },
+  "graph": {
+    "tree_sitter_files": 3,
+    "language_packs": [
+      "ruby"
+    ]
+  },
+  "summary": {
+    "coverage": 1.0,
+    "passed": true
+  }
+}

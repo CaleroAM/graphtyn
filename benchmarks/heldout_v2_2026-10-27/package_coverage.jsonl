@@ -1,0 +1,6 @@
+{"task": "REDIS_EVICTION_FLOW", "covered": 0, "total": 8, "do_not_expand": true, "tokens": 1600}
+{"task": "REDIS_OUTPUT_LIMIT_FLOW", "covered": 0, "total": 8, "do_not_expand": true, "tokens": 1262}
+{"task": "FMT_FLOAT_FLOW", "covered": 0, "total": 7, "do_not_expand": true, "tokens": 1731}
+{"task": "FMT_FORMAT_TO_N_FLOW", "covered": 1, "total": 8, "do_not_expand": true, "tokens": 528}
+{"task": "RAILS_UPDATE_FLOW", "covered": 1, "total": 8, "do_not_expand": false, "tokens": 3512}
+{"task": "RAILS_FIND_FLOW", "covered": 5, "total": 9, "do_not_expand": false, "tokens": 2186}

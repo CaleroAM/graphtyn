@@ -43,7 +43,207 @@ def test_extensionless_runners_and_package_scripts_are_indexed(tmp_path):
     assert "FROM python:3.12-slim" in sections["Dockerfile"]
     assert '"test":"vitest run"' in sections["package.json"]
     assert "python -m pytest -q" in sections[".github/workflows/tests.yml"]
-from graphtyn.core.tree_sitter_backend import parse_file as parse_tree_sitter_file
+from graphtyn.core.tree_sitter_backend import (
+    TREE_SITTER_EXTENSIONS,
+    language_pack_contract,
+    parse_file as parse_tree_sitter_file,
+)
+
+
+def test_language_pack_contract_has_unique_extensions_and_known_capabilities():
+    contract = language_pack_contract()
+    extensions = [extension for pack in contract for extension in pack["extensions"]]
+    capabilities = {"symbols", "imports", "calls", "members", "inheritance", "mixins"}
+
+    assert len(extensions) == len(set(extensions))
+    assert set(extensions) == set(TREE_SITTER_EXTENSIONS)
+    assert {pack["name"] for pack in contract} >= {"c", "cpp"}
+    assert all(set(pack["capabilities"]) <= capabilities for pack in contract)
+
+
+def test_tree_sitter_c_extracts_struct_members_includes_functions_and_calls(tmp_path):
+    pytest.importorskip("tree_sitter_c")
+    source = tmp_path / "service.c"
+    source.write_text(
+        "#include <stdio.h>\n"
+        "struct Service { int value; };\n"
+        "union Payload { int code; };\n"
+        "int helper(int value) { return value + 1; }\n"
+        "int run(struct Service *service) { return helper(service->value); }\n",
+        encoding="utf-8",
+    )
+
+    result = parse_tree_sitter_file(source, "service.c")
+
+    assert result and result["language"] == "c" and result["has_error"] is False
+    assert {(symbol["name"], symbol["kind"]) for symbol in result["symbols"]} >= {
+        ("Service", "struct"), ("Payload", "union"),
+        ("helper", "function"), ("run", "function"),
+    }
+    assert any(member["container"] == "Service" and member["name"] == "value"
+               for member in result["members"])
+    assert any(item["text"] == "#include <stdio.h>" for item in result["imports"])
+    assert any(call["caller"] == "run" and call["name"] == "helper"
+               for call in result["calls"])
+
+
+def test_tree_sitter_cpp_extracts_namespace_inheritance_methods_and_calls(tmp_path):
+    pytest.importorskip("tree_sitter_cpp")
+    source = tmp_path / "service.cpp"
+    source.write_text(
+        "#include <string>\n"
+        "namespace demo {\n"
+        "class Base { public: virtual int run() = 0; };\n"
+        "int helper(int value) { return value + 1; }\n"
+        "class Service : public Base { int value; public: int run() { return helper(value); } };\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    result = parse_tree_sitter_file(source, "service.cpp")
+    symbols = result["symbols"]
+
+    assert result["language"] == "cpp" and result["namespace"] == "demo"
+    service = next(symbol for symbol in symbols if symbol["name"] == "Service")
+    assert service["bases"] == ["Base"]
+    assert service["namespace"] == "demo"
+    assert any(symbol["name"] == "run" and symbol["kind"] == "method"
+               and symbol["container"] == "Service" for symbol in symbols)
+    assert any(call["caller"] == "run" and call["name"] == "helper"
+               for call in result["calls"])
+
+
+def test_tree_sitter_disambiguates_c_and_cpp_dot_h_headers(tmp_path):
+    pytest.importorskip("tree_sitter_c")
+    pytest.importorskip("tree_sitter_cpp")
+    c_header = tmp_path / "plain.h"
+    cpp_header = tmp_path / "templates.h"
+    c_header.write_text("struct Item { int id; };\n", encoding="utf-8")
+    cpp_header.write_text(
+        "namespace demo { template <typename T> T identity(T value) { return value; } }\n",
+        encoding="utf-8",
+    )
+
+    c_result = parse_tree_sitter_file(c_header, "plain.h")
+    cpp_result = parse_tree_sitter_file(cpp_header, "templates.h")
+
+    assert c_result and c_result["language"] == "c" and c_result["has_error"] is False
+    assert cpp_result and cpp_result["language"] == "cpp" and cpp_result["has_error"] is False
+    assert any(symbol["name"] == "identity" for symbol in cpp_result["symbols"])
+
+
+def test_scan_uses_c_cpp_language_packs_for_sources_and_headers(tmp_path):
+    pytest.importorskip("tree_sitter_c")
+    pytest.importorskip("tree_sitter_cpp")
+    (tmp_path / "types.h").write_text("struct Item { int id; };\n", encoding="utf-8")
+    (tmp_path / "service.cpp").write_text(
+        "class Base {}; class Service : public Base {};\n", encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+
+    assert graph["metadata"]["tree_sitter_files"] == 2
+    assert graph["metadata"]["language_packs"] == ["c", "cpp"]
+    assert any(link["label"] == "hereda"
+               and nodes[link["source"]]["name"] == "Service"
+               and nodes[link["target"]]["name"] == "Base"
+               for link in graph["links"])
+
+
+def test_tree_sitter_ruby_extracts_modules_mixins_methods_calls_and_requires(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    source = tmp_path / "order.rb"
+    source.write_text(
+        'require "active_record"\n'
+        "module Billing\n"
+        "  module Trackable\n"
+        "    def audit(event)\n"
+        "      Logger.info(event)\n"
+        "    end\n"
+        "  end\n"
+        "  class Order < ApplicationRecord\n"
+        "    include Trackable\n"
+        "    def total(multiplier = 1)\n"
+        "      audit(:total)\n"
+        "    end\n"
+        "    def self.find_paid(id)\n"
+        "      find(id)\n"
+        "    end\n"
+        "  end\n"
+        "end\n",
+        encoding="utf-8",
+    )
+
+    result = parse_tree_sitter_file(source, "order.rb")
+
+    assert result is not None
+    assert result["language"] == "ruby" and result["has_error"] is False
+    symbols = {(item["name"], item["kind"]): item for item in result["symbols"]}
+    assert ("Billing", "module") in symbols and ("Trackable", "module") in symbols
+    assert symbols[("Trackable", "module")]["namespace"] == "Billing"
+    assert symbols[("Order", "class")]["bases"] == ["ApplicationRecord"]
+    assert symbols[("Order", "class")]["mixins"][0]["name"] == "Trackable"
+    assert symbols[("total", "method")]["required_parameter_count"] == 0
+    assert symbols[("find_paid", "method")]["container"] == "Order"
+    assert any(item["name"] == "audit" and item["caller"] == "total" for item in result["calls"])
+    assert result["imports"] == [{"text": 'require "active_record"', "line": 1}]
+
+
+def test_ruby_graph_distinguishes_inheritance_and_mixin_relations(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    (tmp_path / "application_record.rb").write_text(
+        "class ApplicationRecord\nend\n", encoding="utf-8"
+    )
+    (tmp_path / "trackable.rb").write_text(
+        "module Trackable\n  def audit(event)\n  end\nend\n", encoding="utf-8"
+    )
+    (tmp_path / "order.rb").write_text(
+        'require_relative "trackable"\n'
+        "class Order < ApplicationRecord\n"
+        "  include Trackable\n"
+        "  def total\n"
+        "    audit(:total)\n"
+        "  end\n"
+        "end\n",
+        encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    relations = {
+        (nodes.get(link.get("source"), {}).get("name"), link.get("label"),
+         nodes.get(link.get("target"), {}).get("name"), link.get("mixin_kind"))
+        for link in graph["links"]
+    }
+
+    assert graph["metadata"]["language_packs"] == ["ruby"]
+    assert ("Order", "hereda", "ApplicationRecord", None) in relations
+    assert ("Order", "incluye", "Trackable", "include") in relations
+    assert ("total", "llama", "audit", None) in relations
+
+
+def test_large_ambiguous_call_fanout_is_suppressed(tmp_path):
+    pytest.importorskip("tree_sitter_python")
+    for index in range(8):
+        (tmp_path / f"service_{index}.py").write_text(
+            f"def process(value):\n    return value + {index}\n", encoding="utf-8",
+        )
+    (tmp_path / "caller.py").write_text(
+        "def run(value):\n    return process(value)\n", encoding="utf-8",
+    )
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    fanout = [
+        link for link in graph["links"]
+        if link.get("label") == "llama"
+        and nodes.get(link.get("source"), {}).get("name") == "run"
+        and nodes.get(link.get("target"), {}).get("name") == "process"
+    ]
+
+    assert fanout == []
+    assert graph["metadata"]["relation_coverage"]["suppressed_weak_candidates"]["ambiguous_calls"] == 1
 
 def test_parse_python_file():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -497,3 +697,68 @@ def test_structural_cache_reuses_unchanged_tree_sitter_result(tmp_path, monkeypa
     source.write_text("public class Service { public void Run() {} }", encoding="utf-8")
     ASTParser().scan_directory(tmp_path, respect_git=False, cache_path=cache_path)
     assert len(calls) == 2
+
+
+def test_ruby_bare_method_calls_link_without_locals_or_other_languages(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    (tmp_path / "record.rb").write_text(
+        "class Record\n"
+        "  def destroy(force = false)\n"
+        "    destroy_associations\n"
+        "    total = 1\n"
+        "    persisted? && destroy_row > total + force\n"
+        "  end\n\n"
+        "  def destroy_associations; end\n"
+        "  def destroy_row; 1; end\n"
+        "  def total; 0; end\n"
+        "  def force; end\n"
+        "end\n", encoding="utf-8")
+    (tmp_path / "asset.js").write_text("function destroy_row() { return 2 }\n", encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    calls = {(nodes[link["source"]]["name"], nodes[link["target"]]["name"], nodes[link["target"]]["file"])
+             for link in graph["links"] if link.get("label") == "llama"}
+    assert ("destroy", "destroy_associations", "record.rb") in calls
+    assert ("destroy", "destroy_row", "record.rb") in calls
+    # `total` is a local and `force` a parameter of destroy; JS homonyms are another language.
+    assert not {call for call in calls if call[0] == "destroy" and call[1] in {"total", "force"}}
+    assert not {call for call in calls if call[2] == "asset.js"}
+
+
+def test_ruby_mixins_resolve_lexically_and_super_follows_the_ancestor_chain(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    lib = tmp_path / "lib"
+    lib.mkdir()
+    (lib / "persistence.rb").write_text(
+        "module ActiveRecord\n  module Persistence\n    def save(**options)\n      create_or_update\n    end\n\n"
+        "    def create_or_update; end\n  end\nend\n", encoding="utf-8")
+    (lib / "validations.rb").write_text(
+        "module ActiveRecord\n  module Validations\n    def save(**options)\n      valid? ? super : false\n    end\n\n"
+        "    def valid?; true; end\n  end\nend\n", encoding="utf-8")
+    (lib / "transactions.rb").write_text(
+        "module ActiveRecord\n  module Transactions\n    def save(**options)\n      with_transaction { super(**options) }\n"
+        "    end\n\n    def with_transaction; yield; end\n  end\nend\n", encoding="utf-8")
+    (lib / "translation.rb").write_text("module ActiveRecord\n  module Translation; end\nend\n", encoding="utf-8")
+    (lib / "other_translation.rb").write_text("module ActiveModel\n  module Translation; end\nend\n", encoding="utf-8")
+    (lib / "base.rb").write_text(
+        "module ActiveRecord\n  class Base\n    include Persistence\n    include Translation\n"
+        "    include Validations\n    include Transactions\n  end\nend\n", encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    def label(node_id):
+        node = nodes[node_id]
+        return f"{node.get('container') or node.get('namespace')}#{node['name']}"
+    mixins = {(label(link["source"]), nodes[link["target"]]["file"], link["confidence"])
+              for link in graph["links"] if link.get("label") == "incluye"}
+    # `include Translation` inside ActiveRecord is ActiveRecord::Translation only.
+    assert ("ActiveRecord#Base", "lib/translation.rb", "INFERRED") in mixins or \
+        ("ActiveRecord#Base", "lib/translation.rb", "EXTRACTED") in mixins
+    assert not {mixin for mixin in mixins if mixin[1] == "lib/other_translation.rb"}
+    supers = {(label(link["source"]), label(link["target"]))
+              for link in graph["links"] if (link.get("resolution") or {}).get("strategy") == "ruby-super-ancestors"}
+    # Ancestors of Base: Transactions, Validations, Translation, Persistence.
+    assert supers == {("Transactions#save", "Validations#save"), ("Validations#save", "Persistence#save")}

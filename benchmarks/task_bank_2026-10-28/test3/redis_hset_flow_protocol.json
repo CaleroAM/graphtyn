@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Comparar con agentes reales, sobre el tercer conjunto de prueba, tres variantes del presupuesto de flujo de Graphtyn (actual, A: más nodos, BCD: cadena reservada + esquema de llamadas + nombres de comando) frente a no usar Graphtyn, en calidad y tokens.",
+  "repository": {
+    "name": "redis/redis",
+    "url": "https://github.com/redis/redis",
+    "commit": "f2a17a8dca1566d2a0f078840fffef5661eab4b1"
+  },
+  "design": {
+    "clients": [
+      "claude",
+      "codex"
+    ],
+    "tasks": [
+      "REDIS_HSET_FLOW"
+    ],
+    "arms_by_client": {
+      "claude": [
+        "baseline",
+        "graphtyn_hook"
+      ],
+      "codex": [
+        "baseline",
+        "graphtyn_hook"
+      ]
+    },
+    "repetitions_by_client": {
+      "claude": 1,
+      "codex": 1
+    },
+    "grading": "Rúbrica literal congelada en a2cd6f6 antes de implementar las variantes.",
+    "graphtyn_variants": {
+      "current": "graphtyn del árbol de trabajo con los valores por defecto",
+      "A": "FLOW_NODE_CAP=14 y presupuesto por defecto de 18 entidades",
+      "BCD": "CHAIN_SHARE=0.5, CHAIN_SEEDS=1, COMMAND_NAMES, OUTLINE_LIMIT=12"
+    }
+  },
+  "accounting": {
+    "raw_events": true,
+    "preserve_failed_attempts": true,
+    "unknown_is_null": true,
+    "opencode_step_finish_semantics": "per-step",
+    "fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "cache_write_input_tokens",
+      "output_tokens",
+      "reasoning_tokens",
+      "total_tokens",
+      "provider_cost",
+      "wall_seconds"
+    ]
+  },
+  "authorization": {
+    "source": "El usuario pidió implementar y probar ambas opciones frente a no cambiar nada (2026-10-29).",
+    "total_token_ceiling": null
+  },
+  "client_config": {
+    "models": {
+      "claude": "claude-sonnet-5-5",
+      "codex": "gpt-5.6-luna",
+      "opencode": "opencode/deepseek-v4.1-flash-free",
+      "antigravity": "gemini-3.8-flash-high"
+    },
+    "claude": "--strict-mcp-config; hook: --settings con dos hooks UserPromptSubmit e instrucciones del brazo por --append-system-prompt",
+    "codex": "--ignore-user-config; MCP por -c; hook: -c hooks.UserPromptSubmit inline con additionalContextLimit=8000 y --dangerously-bypass-hook-trust; instrucciones del brazo hook por -c developer_instructions",
+    "opencode": "OPENCODE_CONFIG_CONTENT; sin --pure en los tres brazos (los plugins de proyecto llevan el hook); hook: .opencode/plugins/graphtyn-context.js (chat.message); instrucciones del brazo hook por config.instructions",
+    "antigravity": "agy mcp add por sesión (serializado); sin mecanismo de hook",
+    "codex_model_note": "gpt-6-astra (ejecuciones del 20-21 oct) ya no está disponible con esta cuenta ChatGPT; se usa el modelo por defecto del usuario y se añade un brazo baseline contemporáneo."
+  },
+  "source_protocol": "benchmarks/task_bank_2026-10-28/test2/redis_incr_flow_protocol.json",
+  "previous_runs": [
+    "benchmarks/task_bank_2026-10-28/test2"
+  ],
+  "stop_rule": "targeted"
+}

@@ -264,6 +264,18 @@ def test_message_obligations_provenance_and_adaptive_snippets(tmp_path, monkeypa
     assert context["evidence_complete"] is True
 
 
+def test_obligation_cues_require_complete_words(tmp_path, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    project = tmp_path / "project"; project.mkdir()
+    store = SharedMemoryStore(project)
+
+    result = store.search_messages(
+        "¿Qué aporta Graphtyn y cómo se puede ampliar a otros lenguajes?", limit=3,
+    )
+
+    assert "port" not in result["obligations"]["requested"]
+
+
 def test_proposed_command_does_not_satisfy_memory_evidence(tmp_path, monkeypatch):
     monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
     project = tmp_path / "project"; project.mkdir()

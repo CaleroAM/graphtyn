@@ -1,0 +1,1958 @@
+[
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "claude_FMT_INT_SPEC_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 30375,
+    "seconds": 18.578,
+    "quality": {
+      "facts": {
+        "replacement_field": false,
+        "parse_specs": false,
+        "dynamic": false,
+        "visit_formatter": false,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 3,
+      "total": 7
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          4387
+        ],
+        "context_id": "2010aec4af05"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/claude/runs/claude_FMT_INT_SPEC_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "run_id": "claude_FMT_INT_SPEC_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 30307,
+    "seconds": 17.875,
+    "quality": {
+      "facts": {
+        "replacement_field": false,
+        "parse_specs": true,
+        "dynamic": false,
+        "visit_formatter": false,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 4,
+      "total": 7
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          4387
+        ],
+        "context_id": "2010aec4af05"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/claude/runs/claude_FMT_INT_SPEC_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "claude_FMT_INT_SPEC_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 56856,
+    "seconds": 17.386,
+    "quality": {
+      "facts": {
+        "replacement_field": false,
+        "parse_specs": false,
+        "dynamic": false,
+        "visit_formatter": false,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 3,
+      "total": 7
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": 2,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/claude/runs/claude_FMT_INT_SPEC_FLOW_graphtyn_r1"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "claude_FMT_INT_SPEC_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 56893,
+    "seconds": 17.401,
+    "quality": {
+      "facts": {
+        "replacement_field": false,
+        "parse_specs": false,
+        "dynamic": false,
+        "visit_formatter": false,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 3,
+      "total": 7
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": 2,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/claude/runs/claude_FMT_INT_SPEC_FLOW_graphtyn_r2"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "run_id": "codex_FMT_INT_SPEC_FLOW_baseline",
+    "session_status": "complete",
+    "tokens": 139221,
+    "seconds": 23.029,
+    "quality": {
+      "facts": {
+        "replacement_field": true,
+        "parse_specs": true,
+        "dynamic": true,
+        "visit_formatter": true,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tools": {
+      "command_execution": 5
+    },
+    "tool_calls": 5,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/codex/runs/codex_FMT_INT_SPEC_FLOW_baseline"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "codex_FMT_INT_SPEC_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 27104,
+    "seconds": 15.635,
+    "quality": {
+      "facts": {
+        "replacement_field": false,
+        "parse_specs": false,
+        "dynamic": false,
+        "visit_formatter": false,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 3,
+      "total": 7
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/codex/runs/codex_FMT_INT_SPEC_FLOW_graphtyn"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "codex_FMT_INT_SPEC_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 9683,
+    "seconds": 8.339,
+    "quality": {
+      "facts": {
+        "replacement_field": false,
+        "parse_specs": false,
+        "dynamic": false,
+        "visit_formatter": false,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 3,
+      "total": 7
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": null,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          4378
+        ],
+        "context_id": "2010aec4af05"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/codex/runs/codex_FMT_INT_SPEC_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "opencode_FMT_INT_SPEC_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 25041,
+    "seconds": 27.009,
+    "quality": {
+      "facts": {
+        "replacement_field": false,
+        "parse_specs": false,
+        "dynamic": false,
+        "visit_formatter": false,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 3,
+      "total": 7
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": 2,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/opencode/runs/opencode_FMT_INT_SPEC_FLOW_graphtyn"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_INT_SPEC_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "opencode_FMT_INT_SPEC_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 215097,
+    "seconds": 71.192,
+    "quality": {
+      "facts": {
+        "replacement_field": true,
+        "parse_specs": true,
+        "dynamic": true,
+        "visit_formatter": true,
+        "hex_digits": true,
+        "prefix": true,
+        "padding": true
+      },
+      "passed": 7,
+      "total": 7
+    },
+    "tools": {
+      "bash": 5,
+      "read": 11
+    },
+    "tool_calls": 16,
+    "model_calls": 9,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          4387
+        ],
+        "context_id": "2010aec4af05"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_int_spec_flow/opencode/runs/opencode_FMT_INT_SPEC_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "claude_FMT_PRINT_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 33342,
+    "seconds": 13.239,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": true,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 2,
+        "characters": [
+          9672,
+          1634
+        ],
+        "context_id": "8da9c3b2cf4e"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/claude/runs/claude_FMT_PRINT_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "run_id": "claude_FMT_PRINT_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 33569,
+    "seconds": 16.037,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": true,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 2,
+        "characters": [
+          9672,
+          1634
+        ],
+        "context_id": "8da9c3b2cf4e"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/claude/runs/claude_FMT_PRINT_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "claude_FMT_PRINT_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 61107,
+    "seconds": 17.699,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": true,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": 2,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/claude/runs/claude_FMT_PRINT_FLOW_graphtyn_r1"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "claude_FMT_PRINT_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 60834,
+    "seconds": 17.603,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": true,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": 2,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/claude/runs/claude_FMT_PRINT_FLOW_graphtyn_r2"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "run_id": "codex_FMT_PRINT_FLOW_baseline",
+    "session_status": "complete",
+    "tokens": 215483,
+    "seconds": 29.851,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": false,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tools": {
+      "command_execution": 7
+    },
+    "tool_calls": 7,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/codex/runs/codex_FMT_PRINT_FLOW_baseline"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "codex_FMT_PRINT_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 29978,
+    "seconds": 14.203,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": false,
+        "buffered": true,
+        "file_buffer": false,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/codex/runs/codex_FMT_PRINT_FLOW_graphtyn"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "codex_FMT_PRINT_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 12133,
+    "seconds": 10.102,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": false,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": null,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          11239
+        ],
+        "context_id": "8da9c3b2cf4e"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/codex/runs/codex_FMT_PRINT_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "opencode_FMT_PRINT_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 27837,
+    "seconds": 16.028,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": true,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": 2,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/opencode/runs/opencode_FMT_PRINT_FLOW_graphtyn"
+  },
+  {
+    "repository": "fmt",
+    "task_id": "FMT_PRINT_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "opencode_FMT_PRINT_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 15243,
+    "seconds": 21.282,
+    "quality": {
+      "facts": {
+        "entry": false,
+        "non_utf8": true,
+        "locking": true,
+        "vprint_choice": true,
+        "buffered": true,
+        "file_buffer": true,
+        "lock_flush": true,
+        "final_write": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          11248
+        ],
+        "context_id": "8da9c3b2cf4e"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/fmt/fmt_print_flow/opencode/runs/opencode_FMT_PRINT_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "claude_RAILS_DESTROY_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 183344,
+    "seconds": 46.712,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": true,
+        "associations": true,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 4
+    },
+    "tool_calls": 4,
+    "model_calls": 5,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 2,
+        "characters": [
+          9674,
+          4229
+        ],
+        "context_id": "68f55e6718b2"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/claude/runs/claude_RAILS_DESTROY_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "run_id": "claude_RAILS_DESTROY_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 143212,
+    "seconds": 49.981,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": true,
+        "associations": true,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 3
+    },
+    "tool_calls": 3,
+    "model_calls": 4,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 2,
+        "characters": [
+          9674,
+          4229
+        ],
+        "context_id": "68f55e6718b2"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/claude/runs/claude_RAILS_DESTROY_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "claude_RAILS_DESTROY_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 169565,
+    "seconds": 39.077,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": true,
+        "associations": true,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 4,
+    "model_calls": 5,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/claude/runs/claude_RAILS_DESTROY_FLOW_graphtyn_r1"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "claude_RAILS_DESTROY_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 281282,
+    "seconds": 39.225,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": true,
+        "associations": true,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 6,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 7,
+    "model_calls": 8,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/claude/runs/claude_RAILS_DESTROY_FLOW_graphtyn_r2"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "run_id": "codex_RAILS_DESTROY_FLOW_baseline",
+    "session_status": "complete",
+    "tokens": 343854,
+    "seconds": 37.534,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": false,
+        "associations": false,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tools": {
+      "command_execution": 11
+    },
+    "tool_calls": 11,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/codex/runs/codex_RAILS_DESTROY_FLOW_baseline"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "codex_RAILS_DESTROY_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 263005,
+    "seconds": 50.379,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": false,
+        "associations": false,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tools": {
+      "command_execution": 8,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 9,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/codex/runs/codex_RAILS_DESTROY_FLOW_graphtyn"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "codex_RAILS_DESTROY_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 12894,
+    "seconds": 25.832,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": false,
+        "associations": true,
+        "delete_row": false,
+        "delete_manager": false,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": null,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          13836
+        ],
+        "context_id": "68f55e6718b2"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/codex/runs/codex_RAILS_DESTROY_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "opencode_RAILS_DESTROY_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 520959,
+    "seconds": 89.895,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": true,
+        "associations": true,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "bash": 44,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 45,
+    "model_calls": 19,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/opencode/runs/opencode_RAILS_DESTROY_FLOW_graphtyn"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_DESTROY_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "opencode_RAILS_DESTROY_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 733178,
+    "seconds": 103.239,
+    "quality": {
+      "facts": {
+        "transaction": true,
+        "callbacks": true,
+        "readonly": true,
+        "associations": true,
+        "delete_row": true,
+        "delete_manager": true,
+        "locking": true,
+        "failure": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "bash": 20,
+      "read": 23
+    },
+    "tool_calls": 43,
+    "model_calls": 25,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          13845
+        ],
+        "context_id": "68f55e6718b2"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_destroy_flow/opencode/runs/opencode_RAILS_DESTROY_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "claude_RAILS_RELATION_LOAD_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 249260,
+    "seconds": 42.145,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 6
+    },
+    "tool_calls": 6,
+    "model_calls": 7,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          9789
+        ],
+        "context_id": "508864e1d54b"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/claude/runs/claude_RAILS_RELATION_LOAD_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "run_id": "claude_RAILS_RELATION_LOAD_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 283066,
+    "seconds": 42.991,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 7
+    },
+    "tool_calls": 7,
+    "model_calls": 8,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          9789
+        ],
+        "context_id": "508864e1d54b"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/claude/runs/claude_RAILS_RELATION_LOAD_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "claude_RAILS_RELATION_LOAD_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 406697,
+    "seconds": 45.956,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 9,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 10,
+    "model_calls": 11,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/claude/runs/claude_RAILS_RELATION_LOAD_FLOW_graphtyn_r1"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "claude_RAILS_RELATION_LOAD_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 132674,
+    "seconds": 58.811,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 2,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 3,
+    "model_calls": 4,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/claude/runs/claude_RAILS_RELATION_LOAD_FLOW_graphtyn_r2"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "run_id": "codex_RAILS_RELATION_LOAD_FLOW_baseline",
+    "session_status": "complete",
+    "tokens": 179377,
+    "seconds": 31.856,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "command_execution": 10
+    },
+    "tool_calls": 10,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/codex/runs/codex_RAILS_RELATION_LOAD_FLOW_baseline"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "codex_RAILS_RELATION_LOAD_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 98967,
+    "seconds": 29.663,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "command_execution": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 4,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/codex/runs/codex_RAILS_RELATION_LOAD_FLOW_graphtyn"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "codex_RAILS_RELATION_LOAD_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 101919,
+    "seconds": 29.005,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": false,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {
+      "command_execution": 4
+    },
+    "tool_calls": 4,
+    "model_calls": null,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          9780
+        ],
+        "context_id": "508864e1d54b"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/codex/runs/codex_RAILS_RELATION_LOAD_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "opencode_RAILS_RELATION_LOAD_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 630874,
+    "seconds": 84.466,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "bash": 10,
+      "grep": 1,
+      "mcp:graph_query_intent": 1,
+      "read": 20
+    },
+    "tool_calls": 32,
+    "model_calls": 20,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/opencode/runs/opencode_RAILS_RELATION_LOAD_FLOW_graphtyn"
+  },
+  {
+    "repository": "rails",
+    "task_id": "RAILS_RELATION_LOAD_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "opencode_RAILS_RELATION_LOAD_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 257946,
+    "seconds": 67.494,
+    "quality": {
+      "facts": {
+        "to_a_entry": true,
+        "load_once": true,
+        "exec_queries": true,
+        "short_circuit": true,
+        "eager": true,
+        "adapter": true,
+        "instantiate": true,
+        "post_load": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "bash": 12
+    },
+    "tool_calls": 12,
+    "model_calls": 13,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          9789
+        ],
+        "context_id": "508864e1d54b"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/rails/rails_relation_load_flow/opencode/runs/opencode_RAILS_RELATION_LOAD_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "claude_REDIS_EXPIRE_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 32171,
+    "seconds": 23.364,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": true,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": false,
+        "lazyfree": true,
+        "active_cycle": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          8558
+        ],
+        "context_id": "2373716ef939"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/claude/runs/claude_REDIS_EXPIRE_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "run_id": "claude_REDIS_EXPIRE_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 32073,
+    "seconds": 18.712,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": true,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": false,
+        "lazyfree": false,
+        "active_cycle": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          8558
+        ],
+        "context_id": "2373716ef939"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/claude/runs/claude_REDIS_EXPIRE_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "claude_REDIS_EXPIRE_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 127440,
+    "seconds": 28.643,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": true,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": true,
+        "lazyfree": true,
+        "active_cycle": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 2,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 3,
+    "model_calls": 4,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/claude/runs/claude_REDIS_EXPIRE_FLOW_graphtyn_r1"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "claude_REDIS_EXPIRE_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 163276,
+    "seconds": 32.02,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": true,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": true,
+        "lazyfree": true,
+        "active_cycle": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 3,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 4,
+    "model_calls": 5,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/claude/runs/claude_REDIS_EXPIRE_FLOW_graphtyn_r2"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "run_id": "codex_REDIS_EXPIRE_FLOW_baseline",
+    "session_status": "complete",
+    "tokens": 100734,
+    "seconds": 17.354,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": false,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": true,
+        "lazyfree": true,
+        "active_cycle": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {
+      "command_execution": 4
+    },
+    "tool_calls": 4,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/codex/runs/codex_REDIS_EXPIRE_FLOW_baseline"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "codex_REDIS_EXPIRE_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 28070,
+    "seconds": 15.42,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": false,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": false,
+        "lazyfree": false,
+        "active_cycle": false
+      },
+      "passed": 4,
+      "total": 8
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/codex/runs/codex_REDIS_EXPIRE_FLOW_graphtyn"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "codex_REDIS_EXPIRE_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 10583,
+    "seconds": 11.268,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": false,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": false,
+        "lazyfree": false,
+        "active_cycle": false
+      },
+      "passed": 4,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": null,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          8549
+        ],
+        "context_id": "2373716ef939"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/codex/runs/codex_REDIS_EXPIRE_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "opencode_REDIS_EXPIRE_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 97505,
+    "seconds": 40.984,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": true,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": true,
+        "lazyfree": true,
+        "active_cycle": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "grep": 2,
+      "mcp:graph_query_intent": 1,
+      "read": 10
+    },
+    "tool_calls": 13,
+    "model_calls": 5,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/opencode/runs/opencode_REDIS_EXPIRE_FLOW_graphtyn"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_EXPIRE_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "opencode_REDIS_EXPIRE_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 14125,
+    "seconds": 23.533,
+    "quality": {
+      "facts": {
+        "lazy_entry": true,
+        "expired_check": true,
+        "replica_branch": true,
+        "force_flag": true,
+        "delete": true,
+        "propagation": false,
+        "lazyfree": true,
+        "active_cycle": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          8558
+        ],
+        "context_id": "2373716ef939"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_expire_flow/opencode/runs/opencode_REDIS_EXPIRE_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "claude_REDIS_PSYNC_FLOW_graphtyn_hook_r1",
+    "session_status": "complete",
+    "tokens": 34183,
+    "seconds": 19.218,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": false,
+        "fullresync_reply": true,
+        "backlog": true,
+        "bgsave_reuse": true,
+        "start_bgsave": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 2,
+        "characters": [
+          9622,
+          3081
+        ],
+        "context_id": "9eb7082e61ea"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/claude/runs/claude_REDIS_PSYNC_FLOW_graphtyn_hook_r1"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn_hook",
+    "repetition": 2,
+    "run_id": "claude_REDIS_PSYNC_FLOW_graphtyn_hook_r2",
+    "session_status": "complete",
+    "tokens": 144230,
+    "seconds": 35.318,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": true,
+        "fullresync_reply": true,
+        "backlog": true,
+        "bgsave_reuse": true,
+        "start_bgsave": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 1,
+      "Read": 3
+    },
+    "tool_calls": 4,
+    "model_calls": 4,
+    "prompt_hook": {
+      "hook_events": 0,
+      "context_injected": false,
+      "expected": {
+        "injected": true,
+        "parts": 2,
+        "characters": [
+          9622,
+          3081
+        ],
+        "context_id": "9eb7082e61ea"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/claude/runs/claude_REDIS_PSYNC_FLOW_graphtyn_hook_r2"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "claude_REDIS_PSYNC_FLOW_graphtyn_r1",
+    "session_status": "complete",
+    "tokens": 174114,
+    "seconds": 42.791,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": true,
+        "fullresync_reply": true,
+        "backlog": true,
+        "bgsave_reuse": true,
+        "start_bgsave": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 1,
+      "Read": 4,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 6,
+    "model_calls": 5,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/claude/runs/claude_REDIS_PSYNC_FLOW_graphtyn_r1"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "claude",
+    "arm": "graphtyn",
+    "repetition": 2,
+    "run_id": "claude_REDIS_PSYNC_FLOW_graphtyn_r2",
+    "session_status": "complete",
+    "tokens": 134573,
+    "seconds": 30.547,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": true,
+        "fullresync_reply": true,
+        "backlog": true,
+        "bgsave_reuse": true,
+        "start_bgsave": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "Bash": 1,
+      "Read": 2,
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 4,
+    "model_calls": 4,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/claude/runs/claude_REDIS_PSYNC_FLOW_graphtyn_r2"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "codex",
+    "arm": "baseline",
+    "repetition": 1,
+    "run_id": "codex_REDIS_PSYNC_FLOW_baseline",
+    "session_status": "complete",
+    "tokens": 256737,
+    "seconds": 26.998,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": true,
+        "fullresync_reply": true,
+        "backlog": false,
+        "bgsave_reuse": false,
+        "start_bgsave": true
+      },
+      "passed": 6,
+      "total": 8
+    },
+    "tools": {
+      "command_execution": 8
+    },
+    "tool_calls": 8,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/codex/runs/codex_REDIS_PSYNC_FLOW_baseline"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "codex",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "codex_REDIS_PSYNC_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 29923,
+    "seconds": 17.574,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": false,
+        "full_conditions": false,
+        "fullresync_reply": true,
+        "backlog": false,
+        "bgsave_reuse": false,
+        "start_bgsave": true
+      },
+      "passed": 4,
+      "total": 8
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": null,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/codex/runs/codex_REDIS_PSYNC_FLOW_graphtyn"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "codex",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "codex_REDIS_PSYNC_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 12300,
+    "seconds": 12.753,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": false,
+        "fullresync_reply": true,
+        "backlog": false,
+        "bgsave_reuse": false,
+        "start_bgsave": true
+      },
+      "passed": 5,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": null,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          12636
+        ],
+        "context_id": "9eb7082e61ea"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/codex/runs/codex_REDIS_PSYNC_FLOW_graphtyn_hook"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn",
+    "repetition": 1,
+    "run_id": "opencode_REDIS_PSYNC_FLOW_graphtyn",
+    "session_status": "complete",
+    "tokens": 45801,
+    "seconds": 123.75,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": true,
+        "fullresync_reply": true,
+        "backlog": true,
+        "bgsave_reuse": true,
+        "start_bgsave": true
+      },
+      "passed": 8,
+      "total": 8
+    },
+    "tools": {
+      "mcp:graph_query_intent": 1
+    },
+    "tool_calls": 1,
+    "model_calls": 2,
+    "prompt_hook": null,
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/opencode/runs/opencode_REDIS_PSYNC_FLOW_graphtyn"
+  },
+  {
+    "repository": "redis",
+    "task_id": "REDIS_PSYNC_FLOW",
+    "client": "opencode",
+    "arm": "graphtyn_hook",
+    "repetition": 1,
+    "run_id": "opencode_REDIS_PSYNC_FLOW_graphtyn_hook",
+    "session_status": "complete",
+    "tokens": 16285,
+    "seconds": 27.79,
+    "quality": {
+      "facts": {
+        "entry": true,
+        "partial": true,
+        "continue_reply": true,
+        "full_conditions": false,
+        "fullresync_reply": true,
+        "backlog": true,
+        "bgsave_reuse": true,
+        "start_bgsave": true
+      },
+      "passed": 7,
+      "total": 8
+    },
+    "tools": {},
+    "tool_calls": 0,
+    "model_calls": 1,
+    "prompt_hook": {
+      "expected": {
+        "injected": true,
+        "parts": 1,
+        "characters": [
+          12645
+        ],
+        "context_id": "9eb7082e61ea"
+      }
+    },
+    "raw_directory": "/home/calero/Documentos/docker/graphtyn-benchmark-runs-heldout-2026-10-27/redis/redis_psync_flow/opencode/runs/opencode_REDIS_PSYNC_FLOW_graphtyn_hook"
+  }
+]
