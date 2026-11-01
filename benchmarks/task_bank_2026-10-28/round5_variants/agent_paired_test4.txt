@@ -1,0 +1,6 @@
+claude current vs none (16 tareas): coste USD -9.0 % [-25.4; +7.6] | calidad literal +2.2 pt [-0.8; +6.4] | calidad juzgada +1.0 pt [+0.0; +3.1] | tokens totales -15.8 % [-32.1; +1.6]
+claude cite vs none (16 tareas): coste USD -16.8 % [-32.1; -3.6] | calidad literal +0.8 pt [-0.8; +2.7] | calidad juzgada -0.4 pt [-1.2; +0.0] | tokens totales -19.4 % [-34.4; -5.1]
+claude cite vs current (16 tareas): coste USD -8.5 % [-18.4; -0.8] | calidad literal -1.4 pt [-4.6; +1.6] | calidad juzgada -1.4 pt [-3.9; +0.0] | tokens totales -4.3 % [-14.9; +4.5]
+codex current vs none (16 tareas): coste USD -27.6 % [-38.9; -15.3] | calidad literal -1.4 pt [-6.1; +3.0] | calidad juzgada -1.4 pt [-5.2; +2.5] | tokens totales -32.5 % [-49.0; -14.9]
+codex cite vs none (16 tareas): coste USD -24.7 % [-39.8; -10.3] | calidad literal -1.9 pt [-6.6; +2.5] | calidad juzgada -0.4 pt [-4.8; +3.8] | tokens totales -26.1 % [-49.0; -3.3]
+codex cite vs current (16 tareas): coste USD +4.0 % [-9.1; +17.2] | calidad literal -0.5 pt [-6.6; +5.2] | calidad juzgada +1.1 pt [-2.3; +4.3] | tokens totales +9.6 % [-9.4; +29.8]

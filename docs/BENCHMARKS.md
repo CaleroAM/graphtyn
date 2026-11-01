@@ -180,6 +180,18 @@ mayúsculas. Se midió en un tercer conjunto de prueba con Lua:
 El total de tokens infravalora el ahorro: la mayor parte son lecturas de caché
 del prompt fijo del cliente, que valen una décima parte.
 
+Una sexta ronda corrigió anclajes, homónimos y la clasificación de intenciones,
+y se midió en un cuarto conjunto con jq y Sinatra, corpus nunca usados:
+
+- **Cobertura del paquete en el cuarto conjunto:** 61,3 → 61,4 %. Las
+  correcciones de recuperación no generalizan; sí la intención correcta, con
+  paquetes más pequeños.
+- **192 sesiones reales con precios de lista:** frente a no usar Graphtyn, el
+  coste baja un 27,6 % en Codex [−38,9; −15,3] y un 9,0 % en Claude, este último
+  sin significación, sin perder calidad.
+- **Juez semántico:** la calidad de Codex es ~90 %, no el ~67 % de la rúbrica
+  literal, que penaliza describir una etapa sin nombrarla.
+
 La validación Ruby/Rails está en
 [`benchmarks/real_ruby_agents_2026-10-20/report.md`](../benchmarks/real_ruby_agents_2026-10-20/report.md).
 Con calidad comparable de 8/8, Graphtyn cambió el total informado en −67,30 %

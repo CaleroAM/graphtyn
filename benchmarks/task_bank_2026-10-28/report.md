@@ -518,3 +518,89 @@ Diferencias emparejadas por tarea, con intervalo bootstrap del 95 %:
   pista de propietario. Habría que validarlo con un cuarto conjunto nuevo.
 - Que Codex use lo recuperado: una guía que pida citar cada etapa de `entities`
   y `call_outline`.
+
+## Sexta ronda: correcciones pendientes, cuarto conjunto y coste real
+
+### Diseño
+
+Antes de cambiar código se congeló un cuarto conjunto (`test4/`, commit
+`c049b65`): 16 tareas sobre **jq** y **Sinatra**, dos corpus nunca usados, más
+una tarea de persistencia en Redis. Incluye por primera vez tareas `impact`,
+`tests`, `bindings` y `persistence`. Desde esta ronda test3 cuenta como conjunto
+de ajuste; sólo test4 es una medición limpia.
+
+### Cambios
+
+| Cambio | Desarrollo | test2 | test3 |
+|---|---:|---:|---:|
+| Punto de partida (quinta ronda) | 62,8 % | 66,6 % | 48,8 % |
+| Dependencias incluidas no anclan el paquete | = | = | = (menos tokens) |
+| El handler de un comando sobrevive al anclaje si no hay identificadores escritos | = | = | 55,5 % (HSET 0 → 7/7) |
+| Tipos nombrados sólo con su mayúscula; propietario como desempate | 63,7 % | 70,3 % | 54,5 % |
+| Completitud con identificadores enteros | 64,1 % | = | Lua pcall deja de declararse completo |
+| `call_outline` con estado compartido (`S`) | 64,1 % | = | 55,3 % |
+
+Se descartó conservar fuera del anclaje todos los símbolos obligatorios
+(desarrollo −2,7 puntos). La clasificación de intenciones (formas flexionadas y
+pasivas reflejas) no cambia la cobertura de flujos; se corrigió al ver que test4
+clasificaba como flujo sus tareas de impacto y de registro, así que esa mejora
+no está validada en un conjunto limpio.
+
+### Cobertura en el cuarto conjunto
+
+61,3 % antes y **61,4 %** después: las correcciones de recuperación **no
+generalizan** a jq y Sinatra. Lo que sí cambia es la intención: las tareas de
+impacto y de registro reciben su intención y paquetes más pequeños
+(`process_route`: 1.589 → 1.002 tokens). Siguen sin resolverse Redis RDB (1/7,
+ahora con falsa completitud), jq try/catch (1/8) y las pruebas de ficheros
+estáticos de Sinatra (0/3).
+
+### Coste real y juez semántico
+
+`analyze_variants.py` usa los precios de lista comprobados el 2026-10-31:
+Sonnet 5.5 a 2 $ de entrada, 0,10 $ de lectura de caché, 4 $ de escritura de
+caché a una hora (la que usa Claude Code) y 10 $ de salida por millón;
+gpt-5.6-luna a 0,20 $, 0,02 $ y 1,20 $. `judge_answers.py` pide a Claude Haiku
+5.5 que decida qué hechos de la rúbrica afirma cada respuesta, por nombre o por
+una descripción inequívoca.
+
+Tercer conjunto, recalculado (45 sesiones por celda):
+
+| Comparación | Coste USD | Calidad literal | Calidad juzgada |
+|---|---:|---:|---:|
+| Claude, B+C+D frente a sin Graphtyn | −20,5 % [−34,4; −8,0] | +1,3 pt | −0,1 pt [−1,9; +1,5] |
+| Codex, B+C+D frente a sin Graphtyn | −20,8 % [−29,2; −12,8] | +1,9 pt | +0,3 pt [−3,2; +4,0] |
+
+Con el juez, Codex pasa del 67–71 % literal al ~90 %: la rúbrica literal
+penalizaba que describe las etapas sin nombrarlas. La distancia con Claude
+(~99 %) baja de unos 25 puntos a unos 9.
+
+### Sesiones en el cuarto conjunto
+
+192 sesiones: Claude y Codex, sin Graphtyn, con la política actual y con la guía
+`CITE_STAGES`, dos repeticiones por tarea.
+
+| Cliente y variante | Coste USD | Tokens totales | Calidad juzgada | Herramientas |
+|---|---:|---:|---:|---:|
+| Claude, sin Graphtyn | 0,0926 | 145.149 | 97,9 % | 3,6 |
+| Claude, actual | 0,0843 | 122.145 | 99,0 % | 2,5 |
+| Claude, con `CITE_STAGES` | 0,0771 | 116.924 | 97,5 % | 2,8 |
+| Codex, sin Graphtyn | 0,0097 | 132.378 | 92,5 % | 5,6 |
+| Codex, actual | 0,0070 | 89.338 | 91,1 % | 3,5 |
+| Codex, con `CITE_STAGES` | 0,0073 | 97.885 | 92,1 % | 3,8 |
+
+| Comparación | Coste USD | Calidad juzgada |
+|---|---:|---:|
+| Claude, actual frente a sin Graphtyn | −9,0 % [−25,4; +7,6] | +1,0 pt [0,0; +3,1] |
+| Codex, actual frente a sin Graphtyn | −27,6 % [−38,9; −15,3] | −1,4 pt [−5,2; +2,5] |
+| Codex, `CITE_STAGES` frente a actual | +4,0 % [−9,1; +17,2] | +1,1 pt [−2,3; +4,3] |
+
+- En corpus nuevos el ahorro se mantiene en Codex (−28 %) y en Claude es menor
+  y no significativo (−9 %), sin pérdida de calidad en ninguno.
+- **`CITE_STAGES` no se adopta:** no mejora la calidad de Codex de forma
+  significativa y en Claude la baja 1,4 puntos. Queda como opción de la política.
+
+### Pendiente
+
+- Redis RDB y jq try/catch: el punto de entrada correcto no llega al paquete.
+- Validar la clasificación de intenciones en un conjunto que no la haya motivado.
