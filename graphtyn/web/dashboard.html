@@ -41,10 +41,10 @@
     </div>
   </aside>
 
-  <!-- ===== RIGHT SIDEBAR: COMMUNITIES ===== -->
+  <!-- ===== RIGHT SIDEBAR: COMUNIDADES ===== -->
   <aside class="right-aside">
     <div class="comm-header">
-      <div class="section-label" style="margin:0;">COMMUNITIES</div>
+      <div class="section-label" style="margin:0;" title="Agrupación por carpeta. Desmarca una comunidad para ocultar sus nodos.">COMUNIDADES</div>
       <label class="comm-select-all">
         <span>Todo</span>
         <span class="chk-wrap">
@@ -333,11 +333,12 @@
     </div>
     <div class="graph-status" aria-label="Estado del índice y confianza de relaciones">
       <div class="graph-status-primary"><span id="model-badge">—</span><span id="stats">—</span></div>
-      <div id="conf-legend" class="confidence-legend" title="Sólida = extraída · punteada = inferida · ámbar = ambigua">
+      <div id="conf-legend" class="confidence-legend" title="Sólida = extraída del código · punteada = inferida, compruébala en el código · ámbar = ambigua, no la tomes como hecho">
         <span class="confidence-item extracted"><i></i>EXTRACTED</span>
         <span class="confidence-item inferred"><i></i>INFERRED</span>
         <span class="confidence-item ambiguous"><i></i>AMBIGUOUS</span>
       </div>
+      <div id="kind-legend" class="confidence-legend kind-legend" aria-label="Color de cada tipo de nodo"></div>
     </div>
   </header>
 
@@ -367,6 +368,10 @@
 
   <!-- ===== GRAPH CANVAS ===== -->
   <div id="graph-container"></div>
+  <div id="view-hint" class="view-hint" hidden>
+    <span class="view-hint-text"></span>
+    <button type="button" class="view-hint-close" onclick="dismissViewHint()" aria-label="Ocultar esta explicación">✕</button>
+  </div>
   <div id="service-offline" class="service-offline" role="alert" hidden>
     <strong>El servicio de Graphtyn no responde.</strong>
     Vuelve a levantarlo con <code>graphtyn serve</code>; esta página se reconectará sola.

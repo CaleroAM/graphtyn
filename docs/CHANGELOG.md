@@ -5,6 +5,15 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Cambiado
+
+- El dashboard explica lo que muestra: una leyenda con el color de cada tipo
+  de nodo (archivo, clase, función, documento; en Semántico también
+  subsistema y arquitectura), una línea por vista que se puede ocultar, y un
+  mensaje en Topología cuando aún no hay agentes en lugar de un nodo suelto.
+  El selector «Memoria» sólo aparece en su vista, el panel de comunidades está
+  en español y deja de repetir el número de nodos.
+
 ### Corregido
 
 - Dashboard abierto desde la red (no loopback): Code AST, Semántico,

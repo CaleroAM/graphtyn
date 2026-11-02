@@ -357,6 +357,17 @@
 .confidence-item.inferred i { border-top-style:dashed; opacity:.65; }
 .confidence-item.ambiguous { color:#f59e0b; }
 .confidence-item.ambiguous i { border-top-style:dashed; border-color:#f59e0b; }
+.kind-legend[hidden] { display:none; }
+.kind-item { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+.kind-item i { display:inline-block; width:7px; height:7px; border-radius:50%; }
+.view-hint {
+  position:absolute; left:254px; bottom:14px; z-index:70; display:flex; align-items:flex-start; gap:8px;
+  max-width:min(520px, calc(100% - 560px)); min-width:240px; padding:7px 9px; border-radius:7px;
+  background:rgba(11,18,32,.9); border:1px solid #1e293b; color:#94a3b8; font-size:11px; line-height:1.45;
+}
+.view-hint[hidden] { display:none; }
+body.left-collapsed .view-hint { left:14px; }
+.view-hint-close { background:none; border:0; color:#64748b; cursor:pointer; font-size:11px; padding:0 2px; }
 
 @media (max-width: 1280px) {
   header { padding:0 8px; }
@@ -389,7 +400,7 @@
 .memory-review-block .memory-card{margin:7px 0;padding:8px;font-size:11px;line-height:1.45}
 
 #memory-conversation-panel:not([hidden]){position:fixed;right:2vw;top:8vh;width:min(480px,90vw);height:80vh;overflow:auto;z-index:10000;padding:18px;background:#0b1220;color:#e2e8f0;border:1px solid #475569;box-shadow:0 0 30px #0009} #memory-topic-list summary{cursor:pointer;font-size:14px;font-weight:600} #memory-topic-list .memory-card{margin:8px 0}
-.memory-graph-view-control{display:flex;align-items:center;gap:5px;color:#94a3b8;font-size:10px}.memory-graph-view-control select{background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:4px 6px;font-size:10px}
+.memory-graph-view-control[hidden]{display:none}.memory-graph-view-control{display:flex;align-items:center;gap:5px;color:#94a3b8;font-size:10px}.memory-graph-view-control select{background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:4px 6px;font-size:10px}
 
 /* Native OpenClaw management view */
 body.openclaw-view aside.right-aside,
