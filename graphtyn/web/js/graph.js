@@ -1,4 +1,4 @@
-import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
+import { state, authHeaders, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
 import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
 import { apply2DStyle, apply3DStyle, standard2DLinkColor, paintNodePointerArea } from './styles.js';
@@ -161,7 +161,7 @@ async function loadMemoryNodeDetails(node, body) {
       state.memoryNodeDetailRequestId = requestId;
       try {
         const response = await fetch('/api/memory/node?path=' + encodeURIComponent(state.activePath) +
-          '&reference=' + encodeURIComponent(String(node.reference || node.public_id || '')) + '&limit=20');
+          '&reference=' + encodeURIComponent(String(node.reference || node.public_id || '')) + '&limit=20', {headers:authHeaders()});
         const payload = await response.json();
         if (requestId !== state.memoryNodeDetailRequestId || state.selectedNode?.id !== node.id) return;
         if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo cargar el detalle');
@@ -713,10 +713,7 @@ export function loadGraph() {
       showGraphSpinner(loadingMessage);
       document.getElementById('stats').textContent = 'Cargando...';
 
-      const memoryToken = localStorage.getItem('graphtyn-memory-token') || '';
-      const fetchOptions = state.activeView === 'memory' && memoryToken
-        ? {headers:{'Authorization':`Bearer ${memoryToken}`}} : {};
-      fetch(url, {...fetchOptions, signal:requestSignal}).then(async r => {
+      fetch(url, {headers:authHeaders(), signal:requestSignal}).then(async r => {
         const data = await r.json();
         if (!r.ok || data.ok === false) throw new Error(data.error || `HTTP ${r.status}`);
         return data;
@@ -883,10 +880,10 @@ export function loadGraph() {
         const isAuth = /401|token/i.test(msg);
         document.getElementById('graph-container').innerHTML =
           '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;padding:20px;text-align:center;">' +
-          '<strong>' + (isAuth ? 'Token de memoria requerido' : 'Error al conectar con la API') + '</strong><br/>' +
+          '<strong>' + (isAuth ? 'Token de acceso requerido' : 'Error al conectar con la API') + '</strong><br/>' +
           '<span style="color:#94a3b8;font-size:11px;margin-top:6px;">' +
           (isAuth
-            ? 'Abre el panel "Buscar en memoria", pega el token de memoria y vuelve a seleccionar esta pestaña.'
+            ? 'Este dashboard se abrió desde la red. Abre Acciones → Administrar memoria, escribe el token en "Token HTTP" y vuelve a seleccionar esta vista.'
             : escapeHtml(msg)) +
           '</span></div>';
       });

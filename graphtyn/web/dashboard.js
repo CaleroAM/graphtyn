@@ -21,6 +21,7 @@ import {
   loadOpenClawPanel, syncOpenClaw, openOpenClawBrain
 } from './js/__handlers.js';
 import { state } from './js/state.js';
+import { initServiceStatus } from './js/service.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -120,6 +121,7 @@ import { state } from './js/state.js';
       showWelcomeOnce();
       loadProjects(true);
       initWatchPolling();
+      initServiceStatus();
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', boot);

@@ -154,6 +154,14 @@
       padding:5px 8px; border-radius:6px; border:1px solid rgba(16,185,129,0.25);
       display:flex; align-items:center; gap:5px; min-height:27px;
     }
+    .service-dot { width:6px; height:6px; border-radius:50%; background:currentColor; box-shadow:0 0 8px currentColor; }
+    .service-status.offline { color:#f87171; background:rgba(248,113,113,0.12); border-color:rgba(248,113,113,0.3); }
+    .service-offline {
+      position:absolute; top:118px; left:50%; transform:translateX(-50%); z-index:85;
+      background:#2a0f12; border:1px solid #7f1d1d; color:#fecaca; border-radius:8px;
+      padding:9px 14px; font-size:12px; max-width:min(560px, calc(100% - 32px));
+    }
+    .service-offline code { background:#1a2234; padding:1px 5px; border-radius:3px; color:#e2e8f0; }
 
     /* Modals */
     .modal-bg {

@@ -1,4 +1,4 @@
-import { state } from './state.js';
+import { state, authHeaders } from './state.js';
 import { setView } from './controls.js';
 import { destroyGraph, focusNode, loadGraph, updateMemoryFocusBanner } from './graph.js';
 import { buildPulseSim } from './sim.js';
@@ -29,7 +29,7 @@ function renderMemorySessions(data, append = false) {
 function headers() {
   const token = document.getElementById('memory-token')?.value.trim() || localStorage.getItem('graphtyn-memory-token') || '';
   if (token) localStorage.setItem('graphtyn-memory-token', token);
-  return {'Content-Type':'application/json', ...(token ? {'Authorization':`Bearer ${token}`} : {})};
+  return authHeaders({'Content-Type':'application/json'});
 }
 
 async function request(url, options={}) {

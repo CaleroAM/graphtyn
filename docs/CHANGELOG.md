@@ -3,6 +3,20 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [Sin publicar]
+
+### Corregido
+
+- Dashboard abierto desde la red (no loopback): Code AST, Semántico,
+  Topología, Reindexar y el registro de proyectos enviaban la petición sin el
+  token guardado, y el servidor la rechazaba aunque el token fuera válido.
+  Ahora todas las rutas protegidas lo envían, y el aviso indica dónde
+  escribirlo (Acciones → Administrar memoria → Token HTTP).
+- El indicador «MCP Activo» era un texto fijo en verde. Ahora consulta
+  `/api/service`: muestra si el servicio responde y si su `/mcp` por HTTP
+  acepta clientes. Si el servicio deja de responder con la página abierta, lo
+  avisa y recarga el grafo cuando vuelve.
+
 ## [0.11.0] - sin publicar
 
 Versión preparada en el repositorio; la etiqueta y los artefactos se publican

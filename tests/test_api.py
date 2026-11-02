@@ -284,6 +284,17 @@ def test_memory_context_api_exposes_attributed_recent_activity(tmp_path, monkeyp
     assert retrieval["recent_message_ids"] == [result["recent_activity"][0]["message_id"]]
 
 
+def test_service_status_reports_whether_http_mcp_accepts_clients(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    for name in ("GRAPHTYN_MCP_TOKEN", "GRAPHTYN_MEMORY_TOKENS", "GRAPHTYN_MEMORY_TOKENS_FILE"):
+        monkeypatch.delenv(name, raising=False)
+    status = client.get("/api/service").json()
+    assert status["ok"] is True and status["version"] == api_main.__version__
+    assert status["mcp_http"] is False
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS_FILE", str(tmp_path / "tokens.json"))
+    assert client.get("/api/service").json()["mcp_http"] is True
+
+
 def test_mcp_token_does_not_lock_local_dashboard_memory_api(tmp_path, monkeypatch):
     monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
     monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "remote-only")
