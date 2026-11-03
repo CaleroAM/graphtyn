@@ -15,6 +15,7 @@ from pathlib import Path
 from fastapi import FastAPI, Query, Body, Header
 from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
 from .. import __version__
+from . import web_assets
 from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
 from ..core.watcher import WatchManager
@@ -3169,41 +3170,4 @@ def mcp_http(payload: dict = Body(...), authorization: str | None = Header(defau
     return JSONResponse({"jsonrpc": "2.0", "id": req_id, "result": result})
 
 
-@app.get("/comparison")
-def model_comparison():
-    comparison_path = Path(__file__).resolve().parent.parent / "web" / "comparison.html"
-    return HTMLResponse(content=comparison_path.read_text(encoding="utf-8"))
-
-
-@app.get("/favicon.svg")
-def favicon():
-    svg_path = Path(__file__).resolve().parent.parent / "web" / "favicon.svg"
-    return Response(content=svg_path.read_text(encoding="utf-8"), media_type="image/svg+xml")
-
-
-@app.get("/")
-def index():
-    dashboard_html = Path(__file__).resolve().parent.parent / "web" / "dashboard.html"
-    return HTMLResponse(content=dashboard_html.read_text(encoding="utf-8"), headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
-
-
-@app.get("/dashboard.css")
-def dashboard_css():
-    css_path = Path(__file__).resolve().parent.parent / "web" / "dashboard.css"
-    return HTMLResponse(content=css_path.read_text(encoding="utf-8"), media_type="text/css", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
-
-
-@app.get("/dashboard.js")
-def dashboard_js():
-    js_path = Path(__file__).resolve().parent.parent / "web" / "dashboard.js"
-    return HTMLResponse(content=js_path.read_text(encoding="utf-8"), media_type="application/javascript", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
-
-
-@app.get("/js/{file}")
-def js_module(file: str):
-    if not file.endswith(".js") or "/" in file or "\\" in file or ".." in file:
-        return JSONResponse({"error": "invalid path"}, status_code=404)
-    js_path = Path(__file__).resolve().parent.parent / "web" / "js" / file
-    if not js_path.is_file():
-        return JSONResponse({"error": "not found"}, status_code=404)
-    return HTMLResponse(content=js_path.read_text(encoding="utf-8"), media_type="application/javascript", headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+app.include_router(web_assets.router)

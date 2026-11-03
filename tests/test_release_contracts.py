@@ -83,7 +83,7 @@ def test_windows_installer_is_user_scoped_and_release_bundled():
 
 def test_dashboard_assets_are_declared_as_package_data():
     metadata = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    for asset in ("web/*.html", "web/*.css", "web/*.js", "web/*.svg", "web/js/*.js"):
+    for asset in ("web/*.html", "web/*.css", "web/*.js", "web/*.svg", "web/js/*.js", "web/vendor/*.js"):
         assert asset in metadata
 
 
