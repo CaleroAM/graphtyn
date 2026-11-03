@@ -1,6 +1,8 @@
-import { state, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
-import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
+import { state, authHeaders, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
+import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia, paintFocusLabels } from './painters.js';
 import { buildPulseSim } from './sim.js';
+import { renderKindLegend } from './legend.js';
+import { anonymousName } from './help.js';
 import { apply2DStyle, apply3DStyle, standard2DLinkColor, paintNodePointerArea } from './styles.js';
 
 function endpointId(value) { return value && typeof value === 'object' ? value.id : value; }
@@ -108,7 +110,7 @@ export function buildCommunities(data) {
               <span class="comm-badge">${count}</span>
             </div>
             <details class="comm-node-details" data-community="${safeName}" ontoggle="renderCommunityNodes(this)">
-              <summary><span>IDs de nodos</span><span>${count}</span></summary>
+              <summary><span>IDs de nodos</span></summary>
               <div class="comm-node-ids"><span class="comm-node-loading">Abre para cargar</span></div>
             </details>
           </div>`;
@@ -167,7 +169,7 @@ async function loadMemoryNodeDetails(node, body) {
       state.memoryNodeDetailRequestId = requestId;
       try {
         const response = await fetch('/api/memory/node?path=' + encodeURIComponent(state.activePath) +
-          '&reference=' + encodeURIComponent(String(node.reference || node.public_id || '')) + '&limit=20');
+          '&reference=' + encodeURIComponent(String(node.reference || node.public_id || '')) + '&limit=20', {headers:authHeaders()});
         const payload = await response.json();
         if (requestId !== state.memoryNodeDetailRequestId || state.selectedNode?.id !== node.id) return;
         if (!response.ok || !payload.ok) throw new Error(payload.error || 'No se pudo cargar el detalle');
@@ -300,6 +302,8 @@ export function focusWebFlow(nodeId) {
 
 export function clearWebFlow() {
       state.webFlowNodeIds = null;
+      state.graphInst?.d3Force?.('x', null);
+      state.graphInst?.d3Force?.('y', null);
       const reset = document.getElementById('reset-web-flow');
       if (reset) reset.style.display = 'none';
       applyFilter();
@@ -698,7 +702,8 @@ export function loadGraph() {
       if (!state.activePath && state.activeView !== 'agents' && !(state.activeView === 'memory' && state.activeAgentId)) {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
         document.getElementById('graph-container').innerHTML =
-          '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda</div>';
+          '<div style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda' +
+          '<button class="btn-action" onclick="startDemo(this)">Probar con un proyecto de ejemplo</button></div>';
         return;
       }
       const url = state.activeView === 'agents'
@@ -720,16 +725,15 @@ export function loadGraph() {
       showGraphSpinner(loadingMessage);
       document.getElementById('stats').textContent = 'Cargando...';
 
-      const memoryToken = localStorage.getItem('graphtyn-memory-token') || '';
-      const fetchOptions = state.activeView === 'memory' && memoryToken
-        ? {headers:{'Authorization':`Bearer ${memoryToken}`}} : {};
-      fetch(url, {...fetchOptions, signal:requestSignal}).then(async r => {
+      fetch(url, {headers:authHeaders(), signal:requestSignal}).then(async r => {
         const data = await r.json();
         if (!r.ok || data.ok === false) throw new Error(data.error || `HTTP ${r.status}`);
         return data;
       }).then(data => {
         if (loadId !== state.graphLoadId) return;
-        if (!data.nodes || data.nodes.length === 0) {
+        // La topología siempre incluye su nodo raíz; sin nada más, está vacía.
+        const emptyTopology = state.activeView === 'agents' && (data.nodes || []).length <= 1;
+        if (!data.nodes || data.nodes.length === 0 || emptyTopology) {
           const selectedBrain = state.activeView === 'memory' && !state.activeAgentId
             ? state.brainSpaces?.[state.activePath]
             : null;
@@ -740,6 +744,8 @@ export function loadGraph() {
               : selectedBrain?.family
                 ? `<div class="memory-family-empty"><strong>${escapeHtml(selectedBrain.name)} todavía no tiene recuerdos compartidos.</strong><br>Este espacio sólo muestra recuerdos que sus miembros publican explícitamente. No copia los chats ni la memoria privada de cada agente.<br><span>Miembros: ${familyMembers || 'sin miembros registrados'}.</span><br><span>Cuando un agente publique un recuerdo con <code>memory_agent_publish</code>, aparecerá aquí.</span></div>`
                 : 'Sin memorias capturadas para este proyecto. No hay temas temáticos todavía; abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.')
+            : emptyTopology
+              ? 'Aún no hay agentes observados. Aparecen cuando un agente guarda memoria en un proyecto registrado o cuando configuras una fuente de historial en Acciones → Administrar memoria.'
             : 'Sin nodos de código. Haz clic en Reindexar para escanear el proyecto.';
           document.getElementById('graph-container').innerHTML =
             '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;padding:24px;text-align:center;">' + emptyMessage + '</div>';
@@ -748,8 +754,9 @@ export function loadGraph() {
           if (badge && state.activeView === 'memory') badge.textContent = selectedBrain?.family
             ? `${selectedBrain.name} · 0 recuerdos compartidos`
             : 'Memoria compartida · 0 agentes';
+          else if (badge) badge.textContent = '';
           document.getElementById('memory-legend-overlay')?.remove();
-          buildCommunities(data); updateEstTime();
+          buildCommunities(emptyTopology ? {nodes:[], links:[]} : data); updateEstTime();
           return;
         }
         state.fullData = data;
@@ -781,6 +788,10 @@ export function loadGraph() {
         const container = document.getElementById('graph-container');
 
         const tooltip = n => {
+          if (state.anonymous) {
+            return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;pointer-events:none;">` +
+              `<strong>${escapeHtml(anonymousName(n))}</strong> <span style="color:#94a3b8;font-size:10px;">· ${n.degree || 0} conexiones</span></div>`;
+          }
           const hasDesc = n.details && n.details.length > 0;
           const safeName = escapeHtml(n.name || '');
           const safeKind = escapeHtml(n.kind || '');
@@ -832,6 +843,7 @@ export function loadGraph() {
             .d3Force('charge', d3.forceManyBody().strength(-300))
             .d3Force('link',   d3.forceLink().distance(80).strength(0.4))
             .d3Force('collide', d3.forceCollide().radius(22))
+            .onRenderFramePost(paintFocusLabels)
             .graphData(data);
 
             apply2DStyle();
@@ -876,6 +888,7 @@ export function loadGraph() {
           apply3DStyle();
         }
 
+        state.graphInst.width(container.clientWidth);
         applyFilter();
         } catch(err) {
           console.error("Graph render error:", err);
@@ -890,10 +903,10 @@ export function loadGraph() {
         const isAuth = /401|token/i.test(msg);
         document.getElementById('graph-container').innerHTML =
           '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:13px;padding:20px;text-align:center;">' +
-          '<strong>' + (isAuth ? 'Token de memoria requerido' : 'Error al conectar con la API') + '</strong><br/>' +
+          '<strong>' + (isAuth ? 'Token de acceso requerido' : 'Error al conectar con la API') + '</strong><br/>' +
           '<span style="color:#94a3b8;font-size:11px;margin-top:6px;">' +
           (isAuth
-            ? 'Abre el panel "Buscar en memoria", pega el token de memoria y vuelve a seleccionar esta pestaña.'
+            ? 'Este dashboard se abrió desde la red. Abre Acciones → Administrar memoria, escribe el token en "Token HTTP" y vuelve a seleccionar esta vista.'
             : escapeHtml(msg)) +
           '</span></div>';
       });
@@ -989,6 +1002,7 @@ export function changeNodeColor() {
         if (palette) palette.value = 'custom';
       }
       refreshStyleInPlace();
+      renderKindLegend();
     }
 
 export function changeStyleColors() {

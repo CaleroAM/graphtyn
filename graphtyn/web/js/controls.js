@@ -3,6 +3,7 @@ import { state, PALETTES, getMemoryColors, getMemoryColor, getMemoryPalette, par
          resetMemoryColor, resetMemoryColors, saveMemoryColors, saveVisualPreferences } from './state.js';
 import { destroyGraph, loadGraph, refreshStyleInPlace, toggleRotate } from './graph.js';
 import { loadOpenClawPanel } from './openclaw.js';
+import { refreshLegends, renderKindLegend } from './legend.js';
 
 export function setView(v) {
       state.activeView = v;
@@ -26,6 +27,7 @@ export function setView(v) {
       const memoryGraphControl = document.getElementById('memory-graph-view-control');
       if (memoryGraphControl) memoryGraphControl.hidden = v !== 'memory';
       refreshMemoryColorControls();
+      refreshLegends();
       const explore = document.getElementById('dd-explore');
       if (explore) {
         explore.classList.remove('open');
@@ -66,6 +68,7 @@ export function changePalette() {
       state.activePalette = document.getElementById('palette-sel').value;
       if (state.activePalette !== 'custom') state.nodeColorHex = null;
       refreshStyleInPlace();
+      renderKindLegend();
 }
 
 export function refreshMemoryColorControls() {

@@ -132,7 +132,7 @@ def test_prompt_hook_never_builds_an_index_and_respects_the_budget(tmp_path, mon
     assert prompt_context.handle_prompt_hook(request) == {"injected": False, "reason": "no_index"}
 
     project = _indexed_project(tmp_path, monkeypatch)
-    monkeypatch.setattr(prompt_context, "prefetch_package", lambda root, prompt: __import__("time").sleep(2))
+    monkeypatch.setattr(prompt_context, "prefetch_package", lambda *_args: __import__("time").sleep(2))
     slow = prompt_context.handle_prompt_hook({**request, "cwd": str(project)}, budget_seconds=0.1)
     assert slow["reason"] == "time_budget_exceeded"
 

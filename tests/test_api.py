@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import asyncio
+import importlib.util
 import socket
 import subprocess
 import threading
@@ -285,6 +286,34 @@ def test_memory_context_api_exposes_attributed_recent_activity(tmp_path, monkeyp
     assert retrieval["agent_id"] == "codex"
     assert retrieval["mode"] == "continuity"
     assert retrieval["recent_message_ids"] == [result["recent_activity"][0]["message_id"]]
+
+
+def test_service_status_reports_whether_http_mcp_accepts_clients(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    for name in ("GRAPHTYN_MCP_TOKEN", "GRAPHTYN_MEMORY_TOKENS", "GRAPHTYN_MEMORY_TOKENS_FILE"):
+        monkeypatch.delenv(name, raising=False)
+    status = client.get("/api/service").json()
+    assert status["ok"] is True and status["version"] == api_main.__version__
+    assert status["mcp_http"] is False
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS_FILE", str(tmp_path / "tokens.json"))
+    assert client.get("/api/service").json()["mcp_http"] is True
+
+
+def test_demo_project_is_copied_once_and_indexes_its_order_flow(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    prepared = client.post("/api/demo").json()
+    demo = Path(prepared["path"])
+    assert demo.is_relative_to(tmp_path / ".graphtyn-store") and (demo / "tienda" / "pedidos.py").is_file()
+    (demo / "README.md").write_text("mío", encoding="utf-8")
+    assert client.post("/api/demo").json()["path"] == str(demo)
+    assert (demo / "README.md").read_text(encoding="utf-8") == "mío"
+    graph = client.get("/api/graph", params={"path": str(demo)}).json()
+    assert {"crear_pedido", "calcular_total", "publicar"} <= {node["name"] for node in graph["nodes"]}
+    # Exact calls need the optional tree-sitter extra; the fallback parser only relates files.
+    if importlib.util.find_spec("tree_sitter_python"):
+        calls = {(link["source"].rsplit(":", 1)[-1], link["target"].rsplit(":", 1)[-1])
+                 for link in graph["links"] if link.get("label") == "llama"}
+        assert {("crear_pedido", "calcular_total"), ("crear_pedido", "publicar")} <= calls
 
 
 def test_mcp_token_does_not_lock_local_dashboard_memory_api(tmp_path, monkeypatch):

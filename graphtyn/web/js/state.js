@@ -123,6 +123,13 @@ function writeJsonStorage(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { /* storage opcional */ }
 }
 
+// Fuera de loopback el servidor exige el token en grafo, reindexación, registro y memoria.
+export function authHeaders(headers = {}) {
+  let token = document.getElementById('memory-token')?.value.trim() || '';
+  try { token = token || localStorage.getItem('graphtyn-memory-token') || ''; } catch (_) { /* storage opcional */ }
+  return token ? {...headers, 'Authorization': `Bearer ${token}`} : headers;
+}
+
 export function loadVisualPreferences() {
   const saved = readJsonStorage(VISUAL_PREF_KEY);
   if (saved && typeof saved === 'object') {

@@ -288,3 +288,86 @@ def test_changes_view_stays_below_header_and_explains_clean_repository():
     assert "El repositorio está limpio" in graph
     assert "SIN CAMBIOS" in graph
     assert "Number.isFinite(d.impacted_count)" in graph
+
+
+def test_dashboard_sends_the_stored_token_to_every_route_guarded_for_network_access():
+    # Opened from a non-loopback address, the server requires the token on these routes.
+    guarded = re.compile(r"fetch\((['`])/api/(graph|reindex|memory|v1/|harness/|projects/register|agents/register)")
+    for script in (WEB / "js").glob("*.js"):
+        source = script.read_text()
+        for match in guarded.finditer(source):
+            call = source[match.start():source.find(";", match.start())]
+            assert "authHeaders(" in call or "headers" in call, f"{script.name}: {call[:90]}"
+    graph = (WEB / "js" / "graph.js").read_text()
+    assert "fetch(url, {headers:authHeaders(), signal:requestSignal})" in graph
+    assert "Buscar en memoria" not in graph
+
+
+def test_service_badge_reflects_the_server_instead_of_a_fixed_label():
+    html = (WEB / "dashboard.html").read_text()
+    service = (WEB / "js" / "service.js").read_text()
+    assert "MCP Activo" not in html
+    assert 'id="service-status-label"' in html and 'id="service-offline"' in html
+    assert "fetch('/api/service'" in service
+    assert "initServiceStatus()" in (WEB / "dashboard.js").read_text()
+
+
+def test_dashboard_explains_node_colors_and_each_view():
+    html = (WEB / "dashboard.html").read_text()
+    legend = (WEB / "js" / "legend.js").read_text()
+    controls = (WEB / "js" / "controls.js").read_text()
+    assert 'id="kind-legend"' in html and 'id="view-hint"' in html
+    assert "item(p.file, 'archivo'), item(p.class, 'clase'), item(p.func, 'función')" in legend
+    assert set(("code:", "semantic:", "memory:", "agents:")) <= {line.strip().split(" ")[0] for line in legend.splitlines()}
+    assert "refreshLegends();" in controls and "renderKindLegend();" in controls
+    assert "COMUNIDADES" in html and "COMMUNITIES</div>" not in html
+
+
+def test_view_specific_controls_and_empty_topology_are_explained():
+    css = (WEB / "dashboard.css").read_text()
+    graph = (WEB / "js" / "graph.js").read_text()
+    assert ".memory-graph-view-control[hidden]{display:none}" in css
+    assert "emptyTopology" in graph and "Aún no hay agentes observados" in graph
+    assert "<summary><span>IDs de nodos</span></summary>" in graph
+
+
+def test_help_overlay_shortcuts_and_anonymous_mode_are_wired():
+    html = (WEB / "dashboard.html").read_text()
+    help_js = (WEB / "js" / "help.js").read_text()
+    dashboard = (WEB / "dashboard.js").read_text()
+    css = (WEB / "dashboard.css").read_text()
+    assert 'id="modal-help"' in html and 'onclick="openHelp()"' in html and 'id="anonymous-badge"' in html
+    for key in ("'?'", "'/'", "'a'"):
+        assert f"event.key === {key}" in help_js
+    assert "['INPUT', 'TEXTAREA', 'SELECT']" in help_js
+    assert "handleShortcut(e)" in dashboard and "closeHelp();" in dashboard
+    assert "body.anonymous :is(#project-list" in css and ".modal-bg:not(#modal-help) .modal-box" in css
+    assert "if (state.anonymous)" in (WEB / "js" / "graph.js").read_text()
+
+
+def test_demo_is_offered_on_first_run_help_and_empty_dashboard():
+    html = (WEB / "dashboard.html").read_text()
+    assert 'id="welcome-demo"' in html and html.count("startDemo(this)") >= 2
+    assert "startDemo(this)" in (WEB / "js" / "graph.js").read_text()
+    assert "'/api/demo'" in (WEB / "js" / "help.js").read_text()
+    assert '"/api/demo"' in (Path(api_main.__file__)).read_text()
+
+
+def test_activity_panel_is_wired_and_states_what_it_cannot_see():
+    html = (WEB / "dashboard.html").read_text()
+    activity = (WEB / "js" / "activity.js").read_text()
+    assert 'id="activity-panel"' in html and 'id="activity-follow"' in html and 'id="activity-btn"' in html
+    assert "fetch('/api/agent-activity?path='" in activity and "headers:authHeaders()" in activity
+    assert "no sabe qué archivos lee o busca el agente después" in activity
+    assert "resetActivityForProject();" in (WEB / "js" / "ui.js").read_text()
+    assert '"/api/agent-activity"' in Path(api_main.__file__).read_text()
+    # Everything from a query comes from agents: it must be escaped before reaching innerHTML.
+    assert "${esc(query.request)}" in activity and "${query.request}" not in activity
+    # Node ids reach the handler through a data attribute, never spliced into inline JavaScript.
+    assert 'data-node-id="${esc(item.id)}" onclick="focusNode(this.dataset.nodeId)"' in activity
+
+
+def test_focused_packages_are_named_on_the_canvas_and_stay_anonymous():
+    painters = (WEB / "js" / "painters.js").read_text()
+    assert "state.anonymous ? anonymousName(node) : String(node.name || '')" in painters
+    assert ".onRenderFramePost(paintFocusLabels)" in (WEB / "js" / "graph.js").read_text()

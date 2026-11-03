@@ -21,6 +21,10 @@ import {
   loadOpenClawPanel, syncOpenClaw, openOpenClawBrain
 } from './js/__handlers.js';
 import { state } from './js/state.js';
+import { initServiceStatus } from './js/service.js';
+import { refreshLegends, dismissViewHint } from './js/legend.js';
+import { toggleActivityPanel, selectActivityQuery, focusActivityQuery, resetActivityFocus, setActivityFollow } from './js/activity.js';
+import { openHelp, closeHelp, toggleAnonymous, startDemo, handleShortcut } from './js/help.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -49,6 +53,9 @@ import { state } from './js/state.js';
         closeBrainRegister();
         closeTutorial();
         closeBlastPanel();
+        closeHelp();
+      } else if (handleShortcut(e)) {
+        e.preventDefault();
       }
     });
 
@@ -120,6 +127,8 @@ import { state } from './js/state.js';
       showWelcomeOnce();
       loadProjects(true);
       initWatchPolling();
+      initServiceStatus();
+      refreshLegends();
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', boot);
@@ -136,4 +145,4 @@ function openFromChanges(nodeId) {
 }
 
 Object.assign(window, {applyFilter, renderCommunityNodes, changeGraphStyle, changeNodeColor, changeNodeShape, changePalette, changeStyleColors, refreshMemoryColorControls, selectMemoryColorKind, selectMemoryPalette, changeMemoryColor, toggleMemoryHaloLink, toggleRadiance, resetMemoryColorType, resetMemoryColorSettings, closeBlastPanel, closeRegister, closeBrainRegister, closeAgentRegister, closeTutorial, closeWelcome, doReindex, exportGraphData, exportGraphPNG, onFolderPicked, openRegister, openBrainRegister, openAgentRegister, openTutorial, selMode, setDim, setView, setMemoryGraphMode, setPRBase, submitRegister, submitBrainRegister, submitAgentRegister, toggleAllComm, toggleComm, toggleDD, toggleGitignore, toggleLeftSidebar, toggleOrganic3d, toggleRightSidebar, toggleRotate, toggleVertexBlink, updateLinkStyles, focusNode, focusWebFlow, clearWebFlow, copyNodeReference, openFromChanges, selectProject, selectBrain, loadBrains, loadAgents, selectAgent, startLegacyConsolidation, loadHistoryUI, toggleNodeDesc, updateModelEstimate, openQualityPanel, closeQualityPanel, addNodeToContext, removeNodeFromContext, clearContextSelection, generateContextBundle, copyContextBundle, loadIndexUpdate, loadAmbiguities, reviewAmbiguity, validateAgentAnswer, generateChangeReport, openMemoryPanel, closeMemoryPanel, loadMemoryOverview, searchSharedMemory, searchMemorySessions, loadMoreMemorySessions, loadMoreMemoryTopics, correctSharedMemory, forgetSharedMemory, showSharedMemoryGraph, openSessionDetail, focusMemoryNode, focusMemorySession, clearMemorySessionFocus, linkAgentProfile, discoverHistoricalMemory, applyHistoricalMemory, syncMemorySpace, syncAllMemorySpaces, retryMemoryEnrichment, toggleMemoryWatch, loadOpenClawPanel, syncOpenClaw, openOpenClawBrain});
-Object.assign(window, {verifyProjectMcp});
+Object.assign(window, {verifyProjectMcp, dismissViewHint, openHelp, closeHelp, toggleAnonymous, startDemo, toggleActivityPanel, selectActivityQuery, focusActivityQuery, resetActivityFocus, setActivityFollow});
