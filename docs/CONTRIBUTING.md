@@ -4,7 +4,7 @@
 
 ```bash
 python -m venv .venv
-.venv/bin/pip install -e '.[dev,treesitter]'
+.venv/bin/pip install -e '.[dev]'
 .venv/bin/pytest -q
 ```
 

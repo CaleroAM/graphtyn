@@ -113,3 +113,12 @@ def test_serve_defaults_to_loopback_and_announces_dashboard_url():
     args = build_parser().parse_args(["serve"])
     assert args.host == "127.0.0.1"
     assert 'print(f"   Dashboard: {scheme}://{dashboard_host}:{args.port}")' in cli
+
+
+def test_every_language_pack_grammar_is_a_core_dependency():
+    from graphtyn.core.tree_sitter_backend import LANGUAGE_PACKS
+
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    core = {re.split(r"[<>=!;\s]", item, maxsplit=1)[0].replace("-", "_") for item in project["dependencies"]}
+    assert {"tree_sitter", *(pack.grammar_module for pack in LANGUAGE_PACKS)} <= core
+    assert project["optional-dependencies"]["treesitter"] == []

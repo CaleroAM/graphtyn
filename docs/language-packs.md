@@ -68,8 +68,8 @@ y llamadas a constructores todavía no se modelan como relaciones.
 
 ## Cómo añadir otro paquete
 
-Se añade una entrada a `LANGUAGE_PACKS`, se incluye su gramática en el extra
-`treesitter` y se extienden los tipos de nodo sólo cuando la gramática lo
+Se añade una entrada a `LANGUAGE_PACKS`, se incluye su gramática en las
+dependencias del paquete y se extienden los tipos de nodo sólo cuando la gramática lo
 requiere. Las pruebas deben cubrir el resultado directo del parser y al menos
 una relación en el grafo ensamblado. Los benchmarks locales de C/C++ y Ruby
 sirven como plantilla: `python benchmarks/run_language_pack_benchmark.py` y

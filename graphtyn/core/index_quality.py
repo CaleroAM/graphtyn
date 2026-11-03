@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections import Counter
 
+from .tree_sitter_backend import missing_grammars
+
 
 def index_quality(graph: dict) -> dict:
     """Summarize observable index quality without claiming ground-truth accuracy."""
@@ -39,7 +41,11 @@ def index_quality(graph: dict) -> dict:
     if unresolved:
         warnings.append(f"Hay {unresolved} relaciones no resueltas.")
     if metadata.get("structural_parser") == "builtin-fallback":
-        warnings.append("Tree-sitter no se utilizó; el índice usa el parser de respaldo.")
+        warnings.append("Tree-sitter no se utilizó: el índice usa el parser de respaldo, sin relaciones de llamada "
+                        "exactas. Reinstala Graphtyn y reindexa.")
+    missing = missing_grammars()
+    if missing:
+        warnings.append(f"Faltan gramáticas de Tree-sitter ({', '.join(missing)}): esos lenguajes usan el parser de respaldo.")
     return {
         "health_score": health_score,
         "score_basis": "1 - (relaciones ambiguas + no resueltas) / relaciones totales",
