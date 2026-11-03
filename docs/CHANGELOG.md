@@ -3,16 +3,10 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
-## [Sin publicar]
+## [0.11.1] - sin publicar
 
-### Corregido
-
-- Las gramáticas de Tree-sitter se instalan por defecto (unos 4 MB, con wheels
-  para Linux, macOS y Windows). Antes eran un extra opcional que el comando de
-  instalación del README y `install.ps1` no pedían: esas instalaciones usaban en
-  silencio el parser de respaldo, sin relaciones de llamada exactas. El extra
-  `.[treesitter]` sigue aceptándose. Si una gramática no puede cargarse, lo avisan
-  «Calidad y contexto» y `graphtyn reindex` en local.
+Versión preparada en el repositorio; la etiqueta y los artefactos se publican
+tras la validación de release (`docs/release-validation-0.11.1.md`).
 
 ### Añadido
 
@@ -42,6 +36,12 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Las gramáticas de Tree-sitter se instalan por defecto (unos 4 MB, con wheels
+  para Linux, macOS y Windows). Antes eran un extra opcional que el comando de
+  instalación del README y `install.ps1` no pedían: esas instalaciones usaban en
+  silencio el parser de respaldo, sin relaciones de llamada exactas. El extra
+  `.[treesitter]` sigue aceptándose. Si una gramática no puede cargarse, lo avisan
+  «Calidad y contexto» y `graphtyn reindex` en local.
 - Dashboard abierto desde la red (no loopback): Code AST, Semántico,
   Topología, Reindexar y el registro de proyectos enviaban la petición sin el
   token guardado, y el servidor la rechazaba aunque el token fuera válido.

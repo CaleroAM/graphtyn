@@ -492,7 +492,8 @@ Resultados, hardware, metodología y comparaciones anonimizadas:
 | MCP por proyecto y agentes | [docs/project-mcp-integrations.md](docs/project-mcp-integrations.md) |
 | Conexión nativa con OpenClaw | [docs/openclaw-native.md](docs/openclaw-native.md) |
 | Validación real OpenClaw host + VM | [docs/openclaw-native-validation-2026-09.md](docs/openclaw-native-validation-2026-09.md) |
-| Validación de 0.11.0 (sin publicar) | [docs/release-validation-0.11.0.md](docs/release-validation-0.11.0.md) |
+| Validación de 0.11.1 (sin publicar) | [docs/release-validation-0.11.1.md](docs/release-validation-0.11.1.md) |
+| Validación de 0.11.0 | [docs/release-validation-0.11.0.md](docs/release-validation-0.11.0.md) |
 | Validación de 0.10.7 | [docs/release-validation-0.10.7.md](docs/release-validation-0.10.7.md) |
 | Dashboard | [docs/ui_ux_specification.md](docs/ui_ux_specification.md) |
 | Pruebas | [docs/testing.md](docs/testing.md) |
