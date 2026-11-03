@@ -775,7 +775,7 @@ def _command_claude_context(args, root: Path, parser, client: str = "claude") ->
                 args.budget_seconds or prompt_context.DEFAULT_BUDGET_SECONDS,
                 part=max(1, args.part), parts=max(1, args.parts),
                 part_limit=(prompt_context.MAX_CONTEXT_CHARACTERS if client == "claude"
-                            else prompt_context.CODEX_MAX_CONTEXT_CHARACTERS))
+                            else prompt_context.CODEX_MAX_CONTEXT_CHARACTERS), client=client)
             output = prompt_context.hook_output(outcome)
             if output:
                 print(output)

@@ -1,6 +1,7 @@
-import { state } from './state.js';
+import { state, authHeaders } from './state.js';
 import { setView } from './controls.js';
 import { loadGraph, focusNode } from './graph.js';
+import { resetActivityForProject } from './activity.js';
 
 const html = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const attr = value => encodeURIComponent(String(value ?? ''));
@@ -42,7 +43,7 @@ export function submitRegister() {
       const spaceType = state.regMode === 'agent_discovered' ? 'agent_brain'
         : state.regMode === 'master_folder' ? 'container' : 'project';
       fetch('/api/projects/register', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST', headers: authHeaders({'Content-Type':'application/json'}),
         body: JSON.stringify({ path, mode: state.regMode, space_type: spaceType })
       }).then(r => r.json()).then(res => {
         if (res.ok) {
@@ -115,6 +116,7 @@ export function selectProject(path) {
       state.activePath = path;
       state.activeAgentId = null;
       state.activeSpaceType = 'project';
+      resetActivityForProject();
       state.memoryFocusSession = null;
       state.webFlowNodeIds = null;
       const resetFlow = document.getElementById('reset-web-flow');
@@ -261,8 +263,7 @@ export async function startLegacyConsolidation(sourcePath, targetPath, agentId) 
         decodeURIComponent(item.dataset.agent || '') === agentId);
       const row = button?.closest('.legacy-archive-item');
       const output = row?.querySelector('.legacy-migration-status');
-      const token = document.getElementById('memory-token')?.value.trim() || localStorage.getItem('graphtyn-memory-token') || '';
-      const headers = {'Content-Type':'application/json', ...(token ? {'Authorization':`Bearer ${token}`} : {})};
+      const headers = authHeaders({'Content-Type':'application/json'});
       const post = async body => {
         const response = await fetch('/api/v1/memory/consolidations', {method:'POST', headers, body:JSON.stringify(body)});
         const data = await response.json();
@@ -315,6 +316,7 @@ export function selectBrain(path) {
       state.activePath = String(path || '');
       state.activeAgentId = null;
       state.activeSpaceType = 'agent_brain';
+      resetActivityForProject();
       state.memoryFocusSession = null;
       state.webFlowNodeIds = null;
       state.contextSelection = [];
@@ -352,7 +354,7 @@ export async function submitBrainRegister() {
       if (!path) { if (status) status.textContent = 'La ruta del cerebro es obligatoria.'; return; }
       if (status) status.textContent = 'Guardando…';
       try {
-        const response = await fetch('/api/projects/register', {method:'POST', headers:{'Content-Type':'application/json'},
+        const response = await fetch('/api/projects/register', {method:'POST', headers:authHeaders({'Content-Type':'application/json'}),
           body:JSON.stringify({path, name:name || path.split('/').pop() || 'Cerebro', mode:'single_folder', space_type:'agent_brain'})});
         const data = await response.json();
         if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
@@ -405,7 +407,7 @@ export async function doReindex(full) {
       if (vision && visionModel) body.vision_model = visionModel;
       try {
         const response = await fetch('/api/reindex', {
-          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+          method:'POST', headers:authHeaders({'Content-Type':'application/json'}), body: JSON.stringify(body)
         });
         const created = await response.json();
         if (!response.ok || created.ok === false || !created.id) {
@@ -415,7 +417,7 @@ export async function doReindex(full) {
         while (!['completed', 'failed', 'cancelled'].includes(job.status)) {
           btn.textContent = `${job.message || 'Indexando'} · ${job.progress || 0}%`;
           await new Promise(resolve => setTimeout(resolve, 700));
-          const statusResponse = await fetch(`/api/reindex/${encodeURIComponent(created.id)}`);
+          const statusResponse = await fetch(`/api/reindex/${encodeURIComponent(created.id)}`, {headers:authHeaders()});
           job = await statusResponse.json();
           if (!statusResponse.ok || job.ok === false) throw new Error(job.error || `HTTP ${statusResponse.status}`);
         }

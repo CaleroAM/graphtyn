@@ -5,8 +5,41 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Añadido
+
+- Panel «Actividad» del dashboard: qué preguntan los agentes en este proyecto
+  (por MCP, MCP HTTP o hook), con su cliente y hora, qué entidades y etapas
+  recibieron y por qué entró cada entidad. «Ver en el grafo» deja sólo ese
+  paquete y «Seguir en vivo» lo hace con cada consulta nueva. Incluye un resumen
+  de 7 días; sólo cuenta lo que pasa por Graphtyn, no lo que el agente lee después.
+- Ayuda del dashboard (botón `?` o tecla `?`): qué muestra cada vista, cómo leer
+  colores y líneas, y atajos (`/` busca, `A` modo anónimo, `Esc` cierra).
+- Modo anónimo (`A`): difumina proyectos, archivos, comunidades y paneles, y el
+  grafo usa nombres genéricos, para compartir pantalla sin revelar código.
+- Proyecto de ejemplo: «Probar con un proyecto de ejemplo» (bienvenida, ayuda y
+  dashboard vacío) copia una tienda pequeña a `GRAPHTYN_HOME/demo-projects/` y
+  la registra, para explorar el dashboard sin usar código propio.
+
+### Cambiado
+
+- El dashboard explica lo que muestra: una leyenda con el color de cada tipo
+  de nodo (archivo, clase, función, documento; en Semántico también
+  subsistema y arquitectura), una línea por vista que se puede ocultar, y un
+  mensaje en Topología cuando aún no hay agentes en lugar de un nodo suelto.
+  El selector «Memoria» sólo aparece en su vista, el panel de comunidades está
+  en español y deja de repetir el número de nodos.
+
 ### Corregido
 
+- Dashboard abierto desde la red (no loopback): Code AST, Semántico,
+  Topología, Reindexar y el registro de proyectos enviaban la petición sin el
+  token guardado, y el servidor la rechazaba aunque el token fuera válido.
+  Ahora todas las rutas protegidas lo envían, y el aviso indica dónde
+  escribirlo (Acciones → Administrar memoria → Token HTTP).
+- El indicador «MCP Activo» era un texto fijo en verde. Ahora consulta
+  `/api/service`: muestra si el servicio responde y si su `/mcp` por HTTP
+  acepta clientes. Si el servicio deja de responder con la página abierta, lo
+  avisa y recarga el grafo cuando vuelve.
 - El dashboard ya no carga d3, force-graph ni 3d-force-graph desde
   cdn.jsdelivr.net: el paquete incluye versiones fijas (`graphtyn/web/vendor/`,
   verificadas contra la integridad publicada en npm). Sin conexión, o cuando el

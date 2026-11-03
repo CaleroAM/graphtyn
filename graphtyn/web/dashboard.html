@@ -41,10 +41,10 @@
     </div>
   </aside>
 
-  <!-- ===== RIGHT SIDEBAR: COMMUNITIES ===== -->
+  <!-- ===== RIGHT SIDEBAR: COMUNIDADES ===== -->
   <aside class="right-aside">
     <div class="comm-header">
-      <div class="section-label" style="margin:0;">COMMUNITIES</div>
+      <div class="section-label" style="margin:0;" title="Agrupación por carpeta. Desmarca una comunidad para ocultar sus nodos.">COMUNIDADES</div>
       <label class="comm-select-all">
         <span>Todo</span>
         <span class="chk-wrap">
@@ -329,23 +329,27 @@
         </div>
       </div>
 
-      <input type="text" class="search-input" id="search-box" placeholder="Buscar símbolo, ruta, método…" oninput="applyFilter()">
+      <input type="text" class="search-input" id="search-box" placeholder="Buscar símbolo, ruta, método…" oninput="applyFilter()" title="Atajo: /">
+      <button class="btn-action help-btn" type="button" onclick="openHelp()" title="Ayuda y atajos (?)" aria-label="Ayuda y atajos">?</button>
+      <span id="anonymous-badge" class="anonymous-badge" hidden title="Los nombres están ocultos. Pulsa A para mostrarlos.">Modo anónimo · A</span>
     </div>
     <div class="graph-status" aria-label="Estado del índice y confianza de relaciones">
       <div class="graph-status-primary"><span id="model-badge">—</span><span id="stats">—</span></div>
-      <div id="conf-legend" class="confidence-legend" title="Sólida = extraída · punteada = inferida · ámbar = ambigua">
+      <div id="conf-legend" class="confidence-legend" title="Sólida = extraída del código · punteada = inferida, compruébala en el código · ámbar = ambigua, no la tomes como hecho">
         <span class="confidence-item extracted"><i></i>EXTRACTED</span>
         <span class="confidence-item inferred"><i></i>INFERRED</span>
         <span class="confidence-item ambiguous"><i></i>AMBIGUOUS</span>
       </div>
+      <div id="kind-legend" class="confidence-legend kind-legend" aria-label="Color de cada tipo de nodo"></div>
     </div>
   </header>
 
   <!-- Focused quick actions: one primary action, the rest grouped by task -->
   <div class="float-actions">
-    <div class="service-status">
-      <span style="width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></span> MCP Activo
+    <div class="service-status" id="service-status" role="status" title="Comprobando el servicio del dashboard">
+      <span class="service-dot"></span> <span id="service-status-label">Comprobando…</span>
     </div>
+    <button class="btn-action" id="activity-btn" type="button" onclick="toggleActivityPanel()" title="Qué preguntan tus agentes a Graphtyn y qué reciben">Actividad</button>
     <div class="dd-wrap" id="dd-actions">
       <button class="btn-action" onclick="toggleDD('dd-actions')" aria-haspopup="true" aria-expanded="false">Acciones ▾</button>
       <div class="dd-panel action-menu" role="menu">
@@ -367,6 +371,27 @@
 
   <!-- ===== GRAPH CANVAS ===== -->
   <div id="graph-container"></div>
+  <aside id="activity-panel" class="activity-panel" aria-label="Actividad de agentes" hidden>
+    <div class="activity-head">
+      <strong>Actividad de agentes</strong>
+      <label title="Muestra en el grafo cada paquete nuevo en cuanto llega"><input type="checkbox" id="activity-follow" onchange="setActivityFollow(this.checked)"> Seguir en vivo</label>
+      <button class="modal-close" onclick="toggleActivityPanel(false)" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="activity-usage"></div>
+    <div class="help-section">Últimos 10 minutos</div>
+    <div id="activity-river"></div>
+    <div id="activity-detail" class="activity-detail" hidden></div>
+    <div class="help-section">Consultas recientes</div>
+    <div id="activity-list" class="activity-list"></div>
+  </aside>
+  <div id="view-hint" class="view-hint" hidden>
+    <span class="view-hint-text"></span>
+    <button type="button" class="view-hint-close" onclick="dismissViewHint()" aria-label="Ocultar esta explicación">✕</button>
+  </div>
+  <div id="service-offline" class="service-offline" role="alert" hidden>
+    <strong>El servicio de Graphtyn no responde.</strong>
+    Vuelve a levantarlo con <code>graphtyn serve</code>; esta página se reconectará sola.
+  </div>
 
   <!-- ===== FLOATING BLAST RADIUS PANEL ===== -->
   <div id="blast-panel" style="position:absolute;bottom:16px;right:276px;z-index:90;background:#111827;border:1px solid #374151;border-radius:10px;padding:12px 14px;width:280px;box-sizing:border-box;box-shadow:0 16px 36px rgba(0,0,0,0.6);display:none;overflow:hidden;">
@@ -455,9 +480,10 @@
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:5px;">El dashboard de Graphtyn corre en</div>
           <strong id="welcome-dashboard-url" style="color:#38bdf8;font-family:monospace;font-size:15px;">http://127.0.0.1:9210</strong>
         </div>
-        <p style="margin:0;color:#94a3b8;">Selecciona o registra un proyecto, reindexa su contenido y explora el grafo. Este mensaje sólo aparece la primera vez en este navegador.</p>
+        <p style="margin:0;color:#94a3b8;">Selecciona o registra un proyecto, reindexa su contenido y explora el grafo. Si aún no quieres usar tu código, abre la tienda de ejemplo. Pulsa <kbd>?</kbd> en cualquier momento para ver la ayuda. Este mensaje sólo aparece la primera vez en este navegador.</p>
       </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;">
+        <button class="btn-action" id="welcome-demo" onclick="closeWelcome();startDemo(this)">Probar con un proyecto de ejemplo</button>
         <button class="btn-action btn-primary" id="welcome-start" onclick="closeWelcome()">Comenzar</button>
       </div>
     </div>
@@ -509,6 +535,37 @@
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
         <button class="btn-action" onclick="closeAgentRegister()">Cancelar</button>
         <button class="btn-action btn-primary" onclick="submitBrainRegister()">Guardar cerebro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: Ayuda ===== -->
+  <div class="modal-bg" id="modal-help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-box help-modal">
+      <div class="modal-hdr"><span id="help-title">Ayuda del dashboard</span><button class="modal-close" onclick="closeHelp()" aria-label="Cerrar">✕</button></div>
+      <p class="help-intro">El dashboard muestra el índice que Graphtyn construye de tu código y la memoria que guardan tus agentes. Sólo lo necesitas para mirar: Claude y Codex usan <code>graphtyn mcp</code> sin él.</p>
+      <div class="help-section">Vistas (menú Explorar)</div>
+      <dl class="help-views" id="help-views"></dl>
+      <div class="help-section">Cómo leer el grafo</div>
+      <dl class="help-views">
+        <dt>Color del nodo</dt><dd>Su tipo: la leyenda está bajo el contador de nodos. Con la paleta «Por comunidad», su carpeta.</dd>
+        <dt>Línea sólida</dt><dd>Relación extraída del código (EXTRACTED).</dd>
+        <dt>Línea punteada</dt><dd>Relación inferida (INFERRED): compruébala en el código.</dd>
+        <dt>Línea ámbar</dt><dd>Relación ambigua (AMBIGUOUS): no la tomes como hecho.</dd>
+        <dt>Comunidades</dt><dd>Agrupación por carpeta del panel derecho; desmarca una para ocultar sus nodos.</dd>
+      </dl>
+      <div class="help-section">Atajos</div>
+      <dl class="help-views help-keys">
+        <dt><kbd>?</kbd></dt><dd>Abrir esta ayuda</dd>
+        <dt><kbd>/</kbd></dt><dd>Buscar símbolo o ruta</dd>
+        <dt><kbd>A</kbd></dt><dd>Modo anónimo: oculta nombres de proyectos, archivos y símbolos para compartir pantalla</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Cerrar menús y paneles</dd>
+      </dl>
+      <div class="help-section">Actividad de agentes</div>
+      <p class="help-intro">El botón <strong>Actividad</strong> lista lo que Claude, Codex u otros clientes preguntan a Graphtyn en este proyecto, qué recibieron y por qué entró cada entidad. «Ver en el grafo» deja sólo ese paquete; «Seguir en vivo» lo hace con cada consulta nueva.</p>
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px;">
+        <button class="btn-action" onclick="startDemo(this)">Probar con un proyecto de ejemplo</button>
+        <button class="btn-action btn-primary" onclick="closeHelp()">Entendido</button>
       </div>
     </div>
   </div>

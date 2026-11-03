@@ -97,17 +97,24 @@ def _indexed_root(cwd: str | None) -> Path | None:
     return None
 
 
-def prefetch_package(root: Path, prompt: str) -> dict[str, Any] | None:
-    """The lean `graph_query_intent` package for `prompt`, or None without an index."""
+def prefetch_package(root: Path, prompt: str, client: str | None = None) -> dict[str, Any] | None:
+    """The lean `graph_query_intent` package for `prompt`, or None without an index.
+
+    With `client`, the query is recorded for the dashboard as coming from that client's hook.
+    """
     from ..mcp_server import _tag_graph_result, build_intent_package, lean_payload
     index = _index_path(root)
     if not index.is_file():
         return None
     graph = json.loads(index.read_text(encoding="utf-8"))
-    _raw, result, context_id = build_intent_package(root, graph, prompt)
+    raw, result, context_id = build_intent_package(root, graph, prompt)
     result["context_id"] = context_id
     _tag_graph_result(result, root)
-    return lean_payload(result)
+    package = lean_payload(result)
+    if client:
+        from .query_log import record_query
+        record_query(root, raw, source="hook", agent=client, request=prompt, result=package, context_id=context_id)
+    return package
 
 
 # Rendered as plain text: JSON would escape every newline and quote of the excerpts.
@@ -244,11 +251,12 @@ def split_context(text: str, parts: int, limit: int = MAX_CONTEXT_CHARACTERS) ->
 def handle_prompt_hook(payload: dict[str, Any], root: Path | None = None,
                        budget_seconds: float = DEFAULT_BUDGET_SECONDS,
                        part: int = 1, parts: int = 1,
-                       part_limit: int = MAX_CONTEXT_CHARACTERS) -> dict[str, Any]:
+                       part_limit: int = MAX_CONTEXT_CHARACTERS, client: str | None = None) -> dict[str, Any]:
     """Decide, retrieve within the budget and return this hook part's outcome.
 
     `context` is set only when there is something worth injecting. With several
-    parts, each process returns its own slice of the same rendered block.
+    parts, each process returns its own slice of the same rendered block, and only the
+    first one records the query for `client`.
     """
     prompt = str(payload.get("prompt") or "")
     wanted, reason = should_prefetch(prompt)
@@ -261,7 +269,7 @@ def handle_prompt_hook(payload: dict[str, Any], root: Path | None = None,
 
     def work() -> None:
         try:
-            outcome["package"] = prefetch_package(root, prompt)
+            outcome["package"] = prefetch_package(root, prompt, client if part == 1 else None)
         except Exception as exc:  # noqa: BLE001 - reported, never raised into the client
             outcome["error"] = f"{type(exc).__name__}: {exc}"
 

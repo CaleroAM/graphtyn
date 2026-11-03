@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from . import __version__
 from .core.topic_contracts import TOPIC_TOOLS
 
 
@@ -326,3 +327,22 @@ def mcp_tools(tool_profile: str = "full") -> list[dict[str, Any]]:
 
 def tools_list_response(request_id: Any, tool_profile: str = "full") -> dict[str, Any]:
     return {"jsonrpc": "2.0", "id": request_id, "result": {"tools": mcp_tools(tool_profile)}}
+
+
+def initialize_response(req_id: Any, server_context: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "jsonrpc": "2.0",
+        "id": req_id,
+        "result": {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {"tools": {}},
+            "serverInfo": {
+                "name": "graphtyn-mcp",
+                "version": __version__,
+                "workspace": server_context["workspace"],
+                "project_id": server_context["project_id"],
+                "project_name": server_context["project_name"],
+                "scope": server_context["scope"],
+            }
+        }
+    }

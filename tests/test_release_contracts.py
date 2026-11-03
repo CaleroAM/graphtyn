@@ -87,6 +87,15 @@ def test_dashboard_assets_are_declared_as_package_data():
         assert asset in metadata
 
 
+def test_bundled_demo_project_files_are_all_declared_as_package_data():
+    metadata = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    demo = ROOT / "graphtyn" / "demo_project"
+    folders = {path.parent.relative_to(demo) for path in demo.rglob("*") if path.is_file() and "__pycache__" not in path.parts}
+    for folder in folders:
+        prefix = "demo_project" if str(folder) == "." else f"demo_project/{folder}"
+        assert f'"{prefix}/*' in metadata, prefix
+
+
 def test_architecture_is_canonical_and_readme_has_compact_map():
     architecture = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
