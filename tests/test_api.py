@@ -1,4 +1,5 @@
 import json
+import re
 import asyncio
 import socket
 import subprocess
@@ -575,6 +576,9 @@ def test_dashboard_assets_served(tmp_path, monkeypatch):
     assert "nearestNodeAtPointer" in graph_js
     assert ".onNodeClick(handleGraphNodeClick)" in graph_js
     assert "installReliableNodeDrag" in graph_js
+    # A replaced graph must be disposed, or its simulation keeps redrawing off screen.
+    load_graph = graph_js.split("export function loadGraph", 1)[1]
+    assert load_graph.index("disposeGraphInstance()") < load_graph.index("showGraphSpinner(")
     assert "screen2GraphCoords" in graph_js
     assert "grid-template-columns:minmax(0,1fr)" in graph_js
     assert "EVIDENCIA " in graph_js
@@ -598,6 +602,20 @@ def test_js_route_rejects_traversal(tmp_path, monkeypatch):
     assert client.get("/js/../main.py").status_code == 404
     assert client.get("/js/noexiste.js").status_code == 404
     assert client.get("/js/state.py").status_code == 404
+
+
+def test_dashboard_scripts_are_bundled_not_loaded_from_a_cdn(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    html = client.get("/").text
+    scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
+    assert scripts and all(src.startswith("/") for src in scripts), scripts
+    for src in [s for s in scripts if s.startswith("/vendor/")]:
+        r = client.get(src)
+        assert r.status_code == 200 and len(r.content) > 10_000, src
+        assert "immutable" in r.headers["cache-control"]
+    assert client.get("/vendor/../api/main.py").status_code == 404
+    assert client.get("/vendor/LICENSES.md").status_code == 404
+    assert client.get("/vendor/noexiste.min.js").status_code == 404
 
 
 def test_project_config_roundtrip_api(tmp_path, monkeypatch):
