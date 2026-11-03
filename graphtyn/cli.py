@@ -534,6 +534,9 @@ def _command_reindex(args, root: Path, parser) -> None:
     except Exception:
         from .core.deployment import build_local_index
         indexed = build_local_index(root)
+        if indexed["graph"].get("metadata", {}).get("structural_parser") == "builtin-fallback" and indexed["nodes"]:
+            print("Aviso: Tree-sitter no se utilizó; el índice no tiene relaciones de llamada exactas. "
+                  "Reinstala Graphtyn y reindexa.", file=sys.stderr)
         print(f"✓ Reindexado AST local completado ({args.mode or 'fast'}): {indexed['nodes']} nodos, {indexed['links']} conectores.")
     else:
         job_id = res.get("id")

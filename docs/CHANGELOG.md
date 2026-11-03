@@ -5,6 +5,15 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Corregido
+
+- Las gramáticas de Tree-sitter se instalan por defecto (unos 4 MB, con wheels
+  para Linux, macOS y Windows). Antes eran un extra opcional que el comando de
+  instalación del README y `install.ps1` no pedían: esas instalaciones usaban en
+  silencio el parser de respaldo, sin relaciones de llamada exactas. El extra
+  `.[treesitter]` sigue aceptándose. Si una gramática no puede cargarse, lo avisan
+  «Calidad y contexto» y `graphtyn reindex` en local.
+
 ### Añadido
 
 - Panel «Actividad» del dashboard: qué preguntan los agentes en este proyecto

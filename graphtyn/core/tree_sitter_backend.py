@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import bisect
 import importlib
+import importlib.util
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -122,6 +123,12 @@ def _jvm_apple_kind(source: bytes, node, kind: str) -> str:
         keyword = "enum"  # Kotlin: `enum class` carries enum as a class modifier.
     return {"interface": "interface", "struct": "struct", "enum": "enum",
             "protocol": "interface", "extension": "class"}.get(keyword, kind)
+
+
+def missing_grammars() -> list[str]:
+    """Language packs that cannot load: their files fall back to the parser without exact calls."""
+    modules = ["tree_sitter", *(pack.grammar_module for pack in LANGUAGE_PACKS)]
+    return sorted({module for module in modules if importlib.util.find_spec(module) is None})
 
 
 def _pack_for_source(ext: str, source: bytes) -> LanguagePack | None:

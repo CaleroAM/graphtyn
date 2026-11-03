@@ -51,3 +51,12 @@ def test_index_quality_reports_framework_route_resolution():
         "relations": 2,
         "ambiguous_relations": 0,
     }
+
+
+def test_missing_grammars_are_reported_instead_of_silently_falling_back(monkeypatch):
+    from graphtyn.core import index_quality as module, tree_sitter_backend
+
+    assert tree_sitter_backend.missing_grammars() == []
+    monkeypatch.setattr(module, "missing_grammars", lambda: ["tree_sitter_ruby"])
+    warnings = index_quality({"nodes": [], "links": [], "metadata": {}})["warnings"]
+    assert any("tree_sitter_ruby" in warning for warning in warnings)
