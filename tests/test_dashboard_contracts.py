@@ -288,3 +288,25 @@ def test_changes_view_stays_below_header_and_explains_clean_repository():
     assert "El repositorio está limpio" in graph
     assert "SIN CAMBIOS" in graph
     assert "Number.isFinite(d.impacted_count)" in graph
+
+
+def test_dashboard_sends_the_stored_token_to_every_route_guarded_for_network_access():
+    # Opened from a non-loopback address, the server requires the token on these routes.
+    guarded = re.compile(r"fetch\((['`])/api/(graph|reindex|memory|v1/|harness/|projects/register|agents/register)")
+    for script in (WEB / "js").glob("*.js"):
+        source = script.read_text()
+        for match in guarded.finditer(source):
+            call = source[match.start():source.find(";", match.start())]
+            assert "authHeaders(" in call or "headers" in call, f"{script.name}: {call[:90]}"
+    graph = (WEB / "js" / "graph.js").read_text()
+    assert "fetch(url, {headers:authHeaders(), signal:requestSignal})" in graph
+    assert "Buscar en memoria" not in graph
+
+
+def test_service_badge_reflects_the_server_instead_of_a_fixed_label():
+    html = (WEB / "dashboard.html").read_text()
+    service = (WEB / "js" / "service.js").read_text()
+    assert "MCP Activo" not in html
+    assert 'id="service-status-label"' in html and 'id="service-offline"' in html
+    assert "fetch('/api/service'" in service
+    assert "initServiceStatus()" in (WEB / "dashboard.js").read_text()

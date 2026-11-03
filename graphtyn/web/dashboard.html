@@ -343,8 +343,8 @@
 
   <!-- Focused quick actions: one primary action, the rest grouped by task -->
   <div class="float-actions">
-    <div class="service-status">
-      <span style="width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;"></span> MCP Activo
+    <div class="service-status" id="service-status" role="status" title="Comprobando el servicio del dashboard">
+      <span class="service-dot"></span> <span id="service-status-label">Comprobando…</span>
     </div>
     <div class="dd-wrap" id="dd-actions">
       <button class="btn-action" onclick="toggleDD('dd-actions')" aria-haspopup="true" aria-expanded="false">Acciones ▾</button>
@@ -367,6 +367,10 @@
 
   <!-- ===== GRAPH CANVAS ===== -->
   <div id="graph-container"></div>
+  <div id="service-offline" class="service-offline" role="alert" hidden>
+    <strong>El servicio de Graphtyn no responde.</strong>
+    Vuelve a levantarlo con <code>graphtyn serve</code>; esta página se reconectará sola.
+  </div>
 
   <!-- ===== FLOATING BLAST RADIUS PANEL ===== -->
   <div id="blast-panel" style="position:absolute;bottom:16px;right:276px;z-index:90;background:#111827;border:1px solid #374151;border-radius:10px;padding:12px 14px;width:280px;box-sizing:border-box;box-shadow:0 16px 36px rgba(0,0,0,0.6);display:none;overflow:hidden;">

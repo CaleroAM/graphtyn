@@ -1,13 +1,11 @@
-import { state } from './state.js';
+import { state, authHeaders } from './state.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 let requestId = 0;
 let controller = null;
 
 function headers() {
-  const token = document.getElementById('memory-token')?.value.trim() ||
-    localStorage.getItem('graphtyn-memory-token') || '';
-  return {'Content-Type':'application/json', ...(token ? {'Authorization':`Bearer ${token}`} : {})};
+  return authHeaders({'Content-Type':'application/json'});
 }
 
 async function request(url, options = {}) {

@@ -7,6 +7,15 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Dashboard abierto desde la red (no loopback): Code AST, Semántico,
+  Topología, Reindexar y el registro de proyectos enviaban la petición sin el
+  token guardado, y el servidor la rechazaba aunque el token fuera válido.
+  Ahora todas las rutas protegidas lo envían, y el aviso indica dónde
+  escribirlo (Acciones → Administrar memoria → Token HTTP).
+- El indicador «MCP Activo» era un texto fijo en verde. Ahora consulta
+  `/api/service`: muestra si el servicio responde y si su `/mcp` por HTTP
+  acepta clientes. Si el servicio deja de responder con la página abierta, lo
+  avisa y recarga el grafo cuando vuelve.
 - El dashboard ya no carga d3, force-graph ni 3d-force-graph desde
   cdn.jsdelivr.net: el paquete incluye versiones fijas (`graphtyn/web/vendor/`,
   verificadas contra la integridad publicada en npm). Sin conexión, o cuando el

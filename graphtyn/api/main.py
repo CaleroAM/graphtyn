@@ -40,6 +40,7 @@ from ..core.history_import import (ProjectIdentityRegistry, discover_histories, 
                                    parse_history_database, _agent_id_matches)
 from ..core.memory_jobs import MemoryJobManager, memory_jobs
 from .semantic_graph import build_semantic_graph
+from .service_status import router as service_router, memory_auth_configured, scoped_tokens_configured
 from ..core.memory_consolidation import (consolidate_legacy_brain,
                                          preview_legacy_consolidation)
 from ..mcp_server import (blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node,
@@ -73,6 +74,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Graphtyn API", version=__version__, lifespan=lifespan)
+app.include_router(service_router)
 
 
 @app.exception_handler(MemoryStoreConflictError)
@@ -359,10 +361,7 @@ def _restore_memory_watchers() -> None:
 def _memory_auth(authorization: str | None, path: str | None = None,
                  required: str = "reader") -> JSONResponse | None:
     """Apply configured token roles and project scopes to legacy memory routes."""
-    configured = (os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN")
-                  or os.environ.get("GRAPHTYN_MEMORY_TOKENS")
-                  or os.environ.get("GRAPHTYN_MEMORY_TOKENS_FILE"))
-    if not configured:
+    if not memory_auth_configured():
         return None
     _, denied = _require_role(authorization, required, path)
     return denied
@@ -459,10 +458,7 @@ async def require_remote_memory_auth(request, call_next):
                  or path.startswith("/api/reindex") or path == "/api/graph"
                  or path in {"/api/projects/register", "/api/agents/register"})
     if remote and protected:
-        configured = (os.environ.get("GRAPHTYN_MEMORY_HTTP_TOKEN")
-                      or os.environ.get("GRAPHTYN_MEMORY_TOKENS")
-                      or os.environ.get("GRAPHTYN_MEMORY_TOKENS_FILE"))
-        if not configured:
+        if not memory_auth_configured():
             return JSONResponse({"ok": False, "error": "Configura autenticación de memoria antes de exponer la API"},
                                 status_code=503)
         if _memory_principal(request.headers.get("authorization")) is None:
@@ -2765,8 +2761,7 @@ def _mcp_protocol_error(req_id, code: int, message: str) -> JSONResponse:
 def _authorize_http_mcp(authorization: str | None) -> tuple[dict | None, JSONResponse | None]:
     token = os.environ.get("GRAPHTYN_MCP_TOKEN", "")
     supplied = authorization.removeprefix("Bearer ") if authorization else ""
-    has_scoped_tokens = bool(os.environ.get("GRAPHTYN_MEMORY_TOKENS") or
-                             os.environ.get("GRAPHTYN_MEMORY_TOKENS_FILE"))
+    has_scoped_tokens = scoped_tokens_configured()
     if not token and not has_scoped_tokens:
         return None, JSONResponse({
             "error": "MCP HTTP deshabilitado: configura GRAPHTYN_MCP_TOKEN o tokens Graphtyn por agente"
