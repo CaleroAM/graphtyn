@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import time
@@ -421,6 +422,28 @@ def make_workspace(source: Path, destination: Path, treatment: bool,
     return commit
 
 
+def _session_home(workspace: Path) -> Path:
+    return workspace.with_name(f"{workspace.name}.graphtyn-home")
+
+
+def isolated_executable(graphtyn_executable: Path, workspace: Path) -> Path:
+    """A wrapper that runs Graphtyn with a GRAPHTYN_HOME of its own for one session.
+
+    The index, MCP server and prompt hooks of a session must not write into the
+    user's data home: each workspace is a throwaway copy, and its index would
+    stay there (hundreds of MB per Rails session) after the copy is deleted. A
+    wrapper isolates every caller, including clients that do not pass their
+    environment to MCP servers or hooks.
+    """
+    home = _session_home(workspace)
+    home.mkdir(parents=True, exist_ok=True)
+    wrapper = workspace.with_name(f"{workspace.name}.graphtyn")
+    wrapper.write_text(f"#!/bin/sh\nGRAPHTYN_HOME={shlex.quote(str(home.resolve()))} "
+                       f"exec {shlex.quote(str(graphtyn_executable))} \"$@\"\n", encoding="utf-8")
+    wrapper.chmod(0o755)
+    return wrapper.resolve()
+
+
 def prepare_graphtyn_index(workspace: Path, graphtyn_executable: Path) -> dict:
     """Build the one-time project index outside measured agent-session time."""
     started = time.monotonic()
@@ -761,22 +784,25 @@ def main() -> int:
                 run_id += f"_r{repetition}"
             workspace = args.output_dir / "workspaces" / run_id
             shutil.rmtree(workspace, ignore_errors=True)  # left by an attempt that failed while copying
+            executable = isolated_executable(args.graphtyn_executable.resolve(), workspace)
             make_workspace(args.repo.resolve(), workspace, treatment,
-                           args.graphtyn_executable.resolve(), full_payload=arm == "graphtyn_full",
+                           executable, full_payload=arm == "graphtyn_full",
                            opencode_hook=client == "opencode" and arm == "graphtyn_hook")
             try:
-                index_setup = (prepare_graphtyn_index(workspace, args.graphtyn_executable.resolve())
+                index_setup = (prepare_graphtyn_index(workspace, executable)
                                if treatment else prepare_graphify_graph(workspace, graphify_bin)
                                if arm == "graphify" else None)
                 result = run_cell(client, models[client], task, treatment, workspace, args.repo.resolve(),
                                   args.output_dir / "runs" / run_id, args.timeout,
-                                  args.graphtyn_executable.resolve(), index_setup=index_setup,
+                                  executable, index_setup=index_setup,
                                   claude_bare=args.claude_bare, repetition=repetition,
                                   graphify_bin=graphify_bin if arm == "graphify" else None,
                                   prefetch=arm == "graphtyn_hook", full_payload=arm == "graphtyn_full",
                                   opencode_plugins=args.opencode_plugins, stop_rule=args.stop_rule)
             finally:
                 shutil.rmtree(workspace, ignore_errors=True)
+                shutil.rmtree(_session_home(workspace), ignore_errors=True)
+                executable.unlink(missing_ok=True)
             results.append(result)
             measured = result["usage"].get("total_tokens")
             # A refused session (usage limit, auth) reports zero usage without any
