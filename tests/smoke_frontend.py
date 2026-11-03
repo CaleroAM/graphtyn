@@ -94,6 +94,7 @@ def main():
          "--host", "127.0.0.1", "--port", str(PORT), "--path", str(proj)],
         cwd=str(ROOT), env=env, stdout=subprocess.DEVNULL, stderr=open(str(tmp / "server.log"), "w"))
     failures = []
+    console_errors = []
     try:
         if not wait_server(BASE):
             print("FAIL: servidor no levantó")
@@ -213,7 +214,28 @@ def main():
                 assert page.evaluate(f"typeof window.{name}") == "function", f"{name} no expuesto en window"
 
             canvas = page.locator("#graph-container canvas")
-            canvas.first.wait_for(state="visible", timeout=30000)
+            try:
+                canvas.first.wait_for(state="visible", timeout=30000)
+            except Exception:
+                # The page state says which branch of loadGraph ran instead of drawing.
+                snapshot = page.evaluate("""async () => {
+                  const {state} = await import('/js/state.js');
+                  const box = document.getElementById('graph-container');
+                  return {stats: document.getElementById('stats')?.textContent,
+                          html: box?.innerHTML?.slice(0, 300),
+                          box: box && [box.clientWidth, box.clientHeight, getComputedStyle(box).display],
+                          canvases: [...(box?.querySelectorAll('canvas') || [])].map(c => {
+                            const r = c.getBoundingClientRect();
+                            return [c.width, c.height, Math.round(r.width), Math.round(r.height), getComputedStyle(c).visibility];
+                          }),
+                          graphInst: Boolean(state.graphInst), loadId: state.graphLoadId, dim: state.activeDim,
+                          api: performance.getEntriesByType('resource').filter(e => e.name.includes('/api/'))
+                            .map(e => [e.name.replace(location.origin, '').slice(0, 70), Math.round(e.startTime),
+                                       Math.round(e.duration)]),
+                          activeView: state.activeView, activePath: state.activePath,
+                          libraries: {d3: typeof d3, ForceGraph: typeof ForceGraph, ForceGraph3D: typeof ForceGraph3D}};
+                }""")
+                raise AssertionError(f"canvas del grafo no renderizado: {snapshot}")
             assert canvas.count() >= 1, "canvas del grafo no renderizado"
 
             # Primary navigation is grouped by task instead of exposing every view as a top-level button.
@@ -381,11 +403,15 @@ def main():
         failures.append(str(exc))
         print(f"FAIL: {exc}")
         traceback.print_exc()
+        if console_errors:
+            print("browser errors:", console_errors[-8:])
         slog = tmp / "server.log"
         if slog.exists():
-            lines = [l for l in slog.read_text(encoding="utf-8", errors="replace").splitlines() if " 404 " in l or " 500 " in l]
-            if lines:
-                print("server 4xx/5xx:", lines[-8:])
+            lines = slog.read_text(encoding="utf-8", errors="replace").splitlines()
+            errors = [l for l in lines if " 404 " in l or " 500 " in l]
+            if errors:
+                print("server 4xx/5xx:", errors[-8:])
+            print("server log tail:", lines[-25:])
         return 1
     finally:
         server.terminate()

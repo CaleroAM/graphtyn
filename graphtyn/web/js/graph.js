@@ -37,6 +37,13 @@ export function destroyGraph() {
         state.graphRequestController = null;
       }
       state.graphLoadId += 1;
+      disposeGraphInstance();
+      document.getElementById('graph-container').innerHTML = '';
+    }
+
+// Stops the current graph's simulation, redraw loop and timers. Removing its
+// canvas from the DOM does not: a replaced instance kept redrawing off screen.
+function disposeGraphInstance() {
       stop3DRotation();
       if (state.neuralTimer) { clearInterval(state.neuralTimer); state.neuralTimer = null; }
       if (state.pulse3dRaf) { cancelAnimationFrame(state.pulse3dRaf); state.pulse3dRaf = null; }
@@ -47,7 +54,6 @@ export function destroyGraph() {
         try { state.graphInst._destructor && state.graphInst._destructor(); } catch(e){}
         state.graphInst = null;
       }
-      document.getElementById('graph-container').innerHTML = '';
     }
 
 export function showGraphSpinner(msg) {
@@ -711,6 +717,7 @@ export function loadGraph() {
           ? 'Cargando evidencia, ejecuciones y dependencias...'
           : state.memoryFocusSession ? 'Cargando sesión y sus temas...' : 'Cargando sesiones, temas y episodios...')
         : 'Escaneando proyecto...';
+      disposeGraphInstance();
       showGraphSpinner(loadingMessage);
       document.getElementById('stats').textContent = 'Cargando...';
 
