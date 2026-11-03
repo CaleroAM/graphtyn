@@ -382,6 +382,7 @@ body.right-collapsed .activity-panel { right:14px; }
 }
 .activity-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; color:#e2e8f0; font-size:12px; }
 .activity-head label { margin-left:auto; display:flex; align-items:center; gap:4px; font-size:10px; color:#94a3b8; cursor:pointer; }
+.activity-logging { display:flex; align-items:center; gap:5px; margin-top:6px; font-size:10px; color:#94a3b8; cursor:pointer; }
 .activity-note { margin:5px 0; color:#64748b; font-size:10px; }
 .activity-stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; }
 .activity-stats div { background:#0b1220; border:1px solid #1e293b; border-radius:6px; padding:5px 6px; display:flex; flex-direction:column; }

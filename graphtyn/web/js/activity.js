@@ -24,6 +24,31 @@ let zoomTimers = [];
 const panel = () => document.getElementById('activity-panel');
 const clock = seconds => new Date(seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 
+function renderLogging(enabled, retentionDays) {
+  const box = document.getElementById('activity-logging');
+  const note = document.getElementById('activity-logging-note');
+  if (box) { box.checked = enabled; box.disabled = false; }
+  if (note) note.textContent = enabled
+    ? `Las preguntas se guardan en este equipo y se borran a los ${retentionDays} días.`
+    : `Registro apagado para este proyecto: no se guardan consultas nuevas. Las anteriores se borran a los ${retentionDays} días.`;
+}
+
+export async function setActivityLogging(enabled) {
+  const box = document.getElementById('activity-logging');
+  if (box) box.disabled = true;
+  try {
+    const response = await fetch('/api/agent-activity/settings', {method:'POST',
+      headers:authHeaders({'Content-Type':'application/json'}),
+      body:JSON.stringify({path:state.activePath, logging:enabled})});
+    const data = await response.json();
+    if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+  } catch (error) {
+    window.alert(`No se pudo cambiar el registro: ${error.message}`);
+  }
+  lastSignature = '';
+  await poll();
+}
+
 function renderUsage(usage) {
   const el = document.getElementById('activity-usage');
   if (!el) return;
@@ -176,7 +201,7 @@ async function poll() {
     lastSignature = signature;
     queries = data.queries || [];
     renderRiver();
-    if (changed) { renderUsage(data.usage); renderList(); }
+    if (changed) { renderUsage(data.usage); renderList(); renderLogging(data.logging !== false, data.retention_days); }
     const newest = queries[0]?.id ?? null;
     if (follow && polledOnce && newest !== null && newest !== newestSeen) {
       selectActivityQuery(newest);

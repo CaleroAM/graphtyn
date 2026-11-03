@@ -15,6 +15,9 @@ from typing import Any
 from .history import HistoryTracker
 
 ACTION = "query_intent"
+RETENTION_DAYS = 30
+# In the project's database, not the environment: clients launch MCP and hooks with their own.
+LOGGING_SETTING = "activity_log"
 MAX_ENTITIES = 24
 MAX_STAGES = 40
 _MIN_TERM = 4
@@ -84,20 +87,38 @@ def record_query(workspace: Path, package: dict[str, Any], *, source: str, agent
                  result: dict[str, Any] | None = None, context_id: str = "", extends: str = "",
                  tracker: HistoryTracker | None = None) -> None:
     try:
+        tracker = tracker or HistoryTracker(workspace)
+        prune_queries(tracker)
+        if not logging_enabled(tracker):
+            return
         details = query_record(package, source=source, agent=agent or source, request=request or str(package.get("request") or ""),
                                workspace=workspace, result=result, context_id=context_id, extends=extends)
-        (tracker or HistoryTracker(workspace)).log_event(source, ACTION, f"Consulta {details['intent']} de una ronda", details)
+        tracker.log_event(source, ACTION, f"Consulta {details['intent']} de una ronda", details)
     except Exception:  # noqa: BLE001 - the activity log never breaks a query
         pass
 
 
-def recent_queries(tracker: HistoryTracker, limit: int = 30, days: int = 7) -> list[dict[str, Any]]:
-    since = time.time() - days * 86400
-    return tracker.events_since(ACTION, since, limit)
+def logging_enabled(tracker: HistoryTracker) -> bool:
+    return tracker.get_setting(LOGGING_SETTING, "on") != "off"
+
+
+def set_logging(tracker: HistoryTracker, enabled: bool) -> None:
+    tracker.set_setting(LOGGING_SETTING, "on" if enabled else "off")
+
+
+def prune_queries(tracker: HistoryTracker, now: float | None = None) -> int:
+    """Questions are the user's words: they do not outlive the retention window, even with logging off."""
+    return tracker.prune_events(ACTION, (now if now is not None else time.time()) - RETENTION_DAYS * 86400)
+
+
+def recent_queries(tracker: HistoryTracker, limit: int = 30, days: int = RETENTION_DAYS) -> list[dict[str, Any]]:
+    return tracker.events_since(ACTION, time.time() - days * 86400, limit)
 
 
 def usage_summary(queries: list[dict[str, Any]], days: int = 7) -> dict[str, Any]:
     """What passes through Graphtyn; what an agent reads afterwards is not visible from here."""
+    since = time.time() - days * 86400
+    queries = [query for query in queries if query.get("timestamp", since) >= since]
     files: Counter[str] = Counter()
     for query in queries:
         files.update({str(item["file"]) for item in query.get("entities") or [] if item.get("file")})
