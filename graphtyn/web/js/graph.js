@@ -2,6 +2,7 @@ import { state, authHeaders, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, 
 import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
 import { renderKindLegend } from './legend.js';
+import { anonymousName } from './help.js';
 import { apply2DStyle, apply3DStyle, standard2DLinkColor, paintNodePointerArea } from './styles.js';
 
 function endpointId(value) { return value && typeof value === 'object' ? value.id : value; }
@@ -693,7 +694,8 @@ export function loadGraph() {
       if (!state.activePath && state.activeView !== 'agents' && !(state.activeView === 'memory' && state.activeAgentId)) {
         document.getElementById('stats').textContent = 'Selecciona un proyecto';
         document.getElementById('graph-container').innerHTML =
-          '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda</div>';
+          '<div style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;">Selecciona un proyecto de la lista izquierda' +
+          '<button class="btn-action" onclick="startDemo(this)">Probar con un proyecto de ejemplo</button></div>';
         return;
       }
       const url = state.activeView === 'agents'
@@ -777,6 +779,10 @@ export function loadGraph() {
         const container = document.getElementById('graph-container');
 
         const tooltip = n => {
+          if (state.anonymous) {
+            return `<div style="background:#111827;border:1px solid #374151;border-radius:6px;padding:7px 11px;font-size:12px;color:#f8fafc;pointer-events:none;">` +
+              `<strong>${escapeHtml(anonymousName(n))}</strong> <span style="color:#94a3b8;font-size:10px;">· ${n.degree || 0} conexiones</span></div>`;
+          }
           const hasDesc = n.details && n.details.length > 0;
           const safeName = escapeHtml(n.name || '');
           const safeKind = escapeHtml(n.kind || '');

@@ -5,6 +5,16 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Añadido
+
+- Ayuda del dashboard (botón `?` o tecla `?`): qué muestra cada vista, cómo leer
+  colores y líneas, y atajos (`/` busca, `A` modo anónimo, `Esc` cierra).
+- Modo anónimo (`A`): difumina proyectos, archivos, comunidades y paneles, y el
+  grafo usa nombres genéricos, para compartir pantalla sin revelar código.
+- Proyecto de ejemplo: «Probar con un proyecto de ejemplo» (bienvenida, ayuda y
+  dashboard vacío) copia una tienda pequeña a `GRAPHTYN_HOME/demo-projects/` y
+  la registra, para explorar el dashboard sin usar código propio.
+
 ### Cambiado
 
 - El dashboard explica lo que muestra: una leyenda con el color de cada tipo

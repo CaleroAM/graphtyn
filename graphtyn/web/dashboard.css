@@ -367,6 +367,22 @@
 }
 .view-hint[hidden] { display:none; }
 body.left-collapsed .view-hint { left:14px; }
+.help-btn { width:28px; padding-left:0 !important; padding-right:0 !important; font-weight:800; justify-content:center; text-align:center; }
+.anonymous-badge { font-size:10px; font-weight:700; color:#fbbf24; background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35);
+  border-radius:6px; padding:5px 8px; white-space:nowrap; }
+.anonymous-badge[hidden] { display:none; }
+.help-modal { width:min(640px, 94vw); max-height:88vh; overflow:auto; }
+.help-intro { margin:0 0 6px; color:#cbd5e1; font-size:12px; line-height:1.55; }
+.help-section { margin:14px 0 6px; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#64748b; font-weight:700; }
+.help-views { display:grid; grid-template-columns:150px 1fr; gap:6px 12px; margin:0; font-size:12px; line-height:1.45; }
+.help-views dt { color:#e2e8f0; font-weight:700; }
+.help-views dd { margin:0; color:#94a3b8; }
+.help-keys { grid-template-columns:60px 1fr; }
+kbd { background:#1a2234; border:1px solid #334155; border-bottom-width:2px; border-radius:4px; padding:0 5px; font-size:11px; color:#e2e8f0; font-family:monospace; }
+/* Modo anónimo: lo que nombra proyectos, archivos o símbolos se difumina; el lienzo usa nombres genéricos. */
+body.anonymous :is(#project-list, #brain-list, #legacy-brain-list, #community-list, #blast-content, #model-badge,
+  #search-box, #hist-list, .changes-view, .openclaw-dashboard, .memory-focus-banner, #memory-legend-overlay,
+  .modal-bg:not(#modal-help) .modal-box) { filter:blur(5px); }
 .view-hint-close { background:none; border:0; color:#64748b; cursor:pointer; font-size:11px; padding:0 2px; }
 
 @media (max-width: 1280px) {

@@ -3,7 +3,7 @@ import { state, PALETTES } from './state.js';
 
 const HINT_KEY = 'graphtyn-view-hints-hidden-v1';
 // Cambios y OpenClaw ya abren con su propia cabecera explicativa.
-const VIEW_HINTS = {
+export const VIEW_HINTS = {
   code: 'Archivos, clases y funciones extraídos del código, unidos por llamadas, imports y herencia. Haz clic en un nodo para ver su radio de impacto.',
   semantic: 'Agrupa el código por carpeta (verde: subsistema, rosa: arquitectura global) y une elementos de contenido parecido. Esas uniones son inferidas: compruébalas en el código.',
   memory: 'Temas, decisiones y sesiones que los agentes guardaron en la memoria de este proyecto. Haz clic en un nodo para ver de qué conversación viene.',

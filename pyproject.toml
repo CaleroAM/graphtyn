@@ -73,7 +73,7 @@ treesitter = [
 graphtyn = "graphtyn.cli:main"
 
 [tool.setuptools.package-data]
-graphtyn = ["client.ts", "agent_memory_policy.md", "skills/*/*.md", "skills/*/references/*.md", "skills/*/agents/*.yaml", "web/*.html", "web/*.css", "web/*.js", "web/*.svg", "web/js/*.js"]
+graphtyn = ["client.ts", "agent_memory_policy.md", "skills/*/*.md", "skills/*/references/*.md", "skills/*/agents/*.yaml", "web/*.html", "web/*.css", "web/*.js", "web/*.svg", "web/js/*.js", "demo_project/*.md", "demo_project/tienda/*.py", "demo_project/tests/*.py"]
 
 [tool.setuptools.packages.find]
 include = ["graphtyn*"]

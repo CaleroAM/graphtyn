@@ -329,3 +329,25 @@ def test_view_specific_controls_and_empty_topology_are_explained():
     assert ".memory-graph-view-control[hidden]{display:none}" in css
     assert "emptyTopology" in graph and "Aún no hay agentes observados" in graph
     assert "<summary><span>IDs de nodos</span></summary>" in graph
+
+
+def test_help_overlay_shortcuts_and_anonymous_mode_are_wired():
+    html = (WEB / "dashboard.html").read_text()
+    help_js = (WEB / "js" / "help.js").read_text()
+    dashboard = (WEB / "dashboard.js").read_text()
+    css = (WEB / "dashboard.css").read_text()
+    assert 'id="modal-help"' in html and 'onclick="openHelp()"' in html and 'id="anonymous-badge"' in html
+    for key in ("'?'", "'/'", "'a'"):
+        assert f"event.key === {key}" in help_js
+    assert "['INPUT', 'TEXTAREA', 'SELECT']" in help_js
+    assert "handleShortcut(e)" in dashboard and "closeHelp();" in dashboard
+    assert "body.anonymous :is(#project-list" in css and ".modal-bg:not(#modal-help) .modal-box" in css
+    assert "if (state.anonymous)" in (WEB / "js" / "graph.js").read_text()
+
+
+def test_demo_is_offered_on_first_run_help_and_empty_dashboard():
+    html = (WEB / "dashboard.html").read_text()
+    assert 'id="welcome-demo"' in html and html.count("startDemo(this)") >= 2
+    assert "startDemo(this)" in (WEB / "js" / "graph.js").read_text()
+    assert "'/api/demo'" in (WEB / "js" / "help.js").read_text()
+    assert '"/api/demo"' in (Path(api_main.__file__)).read_text()

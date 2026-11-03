@@ -295,6 +295,20 @@ def test_service_status_reports_whether_http_mcp_accepts_clients(tmp_path, monke
     assert client.get("/api/service").json()["mcp_http"] is True
 
 
+def test_demo_project_is_copied_once_and_indexes_its_order_flow(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    prepared = client.post("/api/demo").json()
+    demo = Path(prepared["path"])
+    assert demo.is_relative_to(tmp_path / ".graphtyn-store") and (demo / "tienda" / "pedidos.py").is_file()
+    (demo / "README.md").write_text("mío")
+    assert client.post("/api/demo").json()["path"] == str(demo)
+    assert (demo / "README.md").read_text() == "mío"
+    graph = client.get("/api/graph", params={"path": str(demo)}).json()
+    calls = {(link["source"].rsplit(":", 1)[-1], link["target"].rsplit(":", 1)[-1])
+             for link in graph["links"] if link.get("label") == "llama"}
+    assert {("crear_pedido", "calcular_total"), ("crear_pedido", "publicar")} <= calls
+
+
 def test_mcp_token_does_not_lock_local_dashboard_memory_api(tmp_path, monkeypatch):
     monkeypatch.delenv("GRAPHTYN_MEMORY_HTTP_TOKEN", raising=False)
     monkeypatch.setenv("GRAPHTYN_MCP_TOKEN", "remote-only")

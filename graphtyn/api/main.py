@@ -40,6 +40,7 @@ from ..core.history_import import (ProjectIdentityRegistry, discover_histories, 
 from ..core.memory_jobs import MemoryJobManager, memory_jobs
 from .semantic_graph import build_semantic_graph
 from .service_status import router as service_router, memory_auth_configured, scoped_tokens_configured
+from .demo import router as demo_router
 from ..core.memory_consolidation import (consolidate_legacy_brain,
                                          preview_legacy_consolidation)
 from ..mcp_server import (blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node,
@@ -74,6 +75,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Graphtyn API", version=__version__, lifespan=lifespan)
 app.include_router(service_router)
+app.include_router(demo_router)
 
 
 @app.exception_handler(MemoryStoreConflictError)
@@ -455,7 +457,7 @@ async def require_remote_memory_auth(request, call_next):
     protected = (path.startswith("/api/memory") or path.startswith("/api/v1/")
                  or path.startswith("/api/harness/")
                  or path.startswith("/api/reindex") or path == "/api/graph"
-                 or path in {"/api/projects/register", "/api/agents/register"})
+                 or path in {"/api/projects/register", "/api/agents/register", "/api/demo"})
     if remote and protected:
         if not memory_auth_configured():
             return JSONResponse({"ok": False, "error": "Configura autenticación de memoria antes de exponer la API"},
