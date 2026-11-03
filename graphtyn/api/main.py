@@ -473,7 +473,7 @@ async def require_remote_memory_auth(request, call_next):
     protected = (path.startswith("/api/memory") or path.startswith("/api/v1/")
                  or path.startswith("/api/harness/")
                  or path.startswith("/api/reindex") or path == "/api/graph"
-                 or path in {"/api/projects/register", "/api/agents/register", "/api/demo", "/api/agent-activity"})
+                 or path in {"/api/projects/register", "/api/agents/register", "/api/demo", "/api/agent-activity", "/api/agent-activity/settings"})
     if remote and protected:
         if not memory_auth_configured():
             return JSONResponse({"ok": False, "error": "Configura autenticación de memoria antes de exponer la API"},
