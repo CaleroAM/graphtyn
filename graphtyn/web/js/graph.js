@@ -1,6 +1,7 @@
 import { state, authHeaders, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
 import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
 import { buildPulseSim } from './sim.js';
+import { renderKindLegend } from './legend.js';
 import { apply2DStyle, apply3DStyle, standard2DLinkColor, paintNodePointerArea } from './styles.js';
 
 function endpointId(value) { return value && typeof value === 'object' ? value.id : value; }
@@ -108,7 +109,7 @@ export function buildCommunities(data) {
               <span class="comm-badge">${count}</span>
             </div>
             <details class="comm-node-details" data-community="${safeName}" ontoggle="renderCommunityNodes(this)">
-              <summary><span>IDs de nodos</span><span>${count}</span></summary>
+              <summary><span>IDs de nodos</span></summary>
               <div class="comm-node-ids"><span class="comm-node-loading">Abre para cargar</span></div>
             </details>
           </div>`;
@@ -726,7 +727,9 @@ export function loadGraph() {
         return data;
       }).then(data => {
         if (loadId !== state.graphLoadId) return;
-        if (!data.nodes || data.nodes.length === 0) {
+        // La topología siempre incluye su nodo raíz; sin nada más, está vacía.
+        const emptyTopology = state.activeView === 'agents' && (data.nodes || []).length <= 1;
+        if (!data.nodes || data.nodes.length === 0 || emptyTopology) {
           const selectedBrain = state.activeView === 'memory' && !state.activeAgentId
             ? state.brainSpaces?.[state.activePath]
             : null;
@@ -737,6 +740,8 @@ export function loadGraph() {
               : selectedBrain?.family
                 ? `<div class="memory-family-empty"><strong>${escapeHtml(selectedBrain.name)} todavía no tiene recuerdos compartidos.</strong><br>Este espacio sólo muestra recuerdos que sus miembros publican explícitamente. No copia los chats ni la memoria privada de cada agente.<br><span>Miembros: ${familyMembers || 'sin miembros registrados'}.</span><br><span>Cuando un agente publique un recuerdo con <code>memory_agent_publish</code>, aparecerá aquí.</span></div>`
                 : 'Sin memorias capturadas para este proyecto. No hay temas temáticos todavía; abre “Administrar memoria” para importar conversaciones o registra una sesión desde un agente.')
+            : emptyTopology
+              ? 'Aún no hay agentes observados. Aparecen cuando un agente guarda memoria en un proyecto registrado o cuando configuras una fuente de historial en Acciones → Administrar memoria.'
             : 'Sin nodos de código. Haz clic en Reindexar para escanear el proyecto.';
           document.getElementById('graph-container').innerHTML =
             '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#475569;font-size:13px;padding:24px;text-align:center;">' + emptyMessage + '</div>';
@@ -745,8 +750,9 @@ export function loadGraph() {
           if (badge && state.activeView === 'memory') badge.textContent = selectedBrain?.family
             ? `${selectedBrain.name} · 0 recuerdos compartidos`
             : 'Memoria compartida · 0 agentes';
+          else if (badge) badge.textContent = '';
           document.getElementById('memory-legend-overlay')?.remove();
-          buildCommunities(data); updateEstTime();
+          buildCommunities(emptyTopology ? {nodes:[], links:[]} : data); updateEstTime();
           return;
         }
         state.fullData = data;
@@ -986,6 +992,7 @@ export function changeNodeColor() {
         if (palette) palette.value = 'custom';
       }
       refreshStyleInPlace();
+      renderKindLegend();
     }
 
 export function changeStyleColors() {

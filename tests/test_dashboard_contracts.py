@@ -310,3 +310,22 @@ def test_service_badge_reflects_the_server_instead_of_a_fixed_label():
     assert 'id="service-status-label"' in html and 'id="service-offline"' in html
     assert "fetch('/api/service'" in service
     assert "initServiceStatus()" in (WEB / "dashboard.js").read_text()
+
+
+def test_dashboard_explains_node_colors_and_each_view():
+    html = (WEB / "dashboard.html").read_text()
+    legend = (WEB / "js" / "legend.js").read_text()
+    controls = (WEB / "js" / "controls.js").read_text()
+    assert 'id="kind-legend"' in html and 'id="view-hint"' in html
+    assert "item(p.file, 'archivo'), item(p.class, 'clase'), item(p.func, 'función')" in legend
+    assert set(("code:", "semantic:", "memory:", "agents:")) <= {line.strip().split(" ")[0] for line in legend.splitlines()}
+    assert "refreshLegends();" in controls and "renderKindLegend();" in controls
+    assert "COMUNIDADES" in html and "COMMUNITIES</div>" not in html
+
+
+def test_view_specific_controls_and_empty_topology_are_explained():
+    css = (WEB / "dashboard.css").read_text()
+    graph = (WEB / "js" / "graph.js").read_text()
+    assert ".memory-graph-view-control[hidden]{display:none}" in css
+    assert "emptyTopology" in graph and "Aún no hay agentes observados" in graph
+    assert "<summary><span>IDs de nodos</span></summary>" in graph
