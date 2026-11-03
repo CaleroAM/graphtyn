@@ -3,10 +3,9 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
-## [0.11.1] - sin publicar
+## [0.12.0] - 2026-11-02
 
-Versión preparada en el repositorio; la etiqueta y los artefactos se publican
-tras la validación de release (`docs/release-validation-0.11.1.md`).
+Validación de la versión: `docs/release-validation-0.12.0.md`.
 
 ### Añadido
 
