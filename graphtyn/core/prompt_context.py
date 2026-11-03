@@ -185,6 +185,15 @@ def render_context(package: dict[str, Any], limit: int | None = None) -> str | N
             header.append(f"guidance: {guidance}")
     extra = {key: value for key, value in package.items()
              if key not in _RENDERED_KEYS and key not in _STATUS_KEYS}
+    files = package.get("files") or {}
+    if extra.get("call_outline"):
+        # The files map is not rendered, so the outline carries real paths instead of F aliases.
+        def located(at: Any) -> str:
+            alias, _, line = str(at).partition(":")
+            return f"{files.get(alias, alias)}:{line}" if line else str(files.get(alias, alias))
+        extra["call_outline"] = [[*row[:2], located(row[2]), *row[3:]] for row in extra["call_outline"]]
+        if isinstance(extra.get("call_outline_legend"), str):
+            extra["call_outline_legend"] = extra["call_outline_legend"].replace("F:line", "file:line")
     header += [f"{key}: {json.dumps(value, ensure_ascii=False, separators=(',', ':'))}"
                for key, value in extra.items()]
     tail = []

@@ -99,6 +99,7 @@ _RUNTIME_BUILTINS = {
 # Kernel/Module methods Ruby code calls without a receiver. A project method
 # with the same name (e.g. Parameters#require) is only its target when the call
 # has a receiver, so these are flagged for bare calls only.
+_RUBY_SELF_RECEIVERS = {"self", "dup", "clone"}
 _RUBY_BARE_BUILTINS = {
     "require", "require_relative", "load", "include", "extend", "prepend", "raise", "fail",
     "puts", "print", "p", "pp", "printf", "sprintf", "format", "sleep", "rand", "loop",
@@ -185,7 +186,7 @@ def _parameters(node):
     return parameters
 
 
-def _call_name(source: bytes, node) -> str:
+def _call_name(source: bytes, node, ruby: bool = False) -> str:
     target = node.child_by_field_name("function") or node.child_by_field_name("method")
     if target is None and node.named_child_count:
         target = node.named_children[0]
@@ -200,7 +201,8 @@ def _call_name(source: bytes, node) -> str:
         if named is None and target.named_child_count:
             named = target.named_children[0]
         raw = _text(source, named) if named is not None else raw.split("<", 1)[0]
-    names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", raw)
+    # A Ruby method name keeps its ! or ? suffix: route! and route are different methods.
+    names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*[!?]?" if ruby else r"[A-Za-z_][A-Za-z0-9_]*", raw)
     return names[-1] if names else ""
 
 
@@ -471,7 +473,7 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
 def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, operations: list,
                 imports: list, ruby_mixins: list) -> None:
     """A call or instantiation, its operation and Ruby require/mixin side facts."""
-    name = _call_name(ctx.source, node)
+    name = _call_name(ctx.source, node, ruby=ctx.pack.name == "ruby")
     if name:
         target = node.child_by_field_name("function") or node.child_by_field_name("method")
         raw_target = _text(ctx.source, target) if target is not None else ""
@@ -480,6 +482,9 @@ def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, 
         receiver_node = node.child_by_field_name("receiver")
         receiver = (_text(ctx.source, receiver_node) if receiver_node is not None
                     else (chain[-1] if chain else ""))
+        if ctx.pack.name == "ruby" and receiver in _RUBY_SELF_RECEIVERS:
+            # self.x, dup.x and clone.x dispatch on the caller's own class, like a bare call.
+            receiver, chain = "", []
         args = node.child_by_field_name("arguments")
         calls.append({
             "name": name, "line": line, "evidence": evidence,

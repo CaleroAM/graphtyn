@@ -727,6 +727,33 @@ def test_ruby_bare_method_calls_link_without_locals_or_other_languages(tmp_path)
     assert not {call for call in calls if call[2] == "asset.js"}
 
 
+def test_ruby_calls_keep_the_bang_and_predicate_suffix_of_the_method_name(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    (tmp_path / "app.rb").write_text(
+        "class App\n"
+        "  def call(env)\n"
+        "    dup.call!(env)\n"
+        "  end\n\n"
+        "  def call!(env)\n"
+        "    invoke { dispatch! } if ready?\n"
+        "  end\n\n"
+        "  def dispatch!; route!; end\n"
+        "  def route!; end\n"
+        "  def route(path); end\n"
+        "  def ready?; true; end\n"
+        "  def invoke; yield; end\n"
+        "end\n", encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    calls = {(nodes[link["source"]]["name"], nodes[link["target"]]["name"])
+             for link in graph["links"] if link.get("label") == "llama"}
+    assert {("call", "call!"), ("call!", "dispatch!"), ("call!", "ready?"), ("dispatch!", "route!")} <= calls
+    # route! and route are different methods; the suffix must not be dropped.
+    assert ("dispatch!", "route") not in calls
+
+
 def test_ruby_mixins_resolve_lexically_and_super_follows_the_ancestor_chain(tmp_path):
     pytest.importorskip("tree_sitter_ruby")
     lib = tmp_path / "lib"

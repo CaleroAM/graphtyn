@@ -56,6 +56,18 @@ compatibles con PEP 440.
   después de importar se respeta, e importar el módulo ya no crea
   `~/.graphtyn`. Por eso los tests escribían en el directorio real del usuario,
   incluido `registered_projects.json`.
+- El contexto que inyecta el hook (Claude y Codex) muestra `call_outline` con
+  rutas reales (`ldo.c:1083`) en vez de alias `F5:1083`: el mapa `files` no se
+  incluye en ese texto, así que el agente no podía resolver el alias y buscaba
+  la etapa a mano. En las sesiones de test3 y test4, entre el 19 % y el 26 % de
+  las búsquedas posteriores al hook perseguían una etapa que el outline ya
+  nombraba (10-19 % con MCP, que sí trae el mapa).
+- Ruby: las llamadas conservan el sufijo `!`/`?` del método (`route!`,
+  `valid?`), y `self.x`, `dup.x` y `clone.x` se resuelven como llamadas a la
+  propia clase. Antes `dispatch!` aparecía llamando a `route` (otro método) y
+  `call!` no tenía llamadas entrantes. Rails gana 3.917 relaciones y Sinatra 45;
+  la cobertura del banco de tareas no cambia de forma apreciable (de 91 tareas,
+  una gana un hecho y otra pierde uno neto).
 
 ## [0.11.0] - 2026-11-01
 
