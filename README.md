@@ -10,7 +10,7 @@ contexto compacto a agentes mediante MCP. También conserva memoria semántica
 compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
 estructurales.
 
-> Última versión estable publicada: [`0.11.0`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.11.0).
+> Última versión estable publicada: [`0.12.0`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.12.0).
 > Graphtyn se distribuye por GitHub Releases; PyPI permanece deshabilitado. El
 > despliegue es self-hosted: los agentes pueden compartir memoria con permisos
 > por token y proyecto, pero no es un servicio SaaS multi-tenant.
@@ -64,7 +64,7 @@ Graphtyn aún no está publicado en PyPI. Instala el wheel de
 [GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/latest):
 
 ```bash
-python -m pip install "https://github.com/CaleroAM/graphtyn/releases/download/v0.11.0/graphtyn-0.11.0-py3-none-any.whl"
+python -m pip install "https://github.com/CaleroAM/graphtyn/releases/download/v0.12.0/graphtyn-0.12.0-py3-none-any.whl"
 ```
 
 También puedes instalarlo en modo desarrollo desde un checkout:
@@ -492,7 +492,7 @@ Resultados, hardware, metodología y comparaciones anonimizadas:
 | MCP por proyecto y agentes | [docs/project-mcp-integrations.md](docs/project-mcp-integrations.md) |
 | Conexión nativa con OpenClaw | [docs/openclaw-native.md](docs/openclaw-native.md) |
 | Validación real OpenClaw host + VM | [docs/openclaw-native-validation-2026-09.md](docs/openclaw-native-validation-2026-09.md) |
-| Validación de 0.12.0 (sin publicar) | [docs/release-validation-0.12.0.md](docs/release-validation-0.12.0.md) |
+| Validación de 0.12.0 | [docs/release-validation-0.12.0.md](docs/release-validation-0.12.0.md) |
 | Validación de 0.11.0 | [docs/release-validation-0.11.0.md](docs/release-validation-0.11.0.md) |
 | Validación de 0.10.7 | [docs/release-validation-0.10.7.md](docs/release-validation-0.10.7.md) |
 | Dashboard | [docs/ui_ux_specification.md](docs/ui_ux_specification.md) |
