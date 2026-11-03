@@ -371,3 +371,12 @@ def test_focused_packages_are_named_on_the_canvas_and_stay_anonymous():
     painters = (WEB / "js" / "painters.js").read_text()
     assert "state.anonymous ? anonymousName(node) : String(node.name || '')" in painters
     assert ".onRenderFramePost(paintFocusLabels)" in (WEB / "js" / "graph.js").read_text()
+
+
+def test_activity_logging_switch_is_in_the_panel_and_guarded_for_network_access():
+    html = (WEB / "dashboard.html").read_text()
+    activity = (WEB / "js" / "activity.js").read_text()
+    assert 'id="activity-logging"' in html and 'onchange="setActivityLogging(this.checked)"' in html
+    assert "se borran a los ${retentionDays} días" in activity
+    assert "setActivityLogging" in (WEB / "dashboard.js").read_text()
+    assert '"/api/agent-activity/settings"' in Path(api_main.__file__).read_text()

@@ -378,6 +378,10 @@
       <button class="modal-close" onclick="toggleActivityPanel(false)" aria-label="Cerrar">✕</button>
     </div>
     <div id="activity-usage"></div>
+    <label class="activity-logging" title="Sólo afecta a este proyecto. Lo respetan MCP y los hooks de todos los clientes.">
+      <input type="checkbox" id="activity-logging" onchange="setActivityLogging(this.checked)" checked> Registrar consultas de agentes
+    </label>
+    <p class="activity-note" id="activity-logging-note"></p>
     <div class="help-section">Últimos 10 minutos</div>
     <div id="activity-river"></div>
     <div id="activity-detail" class="activity-detail" hidden></div>

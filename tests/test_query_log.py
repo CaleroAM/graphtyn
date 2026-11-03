@@ -1,7 +1,9 @@
 import json
 import os
+import sqlite3
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -10,7 +12,8 @@ from graphtyn.api import agent_activity
 from graphtyn.cli import main
 from graphtyn.core import prompt_context
 from graphtyn.core.history import HistoryTracker
-from graphtyn.core.query_log import record_query, recent_queries, selection_reasons, usage_summary
+from graphtyn.core.query_log import (ACTION, RETENTION_DAYS, prune_queries, record_query, recent_queries, selection_reasons,
+                                     set_logging, usage_summary)
 
 MCP_RUNNER = "from pathlib import Path\nfrom graphtyn.mcp_server import run_mcp_server\nrun_mcp_server(Path(%r))\n"
 REQUEST = "¿Cómo se crea un pedido y se calcula su total?"
@@ -118,3 +121,69 @@ def test_activity_endpoint_summarizes_what_passes_through_graphtyn(project):
 
 def test_activity_endpoint_rejects_a_missing_project(tmp_path):
     assert agent_activity.agent_activity(str(tmp_path / "nada"), 5).status_code == 404
+
+
+def test_old_queries_are_deleted_and_other_events_stay(project):
+    tracker = HistoryTracker(project)
+    record_query(project, {"intent": "flow", "request": "reciente", "nodes": []}, source="mcp", tracker=tracker)
+    tracker.log_event("mcp", "blast_radius", "otro evento", {})
+    old = time.time() - (RETENTION_DAYS + 1) * 86400
+    with sqlite3.connect(tracker.db_path) as conn:
+        conn.execute("INSERT INTO observations (session_id, timestamp, action_type, summary, details) VALUES ('mcp', ?, ?, 's', ?)",
+                     (old, ACTION, json.dumps({"request": "antigua"})))
+        conn.execute("INSERT INTO observations (session_id, timestamp, action_type, summary, details) VALUES ('mcp', ?, 'blast_radius', 's', '{}')", (old,))
+    assert prune_queries(tracker) == 1
+    with sqlite3.connect(tracker.db_path) as conn:
+        details = [row[0] for row in conn.execute("SELECT details FROM observations WHERE action_type = ?", (ACTION,))]
+        kept = conn.execute("SELECT COUNT(*) FROM observations WHERE action_type = 'blast_radius'").fetchone()[0]
+    assert len(details) == 1 and "reciente" in details[0] and kept == 2
+
+
+def test_turning_logging_off_stops_new_records_but_old_ones_still_expire(project):
+    tracker = HistoryTracker(project)
+    set_logging(tracker, False)
+    old = time.time() - (RETENTION_DAYS + 1) * 86400
+    with sqlite3.connect(tracker.db_path) as conn:
+        conn.execute("INSERT INTO observations (session_id, timestamp, action_type, summary, details) VALUES ('mcp', ?, ?, 's', '{}')", (old, ACTION))
+    record_query(project, {"intent": "flow", "request": "x", "nodes": []}, source="mcp", tracker=tracker)
+    with sqlite3.connect(tracker.db_path) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM observations WHERE action_type = ?", (ACTION,)).fetchone()[0] == 0
+
+
+def test_the_switch_reaches_a_real_mcp_process_started_elsewhere(project):
+    # MCP has its own environment: the setting must live where every process reads it.
+    set_logging(HistoryTracker(project), False)
+    _mcp(project, [_query(1)])
+    assert recent_queries(HistoryTracker(project)) == []
+    set_logging(HistoryTracker(project), True)
+    _mcp(project, [_query(1)])
+    assert len(recent_queries(HistoryTracker(project))) == 1
+
+
+def test_settings_endpoint_toggles_logging_and_validates(project, monkeypatch):
+    for name in ("GRAPHTYN_MEMORY_TOKENS", "GRAPHTYN_MEMORY_TOKENS_FILE", "GRAPHTYN_MEMORY_HTTP_TOKEN"):
+        monkeypatch.delenv(name, raising=False)
+    done = agent_activity.agent_activity_settings({"path": str(project), "logging": False}, None)
+    assert done == {"ok": True, "logging": False}
+    state = agent_activity.agent_activity(str(project), 5)
+    assert state["logging"] is False and state["retention_days"] == RETENTION_DAYS
+    assert agent_activity.agent_activity_settings({"path": str(project), "logging": "no"}, None).status_code == 422
+    assert agent_activity.agent_activity_settings({"path": str(project / "nada"), "logging": True}, None).status_code == 404
+
+
+def test_settings_endpoint_requires_a_writer_token_when_tokens_are_configured(project, monkeypatch):
+    monkeypatch.setenv("GRAPHTYN_MEMORY_TOKENS", json.dumps({"lector": "reader", "escritor": "writer"}))
+    payload = {"path": str(project), "logging": False}
+    assert agent_activity.agent_activity_settings(payload, None).status_code == 401
+    assert agent_activity.agent_activity_settings(payload, "Bearer lector").status_code == 403
+    assert agent_activity.agent_activity_settings(payload, "Bearer escritor")["logging"] is False
+
+
+def test_summary_covers_seven_days_while_the_list_keeps_the_retention_window(project):
+    tracker = HistoryTracker(project)
+    with sqlite3.connect(tracker.db_path) as conn:
+        conn.execute("INSERT INTO observations (session_id, timestamp, action_type, summary, details) VALUES ('mcp', ?, ?, 's', ?)",
+                     (time.time() - 10 * 86400, ACTION, json.dumps({"request": "hace diez días"})))
+    data = agent_activity.agent_activity(str(project), 5)
+    assert [query["request"] for query in data["queries"]] == ["hace diez días"]
+    assert data["usage"]["queries"] == 0

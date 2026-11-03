@@ -48,6 +48,7 @@ class HistoryTracker:
             """)
             conn.execute("CREATE INDEX IF NOT EXISTS idx_session ON observations(session_id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON observations(timestamp)")
+            conn.execute("CREATE TABLE IF NOT EXISTS settings (name TEXT PRIMARY KEY, value TEXT NOT NULL)")
             conn.commit()
 
     def log_event(self, session_id: str, action_type: str, summary: str, details: Dict[str, Any]) -> int:
@@ -102,6 +103,21 @@ class HistoryTracker:
                 (action_type, since, limit),
             ).fetchall()
         return [{"source": row[1], **json.loads(row[3]), "id": row[0], "timestamp": row[2]} for row in rows]
+
+    def prune_events(self, action_type: str, before: float) -> int:
+        with sqlite3.connect(self.db_path) as conn:
+            return conn.execute("DELETE FROM observations WHERE action_type = ? AND timestamp < ?",
+                                (action_type, before)).rowcount
+
+    def get_setting(self, name: str, default: str = "") -> str:
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute("SELECT value FROM settings WHERE name = ?", (name,)).fetchone()
+        return row[0] if row else default
+
+    def set_setting(self, name: str, value: str) -> None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("INSERT INTO settings (name, value) VALUES (?, ?) "
+                         "ON CONFLICT(name) DO UPDATE SET value = excluded.value", (name, value))
 
     def get_observation(self, obs_id: int) -> Dict[str, Any]:
         with sqlite3.connect(self.db_path) as conn:
