@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingRes
 from .. import __version__
 from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
+from ..core.query_log import record_query
 from ..core.watcher import WatchManager
 from ..core.impact import analyze_impact
 from ..core.change_analyst import analyze_change, query_intent
@@ -41,6 +42,7 @@ from ..core.memory_jobs import MemoryJobManager, memory_jobs
 from .semantic_graph import build_semantic_graph
 from .service_status import router as service_router, memory_auth_configured, scoped_tokens_configured
 from .demo import router as demo_router
+from .agent_activity import router as activity_router
 from ..core.memory_consolidation import (consolidate_legacy_brain,
                                          preview_legacy_consolidation)
 from ..mcp_server import (blast_radius, context_bundle, get_workspace_graph, neighborhood_subgraph, _prune_node,
@@ -76,6 +78,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="Graphtyn API", version=__version__, lifespan=lifespan)
 app.include_router(service_router)
 app.include_router(demo_router)
+app.include_router(activity_router)
 
 
 @app.exception_handler(MemoryStoreConflictError)
@@ -457,7 +460,7 @@ async def require_remote_memory_auth(request, call_next):
     protected = (path.startswith("/api/memory") or path.startswith("/api/v1/")
                  or path.startswith("/api/harness/")
                  or path.startswith("/api/reindex") or path == "/api/graph"
-                 or path in {"/api/projects/register", "/api/agents/register", "/api/demo"})
+                 or path in {"/api/projects/register", "/api/agents/register", "/api/demo", "/api/agent-activity"})
     if remote and protected:
         if not memory_auth_configured():
             return JSONResponse({"ok": False, "error": "Configura autenticación de memoria antes de exponer la API"},
@@ -3079,9 +3082,9 @@ def _execute_http_graph_tool(name: str, args: dict, root: Path) -> dict | JSONRe
             graph, request, str(args.get("intent") or "auto"),
             max(4, min(24, int(args.get("limit") or 10))),
         )
-        return attach_learning(
-            attach_source_evidence(root, data, request, str(args.get("evidence_mode") or "auto")), root
-        )
+        data = attach_learning(attach_source_evidence(root, data, request, str(args.get("evidence_mode") or "auto")), root)
+        record_query(root, data, source="mcp-http", request=request)
+        return data
     if name == "graph_validate_answer":
         return validate_answer(
             apply_decisions(graph, root), str(args.get("answer") or ""),

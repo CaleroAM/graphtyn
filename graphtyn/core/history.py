@@ -93,6 +93,16 @@ class HistoryTracker:
                 for r in rows
             ]
 
+    def events_since(self, action_type: str, since: float, limit: int = 30) -> List[Dict[str, Any]]:
+        """Newest first, each event's details merged with its id, time and session."""
+        with sqlite3.connect(self.db_path) as conn:
+            rows = conn.execute(
+                "SELECT id, session_id, timestamp, details FROM observations "
+                "WHERE action_type = ? AND timestamp >= ? ORDER BY timestamp DESC, id DESC LIMIT ?",
+                (action_type, since, limit),
+            ).fetchall()
+        return [{"source": row[1], **json.loads(row[3]), "id": row[0], "timestamp": row[2]} for row in rows]
+
     def get_observation(self, obs_id: int) -> Dict[str, Any]:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()

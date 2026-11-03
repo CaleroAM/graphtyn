@@ -349,6 +349,7 @@
     <div class="service-status" id="service-status" role="status" title="Comprobando el servicio del dashboard">
       <span class="service-dot"></span> <span id="service-status-label">Comprobando…</span>
     </div>
+    <button class="btn-action" id="activity-btn" type="button" onclick="toggleActivityPanel()" title="Qué preguntan tus agentes a Graphtyn y qué reciben">Actividad</button>
     <div class="dd-wrap" id="dd-actions">
       <button class="btn-action" onclick="toggleDD('dd-actions')" aria-haspopup="true" aria-expanded="false">Acciones ▾</button>
       <div class="dd-panel action-menu" role="menu">
@@ -370,6 +371,19 @@
 
   <!-- ===== GRAPH CANVAS ===== -->
   <div id="graph-container"></div>
+  <aside id="activity-panel" class="activity-panel" aria-label="Actividad de agentes" hidden>
+    <div class="activity-head">
+      <strong>Actividad de agentes</strong>
+      <label title="Muestra en el grafo cada paquete nuevo en cuanto llega"><input type="checkbox" id="activity-follow" onchange="setActivityFollow(this.checked)"> Seguir en vivo</label>
+      <button class="modal-close" onclick="toggleActivityPanel(false)" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="activity-usage"></div>
+    <div class="help-section">Últimos 10 minutos</div>
+    <div id="activity-river"></div>
+    <div id="activity-detail" class="activity-detail" hidden></div>
+    <div class="help-section">Consultas recientes</div>
+    <div id="activity-list" class="activity-list"></div>
+  </aside>
   <div id="view-hint" class="view-hint" hidden>
     <span class="view-hint-text"></span>
     <button type="button" class="view-hint-close" onclick="dismissViewHint()" aria-label="Ocultar esta explicación">✕</button>
@@ -547,6 +561,8 @@
         <dt><kbd>A</kbd></dt><dd>Modo anónimo: oculta nombres de proyectos, archivos y símbolos para compartir pantalla</dd>
         <dt><kbd>Esc</kbd></dt><dd>Cerrar menús y paneles</dd>
       </dl>
+      <div class="help-section">Actividad de agentes</div>
+      <p class="help-intro">El botón <strong>Actividad</strong> lista lo que Claude, Codex u otros clientes preguntan a Graphtyn en este proyecto, qué recibieron y por qué entró cada entidad. «Ver en el grafo» deja sólo ese paquete; «Seguir en vivo» lo hace con cada consulta nueva.</p>
       <div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px;">
         <button class="btn-action" onclick="startDemo(this)">Probar con un proyecto de ejemplo</button>
         <button class="btn-action btn-primary" onclick="closeHelp()">Entendido</button>

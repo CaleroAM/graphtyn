@@ -1,5 +1,5 @@
 import { state, authHeaders, PALETTES, COMM_COLORS, getCommKey, getMemoryColor, particleProfile, saveVisualPreferences, safePaint } from './state.js';
-import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia } from './painters.js';
+import { nodeColor, nodeVal, squareNodePainter, isDocOrMedia, paintFocusLabels } from './painters.js';
 import { buildPulseSim } from './sim.js';
 import { renderKindLegend } from './legend.js';
 import { anonymousName } from './help.js';
@@ -296,6 +296,8 @@ export function focusWebFlow(nodeId) {
 
 export function clearWebFlow() {
       state.webFlowNodeIds = null;
+      state.graphInst?.d3Force?.('x', null);
+      state.graphInst?.d3Force?.('y', null);
       const reset = document.getElementById('reset-web-flow');
       if (reset) reset.style.display = 'none';
       applyFilter();
@@ -834,6 +836,7 @@ export function loadGraph() {
             .d3Force('charge', d3.forceManyBody().strength(-300))
             .d3Force('link',   d3.forceLink().distance(80).strength(0.4))
             .d3Force('collide', d3.forceCollide().radius(22))
+            .onRenderFramePost(paintFocusLabels)
             .graphData(data);
 
             apply2DStyle();
@@ -878,6 +881,7 @@ export function loadGraph() {
           apply3DStyle();
         }
 
+        state.graphInst.width(container.clientWidth);
         applyFilter();
         } catch(err) {
           console.error("Graph render error:", err);

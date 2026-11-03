@@ -1,4 +1,18 @@
 import { state, PALETTES, MEMORY_COLOR_DEFAULTS, getCommKey, hexRgb, mixColor, getMemoryColor } from './state.js';
+import { anonymousName } from './help.js';
+
+// Con pocos nodos enfocados, el nombre sobre el lienzo dice cuál es cuál sin pasar el ratón.
+export function paintFocusLabels(ctx, scale) {
+      if (!state.webFlowNodeIds || !state.graphInst) return;
+      ctx.font = `${11 / scale}px Inter, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#e2e8f0';
+      state.graphInst.graphData().nodes.forEach(node => {
+        if (!Number.isFinite(node.x)) return;
+        ctx.fillText(state.anonymous ? anonymousName(node) : String(node.name || ''), node.x, node.y + 9 + 4 / scale);
+      });
+    }
 
 export function isDocOrMedia(n) {
       if (!n) return false;

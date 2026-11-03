@@ -9,13 +9,13 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from pathlib import Path
 from typing import Dict, Any
-from . import __version__
 
 from .core.ast_parser import ASTParser
 from .core.change_analyst import analyze_change, query_intent
 from .core.retrieval_signals import render_call_outline
 from .core.work_memory import attach_learning
 from .core.history import HistoryTracker
+from .core.query_log import record_query
 from .core.shared_memory import SharedMemoryStore
 from .core.storage import data_home, project_store_dir
 from .core.memory_scope import resolve_memory_scope
@@ -27,7 +27,7 @@ from .core.intent_delta import _intent_delta
 from .core.answer_validation import validate_answer
 from .core.ambiguity_review import apply_decisions
 from .core.console import configure_utf8_stdio
-from .mcp_catalog import tools_list_response
+from .mcp_catalog import initialize_response, tools_list_response
 
 
 def _mcp_text(req_id: Any, result: Any) -> Dict[str, Any]:
@@ -966,6 +966,7 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full", *, preload_index
     history = HistoryTracker(workspace)
     memory = SharedMemoryStore(workspace)
     intent_contexts: dict[str, dict] = {}
+    client_name = ""
     preload_index_ms = 0.0
     if preload_index:
         preload_started_at = time.perf_counter()
@@ -974,26 +975,13 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full", *, preload_index
     server_startup_ms = round((time.perf_counter() - server_started_at) * 1000, 3)
 
     def _handle_request(req: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal client_name
         method = req.get("method")
         req_id = req.get("id")
 
         if method == "initialize":
-            return {
-                "jsonrpc": "2.0",
-                "id": req_id,
-                "result": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {"tools": {}},
-                    "serverInfo": {
-                        "name": "graphtyn-mcp",
-                        "version": __version__,
-                        "workspace": server_context["workspace"],
-                        "project_id": server_context["project_id"],
-                        "project_name": server_context["project_name"],
-                        "scope": server_context["scope"],
-                    }
-                }
-            }
+            client_name = str(((req.get("params") or {}).get("clientInfo") or {}).get("name") or "")
+            return initialize_response(req_id, server_context)
         elif method == "tools/list":
             return tools_list_response(req_id, tool_profile)
         elif method == "tools/call":
@@ -1053,7 +1041,9 @@ def run_mcp_server(workspace: Path, tool_profile: str = "full", *, preload_index
                 _tag_graph_result(result, graph_workspace)
                 if str(args.get("response_detail") or response_detail) != "debug":
                     result = lean_payload(result)
-                history.log_event("mcp", "query_intent", f"Consulta {raw['intent']} de una ronda", {"request": request[:240], "context_id": context_id, "workspace": str(graph_workspace), "estimated_tokens": result.get("estimated_tokens", result.get("payload_tokens"))})
+                record_query(graph_workspace, raw, source="mcp", agent=client_name, request=request, result=result,
+                             context_id=context_id, extends=previous_id,
+                             tracker=history if graph_workspace == workspace else None)
                 return {"jsonrpc": "2.0", "id": req_id,
                         "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, separators=(",", ":"))}]}}
             elif name == "graph_validate_answer":
