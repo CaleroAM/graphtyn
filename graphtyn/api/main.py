@@ -55,12 +55,11 @@ parser = ASTParser()
 watch_manager = WatchManager()
 _memory_watchers: dict[str, dict] = {}
 _memory_watch_lock = threading.Lock()
-_memory_watch_config = data_home() / "memory-watchers.json"
 _openclaw_sync_jobs: dict[str, str] = {}
 _openclaw_sync_lock = threading.Lock()
 _legacy_consolidation_jobs: dict[str, str] = {}
 _legacy_consolidation_lock = threading.Lock()
-reindex_jobs = MemoryJobManager(data_home() / "reindex-jobs")
+reindex_jobs = MemoryJobManager(name="reindex-jobs")
 _reindex_jobs_ready_for: str | None = None
 _reindex_lock = threading.Lock()
 
@@ -91,17 +90,30 @@ async def memory_store_conflict_handler(_request, exc: MemoryStoreConflictError)
 async def memory_permission_handler(_request, exc: PermissionError):
     return JSONResponse({"ok": False, "error": str(exc)}, status_code=403)
 
-# Central writable index store — user home ~/.graphtyn/
-INDEX_STORE = data_home()
-INDEX_STORE.mkdir(parents=True, exist_ok=True)
+# Central writable index store (~/.graphtyn/ or GRAPHTYN_HOME), resolved on use so the
+# variable can be set after import. Assigning INDEX_STORE or REGISTRATION_FILE pins them.
+INDEX_STORE: Path | None = None
+REGISTRATION_FILE: Path | None = None
 
-REGISTRATION_FILE = INDEX_STORE / "registered_projects.json"
+
+def _index_store() -> Path:
+    store = INDEX_STORE or data_home()
+    store.mkdir(parents=True, exist_ok=True)
+    return store
+
+
+def _registration_file() -> Path:
+    return REGISTRATION_FILE or _index_store() / "registered_projects.json"
+
+
+def _memory_watch_config() -> Path:
+    return data_home() / "memory-watchers.json"
 DEFAULT_MASTER_DIR = Path.cwd()
 
 
 def _agent_registry_path() -> Path:
     """Central registry for agent identities, independent from project paths."""
-    return INDEX_STORE / "registered_agents.json"
+    return _index_store() / "registered_agents.json"
 
 
 def _read_agent_registry() -> list[dict]:
@@ -210,7 +222,7 @@ def _load_registered_agents() -> list[dict]:
 
 def _index_dir(project_path: Path) -> Path:
     """Returns the writable index directory for a project."""
-    return project_store_dir(INDEX_STORE, project_path)
+    return project_store_dir(_index_store(), project_path)
 
 
 def _watch_enabled() -> bool:
@@ -265,7 +277,7 @@ def _legacy_memory_record(path: str | Path) -> dict | None:
 
 def _watch_config_read() -> list[dict]:
     try:
-        payload = json.loads(_memory_watch_config.read_text(encoding="utf-8"))
+        payload = json.loads(_memory_watch_config().read_text(encoding="utf-8"))
         rows = payload.get("watchers", []) if isinstance(payload, dict) else payload
         return [row for row in rows if isinstance(row, dict) and row.get("path")]
     except (OSError, ValueError):
@@ -276,7 +288,7 @@ def _watch_config_write() -> None:
     rows = [{"path": key, "interval": max(5, float(value.get("interval", 30))),
              "agent_id": value.get("agent_id"), "enrich": bool(value.get("enrich", False))}
             for key, value in _memory_watchers.items() if value.get("persist", True)]
-    atomic_write_json(_memory_watch_config, {"version": 1, "watchers": rows})
+    atomic_write_json(_memory_watch_config(), {"version": 1, "watchers": rows})
 
 
 def _watcher_public(key: str, entry: dict) -> dict:
@@ -556,9 +568,9 @@ def _load_registered_projects() -> list[dict]:
                             })
                 except Exception:
                     pass
-    if REGISTRATION_FILE.exists():
+    if _registration_file().exists():
         try:
-            custom = json.loads(REGISTRATION_FILE.read_text(encoding="utf-8"))
+            custom = json.loads(_registration_file().read_text(encoding="utf-8"))
             for cp in custom:
                 p_path = Path(cp["path"])
                 if not p_path.exists():
@@ -973,9 +985,9 @@ def register_project(payload: dict = Body(...), authorization: str | None = Head
         return JSONResponse({"ok": False, "error": reason + "; registra el repositorio concreto."}, status_code=400)
 
     custom_projects = []
-    if REGISTRATION_FILE.exists():
+    if _registration_file().exists():
         try:
-            custom_projects = json.loads(REGISTRATION_FILE.read_text(encoding="utf-8"))
+            custom_projects = json.loads(_registration_file().read_text(encoding="utf-8"))
         except Exception:
             pass
 
@@ -1004,7 +1016,7 @@ def register_project(payload: dict = Body(...), authorization: str | None = Head
         custom_projects.append(new_entry)
     else:
         existing.update(new_entry)
-    atomic_write_json(REGISTRATION_FILE, custom_projects)
+    atomic_write_json(_registration_file(), custom_projects)
 
     return JSONResponse({"ok": True, "registered": new_entry, "mode": mode,
                          "project_identity": project_identity,
@@ -2787,7 +2799,7 @@ def _http_project_context_tool(req_id, args: dict, authorization: str | None) ->
 
     is_error = False
     try:
-        resolution = resolve_registered_project(str(args.get("project") or ""), home=INDEX_STORE)
+        resolution = resolve_registered_project(str(args.get("project") or ""), home=_index_store())
         if resolution["status"] != "matched":
             data = {
                 "ok": False,
