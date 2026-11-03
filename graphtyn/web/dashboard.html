@@ -329,7 +329,9 @@
         </div>
       </div>
 
-      <input type="text" class="search-input" id="search-box" placeholder="Buscar símbolo, ruta, método…" oninput="applyFilter()">
+      <input type="text" class="search-input" id="search-box" placeholder="Buscar símbolo, ruta, método…" oninput="applyFilter()" title="Atajo: /">
+      <button class="btn-action help-btn" type="button" onclick="openHelp()" title="Ayuda y atajos (?)" aria-label="Ayuda y atajos">?</button>
+      <span id="anonymous-badge" class="anonymous-badge" hidden title="Los nombres están ocultos. Pulsa A para mostrarlos.">Modo anónimo · A</span>
     </div>
     <div class="graph-status" aria-label="Estado del índice y confianza de relaciones">
       <div class="graph-status-primary"><span id="model-badge">—</span><span id="stats">—</span></div>
@@ -464,9 +466,10 @@
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:5px;">El dashboard de Graphtyn corre en</div>
           <strong id="welcome-dashboard-url" style="color:#38bdf8;font-family:monospace;font-size:15px;">http://127.0.0.1:9210</strong>
         </div>
-        <p style="margin:0;color:#94a3b8;">Selecciona o registra un proyecto, reindexa su contenido y explora el grafo. Este mensaje sólo aparece la primera vez en este navegador.</p>
+        <p style="margin:0;color:#94a3b8;">Selecciona o registra un proyecto, reindexa su contenido y explora el grafo. Si aún no quieres usar tu código, abre la tienda de ejemplo. Pulsa <kbd>?</kbd> en cualquier momento para ver la ayuda. Este mensaje sólo aparece la primera vez en este navegador.</p>
       </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;">
+        <button class="btn-action" id="welcome-demo" onclick="closeWelcome();startDemo(this)">Probar con un proyecto de ejemplo</button>
         <button class="btn-action btn-primary" id="welcome-start" onclick="closeWelcome()">Comenzar</button>
       </div>
     </div>
@@ -518,6 +521,35 @@
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
         <button class="btn-action" onclick="closeAgentRegister()">Cancelar</button>
         <button class="btn-action btn-primary" onclick="submitBrainRegister()">Guardar cerebro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: Ayuda ===== -->
+  <div class="modal-bg" id="modal-help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-box help-modal">
+      <div class="modal-hdr"><span id="help-title">Ayuda del dashboard</span><button class="modal-close" onclick="closeHelp()" aria-label="Cerrar">✕</button></div>
+      <p class="help-intro">El dashboard muestra el índice que Graphtyn construye de tu código y la memoria que guardan tus agentes. Sólo lo necesitas para mirar: Claude y Codex usan <code>graphtyn mcp</code> sin él.</p>
+      <div class="help-section">Vistas (menú Explorar)</div>
+      <dl class="help-views" id="help-views"></dl>
+      <div class="help-section">Cómo leer el grafo</div>
+      <dl class="help-views">
+        <dt>Color del nodo</dt><dd>Su tipo: la leyenda está bajo el contador de nodos. Con la paleta «Por comunidad», su carpeta.</dd>
+        <dt>Línea sólida</dt><dd>Relación extraída del código (EXTRACTED).</dd>
+        <dt>Línea punteada</dt><dd>Relación inferida (INFERRED): compruébala en el código.</dd>
+        <dt>Línea ámbar</dt><dd>Relación ambigua (AMBIGUOUS): no la tomes como hecho.</dd>
+        <dt>Comunidades</dt><dd>Agrupación por carpeta del panel derecho; desmarca una para ocultar sus nodos.</dd>
+      </dl>
+      <div class="help-section">Atajos</div>
+      <dl class="help-views help-keys">
+        <dt><kbd>?</kbd></dt><dd>Abrir esta ayuda</dd>
+        <dt><kbd>/</kbd></dt><dd>Buscar símbolo o ruta</dd>
+        <dt><kbd>A</kbd></dt><dd>Modo anónimo: oculta nombres de proyectos, archivos y símbolos para compartir pantalla</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Cerrar menús y paneles</dd>
+      </dl>
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px;">
+        <button class="btn-action" onclick="startDemo(this)">Probar con un proyecto de ejemplo</button>
+        <button class="btn-action btn-primary" onclick="closeHelp()">Entendido</button>
       </div>
     </div>
   </div>
