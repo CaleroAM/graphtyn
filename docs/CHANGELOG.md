@@ -7,6 +7,11 @@ compatibles con PEP 440.
 
 ### Añadido
 
+- Panel «Actividad» del dashboard: qué preguntan los agentes en este proyecto
+  (por MCP, MCP HTTP o hook), con su cliente y hora, qué entidades y etapas
+  recibieron y por qué entró cada entidad. «Ver en el grafo» deja sólo ese
+  paquete y «Seguir en vivo» lo hace con cada consulta nueva. Incluye un resumen
+  de 7 días; sólo cuenta lo que pasa por Graphtyn, no lo que el agente lee después.
 - Ayuda del dashboard (botón `?` o tecla `?`): qué muestra cada vista, cómo leer
   colores y líneas, y atajos (`/` busca, `A` modo anónimo, `Esc` cierra).
 - Modo anónimo (`A`): difumina proyectos, archivos, comunidades y paneles, y el

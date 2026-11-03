@@ -1,6 +1,7 @@
 import { state, authHeaders } from './state.js';
 import { setView } from './controls.js';
 import { loadGraph, focusNode } from './graph.js';
+import { resetActivityForProject } from './activity.js';
 
 const html = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const attr = value => encodeURIComponent(String(value ?? ''));
@@ -115,6 +116,7 @@ export function selectProject(path) {
       state.activePath = path;
       state.activeAgentId = null;
       state.activeSpaceType = 'project';
+      resetActivityForProject();
       state.memoryFocusSession = null;
       state.webFlowNodeIds = null;
       const resetFlow = document.getElementById('reset-web-flow');
@@ -314,6 +316,7 @@ export function selectBrain(path) {
       state.activePath = String(path || '');
       state.activeAgentId = null;
       state.activeSpaceType = 'agent_brain';
+      resetActivityForProject();
       state.memoryFocusSession = null;
       state.webFlowNodeIds = null;
       state.contextSelection = [];

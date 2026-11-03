@@ -351,3 +351,23 @@ def test_demo_is_offered_on_first_run_help_and_empty_dashboard():
     assert "startDemo(this)" in (WEB / "js" / "graph.js").read_text()
     assert "'/api/demo'" in (WEB / "js" / "help.js").read_text()
     assert '"/api/demo"' in (Path(api_main.__file__)).read_text()
+
+
+def test_activity_panel_is_wired_and_states_what_it_cannot_see():
+    html = (WEB / "dashboard.html").read_text()
+    activity = (WEB / "js" / "activity.js").read_text()
+    assert 'id="activity-panel"' in html and 'id="activity-follow"' in html and 'id="activity-btn"' in html
+    assert "fetch('/api/agent-activity?path='" in activity and "headers:authHeaders()" in activity
+    assert "no sabe qué archivos lee o busca el agente después" in activity
+    assert "resetActivityForProject();" in (WEB / "js" / "ui.js").read_text()
+    assert '"/api/agent-activity"' in Path(api_main.__file__).read_text()
+    # Everything from a query comes from agents: it must be escaped before reaching innerHTML.
+    assert "${esc(query.request)}" in activity and "${query.request}" not in activity
+    # Node ids reach the handler through a data attribute, never spliced into inline JavaScript.
+    assert 'data-node-id="${esc(item.id)}" onclick="focusNode(this.dataset.nodeId)"' in activity
+
+
+def test_focused_packages_are_named_on_the_canvas_and_stay_anonymous():
+    painters = (WEB / "js" / "painters.js").read_text()
+    assert "state.anonymous ? anonymousName(node) : String(node.name || '')" in painters
+    assert ".onRenderFramePost(paintFocusLabels)" in (WEB / "js" / "graph.js").read_text()
