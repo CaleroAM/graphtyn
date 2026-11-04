@@ -10,6 +10,12 @@ from typing import Any
 from .path_signals import TEST_PATH, VENDORED_PATH
 from .vocabulary import COMMON_WORDS, is_prose_word
 
+# A code identifier is the same in every language, so it names code on its own.
+# Shapes are case-sensitive (camelCase, PascalCase with an inner capital).
+CODE_IDENTIFIER = re.compile(
+    r"`[^`]+`|\b[a-z]+[A-Z]\w*|\b[A-Z][a-z0-9]+[A-Z]\w*|\b\w+_\w+\b|\w::\w|\w#\w|\w\.\w+\(|"
+    r"\b[\w./-]+\.(?:py|rb|js|jsx|ts|tsx|go|rs|java|kt|swift|scala|cs|php|c|h|cc|cpp|hpp)\b")
+
 BEHAVIOR_KINDS = {"function", "method", "def"}
 HOMONYM_CAP = 2
 # Flow package policy, measured on benchmarks/task_bank_2026-10-28 (fifth
