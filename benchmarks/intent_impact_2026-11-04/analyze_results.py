@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Grade the before/after intent run against the rubrics frozen before implementing.
+"""Grade every intent-benchmark variant against the rubrics frozen before implementing.
 
-Layout: <run-root>/{before,after}/<task>/runs/<run_id>/{summary.json,events.jsonl,answer.txt}.
+Layout: <run-root>/<variant>/<task>/runs/<run_id>/{summary.json,events.jsonl,answer.txt}.
+
+Set 1 ran three versions: before (3de6e0e), after (46a8057) and set1-final (95e53ff).
+Set 2 was frozen before the corrections and ran set2-before (3de6e0e) and set2-final (95e53ff).
+Set 3 was frozen before correcting truncated bodies; retest-* reruns the explanation tasks that regressed.
 """
 from __future__ import annotations
 
@@ -11,7 +15,10 @@ import statistics
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-VARIANTS = ("before", "after")
+VARIANTS = {"before": HERE, "after": HERE, "set1-final": HERE,
+            "set2-before": HERE / "set2", "set2-final": HERE / "set2",
+            "set3-before": HERE / "set3", "set3-final": HERE / "set3",
+            "retest-set1": HERE, "retest-set2": HERE / "set2"}
 
 
 def _steps(events: list[dict]) -> list[dict]:
@@ -24,8 +31,8 @@ def _steps(events: list[dict]) -> list[dict]:
 
 
 def load_runs(root: Path) -> list[dict]:
-    specs = {task["id"]: task for corpus in ("redis", "fmt", "rails")
-             for task in json.loads((HERE / f"{corpus}_tasks.json").read_text(encoding="utf-8"))["tasks"]}
+    specs = {task["id"]: task for folder in set(VARIANTS.values()) for corpus in ("redis", "fmt", "rails")
+             for task in json.loads((folder / f"{corpus}_tasks.json").read_text(encoding="utf-8"))["tasks"]}
     rows = []
     for variant in VARIANTS:
         for path in sorted((root / variant).glob("*/runs/*/summary.json")):
@@ -55,6 +62,8 @@ def main() -> int:
         summary[task] = {}
         for variant in VARIANTS:
             group = [row for row in rows if row["task"] == task and row["variant"] == variant]
+            if not group:
+                continue
             summary[task][variant] = {
                 "statuses": [row["session_status"] for row in group], "tokens": [row["tokens"] for row in group],
                 "cached_input_tokens": [row["cached_input_tokens"] for row in group],
@@ -62,7 +71,18 @@ def main() -> int:
                 "tool_calls": [row["tool_calls"] for row in group], "mcp_calls": [row["mcp_calls"] for row in group],
                 "seconds": round(statistics.fmean(row["seconds"] for row in group), 1)}
     (HERE / "results.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(summary, ensure_ascii=False))
+    for variant in VARIANTS:
+        group = [row for row in rows if row["variant"] == variant]
+        total = sum(row["tokens"] for row in group) / len(group)
+        cached = sum(row["cached_input_tokens"] for row in group) / len(group)
+        print(f"{variant}: n={len(group)} incomplete={sum(row['session_status'] != 'complete' for row in group)} "
+              f"tokens={total:.0f} with_cache={total + cached:.0f} rubric={sum(row['passed'] for row in group)}/"
+              f"{sum(row['total'] for row in group)} tools={sum(row['tool_calls'] for row in group) / len(group):.1f} "
+              f"mcp={sum(row['mcp_calls'] for row in group) / len(group):.1f} "
+              f"seconds={sum(row['seconds'] for row in group) / len(group):.0f}")
+    for task, cell in summary.items():
+        print(task, {variant: (data["rubric"], data["rubric_total"], data["tokens"], data["tool_calls"])
+                     for variant, data in cell.items()})
     return 0
 
 
