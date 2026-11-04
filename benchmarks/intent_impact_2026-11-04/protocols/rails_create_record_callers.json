@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Efecto de corregir clasificación e impact: Graphtyn anterior frente a nuevo, MCP lean, con preguntas naturales que nombran el proyecto.",
+  "repository": {
+    "name": "rails/rails",
+    "url": "https://github.com/rails/rails",
+    "commit": "3f0b675158e8284241bb1213c00375bc1fb9c52f"
+  },
+  "design": {
+    "clients": [
+      "antigravity"
+    ],
+    "tasks": [
+      "RAILS_CREATE_RECORD_CALLERS"
+    ],
+    "arms": {
+      "before": "Graphtyn en 3de6e0e, antes de PR #34",
+      "after": "esta rama"
+    },
+    "repetitions": 2,
+    "stop_rule": "targeted",
+    "grading": "Rúbrica literal congelada antes de implementar, escrita leyendo el código fuente."
+  },
+  "client_config": {
+    "models": {
+      "antigravity": "gemini-3.8-flash-high"
+    }
+  },
+  "authorization": {
+    "source": "El usuario pidió resolver lo faltante, incluida la medición con agentes (2026-11-04).",
+    "total_token_ceiling": 4000000
+  }
+}

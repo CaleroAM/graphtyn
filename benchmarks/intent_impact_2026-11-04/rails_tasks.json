@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "RAILS_TOUCH_IMPACT",
+      "request": "Si cambio el método touch en este proyecto, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "touch_later",
+          "any": [
+            "touch_later"
+          ]
+        },
+        {
+          "id": "transactions",
+          "any": [
+            "with_transaction_returning_status",
+            "transactions.rb"
+          ]
+        },
+        {
+          "id": "callbacks",
+          "any": [
+            "_run_touch_callbacks",
+            "callbacks.rb"
+          ]
+        },
+        {
+          "id": "no_touching",
+          "any": [
+            "no_touching"
+          ]
+        },
+        {
+          "id": "has_one",
+          "any": [
+            "has_one.rb",
+            "touch_record"
+          ]
+        },
+        {
+          "id": "touch_row",
+          "any": [
+            "_touch_row"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RAILS_CREATE_RECORD_CALLERS",
+      "request": "¿Quién llama a _create_record en este proyecto? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "create_or_update",
+          "any": [
+            "create_or_update"
+          ]
+        },
+        {
+          "id": "callbacks",
+          "any": [
+            "callbacks.rb",
+            "_run_create_callbacks"
+          ]
+        },
+        {
+          "id": "timestamp",
+          "any": [
+            "timestamp.rb"
+          ]
+        },
+        {
+          "id": "counter_cache",
+          "any": [
+            "counter_cache.rb"
+          ]
+        },
+        {
+          "id": "dirty",
+          "any": [
+            "dirty.rb"
+          ]
+        },
+        {
+          "id": "association",
+          "any": [
+            "association.rb",
+            "collection_association"
+          ]
+        }
+      ]
+    }
+  ]
+}
