@@ -266,7 +266,7 @@ que recibe el proyecto en cada llamada.
 | Claude Code | `graphtyn agent-install claude --path .` | `CLAUDE.md`, `.claude/skills/graphtyn{,-memory}/`, `.mcp.json` y registro `local` con `claude mcp add` | `claude mcp list` |
 | Codex | `graphtyn agent-install codex --path .` | `AGENTS.md`, `.codex/config.toml` (requiere proyecto de confianza) | `codex mcp list` |
 | OpenCode | `graphtyn agent-install opencode --path .` | `AGENTS.md`, `opencode.json` | `opencode mcp list` |
-| Antigravity | `graphtyn agent-install antigravity --path .` | `GEMINI.md`, `.agents/skills/graphtyn{,-memory}/`, `.agents/mcp_config.json` | `agy mcp list` |
+| Antigravity | `graphtyn agent-install antigravity --path .` | `GEMINI.md`, `.agents/skills/graphtyn{,-memory}/`, `.agents/mcp_config.json` | en una sesión de `agy` (`agy mcp list` sólo muestra los servidores globales) |
 | OpenClaw | `graphtyn harness openclaw connect` | servidor compartido de la instalación | ver [conexión OpenClaw](docs/openclaw-native.md) |
 | Copilot (VS Code) | `graphtyn agent-install copilot --path .` | `.github/copilot-instructions.md`, `.vscode/mcp.json` (formato contrastado con la referencia de VS Code; sin probar con un cliente real) | vista MCP de VS Code |
 | Cursor, Gemini | `graphtyn agent-install <cliente> --path .` | instrucciones (y `.cursor/mcp.json` en Cursor) | inspector MCP del cliente |
@@ -362,7 +362,7 @@ paquete `lean` (sin diagnósticos ni entidades ajenas a la evidencia);
 `response_detail="debug"` (o `graphtyn mcp --response-detail debug`) conserva el
 paquete completo.
 
-El mismo hook existe para otros dos clientes, también opcional y reversible:
+El mismo hook existe para otros tres clientes, también opcional y reversible:
 
 - **Codex** — `graphtyn codex-context install --consent --path .` añade a
   `.codex/hooks.json` un hook `UserPromptSubmit` con
@@ -375,8 +375,19 @@ El mismo hook existe para otros dos clientes, también opcional y reversible:
   mensaje (OpenCode no envía al modelo las partes `synthetic`). `opencode run
   --pure` desactiva los plugins y, con ellos, el hook.
 
-Antigravity no ofrece un mecanismo equivalente; allí sólo aplica el paquete
-`lean` del MCP.
+- **Antigravity** — `graphtyn antigravity-context install --consent --path .`
+  añade a `.agents/hooks.json` un hook `PreInvocation`, conservando los tuyos.
+  Ese evento se dispara antes de cada llamada al modelo y no recibe el mensaje,
+  así que el hook lo lee de la transcripción de la sesión e inyecta sólo en la
+  primera llamada de cada turno, como mensaje efímero. El formato de esa
+  transcripción no está documentado: si cambia, el hook no inyecta nada y el
+  agente sigue con el MCP. Probado con el CLI `agy` 1.3.5, no con el IDE ni con
+  Antigravity 2.0.
+  **Aquí no conviene activarlo para ahorrar:** frente a MCP lean, gastó un 4 %
+  menos en las tareas ya usadas y un 13 % más en tareas nuevas, con la misma
+  calidad; sólo redujo claramente el gasto cuando el paquete bastaba para
+  responder (−53 % en el flujo de comandos de Redis)
+  ([informe](benchmarks/antigravity_hook_2026-11-03/report.md)).
 
 El repositorio incluye [AGENTS.md](AGENTS.md) para descubrimiento automático y
 dos skills reutilizables con alcances separados:

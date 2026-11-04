@@ -14,6 +14,7 @@ import os
 import shlex
 import shutil
 import subprocess
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,7 +30,7 @@ ARMS = ("baseline", "graphtyn", "graphtyn_full", "graphtyn_hook", "graphify")
 TREATMENT_ARMS = ("graphtyn", "graphtyn_full", "graphtyn_hook")
 SERVER_NAMES = {"graphtyn": "graphtyn_benchmark", "graphtyn_full": "graphtyn_benchmark",
                 "graphtyn_hook": "graphtyn_benchmark", "graphify": "graphify_benchmark"}
-HOOK_CLIENTS = ("claude", "codex", "opencode")
+HOOK_CLIENTS = ("claude", "codex", "opencode", "antigravity")
 
 
 def graphtyn_mcp_args(workspace: Path, full_payload: bool = False) -> list[str]:
@@ -165,6 +166,39 @@ def claude_hook_evidence(events: list[dict]) -> dict:
     return {"hook_events": len(hooks), "context_injected": "<graphtyn-context" in text}
 
 
+def antigravity_hook_evidence(events: list[dict]) -> dict:
+    """What Antigravity's own transcript recorded as injected; it is not echoed in stream-json."""
+    conversation = next((event.get("conversation_id") for event in events if event.get("conversation_id")), None)
+    sizes = []
+    if conversation:
+        transcript = (Path.home() / ".gemini/antigravity-cli/brain" / str(conversation)
+                      / ".system_generated/logs/transcript_full.jsonl")
+        if transcript.is_file():
+            steps = parse_json_lines(transcript.read_text(encoding="utf-8", errors="replace"))
+            sizes = [len(str(step.get("content") or "")) for step in steps if step.get("type") == "EPHEMERAL_MESSAGE"
+                     and "<graphtyn-context" in str(step.get("content") or "")]
+    return {"conversation_id": conversation, "context_injected": bool(sizes), "injected_characters": sizes}
+
+
+def _hook_payload(client: str, request: str, workspace: Path, scratch: Path) -> str:
+    if client != "antigravity":
+        return json.dumps({"prompt": request, "cwd": str(workspace.resolve()), "hook_event_name": "UserPromptSubmit"})
+    # Same step shape as a real transcript: this event carries no prompt of its own.
+    transcript = scratch / "transcript_full.jsonl"
+    transcript.write_text(json.dumps({"type": "USER_INPUT",
+                                      "content": f"<USER_REQUEST>\n{request}\n</USER_REQUEST>"}) + "\n", encoding="utf-8")
+    return json.dumps({"invocationNum": 0, "transcriptPath": str(transcript),
+                       "workspacePaths": [str(workspace.resolve())]})
+
+
+def _hook_text(client: str, stdout: str) -> str:
+    if not stdout:
+        return ""
+    output = json.loads(stdout)
+    return (output["injectSteps"][0]["ephemeralMessage"] if client == "antigravity"
+            else output["hookSpecificOutput"]["additionalContext"])
+
+
 def expected_hook_context(client: str, workspace: Path, request: str, graphtyn_executable: Path) -> dict:
     """Run the arm's hook once outside session time: what the client receives.
 
@@ -173,17 +207,17 @@ def expected_hook_context(client: str, workspace: Path, request: str, graphtyn_e
     """
     from graphtyn.core.prompt_context import PARTS
     parts = PARTS if client == "claude" else 1
-    payload = json.dumps({"prompt": request, "cwd": str(workspace.resolve()), "hook_event_name": "UserPromptSubmit"})
     contexts, sizes = [], []
-    for part in range(1, parts + 1):
-        process = subprocess.run([str(graphtyn_executable), f"{client}-context", "hook", "--path",
-                                  str(workspace.resolve()), "--part", str(part), "--parts", str(parts)],
-                                 input=payload, text=True, capture_output=True, timeout=60)
-        text = process.stdout.strip()
-        context = json.loads(text)["hookSpecificOutput"]["additionalContext"] if text else ""
-        if context:
-            contexts.append(context)
-            sizes.append(len(context))
+    with tempfile.TemporaryDirectory() as scratch:
+        payload = _hook_payload(client, request, workspace, Path(scratch))
+        for part in range(1, parts + 1):
+            process = subprocess.run([str(graphtyn_executable), f"{client}-context", "hook", "--path",
+                                      str(workspace.resolve()), "--part", str(part), "--parts", str(parts)],
+                                     input=payload, text=True, capture_output=True, timeout=60)
+            context = _hook_text(client, process.stdout.strip())
+            if context:
+                contexts.append(context)
+                sizes.append(len(context))
     first = contexts[0] if contexts else ""
     marker = first.find('context_id="')
     return {"injected": bool(contexts), "parts": len(contexts), "characters": sizes,
@@ -373,7 +407,8 @@ def command_for(client: str, model: str, prompt: str, repo: Path, timeout: int,
 
 
 def make_workspace(source: Path, destination: Path, treatment: bool,
-                   graphtyn_executable: Path, full_payload: bool = False, opencode_hook: bool = False) -> str:
+                   graphtyn_executable: Path, full_payload: bool = False, opencode_hook: bool = False,
+                   antigravity_hook: bool = False) -> str:
     """Copy only tracked source and install an isolated per-arm MCP config."""
     commit = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
     files = subprocess.check_output(["git", "-C", str(source), "ls-files", "-z"]).split(b"\0")
@@ -419,6 +454,10 @@ def make_workspace(source: Path, destination: Path, treatment: bool,
         plugin.parent.mkdir(parents=True, exist_ok=True)
         plugin.write_text(opencode_plugin_source(
             [str(graphtyn_executable), "opencode-context", "hook", "--path", str(destination.resolve())]))
+    if antigravity_hook:
+        from graphtyn.core.prompt_context import install_antigravity_prompt_hook
+        install_antigravity_prompt_hook(destination, " ".join(shlex.quote(part) for part in (
+            str(graphtyn_executable), "antigravity-context", "hook", "--path", str(destination.resolve()))))
     return commit
 
 
@@ -591,6 +630,9 @@ def run_cell(client: str, model: str, task: dict, treatment: bool, workspace: Pa
                           system_prompt=system_prompt if client in ("claude", "codex") else None,
                           full_payload=full_payload, opencode_plugins=opencode_plugins)
     env = os.environ.copy()
+    if client == "antigravity" and system_prompt:
+        # agy has no system-prompt flag; GEMINI.md is its project policy (source copies exclude it).
+        (workspace / "GEMINI.md").write_text(system_prompt + "\n", encoding="utf-8")
     if client == "opencode":
         instructions = None
         if system_prompt:
@@ -658,6 +700,8 @@ def run_cell(client: str, model: str, task: dict, treatment: bool, workspace: Pa
                               if client == "claude" else None),
                "prompt_hook": ({**claude_hook_evidence(events), "expected": expected_hook}
                                if prefetch and client == "claude" else
+                               {**antigravity_hook_evidence(events), "expected": expected_hook}
+                               if prefetch and client == "antigravity" else
                                {"expected": expected_hook} if prefetch else None),
                "terminal_errors": [e.get("error") for e in events if e.get("type") == "error"]
                                   + [e.get("result") for e in events
@@ -787,7 +831,8 @@ def main() -> int:
             executable = isolated_executable(args.graphtyn_executable.resolve(), workspace)
             make_workspace(args.repo.resolve(), workspace, treatment,
                            executable, full_payload=arm == "graphtyn_full",
-                           opencode_hook=client == "opencode" and arm == "graphtyn_hook")
+                           opencode_hook=client == "opencode" and arm == "graphtyn_hook",
+                           antigravity_hook=client == "antigravity" and arm == "graphtyn_hook")
             try:
                 index_setup = (prepare_graphtyn_index(workspace, executable)
                                if treatment else prepare_graphify_graph(workspace, graphify_bin)

@@ -3,6 +3,22 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [Sin publicar]
+
+### Añadido
+
+- `graphtyn antigravity-context` (`install|uninstall|status|hook`): hook de primer
+  turno para Antigravity en `.agents/hooks.json` (`PreInvocation`). Lee el mensaje
+  de la transcripción e inyecta una vez por turno. Opcional, requiere `--consent`.
+  No ahorra tokens de forma general: ver
+  `benchmarks/antigravity_hook_2026-11-03/report.md`.
+
+### Corregido
+
+- El README ya no dice que Antigravity carece de hooks, ni indica `agy mcp list`
+  para verificar la entrada de proyecto: ese comando sólo muestra los servidores
+  globales.
+
 ## [0.12.0] - 2026-11-02
 
 Validación de la versión: `docs/release-validation-0.12.0.md`.

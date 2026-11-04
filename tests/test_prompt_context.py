@@ -271,3 +271,111 @@ def test_codex_hook_returns_one_block_through_the_cli(tmp_path, monkeypatch, cap
     assert output["hookEventName"] == "UserPromptSubmit"
     assert output["additionalContext"].startswith("<graphtyn-context")
     assert output["additionalContext"].rstrip().endswith("</graphtyn-context>")
+
+
+def _antigravity_transcript(tmp_path, *requests):
+    transcript = tmp_path / "transcript_full.jsonl"
+    steps = []
+    for request in requests:
+        steps += [{"type": "USER_INPUT", "source": "USER_EXPLICIT",
+                   "content": f"<USER_REQUEST>\n{request}\n</USER_REQUEST>\n<ADDITIONAL_METADATA>\nhora\n</ADDITIONAL_METADATA>"},
+                  {"type": "PLANNER_RESPONSE", "source": "MODEL"}]
+    transcript.write_text("\n".join(json.dumps(step) for step in steps) + "\nno es json\n", encoding="utf-8")
+    return transcript
+
+
+def test_antigravity_payload_reads_the_latest_request_only_on_the_first_model_call(tmp_path):
+    transcript = _antigravity_transcript(tmp_path, "Primera pregunta", "Traza `processCommand`\nen dos líneas")
+    payload = {"invocationNum": 0, "transcriptPath": str(transcript), "workspacePaths": [str(tmp_path)]}
+
+    assert prompt_context.antigravity_prompt_payload(payload) == {
+        "prompt": "Traza `processCommand`\nen dos líneas", "cwd": str(tmp_path)}
+    # Field absent (protojson may omit a zero) counts as the first call.
+    assert prompt_context.antigravity_prompt_payload({"transcriptPath": str(transcript)})["prompt"]
+    assert prompt_context.antigravity_prompt_payload({**payload, "invocationNum": 1}) == {}
+
+
+@pytest.mark.parametrize("transcript", [None, "ausente.jsonl"])
+def test_antigravity_payload_without_a_readable_transcript_injects_nothing(tmp_path, transcript):
+    path = str(tmp_path / transcript) if transcript else None
+    payload = prompt_context.antigravity_prompt_payload({"invocationNum": 0, "transcriptPath": path})
+
+    assert prompt_context.handle_prompt_hook(payload)["injected"] is False
+
+
+def test_antigravity_payload_with_an_unknown_transcript_format_injects_nothing(tmp_path):
+    transcript = tmp_path / "t.jsonl"
+    transcript.write_text(json.dumps({"type": "USER_INPUT", "content": "Traza `processCommand` sin etiquetas"}))
+    payload = prompt_context.antigravity_prompt_payload({"transcriptPath": str(transcript)})
+
+    assert payload["prompt"] == ""
+
+
+def test_antigravity_hook_install_is_reversible_and_preserves_user_hooks(tmp_path):
+    hooks = tmp_path / ".agents" / "hooks.json"
+    hooks.parent.mkdir()
+    user_hook = {"PostToolUse": [{"matcher": "*", "hooks": [{"command": "./lint.sh"}]}]}
+    hooks.write_text(json.dumps({"mio": user_hook}), encoding="utf-8")
+
+    prompt_context.install_antigravity_prompt_hook(tmp_path)
+    prompt_context.install_antigravity_prompt_hook(tmp_path)
+    data = json.loads(hooks.read_text(encoding="utf-8"))
+    assert data["mio"] == user_hook
+    assert data["graphtyn-context"]["PreInvocation"] == [
+        {"type": "command", "command": "graphtyn antigravity-context hook", "timeout": 20}]
+    assert prompt_context.antigravity_prompt_hook_installed(tmp_path)
+
+    assert prompt_context.uninstall_antigravity_prompt_hook(tmp_path)["removed"] is True
+    assert json.loads(hooks.read_text(encoding="utf-8")) == {"mio": user_hook}
+    assert not prompt_context.antigravity_prompt_hook_installed(tmp_path)
+    assert prompt_context.uninstall_antigravity_prompt_hook(tmp_path)["removed"] is False
+
+
+def test_antigravity_uninstall_removes_the_file_it_created_and_install_keeps_foreign_names(tmp_path):
+    prompt_context.install_antigravity_prompt_hook(tmp_path)
+    prompt_context.uninstall_antigravity_prompt_hook(tmp_path)
+    hooks = tmp_path / ".agents" / "hooks.json"
+    assert not hooks.exists()
+
+    hooks.write_text(json.dumps({"graphtyn-context": {"Stop": [{"command": "./mio.sh"}]}}), encoding="utf-8")
+    with pytest.raises(ValueError, match="no lo gestiona"):
+        prompt_context.install_antigravity_prompt_hook(tmp_path)
+    assert prompt_context.uninstall_antigravity_prompt_hook(tmp_path)["removed"] is False
+    assert hooks.is_file()
+
+
+def test_antigravity_hook_injects_once_per_turn_through_the_cli(tmp_path, monkeypatch, capsys):
+    import io
+    import sys
+    from graphtyn import cli
+    transcript = _antigravity_transcript(tmp_path, "Traza `processCommand` en el servidor")
+    seen = {}
+
+    def fake_prefetch(root, prompt, client=None):
+        seen.update(prompt=prompt, client=client)
+        return _package()
+
+    monkeypatch.setattr(prompt_context, "prefetch_package", fake_prefetch)
+    monkeypatch.setattr(prompt_context, "_index_path", lambda root: transcript)
+
+    def run(invocation):
+        payload = {"invocationNum": invocation, "transcriptPath": str(transcript), "workspacePaths": [str(tmp_path)]}
+        monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
+        monkeypatch.setattr(sys, "argv", ["graphtyn", "antigravity-context", "hook", "--path", str(tmp_path)])
+        cli.main()
+        return capsys.readouterr().out
+
+    steps = json.loads(run(0))["injectSteps"]
+    assert list(steps[0]) == ["ephemeralMessage"]
+    assert "<graphtyn-context" in steps[0]["ephemeralMessage"]
+    assert seen == {"prompt": "Traza `processCommand` en el servidor", "client": "antigravity"}
+    assert run(1) == ""
+
+
+def test_antigravity_context_install_requires_consent(tmp_path, monkeypatch):
+    import sys
+    from graphtyn import cli
+    monkeypatch.setattr(sys, "argv", ["graphtyn", "antigravity-context", "install", "--path", str(tmp_path)])
+    with pytest.raises(SystemExit, match="--consent"):
+        cli.main()
+    assert not (tmp_path / ".agents" / "hooks.json").exists()

@@ -1,0 +1,593 @@
+{
+  "FMT_FLOAT_FLOW": {
+    "set": "heldout_v2",
+    "graphtyn": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        112282,
+        115006
+      ],
+      "mean_tokens": 113644,
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        14,
+        16
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        166548,
+        225856
+      ],
+      "seconds": 154.9,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        254595,
+        150330
+      ],
+      "mean_tokens": 202462,
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        38,
+        20
+      ],
+      "mcp_calls": [
+        0,
+        0
+      ],
+      "cached_input_tokens": [
+        669554,
+        280966
+      ],
+      "seconds": 182.7,
+      "hook_injected": [
+        true,
+        true
+      ]
+    }
+  },
+  "FMT_FORMAT_FLOW": {
+    "set": "seen",
+    "graphtyn": {
+      "n": 3,
+      "incomplete": 0,
+      "tokens": [
+        95651,
+        109830,
+        96313
+      ],
+      "mean_tokens": 100598,
+      "rubric": [
+        8,
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        14,
+        12,
+        10
+      ],
+      "mcp_calls": [
+        1,
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        176244,
+        128386,
+        82932
+      ],
+      "seconds": 150.7,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 3,
+      "incomplete": 0,
+      "tokens": [
+        92498,
+        115826,
+        138971
+      ],
+      "mean_tokens": 115765,
+      "rubric": [
+        8,
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        10,
+        11,
+        10
+      ],
+      "mcp_calls": [
+        0,
+        0,
+        0
+      ],
+      "cached_input_tokens": [
+        107044,
+        88908,
+        0
+      ],
+      "seconds": 92.3,
+      "hook_injected": [
+        true,
+        true,
+        true
+      ]
+    }
+  },
+  "FMT_FORMAT_TO_N_FLOW": {
+    "set": "heldout_v2",
+    "graphtyn": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        104216,
+        135696
+      ],
+      "mean_tokens": 119956,
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        9,
+        14
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        47373,
+        96375
+      ],
+      "seconds": 128.3,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        81604,
+        95140
+      ],
+      "mean_tokens": 88372,
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        5,
+        6
+      ],
+      "mcp_calls": [
+        0,
+        0
+      ],
+      "cached_input_tokens": [
+        16068,
+        0
+      ],
+      "seconds": 82.4,
+      "hook_injected": [
+        true,
+        true
+      ]
+    }
+  },
+  "RAILS_FIND_FLOW": {
+    "set": "heldout_v2",
+    "graphtyn": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        187604,
+        148987
+      ],
+      "mean_tokens": 168296,
+      "rubric": [
+        9,
+        9
+      ],
+      "rubric_total": 9,
+      "tool_calls": [
+        22,
+        16
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        226387,
+        151470
+      ],
+      "seconds": 177.3,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        186426,
+        158064
+      ],
+      "mean_tokens": 172245,
+      "rubric": [
+        9,
+        9
+      ],
+      "rubric_total": 9,
+      "tool_calls": [
+        19,
+        15
+      ],
+      "mcp_calls": [
+        0,
+        0
+      ],
+      "cached_input_tokens": [
+        137354,
+        100082
+      ],
+      "seconds": 148.0,
+      "hook_injected": [
+        true,
+        true
+      ]
+    }
+  },
+  "RAILS_SAVE_FLOW": {
+    "set": "seen",
+    "graphtyn": {
+      "n": 3,
+      "incomplete": 0,
+      "tokens": [
+        168904,
+        203778,
+        172569
+      ],
+      "mean_tokens": 181750,
+      "rubric": [
+        8,
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        27,
+        37,
+        18
+      ],
+      "mcp_calls": [
+        1,
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        423761,
+        799716,
+        179978
+      ],
+      "seconds": 223.1,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 3,
+      "incomplete": 0,
+      "tokens": [
+        157199,
+        179292,
+        202846
+      ],
+      "mean_tokens": 179779,
+      "rubric": [
+        8,
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        18,
+        19,
+        21
+      ],
+      "mcp_calls": [
+        0,
+        0,
+        0
+      ],
+      "cached_input_tokens": [
+        145957,
+        163830,
+        157080
+      ],
+      "seconds": 159.1,
+      "hook_injected": [
+        true,
+        true,
+        true
+      ]
+    }
+  },
+  "RAILS_UPDATE_FLOW": {
+    "set": "heldout_v2",
+    "graphtyn": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        223119,
+        249052
+      ],
+      "mean_tokens": 236086,
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        42,
+        49
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        963431,
+        1328252
+      ],
+      "seconds": 293.2,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        296390,
+        289348
+      ],
+      "mean_tokens": 292869,
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        51,
+        48
+      ],
+      "mcp_calls": [
+        0,
+        0
+      ],
+      "cached_input_tokens": [
+        1002971,
+        1002073
+      ],
+      "seconds": 337.6,
+      "hook_injected": [
+        true,
+        true
+      ]
+    }
+  },
+  "REDIS_COMMAND_FLOW": {
+    "set": "seen",
+    "graphtyn": {
+      "n": 3,
+      "incomplete": 0,
+      "tokens": [
+        49834,
+        49202,
+        53627
+      ],
+      "mean_tokens": 50888,
+      "rubric": [
+        8,
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        0,
+        0,
+        0
+      ],
+      "seconds": 85.9,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 3,
+      "incomplete": 0,
+      "tokens": [
+        25830,
+        20252,
+        25384
+      ],
+      "mean_tokens": 23822,
+      "rubric": [
+        8,
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        0,
+        0,
+        0
+      ],
+      "mcp_calls": [
+        0,
+        0,
+        0
+      ],
+      "cached_input_tokens": [
+        0,
+        0,
+        0
+      ],
+      "seconds": 73.4,
+      "hook_injected": [
+        true,
+        true,
+        true
+      ]
+    }
+  },
+  "REDIS_EVICTION_FLOW": {
+    "set": "heldout_v2",
+    "graphtyn": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        152901,
+        155985
+      ],
+      "mean_tokens": 154443,
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        20,
+        19
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        289026,
+        237746
+      ],
+      "seconds": 185.0,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        121287,
+        136653
+      ],
+      "mean_tokens": 128970,
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        15,
+        19
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        234911,
+        276792
+      ],
+      "seconds": 154.3,
+      "hook_injected": [
+        false,
+        false
+      ]
+    }
+  },
+  "REDIS_OUTPUT_LIMIT_FLOW": {
+    "set": "heldout_v2",
+    "graphtyn": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        166575,
+        141445
+      ],
+      "mean_tokens": 154010,
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        26,
+        26
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "cached_input_tokens": [
+        438725,
+        480517
+      ],
+      "seconds": 200.6,
+      "hook_injected": null
+    },
+    "graphtyn_hook": {
+      "n": 2,
+      "incomplete": 0,
+      "tokens": [
+        170209,
+        201809
+      ],
+      "mean_tokens": 186009,
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        25,
+        31
+      ],
+      "mcp_calls": [
+        0,
+        0
+      ],
+      "cached_input_tokens": [
+        365291,
+        612051
+      ],
+      "seconds": 216.7,
+      "hook_injected": [
+        true,
+        true
+      ]
+    }
+  }
+}

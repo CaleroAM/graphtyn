@@ -240,10 +240,11 @@ def _add_benchmark_commands(subparsers: argparse._SubParsersAction) -> None:
                        help="Evalúa los PR abiertos con gh; los descarga en refs/graphtyn/pr/<n>")
     prs_p.add_argument("--json", action="store_true", help="Salida JSON en lugar de Markdown")
     prs_p.add_argument("--path", default=".", help="Ruta del proyecto")
-    for client, label in (("claude", "Claude Code"), ("codex", "Codex"), ("opencode", "OpenCode")):
+    for client, label, event in (("claude", "Claude Code", "UserPromptSubmit"), ("codex", "Codex", "UserPromptSubmit"),
+                                 ("opencode", "OpenCode", "chat.message"), ("antigravity", "Antigravity", "PreInvocation")):
         context_p = subparsers.add_parser(
             f"{client}-context",
-            help=f"Hook UserPromptSubmit de {label}: adelanta graph_query_intent al primer turno")
+            help=f"Hook {event} de {label}: adelanta graph_query_intent al primer turno")
         context_p.add_argument("action", choices=["install", "uninstall", "status", "hook"])
         context_p.add_argument("--consent", action="store_true",
                                help="Autoriza añadir contexto de Graphtyn a los mensajes de código en este proyecto")

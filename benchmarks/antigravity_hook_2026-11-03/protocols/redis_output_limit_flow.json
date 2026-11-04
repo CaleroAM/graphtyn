@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Medir el hook PreInvocation de Antigravity frente al MCP lean con los mismos commits y rúbricas congeladas.",
+  "repository": {
+    "name": "redis/redis",
+    "url": "https://github.com/redis/redis",
+    "commit": "f2a17a8dca1566d2a0f078840fffef5661eab4b1"
+  },
+  "set": "heldout_v2",
+  "source_protocol": "benchmarks/heldout_v2_2026-10-27/redis_output_limit_flow_protocol.json",
+  "design": {
+    "clients": [
+      "antigravity"
+    ],
+    "tasks": [
+      "REDIS_OUTPUT_LIMIT_FLOW"
+    ],
+    "arms_by_client": {
+      "antigravity": [
+        "graphtyn",
+        "graphtyn_hook"
+      ]
+    },
+    "repetitions_by_client": {
+      "antigravity": 2
+    },
+    "order": "Orden de brazos alternado por repetición.",
+    "stop_rule": "targeted",
+    "grading": "Rúbrica literal congelada de la tarea de origen."
+  },
+  "client_config": {
+    "models": {
+      "antigravity": "gemini-3.8-flash-high"
+    },
+    "antigravity": "agy mcp add por sesión; hook en .agents/hooks.json (PreInvocation) instalado por Graphtyn; instrucciones del brazo hook en GEMINI.md"
+  },
+  "authorization": {
+    "source": "El usuario aprobó implementar el hook y medirlo con repeticiones (2026-11-03).",
+    "total_token_ceiling": 8000000
+  }
+}
