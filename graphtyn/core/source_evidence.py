@@ -448,7 +448,7 @@ def _select_excerpts(root: Path, candidates: list[dict[str, Any]], required_symb
         if mode == "precision":
             # Short declaration comments often define failure behavior (for
             # example callback abort semantics) that the AST body omits.
-            start = _declaration_comment_start(source, start)
+            start = _declaration_comment_start(source, start) if whole_body and required else max(1, start - 12)
         declared_end = int(node.get("end_line") or start + line_budget - 1)
         if node.get("kind") in _TYPE_KINDS and source.suffix.lower() in _BRACE_SUFFIXES:
             # Macro-heavy headers make parsers close a type at its first

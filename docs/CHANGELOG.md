@@ -40,7 +40,7 @@ compatibles con PEP 440.
   `config_`), dejaba 69 de las 233 líneas de `activeExpireCycle` y declaraba la
   evidencia completa. Un cuerpo que no cabe se informa como `source_body:<símbolo>`
   en `missing`.
-- Los extractos empiezan en el comentario de la declaración, no dentro de la función
+  Ese extracto empieza en el comentario de la declaración, no dentro de la función
   anterior.
 - Medición con agentes en Antigravity (80 sesiones): calidad igual o mejor en dos
   conjuntos con un 59 % y un 30 % menos de tokens, con excepciones que recoge

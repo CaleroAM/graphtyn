@@ -114,6 +114,11 @@ Portugués, francés, alemán e italiano están cubiertos por pruebas de clasifi
   por descuido mío: sólo 3 de las 4 tareas del conjunto 3 son inéditas.
 - `4c14669` sólo se midió con el conjunto 3 y las dos repeticiones. Las demás tareas
   de explicación de los conjuntos 1 y 2 no se repitieron con esa versión.
+- Tras medir `4c14669`, la puerta de cobertura de CI detectó que empezar todos los
+  extractos en el comentario de la declaración perdía hechos en Flask: las líneas
+  previas traían una función vecina relevante. Ese cambio quedó limitado a las
+  preguntas de cuerpo entero, las únicas donde se midió; esas preguntas no cambian
+  respecto a lo medido, y las demás vuelven a su comportamiento anterior.
 - La versión final se midió con la instalación editable de la rama, ejecutada a
   través de `--graphtyn-executable`; la anterior, desde un worktree en `3de6e0e`.
 
