@@ -10,6 +10,7 @@ from typing import Any
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
 from . import retrieval_signals as _signals
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
+from .intent_classifier import _INTENT_MARKERS, classify_intent, is_change_request as _is_change_request, without_project_scope
 from .ranking_weights import trace_stage, weighted_score
 from .vocabulary import COMMON_WORDS, is_prose_word, translated_terms
 
@@ -19,21 +20,6 @@ _STOP = {
     "una", "uno", "unos", "las", "los", "del", "por", "que", "and", "con",
     "change", "cambio", "modify", "modificar", "agregar", "add", "hacer",
 }
-
-_INTENT_MARKERS = {
-    "overview": ("overview", "purpose", "architecture", "summary", "what is this", "de qué trata", "de que trata", "resumen", "arquitectura", "proyecto", "project", "repository"),
-    "bindings": ("binding", "bindings", "addscoped", "addsingleton", "addtransient", "dependency", "dependencia", "registr", "inyección", "injection"),
-    "persistence": ("persist", "repository", "repositorio", "database", "base de datos", "save", "deleteasync", "addasync", "query", "consulta"),
-    "tests": ("test", "tests", "prueba", "pruebas", "coverage", "cobertura"),
-    "impact": ("impact", "impacto", "consumer", "consumidor", "blast", "afecta"),
-    "flow": ("flow", "flujo", "trace", "traza", "desde", "hasta", "event", "evento"),
-}
-
-_DI_CONTEXT = re.compile(
-    r"servic|service|dependen|inyecci|inject|contenedor|container|provider|proveedor|binding|singleton|scoped|transient"
-    r"|extensi|plugin|middleware|helper")
-_INFLECTION = r"(?:s|es|e|en|n|r|do|da|dos|das|ría)?"
-_INFLECTED_MARKERS = {"afecta", "consumidor", "consumer", "persist", "prueba", "test"}
 
 _INTENT_OPERATIONS = {
     "overview": (),
@@ -72,17 +58,6 @@ def _intent_evidence_status(selected_intent: str, has_tests: bool) -> tuple[list
 def _intent_can_stop(result: dict[str, Any]) -> bool:
     return bool(result["stopping"]["sufficient_evidence"] and result["validation"]["ok"]
                 and not result["missing"])
-
-
-def _is_change_request(request: str) -> bool:
-    """Identify requests where an agent is expected to edit the repository."""
-    return bool(re.search(
-        # A reflexive passive describes behaviour ("cuando se añade una ruta").
-        r"(?<!\bse )\b(?:implement(?:a|ar|e)|a(?:ñ|n)ad(?:e|ir)|agreg(?:a|ar)|modific(?:a|ar)|"
-        r"corrig(?:e|ir)|cambi(?:a|ar)|refactor(?:iza|izar)?|fix|edit|update|remove|elimina)\b",
-        str(request or ""),
-        re.I,
-    ))
 
 
 _TEST_COMMAND_RE = re.compile(
@@ -741,44 +716,9 @@ _QUERY_EXPANSIONS = {
 
 def _terms(request: str) -> list[str]:
     return list(dict.fromkeys(
-        normalized for token in re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w.]+", request)
+        normalized for token in re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w.]+", without_project_scope(request))
         if len(normalized := token.lower().strip(".")) >= 3 and normalized not in _STOP
     ))[:48]
-
-
-def classify_intent(request: str, requested: str = "auto") -> str:
-    text = str(request or "").lower()
-    enumerated = len(set(re.findall(r"\bq\d+\s*[):]", text))) >= 2
-    operational = bool(re.search(
-        r"\b(?:c[oó]mo|cu[aá]les?|qu[eé] ocurre|si falta|comprueba|valida|genera|"
-        r"docker|worker|api|archivo|manifiesto|integridad|esquema|script)\b",
-        text,
-    ))
-    # Models sometimes choose ``overview`` merely because the prompt names a
-    # repository. An enumerated operational question needs symbol/operation
-    # evidence, even when the caller supplied that overly broad intent.
-    if requested == "overview" and enumerated and operational:
-        return "flow"
-    if requested in _INTENT_MARKERS:
-        return requested
-    if _is_change_request(text):
-        return "flow"
-    def marker_matches(marker: str) -> bool:
-        if marker == "registr":
-            # "registrar/register" a service, not "registro(s)" (a record) nor a
-            # function that records keys or names: the verb only signals
-            # bindings next to dependency-injection vocabulary.
-            return bool(re.search(r"registr(?!os?\b)", text) and _DI_CONTEXT.search(text))
-        # Inflected forms count: "afectado", "consumidores", "persiste".
-        inflection = _INFLECTION if marker in _INFLECTED_MARKERS else ""
-        return bool(re.search(rf"(?<!\w){re.escape(marker)}{inflection}(?!\w)", text))
-
-    scores = {intent: sum(marker_matches(marker) for marker in markers)
-              for intent, markers in _INTENT_MARKERS.items()}
-    best = max(scores, key=lambda intent: scores[intent])
-    if scores[best] and scores.get("flow") == scores[best]:
-        return "flow"  # a tie with an explicit trace/flow request is a flow
-    return best if scores[best] else "flow"
 
 
 def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
@@ -836,10 +776,10 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     selected_intent = classify_intent(request, intent)
     if selected_intent == "overview":
         return _overview_package(graph, request, max_nodes)
+    request = without_project_scope(request)
     requested_ceiling = max(4, max_nodes)
     complexity = min(3, len(re.findall(r"\b(?:and|y|then|después|también|además)\b", str(request), re.I)))
-    intent_node_cap = {"bindings": 7, "persistence": 7, "tests": 8, "impact": 10, "flow": _signals.FLOW_NODE_CAP}[selected_intent]
-    max_nodes = min(requested_ceiling, intent_node_cap + complexity)
+    max_nodes = min(requested_ceiling, complexity + {"bindings": 7, "persistence": 7, "tests": 8, "impact": 10, "flow": _signals.FLOW_NODE_CAP}[selected_intent])
     request_lower = str(request or "").lower()
     markers = flow_markers(_INTENT_OPERATIONS[selected_intent], request_lower) if selected_intent == "flow" \
         else _INTENT_OPERATIONS[selected_intent]

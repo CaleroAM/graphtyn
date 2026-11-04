@@ -128,6 +128,67 @@ def test_intent_classifier_does_not_read_comprueba_as_prueba():
     assert classify_intent(request) == "flow"
 
 
+@pytest.mark.parametrize("request_text", [
+    "¿Qué hace la función aplicar_descuento en este proyecto? Responde en una línea.",
+    "¿Qué hace aplicar_descuento en este proyecto?",
+    "What does the function apply_discount do in this project?",
+    "Explain the method guardar in this repository",
+    "¿Cómo funciona processCommand en este proyecto?",
+    "¿Dónde se usa `calcular_total` en este repositorio?",
+    "¿Quién llama a calcular_total en este proyecto?",
+    "¿Cómo se crea un pedido en este proyecto?",
+    "Trace how orders are created in this repo",
+    "Resumen de la función calcular_total",
+    "Arquitectura del módulo auth_service en el proyecto",
+])
+def test_naming_the_project_as_scope_does_not_make_a_code_question_an_overview(request_text):
+    assert classify_intent(request_text) == "flow"
+
+
+@pytest.mark.parametrize("request_text", [
+    "¿Qué hace este proyecto?",
+    "What does this project do?",
+    "¿Qué hace este repositorio?",
+    "Explain this codebase",
+    "Analiza este repo",
+    "Resumen del proyecto",
+    "Explica la arquitectura de este repositorio",
+    "Give me an overview of this repository",
+    "What is the purpose of this project?",
+    "¿Qué tecnologías usa este proyecto?",
+    "¿De qué trata el proyecto mi_proyecto?",
+    "Utiliza Graphtyn y dime de qué trata el proyecto/repositorio",
+])
+def test_a_question_about_the_project_itself_stays_an_overview(request_text):
+    assert classify_intent(request_text) == "overview"
+
+
+def test_the_repository_pattern_still_signals_persistence():
+    assert classify_intent("Which repository saves the order?") == "persistence"
+    assert classify_intent("¿Qué persiste el repositorio de pedidos?") == "persistence"
+    assert classify_intent("¿Qué hace el repositorio de pedidos al procesar el alta?") == "persistence"
+
+
+def test_the_project_scope_does_not_become_a_retrieval_term():
+    assert _terms("Traza crear_pedido en este proyecto") == _terms("Traza crear_pedido")
+    assert _terms("Explica cómo guarda el repositorio de pedidos") == [
+        "explica", "cómo", "guarda", "repositorio", "pedidos"]
+
+
+def test_the_project_scope_does_not_change_which_code_is_selected():
+    graph = {"nodes": [
+        {"id": f"symbol:app/{name}.py:{name}", "name": name, "kind": "function", "file": f"app/{name}.py", "degree": degree}
+        for name, degree in (("apply_discount", 2), ("subtotal", 4), ("save_project", 1), ("project_name", 6))
+    ], "links": [{"source": "symbol:app/subtotal.py:subtotal", "target": "symbol:app/apply_discount.py:apply_discount",
+                  "relation": "llama", "confidence": "EXTRACTED"}]}
+
+    def selected(request):
+        return [node["name"] for node in query_intent(graph, request, "auto", 10)["nodes"]]
+
+    assert "apply_discount" in selected("What does apply_discount do?")
+    assert selected("What does apply_discount do in this project?") == selected("What does apply_discount do ?")
+
+
 def test_enumerated_operational_question_overrides_requested_overview():
     request = (
         "En el proyecto responde q1) cuáles archivos necesita; "

@@ -15,6 +15,12 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Decir «en este proyecto» o «in this repository» ya no convierte una pregunta
+  sobre código en un `overview`. Antes, «¿Qué hace la función X en este proyecto?»
+  devolvía el resumen del repositorio, a menudo sin esa función; y «en este
+  repositorio» activaba `persistence`. Esas frases tampoco influyen ya en qué
+  código se selecciona. Las preguntas sobre el proyecto entero siguen siendo
+  `overview`.
 - El README ya no dice que Antigravity carece de hooks, ni indica `agy mcp list`
   para verificar la entrada de proyecto: ese comando sólo muestra los servidores
   globales.

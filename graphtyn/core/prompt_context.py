@@ -16,6 +16,8 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from .retrieval_signals import CODE_IDENTIFIER as _IDENTIFIER
+
 HOOK_COMMAND = "graphtyn claude-context hook"
 DEFAULT_BUDGET_SECONDS = 12.0
 # Claude Code kills the hook after this many seconds; leave room for startup.
@@ -48,10 +50,6 @@ _CODE_REQUEST = re.compile(
     # German
     r"erkl[äa]r\w*|ablauf|wo|aufruf\w*|funktioniert|architektur|fehler)\b",
     re.IGNORECASE)
-# Identifier shapes are case-sensitive (camelCase, PascalCase with an inner capital).
-_IDENTIFIER = re.compile(
-    r"`[^`]+`|\b[a-z]+[A-Z]\w*|\b[A-Z][a-z0-9]+[A-Z]\w*|\b\w+_\w+\b|\w::\w|\w#\w|\w\.\w+\(|"
-    r"\b[\w./-]+\.(?:py|rb|js|jsx|ts|tsx|go|rs|java|kt|swift|scala|cs|php|c|h|cc|cpp|hpp)\b")
 _CODE_NOUN = re.compile(
     r"\b(?:repositori\w*|repo|proyecto|project|projeto|projet|progetto|projekt\w*|codebase|código|code|codice|"
     r"clase|class|classe|klasse\w*|función|function|função|fonction|funzione|funktion\w*|método|method|méthode|"
