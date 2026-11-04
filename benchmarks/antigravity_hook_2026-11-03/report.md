@@ -68,7 +68,7 @@ de este diseño, no un efecto del hook.
   según la propia transcripción de Antigravity. Las otras 2 son las de evicción.
 - **Sustituye la consulta MCP.** Con inyección, ninguna sesión volvió a llamar
   al MCP; sin ella, sí lo hicieron.
-- **No detiene la exploración.** Salvo en Redis, el modelo siguió buscando y
+- **No detiene la exploración.** Salvo en el flujo de comandos de Redis, el modelo siguió buscando y
   leyendo 5–51 veces, tanto con hook como sin él. Por eso el ahorro de la
   consulta se pierde en el resto de la sesión.
 - **Calidad igual.** La rúbrica no cambia entre brazos. El único hecho que falta
