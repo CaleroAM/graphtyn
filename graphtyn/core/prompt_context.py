@@ -1,4 +1,4 @@
-"""Prefetch Graphtyn context into the first model turn (Claude Code, Codex and OpenCode).
+"""Prefetch Graphtyn context into the first model turn (Claude Code, Codex, OpenCode and Antigravity).
 
 With the MCP path, the agent spends one model call to request
 `graph_query_intent` and a second one to answer, so the client's fixed prompt is
@@ -307,10 +307,15 @@ def handle_prompt_hook(payload: dict[str, Any], root: Path | None = None,
             "context": chunks[part - 1]}
 
 
-def hook_output(outcome: dict[str, Any]) -> str:
-    """UserPromptSubmit response (same shape in Claude Code and Codex); empty when nothing is injected."""
+def hook_output(outcome: dict[str, Any], client: str | None = None) -> str:
+    """The client's hook response; empty when nothing is injected.
+
+    Claude Code and Codex (and the OpenCode plugin) share the UserPromptSubmit shape.
+    """
     if not outcome.get("injected"):
         return ""
+    if client == "antigravity":
+        return json.dumps({"injectSteps": [{"ephemeralMessage": outcome["context"]}]}, ensure_ascii=False)
     return json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
                                               "additionalContext": outcome["context"]}},
                       ensure_ascii=False)
@@ -354,7 +359,7 @@ def _codex_managed(group: dict[str, Any]) -> bool:
                for hook in group.get("hooks") or [] if isinstance(hook, dict))
 
 
-def _read_codex_hooks(path: Path) -> dict[str, Any]:
+def _read_hooks_file(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
     data = json.loads(path.read_text(encoding="utf-8") or "{}")
@@ -370,7 +375,7 @@ def install_codex_prompt_hook(root: str | Path, command: str = CODEX_HOOK_COMMAN
     and the hook itself has been reviewed with `/hooks`.
     """
     path = _codex_hooks_path(root)
-    data = _read_codex_hooks(path)
+    data = _read_hooks_file(path)
     hooks = data.setdefault("hooks", {})
     groups = [group for group in hooks.get("UserPromptSubmit") or [] if not _codex_managed(group)]
     groups.append({"hooks": [{"type": "command", "command": command, "timeout": HOOK_TIMEOUT_SECONDS,
@@ -385,7 +390,7 @@ def install_codex_prompt_hook(root: str | Path, command: str = CODEX_HOOK_COMMAN
 
 def uninstall_codex_prompt_hook(root: str | Path) -> dict[str, Any]:
     path = _codex_hooks_path(root)
-    data = _read_codex_hooks(path)
+    data = _read_hooks_file(path)
     hooks = data.get("hooks") or {}
     groups = hooks.get("UserPromptSubmit") or []
     kept = [group for group in groups if not _codex_managed(group)]
@@ -406,7 +411,7 @@ def uninstall_codex_prompt_hook(root: str | Path) -> dict[str, Any]:
 
 def codex_prompt_hook_installed(root: str | Path) -> bool:
     try:
-        data = _read_codex_hooks(_codex_hooks_path(root))
+        data = _read_hooks_file(_codex_hooks_path(root))
     except (OSError, ValueError):
         return False
     return any(_codex_managed(group) for group in (data.get("hooks") or {}).get("UserPromptSubmit") or [])
@@ -479,4 +484,85 @@ def opencode_prompt_plugin_installed(root: str | Path) -> bool:
     try:
         return _OPENCODE_MARKER in path.read_text(encoding="utf-8")
     except OSError:
+        return False
+
+
+# Antigravity has no prompt-submit event: PreInvocation fires before every model
+# call of a turn and does not carry the prompt, only the transcript path. Its
+# `invocationNum` restarts at 0 on each user message and an ephemeral message
+# lasts until the turn ends, so injecting at 0 covers the turn without any state.
+ANTIGRAVITY_HOOK_COMMAND = "graphtyn antigravity-context hook"
+ANTIGRAVITY_HOOK_NAME = "graphtyn-context"
+_USER_REQUEST = re.compile(r"<USER_REQUEST>\s*(.*)\s*</USER_REQUEST>", re.DOTALL)
+
+
+def _last_user_request(transcript: str | None) -> str:
+    """The latest user message in an Antigravity transcript; empty if its format is unknown."""
+    if not transcript:
+        return ""
+    content = ""
+    try:
+        with open(transcript, encoding="utf-8") as lines:
+            for line in lines:
+                try:
+                    step = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(step, dict) and step.get("type") == "USER_INPUT":
+                    content = str(step.get("content") or "")
+    except OSError:
+        return ""
+    match = _USER_REQUEST.search(content)
+    return match.group(1).strip() if match else ""
+
+
+def antigravity_prompt_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Translate a PreInvocation payload for `handle_prompt_hook`; empty on later model calls."""
+    if payload.get("invocationNum"):
+        return {}
+    workspaces = [str(path) for path in payload.get("workspacePaths") or []]
+    cwd = next((path for path in workspaces if _indexed_root(path)), workspaces[0] if workspaces else None)
+    return {"prompt": _last_user_request(payload.get("transcriptPath")), "cwd": cwd}
+
+
+def _antigravity_hooks_path(root: str | Path) -> Path:
+    return Path(root).expanduser().resolve() / ".agents" / "hooks.json"
+
+
+def _antigravity_managed(entry: Any) -> bool:
+    handlers = entry.get("PreInvocation") if isinstance(entry, dict) else None
+    return any("antigravity-context hook" in str(handler.get("command") or "")
+               for handler in handlers or [] if isinstance(handler, dict))
+
+
+def install_antigravity_prompt_hook(root: str | Path, command: str = ANTIGRAVITY_HOOK_COMMAND) -> dict[str, Any]:
+    """Add (or refresh) the managed named hook in `<root>/.agents/hooks.json`, keeping user hooks."""
+    path = _antigravity_hooks_path(root)
+    data = _read_hooks_file(path)
+    if ANTIGRAVITY_HOOK_NAME in data and not _antigravity_managed(data[ANTIGRAVITY_HOOK_NAME]):
+        raise ValueError(f"{path} ya define '{ANTIGRAVITY_HOOK_NAME}' y no lo gestiona Graphtyn")
+    data[ANTIGRAVITY_HOOK_NAME] = {"PreInvocation": [{"type": "command", "command": command,
+                                                      "timeout": HOOK_TIMEOUT_SECONDS}]}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return {"ok": True, "installed": True, "hooks_file": str(path), "event": "PreInvocation"}
+
+
+def uninstall_antigravity_prompt_hook(root: str | Path) -> dict[str, Any]:
+    path = _antigravity_hooks_path(root)
+    data = _read_hooks_file(path)
+    removed = _antigravity_managed(data.get(ANTIGRAVITY_HOOK_NAME))
+    if removed:
+        del data[ANTIGRAVITY_HOOK_NAME]
+        if data:
+            path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        else:
+            path.unlink()
+    return {"ok": True, "removed": removed, "hooks_file": str(path)}
+
+
+def antigravity_prompt_hook_installed(root: str | Path) -> bool:
+    try:
+        return _antigravity_managed(_read_hooks_file(_antigravity_hooks_path(root)).get(ANTIGRAVITY_HOOK_NAME))
+    except (OSError, ValueError):
         return False

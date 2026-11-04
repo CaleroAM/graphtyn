@@ -277,7 +277,7 @@ def install_agent(root: Path, platform: str | list[str], tool_profile: str | Non
                "integrations": integrations["clients"],
                "capture_configured": bool(previous.get("capture_configured", False)),
                "files": written, "skill_hashes": skill_hashes}
-    for key in ("capture", "claude_capture", "claude_context", "codex_context", "opencode_context"):
+    for key in ("capture", "claude_capture", "claude_context", "codex_context", "opencode_context", "antigravity_context"):
         if isinstance(previous.get(key), dict):
             payload[key] = previous[key]
     atomic_write_json(manifest, payload)

@@ -773,13 +773,16 @@ def _command_claude_context(args, root: Path, parser, client: str = "claude") ->
         # A hook must never break the user's turn: report on stderr and exit 0.
         try:
             payload = json.loads(sys.stdin.read() or "{}")
+            payload = payload if isinstance(payload, dict) else {}
+            if client == "antigravity":
+                payload = prompt_context.antigravity_prompt_payload(payload)
             outcome = prompt_context.handle_prompt_hook(
-                payload if isinstance(payload, dict) else {}, root if args.path else None,
+                payload, root if args.path else None,
                 args.budget_seconds or prompt_context.DEFAULT_BUDGET_SECONDS,
                 part=max(1, args.part), parts=max(1, args.parts),
                 part_limit=(prompt_context.MAX_CONTEXT_CHARACTERS if client == "claude"
                             else prompt_context.CODEX_MAX_CONTEXT_CHARACTERS), client=client)
-            output = prompt_context.hook_output(outcome)
+            output = prompt_context.hook_output(outcome, client)
             if output:
                 print(output)
             elif outcome.get("reason") in {"error", "time_budget_exceeded"}:
@@ -797,17 +800,21 @@ def _command_claude_context(args, root: Path, parser, client: str = "claude") ->
                      lambda target: prompt_context.install_opencode_prompt_plugin(
                          target, shutil.which("graphtyn") or "graphtyn"),
                      prompt_context.uninstall_opencode_prompt_plugin),
+        "antigravity": (prompt_context.antigravity_prompt_hook_installed,
+                        prompt_context.install_antigravity_prompt_hook,
+                        prompt_context.uninstall_antigravity_prompt_hook),
     }[client]
     manifest_key = f"{client}_context"
     if args.action == "status":
         result = {"ok": True, "installed": installed(root), "index": prompt_context._index_path(root).is_file()}
     elif args.action == "install":
         if not args.consent:
-            label = {"claude": "Claude Code", "codex": "Codex", "opencode": "OpenCode"}[client]
+            label = {"claude": "Claude Code", "codex": "Codex", "opencode": "OpenCode",
+                     "antigravity": "Antigravity"}[client]
             raise SystemExit(f"El hook de contexto de {label} requiere --consent explícito")
         result = install(root)
         update_agent_manifest(root, **{manifest_key: {
-            "enabled": True, "hook": "UserPromptSubmit",
+            "enabled": True, "hook": result.get("event") or "UserPromptSubmit",
             "settings": result.get("settings") or result.get("hooks_file") or result.get("plugin")}})
         if not prompt_context._index_path(root).is_file():
             result["warning"] = "Sin índice: ejecuta 'graphtyn reindex' o el hook no añadirá contexto"
@@ -821,6 +828,9 @@ def _command_codex_context(args, root: Path, parser) -> None:
 
 def _command_opencode_context(args, root: Path, parser) -> None:
     _command_claude_context(args, root, parser, client="opencode")
+
+def _command_antigravity_context(args, root: Path, parser) -> None:
+    _command_claude_context(args, root, parser, client="antigravity")
 
 def _command_export_html(args, root: Path, parser) -> None:
     from .core.html_export import render_html
@@ -1053,6 +1063,7 @@ def main():
         'claude-context': _command_claude_context,
         'codex-context': _command_codex_context,
         'opencode-context': _command_opencode_context,
+        'antigravity-context': _command_antigravity_context,
         'prs': _command_prs,
         'report': _command_report,
         'global': _command_global,

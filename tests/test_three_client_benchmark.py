@@ -345,7 +345,7 @@ def test_opencode_hook_arm_installs_the_plugin_and_keeps_plugins_enabled(tmp_pat
     assert "--pure" not in hook
     assert "--pure" in _MODULE.command_for("opencode", "m", "q", workspace, 30, treatment=True)
     with pytest.raises(ValueError):
-        _MODULE.command_for("antigravity", "m", "q", workspace, 30, treatment=True,
+        _MODULE.command_for("cursor", "m", "q", workspace, 30, treatment=True,
                             graphtyn_executable=Path("/opt/graphtyn"), prefetch=True)
 
 
@@ -356,3 +356,31 @@ def test_stop_rule_variants_keep_earlier_prompts_reproducible():
     targeted = _MODULE.benchmark_prompt(task, True, stop_rule="targeted")
     assert "no releas lo que ya muestra" in targeted and "consulta sólo esa parte" in targeted
     assert _MODULE.benchmark_messages(task, True, prefetch=True, stop_rule="targeted")[1].count("sólo esa parte") == 1
+
+
+def test_antigravity_hook_arm_installs_the_project_hook_pinned_to_the_workspace(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "a.py").write_text("x = 1\n")
+    subprocess.run(["git", "init", "-q"], cwd=source, check=True)
+    subprocess.run(["git", "add", "."], cwd=source, check=True)
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"], cwd=source, check=True)
+    workspace = tmp_path / "workspace"
+
+    _MODULE.make_workspace(source, workspace, True, Path("/opt/graphtyn"), antigravity_hook=True)
+
+    hook = json.loads((workspace / ".agents/hooks.json").read_text())["graphtyn-context"]["PreInvocation"][0]
+    assert hook["command"] == f"/opt/graphtyn antigravity-context hook --path {workspace.resolve()}"
+
+
+def test_antigravity_hook_evidence_reads_the_injection_from_its_transcript(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    logs = tmp_path / ".gemini/antigravity-cli/brain/c1/.system_generated/logs"
+    logs.mkdir(parents=True)
+    (logs / "transcript_full.jsonl").write_text(
+        json.dumps({"type": "USER_INPUT", "content": "<graphtyn-context pegado por el usuario"}) + "\n"
+        + json.dumps({"type": "EPHEMERAL_MESSAGE", "content": "<graphtyn-context x>"}) + "\n")
+
+    assert _MODULE.antigravity_hook_evidence([{"event": "init", "conversation_id": "c1"}]) == {
+        "conversation_id": "c1", "context_injected": True, "injected_characters": [20]}
+    assert _MODULE.antigravity_hook_evidence([])["context_injected"] is False
