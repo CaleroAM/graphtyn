@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V2_FMT_WRITE_BYTES_IMPACT",
+      "request": "Si cambio write_bytes en este repositorio, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "format_h",
+          "any": [
+            "format.h"
+          ]
+        },
+        {
+          "id": "printf_h",
+          "any": [
+            "printf.h"
+          ]
+        },
+        {
+          "id": "std_h",
+          "any": [
+            "std.h"
+          ]
+        },
+        {
+          "id": "bytes_formatter",
+          "any": [
+            "4358"
+          ]
+        },
+        {
+          "id": "printf_null",
+          "any": [
+            "242",
+            "255"
+          ]
+        },
+        {
+          "id": "typeid_std",
+          "any": [
+            "238",
+            "253"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V2_FMT_SPECS_WHAT",
+      "request": "¿Qué hace la función parse_format_specs en este repositorio? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "align",
+          "any": [
+            "parse_align"
+          ]
+        },
+        {
+          "id": "sign",
+          "any": [
+            "set_sign",
+            "sign::"
+          ]
+        },
+        {
+          "id": "presentation",
+          "any": [
+            "presentation_type",
+            "parse_presentation_type"
+          ]
+        },
+        {
+          "id": "error",
+          "any": [
+            "report_error"
+          ]
+        },
+        {
+          "id": "type_set",
+          "any": [
+            "set_type"
+          ]
+        },
+        {
+          "id": "location",
+          "any": [
+            "core.h"
+          ]
+        }
+      ]
+    }
+  ]
+}

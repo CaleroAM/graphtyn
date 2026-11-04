@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V2_RAILS_UPDATE_RECORD_CALLERS",
+      "request": "¿Quién llama a _update_record en este proyecto? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "create_or_update",
+          "any": [
+            "create_or_update"
+          ]
+        },
+        {
+          "id": "callbacks",
+          "any": [
+            "callbacks.rb"
+          ]
+        },
+        {
+          "id": "timestamp",
+          "any": [
+            "timestamp.rb"
+          ]
+        },
+        {
+          "id": "dirty",
+          "any": [
+            "dirty.rb"
+          ]
+        },
+        {
+          "id": "optimistic",
+          "any": [
+            "optimistic.rb"
+          ]
+        },
+        {
+          "id": "update_columns",
+          "any": [
+            "617"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V2_RAILS_TX_STATUS_WHAT",
+      "request": "¿Qué hace el método with_transaction_returning_status en este proyecto? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "with_connection",
+          "any": [
+            "with_connection"
+          ]
+        },
+        {
+          "id": "implicit",
+          "any": [
+            "implicit_persistence_transaction"
+          ]
+        },
+        {
+          "id": "add_to_tx",
+          "any": [
+            "add_to_transaction"
+          ]
+        },
+        {
+          "id": "remember",
+          "any": [
+            "remember_transaction_record_state"
+          ]
+        },
+        {
+          "id": "rollback",
+          "any": [
+            "ActiveRecord::Rollback"
+          ]
+        },
+        {
+          "id": "yield",
+          "any": [
+            "yield"
+          ]
+        },
+        {
+          "id": "last_status",
+          "any": [
+            "_last_transaction_return_status"
+          ]
+        }
+      ]
+    }
+  ]
+}

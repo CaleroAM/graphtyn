@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V2_REDIS_ASYNC_DELETE_CALLERS",
+      "request": "¿Quién llama a dbAsyncDelete en este proyecto? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "del_generic",
+          "any": [
+            "delGenericCommand"
+          ]
+        },
+        {
+          "id": "db_c",
+          "any": [
+            "db.c"
+          ]
+        },
+        {
+          "id": "module_c",
+          "any": [
+            "module.c"
+          ]
+        },
+        {
+          "id": "rm_delete",
+          "any": [
+            "RM_DeleteKey"
+          ]
+        },
+        {
+          "id": "line_1449",
+          "any": [
+            ":1449",
+            "1449"
+          ]
+        },
+        {
+          "id": "line_4417",
+          "any": [
+            ":4417",
+            "4417"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V2_REDIS_POOL_WHAT",
+      "request": "¿Qué hace la función evictionPoolPopulate en este proyecto? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "sampling",
+          "any": [
+            "kvstoreDictGetSomeKeys"
+          ]
+        },
+        {
+          "id": "samples",
+          "any": [
+            "maxmemory_samples"
+          ]
+        },
+        {
+          "id": "lru",
+          "any": [
+            "estimateObjectIdleTime"
+          ]
+        },
+        {
+          "id": "lfu",
+          "any": [
+            "LFUDecrAndReturn"
+          ]
+        },
+        {
+          "id": "ttl",
+          "any": [
+            "MAXMEMORY_VOLATILE_TTL"
+          ]
+        },
+        {
+          "id": "pool_size",
+          "any": [
+            "EVPOOL_SIZE"
+          ]
+        },
+        {
+          "id": "shift",
+          "any": [
+            "memmove"
+          ]
+        },
+        {
+          "id": "caller",
+          "any": [
+            "performEvictions"
+          ]
+        }
+      ]
+    }
+  ]
+}

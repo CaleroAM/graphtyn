@@ -1,0 +1,350 @@
+{
+  "FMT_VPRINT_HOW": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        33727,
+        30514
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 59.3
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        113612,
+        98025
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        8,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 105.8
+    }
+  },
+  "FMT_WRITE_PADDED_IMPACT": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        47102,
+        48720
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        3,
+        3
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 86.4
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        31239,
+        35386
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        1,
+        1
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 59.1
+    }
+  },
+  "RAILS_CREATE_RECORD_CALLERS": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        194037,
+        164567
+      ],
+      "cached_input_tokens": [
+        110376,
+        109529
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        19,
+        17
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 121.8
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        41612,
+        39934
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        2
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 45.6
+    }
+  },
+  "RAILS_TOUCH_IMPACT": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        127349,
+        104146
+      ],
+      "cached_input_tokens": [
+        0,
+        55398
+      ],
+      "rubric": [
+        5,
+        5
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        8,
+        9
+      ],
+      "mcp_calls": [
+        3,
+        4
+      ],
+      "seconds": 163.9
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        45899,
+        44899
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 81.8
+    }
+  },
+  "REDIS_ACTIVE_EXPIRE_WHAT": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        83255,
+        90633
+      ],
+      "cached_input_tokens": [
+        0,
+        50274
+      ],
+      "rubric": [
+        7,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        6,
+        9
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 68.2
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        74164,
+        43140
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        5
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        5,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 63.5
+    }
+  },
+  "REDIS_EVICT_CALLERS": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        136532,
+        115523
+      ],
+      "cached_input_tokens": [
+        88204,
+        31464
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        14,
+        10
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 83.9
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        66316,
+        66723
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        5,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 50.2
+    }
+  }
+}
