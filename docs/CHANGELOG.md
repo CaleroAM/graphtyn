@@ -31,6 +31,20 @@ compatibles con PEP 440.
   `impact`, también si la frase incluye «si cambia X».
 - La clasificación reconoce el alcance, las preguntas sobre el proyecto y las de
   consumidores también en portugués, francés, alemán e italiano.
+- `impact` añade `direct_consumers.text_references`: usos que el índice no resuelve,
+  como las llamadas con plantilla de C++, hallados con una búsqueda de texto acotada
+  y marcados como pistas sin verificar. Si no caben todos, el paquete ya no le dice
+  al agente que pare.
+- «¿Qué hace X?» sobre un símbolo nombrado devuelve su cuerpo entero y quién lo
+  llama. Antes elegía líneas según las palabras de la pregunta (`con` coincidía con
+  `config_`), dejaba 69 de las 233 líneas de `activeExpireCycle` y declaraba la
+  evidencia completa. Un cuerpo que no cabe se informa como `source_body:<símbolo>`
+  en `missing`.
+- Los extractos empiezan en el comentario de la declaración, no dentro de la función
+  anterior.
+- Medición con agentes en Antigravity (80 sesiones): calidad igual o mejor en dos
+  conjuntos con un 59 % y un 30 % menos de tokens, con excepciones que recoge
+  `benchmarks/intent_impact_2026-11-04/report.md`.
 - El README ya no dice que Antigravity carece de hooks, ni indica `agy mcp list`
   para verificar la entrada de proyecto: ese comando sólo muestra los servidores
   globales.

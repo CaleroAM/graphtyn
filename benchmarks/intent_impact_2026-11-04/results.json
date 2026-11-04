@@ -427,6 +427,34 @@
         1
       ],
       "seconds": 57.3
+    },
+    "retest-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        47653,
+        45997
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        6
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 60.7
     }
   },
   "REDIS_EVICT_CALLERS": {
@@ -861,6 +889,266 @@
         1
       ],
       "seconds": 64.3
+    },
+    "retest-set2": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44385,
+        44649
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        5,
+        6
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 62.7
+    }
+  },
+  "V3_FMT_PARSE_SPECS_WHAT": {
+    "set3-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        58784,
+        75706
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        4,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 71.3
+    },
+    "set3-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44879,
+        45496
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 59.2
+    }
+  },
+  "V3_RAILS_WITHIN_TX_WHAT": {
+    "set3-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        53828,
+        80088
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 9,
+      "tool_calls": [
+        4,
+        6
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 53.7
+    },
+    "set3-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        90601,
+        101602
+      ],
+      "cached_input_tokens": [
+        5579,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 9,
+      "tool_calls": [
+        7,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 72.6
+    }
+  },
+  "V3_REDIS_FREE_CLIENT_WHAT": {
+    "set3-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        102364,
+        81380
+      ],
+      "cached_input_tokens": [
+        0,
+        31151
+      ],
+      "rubric": [
+        6,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        7,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 81.0
+    },
+    "set3-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        48357,
+        47332
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 68.3
+    }
+  },
+  "V3_REDIS_SCAN_WHAT": {
+    "set3-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        116910,
+        114627
+      ],
+      "cached_input_tokens": [
+        16228,
+        67848
+      ],
+      "rubric": [
+        5,
+        4
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        9,
+        11
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 82.2
+    },
+    "set3-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        52798,
+        47963
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        6
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 78.7
     }
   }
 }

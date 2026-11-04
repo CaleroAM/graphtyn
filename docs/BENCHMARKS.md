@@ -25,6 +25,7 @@
 | Tareas no vistas (held-out) para MCP lean y hook | NEGATIVE para generalización; seis tareas nuevas, 54 sesiones; rúbricas congeladas antes de ejecutar |
 | Segundo conjunto no visto y regla de parada dirigida | MIXED; seis tareas nuevas más repetición del primer conjunto, 114 sesiones (100 completas) |
 | Hook de primer turno en Antigravity | NEGATIVE para ahorro general; nueve tareas, 42 sesiones (n=2–3); ver `benchmarks/antigravity_hook_2026-11-03/report.md` |
+| Clasificación, `impact` y explicación de símbolos en Antigravity | MIXED, favorable; diez tareas no vistas más repeticiones, 80 sesiones (n=2); ver `benchmarks/intent_impact_2026-11-04/report.md` |
 | 36 tareas multilenguaje | PENDING |
 
 La medición de la release 0.8.0 está en
