@@ -16,7 +16,7 @@ Promedios por sesión. «Anterior» es `3de6e0e`, la rama sin estas correcciones
 | 2 (6 tareas, impact y explicación) | anterior | 67/78 | 105.688 | 126.729 | 8,8 |
 | 2 | `95e53ff` | 68/78 | 43.556 | 43.556 | 2,9 |
 | 3 (4 tareas, sólo explicación) | anterior | 52/66 | 85.461 | 99.864 | 6,6 |
-| 3 | `b6e804c` | 58/66 | 59.878 | 60.576 | 4,0 |
+| 3 | `4c14669` | 58/66 | 59.878 | 60.576 | 4,0 |
 
 Con n=2 por tarea, la diferencia del conjunto 2 es un empate en calidad. La del
 conjunto 3 viene sobre todo de una tarea (`scanGenericCommand`, 9→13/16).
@@ -63,9 +63,9 @@ Hechos de la rúbrica sumando las dos repeticiones, y tokens medios.
 | `V3_FMT_PARSE_SPECS_WHAT` | 13/16 | 14/16 | 67.245 → 45.188 |
 | `V3_RAILS_WITHIN_TX_WHAT` | 16/18 | 16/18 | 66.958 → 96.102 |
 
-Las filas V2 son de `95e53ff`, las V3 de `b6e804c`. Al repetir con `b6e804c`:
+Las filas V2 son de `95e53ff`, las V3 de `4c14669`. Al repetir con `4c14669`:
 
-| Tarea | Anterior | `95e53ff` | `b6e804c` |
+| Tarea | Anterior | `95e53ff` | `4c14669` |
 |---|---:|---:|---:|
 | `REDIS_ACTIVE_EXPIRE_WHAT` | 15/16 | 8/16 | 13/16 |
 | `V2_REDIS_POOL_WHAT` | 14/16 | 12/16 | 11/16 |
@@ -112,7 +112,7 @@ Portugués, francés, alemán e italiano están cubiertos por pruebas de clasifi
   y el llamador real es `RM_UnlinkKey`.
 - `V3_FMT_PARSE_SPECS_WHAT` pregunta por la misma función que `V2_FMT_SPECS_WHAT`,
   por descuido mío: sólo 3 de las 4 tareas del conjunto 3 son inéditas.
-- `b6e804c` sólo se midió con el conjunto 3 y las dos repeticiones. Las demás tareas
+- `4c14669` sólo se midió con el conjunto 3 y las dos repeticiones. Las demás tareas
   de explicación de los conjuntos 1 y 2 no se repitieron con esa versión.
 - La versión final se midió con la instalación editable de la rama, ejecutada a
   través de `--graphtyn-executable`; la anterior, desde un worktree en `3de6e0e`.
