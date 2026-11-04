@@ -1,10 +1,11 @@
+import re
 from pathlib import Path
 
 import pytest
 
 from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.change_analyst import query_intent
-from graphtyn.core.source_evidence import _focused_excerpt, attach_source_evidence
+from graphtyn.core.source_evidence import _focused_excerpt, attach_source_evidence, whole_symbol_name
 from graphtyn.mcp_server import _drop_excerpt_middle
 
 
@@ -168,3 +169,46 @@ def test_type_named_in_request_is_required_with_its_full_brace_extent(tmp_path):
     assert fstring["end_line"] == len(lines) and "runtime_format_string" in fstring["text"]
     # A homonym in another file is no longer required merely by sharing the name.
     assert sum(item["symbol"] == "format_to" for item in result["source_evidence"]) == 1
+
+
+@pytest.mark.parametrize("request_text, symbol", [
+    ("¿Qué hace la función activeExpireCycle en este proyecto? Responde con evidencia archivo:línea.", "activeexpirecycle"),
+    ("What does freeClient do in this repository? Cite file:line.", "freeclient"),
+    ("Explica qué hace parse_format_specs. Cita archivo:línea.", "parse_format_specs"),
+    ("Was macht die Funktion fooBar?", "foobar"),
+    ("How does ActiveRecord::Base.save work?", "save"),
+    ("Explica cómo processCommand rechaza comandos desconocidos", None),
+    ("¿Qué hace processCommand cuando falla?", None),
+    ("Si cambio foo_bar, ¿qué se rompe?", None),
+])
+def test_whole_symbol_question_only_when_nothing_narrows_it(request_text, symbol):
+    assert whole_symbol_name(request_text) == symbol
+
+
+def _explained_package(tmp_path, body_lines, *request_suffix):
+    source = tmp_path / "work.c"
+    prefix = ["void previous(void) {", "    previous_code();", "}", "", "/* Runs the work. */"]
+    body = ["void run_work(int type) {", *[f"    step_{n}(type);" for n in range(body_lines)], "}"]
+    source.write_text("\n".join([*prefix, *body]) + "\n", encoding="utf-8")
+    node = {"id": "n", "name": "run_work", "kind": "function", "file": "work.c", "line": 6, "end_line": 6 + len(body) - 1}
+    caller = {"id": "c", "name": "caller_cron", "kind": "function", "file": "cron.c", "line": 40}
+    graph = {"nodes": [node, caller], "links": [{"source": "c", "target": "n", "label": "llama", "line": 44}]}
+    result = {"intent": "flow", "matched": [node], "nodes": [node], "links": [], "missing": [], "stopping": {"sufficient_evidence": True}}
+    return attach_source_evidence(tmp_path, result, "¿Qué hace la función run_work?", graph=graph)
+
+
+def test_explaining_a_symbol_returns_its_whole_body_and_callers(tmp_path):
+    result = _explained_package(tmp_path, 220)
+    excerpt = result["source_evidence"][0]
+    assert excerpt["start_line"] == 5, "starts at its comment, not inside the previous function"
+    assert "previous_code" not in excerpt["text"]
+    assert "omitted" not in excerpt["text"] and "step_219" in excerpt["text"]
+    assert result["do_not_expand"] is True and result["missing"] == []
+    assert result["direct_consumers"]["others"] == [["caller_cron", "cron.c:44"]]
+
+
+def test_a_body_too_long_to_deliver_is_not_declared_complete(tmp_path):
+    result = _explained_package(tmp_path, 1500)
+    assert re.search(r"\(\d+ lines omitted\)", result["source_evidence"][0]["text"])
+    assert result["missing"] == ["source_body:run_work"]
+    assert result["do_not_expand"] is False and result["source_coverage"]["complete"] is False

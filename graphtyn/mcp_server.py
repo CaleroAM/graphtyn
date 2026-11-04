@@ -20,7 +20,7 @@ from .core.shared_memory import SharedMemoryStore
 from .core.storage import data_home, project_store_dir
 from .core.memory_scope import resolve_memory_scope
 from .core.history_import import configured_sources, _agent_id_matches
-from .core.source_evidence import attach_source_evidence
+from .core.source_evidence import attach_source_evidence, elided_bodies
 from .core.lean_package import lean_payload, serialized_tokens as _serialized_tokens
 from .core.evidence_sufficiency import mark_insufficient_evidence
 from .core.intent_delta import _intent_delta
@@ -339,7 +339,6 @@ def _compact_link(link: dict) -> dict:
 
 
 
-
 def _synchronize_bounded_source_coverage(output: dict) -> None:
     """Keep the stop contract honest after payload compaction drops excerpts."""
     coverage = output.get("source_coverage")
@@ -361,7 +360,7 @@ def _synchronize_bounded_source_coverage(output: dict) -> None:
     coverage["required_obligations"] = obligation_state
     coverage["required_symbols"] = symbol_state
     missing = [label for label, present in obligation_state.items() if not present]
-    missing.extend(f"source_symbol:{symbol}" for symbol, present in symbol_state.items() if not present)
+    missing.extend([*(f"source_symbol:{symbol}" for symbol, present in symbol_state.items() if not present), *elided_bodies(output)])
     coverage["complete"] = not missing
     if missing:
         output["missing"] = list(dict.fromkeys([*output.get("missing", []), *missing]))
@@ -698,9 +697,9 @@ def build_intent_package(workspace: Path, graph: dict, request: str, intent: str
     started = time.perf_counter()
     result = evidence_result(raw, max_nodes=limit,
                              token_budget=6000 if raw.get("evidence_mode") == "precision" else 4000)
-    if raw.get("evidence_mode") == "precision" and result.get("source_evidence"):
-        # Precision keeps more entities, but excerpts stay within the default
-        # budget: this is the configuration measured in the agent benchmarks.
+    if (raw.get("evidence_mode") == "precision" and result.get("source_evidence")
+            and not (raw.get("source_coverage") or {}).get("whole_bodies")):
+        # Precision keeps more entities, but excerpts stay within the default budget (measured in the agent benchmarks).
         result["source_evidence"] = evidence_result(raw, max_nodes=limit).get("source_evidence", [])
         _synchronize_bounded_source_coverage(result)
     mark_insufficient_evidence(result, request, mirror=raw)
