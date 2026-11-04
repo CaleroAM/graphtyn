@@ -117,8 +117,11 @@ Portugués, francés, alemán e italiano están cubiertos por pruebas de clasifi
 - Tras medir `4c14669`, la puerta de cobertura de CI detectó que empezar todos los
   extractos en el comentario de la declaración perdía hechos en Flask: las líneas
   previas traían una función vecina relevante. Ese cambio quedó limitado a las
-  preguntas de cuerpo entero, las únicas donde se midió; esas preguntas no cambian
-  respecto a lo medido, y las demás vuelven a su comportamiento anterior.
+  preguntas de cuerpo entero, las únicas donde se midió. La misma puerta detectó que
+  una explicación de varias partes pasaba a `precision` y se declaraba completa con
+  3/8 hechos, así que `precision` por «explica…» también quedó limitado a esas
+  preguntas. Con estos ajustes, los paquetes de las tareas medidas conservan los
+  mismos hechos (106/111), pero no se repitieron sesiones con agentes.
 - La versión final se midió con la instalación editable de la rama, ejecutada a
   través de `--graphtyn-executable`; la anterior, desde un worktree en `3de6e0e`.
 

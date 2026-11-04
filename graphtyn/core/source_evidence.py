@@ -114,7 +114,8 @@ def select_evidence_mode(request: str, requested: str = "auto", intent: str = "f
     if requested in {"compact", "balanced", "precision"}:
         return requested
     text = str(request or "").lower()
-    if any(marker in text for marker in _PRECISION_MARKERS) or (_BEHAVIOR_QUESTION.search(text) and names_code(request)):
+    # A multi-part explanation stays out: more text there flips its stop signal, not its coverage.
+    if any(marker in text for marker in _PRECISION_MARKERS) or (whole_symbol_name(request) and names_code(request)):
         return "precision"
     if intent == "flow" and len(re.findall(r"\b(?:and|y|then|después|además|también)\b", text)) >= 2:
         return "balanced"
