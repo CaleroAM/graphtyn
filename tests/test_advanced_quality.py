@@ -134,8 +134,6 @@ def test_intent_classifier_does_not_read_comprueba_as_prueba():
     "What does the function apply_discount do in this project?",
     "Explain the method guardar in this repository",
     "¿Cómo funciona processCommand en este proyecto?",
-    "¿Dónde se usa `calcular_total` en este repositorio?",
-    "¿Quién llama a calcular_total en este proyecto?",
     "¿Cómo se crea un pedido en este proyecto?",
     "Trace how orders are created in this repo",
     "Resumen de la función calcular_total",
@@ -161,6 +159,90 @@ def test_naming_the_project_as_scope_does_not_make_a_code_question_an_overview(r
 ])
 def test_a_question_about_the_project_itself_stays_an_overview(request_text):
     assert classify_intent(request_text) == "overview"
+
+
+@pytest.mark.parametrize("request_text", [
+    "¿Quién llama a calcular_total en este proyecto?",
+    "¿Dónde se usa `calcular_total` en este repositorio?",
+    "Si cambio calcular_total en este proyecto, ¿qué se rompe?",
+    "¿Qué se rompe si cambia calcular_total?",
+    "Who calls lookupCommand?",
+    "What would break if I change create_or_update?",
+    "Where is vformat_to used in this repo?",
+    "Quem chama calcular_total neste projeto?",
+    "Qui appelle calculer_total dans ce projet ?",
+    "Wer ruft berechne_summe in diesem Projekt auf?",
+    "Chi chiama calcola_totale in questo progetto?",
+    "Assess repository contract change.",
+])
+def test_questions_about_consumers_or_breakage_are_impact(request_text):
+    assert classify_intent(request_text) == "impact"
+
+
+def test_a_flow_request_that_mentions_callers_stays_a_flow():
+    assert classify_intent("Traza el flujo de save y quién llama a cada etapa") == "flow"
+
+
+@pytest.mark.parametrize("request_text,intent", [
+    ("O que faz a função calcular_total neste projeto?", "flow"),
+    ("Que fait la fonction calculer_total dans ce projet ?", "flow"),
+    ("Was macht die Funktion berechne_summe in diesem Projekt?", "flow"),
+    ("Cosa fa la funzione calcola_totale in questo progetto?", "flow"),
+    ("O que faz este projeto?", "overview"),
+    ("Que fait ce projet ?", "overview"),
+    ("Was macht dieses Projekt?", "overview"),
+    ("Cosa fa questo progetto?", "overview"),
+    ("How does this project work?", "overview"),
+    ("How does this project validate the session token?", "flow"),
+])
+def test_scope_and_project_questions_work_in_other_languages(request_text, intent):
+    assert classify_intent(request_text) == intent
+
+
+def _overloaded_graph(overloads, callers):
+    nodes = [{"id": f"s:o{n}", "name": "render", "kind": "function", "file": f"lib/o{n}.h", "line": n + 1}
+             for n in range(overloads)]
+    nodes += [{"id": f"s:c{n}", "name": f"caller_{n}", "kind": "function", "file": f"src/c{n}.c", "line": 5}
+              for n in range(callers)]
+    links = [{"source": f"s:c{n}", "target": f"s:o{n % overloads}", "label": "llama", "confidence": "EXTRACTED", "line": 9}
+             for n in range(callers)]
+    return {"nodes": nodes, "links": links}
+
+
+def test_overloads_cannot_hide_consumers_behind_a_false_zero():
+    result = query_intent(_overloaded_graph(overloads=9, callers=3), "¿Quién llama a render?", "auto", 10)
+
+    assert result["intent"] == "impact"
+    assert result["negative_evidence"] == {}
+    assert result["direct_consumers"]["indexed"] == 3
+    assert {node["name"] for node in result["nodes"]} >= {"caller_0", "caller_1", "caller_2"}
+    assert len(result["omitted_homonyms"]) == 9 - 5
+
+
+def test_consumers_beyond_the_budget_are_still_reported_with_their_location():
+    result = query_intent(_overloaded_graph(overloads=1, callers=30), "¿Quién llama a render?", "auto", 10)
+    shown = {node["name"] for node in result["nodes"]}
+    listed = {name for name, _at in result["direct_consumers"]["others"]}
+
+    assert result["direct_consumers"]["indexed"] == 30
+    assert len(shown - {"render"}) + len(listed) == 30
+    assert ["caller_29", "src/c29.c:9"] in result["direct_consumers"]["others"] or "caller_29" in shown
+    assert result["do_not_expand"] is True
+
+
+def test_more_consumers_than_can_be_listed_is_declared_missing():
+    result = query_intent(_overloaded_graph(overloads=1, callers=80), "¿Quién llama a render?", "auto", 10)
+
+    assert result["direct_consumers"]["omitted"] > 0
+    assert "all_direct_consumers" in result["missing"]
+    assert result["do_not_expand"] is False
+
+
+def test_a_symbol_without_consumers_still_reports_the_zero():
+    result = query_intent(_overloaded_graph(overloads=1, callers=0), "¿Quién llama a render?", "auto", 10)
+
+    assert result["direct_consumers"]["indexed"] == 0
+    assert result["negative_evidence"]["consumers"] == 0
 
 
 def test_the_repository_pattern_still_signals_persistence():

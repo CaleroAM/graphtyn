@@ -771,6 +771,112 @@ def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
     return concerns
 
 
+_CONSUMER_LABELS = {"llama", "usa", "referencia", "implementa", "hereda", "suscribe", "escucha",
+                    "despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
+# Overloads of a common name must not spend the budget meant for their consumers.
+_IMPACT_ANCHOR_SHARE = 0.5
+_LISTED_CONSUMERS = 40
+
+
+def _direct_consumers(graph: dict[str, Any], by_id: dict[Any, dict], anchor_ids: set[Any]) -> dict[Any, list[dict]]:
+    """Every indexed incoming consumer edge of the anchors, in the whole graph."""
+    consumers: dict[Any, list[dict]] = {}
+    for link in graph.get("links", []):
+        if (str(link.get("label") or "") in _CONSUMER_LABELS and link.get("target") in anchor_ids
+                and link.get("source") in by_id and link.get("source") not in anchor_ids):
+            consumers.setdefault(link["source"], []).append(link)
+    return consumers
+
+
+def _consumer_summary(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], shown: set[Any]) -> dict[str, Any]:
+    """How many consumers exist and where the ones outside the selected nodes are.
+
+    The node budget caps what is expanded, not what the agent is told exists.
+    """
+    rest = [node_id for node_id in consumers if node_id not in shown]
+    listed = sorted(rest, key=lambda node_id: (bool(_TEST_PATH.search(str(by_id[node_id].get("file") or ""))),
+                                               str(by_id[node_id].get("file") or ""), str(node_id)))
+    return {"indexed": len(consumers), "omitted": max(0, len(listed) - _LISTED_CONSUMERS), "others": [
+        [by_id[node_id].get("name"), f"{by_id[node_id].get('file') or ''}:{consumers[node_id][0].get('line') or by_id[node_id].get('line') or ''}"]
+        for node_id in listed[:_LISTED_CONSUMERS]]}
+
+
+def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names: set[str], request: str,
+                    request_terms: list[str], max_nodes: int, requested_ceiling: int) -> dict[str, Any]:
+    by_id = {node.get("id"): node for node in all_nodes}
+    named = [node for node in all_nodes if str(node.get("name") or "").lower() in explicit_names]
+    all_consumers = _direct_consumers(graph, by_id, {node.get("id") for node in named})
+    incoming = {node.get("id"): 0 for node in named}
+    for edges in all_consumers.values():
+        for edge in edges:
+            incoming[edge["target"]] += 1
+    # Most consumed overloads first; the others are still counted and reported.
+    anchors = sorted(named, key=lambda node: (-incoming[node.get("id")], str(node.get("id"))))[
+        :max(1, int(max_nodes * _IMPACT_ANCHOR_SHARE))]
+    omitted_anchors = named[len(anchors):] and [node for node in named if node not in anchors]
+    adjacency: dict[str, list[tuple[str, dict]]] = {}
+    for link in graph.get("links", []):
+        source, target, label = link.get("source"), link.get("target"), str(link.get("label") or "")
+        if label in _CONSUMER_LABELS:
+            adjacency.setdefault(target, []).append((source, link))
+            if label in {"implementa", "hereda"}:
+                adjacency.setdefault(source, []).append((target, link))
+        elif label == "contiene":
+            # Include the declaring file/container but never fan out from
+            # that file into every sibling symbol.
+            adjacency.setdefault(target, []).append((source, link))
+    selected_ids = {node.get("id") for node in anchors}
+    frontier = [(node.get("id"), 0) for node in anchors]
+    while frontier and len(selected_ids) < max_nodes:
+        current, hop = frontier.pop(0)
+        if hop >= 2 or str(current).startswith("file:"):
+            continue
+        neighbors = sorted(adjacency.get(current, []), key=lambda item: (
+            str(item[1].get("label") or "") == "contiene",
+            str(item[1].get("confidence") or "") == "AMBIGUOUS", str(item[0])))
+        for neighbor, _edge in neighbors:
+            if neighbor in selected_ids or neighbor not in by_id:
+                continue
+            selected_ids.add(neighbor)
+            frontier.append((neighbor, hop + 1))
+            if len(selected_ids) >= max_nodes:
+                break
+    nodes = anchors + sorted((by_id[node_id] for node_id in selected_ids
+                              if node_id not in {node.get("id") for node in anchors}),
+                             key=lambda node: (not re.search(r"test", str(node.get("file") or ""), re.I),
+                                               -int(node.get("degree") or 0), str(node.get("id"))))
+    node_ids = {node.get("id") for node in nodes}
+    links = [link for link in graph.get("links", [])
+             if link.get("source") in node_ids and link.get("target") in node_ids]
+    consumers = _consumer_summary(all_consumers, by_id, node_ids)
+    missing = [] if len(nodes) > len(anchors) else ["consumers"]
+    if consumers["omitted"]:
+        missing.append("all_direct_consumers")
+    result = {
+        "request": str(request or "").strip(), "intent": "impact", "intent_terms": request_terms,
+        "matched": anchors[:5], "nodes": nodes[:max_nodes], "links": links,
+        "complete_for": ["impact"] if not missing else [], "missing": missing,
+        "direct_consumers": consumers,
+        "negative_evidence": ({"consumers": 0, "meaning": "no incoming indexed consumer relation"}
+                              if not all_consumers else {}),
+        "guidance": "Report only directional consumers/contracts in links and direct_consumers; cite file and line; verify AMBIGUOUS.",
+        "planner": "adaptive-impact-v2",
+        "budget": {"requested_ceiling": requested_ceiling, "max_nodes": max_nodes, "selected_nodes": len(nodes[:max_nodes])},
+        "stopping": {"sufficient_evidence": bool(anchors), "reason": "exact target and directional traversal completed"},
+        "operation_limit": 4,
+    }
+    if omitted_anchors:
+        result["omitted_homonyms"] = [f"{node.get('file') or ''}:{node.get('line') or ''}" for node in omitted_anchors]
+    implementation = _implementation_context(graph, request, anchors[:5], nodes[:max_nodes])
+    if implementation:
+        result["implementation_context"] = implementation
+        result["guidance"] += " " + _EDIT_EXECUTION_GUIDANCE
+    from .answer_validation import validate_context_package
+    result["validation"] = validate_context_package(graph, result)
+    result["do_not_expand"] = _intent_can_stop(result)
+    return result
+
+
 def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_nodes: int = 12) -> dict[str, Any]:
     """Return a one-shot, intent-specific evidence package."""
     selected_intent = classify_intent(request, intent)
@@ -881,65 +987,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     command_names = _signals.command_handlers(request, all_nodes, anchor_excluded_kinds)
     explicit_names |= command_names
     if selected_intent == "impact" and explicit_names:
-        anchors = [node for node in all_nodes if str(node.get("name") or "").lower() in explicit_names]
-        by_id = {node.get("id"): node for node in all_nodes}
-        consumer_labels = {"llama", "usa", "referencia", "implementa", "hereda", "suscribe", "escucha",
-                           "despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
-        adjacency: dict[str, list[tuple[str, dict]]] = {}
-        for link in graph.get("links", []):
-            source, target, label = link.get("source"), link.get("target"), str(link.get("label") or "")
-            if label in consumer_labels:
-                adjacency.setdefault(target, []).append((source, link))
-                if label in {"implementa", "hereda"}:
-                    adjacency.setdefault(source, []).append((target, link))
-            elif label == "contiene":
-                # Include the declaring file/container but never fan out from
-                # that file into every sibling symbol.
-                adjacency.setdefault(target, []).append((source, link))
-        selected_ids = {node.get("id") for node in anchors}
-        frontier = [(node.get("id"), 0) for node in anchors]
-        traversed = []
-        while frontier and len(selected_ids) < max_nodes:
-            current, hop = frontier.pop(0)
-            if hop >= 2 or str(current).startswith("file:"):
-                continue
-            neighbors = sorted(adjacency.get(current, []), key=lambda item: (
-                str(item[1].get("confidence") or "") == "AMBIGUOUS", str(item[0])))
-            for neighbor, edge in neighbors:
-                if neighbor in selected_ids or neighbor not in by_id:
-                    continue
-                selected_ids.add(neighbor)
-                traversed.append(edge)
-                frontier.append((neighbor, hop + 1))
-                if len(selected_ids) >= max_nodes:
-                    break
-        nodes = anchors + sorted((by_id[node_id] for node_id in selected_ids
-                                  if node_id not in {node.get("id") for node in anchors}),
-                                 key=lambda node: (not re.search(r"test", str(node.get("file") or ""), re.I),
-                                                   -int(node.get("degree") or 0), str(node.get("id"))))
-        node_ids = {node.get("id") for node in nodes}
-        links = [link for link in graph.get("links", [])
-                 if link.get("source") in node_ids and link.get("target") in node_ids]
-        result = {
-            "request": str(request or "").strip(), "intent": "impact", "intent_terms": request_terms,
-            "matched": anchors[:5], "nodes": nodes[:max_nodes], "links": links,
-            "complete_for": ["impact"], "missing": [] if len(nodes) > len(anchors) else ["consumers"],
-            "negative_evidence": ({"consumers": 0, "meaning": "no incoming indexed consumer relation"}
-                                  if not any(node.get("kind") != "file" and node not in anchors for node in nodes) else {}),
-            "guidance": "Report only directional consumers/contracts in links; cite file and line; verify AMBIGUOUS.",
-            "planner": "adaptive-impact-v2",
-            "budget": {"requested_ceiling": requested_ceiling, "max_nodes": max_nodes, "selected_nodes": len(nodes[:max_nodes])},
-            "stopping": {"sufficient_evidence": bool(anchors), "reason": "exact target and directional traversal completed"},
-            "operation_limit": 4,
-        }
-        implementation = _implementation_context(graph, request, anchors[:5], nodes[:max_nodes])
-        if implementation:
-            result["implementation_context"] = implementation
-            result["guidance"] += " " + _EDIT_EXECUTION_GUIDANCE
-        from .answer_validation import validate_context_package
-        result["validation"] = validate_context_package(graph, result)
-        result["do_not_expand"] = _intent_can_stop(result)
-        return result
+        return _impact_package(graph, all_nodes, explicit_names, request, request_terms, max_nodes, requested_ceiling)
     ranked = []
     strong_semantic_ids: set[str] = set()
     operation_filters = tuple(markers)

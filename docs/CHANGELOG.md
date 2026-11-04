@@ -21,6 +21,16 @@ compatibles con PEP 440.
   repositorio» activaba `persistence`. Esas frases tampoco influyen ya en qué
   código se selecciona. Las preguntas sobre el proyecto entero siguen siendo
   `overview`.
+- `impact` ya no afirma que un símbolo no tiene consumidores cuando el grafo sí
+  los tiene. Con varias sobrecargas (`vformat_to` en fmt tiene 9), estas agotaban
+  el presupuesto de nodos antes de recorrer a los consumidores, y el paquete
+  declaraba cero y evidencia suficiente. Ahora ocupan como mucho la mitad del
+  presupuesto, y `direct_consumers` cuenta sobre todo el grafo y lista con
+  `archivo:línea` los que no entran.
+- «¿Quién llama a X?», «¿Dónde se usa X?» y «¿Qué se rompe si cambio X?» pasan a
+  `impact`, también si la frase incluye «si cambia X».
+- La clasificación reconoce el alcance, las preguntas sobre el proyecto y las de
+  consumidores también en portugués, francés, alemán e italiano.
 - El README ya no dice que Antigravity carece de hooks, ni indica `agy mcp list`
   para verificar la entrada de proyecto: ese comando sólo muestra los servidores
   globales.

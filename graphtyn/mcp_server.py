@@ -625,6 +625,7 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
         "complete": len(unique) <= len(selected) and len(result.get("links", [])) <= len(relations),
     })
     if matched_ids:
+        incoming_calls = max(incoming_calls, int((result.get("direct_consumers") or {}).get("indexed") or 0))  # whole graph
         output["coverage"] = {
             "incoming_calls_or_uses": incoming_calls,
             "outgoing_calls_or_uses": outgoing_calls,
@@ -641,8 +642,7 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
                 negative.append("no implementa relation for matched symbol")
             if inheritance == 0:
                 negative.append("no hereda relation for matched symbol")
-            if negative:
-                output["negative_evidence"] = negative
+            output.update({"negative_evidence": negative} if negative else {})
     requested_checks = []
     if any(term.startswith(("dependenc", "import", "using")) for term in evidence_terms):
         requested_checks.append("dependencies: enumerate imports/usings from evidence")
