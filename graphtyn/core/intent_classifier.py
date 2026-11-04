@@ -65,6 +65,12 @@ def without_project_scope(request: str) -> str:
     return _PROJECT_SCOPE.sub(" ", str(request or ""))
 
 
+def names_code(request: str) -> bool:
+    """Whether the request names a code element, beyond the project it lives in."""
+    question = without_project_scope(request)
+    return bool(_CODE_IDENTIFIER.search(question) or _CODE_UNIT.search(question))
+
+
 def is_change_request(request: str) -> bool:
     """Identify requests where an agent is expected to edit the repository."""
     return bool(re.search(
@@ -94,8 +100,8 @@ def classify_intent(request: str, requested: str = "auto") -> str:
     if is_change_request(text) and not _IMPACT_QUESTION.search(text):
         return "flow"
     question = without_project_scope(request)
-    names_code = bool(_CODE_IDENTIFIER.search(question) or _CODE_UNIT.search(question))
-    if not names_code and (_PROJECT_SUBJECT.search(text) or _PROJECT_WORKS.search(text)):
+    named = names_code(request)
+    if not named and (_PROJECT_SUBJECT.search(text) or _PROJECT_WORKS.search(text)):
         return "overview"
     text = question.lower()
 
@@ -112,7 +118,7 @@ def classify_intent(request: str, requested: str = "auto") -> str:
     scores = {intent: sum(marker_matches(marker) for marker in markers)
               for intent, markers in _INTENT_MARKERS.items()}
     scores["impact"] += bool(_IMPACT_QUESTION.search(text))
-    if names_code:
+    if named:
         scores["overview"] = 0  # a summary of a named function or class is about that code
     best = max(scores, key=lambda intent: scores[intent])
     if _IMPACT_QUESTION.search(text) and scores["impact"] == scores[best] > scores["flow"]:

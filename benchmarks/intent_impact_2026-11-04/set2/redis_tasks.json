@@ -24,9 +24,9 @@
           ]
         },
         {
-          "id": "rm_delete",
+          "id": "rm_unlink",
           "any": [
-            "RM_DeleteKey"
+            "RM_UnlinkKey"
           ]
         },
         {

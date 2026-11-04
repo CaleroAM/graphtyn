@@ -6,6 +6,9 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .impact_references import attach_text_references
+from .intent_classifier import names_code
+
 
 _PRECISION_MARKERS = (
     "exact", "exacto", "exacta", "orden", "sequence", "secuencia",
@@ -72,12 +75,18 @@ def _focus_terms(request: str) -> list[str]:
     return list(dict.fromkeys(terms))
 
 
+# Explaining a named symbol needs its body: its signature and calls do not say what it does.
+_BEHAVIOR_QUESTION = re.compile(
+    r"\b(?:qu[eé] hace|c[oó]mo funciona|expl[ií]ca(?:me)?|what does|how does|how do|explain|o que faz|como funciona|"
+    r"que fait|comment fonctionne|was macht|wie funktioniert|cosa fa|come funziona)\b", re.IGNORECASE)
+
+
 def select_evidence_mode(request: str, requested: str = "auto", intent: str = "flow") -> str:
     """Choose source expansion only for questions that need body-level proof."""
     if requested in {"compact", "balanced", "precision"}:
         return requested
     text = str(request or "").lower()
-    if any(marker in text for marker in _PRECISION_MARKERS):
+    if any(marker in text for marker in _PRECISION_MARKERS) or (_BEHAVIOR_QUESTION.search(text) and names_code(request)):
         return "precision"
     if intent == "flow" and len(re.findall(r"\b(?:and|y|then|después|además|también)\b", text)) >= 2:
         return "balanced"
@@ -471,12 +480,15 @@ def attach_source_evidence(
     result: dict[str, Any],
     request: str,
     requested_mode: str = "auto",
+    graph: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Add a few exact symbol bodies when structural evidence is insufficient.
 
-    This runs after graph selection, so it never scans the repository or sends
-    unrelated files. Limits are deliberately small and deterministic.
+    This runs after graph selection and sends no unrelated files. Limits are
+    deliberately small and deterministic. With `graph`, an impact package also
+    gets a bounded scan for uses the index did not resolve.
     """
+    attach_text_references(root, graph, result)
     mode = select_evidence_mode(request, requested_mode, str(result.get("intent") or "flow"))
     result["evidence_mode"] = mode
     obligations = list(dict.fromkeys([

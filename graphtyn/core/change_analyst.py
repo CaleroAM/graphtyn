@@ -796,7 +796,7 @@ def _consumer_summary(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], 
     rest = [node_id for node_id in consumers if node_id not in shown]
     listed = sorted(rest, key=lambda node_id: (bool(_TEST_PATH.search(str(by_id[node_id].get("file") or ""))),
                                                str(by_id[node_id].get("file") or ""), str(node_id)))
-    return {"indexed": len(consumers), "omitted": max(0, len(listed) - _LISTED_CONSUMERS), "others": [
+    return {"indexed": len(consumers), "total": len(consumers), "omitted": max(0, len(listed) - _LISTED_CONSUMERS), "others": [
         [by_id[node_id].get("name"), f"{by_id[node_id].get('file') or ''}:{consumers[node_id][0].get('line') or by_id[node_id].get('line') or ''}"]
         for node_id in listed[:_LISTED_CONSUMERS]]}
 
@@ -867,6 +867,8 @@ def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names
     }
     if omitted_anchors:
         result["omitted_homonyms"] = [f"{node.get('file') or ''}:{node.get('line') or ''}" for node in omitted_anchors]
+        result["guidance"] += (" omitted_homonyms are other definitions of the same name (overloads or overrides, "
+                               "which may chain with super): changing the name affects them too, so report them.")
     implementation = _implementation_context(graph, request, anchors[:5], nodes[:max_nodes])
     if implementation:
         result["implementation_context"] = implementation

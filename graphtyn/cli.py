@@ -573,7 +573,7 @@ def _command_query_intent(args, root: Path, parser) -> None:
     graph = get_workspace_graph(root, ASTParser())
     from .core.source_evidence import attach_source_evidence
     result = query_intent(graph, args.request, args.intent, args.limit)
-    result = attach_source_evidence(root, result, args.request, args.evidence_mode)
+    result = attach_source_evidence(root, result, args.request, args.evidence_mode, graph=graph)
     result = attach_learning(result, root)
     if args.response_mode == "compact":
         from .mcp_server import evidence_result

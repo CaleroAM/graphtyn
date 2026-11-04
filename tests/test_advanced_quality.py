@@ -8,9 +8,9 @@ from graphtyn.core.answer_validation import detect_incomplete_answer, validate_c
 from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.benchmark_protocol import paired_statistics, validate_protocol
 from graphtyn.core.change_analyst import _terms, classify_intent, query_intent
+from graphtyn.core.source_evidence import attach_source_evidence, select_evidence_mode
 from graphtyn.core.graph_hygiene import normalize_graph
 from graphtyn.core.semantic_index import build_semantic_index, hashed_embedding, semantic_search
-from graphtyn.core.source_evidence import attach_source_evidence, select_evidence_mode
 
 
 def graph():
@@ -236,6 +236,60 @@ def test_more_consumers_than_can_be_listed_is_declared_missing():
     assert result["direct_consumers"]["omitted"] > 0
     assert "all_direct_consumers" in result["missing"]
     assert result["do_not_expand"] is False
+
+
+def _templated_project(tmp_path):
+    (tmp_path / "lib.h").write_text("int render(int x);\n// render is documented here\n")
+    (tmp_path / "use.h").write_text("int helper() {\n  return render<char>(1);\n}\n")
+    return tmp_path, {"nodes": [
+        {"id": "s:render", "name": "render", "kind": "function", "file": "lib.h", "line": 1},
+        {"id": "s:helper", "name": "helper", "kind": "function", "file": "use.h", "line": 1},
+    ], "links": []}
+
+
+def test_a_use_the_index_missed_is_reported_instead_of_a_zero(tmp_path):
+    root, data = _templated_project(tmp_path)
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    consumers = result["direct_consumers"]
+    assert consumers["indexed"] == 0 and consumers["total"] == 1
+    assert consumers["text_references"] == [["helper", "use.h:2"]]
+    assert result["negative_evidence"] == {}
+    assert "unverified" in result["guidance"]
+
+
+def test_without_any_use_the_zero_stands_and_comments_do_not_count(tmp_path):
+    root, data = _templated_project(tmp_path)
+    (root / "use.h").write_text("int helper() {\n  return 1;\n}\n")
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    assert result["direct_consumers"]["total"] == 0
+    assert "text_references" not in result["direct_consumers"]
+    assert result["negative_evidence"]["consumers"] == 0
+
+
+def test_too_many_textual_uses_withdraw_the_stop_signal(tmp_path):
+    root, data = _templated_project(tmp_path)
+    for n in range(45):
+        (root / f"u{n}.h").write_text("int h() {\n  return render<char>(1);\n}\n")
+        data["nodes"].append({"id": f"s:h{n}", "name": f"h{n}", "kind": "function", "file": f"u{n}.h", "line": 1})
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    assert result["direct_consumers"]["text_references_incomplete"] is True
+    assert "all_text_references" in result["missing"]
+    assert result["do_not_expand"] is False
+
+
+@pytest.mark.parametrize("request_text,mode", [
+    ("¿Qué hace la función aplicar_descuento en este proyecto?", "precision"),
+    ("How does processCommand work?", "precision"),
+    ("¿Qué hace este proyecto?", "compact"),
+])
+def test_explaining_a_named_symbol_asks_for_its_source(request_text, mode):
+    assert select_evidence_mode(request_text, "auto", "flow") == mode
 
 
 def test_a_symbol_without_consumers_still_reports_the_zero():

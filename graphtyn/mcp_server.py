@@ -625,7 +625,7 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
         "complete": len(unique) <= len(selected) and len(result.get("links", [])) <= len(relations),
     })
     if matched_ids:
-        incoming_calls = max(incoming_calls, int((result.get("direct_consumers") or {}).get("indexed") or 0))  # whole graph
+        incoming_calls = max(incoming_calls, int((result.get("direct_consumers") or {}).get("total") or 0))  # whole graph
         output["coverage"] = {
             "incoming_calls_or_uses": incoming_calls,
             "outgoing_calls_or_uses": outgoing_calls,
@@ -691,7 +691,7 @@ def build_intent_package(workspace: Path, graph: dict, request: str, intent: str
     raw = query_intent(graph, request, intent, limit)
     retrieval_ms = (time.perf_counter() - started) * 1000
     started = time.perf_counter()
-    raw = attach_source_evidence(workspace, raw, request, evidence_mode)
+    raw = attach_source_evidence(workspace, raw, request, evidence_mode, graph=graph)
     raw = attach_learning(raw, workspace)
     _synchronize_stopping(raw)
     coverage_ms = (time.perf_counter() - started) * 1000
