@@ -1,11 +1,11 @@
 # Clasificación de intención, `impact` y explicación de símbolos
 
 Fecha: 2026-11-04. Cliente: Antigravity CLI (`gemini-3.8-flash-high`), regla de
-parada `targeted`. 80 sesiones reales, todas completas, 5.938.989 tokens.
+parada `targeted`. 122 sesiones reales, todas completas, 8.933.034 tokens.
 
-**Veredicto: MIXED, favorable.** En los dos conjuntos que aún no había visto al
-medirlos, la calidad no baja y el gasto cae. Quedan una tarea que no se recupera
-y dos que cuestan más; sólo se midió en un cliente, con n=2.
+**Veredicto: MIXED, favorable.** En los conjuntos 2 y 3, la calidad no baja y el
+gasto cae. En el conjunto 4, el gasto baja un 54 % y la calidad pasa de 51/54 a
+48/54, casi todo por `V4_RAILS_RELOAD_IMPACT`. Sólo se midió en un cliente, con n=2.
 
 ## Resultado
 
@@ -17,9 +17,13 @@ Promedios por sesión. «Anterior» es `3de6e0e`, la rama sin estas correcciones
 | 2 | `95e53ff` | 68/78 | 43.556 | 43.556 | 2,9 |
 | 3 (4 tareas, sólo explicación) | anterior | 52/66 | 85.461 | 99.864 | 6,6 |
 | 3 | `4c14669` | 58/66 | 59.878 | 60.576 | 4,0 |
+| 4 (4 tareas, punta previa del PR) | `f6544c3` | 51/54 | 109.134 | 213.092 | 11,1 |
+| 4 | `3ff1c90` y `7b11c85` | 48/54 | 50.226 | 50.226 | 3,3 |
 
 Con n=2 por tarea, la diferencia del conjunto 2 es un empate en calidad. La del
-conjunto 3 viene sobre todo de una tarea (`scanGenericCommand`, 9→13/16).
+conjunto 3 viene sobre todo de una tarea (`scanGenericCommand`, 9→13/16). En el
+conjunto 4, la fila final combina `7b11c85` en las dos tareas de `impact` con
+`3ff1c90` en las otras dos, que no se repitieron.
 
 «Con caché» suma los tokens de entrada servidos desde caché, que Antigravity
 informa aparte. Los aciertos de caché varían entre sesiones, así que se dan las
@@ -45,6 +49,15 @@ corregir mirando las mismas tareas sesga el resultado.
    pregunta: `con` coincidía con `config_`, quedaban 69 de 233 líneas y el paquete
    declaraba `complete: true`. Ahora esas preguntas reciben el cuerpo entero y los
    llamadores, y un cuerpo que no cabe se informa en `missing`.
+4. **Cuarta corrección, conjunto 4 (16 sesiones) y repetición de cinco tareas (10).**
+   Cuatro causas: el nombre `within_new_transaction` activaba obligaciones por
+   contener «transaction»; una lista larga se declaraba incompleta y mandaba a usar
+   `grep`; `write_exponent<Char>(...)` se registraba como llamada a `Char`; y palabras
+   cortas de la pregunta elegían líneas por subcadena.
+5. **Dos repeticiones más (8 + 8 sesiones).** Quitar el duplicado de texto de una
+   llamada ya resuelta empeoró fmt: `write_exponent` pasó de 2 a 6-7 herramientas,
+   porque el único llamador visible era `format.h`. Ahora esas llamadas se listan con
+   la función que las hace, y las dos tareas de fmt vuelven a 2-3 herramientas.
 
 ## Por tarea
 
@@ -70,24 +83,47 @@ Las filas V2 son de `95e53ff`, las V3 de `4c14669`. Al repetir con `4c14669`:
 | `REDIS_ACTIVE_EXPIRE_WHAT` | 15/16 | 8/16 | 13/16 |
 | `V2_REDIS_POOL_WHAT` | 14/16 | 12/16 | 11/16 |
 
+### Tareas repetidas tras la cuarta corrección
+
+Ya las había visto, así que muestran si el problema se corrigió, no cuánto
+generaliza la corrección.
+
+| Tarea | Versión | Punta previa | Última medición | Tokens punta previa → última |
+|---|---|---:|---:|---:|
+| `V3_RAILS_WITHIN_TX_WHAT` | `3ff1c90` | 16/18 | 18/18 | 96.102 → 43.296 |
+| `RAILS_TOUCH_IMPACT` | `7b11c85` | 12/12 | 12/12 | 165.717 → 59.886 |
+| `V2_REDIS_POOL_WHAT` | `3ff1c90` | 11/16 | 16/16 | 44.517 → 47.713 |
+| `REDIS_ACTIVE_EXPIRE_WHAT` | `3ff1c90` | 13/16 | 16/16 | 46.825 → 48.956 |
+| `FMT_WRITE_PADDED_IMPACT` | `7b11c85` | 12/12 | 12/12 | 45.855 → 46.158 |
+
+### Conjunto 4, por tarea
+
+| Tarea | Versión | `f6544c3` | Última medición | Tokens |
+|---|---|---:|---:|---:|
+| `V4_RAILS_COMMIT_TX_WHAT` | `3ff1c90` | 14/14 | 14/14 | 114.632 → 38.596 |
+| `V4_RAILS_RELOAD_IMPACT` | `7b11c85` | 15/16 | 12/16 | 181.266 → 65.652 |
+| `V4_FMT_EXPONENT_CALLERS` | `7b11c85` | 8/8 | 8/8 | 28.916 → 27.854 |
+| `V4_REDIS_MIGRATE_RETRY` | `3ff1c90` | 14/16 | 14/16 | 111.724 → 68.800 |
+
 ## Lo que sigue sin estar bien
 
-- **`V2_REDIS_POOL_WHAT` no se recupera:** 11/16 frente a 14/16. El paquete
-  contiene los hechos que faltan (`EVPOOL_SIZE`, `memmove`); el agente responde sin
-  mencionarlos. Es más barato que antes (44.517 frente a 79.668 tokens), pero
-  también menos detallado.
-- **`V3_RAILS_WITHIN_TX_WHAT` cuesta un 44 % más.** La palabra «transaction» exige
-  obligaciones (`transaction_entry`, `transaction_rollback`) que este método no
-  cumple, así que el paquete dice que falta evidencia y el agente sigue buscando.
-  No se corrigió.
-- **`RAILS_TOUCH_IMPACT` cuesta un 44 % más** (115.748 → 165.717 tokens) y gana un
-  hecho por sesión. Tiene 167 consumidores y el agente sigue el aviso de que la
-  lista no está completa. Este coste es esperable, pero es un coste.
-- **La causa de las llamadas con plantilla sigue en el parser.** La búsqueda de
-  texto la cubre como pista sin verificar; no resuelve el enlace en el grafo.
-- **El foco por palabras sigue igual en las preguntas concretas.** La coincidencia
-  de `con` con `config_` también puede ocurrir allí; cambiarla afectaría a
-  recuperaciones ya medidas y merece su propia medición.
+- **`V4_RAILS_RELOAD_IMPACT` pierde calidad:** 15/16 → 12/16 con un 64 % menos de
+  tokens. `reload` tiene unas 690 menciones y la mayoría de archivos quedan como un
+  total: 209 ni siquiera aparecen en el resumen por archivo. Antes el agente hacía
+  25-27 lecturas y encontraba más; ahora para antes. Es el coste de no mandarlo a
+  buscar, y con un nombre tan común puede no compensar.
+- **El grafo atribuye muchas llamadas al archivo:** 3.233 de 5.583 en fmt, porque
+  `ast_parser.py` se rinde si quien llama tiene sobrecargas. Elegir la sobrecarga por
+  rango de líneas lo baja a 271, pero la cobertura de `flow` cae del 69,3 % al 65,9 %
+  y `FMT_DYNAMIC_WIDTH_FLOW` de 6/8 a 3/8. Se revirtió: `impact` lo resuelve al listar,
+  y el arreglo de fondo necesita medir `flow` con agentes. En Rails son 49.739 de
+  93.183; no se investigó cuántas tienen esta causa.
+- **Las obligaciones siguen siendo específicas de Rails:** dejar de activarlas por un
+  nombre quita el falso positivo, pero «transacción» en prosa sigue exigiendo evidencia
+  de `save`, aunque se pregunte por otro código.
+- **La guía de nombrar constantes y funciones favorece a esta rúbrica,** que busca
+  esos nombres literalmente. Parte de la mejora de `V2_REDIS_POOL_WHAT` (11→16/16) y
+  `REDIS_ACTIVE_EXPIRE_WHAT` puede venir de ahí, no de respuestas mejores.
 
 ## Clasificación
 
@@ -122,6 +158,10 @@ Portugués, francés, alemán e italiano están cubiertos por pruebas de clasifi
   3/8 hechos, así que `precision` por «explica…» también quedó limitado a esas
   preguntas. Con estos ajustes, los paquetes de las tareas medidas conservan los
   mismos hechos (106/111), pero no se repitieron sesiones con agentes.
+- El conjunto 4 no es del todo a ciegas: ajusté cuándo se usa `precision` tras ver
+  que el paquete de `V4_REDIS_MIGRATE_RETRY` cubría 2/8, sin sesiones con agentes.
+- Las tareas de explicación y las de los conjuntos 2 y 3 no se repitieron con
+  `78a52f3` ni `7b11c85`, que cambian cómo se listan los consumidores.
 - La versión final se midió con la instalación editable de la rama, ejecutada a
   través de `--graphtyn-executable`; la anterior, desde un worktree en `3de6e0e`.
 

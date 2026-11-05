@@ -225,6 +225,34 @@
         1
       ],
       "seconds": 148.2
+    },
+    "retest6-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44314,
+        48001
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 65.0
     }
   },
   "RAILS_CREATE_RECORD_CALLERS": {
@@ -453,6 +481,34 @@
         1
       ],
       "seconds": 146.4
+    },
+    "retest6-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        64314,
+        55459
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 147.4
     }
   },
   "REDIS_ACTIVE_EXPIRE_WHAT": {
@@ -1431,6 +1487,34 @@
         1
       ],
       "seconds": 39.3
+    },
+    "retest6-set4": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        27415,
+        28293
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 4,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 21.2
     }
   },
   "V4_RAILS_COMMIT_TX_WHAT": {
@@ -1575,6 +1659,34 @@
         1
       ],
       "seconds": 189.9
+    },
+    "retest6-set4": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        72626,
+        58679
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        4,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 142.0
     }
   },
   "V4_REDIS_MIGRATE_RETRY": {

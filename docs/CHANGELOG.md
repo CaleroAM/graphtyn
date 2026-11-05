@@ -42,8 +42,21 @@ compatibles con PEP 440.
   en `missing`.
   Ese extracto empieza en el comentario de la declaración, no dentro de la función
   anterior.
-- Medición con agentes en Antigravity (80 sesiones): calidad igual o mejor en dos
-  conjuntos con un 59 % y un 30 % menos de tokens, con excepciones que recoge
+- Un nombre como `within_new_transaction` ya no exige evidencia de transacciones por
+  contener esa palabra: el paquete pedía seguir buscando sin motivo.
+- Las llamadas con plantilla de C++ (`write_exponent<Char>(...)`) se atribuyen a la
+  función real, no a `Char`. También en Rust y otros lenguajes con esa sintaxis. Se
+  aplica al reindexar: cambia `PARSER_VERSION`, así que la caché estructural se rehace.
+- `impact` cuenta por archivo los consumidores y usos que no caben en la lista, en vez
+  de declararlos pendientes y mandar al agente a buscarlos. Si la búsqueda se corta por
+  tiempo, sigue avisando. Una llamada atribuida a un archivo se lista con la función
+  que la hace, y los usos del mismo componente del símbolo van primero.
+- Las palabras cortas o comunes de la pregunta ya no eligen líneas del extracto por
+  subcadena. Una pregunta corta sobre un aspecto de un símbolo nombrado recibe código
+  enfocado; una explicación larga de varias partes, no.
+- Medición con agentes en Antigravity (122 sesiones): con tareas no vistas, un 59 %, un
+  30 % y un 54 % menos de tokens. La calidad empata o mejora en dos conjuntos y baja de
+  51/54 a 48/54 en el tercero. Excepciones en
   `benchmarks/intent_impact_2026-11-04/report.md`.
 - El README ya no dice que Antigravity carece de hooks, ni indica `agy mcp list`
   para verificar la entrada de proyecto: ese comando sólo muestra los servidores

@@ -2492,5 +2492,173 @@
     },
     "tool_calls": 3,
     "mcp_calls": 1
+  },
+  {
+    "variant": "retest6-set4",
+    "task": "V4_FMT_EXPONENT_CALLERS",
+    "repetition": 1,
+    "session_status": "complete",
+    "tokens": 27415,
+    "cached_input_tokens": 0,
+    "seconds": 19.077,
+    "passed": 4,
+    "total": 4,
+    "facts": {
+      "do_write_float": true,
+      "line_2861": true,
+      "line_3845": true,
+      "file": true
+    },
+    "tool_calls": 2,
+    "mcp_calls": 1
+  },
+  {
+    "variant": "retest6-set4",
+    "task": "V4_FMT_EXPONENT_CALLERS",
+    "repetition": 2,
+    "session_status": "complete",
+    "tokens": 28293,
+    "cached_input_tokens": 0,
+    "seconds": 23.339,
+    "passed": 4,
+    "total": 4,
+    "facts": {
+      "do_write_float": true,
+      "line_2861": true,
+      "line_3845": true,
+      "file": true
+    },
+    "tool_calls": 2,
+    "mcp_calls": 1
+  },
+  {
+    "variant": "retest6-set4",
+    "task": "V4_RAILS_RELOAD_IMPACT",
+    "repetition": 1,
+    "session_status": "complete",
+    "tokens": 72626,
+    "cached_input_tokens": 0,
+    "seconds": 150.806,
+    "passed": 6,
+    "total": 8,
+    "facts": {
+      "pessimistic": true,
+      "singular": false,
+      "collection": true,
+      "through": false,
+      "persistence": true,
+      "autosave": true,
+      "dirty": true,
+      "relation": true
+    },
+    "tool_calls": 4,
+    "mcp_calls": 1
+  },
+  {
+    "variant": "retest6-set4",
+    "task": "V4_RAILS_RELOAD_IMPACT",
+    "repetition": 2,
+    "session_status": "complete",
+    "tokens": 58679,
+    "cached_input_tokens": 0,
+    "seconds": 133.144,
+    "passed": 6,
+    "total": 8,
+    "facts": {
+      "pessimistic": true,
+      "singular": false,
+      "collection": true,
+      "through": false,
+      "persistence": true,
+      "autosave": true,
+      "dirty": true,
+      "relation": true
+    },
+    "tool_calls": 3,
+    "mcp_calls": 1
+  },
+  {
+    "variant": "retest6-set1",
+    "task": "FMT_WRITE_PADDED_IMPACT",
+    "repetition": 1,
+    "session_status": "complete",
+    "tokens": 44314,
+    "cached_input_tokens": 0,
+    "seconds": 54.46,
+    "passed": 6,
+    "total": 6,
+    "facts": {
+      "write_char": true,
+      "write_ptr": true,
+      "write_nonfinite": true,
+      "write_float": true,
+      "write_int": true,
+      "std_formatter": true
+    },
+    "tool_calls": 3,
+    "mcp_calls": 1
+  },
+  {
+    "variant": "retest6-set1",
+    "task": "FMT_WRITE_PADDED_IMPACT",
+    "repetition": 2,
+    "session_status": "complete",
+    "tokens": 48001,
+    "cached_input_tokens": 0,
+    "seconds": 75.613,
+    "passed": 6,
+    "total": 6,
+    "facts": {
+      "write_char": true,
+      "write_ptr": true,
+      "write_nonfinite": true,
+      "write_float": true,
+      "write_int": true,
+      "std_formatter": true
+    },
+    "tool_calls": 3,
+    "mcp_calls": 1
+  },
+  {
+    "variant": "retest6-set1",
+    "task": "RAILS_TOUCH_IMPACT",
+    "repetition": 1,
+    "session_status": "complete",
+    "tokens": 64314,
+    "cached_input_tokens": 0,
+    "seconds": 182.943,
+    "passed": 6,
+    "total": 6,
+    "facts": {
+      "touch_later": true,
+      "transactions": true,
+      "callbacks": true,
+      "no_touching": true,
+      "has_one": true,
+      "touch_row": true
+    },
+    "tool_calls": 3,
+    "mcp_calls": 1
+  },
+  {
+    "variant": "retest6-set1",
+    "task": "RAILS_TOUCH_IMPACT",
+    "repetition": 2,
+    "session_status": "complete",
+    "tokens": 55459,
+    "cached_input_tokens": 0,
+    "seconds": 111.855,
+    "passed": 6,
+    "total": 6,
+    "facts": {
+      "touch_later": true,
+      "transactions": true,
+      "callbacks": true,
+      "no_touching": true,
+      "has_one": true,
+      "touch_row": true
+    },
+    "tool_calls": 3,
+    "mcp_calls": 1
   }
 ]
