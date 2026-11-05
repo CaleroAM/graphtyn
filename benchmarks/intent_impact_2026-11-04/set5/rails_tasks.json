@@ -1,0 +1,94 @@
+{
+ "tasks": [
+  {
+   "id": "V5_RAILS_PERFORM_IMPACT",
+   "request": "What breaks if I change perform in Active Job? List the direct consumers with file:line evidence.",
+   "rubric": [
+    {
+     "id": "execution",
+     "any": [
+      "execution.rb"
+     ]
+    },
+    {
+     "id": "async",
+     "any": [
+      "async_adapter"
+     ]
+    },
+    {
+     "id": "instrumentation",
+     "any": [
+      "instrumentation.rb"
+     ]
+    },
+    {
+     "id": "resque",
+     "any": [
+      "resque_adapter"
+     ]
+    },
+    {
+     "id": "queue_classic",
+     "any": [
+      "queue_classic_adapter"
+     ]
+    },
+    {
+     "id": "mailer_job",
+     "any": [
+      "mail_delivery_job"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V5_RAILS_TOUCH_LATER_TX_WHAT",
+   "request": "¿Qué hace touch_later cuando hay una transacción abierta y qué ocurre al confirmarla? Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "add_tx",
+     "any": [
+      "add_to_transaction"
+     ]
+    },
+    {
+     "id": "surreptitious",
+     "any": [
+      "surreptitiously_touch"
+     ]
+    },
+    {
+     "id": "before_committed",
+     "any": [
+      "before_committed!"
+     ]
+    },
+    {
+     "id": "deferred",
+     "any": [
+      "touch_deferred_attributes"
+     ]
+    },
+    {
+     "id": "not_touched",
+     "any": [
+      "_raise_record_not_touched_error"
+     ]
+    },
+    {
+     "id": "parents",
+     "any": [
+      "touch_record"
+     ]
+    },
+    {
+     "id": "defer_attrs",
+     "any": [
+      "_defer_touch_attrs"
+     ]
+    }
+   ]
+  }
+ ]
+}

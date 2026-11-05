@@ -1,0 +1,117 @@
+{
+ "tasks": [
+  {
+   "id": "FMT_PRINTF_FLOW",
+   "request": "Explica cómo fmt::sprintf(\"%-08.3d\", x) procesa una cadena de estilo printf: cómo se analizan índice, flags y ancho, cómo se obtiene un ancho o precisión con asterisco, cómo se interpretan los modificadores de longitud y se convierte el argumento, cómo se mapea el tipo de conversión y qué formateador escribe el valor. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "vprintf",
+     "any": [
+      "vprintf"
+     ]
+    },
+    {
+     "id": "header",
+     "any": [
+      "parse_header"
+     ]
+    },
+    {
+     "id": "flags",
+     "any": [
+      "parse_flags"
+     ]
+    },
+    {
+     "id": "width",
+     "any": [
+      "printf_width_handler"
+     ]
+    },
+    {
+     "id": "precision",
+     "any": [
+      "printf_precision_handler"
+     ]
+    },
+    {
+     "id": "convert",
+     "any": [
+      "convert_arg"
+     ]
+    },
+    {
+     "id": "type",
+     "any": [
+      "parse_printf_presentation_type"
+     ]
+    },
+    {
+     "id": "writer",
+     "any": [
+      "printf_arg_formatter"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "FMT_DYNAMIC_WIDTH_FLOW",
+   "request": "En fmt, explica cómo se resuelven un ancho y una precisión dinámicos como en fmt::format(\"{:{}.{}}\", x, 10, 3): cómo se analizan las llaves anidadas, cómo se asigna el identificador del argumento (automático o manual y el error al mezclarlos), cómo se recupera el valor en tiempo de formateo y qué errores hay si no es entero o está fuera de rango. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "parse",
+     "any": [
+      "parse_dynamic_spec"
+     ]
+    },
+    {
+     "id": "width",
+     "any": [
+      "parse_width"
+     ]
+    },
+    {
+     "id": "precision",
+     "any": [
+      "parse_precision"
+     ]
+    },
+    {
+     "id": "ref",
+     "any": [
+      "width_ref",
+      "precision_ref",
+      "arg_ref"
+     ]
+    },
+    {
+     "id": "indexing",
+     "any": [
+      "cannot switch from",
+      "next_arg_id",
+      "check_arg_id"
+     ]
+    },
+    {
+     "id": "handle",
+     "any": [
+      "handle_dynamic_spec"
+     ]
+    },
+    {
+     "id": "getter",
+     "any": [
+      "dynamic_spec_getter",
+      "is not integer"
+     ]
+    },
+    {
+     "id": "range",
+     "any": [
+      "out of range"
+     ]
+    }
+   ]
+  }
+ ]
+}
