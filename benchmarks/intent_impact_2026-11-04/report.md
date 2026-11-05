@@ -1,11 +1,12 @@
 # Clasificación de intención, `impact` y explicación de símbolos
 
 Fecha: 2026-11-04. Cliente: Antigravity CLI (`gemini-3.8-flash-high`), regla de
-parada `targeted`. 122 sesiones reales, todas completas, 8.933.034 tokens.
+parada `targeted`. 136 sesiones reales, todas completas, 10.210.980 tokens.
 
 **Veredicto: MIXED, favorable.** En los conjuntos 2 y 3, la calidad no baja y el
 gasto cae. En el conjunto 4, el gasto baja un 54 % y la calidad pasa de 51/54 a
-48/54, casi todo por `V4_RAILS_RELOAD_IMPACT`. Sólo se midió en un cliente, con n=2.
+48/54, casi todo por `V4_RAILS_RELOAD_IMPACT`, que se corrigió después (ver «Quinta
+corrección»). Sólo se midió en un cliente, con n=2.
 
 ## Resultado
 
@@ -105,22 +106,62 @@ generaliza la corrección.
 | `V4_FMT_EXPONENT_CALLERS` | `7b11c85` | 8/8 | 8/8 | 28.916 → 27.854 |
 | `V4_REDIS_MIGRATE_RETRY` | `3ff1c90` | 14/16 | 14/16 | 111.724 → 68.800 |
 
+## Quinta corrección (`78d4930`)
+
+**La explicación anterior de `reload` estaba equivocada.** Atribuía la caída a unas
+690 menciones de `reload`. En realidad, casi todas eran de `record`: «Active Record»
+hacía de `record` un símbolo pedido, sus homónimos ocupaban los anclajes y la búsqueda
+de texto ni siquiera buscaba `reload`. En `activerecord/lib` sólo hay unos 15 usos.
+
+| Tarea | Versión anterior | `78d4930` | Tokens |
+|---|---:|---:|---:|
+| `V4_RAILS_RELOAD_IMPACT` (ya vista) | 12/16 | 16/16 | 65.652 → 51.344 |
+| `V5_RAILS_PERFORM_IMPACT` (nueva, en inglés) | sin medir | 10/12 | 48.807 |
+| `V5_RAILS_TOUCH_LATER_TX_WHAT` (nueva) | sin medir | 12/14 | 63.276 |
+
+- **Paquete nombrado:** «Active Record» acota los homónimos a `activerecord/` y sus
+  palabras dejan de ser símbolos. El paquete de `reload` cubre 8/8 en 9 redacciones, en
+  español, inglés, portugués, francés, alemán e italiano; sin agentes.
+- **Obligaciones de guardado:** sólo se exigen si la tarea trata de guardar. Un nombre
+  escrito como código decide; si no hay ninguno, deciden las palabras.
+- **Atribución por sobrecarga:** una llamada pertenece a la sobrecarga que la contiene.
+
+| Repositorio | Llamadas al archivo, antes | Después | Total |
+|---|---:|---:|---:|
+| fmt | 3.233 | 271 | 5.545 |
+| Redis | 1.580 | 329 | 54.410 |
+| Rails | 50.298 | 49.739 | 93.183 |
+
+En Rails no era esta causa: esas llamadas no tienen función contenedora, y 46.998 están
+en pruebas (bloques `test "..." do`, macros de clase).
+
+`flow` caía porque elegía como semillas las dos primeras funciones con llamadas. Las
+sobrecargas de `format` sólo quedaban fuera por el dato impreciso. Ahora una semilla que
+no lleva a nada nuevo no agota el turno, y si no caben todas las etapas se conservan las
+que deletrean una palabra de la pregunta.
+
+| Tarea, con y sin atribución (misma versión) | Rúbrica | Tokens | Herramientas |
+|---|---:|---:|---:|
+| `FMT_DYNAMIC_WIDTH_FLOW` | 16/16 → 16/16 | 144.738 → 115.732 | 17,5 → 14 |
+| `FMT_PRINTF_FLOW` | 16/16 → 16/16 | 108.129 → 106.948 | 10,5 → 12 |
+
+Sin agentes, las 138 comprobaciones de los conjuntos 1 a 4 dan 133 con y sin atribución,
+sin cambios en ninguna tarea.
+
 ## Lo que sigue sin estar bien
 
-- **`V4_RAILS_RELOAD_IMPACT` pierde calidad:** 15/16 → 12/16 con un 64 % menos de
-  tokens. `reload` tiene unas 690 menciones y la mayoría de archivos quedan como un
-  total: 209 ni siquiera aparecen en el resumen por archivo. Antes el agente hacía
-  25-27 lecturas y encontraba más; ahora para antes. Es el coste de no mandarlo a
-  buscar, y con un nombre tan común puede no compensar.
-- **El grafo atribuye muchas llamadas al archivo:** 3.233 de 5.583 en fmt, porque
-  `ast_parser.py` se rinde si quien llama tiene sobrecargas. Elegir la sobrecarga por
-  rango de líneas lo baja a 271, pero la cobertura de `flow` cae del 69,3 % al 65,9 %
-  y `FMT_DYNAMIC_WIDTH_FLOW` de 6/8 a 3/8. Se revirtió: `impact` lo resuelve al listar,
-  y el arreglo de fondo necesita medir `flow` con agentes. En Rails son 49.739 de
-  93.183; no se investigó cuántas tienen esta causa.
-- **Las obligaciones siguen siendo específicas de Rails:** dejar de activarlas por un
-  nombre quita el falso positivo, pero «transacción» en prosa sigue exigiendo evidencia
-  de `save`, aunque se pregunte por otro código.
+- **La cobertura de `flow` baja un poco en el banco:** del 69,8 % al 68,6 % sin agentes;
+  pasa la puerta (baseline 69,3 %, tolerancia 1 punto) sin tocar el baseline.
+  `FMT_DYNAMIC_WIDTH_FLOW` da 5/8 en el paquete frente a 6/8, aunque el agente llega a
+  8/8 con menos gasto al leer más.
+- **Fallos que quedan en las tareas nuevas:** `perform` no menciona `mail_delivery_job`,
+  que está fuera del paquete nombrado; `touch_later` omite `touch_record`, que está en
+  el cuerpo del método.
+- **Un nombre sin forma de código sigue dependiendo de la prosa:** «¿qué hace lock! al
+  guardar dentro de una transacción?» sigue exigiendo evidencia de `save`.
+- **Dos palabras sólo acotan si existe ese directorio:** «Active Record» funciona en
+  Rails porque hay `activerecord/`; otros nombres de componente siguen siendo palabras.
+- **Sin repetir con `78d4930`:** las tareas de los conjuntos 1 a 4 salvo `reload`.
 - **La guía de nombrar constantes y funciones favorece a esta rúbrica,** que busca
   esos nombres literalmente. Parte de la mejora de `V2_REDIS_POOL_WHAT` (11→16/16) y
   `REDIS_ACTIVE_EXPIRE_WHAT` puede venir de ahí, no de respuestas mejores.

@@ -1,4 +1,120 @@
 {
+  "FMT_DYNAMIC_WIDTH_FLOW": {
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        112108,
+        119356
+      ],
+      "cached_input_tokens": [
+        208441,
+        171692
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        14,
+        14
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 136.4
+    },
+    "set5-off": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        138693,
+        150782
+      ],
+      "cached_input_tokens": [
+        221451,
+        296462
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        17,
+        18
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 192.6
+    }
+  },
+  "FMT_PRINTF_FLOW": {
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        105162,
+        108733
+      ],
+      "cached_input_tokens": [
+        131147,
+        135927
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        12,
+        12
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 141.6
+    },
+    "set5-off": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        101198,
+        115059
+      ],
+      "cached_input_tokens": [
+        116853,
+        73256
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        11,
+        10
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 129.8
+    }
+  },
   "FMT_VPRINT_HOW": {
     "before": {
       "statuses": [
@@ -1687,6 +1803,34 @@
         1
       ],
       "seconds": 142.0
+    },
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        51407,
+        51282
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 94.7
     }
   },
   "V4_REDIS_MIGRATE_RETRY": {
@@ -1745,6 +1889,66 @@
         1
       ],
       "seconds": 56.7
+    }
+  },
+  "V5_RAILS_PERFORM_IMPACT": {
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        49438,
+        48176
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        5,
+        5
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 81.6
+    }
+  },
+  "V5_RAILS_TOUCH_LATER_TX_WHAT": {
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        57018,
+        69534
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        4,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 69.5
     }
   }
 }

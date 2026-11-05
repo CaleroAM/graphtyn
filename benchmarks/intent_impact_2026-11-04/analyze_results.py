@@ -9,6 +9,7 @@ Set 3 was frozen before correcting truncated bodies; retest-* reruns the explana
 Set 4 was frozen before the follow-up corrections: set4-before is f6544c3; retest4-* rerun the costly and weak tasks.
 retest5-* rerun the tasks touched by the last adjustments to references; they got worse.
 retest6-* rerun them after listing file-level calls under the function making them.
+Set 5 was frozen before seeing its packages: set5-final is 78d4930 and set5-off the same code without overload attribution.
 """
 from __future__ import annotations
 
@@ -25,7 +26,8 @@ VARIANTS = {"before": HERE, "after": HERE, "set1-final": HERE,
             "set4-before": HERE / "set4", "set4-final": HERE / "set4",
             "retest4-set1": HERE, "retest4-set2": HERE / "set2", "retest4-set3": HERE / "set3",
             "retest5-set4": HERE / "set4", "retest5-set1": HERE,
-            "retest6-set4": HERE / "set4", "retest6-set1": HERE}
+            "retest6-set4": HERE / "set4", "retest6-set1": HERE,
+            "set5-final": HERE / "set5", "set5-off": HERE / "set5"}
 
 
 def _steps(events: list[dict]) -> list[dict]:
@@ -39,6 +41,7 @@ def _steps(events: list[dict]) -> list[dict]:
 
 def load_runs(root: Path) -> list[dict]:
     specs = {task["id"]: task for folder in set(VARIANTS.values()) for corpus in ("redis", "fmt", "rails")
+             if (folder / f"{corpus}_tasks.json").exists()
              for task in json.loads((folder / f"{corpus}_tasks.json").read_text(encoding="utf-8"))["tasks"]}
     rows = []
     for variant in VARIANTS:

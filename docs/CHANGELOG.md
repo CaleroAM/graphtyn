@@ -15,6 +15,16 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- `impact` entiende un paquete escrito en dos palabras: en «reload en Active Record»
+  ya no toma `record` como símbolo, y sólo considera las definiciones de
+  `activerecord/`. Antes, los consumidores listados eran sobre todo de `record`.
+- Las obligaciones de guardado (validaciones, callbacks, transacción, adaptador) sólo
+  se exigen si la tarea trata de guardar. Decir «transacción» al preguntar por otro
+  código ya no hace esperar evidencia de `save`.
+- Una llamada dentro de una sobrecarga se atribuye a ella y no al archivo: en fmt, las
+  llamadas atribuidas al archivo pasan de 3.233 a 271. Hay que reindexar para notarlo.
+- `call_outline` no se detiene en una semilla que no lleva a nada nuevo y, si no caben
+  todas las etapas, conserva las que deletrean una palabra de la pregunta.
 - Decir «en este proyecto» o «in this repository» ya no convierte una pregunta
   sobre código en un `overview`. Antes, «¿Qué hace la función X en este proyecto?»
   devolvía el resumen del repositorio, a menudo sin esa función; y «en este
