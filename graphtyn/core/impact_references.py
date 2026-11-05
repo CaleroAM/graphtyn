@@ -10,6 +10,7 @@ from __future__ import annotations
 import bisect
 import re
 import time
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,7 @@ from .path_signals import TEST_PATH, VENDORED_PATH
 _SCAN_SECONDS = 2.0
 _MAX_FILE_BYTES = 2_000_000
 _LISTED_REFERENCES = 40
+_LISTED_FILES = 40
 _COMMENT = ("//", "/*", "*", "#", "--", '"""', "'''")
 _ENCLOSING_KINDS = {"function", "method", "class", "struct", "interface", "module", "type"}
 _SKIPPED_SUFFIXES = (".md", ".json", ".lock", ".txt", ".rst", ".yml", ".yaml", ".toml", ".svg", ".html", ".css")
@@ -98,7 +100,14 @@ def attach_text_references(root: Path, graph: dict[str, Any] | None, data: dict[
         data["negative_evidence"] = {}
         data["guidance"] = (str(data.get("guidance") or "") + " direct_consumers.text_references are textual uses "
                             "the index did not resolve: [enclosing symbol, file:line]; report them as unverified.").strip()
-    if truncated or len(references) > _LISTED_REFERENCES:
+    if len(references) > _LISTED_REFERENCES:
+        # Every use is accounted for per file, so the agent has no gap to go and search for.
+        per_file = Counter(reference[1].rsplit(":", 1)[0] for reference in references[_LISTED_REFERENCES:])
+        consumers["text_references_more_by_file"] = dict(per_file.most_common(_LISTED_FILES))
+        consumers["text_references_more_files_omitted"] = max(0, len(per_file) - _LISTED_FILES)
+        data["guidance"] += (" text_references_more_by_file counts the remaining uses per file; report those counts "
+                             "instead of searching for each use.")
+    if truncated:
         consumers["text_references_incomplete"] = True
         data["missing"] = [*data.get("missing", []), "all_text_references"]
         data["complete_for"] = []

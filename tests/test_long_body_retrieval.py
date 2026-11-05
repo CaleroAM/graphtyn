@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 
 from graphtyn.core.ast_parser import ASTParser
-from graphtyn.core.change_analyst import query_intent
-from graphtyn.core.source_evidence import _focused_excerpt, attach_source_evidence, whole_symbol_name
+from graphtyn.core.change_analyst import _requested_concerns, query_intent
+from graphtyn.core.source_evidence import _focus_terms, _focused_excerpt, attach_source_evidence, select_evidence_mode, whole_symbol_name
 from graphtyn.mcp_server import _drop_excerpt_middle
 
 
@@ -212,3 +212,23 @@ def test_a_body_too_long_to_deliver_is_not_declared_complete(tmp_path):
     assert re.search(r"\(\d+ lines omitted\)", result["source_evidence"][0]["text"])
     assert result["missing"] == ["source_body:run_work"]
     assert result["do_not_expand"] is False and result["source_coverage"]["complete"] is False
+
+
+def test_a_name_containing_a_concern_word_does_not_require_that_concern():
+    assert not _requested_concerns("¿Cómo funciona within_new_transaction? Cita archivo:línea.")
+    assert not _requested_concerns("What does validationCallbacks do?")
+    assert "transaction_entry" in _requested_concerns("¿Cómo entra save en la transacción?")
+
+
+def test_prose_fragments_do_not_become_focus_terms():
+    terms = _focus_terms("¿Qué hace la función con DEL en este proyecto? Responde con evidencia.")
+    assert "con" not in terms and "del" in terms and "hace" not in terms
+
+
+@pytest.mark.parametrize("request_text, mode", [
+    ("Explica cómo migrateCommand reintenta tras un error de socket. Cita archivo:línea.", "precision"),
+    ('Explica cómo funcionan los argumentos con nombre en fmt, por ejemplo fmt::format("{answer}", fmt::arg("answer", 42)): '
+     "qué objeto crea fmt::arg, cómo se registran los nombres y cómo se busca el índice.", "compact"),
+])
+def test_only_short_questions_about_a_named_symbol_ask_for_source(request_text, mode):
+    assert select_evidence_mode(request_text) == mode

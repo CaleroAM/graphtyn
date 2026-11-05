@@ -9,6 +9,7 @@ from typing import Any
 from .change_analyst import _consumer_summary, _direct_consumers
 from .impact_references import attach_text_references
 from .intent_classifier import names_code, without_project_scope
+from .vocabulary import COMMON_WORDS
 
 
 _PRECISION_MARKERS = (
@@ -69,8 +70,11 @@ _COMMENT_LINE = re.compile(r"\s*(?:/\*|\*|//|#(?!\s*(?:if|else|elif|endif|define
 
 
 def _focus_terms(request: str) -> list[str]:
-    words = [word.lower() for word in re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w]{2,}", request)]
-    terms = [word for word in words if word not in _FOCUS_STOPWORDS and len(word) >= 3]
+    found = re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w]{2,}", request)
+    words = [word.lower() for word in found]
+    # Short lowercase words match inside identifiers ("con" in `config_`); DEL or `err` are spelled on purpose.
+    terms = [word.lower() for word in found if word.lower() not in _FOCUS_STOPWORDS
+             and (len(word) >= 4 or not word.islower()) and word.lower() not in COMMON_WORDS]
     for word in words:
         terms.extend(_FOCUS_EXPANSIONS.get(word, ()))
     return list(dict.fromkeys(terms))
@@ -92,6 +96,7 @@ _WHOLE_SYMBOL_QUESTION = re.compile(
     r"[`'\"]?(?P<symbol>[A-Za-z_][\w:.#]*)[`'\"]?(?:\(\))?\s*(?:do|does|work|works|macht|fa)?\s*[?.!]?\s*$", re.IGNORECASE)
 _ELIDED_LINES = re.compile(r"\(\d+ lines omitted\)")
 _LISTED_CALLERS = 15
+_SINGLE_ASPECT_WORDS = 16
 
 
 def whole_symbol_name(request: str) -> str | None:
@@ -115,7 +120,9 @@ def select_evidence_mode(request: str, requested: str = "auto", intent: str = "f
         return requested
     text = str(request or "").lower()
     # A multi-part explanation stays out: more text there flips its stop signal, not its coverage.
-    if any(marker in text for marker in _PRECISION_MARKERS) or (whole_symbol_name(request) and names_code(request)):
+    short_question = len(re.split(r"[?.!](?:\s|$)", text.strip(), maxsplit=1)[0].split()) <= _SINGLE_ASPECT_WORDS
+    if any(marker in text for marker in _PRECISION_MARKERS) or (
+            _BEHAVIOR_QUESTION.search(text) and short_question and names_code(request)):
         return "precision"
     if intent == "flow" and len(re.findall(r"\b(?:and|y|then|después|además|también)\b", text)) >= 2:
         return "balanced"
@@ -555,6 +562,8 @@ def _attach_whole_body_context(graph: dict[str, Any] | None, result: dict[str, A
     """Declare whether each body is complete, and who calls the explained symbol."""
     coverage = result.setdefault("source_coverage", {})
     coverage["whole_bodies"] = symbols
+    result["guidance"] = (str(result.get("guidance") or "") + " Explain each stage of the body and name its constants, "
+                          "flags and callees exactly as written.").strip()
     elided = elided_bodies(result)
     if elided:
         coverage["complete"] = False

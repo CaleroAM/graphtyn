@@ -230,12 +230,13 @@ def test_consumers_beyond_the_budget_are_still_reported_with_their_location():
     assert result["do_not_expand"] is True
 
 
-def test_more_consumers_than_can_be_listed_is_declared_missing():
+def test_consumers_beyond_the_list_are_counted_per_file():
     result = query_intent(_overloaded_graph(overloads=1, callers=80), "¿Quién llama a render?", "auto", 10)
 
     assert result["direct_consumers"]["omitted"] > 0
-    assert "all_direct_consumers" in result["missing"]
-    assert result["do_not_expand"] is False
+    assert result["direct_consumers"]["omitted_by_file"], "the rest is accounted for per file"
+    assert "all_direct_consumers" not in result["missing"]
+    assert result["do_not_expand"] is True
 
 
 def _templated_project(tmp_path):
@@ -270,7 +271,7 @@ def test_without_any_use_the_zero_stands_and_comments_do_not_count(tmp_path):
     assert result["negative_evidence"]["consumers"] == 0
 
 
-def test_too_many_textual_uses_withdraw_the_stop_signal(tmp_path):
+def test_textual_uses_beyond_the_list_are_counted_per_file(tmp_path):
     root, data = _templated_project(tmp_path)
     for n in range(45):
         (root / f"u{n}.h").write_text("int h() {\n  return render<char>(1);\n}\n")
@@ -278,9 +279,20 @@ def test_too_many_textual_uses_withdraw_the_stop_signal(tmp_path):
     result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
                                     graph=data)
 
+    consumers = result["direct_consumers"]
+    assert sum(consumers["text_references_more_by_file"].values()) == consumers["total"] - len(consumers["text_references"])
+    assert "text_references_incomplete" not in consumers and "all_text_references" not in result["missing"]
+    assert result["missing"] == ["consumers"], "unverified leads alone do not prove the consumers"
+
+
+def test_a_scan_cut_short_still_withdraws_the_stop_signal(tmp_path, monkeypatch):
+    root, data = _templated_project(tmp_path)
+    monkeypatch.setattr("graphtyn.core.impact_references._SCAN_SECONDS", -1)
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
     assert result["direct_consumers"]["text_references_incomplete"] is True
-    assert "all_text_references" in result["missing"]
-    assert result["do_not_expand"] is False
+    assert "all_text_references" in result["missing"] and result["do_not_expand"] is False
 
 
 @pytest.mark.parametrize("request_text,mode", [
@@ -990,3 +1002,17 @@ def test_overview_projection_is_compact_bounded_and_does_not_duplicate_matches()
     assert len(encoded) <= result["payload_budget_tokens"] * 4
     assert all(len(node.get("details", "")) <= 240 for node in result["nodes"])
     assert set(result["detail_refs"]) == {node["id"] for node in result["nodes"]}
+
+
+def test_template_arguments_are_not_the_callee(tmp_path):
+    from graphtyn.core.tree_sitter_backend import parse_file
+
+    source = tmp_path / "a.h"
+    source.write_text("void g(S s, S* p) { write_exp<char>(1); detail::write_exp<char>(1); ns::f<std::vector<int>>(2);"
+                      " s.template m<int>(1); p->m<int>(1); int x = (1 < 2); h(x); }\n", encoding="utf-8")
+    facts = parse_file(source, "a.h")
+    if facts is None:
+        pytest.skip("tree-sitter grammar unavailable")
+
+    assert [(call["name"], call["receiver"]) for call in facts["calls"]] == [
+        ("write_exp", ""), ("write_exp", "detail"), ("f", "ns"), ("m", "s"), ("m", "p"), ("h", "")]

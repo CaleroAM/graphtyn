@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -728,7 +729,7 @@ def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
     when the selected evidence covers each named concern, without requiring a
     second graph call simply because the prompt used q1/q2 notation.
     """
-    text = str(request or "").lower()
+    text, prose = str(request or "").lower(), _signals.CODE_IDENTIFIER.sub(" ", str(request or "")).lower()  # names are not concerns
     concerns: dict[str, re.Pattern[str]] = {}
     if re.search(r"(?:dos|2) archivos|archivos? de datos|tabla.*manifiesto|manifiesto.*tabla", text):
         concerns["artifacts"] = re.compile(r"parquet|manifest|manifiesto|feature_store", re.I)
@@ -750,20 +751,20 @@ def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
         if "manifiesto" in text or "manifest" in text:
             concerns["runtime_manifest_generation"] = re.compile(
                 r"preparar_almacen(?:_inferencia)?|prepare[^/\s]*manifest", re.I)
-    if re.search(r"validaci[oó]n|validaciones?|validations?", text):
+    if re.search(r"validaci[oó]n|validaciones?|validations?", prose):
         concerns["validation_gate"] = re.compile(
             r"perform_validations|_run_validation_callbacks", re.I)
-    if re.search(r"callbacks?|retrollamadas?", text):
+    if re.search(r"callbacks?|retrollamadas?", prose):
         concerns["save_callbacks"] = re.compile(r"_run_save_callbacks", re.I)
         if re.search(r"_create_record|registro nuevo|new record|creaci[oó]n|create", text):
             concerns["create_callbacks"] = re.compile(r"_run_create_callbacks", re.I)
-    if re.search(r"transacci[oó]n|transacciones?|transactions?", text):
+    if re.search(r"transacci[oó]n|transacciones?|transactions?", prose):
         concerns["transaction_entry"] = re.compile(r"with_transaction_returning_status", re.I)
         concerns["transaction_rollback"] = re.compile(r"rollback|with_transaction_returning_status", re.I)
-    if re.search(r"adaptador|adapter|llamada final|base de datos", text):
+    if re.search(r"adaptador|adapter|llamada final|base de datos", prose):
         concerns["persistence_adapter"] = re.compile(
             r"connection\.(?:insert|update|delete)|connection_adapters?", re.I)
-    if re.search(r"aborta|fall[ao]|error|rollback", text):
+    if re.search(r"aborta|fall[ao]|error|rollback", prose):
         concerns["save_failure_result"] = re.compile(
             r"recordinvalid|recordnotsaved|return\s+false|perform_validations", re.I)
         if re.search(r"aborta|abort", text):
@@ -796,7 +797,8 @@ def _consumer_summary(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], 
     rest = [node_id for node_id in consumers if node_id not in shown]
     listed = sorted(rest, key=lambda node_id: (bool(_TEST_PATH.search(str(by_id[node_id].get("file") or ""))),
                                                str(by_id[node_id].get("file") or ""), str(node_id)))
-    return {"indexed": len(consumers), "total": len(consumers), "omitted": max(0, len(listed) - _LISTED_CONSUMERS), "others": [
+    return {"indexed": len(consumers), "total": len(consumers), "omitted": max(0, len(listed) - _LISTED_CONSUMERS),
+            "omitted_by_file": dict(Counter(str(by_id[node_id].get("file") or "") for node_id in listed[_LISTED_CONSUMERS:]).most_common(_LISTED_CONSUMERS)), "others": [
         [by_id[node_id].get("name"), f"{by_id[node_id].get('file') or ''}:{consumers[node_id][0].get('line') or by_id[node_id].get('line') or ''}"]
         for node_id in listed[:_LISTED_CONSUMERS]]}
 
@@ -850,8 +852,6 @@ def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names
              if link.get("source") in node_ids and link.get("target") in node_ids]
     consumers = _consumer_summary(all_consumers, by_id, node_ids)
     missing = [] if len(nodes) > len(anchors) else ["consumers"]
-    if consumers["omitted"]:
-        missing.append("all_direct_consumers")
     result = {
         "request": str(request or "").strip(), "intent": "impact", "intent_terms": request_terms,
         "matched": anchors[:5], "nodes": nodes[:max_nodes], "links": links,
@@ -897,7 +897,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         r"\b(?:verifiers?|verificadores?|verificar|comprobar|instalaci[oó]n|backup|respaldo)\b",
         request_lower,
     ))
-    requested_concerns = _requested_concerns(request_lower)
+    requested_concerns = _requested_concerns(request)
     expansions = list(dict.fromkeys(
         expansion for word, values in _QUERY_EXPANSIONS.items() if word in request_lower for expansion in values
     ))
