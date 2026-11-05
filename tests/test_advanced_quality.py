@@ -1153,3 +1153,55 @@ def test_outline_keeps_the_stage_spelling_a_request_word_when_it_does_not_fit():
     outline = call_outline(graph, [by_name["entry"]], NameFrequency(graph["nodes"], ["width"], set()), 3)
 
     assert "parse_width" in {item["callee"] for item in outline}
+
+
+def test_impact_in_a_named_package_keeps_overrides_from_its_subclasses():
+    from graphtyn.core.impact_references import impact_targets
+
+    def node(node_id, name, kind, path, container=""):
+        return {"id": node_id, "name": name, "kind": kind, "file": path, "container": container, "line": 1}
+
+    nodes = [node("base", "Base", "class", "activejob/lib/base.rb"),
+             node("perform", "perform", "method", "activejob/lib/execution.rb", "Execution"),
+             node("job", "MailDeliveryJob", "class", "actionmailer/lib/job.rb"),
+             node("override", "perform", "method", "actionmailer/lib/job.rb", "MailDeliveryJob"),
+             node("other", "perform", "method", "railties/lib/runner.rb", "Runner"),
+             node("runner", "Runner", "class", "railties/lib/runner.rb")]
+    links = [{"source": "job", "target": "base", "label": "hereda", "confidence": "INFERRED"}]
+
+    assert [item["id"] for item in impact_targets(nodes, {"perform"}, {"activejob"}, links)] == ["perform", "override"]
+    assert [item["id"] for item in impact_targets(nodes, {"perform"}, {"activejob"})] == ["perform"]
+
+
+def test_two_words_name_a_component_by_directory_or_namespace():
+    from graphtyn.core.path_signals import in_named_scope, package_name_words
+
+    route = {"name": "recognize_path", "kind": "method", "file": "actionpack/lib/action_dispatch/routing/route_set.rb",
+             "namespace": "ActionDispatch::Routing"}
+    other = {"name": "recognize_path", "kind": "method", "file": "railties/lib/rails/engine.rb", "namespace": "Rails"}
+
+    scopes = set(package_name_words([route, other], "What breaks if I change recognize_path in Action Dispatch?"))
+    assert scopes == {"actiondispatch"}
+    assert in_named_scope(route, scopes) and not in_named_scope(other, scopes)
+
+
+def test_the_subject_of_a_question_is_named_code_in_every_language():
+    from graphtyn.core.retrieval_signals import scoped_to_save_flow
+
+    concerns = {"transaction_entry": None, "validation_gate": None}
+    for question in ("¿Qué hace lock! al guardar dentro de una transacción?",
+                     "What does reload do when saving inside a transaction?",
+                     "Que fait reload lors de la sauvegarde dans une transaction ?",
+                     "Was macht reload beim Speichern in einer Transaktion?",
+                     "Cosa fa reload quando si salva in una transazione?",
+                     "O que faz reload ao salvar dentro de uma transação?"):
+        assert scoped_to_save_flow(concerns, question, {"lock", "reload"}) == {}, question
+    assert scoped_to_save_flow(concerns, "What does save do in a transaction?", {"save"}) == concerns
+    # A subject that names no symbol is prose: the question is still about saving.
+    assert scoped_to_save_flow(concerns, "¿Qué hace el sistema al guardar en una transacción?", {"lock"}) == concerns
+
+
+def test_spanish_dynamic_translates_to_its_identifier_fragment():
+    from graphtyn.core.vocabulary import translated_terms
+
+    assert "dynamic" in translated_terms("un ancho y una precisión dinámicos")

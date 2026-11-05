@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v23-calls-in-overloads"
+PARSER_VERSION = "treesitter-v24-qualified-ruby-bases"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -451,7 +451,7 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
                     r"[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*",
                     _text(ctx.source, base_node),
                 )
-                bases = [qualified[-1].rsplit("::", 1)[-1]] if qualified else []
+                bases = qualified[-1:]  # `ActiveJob::Base`: the qualifier picks among the many `Base`
             else:
                 bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", _text(ctx.source, base_node))
                 bases = [base for base in bases if base not in {"public", "protected", "private", "virtual", "final", "extends", "with"}]
