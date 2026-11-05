@@ -7,7 +7,8 @@ Set 1 ran three versions: before (3de6e0e), after (46a8057) and set1-final (95e5
 Set 2 was frozen before the corrections and ran set2-before (3de6e0e) and set2-final (95e53ff).
 Set 3 was frozen before correcting truncated bodies; retest-* reruns the explanation tasks that regressed.
 Set 4 was frozen before the follow-up corrections: set4-before is f6544c3; retest4-* rerun the costly and weak tasks.
-retest5-* rerun the tasks touched by the last adjustments to references.
+retest5-* rerun the tasks touched by the last adjustments to references; they got worse.
+retest6-* rerun them after listing file-level calls under the function making them.
 """
 from __future__ import annotations
 
@@ -23,7 +24,8 @@ VARIANTS = {"before": HERE, "after": HERE, "set1-final": HERE,
             "retest-set1": HERE, "retest-set2": HERE / "set2",
             "set4-before": HERE / "set4", "set4-final": HERE / "set4",
             "retest4-set1": HERE, "retest4-set2": HERE / "set2", "retest4-set3": HERE / "set3",
-            "retest5-set4": HERE / "set4", "retest5-set1": HERE}
+            "retest5-set4": HERE / "set4", "retest5-set1": HERE,
+            "retest6-set4": HERE / "set4", "retest6-set1": HERE}
 
 
 def _steps(events: list[dict]) -> list[dict]:

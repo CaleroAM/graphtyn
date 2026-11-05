@@ -8,7 +8,7 @@ from graphtyn.core.answer_validation import detect_incomplete_answer, validate_c
 from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.benchmark_protocol import paired_statistics, validate_protocol
 from graphtyn.core.change_analyst import _terms, classify_intent, query_intent
-from graphtyn.core.impact_references import _scan
+from graphtyn.core.impact_references import _scan, consumer_summary, direct_consumers
 from graphtyn.core.source_evidence import attach_source_evidence, select_evidence_mode
 from graphtyn.core.graph_hygiene import normalize_graph
 from graphtyn.core.semantic_index import build_semantic_index, hashed_embedding, semantic_search
@@ -1043,3 +1043,15 @@ def test_a_resolved_call_from_file_scope_is_not_also_a_textual_use(tmp_path):
     references, _ = _scan(root, data, {data["nodes"][0]["name"]}, {data["nodes"][0]["id"]})
 
     assert ["", "use.h:2"] not in references and not [at for _name, at in references if at == "use.h:2"]
+
+
+def test_a_call_attributed_to_a_file_is_listed_under_the_function_making_it():
+    file_node = {"id": "f", "name": "format.h", "kind": "file", "file": "fmt/format.h"}
+    target = {"id": "t", "name": "write_exponent", "kind": "function", "file": "fmt/format.h", "line": 5}
+    edge = {"source": "f", "target": "t", "label": "llama", "file": "fmt/format.h", "line": 90, "resolution": {"caller": "write"}}
+    by_id = {"f": file_node, "t": target}
+
+    summary = consumer_summary(direct_consumers({"links": [edge, dict(edge)]}, by_id, {"t"}), by_id, {"f", "t"})
+
+    assert summary["others"] == [["write", "fmt/format.h:90"]]
+    assert summary["total"] == 1

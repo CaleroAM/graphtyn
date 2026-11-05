@@ -6,8 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .change_analyst import _consumer_summary, _direct_consumers
-from .impact_references import attach_text_references
+from .impact_references import attach_text_references, consumer_summary, direct_consumers
 from .intent_classifier import names_code, without_project_scope
 from .vocabulary import COMMON_WORDS
 
@@ -573,7 +572,7 @@ def _attach_whole_body_context(graph: dict[str, Any] | None, result: dict[str, A
     if graph:
         by_id = {node.get("id"): node for node in graph.get("nodes", [])}
         anchors = {node_id for node_id, node in by_id.items() if str(node.get("name") or "").lower() in symbols}
-        summary = _consumer_summary(_direct_consumers(graph, by_id, anchors), by_id, set())
+        summary = consumer_summary(direct_consumers(graph, by_id, anchors), by_id, set())
         summary["omitted"] += max(0, len(summary["others"]) - _LISTED_CALLERS)
         summary["others"] = summary["others"][:_LISTED_CALLERS]
         result["direct_consumers"] = summary

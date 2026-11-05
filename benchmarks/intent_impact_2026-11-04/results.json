@@ -169,6 +169,62 @@
         1
       ],
       "seconds": 209.7
+    },
+    "retest4-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        50957,
+        117329
+      ],
+      "cached_input_tokens": [
+        0,
+        129234
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        14
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 97.6
+    },
+    "retest5-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        109820,
+        118501
+      ],
+      "cached_input_tokens": [
+        158095,
+        133411
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        14,
+        14
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 148.2
     }
   },
   "RAILS_CREATE_RECORD_CALLERS": {
@@ -341,6 +397,62 @@
         1
       ],
       "seconds": 154.6
+    },
+    "retest4-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        58816,
+        50839
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 115.6
+    },
+    "retest5-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        60478,
+        63112
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 146.4
     }
   },
   "REDIS_ACTIVE_EXPIRE_WHAT": {
@@ -455,6 +567,34 @@
         1
       ],
       "seconds": 60.7
+    },
+    "retest4-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        46808,
+        51105
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 71.5
     }
   },
   "REDIS_EVICT_CALLERS": {
@@ -917,6 +1057,34 @@
         1
       ],
       "seconds": 62.7
+    },
+    "retest4-set2": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        50320,
+        45106
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 81.0
     }
   },
   "V3_FMT_PARSE_SPECS_WHAT": {
@@ -1033,6 +1201,34 @@
         1
       ],
       "seconds": 72.6
+    },
+    "retest4-set3": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44014,
+        42578
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        9,
+        9
+      ],
+      "rubric_total": 9,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 57.8
     }
   },
   "V3_REDIS_FREE_CLIENT_WHAT": {
@@ -1149,6 +1345,294 @@
         1
       ],
       "seconds": 78.7
+    }
+  },
+  "V4_FMT_EXPONENT_CALLERS": {
+    "set4-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        29201,
+        28631
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 4,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 30.8
+    },
+    "set4-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        92818,
+        29380
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 4,
+      "tool_calls": [
+        7,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 49.9
+    },
+    "retest5-set4": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        75845,
+        89567
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 4,
+      "tool_calls": [
+        6,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 39.3
+    }
+  },
+  "V4_RAILS_COMMIT_TX_WHAT": {
+    "set4-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        159283,
+        69981
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        11,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 66.3
+    },
+    "set4-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        38492,
+        38701
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 37.3
+    }
+  },
+  "V4_RAILS_RELOAD_IMPACT": {
+    "set4-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        183161,
+        179370
+      ],
+      "cached_input_tokens": [
+        403247,
+        397866
+      ],
+      "rubric": [
+        8,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        25,
+        27
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 176.7
+    },
+    "set4-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        72434,
+        58753
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 178.0
+    },
+    "retest5-set4": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        66864,
+        111632
+      ],
+      "cached_input_tokens": [
+        0,
+        230685
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        15
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 189.9
+    }
+  },
+  "V4_REDIS_MIGRATE_RETRY": {
+    "set4-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        102816,
+        120633
+      ],
+      "cached_input_tokens": [
+        15981,
+        14570
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        8,
+        9
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 69.9
+    },
+    "set4-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        60167,
+        77432
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        4,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 56.7
     }
   }
 }

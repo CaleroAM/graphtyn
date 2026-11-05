@@ -25,6 +25,59 @@ _ENCLOSING_KINDS = {"function", "method", "class", "struct", "interface", "modul
 _SKIPPED_SUFFIXES = (".md", ".json", ".lock", ".txt", ".rst", ".yml", ".yaml", ".toml", ".svg", ".html", ".css")
 
 
+CONSUMER_LABELS = {"llama", "usa", "referencia", "implementa", "hereda", "suscribe", "escucha",
+                    "despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
+_LISTED_CONSUMERS = 40
+
+
+def direct_consumers(graph: dict[str, Any], by_id: dict[Any, dict], anchor_ids: set[Any]) -> dict[Any, list[dict]]:
+    """Every indexed incoming consumer edge of the anchors, in the whole graph."""
+    consumers: dict[Any, list[dict]] = {}
+    for link in graph.get("links", []):
+        if (str(link.get("label") or "") in CONSUMER_LABELS and link.get("target") in anchor_ids
+                and link.get("source") in by_id and link.get("source") not in anchor_ids):
+            consumers.setdefault(link["source"], []).append(link)
+    return consumers
+
+
+def _consumer_rows(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], shown: set[Any]) -> tuple[list[list[str]], int]:
+    """One row per consumer outside `shown`, and how many symbols `shown` already covers.
+
+    A call attributed to a whole file is listed under the function that makes it:
+    "format.h" would leave the agent reading the file to find out who calls.
+    """
+    rows, covered, seen = [], 0, set()
+    for node_id, edges in consumers.items():
+        node = by_id[node_id]
+        path = str(node.get("file") or "")
+        if node.get("kind") == "file":
+            for edge in edges:
+                at = f"{edge.get('file') or path}:{edge.get('line') or ''}"
+                row = (str((edge.get("resolution") or {}).get("caller") or node.get("name") or ""), at)
+                if row not in seen:
+                    seen.add(row)
+                    rows.append(list(row))
+        elif node_id in shown:
+            covered += 1
+        else:
+            rows.append([node.get("name"), f"{path}:{edges[0].get('line') or node.get('line') or ''}"])
+    return rows, covered
+
+
+def consumer_summary(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], shown: set[Any]) -> dict[str, Any]:
+    """How many consumers exist and where the ones outside the selected nodes are.
+
+    The node budget caps what is expanded, not what the agent is told exists.
+    """
+    rows, covered = _consumer_rows(consumers, by_id, shown)
+    # Located code first: a mention in a document, with no line, must not displace it.
+    rows.sort(key=lambda row: (row[1].endswith(":"), bool(TEST_PATH.search(row[1])), row[1], str(row[0])))
+    per_file = Counter(row[1].rsplit(":", 1)[0] for row in rows[_LISTED_CONSUMERS:])
+    return {"indexed": covered + len(rows), "total": covered + len(rows),
+            "omitted": max(0, len(rows) - _LISTED_CONSUMERS),
+            "omitted_by_file": dict(per_file.most_common(_LISTED_CONSUMERS)), "others": rows[:_LISTED_CONSUMERS]}
+
+
 def _symbols_by_file(graph: dict[str, Any]) -> dict[str, list[tuple[int, str]]]:
     symbols: dict[str, list[tuple[int, str]]] = {}
     for node in graph.get("nodes", []):

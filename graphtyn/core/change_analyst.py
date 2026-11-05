@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import re
 import json
-from collections import Counter
 from pathlib import Path
 from typing import Any
 
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
 from . import retrieval_signals as _signals
+from .impact_references import CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
 from .intent_classifier import _INTENT_MARKERS, classify_intent, is_change_request as _is_change_request, without_project_scope
 from .ranking_weights import trace_stage, weighted_score
@@ -772,35 +772,8 @@ def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
     return concerns
 
 
-_CONSUMER_LABELS = {"llama", "usa", "referencia", "implementa", "hereda", "suscribe", "escucha",
-                    "despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
 # Overloads of a common name must not spend the budget meant for their consumers.
 _IMPACT_ANCHOR_SHARE = 0.5
-_LISTED_CONSUMERS = 40
-
-
-def _direct_consumers(graph: dict[str, Any], by_id: dict[Any, dict], anchor_ids: set[Any]) -> dict[Any, list[dict]]:
-    """Every indexed incoming consumer edge of the anchors, in the whole graph."""
-    consumers: dict[Any, list[dict]] = {}
-    for link in graph.get("links", []):
-        if (str(link.get("label") or "") in _CONSUMER_LABELS and link.get("target") in anchor_ids
-                and link.get("source") in by_id and link.get("source") not in anchor_ids):
-            consumers.setdefault(link["source"], []).append(link)
-    return consumers
-
-
-def _consumer_summary(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], shown: set[Any]) -> dict[str, Any]:
-    """How many consumers exist and where the ones outside the selected nodes are.
-
-    The node budget caps what is expanded, not what the agent is told exists.
-    """
-    rest = [node_id for node_id in consumers if node_id not in shown]
-    listed = sorted(rest, key=lambda node_id: (bool(_TEST_PATH.search(str(by_id[node_id].get("file") or ""))),
-                                               str(by_id[node_id].get("file") or ""), str(node_id)))
-    return {"indexed": len(consumers), "total": len(consumers), "omitted": max(0, len(listed) - _LISTED_CONSUMERS),
-            "omitted_by_file": dict(Counter(str(by_id[node_id].get("file") or "") for node_id in listed[_LISTED_CONSUMERS:]).most_common(_LISTED_CONSUMERS)), "others": [
-        [by_id[node_id].get("name"), f"{by_id[node_id].get('file') or ''}:{consumers[node_id][0].get('line') or by_id[node_id].get('line') or ''}"]
-        for node_id in listed[:_LISTED_CONSUMERS]]}
 
 
 def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names: set[str], request: str,
