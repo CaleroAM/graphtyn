@@ -1205,3 +1205,30 @@ def test_spanish_dynamic_translates_to_its_identifier_fragment():
     from graphtyn.core.vocabulary import translated_terms
 
     assert "dynamic" in translated_terms("un ancho y una precisión dinámicos")
+
+
+def test_classification_of_generated_batches_does_not_fall_back():
+    """A regression floor, not a generalization measure: these batches tuned the lexicon."""
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[1] / "benchmarks" / "intent_classification_2026-11-05" / "evaluate.py"
+    spec = importlib.util.spec_from_file_location("intent_classification_evaluate", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    floors = {"batch1": 67, "batch2": 68, "batch3": 69, "batch4": 57}
+
+    for name, floor in floors.items():
+        assert module.agreement(path.parent / f"{name}.json")["agree"] >= floor, name
+
+
+def test_cues_recognise_each_intent_in_six_languages():
+    from graphtyn.core.intent_classifier import classify_intent
+
+    assert classify_intent("Wer ruft parse_header direkt auf?") == "impact"
+    assert classify_intent("Quais classes ainda chamam formatDate?") == "impact"
+    assert classify_intent("Où le middleware d'authentification est-il enregistré ?") == "bindings"
+    assert classify_intent("In quale tabella vengono memorizzati gli ordini?") == "persistence"
+    assert classify_intent("¿Cómo está organizada la arquitectura de este repositorio?") == "overview"
+    assert classify_intent("Which specs cover the checkout service?") == "tests"
+    # An explicit trace stays a flow even when a stage stores data.
+    assert classify_intent("Traza cómo se guarda la sesión en la base de datos paso a paso") == "flow"

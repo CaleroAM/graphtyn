@@ -1,0 +1,367 @@
+{
+ "role": "prueba de la primera ronda; ajuste de la segunda",
+ "generator": "Antigravity CLI, gemini-3.8-flash-high, sin herramientas ni acceso al código",
+ "prompt": "You are helping evaluate an intent classifier for a code-graph tool. Do NOT use any tools, do NOT read files; answer only with JSON.\n\nThe tool answers developer questions about a code repository. Each question must be labelled with exactly one intent:\n- overview: the purpose of the repository, its technologies, entry points, subsystems or overall architecture.\n- flow: how something executes: the steps, order, branches, lifecycle or failure behaviour of a feature or function; what a function or method does; how a request travels from a route to its handler and onwards.\n- impact: what would break or be affected by changing something; who calls, uses or depends on a symbol; its direct consumers.\n- persistence: where and how data is stored, read or written: database tables, models, migrations, repositories, files or caches used as storage.\n- bindings: how components are wired together: dependency injection, service container registration, configuration that binds an interface to an implementation, plugin or middleware registration.\n- tests: which tests cover something, which tests to run, or how something is tested.\n\nWrite 72 realistic questions a developer would ask an AI coding agent about these public repositories: ASP.NET Core, Symfony, Gin (Go), Next.js, Vue, Phoenix (Elixir), Ktor, FastAPI, Celery. Use 12 questions per intent, and for each intent 2 in each language: Spanish, English, Portuguese, French, German, Italian. Vary the phrasing a lot: some name a function, class or file (in code form or as plain words), some are long and some short, some mention \"in this project\", some are change requests (\"I want to modify X: what breaks?\" is impact; \"add X\" alone is not one of these questions). Avoid reusing the wording of the definitions above. Include a few tricky but still unambiguous cases.\n\nReturn ONLY a JSON array of objects: {\"language\": \"es|en|pt|fr|de|it\", \"intent\": \"<one of the six>\", \"question\": \"<text>\"}.\n",
+ "items": [
+  {
+   "language": "en",
+   "intent": "overview",
+   "question": "What is the main role of packages/next in this repo and how is the codebase structured between client and server runtimes?"
+  },
+  {
+   "language": "en",
+   "intent": "overview",
+   "question": "Can you give me a high-level breakdown of the core packages that make up this Gin engine repo?"
+  },
+  {
+   "language": "es",
+   "intent": "overview",
+   "question": "¿De qué se encarga exactamente este repositorio y cuáles son las aplicaciones OTP principales dentro del paraguas de Phoenix?"
+  },
+  {
+   "language": "es",
+   "intent": "overview",
+   "question": "¿Cuál es el punto de entrada principal cuando arranca esta aplicación FastAPI y qué subsistemas contiene?"
+  },
+  {
+   "language": "pt",
+   "intent": "overview",
+   "question": "Qual é a organização geral deste monorepo do Vue 3 e o que cada diretório em packages/ faz?"
+  },
+  {
+   "language": "pt",
+   "intent": "overview",
+   "question": "Pode me resumir para que serve esta base de código e quais são os componentes fundamentais do Celery?"
+  },
+  {
+   "language": "fr",
+   "intent": "overview",
+   "question": "Quelle est la structure globale de ce dépôt Symfony et comment sont découpés les différents composants du framework ?"
+  },
+  {
+   "language": "fr",
+   "intent": "overview",
+   "question": "Quel est le rôle du projet Microsoft.AspNetCore.Hosting dans l'architecture globale de la solution ?"
+  },
+  {
+   "language": "de",
+   "intent": "overview",
+   "question": "Wie ist dieses Ktor-Projekt aufgebaut und welche Hauptmodule bilden den Server-Kern?"
+  },
+  {
+   "language": "de",
+   "intent": "overview",
+   "question": "Was ist der Zweck dieses Repositories und wie hängen Compiler und Runtime hier zusammen?"
+  },
+  {
+   "language": "it",
+   "intent": "overview",
+   "question": "Qual è l'architettura generale di questo repository FastAPI e quali librerie terze ne costituiscono le fondamenta?"
+  },
+  {
+   "language": "it",
+   "intent": "overview",
+   "question": "Come è strutturato questo progetto Phoenix a livello di macro-moduli e qual è il punto d'ingresso del supervisore?"
+  },
+  {
+   "language": "en",
+   "intent": "flow",
+   "question": "Walk me through what happens under the hood when `Context.Next()` is executed in a route handler."
+  },
+  {
+   "language": "en",
+   "intent": "flow",
+   "question": "What is the step-by-step lifecycle of a task message from `apply_async` until worker consumption when an exception is thrown?"
+  },
+  {
+   "language": "es",
+   "intent": "flow",
+   "question": "¿Cómo viaja una petición HTTP entrante a través del pipeline de `KestrelServer` hasta llegar al delegado de middleware?"
+  },
+  {
+   "language": "es",
+   "intent": "flow",
+   "question": "¿Qué secuencia de pasos sigue `solve_dependencies` cuando una ruta async recibe parámetros validados por Pydantic?"
+  },
+  {
+   "language": "pt",
+   "intent": "flow",
+   "question": "O que acontece passo a passo quando uma conexão cai dentro de `Phoenix.Channel.Server`?"
+  },
+  {
+   "language": "pt",
+   "intent": "flow",
+   "question": "Como funciona a fase de patch em `renderer.ts` quando o valor de uma `ref` reativa é atualizado?"
+  },
+  {
+   "language": "fr",
+   "intent": "flow",
+   "question": "Comment s'enchaîne le traitement d'une requête HTTP depuis `HttpKernel::handle` jusqu'à la création du `ResponseEvent` ?"
+  },
+  {
+   "language": "fr",
+   "intent": "flow",
+   "question": "Quel est le parcours d'un appel réseau à travers les phases du pipeline `ApplicationCallPipeline` avant d'atteindre le routing ?"
+  },
+  {
+   "language": "de",
+   "intent": "flow",
+   "question": "Was passiert intern, wenn `engine.ServeHTTP` eine Route aufruft, für die kein Handler registriert ist (404-Pfad)?"
+  },
+  {
+   "language": "de",
+   "intent": "flow",
+   "question": "Wie verarbeitet der Server eine Server Actions Anfrage in `app-render.tsx` vom Empfang bis zum Streaming des Payloads?"
+  },
+  {
+   "language": "it",
+   "intent": "flow",
+   "question": "In che modo `celery.worker.strategy` gestisce l'ACK di un task se il processo figlio subisce un SIGKILL?"
+  },
+  {
+   "language": "it",
+   "intent": "flow",
+   "question": "Qual è la sequenza esatta di invocazione durante l'esecuzione di `ActionFilterAttribute.OnActionExecuting` in MVC?"
+  },
+  {
+   "language": "en",
+   "intent": "impact",
+   "question": "If I modify the signature of `RouterGroup.Handle` to accept an additional parameter, what callers in this repository will break?"
+  },
+  {
+   "language": "en",
+   "intent": "impact",
+   "question": "Who depends on `triggerRef` across packages/reactivity, and what would be impacted if its return type changes?"
+  },
+  {
+   "language": "es",
+   "intent": "impact",
+   "question": "Tengo que renombrar `KernelEvents::REQUEST` en `src/HttpKernel`. ¿Qué listeners y servicios se van a romper en el proyecto?"
+  },
+  {
+   "language": "es",
+   "intent": "impact",
+   "question": "Si cambio la implementación de `SecurityBase` para que retorne una tupla, ¿qué módulos o utilidades de autenticación se ven afectados?"
+  },
+  {
+   "language": "pt",
+   "intent": "impact",
+   "question": "Se eu alterar a função `normalizePath` em `packages/next/src/shared/lib/router`, quais outros arquivos e comandos de build quebram?"
+  },
+  {
+   "language": "pt",
+   "intent": "impact",
+   "question": "Quais partes do repositório consomem diretamente a classe `TaskPromise` em `celery.canvas` se eu remover esse símbolo?"
+  },
+  {
+   "language": "fr",
+   "intent": "impact",
+   "question": "Si je supprime la méthode d'extension `respondText` dans `ResponseFunctions.kt`, quels sont les composants consommateurs touchés ?"
+  },
+  {
+   "language": "fr",
+   "intent": "impact",
+   "question": "Je voudrais modifier le constructeur de `DefaultHttpContext`. Quels sous-systèmes dépendent directement de son instanciation ?"
+  },
+  {
+   "language": "de",
+   "intent": "impact",
+   "question": "Welche Module rufen `Phoenix.Socket.Transport.connect/2` auf und was bricht weg, wenn wir das Rückgabe-Format anpassen?"
+  },
+  {
+   "language": "de",
+   "intent": "impact",
+   "question": "Ich plane, `gin.H` zu deprecaten. Wer in diesem Repo verwendet diesen Typ und wie groß ist der Refactoring-Aufwand?"
+  },
+  {
+   "language": "it",
+   "intent": "impact",
+   "question": "Se modifico i parametri di `createComponentInstance` in runtime-core, quali chiamate dirette falliranno?"
+  },
+  {
+   "language": "it",
+   "intent": "impact",
+   "question": "Chi fa riferimento alla costante `Response::HTTP_INTERNAL_SERVER_ERROR` in `Component/HttpFoundation` se la rendo privata?"
+  },
+  {
+   "language": "en",
+   "intent": "persistence",
+   "question": "Where are Ecto schemas and database repo queries defined for managing user sessions in this repo?"
+  },
+  {
+   "language": "en",
+   "intent": "persistence",
+   "question": "How does the Redis result backend persist task state and tombstone records according to `celery.backends.redis`?"
+  },
+  {
+   "language": "es",
+   "intent": "persistence",
+   "question": "¿En qué clase o archivo se configuran las entidades de Entity Framework Core y las migraciones de Identity en este proyecto?"
+  },
+  {
+   "language": "es",
+   "intent": "persistence",
+   "question": "¿Cómo se maneja el pool de conexiones de SQLAlchemy y dónde se guardan las sesiones de base de datos en esta app?"
+  },
+  {
+   "language": "pt",
+   "intent": "persistence",
+   "question": "Onde estão configurados os mapeamentos de entidade do Doctrine ORM e os arquivos de migration neste projeto?"
+  },
+  {
+   "language": "pt",
+   "intent": "persistence",
+   "question": "Como e onde os registros de usuário são gravados em disco ou em banco usando Exposed nesta aplicação Ktor?"
+  },
+  {
+   "language": "fr",
+   "intent": "persistence",
+   "question": "Où se trouvent les migrations SQL et les modules de schéma `Ecto.Changeset` pour la gestion des commandes ?"
+  },
+  {
+   "language": "fr",
+   "intent": "persistence",
+   "question": "Dans quels fichiers ce projet configure-t-il les modèles Tortoise ORM ou les accès aux tables PostgreSQL ?"
+  },
+  {
+   "language": "de",
+   "intent": "persistence",
+   "question": "In welcher Datei wird der SQLAlchemy-Backend-Speicher für Task-Ergebnisse eingerichtet und welche Tabellen werden angelegt?"
+  },
+  {
+   "language": "de",
+   "intent": "persistence",
+   "question": "Wo liegen die Migrationsdateien und die DbContext-Deklarationen für den SQL-Server-Datenspeicher?"
+  },
+  {
+   "language": "it",
+   "intent": "persistence",
+   "question": "Dove sono archiviate le configurazioni della cache su filesystem e le entità Doctrine in questa cartella?"
+  },
+  {
+   "language": "it",
+   "intent": "persistence",
+   "question": "In quali file sono descritte le tabelle di database e le istruzioni SQL tramite Ecto.Migration?"
+  },
+  {
+   "language": "en",
+   "intent": "bindings",
+   "question": "How is `IServiceCollection` configured in `Program.cs` to bind `IUserRepository` to its concrete implementation?"
+  },
+  {
+   "language": "en",
+   "intent": "bindings",
+   "question": "Where are the compiler passes and service container YAML definitions that register custom tags for form types?"
+  },
+  {
+   "language": "es",
+   "intent": "bindings",
+   "question": "¿Dónde se instalan los plugins como `ContentNegotiation` y `CORS` en el pipeline de la aplicación?"
+  },
+  {
+   "language": "es",
+   "intent": "bindings",
+   "question": "¿Cómo se asocian las dependencias globales mediante `app.dependency_overrides` o parámetros de `Depends()` en este servicio?"
+  },
+  {
+   "language": "pt",
+   "intent": "bindings",
+   "question": "Em que lugar do código os middlewares de logging e recuperação de pânico são atrelados à instância do router com `Use()`?"
+  },
+  {
+   "language": "pt",
+   "intent": "bindings",
+   "question": "Onde os middlewares customizados são adicionados à pipeline HTTP via `IApplicationBuilder.UseMiddleware`?"
+  },
+  {
+   "language": "fr",
+   "intent": "bindings",
+   "question": "Comment le middleware racine est-il rattaché au routeur Edge dans la configuration du serveur ?"
+  },
+  {
+   "language": "fr",
+   "intent": "bindings",
+   "question": "Dans quel fichier de bundle enregistre-t-on les services dans le conteneur d'injection de dépendances via `services.yaml` ?"
+  },
+  {
+   "language": "de",
+   "intent": "bindings",
+   "question": "Wo wird die DI-Verdrahtung mit Koin für die Repositories im Application-Modul vorgenommen?"
+  },
+  {
+   "language": "de",
+   "intent": "bindings",
+   "question": "Wie werden globale Plugins und Direktiven an die Instanz über `app.use()` in der Initialisierungsphase gebunden?"
+  },
+  {
+   "language": "it",
+   "intent": "bindings",
+   "question": "Dove viene registrato il middleware di autenticazione JWT sulla catena di filtri del gruppo di rotte `/api/v1`?"
+  },
+  {
+   "language": "it",
+   "intent": "bindings",
+   "question": "In che file vengono collegate le factory delle dipendenze ai resolver del container di iniezione?"
+  },
+  {
+   "language": "en",
+   "intent": "tests",
+   "question": "Which e2e test suite covers dynamic routing revalidation under `test/e2e` and how can I run it?"
+  },
+  {
+   "language": "en",
+   "intent": "tests",
+   "question": "How is `celery.tests.unit.tasks` set up to mock broker connectivity during unit testing with pytest?"
+  },
+  {
+   "language": "es",
+   "intent": "tests",
+   "question": "¿Qué suites de pruebas unitarias verifican el comportamiento de `watchEffect` en `packages/reactivity/__tests__`?"
+  },
+  {
+   "language": "es",
+   "intent": "tests",
+   "question": "¿Cuál es el comando de Mix para correr las pruebas de integración de canales y qué fixtures usan?"
+  },
+  {
+   "language": "pt",
+   "intent": "tests",
+   "question": "Quais testes em `Microsoft.AspNetCore.Mvc.Core.Test` cobrem a validação de modelo e como eles mockam o `ActionContext`?"
+  },
+  {
+   "language": "pt",
+   "intent": "tests",
+   "question": "Onde estão os testes de benchmark para o roteador radice em `tree_test.go` e quais casos de borda eles cobrem?"
+  },
+  {
+   "language": "fr",
+   "intent": "tests",
+   "question": "Quels tests fonctionnels dans `tests/Controller` valident l'authentification et comment est configuré le WebTestCase ?"
+  },
+  {
+   "language": "fr",
+   "intent": "tests",
+   "question": "Comment exécuter les tests de régression de `test_tutorial` et où sont définis les fixtures pytest pour TestClient ?"
+  },
+  {
+   "language": "de",
+   "intent": "tests",
+   "question": "Welche Unit-Tests prüfen die `AuthenticationFeature`-Logik und wie werden Test-Calls in Ktor mit `testApplication` aufgesetzt?"
+  },
+  {
+   "language": "de",
+   "intent": "tests",
+   "question": "Wo liegen die Komponententests für den Image-Loader und mit welchem Befehl führe ich genau diese Testdateien aus?"
+  },
+  {
+   "language": "it",
+   "intent": "tests",
+   "question": "Quali test in `celery/tests/test_canvas.py` verificano la serializzazione dei chord e quale runner viene usato?"
+  },
+  {
+   "language": "it",
+   "intent": "tests",
+   "question": "Come vengono testate le risposte broadcast in `ChannelTest` e quali helper di test sono inclusi in questo repo?"
+  }
+ ]
+}

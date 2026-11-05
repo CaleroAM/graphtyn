@@ -1,0 +1,367 @@
+{
+ "role": "ajuste (definición de bindings que incluía rutas; 3 etiquetas no coinciden con Graphtyn)",
+ "generator": "Antigravity CLI, gemini-3.8-flash-high, sin herramientas ni acceso al código",
+ "prompt": "You are helping evaluate an intent classifier for a code-graph tool. Do NOT use any tools, do NOT read files; answer only with JSON.\n\nThe tool answers developer questions about a code repository. Each question must be labelled with exactly one intent:\n- overview: the purpose of the repository, its technologies, entry points, subsystems or overall architecture.\n- flow: how something executes: the steps, order, branches, lifecycle or failure behaviour of a feature or function, or what a function/method does.\n- impact: what would break or be affected by changing something; who calls/uses/depends on a symbol; direct consumers.\n- persistence: where and how data is stored, read or written (database tables, models, migrations, files, caches as storage).\n- bindings: how components are wired: dependency injection, service registration, configuration that connects implementations, plugin/middleware registration, routes to handlers.\n- tests: which tests cover something, which tests to run, or how something is tested.\n\nWrite 72 realistic questions a developer would ask an AI coding agent about well-known public repositories (Rails, Django, Redis, React, Spring Boot, Laravel, Express, fmt, Flask, Kubernetes, etc.): 12 per intent, and for each intent 2 in each of these languages: Spanish, English, Portuguese, French, German, Italian. Vary the phrasing a lot: some name a function, class or file (in code form or as plain words), some are long and some short, some mention \"in this project\"/\"en este repositorio\", some are change requests (\"I want to modify X, what breaks?\"). Avoid copying the definitions above. Include a few genuinely tricky but still unambiguous cases.\n\nReturn ONLY a JSON array of objects: {\"language\": \"es|en|pt|fr|de|it\", \"intent\": \"<one of the six>\", \"question\": \"<text>\"}.\n",
+ "items": [
+  {
+   "language": "es",
+   "intent": "overview",
+   "question": "¿Cuál es el punto de entrada principal cuando arranca este proyecto y cómo se estructuran sus aplicaciones internas?"
+  },
+  {
+   "language": "es",
+   "intent": "overview",
+   "question": "En este repositorio de Redis, ¿me puedes dar un resumen de alto nivel de qué subsistemas componen el core y para qué sirve cada carpeta?"
+  },
+  {
+   "language": "en",
+   "intent": "overview",
+   "question": "Can you give me an architectural overview of how the control plane components are organized in Kubernetes?"
+  },
+  {
+   "language": "en",
+   "intent": "overview",
+   "question": "What is the primary tech stack and entry point file of this Express repository?"
+  },
+  {
+   "language": "pt",
+   "intent": "overview",
+   "question": "Qual é o propósito geral deste repositório e como o reconciler do React se divide dos renderers?"
+  },
+  {
+   "language": "pt",
+   "intent": "overview",
+   "question": "Estou conhecendo este projeto agora: quais são os principais módulos do framework e como a arquitetura está desenhada?"
+  },
+  {
+   "language": "fr",
+   "intent": "overview",
+   "question": "Quel est le point d'entrée principal de l'application Flask et comment est organisée l'arborescence des modules ?"
+  },
+  {
+   "language": "fr",
+   "intent": "overview",
+   "question": "Peux-tu m'expliquer l'architecture globale de Spring Boot dans ce dépôt et le rôle du sous-système spring-boot-project ?"
+  },
+  {
+   "language": "de",
+   "intent": "overview",
+   "question": "Was ist der Hauptzweck dieser fmt-Library und welche Kernkomponenten bilden die grundlegende Architektur?"
+  },
+  {
+   "language": "de",
+   "intent": "overview",
+   "question": "Kannst du mir einen Überblick über die Subsysteme in diesem Rails-Repository geben und wie ActionPack und ActiveSupport zusammenhängen?"
+  },
+  {
+   "language": "it",
+   "intent": "overview",
+   "question": "Come è strutturata l'architettura complessiva di questo framework e da quale file comincia il bootstrap dell'applicazione?"
+  },
+  {
+   "language": "it",
+   "intent": "overview",
+   "question": "In questo repository, qual è lo scopo della libreria e quali sono i moduli software fondamentali che contiene?"
+  },
+  {
+   "language": "es",
+   "intent": "flow",
+   "question": "Explícame paso a paso qué hace el método `handle(req, res, next)` en router/index.js cuando entra una petición HTTP."
+  },
+  {
+   "language": "es",
+   "intent": "flow",
+   "question": "En ActiveRecord::Base, ¿cuál es el ciclo de vida exacto al llamar a `save` y qué sucede si un callback `before_validation` devuelve false?"
+  },
+  {
+   "language": "en",
+   "intent": "flow",
+   "question": "Trace the execution path of `processCommand()` in server.c when a SET command arrives: what branches does it take?"
+  },
+  {
+   "language": "en",
+   "intent": "flow",
+   "question": "What actually happens during `workLoopConcurrent` in React when a render phase is interrupted by a high-priority transition?"
+  },
+  {
+   "language": "pt",
+   "intent": "flow",
+   "question": "Qual é a ordem de execução dos hooks quando `Flask.dispatch_request` processa uma requisição e lança uma exceção HTTP?"
+  },
+  {
+   "language": "pt",
+   "intent": "flow",
+   "question": "O que a função `syncPod` no kubelet faz exatamente do início ao fim quando um container falha ao inicializar?"
+  },
+  {
+   "language": "fr",
+   "intent": "flow",
+   "question": "Comment s'exécute `get_response` dans le handler WSGI de Django et à quel moment précis les exceptions 404 sont-elles interceptées ?"
+  },
+  {
+   "language": "fr",
+   "intent": "flow",
+   "question": "Quelles sont les étapes parcourues par `Pipeline::then()` dans Laravel jusqu'à l'exécution du contrôleur final ?"
+  },
+  {
+   "language": "de",
+   "intent": "flow",
+   "question": "Was macht `SpringApplication.run()` beim Bootstrapping Schritt für Schritt, wenn der ApplicationContext initialisiert wird?"
+  },
+  {
+   "language": "de",
+   "intent": "flow",
+   "question": "Wie verarbeitet `vformat_to` Format-String-Tokens und was passiert bei einem ungültigen Specifier im Fehlerfall?"
+  },
+  {
+   "language": "it",
+   "intent": "flow",
+   "question": "Cosa fa esattamente il metodo `authenticate_with_http_token` in Rails e come gestisce il caso in cui l'header sia assente?"
+  },
+  {
+   "language": "it",
+   "intent": "flow",
+   "question": "Qual è il flusso d'esecuzione in Express quando un middleware chiama `next(err)`: come viene cercato e invocato il middleware di errore?"
+  },
+  {
+   "language": "es",
+   "intent": "impact",
+   "question": "Quiero cambiar la firma de `mountState` en ReactFiberHooks: ¿qué otros archivos o funciones del reconciliador se verían afectados?"
+  },
+  {
+   "language": "es",
+   "intent": "impact",
+   "question": "Si elimino el campo `flags` de `struct client` en server.h de Redis, ¿qué partes de la base de código dejarían de compilar?"
+  },
+  {
+   "language": "en",
+   "intent": "impact",
+   "question": "Who directly calls `django.core.cache.backends.base.BaseCache.get_or_set` across this codebase?"
+  },
+  {
+   "language": "en",
+   "intent": "impact",
+   "question": "I want to rename the `NodeCondition` struct in api/types.go. What consumers and controller packages will break?"
+  },
+  {
+   "language": "pt",
+   "intent": "impact",
+   "question": "Se eu alterar o valor de retorno de `ActiveSupport::Duration#parts`, quais classes no repositório dependem diretamente disso?"
+  },
+  {
+   "language": "pt",
+   "intent": "impact",
+   "question": "Quais componentes seriam impactados neste projeto se eu depreciar ou modificar a classe `ConditionOutcome` do Spring Boot?"
+  },
+  {
+   "language": "fr",
+   "intent": "impact",
+   "question": "Si je renomme l'attribut `current_app` dans globals.py de Flask, quels modules internes ou extensions vont casser ?"
+  },
+  {
+   "language": "fr",
+   "intent": "impact",
+   "question": "Qui appelle la fonction utilitaire `abort_if` dans ce framework Laravel et quels services en dépendent directement ?"
+  },
+  {
+   "language": "de",
+   "intent": "impact",
+   "question": "Welche Funktionen im Projekt rufen `basic_memory_buffer::grow` direkt auf, wenn ich dessen Allokationslogik anpasse?"
+  },
+  {
+   "language": "de",
+   "intent": "impact",
+   "question": "Was bricht im Express-Router ab, wenn wir die Signatur von `layer.match(path)` um einen booleschen Parameter erweitern?"
+  },
+  {
+   "language": "it",
+   "intent": "impact",
+   "question": "Se modifico il comportamento di `Model.clean_fields()` in Django, quali form e validatori interni ne risentiranno?"
+  },
+  {
+   "language": "it",
+   "intent": "impact",
+   "question": "Chi utilizza direttamente la funzione `serverLog` in networking.c e quali chiamanti sarebbero influenzati da una modifica?"
+  },
+  {
+   "language": "es",
+   "intent": "persistence",
+   "question": "¿Cómo y en qué tablas de la base de datos almacena Django las sesiones de usuario cuando se usa el backend `cached_db`?"
+  },
+  {
+   "language": "es",
+   "intent": "persistence",
+   "question": "En este repositorio de Redis, ¿en qué archivo se serializan los datos al escribir el dump RDB en disco y cómo estructura el snapshot?"
+  },
+  {
+   "language": "en",
+   "intent": "persistence",
+   "question": "Where does `ActiveRecord::SchemaMigration` write applied migration timestamps and what is the underlying table schema?"
+  },
+  {
+   "language": "en",
+   "intent": "persistence",
+   "question": "How and where does Laravel's Redis cache repository store tagged items and serialize payload data in memory?"
+  },
+  {
+   "language": "pt",
+   "intent": "persistence",
+   "question": "Em quais colunas e tabela o modelo `auth.User` do Django persiste o hash de senha e os metadados de login?"
+  },
+  {
+   "language": "pt",
+   "intent": "persistence",
+   "question": "Como o Spring Session persiste atributos no banco de dados relacional e onde ficam localizados os scripts SQL de migração?"
+  },
+  {
+   "language": "fr",
+   "intent": "persistence",
+   "question": "Où et sous quelle forme ActiveRecord stocke-t-il les métadonnées de pièces jointes avec ActiveStorage dans la base PostgreSQL ?"
+  },
+  {
+   "language": "fr",
+   "intent": "persistence",
+   "question": "Comment le moteur AOF (Append-Only File) de Redis gère-t-il l'écriture sur disque et où est définie la politique de sync/écriture ?"
+  },
+  {
+   "language": "de",
+   "intent": "persistence",
+   "question": "In welcher Datenbanktabelle werden fehlgeschlagene Jobs von Laravel Queue abgelegt und welches Eloquent-Model mappt darauf?"
+  },
+  {
+   "language": "de",
+   "intent": "persistence",
+   "question": "Wo und wie serialisiert der Kubernetes apiserver etcd-Objekte zur persistenten Speicherung der Cluster-Ressourcen?"
+  },
+  {
+   "language": "it",
+   "intent": "persistence",
+   "question": "Dove vengono definiti i campi e le chiavi esterne per il modello `ActionText::RichText` nelle migrazioni del database di Rails?"
+  },
+  {
+   "language": "it",
+   "intent": "persistence",
+   "question": "In quale file viene gestita la lettura e scrittura fisica dei file caricati tramite `FileSystemStorage` sul disco locale?"
+  },
+  {
+   "language": "es",
+   "intent": "bindings",
+   "question": "¿Dónde se registra el bean `AuthenticationManager` en Spring Boot y cómo se inyecta en los filtros de seguridad?"
+  },
+  {
+   "language": "es",
+   "intent": "bindings",
+   "question": "En este proyecto con Express, ¿en qué módulo se asocian las rutas HTTP de `/api/v1/auth` con sus respectivos controladores?"
+  },
+  {
+   "language": "en",
+   "intent": "bindings",
+   "question": "Where is the `PaymentGateway` interface bound to its concrete Stripe implementation in Laravel's service container?"
+  },
+  {
+   "language": "en",
+   "intent": "bindings",
+   "question": "How are custom blueprints and URL converter classes registered and wired onto the main `Flask` instance in this app?"
+  },
+  {
+   "language": "pt",
+   "intent": "bindings",
+   "question": "Onde é feita a configuração de auto-wiring para os serviços de email usando anotações `@Bean` e `@Configuration` no Spring Boot?"
+  },
+  {
+   "language": "pt",
+   "intent": "bindings",
+   "question": "Como os middlewares de autenticação e CORS são plugados na cadeia de rotas deste servidor Express?"
+  },
+  {
+   "language": "fr",
+   "intent": "bindings",
+   "question": "Dans quel ServiceProvider la façade `Cache` de Laravel est-elle liée à son implémentation concrète ?"
+  },
+  {
+   "language": "fr",
+   "intent": "bindings",
+   "question": "Où sont déclarés et associés les middlewares dans la variable `MIDDLEWARE` de Django pour être injectés dans la chaîne de traitement ?"
+  },
+  {
+   "language": "de",
+   "intent": "bindings",
+   "question": "Wie wird `ObjectMapper` im Spring-Context konfiguriert und als DI-Bean registriert, damit Controller ihn automatisch injizieren können?"
+  },
+  {
+   "language": "de",
+   "intent": "bindings",
+   "question": "Wo werden in `config/routes.rb` dieses Rails-Projekts die RESTful-Endpunkte den ActionController-Aktionen zugeordnet?"
+  },
+  {
+   "language": "it",
+   "intent": "bindings",
+   "question": "In quale file di configurazione o provider di Laravel vengono registrati i middleware di routing globali?"
+  },
+  {
+   "language": "it",
+   "intent": "bindings",
+   "question": "Dove viene agganciato il router di autenticazione e con quale prefisso di URL viene montato nell'istanza dell'applicazione Express?"
+  },
+  {
+   "language": "es",
+   "intent": "tests",
+   "question": "¿Qué suite de pruebas cubre la validación de `EmailField` en Django y qué comando uso para correr solo esos tests?"
+  },
+  {
+   "language": "es",
+   "intent": "tests",
+   "question": "¿Cómo se comprueban los rollbacks automáticos en los tests unitarios de ActiveRecord y qué archivo de fixtures utilizan?"
+  },
+  {
+   "language": "en",
+   "intent": "tests",
+   "question": "Which test files under `tests/unit` in Redis cover LRU eviction behavior, and how do I execute them via TCL?"
+  },
+  {
+   "language": "en",
+   "intent": "tests",
+   "question": "How is the concurrent rendering hook `useDeferredValue` tested in React and where are its test suites located?"
+  },
+  {
+   "language": "pt",
+   "intent": "tests",
+   "question": "Quais arquivos de teste cobrem a manipulação de sessões seguras no Flask e que comando executo para rodá-los com pytest?"
+  },
+  {
+   "language": "pt",
+   "intent": "tests",
+   "question": "Como o framework Laravel testa o disparo de notificações em fila dentro da suite de testes de queue?"
+  },
+  {
+   "language": "fr",
+   "intent": "tests",
+   "question": "Quels tests d'intégration valident le comportement de `@SpringBootTest` avec un serveur web embarqué et comment les lancer ?"
+  },
+  {
+   "language": "fr",
+   "intent": "tests",
+   "question": "Où se trouvent les tests unitaires pour la gestion de l'échappement UTF-8 dans fmt et comment exécuter cette suite avec ctest ?"
+  },
+  {
+   "language": "de",
+   "intent": "tests",
+   "question": "Welche Testfälle in Django überprüfen die Migrationen in `tests/migrations/` und wie kann ich diese isoliert ausführen?"
+  },
+  {
+   "language": "de",
+   "intent": "tests",
+   "question": "Welche e2e-Tests in Kubernetes decken den Ausfall eines Node-Controllers ab und in welchem Verzeichnis liegen die Testdateien?"
+  },
+  {
+   "language": "it",
+   "intent": "tests",
+   "question": "Quale suite di test verifica il comportamento del metodo `res.cookie()` in Express e come posso lanciare solo quei test con Mocha?"
+  },
+  {
+   "language": "it",
+   "intent": "tests",
+   "question": "In quale file di test viene verificata l'integrità del parser JSON di ActiveSupport in Rails e quali mock vengono utilizzati?"
+  }
+ ]
+}

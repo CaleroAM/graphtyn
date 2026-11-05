@@ -1,0 +1,121 @@
+{
+ "tasks": [
+  {
+   "id": "V6_PT_RAILS_RELOAD_IMPACT",
+   "request": "Se eu mudar reload no Active Record, o que quebra? Liste os consumidores diretos com evidência arquivo:linha.",
+   "rubric": [
+    {
+     "id": "pessimistic",
+     "any": [
+      "pessimistic"
+     ]
+    },
+    {
+     "id": "singular",
+     "any": [
+      "singular_association"
+     ]
+    },
+    {
+     "id": "collection",
+     "any": [
+      "collection_association",
+      "collection_proxy"
+     ]
+    },
+    {
+     "id": "through",
+     "any": [
+      "has_one_through"
+     ]
+    },
+    {
+     "id": "persistence",
+     "any": [
+      "persistence.rb"
+     ]
+    },
+    {
+     "id": "autosave",
+     "any": [
+      "autosave_association"
+     ]
+    },
+    {
+     "id": "dirty",
+     "any": [
+      "dirty.rb"
+     ]
+    },
+    {
+     "id": "relation",
+     "any": [
+      "relation.rb"
+     ]
+    }
+   ],
+   "translates": "V4_RAILS_RELOAD_IMPACT"
+  },
+  {
+   "id": "V6_IT_RAILS_WITHIN_TX_WHAT",
+   "request": "Come funziona within_new_transaction? Cita file:riga.",
+   "rubric": [
+    {
+     "id": "begin",
+     "any": [
+      "begin_transaction"
+     ]
+    },
+    {
+     "id": "rollback",
+     "any": [
+      "rollback_transaction"
+     ]
+    },
+    {
+     "id": "commit",
+     "any": [
+      "commit_transaction"
+     ]
+    },
+    {
+     "id": "failure",
+     "any": [
+      "after_failure_actions"
+     ]
+    },
+    {
+     "id": "aborting",
+     "any": [
+      "aborting"
+     ]
+    },
+    {
+     "id": "throw_away",
+     "any": [
+      "throw_away!"
+     ]
+    },
+    {
+     "id": "incomplete",
+     "any": [
+      "incomplete!"
+     ]
+    },
+    {
+     "id": "conn_failed",
+     "any": [
+      "ConnectionFailed"
+     ]
+    },
+    {
+     "id": "caller",
+     "any": [
+      "database_statements"
+     ]
+    }
+   ],
+   "translates": "V3_RAILS_WITHIN_TX_WHAT"
+  }
+ ]
+}

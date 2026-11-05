@@ -1,0 +1,47 @@
+{
+ "tasks": [
+  {
+   "id": "V6_FR_FMT_WRITE_PADDED_IMPACT",
+   "request": "Si je modifie write_padded dans ce dépôt, qu'est-ce qui casse ? Liste les consommateurs directs avec une preuve fichier:ligne.",
+   "rubric": [
+    {
+     "id": "write_char",
+     "any": [
+      "write_char"
+     ]
+    },
+    {
+     "id": "write_ptr",
+     "any": [
+      "write_ptr"
+     ]
+    },
+    {
+     "id": "write_nonfinite",
+     "any": [
+      "write_nonfinite"
+     ]
+    },
+    {
+     "id": "write_float",
+     "any": [
+      "do_write_float"
+     ]
+    },
+    {
+     "id": "write_int",
+     "any": [
+      "write_int"
+     ]
+    },
+    {
+     "id": "std_formatter",
+     "any": [
+      "std.h"
+     ]
+    }
+   ],
+   "translates": "FMT_WRITE_PADDED_IMPACT"
+  }
+ ]
+}
