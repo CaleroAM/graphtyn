@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v21-kotlin-swift-scala"
+PARSER_VERSION = "treesitter-v22-template-call-names"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")

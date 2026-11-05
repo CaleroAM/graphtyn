@@ -8,6 +8,7 @@ from graphtyn.core.answer_validation import detect_incomplete_answer, validate_c
 from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.benchmark_protocol import paired_statistics, validate_protocol
 from graphtyn.core.change_analyst import _terms, classify_intent, query_intent
+from graphtyn.core.impact_references import _scan
 from graphtyn.core.source_evidence import attach_source_evidence, select_evidence_mode
 from graphtyn.core.graph_hygiene import normalize_graph
 from graphtyn.core.semantic_index import build_semantic_index, hashed_embedding, semantic_search
@@ -1016,3 +1017,29 @@ def test_template_arguments_are_not_the_callee(tmp_path):
 
     assert [(call["name"], call["receiver"]) for call in facts["calls"]] == [
         ("write_exp", ""), ("write_exp", "detail"), ("f", "ns"), ("m", "s"), ("m", "p"), ("h", "")]
+
+
+def test_textual_uses_in_the_symbols_own_component_are_listed_first(tmp_path):
+    root, data = _templated_project(tmp_path)
+    home = "zzz_home"
+    (root / home).mkdir()
+    (root / home / "lib.h").write_text("int render(int x);\n")
+    data["nodes"][0]["file"] = f"{home}/lib.h"
+    for folder in (home, "aaa_other"):
+        (root / folder).mkdir(exist_ok=True)
+        (root / folder / "use.h").write_text("int h() {\n  return render<char>(1);\n}\n")
+        data["nodes"].append({"id": f"s:{folder}", "name": f"h_{folder}", "kind": "function", "file": f"{folder}/use.h", "line": 1})
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    listed = [at for _name, at in result["direct_consumers"]["text_references"]]
+    assert listed.index(f"{home}/use.h:2") < listed.index("aaa_other/use.h:2")
+
+
+def test_a_resolved_call_from_file_scope_is_not_also_a_textual_use(tmp_path):
+    root, data = _templated_project(tmp_path)
+    data["nodes"].append({"id": "f:use", "name": "use.h", "kind": "file"})
+    data["links"].append({"source": "f:use", "target": data["nodes"][0]["id"], "label": "llama", "file": "use.h", "line": 2})
+    references, _ = _scan(root, data, {data["nodes"][0]["name"]}, {data["nodes"][0]["id"]})
+
+    assert ["", "use.h:2"] not in references and not [at for _name, at in references if at == "use.h:2"]

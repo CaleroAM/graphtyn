@@ -47,13 +47,16 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any]) -> 
     for link in graph.get("links", []):
         source = by_id.get(link.get("source"))
         if source and link.get("target") in ids:
-            resolved_lines.add((str(source.get("file")), int(link.get("line") or 0)))
+            # A file-level caller has no `file` of its own: the edge says where the call is.
+            resolved_lines.add((str(link.get("file") or source.get("file")), int(link.get("line") or 0)))
             resolved_symbols.add((str(source.get("file")), str(source.get("name") or "")))
     symbols = _symbols_by_file(graph)
     pattern = re.compile(r"(?<![\w])(?:" + "|".join(re.escape(name) for name in sorted(names)) + r")(?![\w])")
     needles = [name.encode() for name in names]
+    # In a monorepo, uses inside the symbol's own component matter first and fill the list.
+    homes = {str(node.get("file")).split("/", 1)[0] for node in nodes if node.get("id") in ids and node.get("file")}
     paths = sorted({str(node.get("file")) for node in nodes if node.get("file")},
-                   key=lambda path: (bool(TEST_PATH.search(path)), path))
+                   key=lambda path: (bool(TEST_PATH.search(path)), path.split("/", 1)[0] not in homes, path))
     references, seen = [], set()
     deadline = time.monotonic() + _SCAN_SECONDS
     for path in paths:
