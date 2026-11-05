@@ -8,6 +8,23 @@ gasto cae. En el conjunto 4, el gasto baja un 54 % y la calidad pasa de 51/54 a
 48/54, casi todo por `V4_RAILS_RELOAD_IMPACT`, que se corrigió después (ver «Quinta
 corrección»). Sólo se midió en un cliente, con n=2.
 
+## Corpus
+
+Todas las sesiones y comprobaciones sin agentes usan repositorios públicos de GitHub,
+en commits fijos. Ningún proyecto privado ni del usuario forma parte de la medición.
+
+| Repositorio | Commit | Lenguaje |
+|---|---|---|
+| [redis/redis](https://github.com/redis/redis) | `f2a17a8dca1566d2a0f078840fffef5661eab4b1` | C |
+| [fmtlib/fmt](https://github.com/fmtlib/fmt) | `0fc31633e7d53ac895ae0a688b83b7d44f0b0c1f` | C++ |
+| [rails/rails](https://github.com/rails/rails) | `3f0b675158e8284241bb1213c00375bc1fb9c52f` | Ruby |
+
+Cada protocolo de `protocols/` y `set*/protocols/` registra su repositorio y commit.
+La puerta de cobertura de CI (`tools/check_retrieval_coverage.py`) usa fmt en ese
+mismo commit y [pallets/flask](https://github.com/pallets/flask) en
+`d086db856be187255b8ec61ef409357393020f32`. Las tareas y rúbricas las escribí
+leyendo ese código.
+
 ## Resultado
 
 Promedios por sesión. «Anterior» es `3de6e0e`, la rama sin estas correcciones.
