@@ -14,7 +14,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .path_signals import TEST_PATH, VENDORED_PATH
+from .path_signals import TEST_PATH, VENDORED_PATH, package_root
 
 _SCAN_SECONDS = 2.0
 _MAX_FILE_BYTES = 2_000_000
@@ -28,6 +28,22 @@ _SKIPPED_SUFFIXES = (".md", ".json", ".lock", ".txt", ".rst", ".yml", ".yaml", "
 CONSUMER_LABELS = {"llama", "usa", "referencia", "implementa", "hereda", "suscribe", "escucha",
                     "despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
 _LISTED_CONSUMERS = 40
+
+
+def impact_targets(nodes: list[dict], names: set[str], package_roots: set[str]) -> list[dict]:
+    """Definitions a change affects: only those of the package the request names, when it has them."""
+    named = [node for node in nodes if str(node.get("name") or "").lower() in names]
+    return [node for node in named if package_root(node) in package_roots] or named
+
+
+def one_per_name(anchors: list[dict], limit: int) -> list[dict]:
+    """The first definition of each name, then the rest: every requested name must reach the text scan."""
+    seen, first, rest = set(), [], []
+    for node in anchors:
+        name = str(node.get("name") or "")
+        (rest if name in seen else first).append(node)
+        seen.add(name)
+    return (first + rest)[:limit]
 
 
 def direct_consumers(graph: dict[str, Any], by_id: dict[Any, dict], anchor_ids: set[Any]) -> dict[Any, list[dict]]:
@@ -91,7 +107,7 @@ def _enclosing(symbols: list[tuple[int, str]], line: int) -> str:
     return symbols[index][1] if index >= 0 else ""
 
 
-def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any]) -> tuple[list[list[str]], bool]:
+def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anchors: list[dict]) -> tuple[list[list[str]], bool]:
     """Uses outside the definitions and the edges the graph already has."""
     nodes = graph.get("nodes", [])
     by_id = {node.get("id"): node for node in nodes}
@@ -107,7 +123,7 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any]) -> 
     pattern = re.compile(r"(?<![\w])(?:" + "|".join(re.escape(name) for name in sorted(names)) + r")(?![\w])")
     needles = [name.encode() for name in names]
     # In a monorepo, uses inside the symbol's own component matter first and fill the list.
-    homes = {str(node.get("file")).split("/", 1)[0] for node in nodes if node.get("id") in ids and node.get("file")}
+    homes = {str(node.get("file")).split("/", 1)[0] for node in anchors if node.get("file")}
     paths = sorted({str(node.get("file")) for node in nodes if node.get("file")},
                    key=lambda path: (bool(TEST_PATH.search(path)), path.split("/", 1)[0] not in homes, path))
     references, seen = [], set()
@@ -149,7 +165,7 @@ def attach_text_references(root: Path, graph: dict[str, Any] | None, data: dict[
     if not names:
         return
     ids = {node.get("id") for node in graph.get("nodes", []) if str(node.get("name") or "") in names}
-    references, truncated = _scan(Path(root), graph, names, ids)
+    references, truncated = _scan(Path(root), graph, names, ids, data.get("matched") or [])
     consumers["total"] = int(consumers.get("indexed") or 0) + len(references)
     if references:
         consumers["text_references"] = references[:_LISTED_REFERENCES]

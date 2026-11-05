@@ -7,9 +7,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
+from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots, package_name_words as _package_name_words
 from . import retrieval_signals as _signals
-from .impact_references import CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers
+from .impact_references import CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers, impact_targets as _impact_targets, one_per_name as _one_per_name
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
 from .intent_classifier import _INTENT_MARKERS, classify_intent, is_change_request as _is_change_request, without_project_scope
 from .ranking_weights import trace_stage, weighted_score
@@ -769,7 +769,7 @@ def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
             r"recordinvalid|recordnotsaved|return\s+false|perform_validations", re.I)
         if re.search(r"aborta|abort", text):
             concerns["callback_abort"] = re.compile(r"throw\s*:abort|abort", re.I)
-    return concerns
+    return _signals.scoped_to_save_flow(concerns, str(request or ""))
 
 
 # Overloads of a common name must not spend the budget meant for their consumers.
@@ -779,14 +779,14 @@ _IMPACT_ANCHOR_SHARE = 0.5
 def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names: set[str], request: str,
                     request_terms: list[str], max_nodes: int, requested_ceiling: int) -> dict[str, Any]:
     by_id = {node.get("id"): node for node in all_nodes}
-    named = [node for node in all_nodes if str(node.get("name") or "").lower() in explicit_names]
+    named = _impact_targets(all_nodes, explicit_names, _named_package_roots(all_nodes, request))
     all_consumers = _direct_consumers(graph, by_id, {node.get("id") for node in named})
     incoming = {node.get("id"): 0 for node in named}
     for edges in all_consumers.values():
         for edge in edges:
             incoming[edge["target"]] += 1
-    # Most consumed overloads first; the others are still counted and reported.
-    anchors = sorted(named, key=lambda node: (-incoming[node.get("id")], str(node.get("id"))))[
+    # Most consumed overloads first, the project's own before its tests; the others are still counted and reported.
+    anchors = sorted(named, key=lambda node: (bool(_TEST_PATH.search(str(node.get("file") or ""))), -incoming[node.get("id")], str(node.get("id"))))[
         :max(1, int(max_nodes * _IMPACT_ANCHOR_SHARE))]
     omitted_anchors = named[len(anchors):] and [node for node in named if node not in anchors]
     adjacency: dict[str, list[tuple[str, dict]]] = {}
@@ -827,7 +827,7 @@ def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names
     missing = [] if len(nodes) > len(anchors) else ["consumers"]
     result = {
         "request": str(request or "").strip(), "intent": "impact", "intent_terms": request_terms,
-        "matched": anchors[:5], "nodes": nodes[:max_nodes], "links": links,
+        "matched": _one_per_name(anchors, 5), "nodes": nodes[:max_nodes], "links": links,
         "complete_for": ["impact"] if not missing else [], "missing": missing,
         "direct_consumers": consumers,
         "negative_evidence": ({"consumers": 0, "meaning": "no incoming indexed consumer relation"}
@@ -899,7 +899,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         "transaction", "transactions", "validation", "validations",
         "commit", "rails",
     }
-    symbol_terms = [term for term in direct_terms if term not in generic_symbol_terms]
+    package_words = set().union(*_package_name_words(graph.get("nodes", []), request).values())
+    symbol_terms = [term for term in direct_terms if term not in generic_symbol_terms and term not in package_words]
     explicit_identifiers = {
         identifier.lower()
         for identifier in re.findall(r"\b[A-Z][A-Z0-9_]{4,}\b", str(request or ""))

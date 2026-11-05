@@ -1040,7 +1040,7 @@ def test_a_resolved_call_from_file_scope_is_not_also_a_textual_use(tmp_path):
     root, data = _templated_project(tmp_path)
     data["nodes"].append({"id": "f:use", "name": "use.h", "kind": "file"})
     data["links"].append({"source": "f:use", "target": data["nodes"][0]["id"], "label": "llama", "file": "use.h", "line": 2})
-    references, _ = _scan(root, data, {data["nodes"][0]["name"]}, {data["nodes"][0]["id"]})
+    references, _ = _scan(root, data, {data["nodes"][0]["name"]}, {data["nodes"][0]["id"]}, data["nodes"][:1])
 
     assert ["", "use.h:2"] not in references and not [at for _name, at in references if at == "use.h:2"]
 
@@ -1055,3 +1055,101 @@ def test_a_call_attributed_to_a_file_is_listed_under_the_function_making_it():
 
     assert summary["others"] == [["write", "fmt/format.h:90"]]
     assert summary["total"] == 1
+
+
+def _impact_graph():
+    def symbol(name, path, line, kind="method"):
+        return {"id": f"s:{path}:{line}", "name": name, "kind": kind, "file": path, "line": line, "end_line": line + 3}
+
+    reload_ar = symbol("reload", "activerecord/lib/persistence.rb", 10)
+    reload_conf = symbol("reload", "activesupport/lib/config.rb", 5)
+    record = symbol("record", "activesupport/lib/reporter.rb", 3)
+    lock = symbol("lock!", "activerecord/lib/locking.rb", 8)
+    logger = symbol("log", "activesupport/lib/logger.rb", 1)
+    return {"nodes": [reload_ar, reload_conf, record, lock, logger],
+            "links": [{"source": lock["id"], "target": reload_ar["id"], "label": "llama", "file": lock["file"], "line": 9},
+                      {"source": logger["id"], "target": record["id"], "label": "llama", "file": logger["file"], "line": 2}]}
+
+
+def test_a_package_written_in_two_words_scopes_impact_and_is_not_a_symbol():
+    result = query_intent(_impact_graph(), "Si cambio reload en Active Record, ¿qué se rompe?", "impact", 10)
+
+    assert {(node["name"], node["file"]) for node in result["matched"]} == {("reload", "activerecord/lib/persistence.rb")}
+    assert "omitted_homonyms" not in result
+    assert "log" not in {node["name"] for node in result["nodes"]}
+
+
+def test_package_words_need_a_directory_of_that_name():
+    from graphtyn.core.path_signals import named_package_roots, package_name_words
+
+    nodes = _impact_graph()["nodes"]
+    assert package_name_words(nodes, "reload en Active Record") == {"activerecord": {"active", "record"}}
+    assert package_name_words(nodes, "an active user record") == {}
+    assert named_package_roots(nodes, "reload en active_record") == {"activerecord"}
+    assert named_package_roots(nodes[:1], "reload en Active Record") == set()
+
+
+def test_every_requested_name_reaches_the_text_scan():
+    from graphtyn.core.impact_references import one_per_name
+
+    anchors = [{"name": "a", "id": index} for index in range(6)] + [{"name": "b", "id": 9}]
+
+    assert [node["name"] for node in one_per_name(anchors, 5)] == ["a", "b", "a", "a", "a"]
+
+
+def test_save_obligations_apply_only_to_tasks_about_saving():
+    from graphtyn.core.change_analyst import _requested_concerns
+
+    save_flow = {"validation_gate", "save_callbacks", "transaction_entry", "transaction_rollback"}
+    assert save_flow <= set(_requested_concerns("Traza save: validaciones, callbacks y transacción"))
+    assert save_flow <= set(_requested_concerns("Al guardar un registro, ¿qué validaciones, callbacks y transacción corren?"))
+    assert not save_flow & set(_requested_concerns("¿Qué hace reload dentro de una transacción si hay validaciones?"))
+    # A name written as code decides, even when the prose also mentions saving.
+    assert not save_flow & set(_requested_concerns("Al guardar, ¿qué hace touch_later con la transacción?"))
+    assert save_flow <= set(_requested_concerns("¿Qué hace _create_record con validaciones, callbacks y transacción?"))
+
+
+def test_a_call_belongs_to_the_overload_that_contains_it():
+    from graphtyn.core.ast_parser import _enclosing_overload
+
+    nodes = {"a": {"line": 1, "end_line": 9}, "b": {"line": 10, "end_line": 30}, "inner": {"line": 12, "end_line": 14}}
+
+    assert _enclosing_overload(["a", "b"], 5, nodes) == "a"
+    assert _enclosing_overload(["a", "b", "inner"], 13, nodes) == "inner"
+    assert _enclosing_overload(["a", "b"], 99, nodes) is None
+    assert _enclosing_overload(["a"], 99, nodes) == "a"
+
+
+def _outline_graph():
+    def function(name, line):
+        return {"id": name, "name": name, "kind": "function", "file": "lib/a.c", "line": line}
+
+    names = ["overload", "shared", "entry", "stage", *[f"helper{index}" for index in range(5)], "parse_width"]
+    links = [("overload", "shared"), ("entry", "stage"), *[("stage", f"helper{index}") for index in range(5)],
+             ("stage", "parse_width")]
+    return {"nodes": [function(name, index + 1) for index, name in enumerate(names)],
+            "links": [{"source": source, "target": target, "label": "llama", "line": 1, "confidence": "EXTRACTED"}
+                      for source, target in links]}
+
+
+def test_a_seed_that_leads_nowhere_does_not_use_up_the_next_entry_point():
+    from graphtyn.core.retrieval_signals import NameFrequency, call_outline
+
+    graph = _outline_graph()
+    by_name = {node["name"]: node for node in graph["nodes"]}
+    selected = [by_name["overload"], by_name["shared"], by_name["entry"]]
+
+    outline = call_outline(graph, selected, NameFrequency(graph["nodes"], [], set()), 12)
+
+    assert ("entry", "stage") in {(item["caller"], item["callee"]) for item in outline}
+
+
+def test_outline_keeps_the_stage_spelling_a_request_word_when_it_does_not_fit():
+    from graphtyn.core.retrieval_signals import NameFrequency, call_outline
+
+    graph = _outline_graph()
+    by_name = {node["name"]: node for node in graph["nodes"]}
+
+    outline = call_outline(graph, [by_name["entry"]], NameFrequency(graph["nodes"], ["width"], set()), 3)
+
+    assert "parse_width" in {item["callee"] for item in outline}

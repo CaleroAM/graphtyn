@@ -55,7 +55,7 @@ def test_framework_obligation_that_no_node_can_satisfy_is_not_applicable():
                                         "text": "commandCheckArity(c->cmd, c->argc, &err)"}]}],
              "links": []}
 
-    result = query_intent(graph, "Traza processCommand: validación de aridad y rechazo", "flow", 4)
+    result = query_intent(graph, "Al guardar, traza la validación de aridad y rechazo de processcommand", "flow", 4)
 
     assert "validation_gate" in result["not_applicable_obligations"]
     assert "validation_gate" not in result["requested_obligations"]

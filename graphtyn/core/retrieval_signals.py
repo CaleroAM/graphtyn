@@ -246,36 +246,43 @@ def call_outline(graph: dict[str, Any], selected: list[dict[str, Any]], name_fre
             calls.setdefault(link.get("source"), []).append(link)
             callers.setdefault(link.get("target"), set()).add(link.get("source"))
     selected_ids = {node.get("id") for node in selected}
-    frontier = [node.get("id") for node in selected
-                if node.get("kind") in BEHAVIOR_KINDS and node.get("id") in calls
-                and not TEST_PATH.search(str(node.get("file") or ""))][:seeds]
-    seen = set(frontier)
+    candidates = [node.get("id") for node in selected
+                  if node.get("kind") in BEHAVIOR_KINDS and node.get("id") in calls
+                  and not TEST_PATH.search(str(node.get("file") or ""))]
+    seen = set(candidates[:seeds])
     reached: list[Any] = []
     outline: list[dict[str, Any]] = []
-    for _level in range(depth):
-        following = []
-        for caller_id in frontier:
-            for link in sorted(calls.get(caller_id, []), key=lambda item: int(item.get("line") or 0)):
-                target = link.get("target")
-                node = by_id.get(target)
-                if (not node or target in seen or node.get("kind") not in BEHAVIOR_KINDS
-                        or TEST_PATH.search(str(node.get("file") or ""))
-                        or VENDORED_PATH.search(str(node.get("file") or ""))):
-                    continue
-                if len(callers.get(target, ())) > UTILITY_FAN_IN and not name_frequency.hits(str(node.get("name") or "")):
-                    continue
-                seen.add(target)
-                following.append(target)
-                reached.append(target)
-                if target not in selected_ids and len(outline) < limit:
-                    outline.append({"caller": str(by_id.get(caller_id, {}).get("name") or ""),
-                                    "callee": str(node.get("name") or ""), "file": str(node.get("file") or ""),
-                                    "line": node.get("line"),
-                                    "confidence": str(link.get("confidence") or "EXTRACTED")})
-        frontier = following
+    # A seed that leads nowhere new (an overload whose callees are already selected)
+    # must not use up the turn of the next entry point in the package.
+    while candidates and len(outline) < limit // 2:
+        frontier, candidates = candidates[:seeds], candidates[seeds:]
+        seen.update(frontier)
+        for _level in range(depth):
+            following = []
+            for caller_id in frontier:
+                for link in sorted(calls.get(caller_id, []), key=lambda item: int(item.get("line") or 0)):
+                    target = link.get("target")
+                    node = by_id.get(target)
+                    if (not node or target in seen or node.get("kind") not in BEHAVIOR_KINDS
+                            or TEST_PATH.search(str(node.get("file") or ""))
+                            or VENDORED_PATH.search(str(node.get("file") or ""))):
+                        continue
+                    if len(callers.get(target, ())) > UTILITY_FAN_IN and not name_frequency.hits(str(node.get("name") or "")):
+                        continue
+                    seen.add(target)
+                    following.append(target)
+                    reached.append(target)
+                    if target not in selected_ids:
+                        outline.append({"caller": str(by_id.get(caller_id, {}).get("name") or ""),
+                                        "callee": str(node.get("name") or ""), "file": str(node.get("file") or ""),
+                                        "line": node.get("line"),
+                                        "confidence": str(link.get("confidence") or "EXTRACTED")})
+            frontier = following
     # Stages the entry point reaches first: their state is the flow's hand-over.
     stages = reached + [node.get("id") for node in selected]
-    return outline + state_outline(graph, stages, {*selected_ids, *seen}, by_id)
+    # When stages do not fit, those spelling a word of the request stay; breadth-first order is kept.
+    kept = sorted(range(len(outline)), key=lambda index: (not name_frequency.hits(outline[index]["callee"]), index))[:limit]
+    return [outline[index] for index in sorted(kept)] + state_outline(graph, stages, {*selected_ids, *seen}, by_id)
 
 
 def _field_users(graph: dict[str, Any]) -> dict[str, set[Any]]:
@@ -367,6 +374,29 @@ def foreign_code(path: str, request_lower: str) -> bool:
     """A file of a bundled dependency (`deps/jemalloc/…`) whose name the request does not mention."""
     match = _FOREIGN_DIR.search(str(path or "").replace("\\", "/"))
     return bool(match) and match.group(1).lower() not in request_lower
+
+
+# Obligations that describe how a framework persists a record: they are met by `save`,
+# so a task about other code must not wait for that evidence just for saying "transaction".
+_SAVE_FLOW_CONCERNS = {"validation_gate", "save_callbacks", "create_callbacks", "transaction_entry",
+                       "transaction_rollback", "persistence_adapter", "save_failure_result", "callback_abort"}
+_SAVE_FLOW_NAME = re.compile(r"^!?(?:save|create|update|destroy)!?$|^_?(?:create|update)_record$|^create_or_update$|"
+                             r"^perform_validations$|^with_transaction_returning_status$|^_run_\w+_callbacks$", re.I)
+_SAVE_FLOW_PROSE = re.compile(
+    r"\b(?:sav(?:e|es|ed|ing)!?|persist\w*|creat(?:e|es|ed|ing)!?|updat(?:e|es|ed|ing)!?|new record|"
+    r"guard\w*|cre[ao]\w*|actualiz\w*|registro nuevo|nuevo registro|persiste\w*|"
+    r"salv\w*|atualiz\w*|sauvegard\w*|enregistr\w*|cr[ée]+\w*|speicher\w*|salva\w*)\b", re.I)
+
+
+def scoped_to_save_flow(concerns: dict[str, Any], request: str) -> dict[str, Any]:
+    """Drop save-flow obligations unless the request is about saving, as a name it writes or in words."""
+    names = [match.strip("`") for match in re.findall(r"`[^`]+`|\b\w+_\w+\b|\b[a-z]+[A-Z]\w*", request)]
+    if names:
+        keep = any(_SAVE_FLOW_NAME.search(name) for name in names)
+    else:
+        keep = bool(_SAVE_FLOW_PROSE.search(request))
+    return concerns if keep else {label: pattern for label, pattern in concerns.items()
+                                  if label not in _SAVE_FLOW_CONCERNS}
 
 
 def written_identifiers(request: str) -> list[str]:
