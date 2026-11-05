@@ -6,6 +6,7 @@ Layout: <run-root>/<variant>/<task>/runs/<run_id>/{summary.json,events.jsonl,ans
 Set 1 ran three versions: before (3de6e0e), after (46a8057) and set1-final (95e53ff).
 Set 2 was frozen before the corrections and ran set2-before (3de6e0e) and set2-final (95e53ff).
 Set 3 was frozen before correcting truncated bodies; retest-* reruns the explanation tasks that regressed.
+Set 4 was frozen before the follow-up corrections: set4-before is f6544c3; retest4-* rerun the costly and weak tasks.
 """
 from __future__ import annotations
 
@@ -18,7 +19,9 @@ HERE = Path(__file__).resolve().parent
 VARIANTS = {"before": HERE, "after": HERE, "set1-final": HERE,
             "set2-before": HERE / "set2", "set2-final": HERE / "set2",
             "set3-before": HERE / "set3", "set3-final": HERE / "set3",
-            "retest-set1": HERE, "retest-set2": HERE / "set2"}
+            "retest-set1": HERE, "retest-set2": HERE / "set2",
+            "set4-before": HERE / "set4", "set4-final": HERE / "set4",
+            "retest4-set1": HERE, "retest4-set2": HERE / "set2", "retest4-set3": HERE / "set3"}
 
 
 def _steps(events: list[dict]) -> list[dict]:

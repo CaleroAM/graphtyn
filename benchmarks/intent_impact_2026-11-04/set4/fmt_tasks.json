@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V4_FMT_EXPONENT_CALLERS",
+      "request": "¿Quién llama a write_exponent en este proyecto? Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "do_write_float",
+          "any": [
+            "do_write_float"
+          ]
+        },
+        {
+          "id": "line_2861",
+          "any": [
+            "2861"
+          ]
+        },
+        {
+          "id": "line_3845",
+          "any": [
+            "3845"
+          ]
+        },
+        {
+          "id": "file",
+          "any": [
+            "format.h"
+          ]
+        }
+      ]
+    }
+  ]
+}

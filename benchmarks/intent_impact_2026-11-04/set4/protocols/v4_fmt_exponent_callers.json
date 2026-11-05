@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Cuarto conjunto, congelado antes de corregir obligaciones falsas, referencias incompletas, llamadas con plantilla y foco por palabras: punta del PR #35 frente a final.",
+  "repository": {
+    "name": "fmtlib/fmt",
+    "url": "https://github.com/fmtlib/fmt",
+    "commit": "0fc31633e7d53ac895ae0a688b83b7d44f0b0c1f"
+  },
+  "design": {
+    "clients": [
+      "antigravity"
+    ],
+    "tasks": [
+      "V4_FMT_EXPONENT_CALLERS"
+    ],
+    "arms": {
+      "before": "f6544c3",
+      "after": "versión final de la rama"
+    },
+    "repetitions": 2,
+    "stop_rule": "targeted",
+    "grading": "Rúbrica literal escrita leyendo el código fuente, antes de implementar."
+  },
+  "client_config": {
+    "models": {
+      "antigravity": "gemini-3.8-flash-high"
+    }
+  },
+  "authorization": {
+    "source": "El usuario pidió resolver los puntos pendientes (2026-11-04).",
+    "total_token_ceiling": 2500000
+  }
+}

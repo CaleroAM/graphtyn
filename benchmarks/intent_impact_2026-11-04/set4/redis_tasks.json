@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V4_REDIS_MIGRATE_RETRY",
+      "request": "Explica cómo migrateCommand reintenta tras un error de socket. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "may_retry",
+          "any": [
+            "may_retry"
+          ]
+        },
+        {
+          "id": "try_again",
+          "any": [
+            "try_again"
+          ]
+        },
+        {
+          "id": "socket_err",
+          "any": [
+            "socket_err"
+          ]
+        },
+        {
+          "id": "timeout",
+          "any": [
+            "ETIMEDOUT"
+          ]
+        },
+        {
+          "id": "close",
+          "any": [
+            "migrateCloseSocket"
+          ]
+        },
+        {
+          "id": "target_error",
+          "any": [
+            "error_from_target"
+          ]
+        },
+        {
+          "id": "write_error",
+          "any": [
+            "write_error"
+          ]
+        },
+        {
+          "id": "last_dbid",
+          "any": [
+            "last_dbid"
+          ]
+        }
+      ]
+    }
+  ]
+}
