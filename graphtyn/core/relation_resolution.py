@@ -21,6 +21,66 @@ def unique_symbol_id(
     return overload if overload not in existing else f"{overload}@{symbol['line']}"
 
 
+_OWN_RECEIVERS = {"self", "cls", "this", "$this"}
+_PARENT_RECEIVERS = {"super"}
+_TYPE_KINDS = {"class", "interface", "struct", "trait", "protocol", "enum", "record", "object", "abstract_class"}
+_MAX_ANCESTRY = 8
+
+
+def _simple(name: Any) -> str:
+    return re.split(r"::|\.", str(name or ""))[-1]
+
+
+class ClassAncestry:
+    """Where a call on the caller's own object lands: its class first, then its bases.
+
+    `self._find_error_handler(...)` inside `Flask` runs the method `Flask` inherits
+    from `App`; `super().x()` skips the caller's own class. Inheritance edges must
+    already be resolved, and ambiguous ones are ignored. Ruby has its own ancestry.
+    """
+
+    def __init__(self, nodes: dict[str, dict[str, Any]], links: list[dict[str, Any]]):
+        self.nodes = nodes
+        self.types = {}
+        for node_id, node in nodes.items():
+            if node.get("kind") in _TYPE_KINDS:
+                self.types.setdefault((node.get("file"), node.get("name")), node_id)
+        self.bases: dict[str, list[str]] = {}
+        for link in links:
+            if link.get("label") in ("hereda", "implementa") and link.get("confidence") != "AMBIGUOUS":
+                self.bases.setdefault(str(link.get("source")), []).append(str(link.get("target")))
+        self._levels: dict[tuple[str, str], list[set[tuple[str, str]]]] = {}
+
+    def _ancestry(self, rel_file: str, container: str) -> list[set[tuple[str, str]]]:
+        """(file, class name) of the caller's class, then of each generation of bases."""
+        key = (rel_file, container)
+        if key not in self._levels:
+            start = self.types.get(key)
+            levels, frontier, seen = [], [start] if start else [], {start}
+            while frontier and len(levels) <= _MAX_ANCESTRY:
+                levels.append({(self.nodes[item].get("file"), self.nodes[item].get("name")) for item in frontier})
+                frontier = [base for item in frontier for base in self.bases.get(item, ()) if base not in seen]
+                seen.update(frontier)
+            self._levels[key] = levels
+        return self._levels[key]
+
+    def dispatch(self, call: dict[str, Any], rel_file: str, targets: set[str]) -> tuple[set[str], str] | None:
+        """The nearest definitions a self or super call reaches, and the class that holds them."""
+        receiver = str(call.get("receiver") or "")
+        # `super(Subcommand, self).__init__()` arrives with `self` as its receiver.
+        parent = receiver in _PARENT_RECEIVERS or (call.get("receiver_chain") or [""])[0] in _PARENT_RECEIVERS
+        own = receiver in _OWN_RECEIVERS and not parent
+        if not (own or parent) or rel_file.endswith(".rb") or not call.get("container"):
+            return None
+        levels = self._ancestry(rel_file, _simple(call["container"]))
+        for level in levels if own else levels[1:]:
+            found = {target for target in targets
+                     if (self.nodes.get(target, {}).get("file"), _simple(self.nodes.get(target, {}).get("container"))) in level}
+            if found:
+                return found, str(self.nodes[next(iter(found))].get("container") or "")
+        return None
+
+
 class CandidateRanker:
     """Rank possible relation targets from structural and import evidence."""
 

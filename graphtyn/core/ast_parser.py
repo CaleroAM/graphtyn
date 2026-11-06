@@ -12,7 +12,7 @@ from .tree_sitter_backend import (
 )
 from .overview_report import collect_project_evidence
 from .graph_hygiene import normalize_graph
-from .relation_resolution import CandidateRanker, unique_symbol_id
+from .relation_resolution import CandidateRanker, ClassAncestry, unique_symbol_id
 from .ruby_mro import RubyAncestry, lexical_candidates as ruby_lexical_candidates
 from .source_files import git_visible_files
 from .type_evidence import apply_type_evidence
@@ -137,7 +137,9 @@ def _inheritance_links(pending: List[tuple], symbol_name_ids: Dict[str, Set[str]
         candidates = symbol_name_ids.get(base_name, set())
         if not candidates:
             continue
-        ranked = sorted(((rank_candidate(target, rel_file), target) for target in candidates if target != source_id), reverse=True)
+        # The imported name decides between homonym bases (`from .app import Flask`).
+        ranked = sorted(((rank_candidate(target, rel_file, called_name=base_name), target)
+                         for target in candidates if target != source_id), reverse=True)
         if rel_file.endswith(".rb") and ranked:
             scoped = set(ruby_lexical_candidates(node_by_id.get(source_id, {}), written,
                                                  [target for _score, target in ranked], node_by_id))
@@ -851,6 +853,7 @@ class ASTParser:
                 if target_file is not None:
                     symbols_by_file_name.setdefault((target_file, symbol_name), []).append(target)
         ruby_ancestry = RubyAncestry(nodes, links) if any(path.endswith(".rb") for path in tree_calls) else None
+        class_ancestry = ClassAncestry(node_by_id, links)
         for rel_file, calls in tree_calls.items():
             f_id = f"file:{rel_file}"
             seen_calls = set()
@@ -894,7 +897,10 @@ class ASTParser:
                 # A typed receiver that matches none of the project candidates
                 # is normally a framework/BCL call (e.g. enum.ToString), not a
                 # call to an unrelated same-named method in this repository.
-                if receiver_type and receiver_type not in known_containers and call.get("receiver"):
+                inherited = class_ancestry.dispatch(call, rel_file, targets)
+                if inherited:
+                    targets, receiver_type = inherited
+                elif receiver_type and receiver_type not in known_containers and call.get("receiver"):
                     continue
                 if call.get("bound_locally"):
                     suppressed_relations["bound_calls"] += 1
