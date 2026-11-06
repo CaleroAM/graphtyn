@@ -17,7 +17,7 @@ _ES_EN: dict[str, tuple[str, ...]] = {
     "abrir": ("open",), "abre": ("open",), "acceso": ("access",), "actualiz": ("update",),
     "agrega": ("append", "add"), "añad": ("append", "add"), "alinea": ("align",),
     "almacen": ("store", "storage"), "analiz": ("parse",), "ancho": ("width",),
-    "argumento": ("arg",), "arranc": ("start", "init"), "asigna": ("assign",),
+    "argumento": ("arg",), "dinámic": ("dynamic",), "dinamic": ("dynamic",), "arranc": ("start", "init"), "asigna": ("assign",),
     "asíncron": ("async",), "asincron": ("async",), "atribut": ("attribute",),
     "autentic": ("auth",), "bloque": ("block", "lock"), "borra": ("delete", "remove"),
     "búfer": ("buffer",), "bufer": ("buffer",), "busca": ("find", "lookup", "search"),

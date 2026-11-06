@@ -1,12 +1,14 @@
 # Clasificación de intención, `impact` y explicación de símbolos
 
 Fecha: 2026-11-04. Cliente: Antigravity CLI (`gemini-3.8-flash-high`), regla de
-parada `targeted`. 136 sesiones reales, todas completas, 10.210.980 tokens.
+parada `targeted`, más 16 sesiones de Codex (`gpt-5.6-luna`). 212 sesiones reales,
+todas completas, 14.549.877 tokens.
 
-**Veredicto: MIXED, favorable.** En los conjuntos 2 y 3, la calidad no baja y el
-gasto cae. En el conjunto 4, el gasto baja un 54 % y la calidad pasa de 51/54 a
-48/54, casi todo por `V4_RAILS_RELOAD_IMPACT`, que se corrigió después (ver «Quinta
-corrección»). Sólo se midió en un cliente, con n=2.
+**Veredicto: POSITIVE en la versión final (`d5af039`), con n=2.** En Antigravity, los
+conjuntos 1 a 4 pasan de 247 a 266 hechos de 276 según dos jueces, con un 46 % menos de
+tokens por sesión que antes de estos cambios. En Codex pasan de 37 a 47 de 62, con un
+45 % menos. Ver «Sexta ronda»; las secciones anteriores describen las versiones
+intermedias.
 
 ## Corpus
 
@@ -165,23 +167,58 @@ que deletrean una palabra de la pregunta.
 Sin agentes, las 138 comprobaciones de los conjuntos 1 a 4 dan 133 con y sin atribución,
 sin cambios en ninguna tarea.
 
+## Sexta ronda (`d5af039`)
+
+Se corrigieron los puntos pendientes de la quinta y se repitieron los conjuntos 1 a 5 con
+la misma versión. Calidad según dos jueces (Gemini y GPT, sin acceso al código; kappa
+entre ellos 0,91), contando un hecho solo si los dos coinciden.
+
+| Conjunto | Antes | Final anterior | `d5af039` | Tokens: antes → `d5af039` |
+|---|---:|---:|---:|---:|
+| 1 (6 tareas) | 65/78 | 69/78 | 74/78 | 98.009 → 61.767 |
+| 2 (6 tareas) | 69/78 | 73/78 | 76/78 | 105.688 → 56.651 |
+| 3 (4 tareas) | 62/66 | 63/66 | 64/66 | 85.461 → 46.884 |
+| 4 (4 tareas) | 51/54 | 48/54 | 52/54 | 109.134 → 44.467 |
+| 5 (4 tareas) | — | — | 54/58 | 95.296 |
+
+«Antes» es `3de6e0e` en los conjuntos 1 a 3 y `f6544c3` en el 4; «final anterior»,
+la última versión medida en cada conjunto. Por sesión, 100.028 → 53.796 tokens en los
+conjuntos 1 a 4 (−46 %), y −10 % frente a la final anterior (59.887).
+
+**Codex** (`main` frente a `d5af039`, 4 tareas): 37/62 → 47/62 según los jueces y
+63.464 → 34.998 tokens por sesión (−45 %). La rúbrica literal decía 18 → 39: Codex
+responde bien en prosa sin escribir los identificadores.
+
+**Idiomas** (la misma tarea y rúbrica, traducidas): portugués 16/16, francés 12/12,
+alemán 16/16 e italiano 16/18, igual que en español (16/16, 12/12, 16/16 y 16/18), con
+tokens parecidos.
+
+**La guía de nombrar identificadores no mejora la calidad real.** Sin ella, los jueces
+dan 16/16 y 16/16 en `REDIS_ACTIVE_EXPIRE_WHAT` y `V2_REDIS_POOL_WHAT`, igual que con
+ella; la rúbrica literal baja de 30 a 29.
+
+Correcciones de esta ronda:
+
+- **Herencia cualificada de Ruby:** `class MailDeliveryJob < ActiveJob::Base` ya no se
+  descarta como ambigua; en Rails, las herencias ambiguas bajan de 1.428 a 158.
+- **Redefiniciones en un paquete nombrado:** `impact` incluye las de otros paquetes cuya
+  clase desciende de él. `V5_RAILS_PERFORM_IMPACT` cubre 6/6 en el paquete.
+- **Componentes en dos palabras** por directorio o espacio de nombres («Action Dispatch»).
+- **El sujeto de «¿qué hace X…?»** cuenta como código nombrado en seis idiomas.
+- **«dinámico» → `dynamic`** en el glosario: la cobertura de `flow` vuelve al 69,8 %.
+
 ## Lo que sigue sin estar bien
 
-- **La cobertura de `flow` baja un poco en el banco:** del 69,8 % al 68,6 % sin agentes;
-  pasa la puerta (baseline 69,3 %, tolerancia 1 punto) sin tocar el baseline.
-  `FMT_DYNAMIC_WIDTH_FLOW` da 5/8 en el paquete frente a 6/8, aunque el agente llega a
-  8/8 con menos gasto al leer más.
-- **Fallos que quedan en las tareas nuevas:** `perform` no menciona `mail_delivery_job`,
-  que está fuera del paquete nombrado; `touch_later` omite `touch_record`, que está en
-  el cuerpo del método.
-- **Un nombre sin forma de código sigue dependiendo de la prosa:** «¿qué hace lock! al
-  guardar dentro de una transacción?» sigue exigiendo evidencia de `save`.
-- **Dos palabras sólo acotan si existe ese directorio:** «Active Record» funciona en
-  Rails porque hay `activerecord/`; otros nombres de componente siguen siendo palabras.
-- **Sin repetir con `78d4930`:** las tareas de los conjuntos 1 a 4 salvo `reload`.
-- **La guía de nombrar constantes y funciones favorece a esta rúbrica,** que busca
-  esos nombres literalmente. Parte de la mejora de `V2_REDIS_POOL_WHAT` (11→16/16) y
-  `REDIS_ACTIVE_EXPIRE_WHAT` puede venir de ahí, no de respuestas mejores.
+- **Algunas sesiones de `impact` cuestan el doble.** En `FMT_WRITE_PADDED_IMPACT`,
+  `V2_FMT_WRITE_BYTES_IMPACT` y `V2_RAILS_UPDATE_RECORD_CALLERS`, una repetición hace
+  3 llamadas y la otra entre 7 y 9 (95.000-127.000 tokens). Las sesiones caras leen
+  10-15 líneas en la ubicación de cada consumidor para comprobarla: el paquete los
+  lista sin la línea de código.
+- **`touch_later` omite `touch_record`** aunque el paquete lo contiene: es una
+  omisión del agente.
+- **n=2 por tarea:** no separa una diferencia pequeña de la variación entre sesiones.
+- **Los jueces son modelos:** coinciden entre sí (kappa 0,91), pero pueden compartir
+  el mismo sesgo.
 
 ## Clasificación
 
@@ -192,16 +229,19 @@ generalización. De los 428 prompts de benchmarks previos, sólo 2 cambian de
 intención: «Assess repository contract change.» y «Assess model field change.»,
 ambos a `impact`, que es lo que su protocolo esperaba.
 
-Portugués, francés, alemán e italiano están cubiertos por pruebas de clasificación.
-**Ninguna sesión con agente se hizo en esos idiomas.**
+Portugués, francés, alemán e italiano están cubiertos por pruebas de clasificación y,
+desde la sexta ronda, por cuatro tareas traducidas con agentes. La clasificación con
+preguntas de otro modelo está en `benchmarks/intent_classification_2026-11-05/report.md`.
 
 ## Límites de la medición
 
-- Un solo cliente y modelo; Claude, Codex y OpenCode no se midieron aquí.
+- Antigravity en todas las rondas; Codex solo en cuatro tareas de la sexta. Claude y
+  OpenCode no se midieron aquí.
 - n=2 por tarea y versión: sirve para ver diferencias grandes, no pequeñas.
 - La rúbrica es literal por subcadenas y la escribí yo, leyendo el código antes de
   implementar. Una respuesta que dice «ciclo lento» sin citar
-  `ACTIVE_EXPIRE_CYCLE_SLOW` no suma, y un número de línea puede coincidir por azar.
+  `ACTIVE_EXPIRE_CYCLE_SLOW` no suma. Desde la sexta ronda, la cifra de calidad es la de
+  los jueces (`judge_grades.json`); la literal se conserva para comparar.
 - `rm_unlink` del conjunto 2 se corrigió antes de implementar: decía `RM_DeleteKey`
   y el llamador real es `RM_UnlinkKey`.
 - `V3_FMT_PARSE_SPECS_WHAT` pregunta por la misma función que `V2_FMT_SPECS_WHAT`,
@@ -227,6 +267,8 @@ Portugués, francés, alemán e italiano están cubiertos por pruebas de clasifi
 
 ```bash
 python benchmarks/intent_impact_2026-11-04/analyze_results.py --run-root <directorio de ejecuciones>
+python benchmarks/judge_grades.py --tasks-root benchmarks/intent_impact_2026-11-04 \
+  --run-root <directorio de ejecuciones> --variant f2-set1 --variant before
 ```
 
 `grades_by_run.json` y `results.json` guardan las calificaciones. Las sesiones

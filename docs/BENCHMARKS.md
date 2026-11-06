@@ -25,8 +25,28 @@
 | Tareas no vistas (held-out) para MCP lean y hook | NEGATIVE para generalización; seis tareas nuevas, 54 sesiones; rúbricas congeladas antes de ejecutar |
 | Segundo conjunto no visto y regla de parada dirigida | MIXED; seis tareas nuevas más repetición del primer conjunto, 114 sesiones (100 completas) |
 | Hook de primer turno en Antigravity | NEGATIVE para ahorro general; nueve tareas, 42 sesiones (n=2–3); ver `benchmarks/antigravity_hook_2026-11-03/report.md` |
-| Clasificación, `impact` y explicación de símbolos en Antigravity | MIXED, favorable; dieciocho tareas nuevas más repeticiones, 136 sesiones (n=2) sobre redis/redis, fmtlib/fmt y rails/rails públicos en commits fijos; ver `benchmarks/intent_impact_2026-11-04/report.md` |
+| Clasificación, `impact` y explicación de símbolos en Antigravity | POSITIVE en `d5af039` según dos jueces; veintidós tareas nuevas más repeticiones, 212 sesiones (n=2) en Antigravity y Codex sobre redis/redis, fmtlib/fmt y rails/rails públicos en commits fijos; ver `benchmarks/intent_impact_2026-11-04/report.md` |
+| Clasificación de intención con preguntas de otro modelo | POSITIVE con brecha de sobreajuste; 59/72 en un lote final evaluado una vez (33/72 en `main`); ver `benchmarks/intent_classification_2026-11-05/report.md` |
 | 36 tareas multilenguaje | PENDING |
+
+### Calificación con jueces
+
+Desde 2026-11-05, las sesiones de agente se califican también con dos jueces de modelos
+distintos, además de la rúbrica literal. Son Gemini, con Antigravity CLI, y GPT, con
+Codex CLI, ambos sin herramientas ni acceso al código. Para cada hecho de la rúbrica
+deciden si la respuesta lo afirma por su nombre o con una descripción inequívoca. Se
+informa el acuerdo entre los jueces (kappa de Cohen) y el consenso: un hecho cuenta solo
+si los dos coinciden.
+
+La rúbrica literal busca identificadores, así que no da crédito a una respuesta correcta
+en prosa, y una guía que pide nombrarlos la infla. En Codex, `main` frente a la versión
+final dio 18 → 39 hechos de 62 con la rúbrica literal y 37 → 47 con los jueces. El kappa
+entre jueces fue 0,98; entre la rúbrica literal y el consenso, 0,58. La cifra de calidad
+que vale es la de los jueces.
+
+```bash
+python benchmarks/judge_grades.py --tasks-root benchmarks/<carpeta> --run-root <ejecuciones> --variant <nombre>
+```
 
 La medición de la release 0.8.0 está en
 [`competitive-validation-0.8.0.md`](competitive-validation-0.8.0.md). Separa

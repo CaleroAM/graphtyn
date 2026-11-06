@@ -388,9 +388,22 @@ _SAVE_FLOW_PROSE = re.compile(
     r"salv\w*|atualiz\w*|sauvegard\w*|enregistr\w*|cr[ée]+\w*|speicher\w*|salva\w*)\b", re.I)
 
 
-def scoped_to_save_flow(concerns: dict[str, Any], request: str) -> dict[str, Any]:
-    """Drop save-flow obligations unless the request is about saving, as a name it writes or in words."""
+# "What does X do": X is the code the question is about, even written as a plain word.
+_QUESTION_SUBJECT = re.compile(
+    r"(?:qu[eé]\s+hace|what\s+does|o\s+que\s+faz|qu['’]est-ce\s+que\s+fait|que\s+fait|was\s+(?:macht|tut)|"
+    r"(?:che\s+)?cosa\s+fa)\s+(?:(?:el|la|the|o|a|le|der|die|das|il|lo)\s+)?"
+    r"(?:(?:m[eé]todo|funci[oó]n|method|function|m[eé]thode|fonction|funzione|funktion|methode|fun[cç][aã]o)\s+)?"
+    r"`?([A-Za-z_]\w*[!?]?)", re.I)
+
+
+def scoped_to_save_flow(concerns: dict[str, Any], request: str, symbol_names: set[str] | None = None) -> dict[str, Any]:
+    """Drop save-flow obligations unless the request is about saving, as a name it writes or in words.
+
+    A plain word counts as a name when it is the subject of the question and names a symbol.
+    """
     names = [match.strip("`") for match in re.findall(r"`[^`]+`|\b\w+_\w+\b|\b[a-z]+[A-Z]\w*", request)]
+    names += [subject for subject in _QUESTION_SUBJECT.findall(request)
+              if subject.lower().rstrip("!?") in (symbol_names or set())]
     if names:
         keep = any(_SAVE_FLOW_NAME.search(name) for name in names)
     else:

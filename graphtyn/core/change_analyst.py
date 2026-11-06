@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots, package_name_words as _package_name_words
+from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots, package_name_words as _package_name_words, in_named_scope as _in_named_scope
 from . import retrieval_signals as _signals
 from .impact_references import CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers, impact_targets as _impact_targets, one_per_name as _one_per_name
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
@@ -779,7 +779,7 @@ _IMPACT_ANCHOR_SHARE = 0.5
 def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names: set[str], request: str,
                     request_terms: list[str], max_nodes: int, requested_ceiling: int) -> dict[str, Any]:
     by_id = {node.get("id"): node for node in all_nodes}
-    named = _impact_targets(all_nodes, explicit_names, _named_package_roots(all_nodes, request))
+    named = _impact_targets(all_nodes, explicit_names, _named_package_roots(all_nodes, request), graph.get("links", []))
     all_consumers = _direct_consumers(graph, by_id, {node.get("id") for node in named})
     incoming = {node.get("id"): 0 for node in named}
     for edges in all_consumers.values():
@@ -962,6 +962,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     # Handlers of commands written in capitals; they do not pin anchor files.
     command_names = _signals.command_handlers(request, all_nodes, anchor_excluded_kinds)
     explicit_names |= command_names
+    requested_concerns = _signals.scoped_to_save_flow(requested_concerns, str(request or ""), explicit_names)
     if selected_intent == "impact" and explicit_names:
         return _impact_package(graph, all_nodes, explicit_names, request, request_terms, max_nodes, requested_ceiling)
     ranked = []
@@ -1062,7 +1063,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
             "named_container": str(node.get("container") or "").lower() in explicit_names,
             "described_owner": bool(exact_hits) and homonym_hints.owner_match(node),
             "written_signature": bool(exact_hits) and homonym_hints.signature_match(node),
-            "named_package": bool(qualified_package_roots) and path.split("/", 1)[0] in qualified_package_roots,
+            "named_package": _in_named_scope(node, qualified_package_roots),
             "entry_point": entry_request and entry_name and entry_file,
             "route_capture": capture_request and str(node.get("name") or "").lower() == "findroute",
             "docker_file": docker_bonus, "verifier": verifier_bonus, "generator": generation_bonus,

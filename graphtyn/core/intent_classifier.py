@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 
+from .intent_lexicon import asks_impact, cue_scores
 from .retrieval_signals import CODE_IDENTIFIER as _CODE_IDENTIFIER
 
 _INTENT_MARKERS = {
@@ -19,15 +20,16 @@ _INTENT_MARKERS = {
 
 # "En este proyecto" says where to look, not what is asked: it must not decide the
 # intent, and a bare "repositorio" there is not the data-access pattern.
-_PROJECT_NOUN = (r"(?:proyecto|project|repositorio|repository|repo|codebase|projeto|repositório|projet|dépôt|depot|"
-                 r"progetto|projekt|repositorium)")
+_PROJECT_NOUN = (r"(?:proyecto|project|repositorio|repository|repo|codebase|code base|base de c[oó]digo|base de code|"
+                 r"base di codice|codebasis|projeto|repositório|projet|dépôt|depot|progetto|projekt|repositorium)")
 _PROJECT_DEMONSTRATIVE = (r"(?:este|esta|this|mi|my|nuestro|our|neste|nesta|deste|desta|meu|ce|cet|cette|mon|notre|"
                           r"dies(?:e[mnrs]?)?|mein(?:e[mnrs]?)?|questo|questa|mio)")
 _PROJECT_DETERMINER = rf"(?:el|la|the|o|a|le|il|lo|das|dem|den|{_PROJECT_DEMONSTRATIVE})"
 _PROJECT_PREPOSITION = r"(?:en|de|del|in|of|within|no|do|dans|du|sur|im|von|über|di|su)"
 _PROJECT_NAME = r"`?(?-i:[\w-]*(?:_|[a-z][A-Z])[\w-]*)`?"
+_PRODUCT = r"(?:(?-i:[A-Z][\w.+#]*)(?:\s+|-))?"
 _PROJECT_SCOPE = re.compile(
-    rf"\b(?:{_PROJECT_PREPOSITION}\s+(?:{_PROJECT_DETERMINER}\s+)?|{_PROJECT_DEMONSTRATIVE}\s+)"
+    rf"\b(?:{_PROJECT_PREPOSITION}\s+(?:{_PROJECT_DETERMINER}\s+)?|{_PROJECT_DEMONSTRATIVE}\s+){_PRODUCT}"
     rf"{_PROJECT_NOUN}\b(?:\s+{_PROJECT_NAME})?|\b{_PROJECT_NOUN}\s+{_PROJECT_NAME}", re.IGNORECASE)
 # The project itself is the subject: "¿qué hace este proyecto?", "explain this repo".
 _PROJECT_SUBJECT = re.compile(
@@ -71,6 +73,16 @@ def names_code(request: str) -> bool:
     return bool(_CODE_IDENTIFIER.search(question) or _CODE_UNIT.search(question))
 
 
+_PRODUCT_NAME = re.compile(r"[A-Z][a-z0-9]+[A-Z]\w*")
+
+
+def names_code_unit(request: str) -> bool:
+    """Whether the request names code beyond a product name: `NestJS` alone names a framework."""
+    question = without_project_scope(request)
+    return bool(_CODE_UNIT.search(question) or any(
+        not _PRODUCT_NAME.fullmatch(match.group(0)) for match in _CODE_IDENTIFIER.finditer(question)))
+
+
 def is_change_request(request: str) -> bool:
     """Identify requests where an agent is expected to edit the repository."""
     return bool(re.search(
@@ -97,7 +109,7 @@ def classify_intent(request: str, requested: str = "auto") -> str:
         return "flow"
     if requested in _INTENT_MARKERS:
         return requested
-    if is_change_request(text) and not _IMPACT_QUESTION.search(text):
+    if is_change_request(text) and not (_IMPACT_QUESTION.search(text) or asks_impact(text)):
         return "flow"
     question = without_project_scope(request)
     named = names_code(request)
@@ -118,11 +130,20 @@ def classify_intent(request: str, requested: str = "auto") -> str:
     scores = {intent: sum(marker_matches(marker) for marker in markers)
               for intent, markers in _INTENT_MARKERS.items()}
     scores["impact"] += bool(_IMPACT_QUESTION.search(text))
-    if named:
-        scores["overview"] = 0  # a summary of a named function or class is about that code
-    best = max(scores, key=lambda intent: scores[intent])
-    if _IMPACT_QUESTION.search(text) and scores["impact"] == scores[best] > scores["flow"]:
-        return "impact"
+    cues = cue_scores(text)
+    for intent in scores:
+        scores[intent] += cues[intent]
+    scores["persistence"] += cues["persistence_weak"]
+    # A summary of a named function or class is about that code; "the architecture of
+    # this NestJS repo" names a product, and still asks for the summary.
+    if not named:
+        scores["overview"] += cues["overview_weak"]
+    elif names_code_unit(request):
+        scores["overview"] = 0
+    else:
+        scores["overview"] = cues["overview"]
+    # On a tie, the more specific package wins: consumers, then tests, wiring, summary, storage.
+    best = max(("impact", "tests", "bindings", "overview", "persistence", "flow"), key=lambda intent: scores[intent])
     if scores[best] and scores.get("flow") == scores[best]:
         return "flow"  # a tie with an explicit trace/flow request is a flow
     return best if scores[best] else "flow"

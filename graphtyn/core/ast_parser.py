@@ -124,6 +124,44 @@ def _enclosing_overload(candidates: List[str], line: int, node_by_id: Dict[str, 
     return min(spans)[1] if spans else None
 
 
+def _inheritance_links(pending: List[tuple], symbol_name_ids: Dict[str, Set[str]], node_by_id: Dict[str, Dict[str, Any]],
+                       rank_candidate: Any, suppressed: Dict[str, int]) -> List[Dict[str, Any]]:
+    """`hereda`/`implementa` edges for the bases each declaration writes.
+
+    A qualified Ruby base (`ActiveJob::Base`) follows Ruby's constant lookup, so it is
+    not dropped as ambiguous among every class named `Base`.
+    """
+    links: List[Dict[str, Any]] = []
+    for source_id, written, rel_file, line, evidence in pending:
+        base_name = written.rsplit("::", 1)[-1]
+        candidates = symbol_name_ids.get(base_name, set())
+        if not candidates:
+            continue
+        ranked = sorted(((rank_candidate(target, rel_file), target) for target in candidates if target != source_id), reverse=True)
+        if rel_file.endswith(".rb") and ranked:
+            scoped = set(ruby_lexical_candidates(node_by_id.get(source_id, {}), written,
+                                                 [target for _score, target in ranked], node_by_id))
+            ranked = [(score, target) for score, target in ranked if target in scoped]
+        if not ranked:
+            continue
+        best_score = ranked[0][0]
+        best = [target for score, target in ranked if score == best_score]
+        if len(best) > 4:
+            suppressed["ambiguous_inheritance"] += 1
+            continue
+        for target_id in best:
+            target_node = node_by_id.get(target_id, {})
+            links.append({
+                "source": source_id, "target": target_id,
+                "label": "implementa" if target_node.get("kind") == "interface" else "hereda",
+                "color": "rgba(245, 158, 11, 0.4)",
+                "confidence": "AMBIGUOUS" if len(best) > 1 else ("EXTRACTED" if best_score >= 2 else "INFERRED"),
+                "file": rel_file, "line": line, "evidence": evidence,
+                "resolution": {"strategy": "namespace-assembly", "score": best_score, "candidates": len(candidates)},
+            })
+    return links
+
+
 class ASTParser:
     """
     Deterministic zero-token multi-language code graph parser for Graphtyn.
@@ -775,28 +813,7 @@ class ASTParser:
 
         rank_candidate = CandidateRanker(node_by_id, tree_imports)
 
-        for source_id, base_name, rel_file, line, evidence in pending_inheritance:
-            candidates = symbol_name_ids.get(base_name, set())
-            if not candidates:
-                continue
-            ranked = sorted(((rank_candidate(target, rel_file), target) for target in candidates if target != source_id), reverse=True)
-            if not ranked:
-                continue
-            best_score = ranked[0][0]
-            best = [target for score, target in ranked if score == best_score]
-            if len(best) > 4:
-                suppressed_relations["ambiguous_inheritance"] += 1
-                continue
-            for target_id in best:
-                target_node = node_by_id.get(target_id, {})
-                links.append({
-                    "source": source_id, "target": target_id,
-                    "label": "implementa" if target_node.get("kind") == "interface" else "hereda",
-                    "color": "rgba(245, 158, 11, 0.4)",
-                    "confidence": "AMBIGUOUS" if len(best) > 1 else ("EXTRACTED" if best_score >= 2 else "INFERRED"),
-                    "file": rel_file, "line": line, "evidence": evidence,
-                    "resolution": {"strategy": "namespace-assembly", "score": best_score, "candidates": len(candidates)},
-                })
+        links.extend(_inheritance_links(pending_inheritance, symbol_name_ids, node_by_id, rank_candidate, suppressed_relations))
 
         for source_id, mixin_name, rel_file, line, evidence, mixin_kind, qualified_name in pending_mixins:
             candidates = symbol_name_ids.get(mixin_name, set())

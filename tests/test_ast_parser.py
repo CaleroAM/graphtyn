@@ -789,3 +789,20 @@ def test_ruby_mixins_resolve_lexically_and_super_follows_the_ancestor_chain(tmp_
               for link in graph["links"] if (link.get("resolution") or {}).get("strategy") == "ruby-super-ancestors"}
     # Ancestors of Base: Transactions, Validations, Translation, Persistence.
     assert supers == {("Transactions#save", "Validations#save"), ("Validations#save", "Persistence#save")}
+
+
+def test_a_qualified_ruby_base_is_not_dropped_among_homonyms(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    for package in ("ActiveJob", "ActiveRecord", "ActionMailer", "ActionController", "ActiveStorage"):
+        (tmp_path / f"{package.lower()}_base.rb").write_text(
+            f"module {package}\n  class Base\n    def perform\n    end\n  end\nend\n", encoding="utf-8")
+    (tmp_path / "mail_delivery_job.rb").write_text(
+        "module ActionMailer\n  class MailDeliveryJob < ActiveJob::Base\n    def perform\n    end\n  end\nend\n",
+        encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    parents = [(nodes[link["target"]].get("file"), link.get("confidence")) for link in graph["links"]
+               if link.get("label") == "hereda" and nodes.get(link["source"], {}).get("name") == "MailDeliveryJob"]
+
+    assert parents == [("activejob_base.rb", parents[0][1])] and parents[0][1] != "AMBIGUOUS"

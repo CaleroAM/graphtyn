@@ -14,7 +14,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .path_signals import TEST_PATH, VENDORED_PATH, package_root
+from .path_signals import TEST_PATH, VENDORED_PATH, in_named_scope, package_root
 
 _SCAN_SECONDS = 2.0
 _MAX_FILE_BYTES = 2_000_000
@@ -30,10 +30,45 @@ CONSUMER_LABELS = {"llama", "usa", "referencia", "implementa", "hereda", "suscri
 _LISTED_CONSUMERS = 40
 
 
-def impact_targets(nodes: list[dict], names: set[str], package_roots: set[str]) -> list[dict]:
-    """Definitions a change affects: only those of the package the request names, when it has them."""
+_ANCESTRY_LABELS = {"hereda", "incluye", "implementa"}
+_ANCESTRY_DEPTH = 8
+
+
+def impact_targets(nodes: list[dict], names: set[str], package_roots: set[str],
+                   links: list[dict] | None = None) -> list[dict]:
+    """Definitions a change affects: those of the package the request names, when it has them.
+
+    A homonym elsewhere still counts when its class descends from that package
+    (`ActionMailer::MailDeliveryJob#perform` overrides `ActiveJob::Base#perform`).
+    """
     named = [node for node in nodes if str(node.get("name") or "").lower() in names]
-    return [node for node in named if package_root(node) in package_roots] or named
+    inside = [node for node in named if in_named_scope(node, package_roots)]
+    outside = [node for node in named if not in_named_scope(node, package_roots)]
+    if not inside or not outside or not links:
+        return inside or named
+    return inside + _overrides(outside, nodes, links, package_roots)
+
+
+def _overrides(candidates: list[dict], nodes: list[dict], links: list[dict], package_roots: set[str]) -> list[dict]:
+    by_id = {node.get("id"): node for node in nodes}
+    parents: dict[Any, set[Any]] = {}
+    for link in links:
+        if link.get("label") in _ANCESTRY_LABELS and str(link.get("confidence") or "") != "AMBIGUOUS":
+            parents.setdefault(link.get("source"), set()).add(link.get("target"))
+    owners = {(str(node.get("file") or ""), str(node.get("name") or "")): node.get("id")
+              for node in nodes if node.get("kind") in {"class", "module", "struct", "interface", "trait"}}
+
+    def descends(owner: Any) -> bool:
+        frontier, seen = [owner], {owner}
+        for _depth in range(_ANCESTRY_DEPTH):
+            frontier = [parent for current in frontier for parent in parents.get(current, ()) if parent not in seen]
+            seen.update(frontier)
+            if any(in_named_scope(by_id.get(parent, {}), package_roots) for parent in frontier):
+                return True
+        return False
+
+    return [node for node in candidates
+            if (owner := owners.get((str(node.get("file") or ""), str(node.get("container") or "")))) and descends(owner)]
 
 
 def one_per_name(anchors: list[dict], limit: int) -> list[dict]:

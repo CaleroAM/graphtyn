@@ -1,0 +1,61 @@
+{
+ "tasks": [
+  {
+   "id": "V6_DE_REDIS_ACTIVE_EXPIRE_WHAT",
+   "request": "Was macht die Funktion activeExpireCycle in diesem Projekt? Antworte mit Belegen Datei:Zeile.",
+   "rubric": [
+    {
+     "id": "fast_mode",
+     "any": [
+      "ACTIVE_EXPIRE_CYCLE_FAST"
+     ]
+    },
+    {
+     "id": "slow_mode",
+     "any": [
+      "ACTIVE_EXPIRE_CYCLE_SLOW"
+     ]
+    },
+    {
+     "id": "time_limit",
+     "any": [
+      "timelimit"
+     ]
+    },
+    {
+     "id": "db_count",
+     "any": [
+      "dbs_per_call",
+      "CRON_DBS_PER_CALL"
+     ]
+    },
+    {
+     "id": "try_expire",
+     "any": [
+      "activeExpireCycleTryExpire"
+     ]
+    },
+    {
+     "id": "stale_threshold",
+     "any": [
+      "acceptable_stale",
+      "stale_perc"
+     ]
+    },
+    {
+     "id": "cron_caller",
+     "any": [
+      "databasesCron"
+     ]
+    },
+    {
+     "id": "sleep_caller",
+     "any": [
+      "beforeSleep"
+     ]
+    }
+   ],
+   "translates": "REDIS_ACTIVE_EXPIRE_WHAT"
+  }
+ ]
+}

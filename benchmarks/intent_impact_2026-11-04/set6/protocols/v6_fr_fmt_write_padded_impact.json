@@ -1,0 +1,33 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Sexto conjunto: la misma tarea que FMT_WRITE_PADDED_IMPACT, traducida, con la misma rúbrica literal. Mide si la recuperación funciona con agentes fuera del español.",
+ "repository": {
+  "name": "fmtlib/fmt",
+  "url": "https://github.com/fmtlib/fmt",
+  "commit": "0fc31633e7d53ac895ae0a688b83b7d44f0b0c1f"
+ },
+ "design": {
+  "clients": [
+   "antigravity"
+  ],
+  "tasks": [
+   "V6_FR_FMT_WRITE_PADDED_IMPACT"
+  ],
+  "arms": {
+   "final": "d5af039"
+  },
+  "repetitions": 2,
+  "stop_rule": "targeted",
+  "grading": "Rúbrica literal de la tarea original; los identificadores no se traducen."
+ },
+ "client_config": {
+  "models": {
+   "antigravity": "gemini-3.8-flash-high"
+  }
+ },
+ "authorization": {
+  "source": "El usuario pidió resolver los puntos pendientes (2026-11-05).",
+  "total_token_ceiling": 4500000
+ }
+}

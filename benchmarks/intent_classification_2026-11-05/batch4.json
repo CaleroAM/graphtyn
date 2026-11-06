@@ -1,0 +1,367 @@
+{
+ "role": "prueba final, evaluada una vez",
+ "generator": "Antigravity CLI, gemini-3.8-flash-high, sin herramientas ni acceso al código",
+ "prompt": "You are helping evaluate an intent classifier for a code-graph tool. Do NOT use any tools, do NOT read files; answer only with JSON.\n\nThe tool answers developer questions about a code repository. Each question must be labelled with exactly one intent:\n- overview: the purpose of the repository, its technologies, entry points, subsystems or overall architecture.\n- flow: how something executes: the steps, order, branches, lifecycle or failure behaviour of a feature or function; what a function or method does; how a request travels from a route to its handler and onwards.\n- impact: what would break or be affected by changing something; who calls, uses or depends on a symbol; its direct consumers.\n- persistence: where and how data is stored, read or written: database tables, models, migrations, repositories, files or caches used as storage.\n- bindings: how components are wired together: dependency injection, service container registration, configuration that binds an interface to an implementation, plugin or middleware registration.\n- tests: which tests cover something, which tests to run, or how something is tested.\n\nWrite 72 realistic questions a developer would ask an AI coding agent about these public repositories: Tokio and Axum (Rust), Angular, Svelte, Flutter, Odoo, Strapi, Spring Cloud, Sidekiq. Use 12 questions per intent, and for each intent 2 in each language: Spanish, English, Portuguese, French, German, Italian. Vary the phrasing a lot: some name a function, class or file (in code form or as plain words), some are long and some short, some mention \"in this project\", some are change requests (\"I want to modify X: what breaks?\" is impact; \"add X\" alone is not one of these questions). Avoid reusing the wording of the definitions above. Include a few tricky but still unambiguous cases.\n\nReturn ONLY a JSON array of objects: {\"language\": \"es|en|pt|fr|de|it\", \"intent\": \"<one of the six>\", \"question\": \"<text>\"}.\n",
+ "items": [
+  {
+   "language": "en",
+   "intent": "overview",
+   "question": "What are the core building blocks of this Axum workspace and how do they fit together?"
+  },
+  {
+   "language": "en",
+   "intent": "overview",
+   "question": "Can you summarize what this Flutter repo does and list its main modules?"
+  },
+  {
+   "language": "es",
+   "intent": "overview",
+   "question": "¿Cuál es la estructura general de esta aplicación Angular y cuáles son sus puntos de entrada principales?"
+  },
+  {
+   "language": "es",
+   "intent": "overview",
+   "question": "¿Qué tecnologías y dependencias clave componen este proyecto Sidekiq y para qué sirve cada carpeta?"
+  },
+  {
+   "language": "pt",
+   "intent": "overview",
+   "question": "Como está organizado este backend em Strapi e quais são os subsistemas fundamentais?"
+  },
+  {
+   "language": "pt",
+   "intent": "overview",
+   "question": "Pode me dar um panorama geral da arquitetura deste microsserviço Spring Cloud?"
+  },
+  {
+   "language": "fr",
+   "intent": "overview",
+   "question": "Quel est le rôle global de ce dépôt Svelte et comment s'articulent ses différents dossiers ?"
+  },
+  {
+   "language": "fr",
+   "intent": "overview",
+   "question": "Pourrais-tu me faire un résumé technique de ce module Odoo et de sa finalité ?"
+  },
+  {
+   "language": "de",
+   "intent": "overview",
+   "question": "Wie ist dieses Tokio-Crate aufgebaut und was ist die primäre Aufgabe des Repositories?"
+  },
+  {
+   "language": "de",
+   "intent": "overview",
+   "question": "Welche Hauptkomponenten und Technologie-Stacks bilden das Fundament dieses Angular-Projekts?"
+  },
+  {
+   "language": "it",
+   "intent": "overview",
+   "question": "Qual è l'architettura ad alto livello di questa app Flutter e da dove parte l'esecuzione iniziale?"
+  },
+  {
+   "language": "it",
+   "intent": "overview",
+   "question": "Mi fai una panoramica delle varie parti di questo microservizio Axum e del loro scopo?"
+  },
+  {
+   "language": "en",
+   "intent": "flow",
+   "question": "Trace the path of an incoming HTTP POST request to `/api/v1/orders` down to the service handler and error handling."
+  },
+  {
+   "language": "en",
+   "intent": "flow",
+   "question": "What does `Sidekiq::Processor#process` actually do step by step when a job raises an exception?"
+  },
+  {
+   "language": "es",
+   "intent": "flow",
+   "question": "¿Cómo funciona internamente el bucle de eventos cuando un `tokio::spawn` entra en espera por I/O?"
+  },
+  {
+   "language": "es",
+   "intent": "flow",
+   "question": "Explícame el ciclo de vida y los pasos que se ejecutan al presionar el botón de envío en `LoginFormState`."
+  },
+  {
+   "language": "pt",
+   "intent": "flow",
+   "question": "O que acontece exatamente desde a chamada ao controller `article.create` até o envio da resposta final ao cliente?"
+  },
+  {
+   "language": "pt",
+   "intent": "flow",
+   "question": "Qual é a sequência de chamadas quando o Gateway recebe uma requisição com token expirado?"
+  },
+  {
+   "language": "fr",
+   "intent": "flow",
+   "question": "Comment la méthode `ngOnInit` de `UserProfileComponent` charge-t-elle les données et gère-t-elle un échec réseau ?"
+  },
+  {
+   "language": "fr",
+   "intent": "flow",
+   "question": "Peux-tu m'expliquer le cheminement logique du formulaire d'inscription dans `+page.server.ts` de bout en bout ?"
+  },
+  {
+   "language": "de",
+   "intent": "flow",
+   "question": "Welche Schritte durchläuft die Methode `action_confirm` im Sales-Order-Model bis zum fertigen Auftrag?"
+  },
+  {
+   "language": "de",
+   "intent": "flow",
+   "question": "Was passiert der Reihe nach in `auth_middleware`, falls der Authorization-Header ungültig ist?"
+  },
+  {
+   "language": "it",
+   "intent": "flow",
+   "question": "Come viene gestita la transizione di stato nel BLoC `CartBloc` quando viene dispatchato l'evento `AddToCart`?"
+  },
+  {
+   "language": "it",
+   "intent": "flow",
+   "question": "Descrivi come un pacchetto attraversa `TcpStream::read` in caso di socket non bloccante in questo runtime."
+  },
+  {
+   "language": "en",
+   "intent": "impact",
+   "question": "If I change the signature of `AppState::db_pool(&self)` to return an `Arc<Database>`, what other files will fail to compile?"
+  },
+  {
+   "language": "en",
+   "intent": "impact",
+   "question": "Who consumes `Sidekiq::Worker#perform_async` across this codebase, and what breaks if I add a mandatory parameter?"
+  },
+  {
+   "language": "es",
+   "intent": "impact",
+   "question": "Quiero renombrar la propiedad `currentUser$` en `AuthService`: ¿qué componentes y plantillas se verían afectados?"
+  },
+  {
+   "language": "es",
+   "intent": "impact",
+   "question": "¿Quién llama a `ApiClient.fetchUserPreferences` en este proyecto si decido cambiar su tipo de retorno a `Result<UserPrefs>`?"
+  },
+  {
+   "language": "pt",
+   "intent": "impact",
+   "question": "Se eu remover o campo `isPublished` do payload retornado pelo service de posts, quais rotas e clientes internos quebram?"
+  },
+  {
+   "language": "pt",
+   "intent": "impact",
+   "question": "Quais microsserviços e classes usam a interface `@FeignClient(name = 'inventory-service')` neste repositório?"
+  },
+  {
+   "language": "fr",
+   "intent": "impact",
+   "question": "Si je modifie le comportement par défaut de `_compute_total_amount` dans `sale.order`, quels autres modèles ou vues en dépendent ?"
+  },
+  {
+   "language": "fr",
+   "intent": "impact",
+   "question": "Quels fichiers importent et consomment le store `cartStore.ts` si je modifie sa structure interne ?"
+  },
+  {
+   "language": "de",
+   "intent": "impact",
+   "question": "Was bricht im Projekt ab, wenn ich `tokio::sync::mpsc::channel` durch eine bounded crossbeam-queue ersetze?"
+  },
+  {
+   "language": "de",
+   "intent": "impact",
+   "question": "Welche Handlers und Router-Definitionen sind betroffen, wenn ich den Extraktor `CurrentUser` refaktorisiere?"
+  },
+  {
+   "language": "it",
+   "intent": "impact",
+   "question": "Se modifico l'output `@Output() selected` in `DataTableComponent`, dove si romperà il binding?"
+  },
+  {
+   "language": "it",
+   "intent": "impact",
+   "question": "Quali schermate e widget dipendono direttamente da `ThemeNotifier.toggleDarkMode`?"
+  },
+  {
+   "language": "en",
+   "intent": "persistence",
+   "question": "Which PostgreSQL tables and columns store the records defined in the `res.partner` model?"
+  },
+  {
+   "language": "en",
+   "intent": "persistence",
+   "question": "Where does Strapi store uploaded media metadata and what database schema does it generate for it?"
+  },
+  {
+   "language": "es",
+   "intent": "persistence",
+   "question": "¿Cómo y bajo qué claves serializa Redis los payloads de los jobs en la cola de reintentos de Sidekiq?"
+  },
+  {
+   "language": "es",
+   "intent": "persistence",
+   "question": "¿En qué entidad JPA y tabla de base de datos se guarda el historial de transacciones en este servicio Spring Cloud?"
+  },
+  {
+   "language": "pt",
+   "intent": "persistence",
+   "question": "Onde ficam definidas as migrações SQL e a tabela `users` gerenciada pelo sqlx neste projeto Axum?"
+  },
+  {
+   "language": "pt",
+   "intent": "persistence",
+   "question": "Como os dados do usuário são salvos localmente em disco no app Flutter: usa SQLite, Hive ou SharedPreferences?"
+  },
+  {
+   "language": "fr",
+   "intent": "persistence",
+   "question": "Dans quelle table relationnelle est persisté le schéma `content-types/restaurant` et ses relations associées ?"
+  },
+  {
+   "language": "fr",
+   "intent": "persistence",
+   "question": "Quels champs de `account.move` sont réellement stockés en base plutôt que calculés dynamiquement dans ce module Odoo ?"
+  },
+  {
+   "language": "de",
+   "intent": "persistence",
+   "question": "Über welches Spring Data Repository wird die `CustomerEntity` in die Datenbank geschrieben und gecached?"
+  },
+  {
+   "language": "de",
+   "intent": "persistence",
+   "question": "Wie und in welche Dateien werden die State-Snapshots im Tokio-basierten Server auf das Dateisystem abgelegt?"
+  },
+  {
+   "language": "it",
+   "intent": "persistence",
+   "question": "Come e dove vengono salvate le sessioni sul server in `src/lib/server/db/session.ts`?"
+  },
+  {
+   "language": "it",
+   "intent": "persistence",
+   "question": "In quale struttura dati di Redis vengono memorizzate le metriche di esecuzione dei worker Sidekiq?"
+  },
+  {
+   "language": "en",
+   "intent": "bindings",
+   "question": "Where is `AuthInterceptor` registered in the root dependency injection container or `app.config.ts`?"
+  },
+  {
+   "language": "en",
+   "intent": "bindings",
+   "question": "How does the application bind the `PaymentGateway` interface to its Stripe implementation in the `@Configuration` class?"
+  },
+  {
+   "language": "es",
+   "intent": "bindings",
+   "question": "¿En qué archivo se configuran y encadenan los middleware de CORS y autenticación al `Router` principal de Axum?"
+  },
+  {
+   "language": "es",
+   "intent": "bindings",
+   "question": "¿Dónde se inyecta o provee el `AuthenticationRepository` usando `MultiRepositoryProvider` en la raíz del árbol Flutter?"
+  },
+  {
+   "language": "pt",
+   "intent": "bindings",
+   "question": "Onde estão configurados os `providers` para o serviço `NotificationService` no módulo raiz da aplicação?"
+  },
+  {
+   "language": "pt",
+   "intent": "bindings",
+   "question": "Como os hooks e controllers deste módulo customizado são registrados no container do framework Odoo?"
+  },
+  {
+   "language": "fr",
+   "intent": "bindings",
+   "question": "Où est déclarée la liaison entre le plugin d'email personnalisé et le provider Sendgrid dans `config/plugins.js` ?"
+  },
+  {
+   "language": "fr",
+   "intent": "bindings",
+   "question": "Comment le `SecurityFilterChain` associe-t-il les filtres JWT aux endpoints sécurisés dans ce projet Spring Cloud ?"
+  },
+  {
+   "language": "de",
+   "intent": "bindings",
+   "question": "An welcher Stelle wird `Extension(state)` bzw. `State(app_state)` in die Axum-Router-Kaskade eingehängt?"
+  },
+  {
+   "language": "de",
+   "intent": "bindings",
+   "question": "Wo werden die Server-Middleware-Klassen wie `Sidekiq::Middleware::Server::Logging` in `sidekiq.rb` registriert?"
+  },
+  {
+   "language": "it",
+   "intent": "bindings",
+   "question": "In quale punto dell'albero dei widget o file di setup viene registrato il singleton `GetIt.instance.registerSingleton<NavigationService>`?"
+  },
+  {
+   "language": "it",
+   "intent": "bindings",
+   "question": "Come viene agganciato l'hook `handle` in `src/hooks.server.ts` per intercettare le richieste in ingresso in SvelteKit?"
+  },
+  {
+   "language": "en",
+   "intent": "tests",
+   "question": "Which integration test suites verify the timeout behavior of `tokio::time::sleep`?"
+  },
+  {
+   "language": "en",
+   "intent": "tests",
+   "question": "What test command or test file should I run to validate `WidgetTester` pump events in `LoginScreenTest`?"
+  },
+  {
+   "language": "es",
+   "intent": "tests",
+   "question": "¿Qué archivo `.spec.ts` contiene las pruebas unitarias para `BillingDashboardComponent` y cómo simula el backend?"
+  },
+  {
+   "language": "es",
+   "intent": "tests",
+   "question": "¿Cómo se comprueban las respuestas 401 en los tests de integración usando `tower::ServiceExt::oneshot` en Axum?"
+  },
+  {
+   "language": "pt",
+   "intent": "tests",
+   "question": "Quais testes cobrem a validação de permissões de RBAC nos endpoints de usuários do Strapi?"
+  },
+  {
+   "language": "pt",
+   "intent": "tests",
+   "question": "Como este repositório testa se um worker foi enfileirado usando `Sidekiq::Testing.fake!`?"
+  },
+  {
+   "language": "fr",
+   "intent": "tests",
+   "question": "Quels tests d'intégration avec `@SpringBootTest` et WireMock valident la tolérance aux pannes du CircuitBreaker ?"
+  },
+  {
+   "language": "fr",
+   "intent": "tests",
+   "question": "Quel scénario dans `tests/test_sale_order.py` vérifie le calcul des taxes sur les devis dans ce module Odoo ?"
+  },
+  {
+   "language": "de",
+   "intent": "tests",
+   "question": "Welche Vitest- oder Playwright-Specs decken die Formularvalidierung in `checkout.spec.ts` ab?"
+  },
+  {
+   "language": "de",
+   "intent": "tests",
+   "question": "Mit welchem `cargo test`-Befehl führe ich gezielt die Tests für den Mutex im Tokio-Subsystem aus?"
+  },
+  {
+   "language": "it",
+   "intent": "tests",
+   "question": "Quali test e2e con Cypress o Playwright verificano il percorso di navigazione del carrello in questa app Angular?"
+  },
+  {
+   "language": "it",
+   "intent": "tests",
+   "question": "Dove si trovano i golden test per i componenti grafici in `packages/core_ui` in questo progetto Flutter?"
+  }
+ ]
+}
