@@ -1,0 +1,36 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada de la conformidad por lenguaje (Java, PHP, Go y Rust), en tareas nuevas: Graphtyn main frente a la rama corregida.",
+ "repository": {
+  "name": "slimphp/Slim",
+  "url": "https://github.com/slimphp/Slim",
+  "commit": "3675bf6baac66b07032575b7bef4200b60b7974b"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "L_SLIM_MAP_IMPACT"
+  ],
+  "arms": {
+   "graphtyn (main)": "Graphtyn main f2a1e1d, MCP lean, regla targeted",
+   "graphtyn (fix)": "Graphtyn fix/language-conformance d38f930, MCP lean, regla targeted"
+  },
+  "repetitions": 2,
+  "order": "alternado por repetición",
+  "stop_rule": "targeted",
+  "grading": "Dos jueces (Gemini y GPT, sin herramientas) por hecho; consenso como medida principal. Rúbrica escrita leyendo el código antes de ejecutar."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio; cada versión de Graphtyn se ejecuta desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario aprobó la prueba de conformidad por lenguaje y validar Java y PHP con repositorios públicos (2026-11-06).",
+  "total_token_ceiling": 1500000
+ }
+}

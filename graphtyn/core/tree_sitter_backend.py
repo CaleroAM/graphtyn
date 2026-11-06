@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v27-python-bases"
+PARSER_VERSION = "treesitter-v28-language-conformance"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -38,7 +38,8 @@ class LanguagePack:
 
 LANGUAGE_PACKS = (
     LanguagePack("csharp", (".cs",), "tree_sitter_c_sharp", capabilities=("symbols", "imports", "calls", "members", "inheritance")),
-    LanguagePack("javascript", (".js", ".jsx"), "tree_sitter_javascript"),
+    LanguagePack("javascript", (".js", ".jsx"), "tree_sitter_javascript",
+                 capabilities=("symbols", "imports", "calls", "members", "inheritance")),
     LanguagePack("typescript", (".ts", ".tsx"), "tree_sitter_typescript",
                  factories=((".ts", "language_typescript"), (".tsx", "language_tsx")),
                  capabilities=("symbols", "imports", "calls", "members", "inheritance")),
@@ -46,7 +47,7 @@ LANGUAGE_PACKS = (
                  capabilities=("symbols", "imports", "calls", "members", "inheritance")),
     LanguagePack("python", (".py",), "tree_sitter_python", capabilities=("symbols", "imports", "calls", "inheritance")),
     LanguagePack("java", (".java",), "tree_sitter_java", capabilities=("symbols", "imports", "calls", "members", "inheritance")),
-    LanguagePack("go", (".go",), "tree_sitter_go"),
+    LanguagePack("go", (".go",), "tree_sitter_go", capabilities=("symbols", "imports", "calls", "members", "inheritance")),
     LanguagePack("rust", (".rs",), "tree_sitter_rust", capabilities=("symbols", "imports", "calls", "members", "inheritance")),
     LanguagePack("c", (".c", ".h"), "tree_sitter_c"),
     LanguagePack("cpp", (".cc", ".cpp", ".cxx", ".hh", ".hpp", ".hxx"), "tree_sitter_cpp",
@@ -150,6 +151,47 @@ def _language_for_extension(ext: str, source: bytes = b""):
     return Language(factory())
 
 
+_OWNER_DECLARATIONS = {"rust": "impl_item", "go": "type_spec"}
+_HERITAGE_FIELDS = ("bases", "superclass", "superclasses", "interfaces", "bounds")
+_HERITAGE_TYPES = frozenset({"base_list", "superclass", "base_class_clause", "delegation_specifiers", "extends_clause",
+                             "class_heritage", "base_clause", "class_interface_clause", "super_interfaces",
+                             "extends_interfaces"})
+
+
+def _heritage_nodes(node: Any) -> list[Any]:
+    """Every clause naming a declaration's bases: Java and PHP write `extends` and `implements` apart."""
+    found = [child for child in (node.child_by_field_name(field) for field in _HERITAGE_FIELDS) if child is not None]
+    ids = {child.id for child in found}
+    return found + [child for child in node.named_children if child.type in _HERITAGE_TYPES and child.id not in ids]
+
+
+def _go_receiver(source: bytes, node: Any) -> tuple[str, str]:
+    """(variable, type) of the Go method around a node: `func (c *List[T]) Run()` gives ("c", "List")."""
+    while node is not None and node.type != "method_declaration":
+        node = node.parent
+    receiver = node.child_by_field_name("receiver") if node is not None else None
+    declaration = next((child for child in receiver.named_children if child.type == "parameter_declaration"), None) \
+        if receiver is not None else None
+    if declaration is None:
+        return "", ""
+    variable, written = declaration.child_by_field_name("name"), declaration.child_by_field_name("type")
+    names = re.findall(r"[A-Za-z_]\w*", _text(source, written).split("[", 1)[0]) if written is not None else []
+    return (_text(source, variable) if variable is not None else ""), (names[-1] if names else "")
+
+
+def _go_type(source: bytes, node: Any) -> tuple[str, list[str]]:
+    """Kind of a Go `type` spec and the types a struct embeds, whose methods it promotes."""
+    written = node.child_by_field_name("type")
+    kind = {"struct_type": "struct", "interface_type": "interface"}.get(written.type if written is not None else "", "type")
+    fields = next((child for child in written.named_children if child.type == "field_declaration_list"), None) \
+        if kind == "struct" else None
+    embedded = [_text(source, field.child_by_field_name("type")).lstrip("*").rsplit(".", 1)[-1]
+                for field in (fields.named_children if fields is not None else [])
+                if field.type == "field_declaration" and field.child_by_field_name("name") is None
+                and field.child_by_field_name("type") is not None]
+    return kind, embedded
+
+
 def _python_bases(source: bytes, superclasses: Any) -> list[str]:
     """`class Flask(App, mixins.M, Generic[T], metaclass=Meta)` names App, M and Generic."""
     bases = []
@@ -179,6 +221,9 @@ def _text(source: bytes, node) -> str:
 
 
 def _name(source: bytes, node) -> str:
+    if node.type == "impl_item":  # `impl<T> fmt::Display for Child<T>` belongs to Child
+        names = re.findall(r"[A-Za-z_]\w*", _text(source, node.child_by_field_name("type")).split("<", 1)[0])
+        return names[-1] if names else ""
     named = node.child_by_field_name("name")
     if named is not None:
         return _text(source, named)
@@ -218,7 +263,25 @@ def _without_template_args(raw: str) -> str:
     return re.sub(r"\btemplate\s+", "", raw)  # `s.template m<T>()`
 
 
+# Java `this.own()` and PHP `$this->own()` / `Base::make()` keep the callee in `name` and the
+# receiver in `object` or `scope`; PHP's `parent::` and `self::` name the caller's own classes.
+_PHP_SCOPES = {"parent": "super", "self": "$this", "static": "$this"}
+
+
+def _member_call(source: bytes, node) -> tuple[str, str] | None:
+    """(callee, receiver) of a call written as `object.name(...)` or `scope::name(...)`."""
+    name = node.child_by_field_name("name")
+    if name is None or node.child_by_field_name("function") is not None:
+        return None
+    receiver = node.child_by_field_name("object") or node.child_by_field_name("scope")
+    text = _text(source, receiver) if receiver is not None else ""
+    return _text(source, name), _PHP_SCOPES.get(text, text) if receiver is not None and receiver.type == "relative_scope" else text
+
+
 def _call_name(source: bytes, node, ruby: bool = False) -> str:
+    member = _member_call(source, node)
+    if member:
+        return member[0]
     target = node.child_by_field_name("function") or node.child_by_field_name("method")
     if target is None and node.named_child_count:
         target = node.named_children[0]
@@ -428,6 +491,21 @@ class _FileContext:
     callable_declarations: frozenset
 
 
+_MEMBER_TYPES = frozenset({"field_declaration", "property_declaration", "event_declaration", "event_field_declaration",
+                           "public_field_definition", "field_definition"})
+
+
+def _member_type(ctx: _FileContext, node) -> str:
+    """A field's written type; `base = new Base()` in JavaScript types it by its constructor."""
+    type_node = node.child_by_field_name("type")
+    if type_node is not None:
+        return _text(ctx.source, type_node).lstrip(":").strip()
+    value = node.child_by_field_name("value")
+    if value is not None and value.type == "new_expression":
+        return _call_name(ctx.source, value)
+    return ""
+
+
 def _member_facts(ctx: _FileContext, node, line: int, end_line: int, evidence: str,
                   members: list, symbols: list) -> None:
     """Fields, properties and events of a type, plus C++ in-class method declarations."""
@@ -437,12 +515,20 @@ def _member_facts(ctx: _FileContext, node, line: int, end_line: int, evidence: s
         variable_declaration = next((child for child in node.named_children if child.type == "variable_declaration"), None)
         if type_node is None and variable_declaration is not None:
             type_node = variable_declaration.child_by_field_name("type")
-    type_name = _text(ctx.source, type_node) if type_node is not None else ""
+    type_name = _text(ctx.source, type_node) if type_node is not None else _member_type(ctx, node)
+    if node.type == "public_field_definition":
+        type_name = _member_type(ctx, node)
     container = _ancestor_name(ctx.source, node, ctx.type_declarations)
+    # Go and Rust fields, and TypeScript and JavaScript class fields, name themselves directly.
+    own_name = node.child_by_field_name("name") or node.child_by_field_name("property")
     if container and type_name:
         if node.type in {"property_declaration", "event_declaration"}:
             name_node = node.child_by_field_name("name")
-            names = [_text(ctx.source, name_node)] if name_node is not None else []
+            names = [_text(ctx.source, name_node)] if name_node is not None else [
+                _text(ctx.source, element.child_by_field_name("name") or element).lstrip("$")
+                for element in node.named_children if element.type == "property_element"]  # PHP `Base $base`
+        elif variable_declaration is None and node.child_by_field_name("declarator") is None and own_name is not None:
+            names = [_text(ctx.source, own_name)]
         else:
             names = []
             if variable_declaration is not None:
@@ -504,13 +590,9 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
                     break
                 ancestor = ancestor.parent
         bases = []
-        base_node = (node.child_by_field_name("bases") or node.child_by_field_name("superclass")
-                     or node.child_by_field_name("superclasses"))
-        if base_node is None:
-            base_node = next((c for c in node.named_children if c.type in (
-                "base_list", "superclass", "base_class_clause", "delegation_specifiers", "extends_clause",
-                "class_heritage")), None)
-        if base_node is not None:
+        heritage = _heritage_nodes(node)
+        if heritage:
+            base_node = heritage[0]
             if ctx.pack.name == "ruby":
                 qualified = re.findall(
                     r"[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*",
@@ -520,12 +602,14 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
             elif ctx.pack.name == "python":
                 bases = _python_bases(ctx.source, base_node)
             else:
-                bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", _text(ctx.source, base_node))
+                bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", " ".join(_text(ctx.source, item) for item in heritage))
                 bases = [base for base in bases
                          if base not in {"public", "protected", "private", "virtual", "final", "extends", "implements", "with"}]
         if ctx.pack.name == "swift":
             bases = [_text(ctx.source, child.child_by_field_name("inherits_from") or child).split("<", 1)[0]
                      for child in node.named_children if child.type == "inheritance_specifier"]
+        if node.type == "type_spec":
+            kind, bases = _go_type(ctx.source, node)
         parameters = _parameters(node)
         parameter_count = parameters.named_child_count if parameters is not None else None
         required_parameter_count = None
@@ -548,7 +632,9 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
             "evidence": evidence,
             "bases": bases,
             "parser": "tree-sitter",
-            "container": _ancestor_name(ctx.source, node, ctx.type_declarations), "scope": _ancestor_name(ctx.source, node, ctx.callable_declarations),
+            "container": (_go_receiver(ctx.source, node)[1] if ctx.pack.name == "go" and node.type == "method_declaration"
+                          else _ancestor_name(ctx.source, node, ctx.type_declarations)),
+            "scope": _ancestor_name(ctx.source, node, ctx.callable_declarations),
             "namespace": _ancestor_namespace(ctx.source, node),
             "parameter_count": parameter_count,
             "required_parameter_count": required_parameter_count,
@@ -575,17 +661,28 @@ def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, 
         receiver_node = node.child_by_field_name("receiver")
         receiver = (_text(ctx.source, receiver_node) if receiver_node is not None
                     else (chain[-1] if chain else ""))
+        member = _member_call(ctx.source, node)
+        if member:
+            # `this.base.helper()` is sent to `base`, reached through `this`, as in other languages.
+            chain = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", member[1])
+            receiver = member[1] if member[1] in {"super", "$this"} else (chain[-1] if chain else "")
         if ctx.pack.name == "ruby" and receiver in _RUBY_SELF_RECEIVERS:
             # self.x, dup.x and clone.x dispatch on the caller's own class, like a bare call.
             receiver, chain = "", []
         args = node.child_by_field_name("arguments")
+        container = _ancestor_name(ctx.source, node, ctx.type_declarations)
+        # A Go method's receiver variable is its `self`: `c.Own()` inside `func (c Child)`.
+        variable, owner = _go_receiver(ctx.source, node) if ctx.pack.name == "go" else ("", "")
+        if variable and chain[:1] == [variable]:
+            chain = ["this", *chain[1:]]  # `c.base.Helper()` walks Child's fields like `this.base`
         calls.append({
             "name": name, "line": line, "evidence": evidence,
             "receiver": receiver,
             "receiver_chain": chain,
             "argument_count": args.named_child_count if args is not None else None,
             "caller": _ancestor_name(ctx.source, node, ctx.callable_declarations),
-            "container": _ancestor_name(ctx.source, node, ctx.type_declarations),
+            "container": owner or container,
+            **({"self_receiver": True} if variable and receiver == variable else {}),
             **_call_binding_metadata(ctx.source, node, name, ctx.callable_declarations, ctx.ext),
         })
         operation_text = " ".join(_text(ctx.source, node).split())[:300]
@@ -634,6 +731,7 @@ _SYMBOL_TYPES = {
     "enum_item": "enum",
     "trait_item": "interface",
     "type_declaration": "type",
+    "type_spec": "type",
     "trait_declaration": "interface",
     "class_specifier": "class",
     "struct_specifier": "struct",
@@ -651,7 +749,7 @@ _SYMBOL_TYPES = {
     "object_definition": "class",
 }
 
-_CALL_TYPES = frozenset({"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression", "function_call_expression", "member_call_expression", "scoped_call_expression"})
+_CALL_TYPES = frozenset({"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression", "function_call_expression", "member_call_expression", "nullsafe_member_call_expression", "scoped_call_expression", "method_invocation"})
 _IMPORT_TYPES = frozenset({"using_directive", "import_statement", "import_from_statement", "import_declaration", "package_clause", "use_declaration", "namespace_use_declaration", "preproc_include"})
 _TYPE_DECLARATIONS = frozenset({"class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item", "trait_declaration", "class_specifier", "struct_specifier", "union_specifier", "class"})
 _CALLABLE_DECLARATIONS = frozenset({"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item", "method", "singleton_method"})
@@ -665,6 +763,8 @@ def _declaration_types(pack_name: str, rel_path: str = "") -> tuple[set[str], se
     type_declarations = set(_TYPE_DECLARATIONS)
     if pack_name == "ruby":
         type_declarations.add("module")
+    if pack_name in _OWNER_DECLARATIONS:
+        type_declarations.add(_OWNER_DECLARATIONS[pack_name])
     callable_declarations = set(_CALLABLE_DECLARATIONS)
     if pack_name in _JVM_APPLE_PACKS:
         type_declarations |= {"object_declaration", "protocol_declaration", "trait_definition", "object_definition"}
@@ -713,7 +813,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         node_lines = _text(source, node).splitlines()
         evidence = node_lines[0].strip()[:240] if node_lines else ""
 
-        if node.type in {"field_declaration", "property_declaration", "event_declaration", "event_field_declaration"}:
+        if node.type in _MEMBER_TYPES:
             _member_facts(ctx, node, line, end_line, evidence, members, symbols)
         elif node.type == "variable_declarator":
             value = node.child_by_field_name("value")
@@ -862,7 +962,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         if pack.name == "ruby" and not receiver and call.get("name") in _RUBY_BARE_BUILTINS:
             call["runtime_builtin"] = True
         receiver_type = ""
-        if receiver == "this" or receiver in _SELF_RECEIVERS.get(pack.name, ()):  # the caller's own class
+        if receiver == "this" or receiver in _SELF_RECEIVERS.get(pack.name, ()) or call.get("self_receiver"):  # own class
             receiver_type = call.get("container", "")
         elif receiver:
             # Each receiver is resolved once per file. A match inside the

@@ -1,0 +1,322 @@
+[
+ {
+  "version": "main",
+  "task": "L_COBRA_EXECUTEC_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 55876,
+  "tools": 3,
+  "facts": 10,
+  "facts_total": 10
+ },
+ {
+  "version": "main",
+  "task": "L_COBRA_EXECUTEC_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 28970,
+  "tools": 1,
+  "facts": 10,
+  "facts_total": 10
+ },
+ {
+  "version": "main",
+  "task": "L_COBRA_MERGE_FLAGS_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27062,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "L_COBRA_MERGE_FLAGS_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27134,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "L_GSON_DOPEEK_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 125440,
+  "tools": 6,
+  "facts": 10,
+  "facts_total": 11
+ },
+ {
+  "version": "main",
+  "task": "L_GSON_DOPEEK_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 114099,
+  "tools": 5,
+  "facts": 10,
+  "facts_total": 11
+ },
+ {
+  "version": "main",
+  "task": "L_GSON_POPSTACK_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 97774,
+  "tools": 5,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "L_GSON_POPSTACK_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 88617,
+  "tools": 4,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "L_RIPGREP_GLOB_PARSE_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 31273,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 12
+ },
+ {
+  "version": "main",
+  "task": "L_RIPGREP_GLOB_PARSE_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 62433,
+  "tools": 3,
+  "facts": 12,
+  "facts_total": 12
+ },
+ {
+  "version": "main",
+  "task": "L_RIPGREP_MATCH_LIMIT_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27069,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "L_RIPGREP_MATCH_LIMIT_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27108,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "L_SLIM_MAP_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 29301,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "L_SLIM_MAP_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 29408,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "L_SLIM_RUN_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27231,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "L_SLIM_RUN_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 146547,
+  "tools": 6,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "L_COBRA_EXECUTEC_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 29684,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 10
+ },
+ {
+  "version": "fix",
+  "task": "L_COBRA_EXECUTEC_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 30047,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 10
+ },
+ {
+  "version": "fix",
+  "task": "L_COBRA_MERGE_FLAGS_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 28578,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "L_COBRA_MERGE_FLAGS_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 28414,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "L_GSON_DOPEEK_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 68052,
+  "tools": 3,
+  "facts": 10,
+  "facts_total": 11
+ },
+ {
+  "version": "fix",
+  "task": "L_GSON_DOPEEK_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 66536,
+  "tools": 3,
+  "facts": 10,
+  "facts_total": 11
+ },
+ {
+  "version": "fix",
+  "task": "L_GSON_POPSTACK_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 32071,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "L_GSON_POPSTACK_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 32077,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "L_RIPGREP_GLOB_PARSE_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 137686,
+  "tools": 7,
+  "facts": 12,
+  "facts_total": 12
+ },
+ {
+  "version": "fix",
+  "task": "L_RIPGREP_GLOB_PARSE_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 106000,
+  "tools": 5,
+  "facts": 11,
+  "facts_total": 12
+ },
+ {
+  "version": "fix",
+  "task": "L_RIPGREP_MATCH_LIMIT_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 28504,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "L_RIPGREP_MATCH_LIMIT_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 28325,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "L_SLIM_MAP_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 29376,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "L_SLIM_MAP_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 29194,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "L_SLIM_RUN_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 93207,
+  "tools": 5,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "L_SLIM_RUN_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 84904,
+  "tools": 5,
+  "facts": 9,
+  "facts_total": 9
+ }
+]

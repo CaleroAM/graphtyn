@@ -1,0 +1,141 @@
+{
+ "tasks": [
+  {
+   "id": "L_COBRA_MERGE_FLAGS_IMPACT",
+   "request": "Si cambio mergePersistentFlags en cobra, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "usage_help",
+     "any": [
+      "UsageFunc",
+      "HelpFunc"
+     ]
+    },
+    {
+     "id": "default_flags",
+     "any": [
+      "InitDefaultHelpFlag",
+      "InitDefaultVersionFlag"
+     ]
+    },
+    {
+     "id": "flag_sets",
+     "any": [
+      "LocalFlags",
+      "InheritedFlags"
+     ]
+    },
+    {
+     "id": "parse",
+     "any": [
+      "ParseFlags"
+     ]
+    },
+    {
+     "id": "flag_groups",
+     "any": [
+      "MarkFlagsRequiredTogether",
+      "MarkFlagsOneRequired",
+      "MarkFlagsMutuallyExclusive"
+     ]
+    },
+    {
+     "id": "args",
+     "any": [
+      "argsMinusFirstX"
+     ]
+    },
+    {
+     "id": "strip",
+     "any": [
+      "stripFlags"
+     ]
+    },
+    {
+     "id": "parents",
+     "any": [
+      "updateParentsPflags",
+      "parentsPflags"
+     ]
+    },
+    {
+     "id": "test",
+     "any": [
+      "command_test.go"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "L_COBRA_EXECUTEC_FLOW",
+   "request": "¿Cómo ejecuta cobra un comando en ExecuteC? Explica los pasos, las funciones que llama y los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "root",
+     "any": [
+      "HasParent",
+      "Root()"
+     ]
+    },
+    {
+     "id": "help_cmd",
+     "any": [
+      "InitDefaultHelpCmd"
+     ]
+    },
+    {
+     "id": "completion",
+     "any": [
+      "InitDefaultCompletionCmd",
+      "initCompleteCmd"
+     ]
+    },
+    {
+     "id": "groups",
+     "any": [
+      "checkCommandGroups"
+     ]
+    },
+    {
+     "id": "args",
+     "any": [
+      "os.Args"
+     ]
+    },
+    {
+     "id": "find",
+     "any": [
+      "Traverse",
+      "Find"
+     ]
+    },
+    {
+     "id": "find_error",
+     "any": [
+      "PrintErrln",
+      "SilenceErrors"
+     ]
+    },
+    {
+     "id": "execute",
+     "any": [
+      "execute("
+     ]
+    },
+    {
+     "id": "err_help",
+     "any": [
+      "ErrHelp"
+     ]
+    },
+    {
+     "id": "usage",
+     "any": [
+      "UsageString",
+      "SilenceUsage"
+     ]
+    }
+   ]
+  }
+ ]
+}

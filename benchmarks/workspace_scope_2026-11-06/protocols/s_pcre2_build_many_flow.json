@@ -1,0 +1,36 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada del alcance por miembro de workspace, en tareas no usadas para diagnosticarlo: Graphtyn d38f930 (sin la corrección) frente a afff470 (con ella).",
+ "repository": {
+  "name": "BurntSushi/ripgrep",
+  "url": "https://github.com/BurntSushi/ripgrep",
+  "commit": "91f5d22ef48bde459d90a8c7dbeab416e97d0f2b"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "S_PCRE2_BUILD_MANY_FLOW"
+  ],
+  "arms": {
+   "graphtyn (main)": "Graphtyn d38f930, conformidad sin alcance de workspace",
+   "graphtyn (fix)": "Graphtyn afff470, con alcance de workspace"
+  },
+  "repetitions": 2,
+  "order": "alternado por repetición",
+  "stop_rule": "targeted",
+  "grading": "Dos jueces (Gemini y GPT, sin herramientas) por hecho; consenso como medida principal. Rúbrica escrita leyendo el código antes de ejecutar."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio; cada versión de Graphtyn se ejecuta desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario aprobó la prueba de conformidad por lenguaje y su validación con repositorios públicos (2026-11-06).",
+  "total_token_ceiling": 500000
+ }
+}
