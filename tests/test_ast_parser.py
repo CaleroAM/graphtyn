@@ -854,3 +854,58 @@ def test_python_self_calls_resolve_to_the_callers_own_class(tmp_path):
              for link in graph["links"] if link.get("label") == "llama"}
 
     assert {("dispatch", "ensure_sync"), ("build", "ensure_sync")} <= calls
+
+
+def _calls(graph):
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    return {(nodes[link["source"]].get("name"), nodes[link["target"]].get("container"), nodes[link["target"]].get("name"),
+             link.get("confidence"))
+            for link in graph["links"] if link.get("label") == "llama"}
+
+
+def test_python_classes_record_their_bases(tmp_path):
+    (tmp_path / "base.py").write_text("class App:\n    pass\n\nclass M:\n    pass\n", encoding="utf-8")
+    (tmp_path / "app.py").write_text(
+        "import base as mixins\nfrom typing import Generic, TypeVar\nfrom base import App\nT = TypeVar('T')\n\n"
+        "class Flask(App, mixins.M, Generic[T], metaclass=type):\n    pass\n", encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    bases = {(nodes[link["source"]]["name"], nodes[link["target"]]["name"])
+             for link in graph["links"] if link.get("label") == "hereda"}
+
+    assert {("Flask", "App"), ("Flask", "M")} <= bases
+
+
+def test_self_calls_reach_the_nearest_inherited_definition(tmp_path):
+    (tmp_path / "sansio.py").write_text(
+        "class Scaffold:\n    def describe(self):\n        return 'scaffold'\n\n"
+        "class App(Scaffold):\n    def find_handler(self, error):\n        return None\n\n"
+        "    def describe(self):\n        return 'app'\n", encoding="utf-8")
+    (tmp_path / "app.py").write_text(
+        "from sansio import App\n\nclass Flask(App):\n"
+        "    def handle(self, error):\n        return self.find_handler(error)\n\n"
+        "    def name(self):\n        return self.describe()\n\n"
+        "    def find_handler(self, error):\n        return super().find_handler(error)\n\n"
+        "class Quart(Flask):\n    def __init__(self):\n        super(Quart, self).__init__()\n\n"
+        "    def handle(self, error):\n        return super(Quart, self).handle(error)\n", encoding="utf-8")
+
+    calls = _calls(ASTParser().scan_directory(tmp_path, respect_git=False))
+
+    # The class's own override wins for self; super() skips it; the nearest base wins over Scaffold.
+    assert ("handle", "Flask", "find_handler", "EXTRACTED") in calls
+    assert ("find_handler", "App", "find_handler", "EXTRACTED") in calls
+    assert ("name", "App", "describe", "EXTRACTED") in calls
+    assert ("handle", "Flask", "handle", "EXTRACTED") in calls
+    assert not any(caller == "name" and container == "Scaffold" for caller, container, _name, _confidence in calls)
+
+
+def test_this_calls_reach_an_inherited_typescript_method(tmp_path):
+    (tmp_path / "base.ts").write_text("export class Base {\n  helper(): number { return 1; }\n}\n", encoding="utf-8")
+    (tmp_path / "child.ts").write_text(
+        "import { Base } from './base';\n\nexport class Child extends Base {\n  run(): number { return this.helper(); }\n}\n",
+        encoding="utf-8")
+
+    calls = _calls(ASTParser().scan_directory(tmp_path, respect_git=False))
+
+    assert ("run", "Base", "helper", "EXTRACTED") in calls

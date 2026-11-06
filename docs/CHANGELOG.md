@@ -39,6 +39,14 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Las clases de Python registran sus clases base (`class Flask(App)`), y las de TypeScript
+  y JavaScript las de `extends` e `implements`. Antes el grafo no tenía ninguna relación
+  `hereda` en esos lenguajes. Hay que reindexar para notarlo.
+- Una llamada `self.metodo()`, `this.metodo()` o `super().metodo()` llega al método que
+  hereda la clase, buscando primero en la propia clase y luego en sus bases, de la más
+  cercana a la más lejana. En Flask, `_find_error_handler`, definido en `App` y llamado
+  desde `Flask`, pasa de 0 a 3 llamadores en el grafo. `super(Clase, self)` cuenta como
+  `super`.
 - Las llamadas `self.metodo(...)` y `cls.metodo(...)` de Python, `$this->metodo()` de PHP y
   `self.metodo()` de Swift y Rust se resuelven a la clase del propio método. Antes se
   descartaban: en Flask, `ensure_sync` tenía 0 llamadores en el grafo y ahora tiene 9.

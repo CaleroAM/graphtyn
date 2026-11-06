@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v26-self-receivers"
+PARSER_VERSION = "treesitter-v27-python-bases"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -148,6 +148,19 @@ def _language_for_extension(ext: str, source: bytes = b""):
     grammar = importlib.import_module(pack.grammar_module)
     factory = getattr(grammar, pack.factory_for(ext))
     return Language(factory())
+
+
+def _python_bases(source: bytes, superclasses: Any) -> list[str]:
+    """`class Flask(App, mixins.M, Generic[T], metaclass=Meta)` names App, M and Generic."""
+    bases = []
+    for argument in superclasses.named_children:
+        if argument.type == "subscript":
+            argument = argument.child_by_field_name("value") or argument
+        if argument.type == "attribute":
+            argument = argument.child_by_field_name("attribute") or argument
+        if argument.type == "identifier":
+            bases.append(_text(source, argument))
+    return bases
 
 
 def _parser_for(language):
@@ -491,10 +504,12 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
                     break
                 ancestor = ancestor.parent
         bases = []
-        base_node = node.child_by_field_name("bases") or node.child_by_field_name("superclass")
+        base_node = (node.child_by_field_name("bases") or node.child_by_field_name("superclass")
+                     or node.child_by_field_name("superclasses"))
         if base_node is None:
             base_node = next((c for c in node.named_children if c.type in (
-                "base_list", "superclass", "base_class_clause", "delegation_specifiers", "extends_clause")), None)
+                "base_list", "superclass", "base_class_clause", "delegation_specifiers", "extends_clause",
+                "class_heritage")), None)
         if base_node is not None:
             if ctx.pack.name == "ruby":
                 qualified = re.findall(
@@ -502,9 +517,12 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
                     _text(ctx.source, base_node),
                 )
                 bases = qualified[-1:]  # `ActiveJob::Base`: the qualifier picks among the many `Base`
+            elif ctx.pack.name == "python":
+                bases = _python_bases(ctx.source, base_node)
             else:
                 bases = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", _text(ctx.source, base_node))
-                bases = [base for base in bases if base not in {"public", "protected", "private", "virtual", "final", "extends", "with"}]
+                bases = [base for base in bases
+                         if base not in {"public", "protected", "private", "virtual", "final", "extends", "implements", "with"}]
         if ctx.pack.name == "swift":
             bases = [_text(ctx.source, child.child_by_field_name("inherits_from") or child).split("<", 1)[0]
                      for child in node.named_children if child.type == "inheritance_specifier"]

@@ -1,0 +1,190 @@
+{
+ "tasks": [
+  {
+   "id": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+   "request": "Si cambio get_cookie_name en Flask, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "open_session",
+     "any": [
+      "open_session"
+     ]
+    },
+    {
+     "id": "save_session",
+     "any": [
+      "save_session"
+     ]
+    },
+    {
+     "id": "defined_in_base",
+     "any": [
+      "SessionInterface"
+     ]
+    },
+    {
+     "id": "config",
+     "any": [
+      "SESSION_COOKIE_NAME"
+     ]
+    },
+    {
+     "id": "delete_cookie",
+     "any": [
+      "delete_cookie"
+     ]
+    },
+    {
+     "id": "set_cookie",
+     "any": [
+      "set_cookie"
+     ]
+    },
+    {
+     "id": "test_override",
+     "any": [
+      "test_reqctx.py",
+      "test_session_dynamic_cookie_name",
+      "PathAwareSessionInterface"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+   "request": "What breaks if I change _get_exc_class_and_code in Flask? List the direct consumers with file:line evidence.",
+   "rubric": [
+    {
+     "id": "register",
+     "any": [
+      "register_error_handler"
+     ]
+    },
+    {
+     "id": "find_handler",
+     "any": [
+      "_find_error_handler"
+     ]
+    },
+    {
+     "id": "decorator",
+     "any": [
+      "errorhandler"
+     ]
+    },
+    {
+     "id": "handler_spec",
+     "any": [
+      "error_handler_spec"
+     ]
+    },
+    {
+     "id": "invalid_code",
+     "any": [
+      "ValueError",
+      "default_exceptions"
+     ]
+    },
+    {
+     "id": "instance",
+     "any": [
+      "TypeError"
+     ]
+    },
+    {
+     "id": "handlers",
+     "any": [
+      "handle_http_exception",
+      "handle_user_exception",
+      "handle_exception"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+   "request": "Si cambio inject_url_defaults, ¿qué se rompe? Enumera los consumidores directos con archivo:línea.",
+   "rubric": [
+    {
+     "id": "url_for",
+     "any": [
+      "url_for"
+     ]
+    },
+    {
+     "id": "test",
+     "any": [
+      "test_basic.py"
+     ]
+    },
+    {
+     "id": "registry",
+     "any": [
+      "url_default_functions"
+     ]
+    },
+    {
+     "id": "blueprint_names",
+     "any": [
+      "_split_blueprint_path"
+     ]
+    },
+    {
+     "id": "registration",
+     "any": [
+      "url_defaults",
+      "app_url_defaults"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+   "request": "Si cambio should_set_cookie en Flask, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "save_session",
+     "any": [
+      "save_session"
+     ]
+    },
+    {
+     "id": "consumer_class",
+     "any": [
+      "SecureCookieSessionInterface"
+     ]
+    },
+    {
+     "id": "defined_in_base",
+     "any": [
+      "SessionInterface"
+     ]
+    },
+    {
+     "id": "modified",
+     "any": [
+      "modified"
+     ]
+    },
+    {
+     "id": "refresh",
+     "any": [
+      "SESSION_REFRESH_EACH_REQUEST"
+     ]
+    },
+    {
+     "id": "skips_set_cookie",
+     "any": [
+      "set_cookie"
+     ]
+    },
+    {
+     "id": "process_response",
+     "any": [
+      "process_response"
+     ]
+    }
+   ]
+  }
+ ]
+}

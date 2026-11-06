@@ -1,0 +1,162 @@
+[
+ {
+  "version": "main",
+  "task": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27894,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 7
+ },
+ {
+  "version": "main",
+  "task": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27758,
+  "tools": 1,
+  "facts": 4,
+  "facts_total": 7
+ },
+ {
+  "version": "main",
+  "task": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27142,
+  "tools": 1,
+  "facts": 5,
+  "facts_total": 7
+ },
+ {
+  "version": "main",
+  "task": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27096,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 7
+ },
+ {
+  "version": "main",
+  "task": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27075,
+  "tools": 1,
+  "facts": 4,
+  "facts_total": 5
+ },
+ {
+  "version": "main",
+  "task": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 26965,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 5
+ },
+ {
+  "version": "main",
+  "task": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 26621,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 7
+ },
+ {
+  "version": "main",
+  "task": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 26621,
+  "tools": 1,
+  "facts": 4,
+  "facts_total": 7
+ },
+ {
+  "version": "fix",
+  "task": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27944,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 7
+ },
+ {
+  "version": "fix",
+  "task": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 28110,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 7
+ },
+ {
+  "version": "fix",
+  "task": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 28265,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 7
+ },
+ {
+  "version": "fix",
+  "task": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27759,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 7
+ },
+ {
+  "version": "fix",
+  "task": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27306,
+  "tools": 1,
+  "facts": 2,
+  "facts_total": 5
+ },
+ {
+  "version": "fix",
+  "task": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27206,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 5
+ },
+ {
+  "version": "fix",
+  "task": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27258,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 7
+ },
+ {
+  "version": "fix",
+  "task": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27356,
+  "tools": 1,
+  "facts": 4,
+  "facts_total": 7
+ }
+]
