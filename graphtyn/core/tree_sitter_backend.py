@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v25-test-blocks"
+PARSER_VERSION = "treesitter-v26-self-receivers"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -101,6 +101,7 @@ _RUNTIME_BUILTINS = {
 # with the same name (e.g. Parameters#require) is only its target when the call
 # has a receiver, so these are flagged for bare calls only.
 _RUBY_SELF_RECEIVERS = {"self", "dup", "clone"}
+_SELF_RECEIVERS = {"python": {"self", "cls"}, "php": {"$this"}, "swift": {"self"}, "rust": {"self"}}
 _RUBY_BARE_BUILTINS = {
     "require", "require_relative", "load", "include", "extend", "prepend", "raise", "fail",
     "puts", "print", "p", "pp", "printf", "sprintf", "format", "sleep", "rand", "loop",
@@ -843,7 +844,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         if pack.name == "ruby" and not receiver and call.get("name") in _RUBY_BARE_BUILTINS:
             call["runtime_builtin"] = True
         receiver_type = ""
-        if receiver == "this":
+        if receiver == "this" or receiver in _SELF_RECEIVERS.get(pack.name, ()):  # the caller's own class
             receiver_type = call.get("container", "")
         elif receiver:
             # Each receiver is resolved once per file. A match inside the

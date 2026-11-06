@@ -232,3 +232,20 @@ def test_prose_fragments_do_not_become_focus_terms():
 ])
 def test_only_short_questions_about_a_named_symbol_ask_for_source(request_text, mode):
     assert select_evidence_mode(request_text) == mode
+
+
+def test_a_named_body_explained_by_aspects_is_given_whole_when_it_fits(tmp_path):
+    lines = ["static int parseBuffer(client *c) {"]
+    lines += [f"    step_{index}(c);" for index in range(150)]
+    lines += ["    if (limit_exceeded) return C_ERR;", "}"]
+    (tmp_path / "net.c").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    package = {"intent": "flow", "nodes": [], "complete_for": ["flow"], "missing": [], "do_not_expand": False,
+               "matched": [{"id": "s:pb", "name": "parseBuffer", "kind": "function", "file": "net.c",
+                            "line": 1, "end_line": len(lines)}]}
+
+    result = attach_source_evidence(
+        tmp_path, package, "¿Cómo analiza parseBuffer una petición? Explica los pasos, los límites y los errores.",
+        "precision")
+
+    text = result["source_evidence"][0]["text"]
+    assert "lines omitted" not in text and "step_75(c);" in text and "limit_exceeded" in text

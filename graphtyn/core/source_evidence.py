@@ -234,6 +234,16 @@ def _focused_excerpt(path: Path, start: int, end: int, line_budget: int,
     return "\n".join(rendered), start, end
 
 
+def _focus_in_code(path: Path, start: int, end: int, focus_terms: list[str], symbol: str) -> bool:
+    """Whether a request word besides the symbol's own name appears in a code line of its body."""
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[max(0, start - 1):end]
+    except OSError:
+        return True
+    terms = [term for term in focus_terms if term != symbol]
+    return any(term in line.lower() for line in lines if not _COMMENT_LINE.match(line) for term in terms)
+
+
 def _whole_body_excerpt(path: Path, start: int, end: int, char_budget: int = 14_000) -> tuple[str, int, int]:
     """A complete body with real line numbers: comments go first, then the middle."""
     try:
@@ -467,6 +477,12 @@ def _select_excerpts(root: Path, candidates: list[dict[str, Any]], required_symb
             text, actual_start, actual_end = _focused_excerpt(
                 source, start, declared_end, line_budget * (2 if required else 1), focus_terms,
                 char_budget=6_000 if required else 2_500)
+            if required and _ELIDED_LINES.search(text) and not _focus_in_code(source, start, declared_end, focus_terms, name):
+                # The words of "explain the steps, limits and errors of X" match no line of X, so
+                # they cannot pick its lines: the named body goes whole when it fits.
+                whole = _whole_body_excerpt(source, start, declared_end)
+                if whole[0] and not _ELIDED_LINES.search(whole[0]):
+                    text, actual_start, actual_end = whole
         else:
             text, actual_start, actual_end = _numbered_excerpt(source, start, declared_end, line_budget)
         text = text[:remaining]

@@ -1232,3 +1232,30 @@ def test_cues_recognise_each_intent_in_six_languages():
     assert classify_intent("Which specs cover the checkout service?") == "tests"
     # An explicit trace stays a flow even when a stage stores data.
     assert classify_intent("Traza cómo se guarda la sesión en la base de datos paso a paso") == "flow"
+
+
+def test_a_component_named_after_a_preposition_is_scope_not_a_symbol():
+    from graphtyn.core.path_signals import scope_words
+
+    nodes = [{"name": "Flask", "kind": "class", "file": "src/flask/app.py"},
+             {"name": "ensure_sync", "kind": "method", "file": "src/flask/app.py"},
+             {"name": "helper", "kind": "function", "file": "tests/conftest.py"}]
+    assert scope_words(nodes, "Si cambio ensure_sync en Flask, ¿qué se rompe?") == {"flask"}
+    assert scope_words(nodes, "What breaks if I change ensure_sync in Flask?") == {"flask"}
+    assert scope_words(nodes, "Si cambio ensure_sync en el sistema") == set()
+
+
+def test_impact_on_a_method_named_with_its_project_keeps_only_that_method():
+    graph = {"nodes": [
+        {"id": "c", "name": "Flask", "kind": "class", "file": "src/flask/app.py", "line": 1},
+        {"id": "m", "name": "ensure_sync", "kind": "method", "file": "src/flask/app.py", "line": 5, "container": "Flask"},
+        {"id": "d", "name": "dispatch_request", "kind": "method", "file": "src/flask/app.py", "line": 9, "container": "Flask"},
+        {"id": "t", "name": "test_app", "kind": "function", "file": "tests/test_basic.py", "line": 1}],
+        "links": [{"source": "d", "target": "m", "label": "llama", "file": "src/flask/app.py", "line": 10},
+                  {"source": "t", "target": "c", "label": "llama", "file": "tests/test_basic.py", "line": 2}]}
+
+    result = query_intent(graph, "Si cambio ensure_sync en Flask, ¿qué se rompe?", "impact", 10)
+
+    assert {node["name"] for node in result["matched"]} == {"ensure_sync"}
+    # Naming only the class keeps it as the target.
+    assert {node["name"] for node in query_intent(graph, "Si cambio Flask, ¿qué se rompe?", "impact", 10)["matched"]} == {"Flask"}

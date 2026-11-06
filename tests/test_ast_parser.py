@@ -835,3 +835,22 @@ def test_test_blocks_are_the_callers_of_what_they_run(tmp_path):
     assert {("test_charges_the_amount", "charge"), ("setup_block", "charge"), ("it_pays_once", "pay")} <= calls
     assert ("run", "charge") in calls
     assert not any(node.get("name") == "it_x" for node in graph["nodes"])
+
+
+def test_python_self_calls_resolve_to_the_callers_own_class(tmp_path):
+    (tmp_path / "app.py").write_text(
+        "class App:\n"
+        "    def ensure_sync(self, func):\n"
+        "        return func\n\n"
+        "    def dispatch(self, view):\n"
+        "        return self.ensure_sync(view)()\n\n"
+        "    @classmethod\n"
+        "    def build(cls):\n"
+        "        return cls.ensure_sync(None)\n", encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    calls = {(nodes[link["source"]].get("name"), nodes[link["target"]].get("name"))
+             for link in graph["links"] if link.get("label") == "llama"}
+
+    assert {("dispatch", "ensure_sync"), ("build", "ensure_sync")} <= calls

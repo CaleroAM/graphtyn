@@ -39,6 +39,16 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Las llamadas `self.metodo(...)` y `cls.metodo(...)` de Python, `$this->metodo()` de PHP y
+  `self.metodo()` de Swift y Rust se resuelven a la clase del propio método. Antes se
+  descartaban: en Flask, `ensure_sync` tenía 0 llamadores en el grafo y ahora tiene 9.
+  Hay que reindexar para notarlo.
+- En una pregunta de impacto, el nombre de un componente después de una preposición
+  («ensure_sync en Flask») indica dónde buscar, no qué símbolo se pide. Antes, `Flask`
+  llenaba la lista de consumidores con todos los usos de esa clase.
+- Si una pregunta pide explicar los pasos, límites o errores de una función nombrada y esas
+  palabras no aparecen en su código, el extracto lleva el cuerpo entero cuando cabe, en
+  lugar de unas pocas líneas sueltas que se daban por suficientes.
 - El dashboard ejecuta cada reindexado en un proceso aparte. Antes un proyecto grande
   ocupaba el intérprete del servidor durante minutos y las consultas de estado
   agotaban el tiempo: `graphtyn reindex` abandonaba la espera aunque el índice
