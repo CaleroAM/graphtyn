@@ -1,0 +1,151 @@
+{
+ "tasks": [
+  {
+   "id": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+   "request": "Si cambio _find_error_handler en Flask, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "http_exception",
+     "any": [
+      "handle_http_exception"
+     ]
+    },
+    {
+     "id": "user_exception",
+     "any": [
+      "handle_user_exception"
+     ]
+    },
+    {
+     "id": "unhandled_exception",
+     "any": [
+      "handle_exception",
+      "InternalServerError"
+     ]
+    },
+    {
+     "id": "defined_in_base",
+     "any": [
+      "sansio/app.py"
+     ]
+    },
+    {
+     "id": "lookup_order",
+     "any": [
+      "error_handler_spec",
+      "__mro__"
+     ]
+    },
+    {
+     "id": "exception_code",
+     "any": [
+      "_get_exc_class_and_code"
+     ]
+    },
+    {
+     "id": "no_handler_behaviour",
+     "any": [
+      "re-raise",
+      "vuelve a lanzar",
+      "relanza",
+      "return e"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "test_user_error_handler"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+   "request": "What breaks if I change finalize_request in Flask? List the direct consumers with file:line evidence.",
+   "rubric": [
+    {
+     "id": "normal_dispatch",
+     "any": [
+      "full_dispatch_request"
+     ]
+    },
+    {
+     "id": "error_path",
+     "any": [
+      "handle_exception"
+     ]
+    },
+    {
+     "id": "safe_mode",
+     "any": [
+      "from_error_handler"
+     ]
+    },
+    {
+     "id": "subclass_signature",
+     "any": [
+      "__init_subclass__"
+     ]
+    },
+    {
+     "id": "response_conversion",
+     "any": [
+      "make_response"
+     ]
+    },
+    {
+     "id": "after_request",
+     "any": [
+      "process_response"
+     ]
+    },
+    {
+     "id": "signal",
+     "any": [
+      "request_finished"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+   "request": "Si cambio request_context, ¿qué se rompe? Enumera los consumidores directos y los indirectos con archivo:línea.",
+   "rubric": [
+    {
+     "id": "test_context",
+     "any": [
+      "test_request_context"
+     ]
+    },
+    {
+     "id": "wsgi",
+     "any": [
+      "wsgi_app"
+     ]
+    },
+    {
+     "id": "context_factory",
+     "any": [
+      "from_environ",
+      "ctx.py"
+     ]
+    },
+    {
+     "id": "test_client_session",
+     "any": [
+      "session_transaction",
+      "testing.py"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "conftest.py",
+      "test_basic.py",
+      "test_appctx.py"
+     ]
+    }
+   ]
+  }
+ ]
+}

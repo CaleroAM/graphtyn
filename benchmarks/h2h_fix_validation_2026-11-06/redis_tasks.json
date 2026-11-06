@@ -1,0 +1,140 @@
+{
+ "tasks": [
+  {
+   "id": "V_REDIS_INLINE_FLOW",
+   "request": "¿Cómo analiza Redis una petición inline en processInlineBuffer? Explica los pasos, los límites y los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "too_big",
+     "any": [
+      "PROTO_INLINE_MAX_SIZE",
+      "CLIENT_READ_TOO_BIG_INLINE_REQUEST"
+     ]
+    },
+    {
+     "id": "crlf",
+     "any": [
+      "linefeed_chars",
+      "\\r\\n"
+     ]
+    },
+    {
+     "id": "split",
+     "any": [
+      "sdssplitargs"
+     ]
+    },
+    {
+     "id": "unbalanced_quotes",
+     "any": [
+      "CLIENT_READ_UNBALANCED_QUOTES"
+     ]
+    },
+    {
+     "id": "replica_ack",
+     "any": [
+      "repl_ack_time"
+     ]
+    },
+    {
+     "id": "master_inline",
+     "any": [
+      "CLIENT_READ_MASTER_USING_INLINE_PROTOCOL"
+     ]
+    },
+    {
+     "id": "argv_allocation",
+     "any": [
+      "argv_len",
+      "zmalloc"
+     ]
+    },
+    {
+     "id": "objects",
+     "any": [
+      "createObject",
+      "sdsRemoveFreeSpace"
+     ]
+    },
+    {
+     "id": "input_bytes",
+     "any": [
+      "input_bytes"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V_REDIS_ZSETADD_FLOW",
+   "request": "¿Qué hace zsetAdd en Redis? Explica los pasos, los límites y los errores que devuelve. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "nan_input",
+     "any": [
+      "ZADD_OUT_NAN",
+      "isnan"
+     ]
+    },
+    {
+     "id": "incr",
+     "any": [
+      "score += curscore"
+     ]
+    },
+    {
+     "id": "nx_nop",
+     "any": [
+      "ZADD_OUT_NOP"
+     ]
+    },
+    {
+     "id": "gt_lt",
+     "any": [
+      "score >= curscore",
+      "score <= curscore"
+     ]
+    },
+    {
+     "id": "listpack_update",
+     "any": [
+      "zzlDelete",
+      "zzlInsert"
+     ]
+    },
+    {
+     "id": "listpack_limits",
+     "any": [
+      "zset_max_listpack_entries",
+      "zset_max_listpack_value",
+      "lpSafeToAdd"
+     ]
+    },
+    {
+     "id": "convert",
+     "any": [
+      "zsetConvertAndExpand"
+     ]
+    },
+    {
+     "id": "skiplist_update",
+     "any": [
+      "zslUpdateScore"
+     ]
+    },
+    {
+     "id": "skiplist_insert",
+     "any": [
+      "zslInsert",
+      "dictSetKeyAtLink"
+     ]
+    },
+    {
+     "id": "unknown_encoding",
+     "any": [
+      "serverPanic"
+     ]
+    }
+   ]
+  }
+ ]
+}
