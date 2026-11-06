@@ -1,0 +1,103 @@
+{
+ "versions": {
+  "main": {
+   "sessions": 12,
+   "complete": 12,
+   "facts": 70,
+   "facts_total": 96,
+   "mean_tokens": 30733,
+   "median_tokens": 29597,
+   "mean_tools": 1.0
+  },
+  "fix": {
+   "sessions": 12,
+   "complete": 12,
+   "facts": 80,
+   "facts_total": 96,
+   "mean_tokens": 30470,
+   "median_tokens": 29130,
+   "mean_tools": 1.0
+  }
+ },
+ "tasks": {
+  "V_FLASK_FINALIZE_REQUEST_IMPACT": {
+   "main": {
+    "facts": 8,
+    "facts_total": 14,
+    "mean_tokens": 28913
+   },
+   "fix": {
+    "facts": 10,
+    "facts_total": 14,
+    "mean_tokens": 27900
+   }
+  },
+  "V_FLASK_FIND_ERROR_HANDLER_IMPACT": {
+   "main": {
+    "facts": 8,
+    "facts_total": 16,
+    "mean_tokens": 28720
+   },
+   "fix": {
+    "facts": 11,
+    "facts_total": 16,
+    "mean_tokens": 27130
+   }
+  },
+  "V_FLASK_REQUEST_CONTEXT_IMPACT": {
+   "main": {
+    "facts": 6,
+    "facts_total": 10,
+    "mean_tokens": 27120
+   },
+   "fix": {
+    "facts": 6,
+    "facts_total": 10,
+    "mean_tokens": 27899
+   }
+  },
+  "V_RAILS_SAVE_COLLECTION_FLOW": {
+   "main": {
+    "facts": 16,
+    "facts_total": 18,
+    "mean_tokens": 38342
+   },
+   "fix": {
+    "facts": 17,
+    "facts_total": 18,
+    "mean_tokens": 38327
+   }
+  },
+  "V_REDIS_INLINE_FLOW": {
+   "main": {
+    "facts": 16,
+    "facts_total": 18,
+    "mean_tokens": 30254
+   },
+   "fix": {
+    "facts": 18,
+    "facts_total": 18,
+    "mean_tokens": 30380
+   }
+  },
+  "V_REDIS_ZSETADD_FLOW": {
+   "main": {
+    "facts": 16,
+    "facts_total": 20,
+    "mean_tokens": 31049
+   },
+   "fix": {
+    "facts": 18,
+    "facts_total": 20,
+    "mean_tokens": 31181
+   }
+  }
+ },
+ "pairs": {
+  "pairs": 12,
+  "fix_more_facts": 5,
+  "fix_fewer_facts": 1,
+  "fix_fewer_tokens": 6,
+  "median_token_change": 0.001
+ }
+}

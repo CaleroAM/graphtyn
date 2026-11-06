@@ -1,0 +1,482 @@
+{
+ "0109a15815609e61ee0c40a87305d43482459dd93088efb746fc1e4bfbb6e9ad": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "012c4b834700e6885399b2915a45a200e47a3103fa7b26df31b2ea3ff1eefb11": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": false,
+  "user_exception": true
+ },
+ "0276e160ad78f4eebf74b1e83f135abe2023b57a94922e49e8c486c66e85caa0": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "049942d36831db985b91811e48669fe86b73889d656aabb2bb518cfdd8539969": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "09888e28360e3bb88419413e4db364d593fd1c3bd3f725e0d6a668b97935c5e9": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "09da61642a9bcdafb109e58e3a30ba04cdedc984405cbd01d4e84bdb9420f73c": {
+  "defined_in_base": true,
+  "exception_code": false,
+  "http_exception": false,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": false,
+  "user_exception": false
+ },
+ "0d90d6ae1882998de2da93fdcf5ef118318dfb78ecde979133891fdc8fac96a7": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "0df891baafa777b70fda9f9bd658e3a924ef122212807f73d17adcae45a1bb06": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "1058cec3601958b40d8ed0fcd7bc2d1fb685f35c730ff6a8685d4a08a2a47ce6": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "1df5af67d4205576404e5d79800496ee04a2b441b75b284b68b66e7e804c05cc": {
+  "after_request": true,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": true,
+  "safe_mode": true,
+  "signal": true,
+  "subclass_signature": true
+ },
+ "29736011cbcc94a880246313869f78f5d9e6980d2f6b8dc6e1a7ac9d91374d69": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "29f5cd5071fa2082482703ed27153670cc8b6213ca244f5a2c9eda480199a112": {
+  "after_request": true,
+  "error_path": false,
+  "normal_dispatch": false,
+  "response_conversion": true,
+  "safe_mode": false,
+  "signal": true,
+  "subclass_signature": false
+ },
+ "318bf7336675466d2b3d54f2abe02cccf7b121113572975dd6325f3be38c652b": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "3dad85d1f5ae99672122c8b1c4a87673fc47456f5d55e10552c3c8a465c43b7c": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "3eb6bc98c5d2862bee5070f3144c514f965f7acb1d3e9decc97a79c6b1ca92fb": {
+  "argv_allocation": false,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "3f1ead7c996a79bf85fdc99b70c6c9dafacc0d9ce0ba7fd67bbfdce8b8707767": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "409fb7e1889cd2ded40499820bdc66d55c00ba1283b27bdc80de5d47b18d2429": {
+  "convert": true,
+  "gt_lt": false,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ },
+ "47f519454429335fa25b21a4f619f31ffb3e560518c993ba61a8aa4c7098a1e7": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "588ed64c2af1b4707d234707465c9b166d114fe2c0133060d9ae41bb8607886a": {
+  "after_request": true,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": true,
+  "safe_mode": true,
+  "signal": true,
+  "subclass_signature": true
+ },
+ "67db05eb9988a3f0c383d2447e2c43935d09c83f7f1834447550cbe5c5d023dc": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "68d0aaa5d4b154a71f16be754a12ee8899cf24a1d8326e4b4ee478cc176a79e2": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": false,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "6e07309b75cd7e03ab0599fae118413b83f1a58cf1718593887ef9bbd90af7dc": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "6e4cf6be53cb5f1318ccad6906044145da78575f944536958389d012db11a6b9": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "71b3c46cabaf5f2327f998928f5b411138ef09cb06c3d35ca98937dbb4876a72": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "74699b9957df02befbf4d60b387be518157407078fcafde87d1665f32e3d06f8": {
+  "convert": true,
+  "gt_lt": false,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ },
+ "79236a32a93f125301680e55d058c93120259538451ae977677c5c411e7665f1": {
+  "after_request": false,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": false,
+  "safe_mode": true,
+  "signal": false,
+  "subclass_signature": false
+ },
+ "7f86a530e44622abf5d631042279e45da9911b2094039058afe4592016e94399": {
+  "convert": true,
+  "gt_lt": false,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": false,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "892454396eb43fb6725d7236aab3344ee683b4ece34ce5bdffba84f620b30f6e": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "898316a22fdbdcc888cae482c82dde87bcebb326623b27793aa1554239dd3ad5": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "8d8263149ad7e5cbcc6c338964d786d49f010017ab8b051ff67dfebf6cae6ce9": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": false,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "91811a56dc88a4dfa22d8d6c3c95d0da93cd29016e5ae0a992f188170613c86a": {
+  "after_request": true,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": true,
+  "safe_mode": false,
+  "signal": true,
+  "subclass_signature": false
+ },
+ "92eacb8daf8d6df2988860ad5a7ae8e0fa2d635192e109e655f755bbef532781": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "9416d463859bda47b02de5c3024f6c24fdf57d07cc2247df34ec9e9bcc72c632": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "9a48374dfd0a18e856b0c185bab0b357d66d81245b3d459087437a8c2862e4d0": {
+  "after_request": false,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": false,
+  "safe_mode": true,
+  "signal": false,
+  "subclass_signature": false
+ },
+ "9b64bd67122e93027f0bcd5aab5c08fcc6f0d45842bc934ed0ce63e95e37d5ff": {
+  "after_request": true,
+  "error_path": false,
+  "normal_dispatch": false,
+  "response_conversion": true,
+  "safe_mode": false,
+  "signal": true,
+  "subclass_signature": false
+ },
+ "a520dd298ba94909fab23c7275b3a88e25779c95df247cacbe22240a9973a0ca": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ },
+ "ad5fa1d1fa80d9d2a5035346c58a5197d50adaa96d4c8ab95ca05e4d88253733": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "ada732e50f5a30fdfe4955d61731e0df2ec25d3574462eea21f36cc7152f65e6": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "b8eee1059f0766e2c636738e60a7f919c3e9025c28439ff527d94c183aef8118": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "bc04b31b4177b111b91f3139274102bb83b74dfd488f7d43569d677ea5a8d58e": {
+  "after_request": true,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": true,
+  "safe_mode": false,
+  "signal": true,
+  "subclass_signature": false
+ },
+ "bf07f5b063d82ae5cb943638b62896ff6bfca9dcc7ecf155a915352c0cbd8ed9": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "c3d46aae4a8b2ed795d2495c3f800fa9713067e3bf888bf41f110133679d442e": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": false,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "d4130ed08c30d488cf380e92a562cb23eeed33fcbca90a2d0de8e0b01c490dc7": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "d994ad15ec0c5fd08d8a8c6203a592985979b6086139acc7791fc8350e5669df": {
+  "argv_allocation": false,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": false,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "e0dbfb375df78787c1cbcd4aebb6de6673e565dd61dbeaed0acc2433b5a50912": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "e6d2319c59013749eb22b43598ec3adbabb5b1e7588f6b34aaa8037159bd67cb": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "f604ec85dbf3c3f84f01e7307e5c72970b424493011283150c0f22ff2611cb5f": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": false,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": false,
+  "user_exception": false
+ },
+ "f900ad7a44fd255fed946833bf0dd564fbad5dcc14c0dc9d930701f9a1c3396c": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ }
+}
