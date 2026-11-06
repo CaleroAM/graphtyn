@@ -578,7 +578,8 @@ def _command_query_intent(args, root: Path, parser) -> None:
     if args.response_mode == "compact":
         from .mcp_server import evidence_result
         result = evidence_result(result, max_nodes=args.limit)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    from .core.index_freshness import annotate
+    print(json.dumps(annotate(result, root), ensure_ascii=False, indent=2))
 
 def _command_analyze_change(args, root: Path, parser) -> None:
     graph = ASTParser().scan_directory(root, respect_git=True)

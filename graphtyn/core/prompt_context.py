@@ -105,6 +105,8 @@ def prefetch_package(root: Path, prompt: str, client: str | None = None) -> dict
     if not index.is_file():
         return None
     graph = json.loads(index.read_text(encoding="utf-8"))
+    from .index_freshness import check
+    check(root, graph)
     raw, result, context_id = build_intent_package(root, graph, prompt)
     result["context_id"] = context_id
     _tag_graph_result(result, root)

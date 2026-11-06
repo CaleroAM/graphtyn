@@ -10,6 +10,8 @@ import pytest
 # imports out of the real ~/.graphtyn too.
 _SESSION_HOME = tempfile.mkdtemp(prefix="graphtyn-test-home-")
 os.environ["GRAPHTYN_HOME"] = _SESSION_HOME
+# Hand-written test indexes carry no parser version: they must not start real rebuilds.
+os.environ["GRAPHTYN_AUTO_REINDEX"] = "0"
 atexit.register(shutil.rmtree, _SESSION_HOME, ignore_errors=True)
 
 

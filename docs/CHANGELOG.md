@@ -7,6 +7,11 @@ compatibles con PEP 440.
 
 ### Añadido
 
+- Un índice construido con otra versión del parser se detecta al cargarlo. Las
+  respuestas del grafo llevan `index_status` y una nota para el agente, y el índice se
+  reconstruye una vez en segundo plano con el motor con que se creó, sin reindexar a
+  mano tras actualizar Graphtyn. Los índices `ast_cloud` solo avisan, porque ese motor
+  gasta tokens de pago. Se desactiva con `GRAPHTYN_AUTO_REINDEX=0`.
 - `graphtyn tool-guard install --consent`: hook `PreToolUse` de Claude Code que nunca
   bloquea. Antes de leer, buscar o editar le dice al agente, como un hecho, si el último
   paquete completo ya incluye ese archivo, si aún no consultó Graphtyn antes de una
