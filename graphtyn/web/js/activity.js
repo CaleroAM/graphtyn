@@ -66,7 +66,20 @@ function renderUsage(usage) {
     </div>
     <p class="activity-note">Últimos ${esc(usage.days)} días · ${agents}</p>
     ${files ? `<details class="activity-files"><summary>Archivos más entregados</summary><ul>${files}</ul></details>` : ''}
-    <p class="activity-note">Graphtyn sólo ve lo que pasa por él: no sabe qué archivos lee o busca el agente después.</p>`;
+    ${renderAfterPackage(usage.after_package)}`;
+}
+
+function renderAfterPackage(after) {
+  if (!after?.watched) {
+    return `<p class="activity-note">Graphtyn sólo ve lo que pasa por él. Con <code>graphtyn tool-guard install --consent</code>, Claude Code registra también lo que lee y busca después de cada paquete.</p>`;
+  }
+  const outside = (after.top_outside_files || []).map(([file, count]) => `<li title="${esc(file)}"><span>${esc(file)}</span><b>${esc(count)}</b></li>`).join('');
+  return `<div class="activity-stats">
+      <div title="Consultas tras las que el agente leyó o buscó en los 15 minutos siguientes"><b>${esc(after.followed_by_tools)}</b><span>con lecturas después</span></div>
+      <div title="Lecturas de archivos que el paquete no incluía"><b>${esc(after.reads_outside_package)}</b><span>fuera del paquete</span></div>
+      <div title="Búsquedas tras un paquete"><b>${esc(after.searches_after)}</b><span>búsquedas después</span></div>
+    </div>
+    ${outside ? `<details class="activity-files"><summary>Lo que los paquetes no incluían</summary><ul>${outside}</ul></details>` : ''}`;
 }
 
 function renderRiver() {

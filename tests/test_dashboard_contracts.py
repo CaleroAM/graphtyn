@@ -358,7 +358,9 @@ def test_activity_panel_is_wired_and_states_what_it_cannot_see():
     activity = (WEB / "js" / "activity.js").read_text()
     assert 'id="activity-panel"' in html and 'id="activity-follow"' in html and 'id="activity-btn"' in html
     assert "fetch('/api/agent-activity?path='" in activity and "headers:authHeaders()" in activity
-    assert "no sabe qué archivos lee o busca el agente después" in activity
+    # Without the tool hook it says what it cannot see; with it, what packages left out.
+    assert "Graphtyn sólo ve lo que pasa por él" in activity and "graphtyn tool-guard install --consent" in activity
+    assert "Lo que los paquetes no incluían" in activity
     assert "resetActivityForProject();" in (WEB / "js" / "ui.js").read_text()
     assert '"/api/agent-activity"' in Path(api_main.__file__).read_text()
     # Everything from a query comes from agents: it must be escaped before reaching innerHTML.

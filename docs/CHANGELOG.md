@@ -7,6 +7,13 @@ compatibles con PEP 440.
 
 ### Añadido
 
+- `graphtyn tool-guard install --consent`: hook `PreToolUse` de Claude Code que nunca
+  bloquea. Antes de leer, buscar o editar le dice al agente, como un hecho, si el último
+  paquete completo ya incluye ese archivo, si aún no consultó Graphtyn antes de una
+  búsqueda amplia, o si otra sesión editó el mismo archivo en los últimos 30 minutos.
+  Registra esas acciones en el registro de actividad (opcional, 30 días), y
+  `graphtyn tool-guard gaps` y el dashboard muestran qué leen los agentes después de
+  cada paquete y qué archivos no incluía.
 - `graphtyn antigravity-context` (`install|uninstall|status|hook`): hook de primer
   turno para Antigravity en `.agents/hooks.json` (`PreInvocation`). Lee el mensaje
   de la transcripción e inyecta una vez por turno. Opcional, requiere `--consent`.

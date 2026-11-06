@@ -1,0 +1,7198 @@
+{
+ "summary": {
+  "before": {
+   "runs": 12,
+   "facts": 78,
+   "literal": 65,
+   "gemini": 65,
+   "gpt": 65,
+   "consensus": 65
+  },
+  "set2-before": {
+   "runs": 12,
+   "facts": 78,
+   "literal": 67,
+   "gemini": 69,
+   "gpt": 69,
+   "consensus": 69
+  },
+  "set3-before": {
+   "runs": 8,
+   "facts": 66,
+   "literal": 52,
+   "gemini": 62,
+   "gpt": 64,
+   "consensus": 62
+  },
+  "set4-before": {
+   "runs": 8,
+   "facts": 54,
+   "literal": 51,
+   "gemini": 51,
+   "gpt": 51,
+   "consensus": 51
+  },
+  "set1-final": {
+   "runs": 12,
+   "facts": 78,
+   "literal": 69,
+   "gemini": 71,
+   "gpt": 69,
+   "consensus": 69
+  },
+  "set2-final": {
+   "runs": 12,
+   "facts": 78,
+   "literal": 68,
+   "gemini": 75,
+   "gpt": 74,
+   "consensus": 73
+  },
+  "set3-final": {
+   "runs": 8,
+   "facts": 66,
+   "literal": 58,
+   "gemini": 63,
+   "gpt": 64,
+   "consensus": 63
+  },
+  "set4-final": {
+   "runs": 8,
+   "facts": 54,
+   "literal": 50,
+   "gemini": 49,
+   "gpt": 48,
+   "consensus": 48
+  },
+  "set5-final": {
+   "runs": 10,
+   "facts": 74,
+   "literal": 70,
+   "gemini": 72,
+   "gpt": 72,
+   "consensus": 72
+  },
+  "f2-set1": {
+   "runs": 12,
+   "facts": 78,
+   "literal": 76,
+   "gemini": 77,
+   "gpt": 74,
+   "consensus": 74
+  },
+  "f2-set2": {
+   "runs": 12,
+   "facts": 78,
+   "literal": 77,
+   "gemini": 78,
+   "gpt": 76,
+   "consensus": 76
+  },
+  "f2-set3": {
+   "runs": 8,
+   "facts": 66,
+   "literal": 62,
+   "gemini": 64,
+   "gpt": 64,
+   "consensus": 64
+  },
+  "f2-set4": {
+   "runs": 8,
+   "facts": 54,
+   "literal": 52,
+   "gemini": 52,
+   "gpt": 52,
+   "consensus": 52
+  },
+  "f2-set5": {
+   "runs": 8,
+   "facts": 58,
+   "literal": 54,
+   "gemini": 54,
+   "gpt": 56,
+   "consensus": 54
+  },
+  "f2-set6": {
+   "runs": 8,
+   "facts": 62,
+   "literal": 58,
+   "gemini": 60,
+   "gpt": 60,
+   "consensus": 60
+  },
+  "noguide-set1": {
+   "runs": 2,
+   "facts": 16,
+   "literal": 15,
+   "gemini": 16,
+   "gpt": 16,
+   "consensus": 16
+  },
+  "noguide-set2": {
+   "runs": 2,
+   "facts": 16,
+   "literal": 14,
+   "gemini": 16,
+   "gpt": 16,
+   "consensus": 16
+  },
+  "codex-main": {
+   "runs": 8,
+   "facts": 62,
+   "literal": 18,
+   "gemini": 37,
+   "gpt": 37,
+   "consensus": 37
+  },
+  "codex-final": {
+   "runs": 8,
+   "facts": 62,
+   "literal": 39,
+   "gemini": 47,
+   "gpt": 48,
+   "consensus": 47
+  }
+ },
+ "kappa": {
+  "judges": 0.908,
+  "literal_consensus": 0.683
+ },
+ "runs": [
+  {
+   "variant": "before",
+   "task": "FMT_VPRINT_HOW",
+   "repetition": 1,
+   "tokens": 33727,
+   "literal": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   },
+   "gemini": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   },
+   "gpt": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   },
+   "consensus": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   }
+  },
+  {
+   "variant": "before",
+   "task": "FMT_VPRINT_HOW",
+   "repetition": 2,
+   "tokens": 30514,
+   "literal": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   },
+   "gemini": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   },
+   "gpt": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   },
+   "consensus": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   }
+  },
+  {
+   "variant": "before",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 1,
+   "tokens": 47102,
+   "literal": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 2,
+   "tokens": 48720,
+   "literal": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "RAILS_CREATE_RECORD_CALLERS",
+   "repetition": 1,
+   "tokens": 194037,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "RAILS_CREATE_RECORD_CALLERS",
+   "repetition": 2,
+   "tokens": 164567,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "RAILS_TOUCH_IMPACT",
+   "repetition": 1,
+   "tokens": 127349,
+   "literal": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": false,
+    "touch_row": true
+   },
+   "gemini": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": false,
+    "touch_row": true
+   },
+   "gpt": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": false,
+    "touch_row": true
+   },
+   "consensus": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": false,
+    "touch_row": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "RAILS_TOUCH_IMPACT",
+   "repetition": 2,
+   "tokens": 104146,
+   "literal": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": false,
+    "touch_row": true
+   },
+   "gemini": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": false,
+    "touch_row": true
+   },
+   "gpt": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": false,
+    "touch_row": true
+   },
+   "consensus": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": false,
+    "touch_row": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 1,
+   "tokens": 83255,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 2,
+   "tokens": 90633,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "REDIS_EVICT_CALLERS",
+   "repetition": 1,
+   "tokens": 136532,
+   "literal": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gemini": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gpt": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "consensus": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   }
+  },
+  {
+   "variant": "before",
+   "task": "REDIS_EVICT_CALLERS",
+   "repetition": 2,
+   "tokens": 115523,
+   "literal": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gemini": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gpt": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "consensus": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_FMT_SPECS_WHAT",
+   "repetition": 1,
+   "tokens": 43051,
+   "literal": {
+    "align": true,
+    "sign": false,
+    "presentation": false,
+    "error": false,
+    "type_set": false,
+    "location": true
+   },
+   "gemini": {
+    "align": true,
+    "sign": false,
+    "presentation": false,
+    "error": false,
+    "type_set": false,
+    "location": true
+   },
+   "gpt": {
+    "align": true,
+    "sign": false,
+    "presentation": false,
+    "error": false,
+    "type_set": false,
+    "location": true
+   },
+   "consensus": {
+    "align": true,
+    "sign": false,
+    "presentation": false,
+    "error": false,
+    "type_set": false,
+    "location": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_FMT_SPECS_WHAT",
+   "repetition": 2,
+   "tokens": 42825,
+   "literal": {
+    "align": true,
+    "sign": false,
+    "presentation": false,
+    "error": false,
+    "type_set": false,
+    "location": true
+   },
+   "gemini": {
+    "align": true,
+    "sign": false,
+    "presentation": true,
+    "error": false,
+    "type_set": false,
+    "location": true
+   },
+   "gpt": {
+    "align": true,
+    "sign": false,
+    "presentation": true,
+    "error": false,
+    "type_set": false,
+    "location": true
+   },
+   "consensus": {
+    "align": true,
+    "sign": false,
+    "presentation": true,
+    "error": false,
+    "type_set": false,
+    "location": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_FMT_WRITE_BYTES_IMPACT",
+   "repetition": 1,
+   "tokens": 40901,
+   "literal": {
+    "format_h": true,
+    "printf_h": false,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gemini": {
+    "format_h": true,
+    "printf_h": false,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": false,
+    "typeid_std": true
+   },
+   "gpt": {
+    "format_h": true,
+    "printf_h": false,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": false,
+    "typeid_std": true
+   },
+   "consensus": {
+    "format_h": true,
+    "printf_h": false,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": false,
+    "typeid_std": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_FMT_WRITE_BYTES_IMPACT",
+   "repetition": 2,
+   "tokens": 137440,
+   "literal": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gemini": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gpt": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "consensus": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_RAILS_TX_STATUS_WHAT",
+   "repetition": 1,
+   "tokens": 101470,
+   "literal": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gemini": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gpt": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "consensus": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_RAILS_TX_STATUS_WHAT",
+   "repetition": 2,
+   "tokens": 87471,
+   "literal": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gemini": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gpt": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "consensus": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_RAILS_UPDATE_RECORD_CALLERS",
+   "repetition": 1,
+   "tokens": 150142,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_RAILS_UPDATE_RECORD_CALLERS",
+   "repetition": 2,
+   "tokens": 170540,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_REDIS_ASYNC_DELETE_CALLERS",
+   "repetition": 1,
+   "tokens": 163545,
+   "literal": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gemini": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gpt": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "consensus": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_REDIS_ASYNC_DELETE_CALLERS",
+   "repetition": 2,
+   "tokens": 171535,
+   "literal": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gemini": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gpt": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "consensus": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_REDIS_POOL_WHAT",
+   "repetition": 1,
+   "tokens": 92599,
+   "literal": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": false,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gemini": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gpt": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "consensus": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "set2-before",
+   "task": "V2_REDIS_POOL_WHAT",
+   "repetition": 2,
+   "tokens": 66737,
+   "literal": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": false,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gemini": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gpt": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "consensus": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "set3-before",
+   "task": "V3_FMT_PARSE_SPECS_WHAT",
+   "repetition": 1,
+   "tokens": 58784,
+   "literal": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": false,
+    "numeric": false
+   },
+   "gemini": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": false,
+    "numeric": true
+   },
+   "gpt": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "consensus": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": false,
+    "numeric": true
+   }
+  },
+  {
+   "variant": "set3-before",
+   "task": "V3_FMT_PARSE_SPECS_WHAT",
+   "repetition": 2,
+   "tokens": 75706,
+   "literal": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": false
+   },
+   "gemini": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": false
+   },
+   "gpt": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "consensus": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": false
+   }
+  },
+  {
+   "variant": "set3-before",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 1,
+   "tokens": 53828,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "set3-before",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 2,
+   "tokens": 80088,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "set3-before",
+   "task": "V3_REDIS_FREE_CLIENT_WHAT",
+   "repetition": 1,
+   "tokens": 102364,
+   "literal": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": false,
+    "master_lost": true,
+    "module_event": false
+   },
+   "gemini": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gpt": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "consensus": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   }
+  },
+  {
+   "variant": "set3-before",
+   "task": "V3_REDIS_FREE_CLIENT_WHAT",
+   "repetition": 2,
+   "tokens": 81380,
+   "literal": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gemini": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gpt": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "consensus": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   }
+  },
+  {
+   "variant": "set3-before",
+   "task": "V3_REDIS_SCAN_WHAT",
+   "repetition": 1,
+   "tokens": 116910,
+   "literal": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": false,
+    "pattern": false,
+    "listpack": true,
+    "callers": false
+   },
+   "gemini": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "gpt": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "consensus": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   }
+  },
+  {
+   "variant": "set3-before",
+   "task": "V3_REDIS_SCAN_WHAT",
+   "repetition": 2,
+   "tokens": 114627,
+   "literal": {
+    "novalues": true,
+    "max_iter": false,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": false,
+    "pattern": false,
+    "listpack": true,
+    "callers": false
+   },
+   "gemini": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "gpt": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "consensus": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   }
+  },
+  {
+   "variant": "set4-before",
+   "task": "V4_FMT_EXPONENT_CALLERS",
+   "repetition": 1,
+   "tokens": 29201,
+   "literal": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gemini": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gpt": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "consensus": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   }
+  },
+  {
+   "variant": "set4-before",
+   "task": "V4_FMT_EXPONENT_CALLERS",
+   "repetition": 2,
+   "tokens": 28631,
+   "literal": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gemini": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gpt": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "consensus": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   }
+  },
+  {
+   "variant": "set4-before",
+   "task": "V4_RAILS_COMMIT_TX_WHAT",
+   "repetition": 1,
+   "tokens": 159283,
+   "literal": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gemini": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gpt": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "consensus": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   }
+  },
+  {
+   "variant": "set4-before",
+   "task": "V4_RAILS_COMMIT_TX_WHAT",
+   "repetition": 2,
+   "tokens": 69981,
+   "literal": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gemini": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gpt": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "consensus": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   }
+  },
+  {
+   "variant": "set4-before",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 1,
+   "tokens": 183161,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "set4-before",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 2,
+   "tokens": 179370,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "set4-before",
+   "task": "V4_REDIS_MIGRATE_RETRY",
+   "repetition": 1,
+   "tokens": 102816,
+   "literal": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gemini": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gpt": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "consensus": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   }
+  },
+  {
+   "variant": "set4-before",
+   "task": "V4_REDIS_MIGRATE_RETRY",
+   "repetition": 2,
+   "tokens": 120633,
+   "literal": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gemini": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gpt": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "consensus": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "FMT_VPRINT_HOW",
+   "repetition": 1,
+   "tokens": 95958,
+   "literal": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": true,
+    "format_to": true,
+    "print_helper": true
+   },
+   "gemini": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": true,
+    "format_to": true,
+    "print_helper": true
+   },
+   "gpt": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": true,
+    "format_to": true,
+    "print_helper": true
+   },
+   "consensus": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": true,
+    "format_to": true,
+    "print_helper": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "FMT_VPRINT_HOW",
+   "repetition": 2,
+   "tokens": 33487,
+   "literal": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": true
+   },
+   "gemini": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": true
+   },
+   "gpt": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": true
+   },
+   "consensus": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 1,
+   "tokens": 44278,
+   "literal": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 2,
+   "tokens": 47431,
+   "literal": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "RAILS_CREATE_RECORD_CALLERS",
+   "repetition": 1,
+   "tokens": 44994,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": false,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": false,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "RAILS_CREATE_RECORD_CALLERS",
+   "repetition": 2,
+   "tokens": 41047,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": false,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": false,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "RAILS_TOUCH_IMPACT",
+   "repetition": 1,
+   "tokens": 168584,
+   "literal": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "gemini": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "gpt": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "consensus": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "RAILS_TOUCH_IMPACT",
+   "repetition": 2,
+   "tokens": 162850,
+   "literal": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "gemini": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "gpt": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "consensus": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 1,
+   "tokens": 44149,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 2,
+   "tokens": 43651,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "REDIS_EVICT_CALLERS",
+   "repetition": 1,
+   "tokens": 106107,
+   "literal": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gemini": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gpt": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "consensus": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   }
+  },
+  {
+   "variant": "set1-final",
+   "task": "REDIS_EVICT_CALLERS",
+   "repetition": 2,
+   "tokens": 93077,
+   "literal": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gemini": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gpt": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "consensus": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_FMT_SPECS_WHAT",
+   "repetition": 1,
+   "tokens": 46567,
+   "literal": {
+    "align": true,
+    "sign": false,
+    "presentation": true,
+    "error": false,
+    "type_set": false,
+    "location": true
+   },
+   "gemini": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": false,
+    "type_set": true,
+    "location": true
+   },
+   "gpt": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   },
+   "consensus": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": false,
+    "type_set": true,
+    "location": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_FMT_SPECS_WHAT",
+   "repetition": 2,
+   "tokens": 61263,
+   "literal": {
+    "align": true,
+    "sign": false,
+    "presentation": true,
+    "error": false,
+    "type_set": false,
+    "location": true
+   },
+   "gemini": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": false,
+    "location": true
+   },
+   "gpt": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": false,
+    "location": true
+   },
+   "consensus": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": false,
+    "location": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_FMT_WRITE_BYTES_IMPACT",
+   "repetition": 1,
+   "tokens": 31224,
+   "literal": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gemini": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gpt": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": false
+   },
+   "consensus": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": false
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_FMT_WRITE_BYTES_IMPACT",
+   "repetition": 2,
+   "tokens": 31593,
+   "literal": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gemini": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gpt": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": false
+   },
+   "consensus": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": false
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_RAILS_TX_STATUS_WHAT",
+   "repetition": 1,
+   "tokens": 43218,
+   "literal": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gemini": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gpt": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "consensus": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_RAILS_TX_STATUS_WHAT",
+   "repetition": 2,
+   "tokens": 42606,
+   "literal": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gemini": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gpt": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "consensus": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_RAILS_UPDATE_RECORD_CALLERS",
+   "repetition": 1,
+   "tokens": 40151,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_RAILS_UPDATE_RECORD_CALLERS",
+   "repetition": 2,
+   "tokens": 43322,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_REDIS_ASYNC_DELETE_CALLERS",
+   "repetition": 1,
+   "tokens": 53921,
+   "literal": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gemini": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gpt": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "consensus": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_REDIS_ASYNC_DELETE_CALLERS",
+   "repetition": 2,
+   "tokens": 39793,
+   "literal": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gemini": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gpt": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "consensus": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_REDIS_POOL_WHAT",
+   "repetition": 1,
+   "tokens": 43828,
+   "literal": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": false,
+    "pool_size": false,
+    "shift": false,
+    "caller": true
+   },
+   "gemini": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": false,
+    "shift": true,
+    "caller": true
+   },
+   "gpt": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": false,
+    "shift": true,
+    "caller": true
+   },
+   "consensus": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": false,
+    "shift": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "set2-final",
+   "task": "V2_REDIS_POOL_WHAT",
+   "repetition": 2,
+   "tokens": 45181,
+   "literal": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": false,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gemini": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gpt": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "consensus": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "set3-final",
+   "task": "V3_FMT_PARSE_SPECS_WHAT",
+   "repetition": 1,
+   "tokens": 44879,
+   "literal": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": false
+   },
+   "gemini": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "gpt": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "consensus": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   }
+  },
+  {
+   "variant": "set3-final",
+   "task": "V3_FMT_PARSE_SPECS_WHAT",
+   "repetition": 2,
+   "tokens": 45496,
+   "literal": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": false
+   },
+   "gemini": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "gpt": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "consensus": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   }
+  },
+  {
+   "variant": "set3-final",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 1,
+   "tokens": 90601,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "set3-final",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 2,
+   "tokens": 101602,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "set3-final",
+   "task": "V3_REDIS_FREE_CLIENT_WHAT",
+   "repetition": 1,
+   "tokens": 48357,
+   "literal": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": false
+   },
+   "gemini": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gpt": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "consensus": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   }
+  },
+  {
+   "variant": "set3-final",
+   "task": "V3_REDIS_FREE_CLIENT_WHAT",
+   "repetition": 2,
+   "tokens": 47332,
+   "literal": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gemini": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gpt": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "consensus": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   }
+  },
+  {
+   "variant": "set3-final",
+   "task": "V3_REDIS_SCAN_WHAT",
+   "repetition": 1,
+   "tokens": 52798,
+   "literal": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": false,
+    "listpack": true,
+    "callers": true
+   },
+   "gemini": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": false,
+    "listpack": true,
+    "callers": true
+   },
+   "gpt": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "consensus": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": false,
+    "listpack": true,
+    "callers": true
+   }
+  },
+  {
+   "variant": "set3-final",
+   "task": "V3_REDIS_SCAN_WHAT",
+   "repetition": 2,
+   "tokens": 47963,
+   "literal": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": false,
+    "listpack": true,
+    "callers": false
+   },
+   "gemini": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "gpt": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "consensus": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   }
+  },
+  {
+   "variant": "set4-final",
+   "task": "V4_FMT_EXPONENT_CALLERS",
+   "repetition": 1,
+   "tokens": 92818,
+   "literal": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gemini": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gpt": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "consensus": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   }
+  },
+  {
+   "variant": "set4-final",
+   "task": "V4_FMT_EXPONENT_CALLERS",
+   "repetition": 2,
+   "tokens": 29380,
+   "literal": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gemini": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gpt": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "consensus": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   }
+  },
+  {
+   "variant": "set4-final",
+   "task": "V4_RAILS_COMMIT_TX_WHAT",
+   "repetition": 1,
+   "tokens": 38492,
+   "literal": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gemini": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gpt": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "consensus": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   }
+  },
+  {
+   "variant": "set4-final",
+   "task": "V4_RAILS_COMMIT_TX_WHAT",
+   "repetition": 2,
+   "tokens": 38701,
+   "literal": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gemini": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gpt": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "consensus": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   }
+  },
+  {
+   "variant": "set4-final",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 1,
+   "tokens": 72434,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "set4-final",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 2,
+   "tokens": 58753,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "set4-final",
+   "task": "V4_REDIS_MIGRATE_RETRY",
+   "repetition": 1,
+   "tokens": 60167,
+   "literal": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gemini": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gpt": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "consensus": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   }
+  },
+  {
+   "variant": "set4-final",
+   "task": "V4_REDIS_MIGRATE_RETRY",
+   "repetition": 2,
+   "tokens": 77432,
+   "literal": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gemini": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gpt": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "consensus": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "FMT_DYNAMIC_WIDTH_FLOW",
+   "repetition": 1,
+   "tokens": 112108,
+   "literal": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "gemini": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "gpt": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "consensus": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "FMT_DYNAMIC_WIDTH_FLOW",
+   "repetition": 2,
+   "tokens": 119356,
+   "literal": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "gemini": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "gpt": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "consensus": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "FMT_PRINTF_FLOW",
+   "repetition": 1,
+   "tokens": 105162,
+   "literal": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "gemini": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "gpt": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "consensus": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "FMT_PRINTF_FLOW",
+   "repetition": 2,
+   "tokens": 108733,
+   "literal": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "gemini": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "gpt": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "consensus": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 1,
+   "tokens": 51407,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 2,
+   "tokens": 51282,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "V5_RAILS_PERFORM_IMPACT",
+   "repetition": 1,
+   "tokens": 49438,
+   "literal": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": false
+   },
+   "gemini": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": false
+   },
+   "gpt": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": false
+   },
+   "consensus": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": false
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "V5_RAILS_PERFORM_IMPACT",
+   "repetition": 2,
+   "tokens": 48176,
+   "literal": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": false
+   },
+   "gemini": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": false
+   },
+   "gpt": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": false
+   },
+   "consensus": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": false
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "V5_RAILS_TOUCH_LATER_TX_WHAT",
+   "repetition": 1,
+   "tokens": 57018,
+   "literal": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": false,
+    "defer_attrs": true
+   },
+   "gemini": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "gpt": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "consensus": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   }
+  },
+  {
+   "variant": "set5-final",
+   "task": "V5_RAILS_TOUCH_LATER_TX_WHAT",
+   "repetition": 2,
+   "tokens": 69534,
+   "literal": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": false,
+    "defer_attrs": true
+   },
+   "gemini": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "gpt": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "consensus": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "FMT_VPRINT_HOW",
+   "repetition": 1,
+   "tokens": 31599,
+   "literal": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": true
+   },
+   "gemini": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": true
+   },
+   "gpt": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   },
+   "consensus": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": false,
+    "format_to": true,
+    "print_helper": false
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "FMT_VPRINT_HOW",
+   "repetition": 2,
+   "tokens": 72044,
+   "literal": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": true,
+    "format_to": true,
+    "print_helper": true
+   },
+   "gemini": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": true,
+    "format_to": true,
+    "print_helper": true
+   },
+   "gpt": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": true,
+    "format_to": true,
+    "print_helper": true
+   },
+   "consensus": {
+    "buffered_check": true,
+    "flockfile": true,
+    "buffered_path": true,
+    "file_buffer": true,
+    "format_to": true,
+    "print_helper": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 1,
+   "tokens": 121567,
+   "literal": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 2,
+   "tokens": 50400,
+   "literal": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "RAILS_CREATE_RECORD_CALLERS",
+   "repetition": 1,
+   "tokens": 42451,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": false,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": false,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "RAILS_CREATE_RECORD_CALLERS",
+   "repetition": 2,
+   "tokens": 41635,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": false,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": false,
+    "timestamp": true,
+    "counter_cache": true,
+    "dirty": true,
+    "association": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "RAILS_TOUCH_IMPACT",
+   "repetition": 1,
+   "tokens": 64626,
+   "literal": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "gemini": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "gpt": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "consensus": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "RAILS_TOUCH_IMPACT",
+   "repetition": 2,
+   "tokens": 65963,
+   "literal": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "gemini": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "gpt": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   },
+   "consensus": {
+    "touch_later": true,
+    "transactions": true,
+    "callbacks": true,
+    "no_touching": true,
+    "has_one": true,
+    "touch_row": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 1,
+   "tokens": 47571,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 2,
+   "tokens": 56203,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "REDIS_EVICT_CALLERS",
+   "repetition": 1,
+   "tokens": 80127,
+   "literal": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gemini": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gpt": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "consensus": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   }
+  },
+  {
+   "variant": "f2-set1",
+   "task": "REDIS_EVICT_CALLERS",
+   "repetition": 2,
+   "tokens": 67019,
+   "literal": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gemini": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "gpt": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   },
+   "consensus": {
+    "process_command": true,
+    "time_proc": true,
+    "evict_fail": true,
+    "evict_running": true,
+    "oom_flag": true,
+    "denyoom": true,
+    "ae_nomore": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_FMT_SPECS_WHAT",
+   "repetition": 1,
+   "tokens": 45667,
+   "literal": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   },
+   "gemini": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   },
+   "gpt": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   },
+   "consensus": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_FMT_SPECS_WHAT",
+   "repetition": 2,
+   "tokens": 44573,
+   "literal": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   },
+   "gemini": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   },
+   "gpt": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   },
+   "consensus": {
+    "align": true,
+    "sign": true,
+    "presentation": true,
+    "error": true,
+    "type_set": true,
+    "location": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_FMT_WRITE_BYTES_IMPACT",
+   "repetition": 1,
+   "tokens": 43048,
+   "literal": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gemini": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gpt": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": false
+   },
+   "consensus": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": false
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_FMT_WRITE_BYTES_IMPACT",
+   "repetition": 2,
+   "tokens": 95248,
+   "literal": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gemini": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": true
+   },
+   "gpt": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": false
+   },
+   "consensus": {
+    "format_h": true,
+    "printf_h": true,
+    "std_h": true,
+    "bytes_formatter": true,
+    "printf_null": true,
+    "typeid_std": false
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_RAILS_TX_STATUS_WHAT",
+   "repetition": 1,
+   "tokens": 43383,
+   "literal": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gemini": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gpt": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "consensus": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_RAILS_TX_STATUS_WHAT",
+   "repetition": 2,
+   "tokens": 44285,
+   "literal": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gemini": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "gpt": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   },
+   "consensus": {
+    "with_connection": true,
+    "implicit": true,
+    "add_to_tx": true,
+    "remember": true,
+    "rollback": true,
+    "yield": true,
+    "last_status": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_RAILS_UPDATE_RECORD_CALLERS",
+   "repetition": 1,
+   "tokens": 126563,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_RAILS_UPDATE_RECORD_CALLERS",
+   "repetition": 2,
+   "tokens": 42118,
+   "literal": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gemini": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "gpt": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   },
+   "consensus": {
+    "create_or_update": true,
+    "callbacks": true,
+    "timestamp": true,
+    "dirty": true,
+    "optimistic": true,
+    "update_columns": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_REDIS_ASYNC_DELETE_CALLERS",
+   "repetition": 1,
+   "tokens": 39896,
+   "literal": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gemini": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gpt": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "consensus": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_REDIS_ASYNC_DELETE_CALLERS",
+   "repetition": 2,
+   "tokens": 65993,
+   "literal": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gemini": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "gpt": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   },
+   "consensus": {
+    "del_generic": true,
+    "db_c": true,
+    "module_c": true,
+    "rm_unlink": true,
+    "line_1449": true,
+    "line_4417": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_REDIS_POOL_WHAT",
+   "repetition": 1,
+   "tokens": 45035,
+   "literal": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gemini": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gpt": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "consensus": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "f2-set2",
+   "task": "V2_REDIS_POOL_WHAT",
+   "repetition": 2,
+   "tokens": 44006,
+   "literal": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": false,
+    "caller": true
+   },
+   "gemini": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gpt": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "consensus": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "f2-set3",
+   "task": "V3_FMT_PARSE_SPECS_WHAT",
+   "repetition": 1,
+   "tokens": 44068,
+   "literal": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": false
+   },
+   "gemini": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "gpt": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "consensus": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   }
+  },
+  {
+   "variant": "f2-set3",
+   "task": "V3_FMT_PARSE_SPECS_WHAT",
+   "repetition": 2,
+   "tokens": 44821,
+   "literal": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": false
+   },
+   "gemini": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "gpt": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   },
+   "consensus": {
+    "state": true,
+    "presentation": true,
+    "width": true,
+    "precision": true,
+    "locale": true,
+    "alt": true,
+    "invalid": true,
+    "numeric": true
+   }
+  },
+  {
+   "variant": "f2-set3",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 1,
+   "tokens": 44940,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "f2-set3",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 2,
+   "tokens": 43078,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "f2-set3",
+   "task": "V3_REDIS_FREE_CLIENT_WHAT",
+   "repetition": 1,
+   "tokens": 51640,
+   "literal": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gemini": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gpt": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "consensus": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   }
+  },
+  {
+   "variant": "f2-set3",
+   "task": "V3_REDIS_FREE_CLIENT_WHAT",
+   "repetition": 2,
+   "tokens": 47117,
+   "literal": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gemini": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "gpt": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   },
+   "consensus": {
+    "protected": true,
+    "async": true,
+    "cache_master": true,
+    "watch": true,
+    "unlink": true,
+    "multi": true,
+    "master_lost": true,
+    "module_event": true
+   }
+  },
+  {
+   "variant": "f2-set3",
+   "task": "V3_REDIS_SCAN_WHAT",
+   "repetition": 1,
+   "tokens": 47056,
+   "literal": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "gemini": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "gpt": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "consensus": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   }
+  },
+  {
+   "variant": "f2-set3",
+   "task": "V3_REDIS_SCAN_WHAT",
+   "repetition": 2,
+   "tokens": 52348,
+   "literal": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "gemini": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "gpt": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   },
+   "consensus": {
+    "novalues": true,
+    "max_iter": true,
+    "kvstore_scan": true,
+    "dict_scan": true,
+    "type_filter": true,
+    "pattern": true,
+    "listpack": true,
+    "callers": true
+   }
+  },
+  {
+   "variant": "f2-set4",
+   "task": "V4_FMT_EXPONENT_CALLERS",
+   "repetition": 1,
+   "tokens": 28689,
+   "literal": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gemini": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gpt": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "consensus": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   }
+  },
+  {
+   "variant": "f2-set4",
+   "task": "V4_FMT_EXPONENT_CALLERS",
+   "repetition": 2,
+   "tokens": 27880,
+   "literal": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gemini": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "gpt": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   },
+   "consensus": {
+    "do_write_float": true,
+    "line_2861": true,
+    "line_3845": true,
+    "file": true
+   }
+  },
+  {
+   "variant": "f2-set4",
+   "task": "V4_RAILS_COMMIT_TX_WHAT",
+   "repetition": 1,
+   "tokens": 40602,
+   "literal": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gemini": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gpt": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "consensus": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   }
+  },
+  {
+   "variant": "f2-set4",
+   "task": "V4_RAILS_COMMIT_TX_WHAT",
+   "repetition": 2,
+   "tokens": 39029,
+   "literal": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gemini": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "gpt": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   },
+   "consensus": {
+    "before": true,
+    "dirty": true,
+    "records": true,
+    "rollback_error": true,
+    "invalidate": true,
+    "pop": true,
+    "lock": true
+   }
+  },
+  {
+   "variant": "f2-set4",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 1,
+   "tokens": 52632,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "f2-set4",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 2,
+   "tokens": 48387,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "f2-set4",
+   "task": "V4_REDIS_MIGRATE_RETRY",
+   "repetition": 1,
+   "tokens": 57338,
+   "literal": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gemini": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gpt": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "consensus": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   }
+  },
+  {
+   "variant": "f2-set4",
+   "task": "V4_REDIS_MIGRATE_RETRY",
+   "repetition": 2,
+   "tokens": 61177,
+   "literal": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gemini": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "gpt": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   },
+   "consensus": {
+    "may_retry": true,
+    "try_again": true,
+    "socket_err": true,
+    "timeout": true,
+    "close": true,
+    "target_error": true,
+    "write_error": true,
+    "last_dbid": false
+   }
+  },
+  {
+   "variant": "f2-set5",
+   "task": "FMT_DYNAMIC_WIDTH_FLOW",
+   "repetition": 1,
+   "tokens": 138723,
+   "literal": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": false,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "gemini": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": false,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "gpt": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": false,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "consensus": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": false,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   }
+  },
+  {
+   "variant": "f2-set5",
+   "task": "FMT_DYNAMIC_WIDTH_FLOW",
+   "repetition": 2,
+   "tokens": 142742,
+   "literal": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": false,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "gemini": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": false,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "gpt": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": true,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   },
+   "consensus": {
+    "parse": true,
+    "width": true,
+    "precision": true,
+    "ref": false,
+    "indexing": true,
+    "handle": true,
+    "getter": true,
+    "range": true
+   }
+  },
+  {
+   "variant": "f2-set5",
+   "task": "FMT_PRINTF_FLOW",
+   "repetition": 1,
+   "tokens": 132832,
+   "literal": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "gemini": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "gpt": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "consensus": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   }
+  },
+  {
+   "variant": "f2-set5",
+   "task": "FMT_PRINTF_FLOW",
+   "repetition": 2,
+   "tokens": 109984,
+   "literal": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "gemini": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "gpt": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   },
+   "consensus": {
+    "vprintf": true,
+    "header": true,
+    "flags": true,
+    "width": true,
+    "precision": true,
+    "convert": true,
+    "type": true,
+    "writer": true
+   }
+  },
+  {
+   "variant": "f2-set5",
+   "task": "V5_RAILS_PERFORM_IMPACT",
+   "repetition": 1,
+   "tokens": 49890,
+   "literal": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": true
+   },
+   "gemini": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": true
+   },
+   "gpt": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": true
+   },
+   "consensus": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": true,
+    "queue_classic": true,
+    "mailer_job": true
+   }
+  },
+  {
+   "variant": "f2-set5",
+   "task": "V5_RAILS_PERFORM_IMPACT",
+   "repetition": 2,
+   "tokens": 48723,
+   "literal": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": false,
+    "queue_classic": true,
+    "mailer_job": true
+   },
+   "gemini": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": false,
+    "queue_classic": true,
+    "mailer_job": true
+   },
+   "gpt": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": false,
+    "queue_classic": true,
+    "mailer_job": true
+   },
+   "consensus": {
+    "execution": true,
+    "async": true,
+    "instrumentation": true,
+    "resque": false,
+    "queue_classic": true,
+    "mailer_job": true
+   }
+  },
+  {
+   "variant": "f2-set5",
+   "task": "V5_RAILS_TOUCH_LATER_TX_WHAT",
+   "repetition": 1,
+   "tokens": 83001,
+   "literal": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": false,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "gemini": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": false,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "gpt": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "consensus": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": false,
+    "parents": true,
+    "defer_attrs": true
+   }
+  },
+  {
+   "variant": "f2-set5",
+   "task": "V5_RAILS_TOUCH_LATER_TX_WHAT",
+   "repetition": 2,
+   "tokens": 56474,
+   "literal": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "gemini": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "gpt": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   },
+   "consensus": {
+    "add_tx": true,
+    "surreptitious": true,
+    "before_committed": true,
+    "deferred": true,
+    "not_touched": true,
+    "parents": true,
+    "defer_attrs": true
+   }
+  },
+  {
+   "variant": "f2-set6",
+   "task": "V6_DE_REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 1,
+   "tokens": 47697,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "f2-set6",
+   "task": "V6_DE_REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 2,
+   "tokens": 46469,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "f2-set6",
+   "task": "V6_FR_FMT_WRITE_PADDED_IMPACT",
+   "repetition": 1,
+   "tokens": 112423,
+   "literal": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "f2-set6",
+   "task": "V6_FR_FMT_WRITE_PADDED_IMPACT",
+   "repetition": 2,
+   "tokens": 60769,
+   "literal": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": true,
+    "write_ptr": true,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "f2-set6",
+   "task": "V6_IT_RAILS_WITHIN_TX_WHAT",
+   "repetition": 1,
+   "tokens": 43644,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "f2-set6",
+   "task": "V6_IT_RAILS_WITHIN_TX_WHAT",
+   "repetition": 2,
+   "tokens": 41228,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "f2-set6",
+   "task": "V6_PT_RAILS_RELOAD_IMPACT",
+   "repetition": 1,
+   "tokens": 49008,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "f2-set6",
+   "task": "V6_PT_RAILS_RELOAD_IMPACT",
+   "repetition": 2,
+   "tokens": 49509,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "noguide-set1",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 1,
+   "tokens": 46040,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "noguide-set1",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 2,
+   "tokens": 50640,
+   "literal": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": true,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": true,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "noguide-set2",
+   "task": "V2_REDIS_POOL_WHAT",
+   "repetition": 1,
+   "tokens": 44398,
+   "literal": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": false,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gemini": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gpt": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "consensus": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "noguide-set2",
+   "task": "V2_REDIS_POOL_WHAT",
+   "repetition": 2,
+   "tokens": 45187,
+   "literal": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": false,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gemini": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "gpt": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   },
+   "consensus": {
+    "sampling": true,
+    "samples": true,
+    "lru": true,
+    "lfu": true,
+    "ttl": true,
+    "pool_size": true,
+    "shift": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 1,
+   "tokens": 27355,
+   "literal": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": false,
+    "write_int": false,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": false,
+    "write_int": false,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": false,
+    "write_int": false,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": false,
+    "write_int": false,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 2,
+   "tokens": 27721,
+   "literal": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": false,
+    "write_int": false,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": false,
+    "write_int": false,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": false,
+    "write_int": false,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": false,
+    "write_ptr": false,
+    "write_nonfinite": false,
+    "write_float": false,
+    "write_int": false,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 1,
+   "tokens": 28402,
+   "literal": {
+    "fast_mode": false,
+    "slow_mode": false,
+    "time_limit": false,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": false,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 2,
+   "tokens": 28364,
+   "literal": {
+    "fast_mode": false,
+    "slow_mode": false,
+    "time_limit": false,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": false,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": false,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 1,
+   "tokens": 77115,
+   "literal": {
+    "begin": false,
+    "rollback": false,
+    "commit": false,
+    "failure": false,
+    "aborting": false,
+    "throw_away": false,
+    "incomplete": false,
+    "conn_failed": true,
+    "caller": true
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": true
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": true
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 2,
+   "tokens": 62906,
+   "literal": {
+    "begin": true,
+    "rollback": false,
+    "commit": false,
+    "failure": false,
+    "aborting": false,
+    "throw_away": false,
+    "incomplete": false,
+    "conn_failed": false,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": false,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": false,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": false,
+    "caller": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 1,
+   "tokens": 144912,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": false,
+    "dirty": true,
+    "relation": false
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": false,
+    "dirty": true,
+    "relation": false
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": false,
+    "dirty": true,
+    "relation": false
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": true,
+    "persistence": true,
+    "autosave": false,
+    "dirty": true,
+    "relation": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 2,
+   "tokens": 110937,
+   "literal": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": false,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": false
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": false,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": false
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": false,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": false
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": false,
+    "collection": false,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": false
+   }
+  },
+  {
+   "variant": "codex-final",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 1,
+   "tokens": 29457,
+   "literal": {
+    "write_char": true,
+    "write_ptr": false,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": false
+   },
+   "gemini": {
+    "write_char": true,
+    "write_ptr": false,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": false
+   },
+   "gpt": {
+    "write_char": true,
+    "write_ptr": false,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": false
+   },
+   "consensus": {
+    "write_char": true,
+    "write_ptr": false,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": false
+   }
+  },
+  {
+   "variant": "codex-final",
+   "task": "FMT_WRITE_PADDED_IMPACT",
+   "repetition": 2,
+   "tokens": 29586,
+   "literal": {
+    "write_char": true,
+    "write_ptr": false,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gemini": {
+    "write_char": true,
+    "write_ptr": false,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "gpt": {
+    "write_char": true,
+    "write_ptr": false,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   },
+   "consensus": {
+    "write_char": true,
+    "write_ptr": false,
+    "write_nonfinite": true,
+    "write_float": true,
+    "write_int": true,
+    "std_formatter": true
+   }
+  },
+  {
+   "variant": "codex-final",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 1,
+   "tokens": 31269,
+   "literal": {
+    "fast_mode": false,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": false,
+    "cron_caller": false,
+    "sleep_caller": false
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": false
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": false
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": false
+   }
+  },
+  {
+   "variant": "codex-final",
+   "task": "REDIS_ACTIVE_EXPIRE_WHAT",
+   "repetition": 2,
+   "tokens": 31446,
+   "literal": {
+    "fast_mode": false,
+    "slow_mode": false,
+    "time_limit": false,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": false,
+    "cron_caller": false,
+    "sleep_caller": false
+   },
+   "gemini": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": false
+   },
+   "gpt": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": true,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": false
+   },
+   "consensus": {
+    "fast_mode": true,
+    "slow_mode": false,
+    "time_limit": true,
+    "db_count": false,
+    "try_expire": true,
+    "stale_threshold": true,
+    "cron_caller": false,
+    "sleep_caller": false
+   }
+  },
+  {
+   "variant": "codex-final",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 1,
+   "tokens": 36586,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": false,
+    "conn_failed": true,
+    "caller": true
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": true
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": true
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": true
+   }
+  },
+  {
+   "variant": "codex-final",
+   "task": "V3_RAILS_WITHIN_TX_WHAT",
+   "repetition": 2,
+   "tokens": 36640,
+   "literal": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": false,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gemini": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "gpt": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   },
+   "consensus": {
+    "begin": true,
+    "rollback": true,
+    "commit": true,
+    "failure": true,
+    "aborting": true,
+    "throw_away": true,
+    "incomplete": true,
+    "conn_failed": true,
+    "caller": false
+   }
+  },
+  {
+   "variant": "codex-final",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 1,
+   "tokens": 46789,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": false,
+    "autosave": true,
+    "dirty": true,
+    "relation": false
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": false,
+    "autosave": true,
+    "dirty": true,
+    "relation": false
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": false,
+    "autosave": true,
+    "dirty": true,
+    "relation": false
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": false,
+    "autosave": true,
+    "dirty": true,
+    "relation": false
+   }
+  },
+  {
+   "variant": "codex-final",
+   "task": "V4_RAILS_RELOAD_IMPACT",
+   "repetition": 2,
+   "tokens": 38209,
+   "literal": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gemini": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "gpt": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   },
+   "consensus": {
+    "pessimistic": true,
+    "singular": true,
+    "collection": true,
+    "through": false,
+    "persistence": true,
+    "autosave": true,
+    "dirty": true,
+    "relation": true
+   }
+  }
+ ]
+}

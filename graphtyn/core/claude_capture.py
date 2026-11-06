@@ -39,7 +39,7 @@ def _is_managed(group: Any, command: str = HOOK_COMMAND) -> bool:
 
 def install_claude_hook(root: str | Path, event: str, command: str, timeout: int,
                         invocation: str | None = None,
-                        invocations: list[str] | None = None) -> dict[str, Any]:
+                        invocations: list[str] | None = None, matcher: str | None = None) -> dict[str, Any]:
     """Register a managed hook group once for `event`, preserving user hooks.
 
     `command` identifies the managed hooks; `invocation(s)` are the exact
@@ -53,8 +53,9 @@ def install_claude_hook(root: str | Path, event: str, command: str, timeout: int
     if not isinstance(groups, list):
         raise ValueError(f"{path}: hooks.{event} debe ser una lista")
     if not any(_is_managed(group, command) for group in groups):
-        groups.append({"hooks": [{"type": "command", "command": line, "timeout": timeout}
-                                 for line in invocations]})
+        group: dict[str, Any] = {"matcher": matcher} if matcher else {}
+        group["hooks"] = [{"type": "command", "command": line, "timeout": timeout} for line in invocations]
+        groups.append(group)
         path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_json(path, data)
     return {"ok": True, "settings": str(path), "hook": event,
