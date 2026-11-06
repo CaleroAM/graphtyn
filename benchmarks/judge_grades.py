@@ -8,8 +8,9 @@ Codex CLI), without tools or access to the code, decide for each fact whether th
 states it by name or by an unambiguous description. Cohen's kappa between the judges says
 whether that decision is reproducible; the consensus counts a fact only when both agree.
 
-Usage: judge_grades.py --run-root <runs> --variant <name> [--variant ...]
-Results go to judge_grades.json; calls are cached in judge_cache.json.
+Usage: judge_grades.py --tasks-root <benchmark folder> --run-root <runs> --variant <name> [--variant ...]
+The tasks root holds the `*_tasks.json` files with each task's rubric. Results go to
+<tasks root>/judge_grades.json; judge calls are cached in <tasks root>/judge_cache.json.
 """
 from __future__ import annotations
 
@@ -22,8 +23,6 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-CACHE = HERE / "judge_cache.json"
 MAX_ANSWER = 24_000
 JUDGES = {
     "gemini": lambda prompt, cwd: ["agy", "-p", prompt, "--model", "gemini-3.8-flash-high", "--output-format", "text",
@@ -33,8 +32,8 @@ JUDGES = {
 }
 
 
-def _specs() -> dict[str, dict]:
-    return {task["id"]: task for path in HERE.glob("**/*_tasks.json")
+def _specs(root: Path) -> dict[str, dict]:
+    return {task["id"]: task for path in root.glob("**/*_tasks.json")
             for task in json.loads(path.read_text(encoding="utf-8"))["tasks"]}
 
 
@@ -74,12 +73,14 @@ def _kappa(left: list[bool], right: list[bool]) -> float | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--tasks-root", type=Path, required=True)
     parser.add_argument("--run-root", type=Path, required=True)
     parser.add_argument("--variant", action="append", required=True)
     parser.add_argument("--workers", type=int, default=4)
     args = parser.parse_args()
-    specs = _specs()
-    cache = json.loads(CACHE.read_text(encoding="utf-8")) if CACHE.exists() else {}
+    specs = _specs(args.tasks_root)
+    cache_path, output_path = args.tasks_root / "judge_cache.json", args.tasks_root / "judge_grades.json"
+    cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
     runs = []
     for variant in args.variant:
         for summary_path in sorted((args.run_root / variant).glob("*/runs/*/summary.json")):
@@ -97,7 +98,7 @@ def main() -> int:
         for (run, judge), verdict in zip(jobs, pool.map(lambda job: _ask(job[1], job[0]["prompt"], cwd), jobs)):
             if verdict is not None:
                 cache[hashlib.sha256(f"{judge}\n{run['prompt']}".encode()).hexdigest()] = verdict
-    CACHE.write_text(json.dumps(cache, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    cache_path.write_text(json.dumps(cache, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     rows, pairs = [], {"judges": ([], []), "literal_consensus": ([], [])}
     for run in runs:
         verdicts = {judge: cache.get(hashlib.sha256(f"{judge}\n{run['prompt']}".encode()).hexdigest()) for judge in JUDGES}
@@ -119,7 +120,7 @@ def main() -> int:
                             **{key: sum(sum(row[key].values()) for row in group)
                                for key in ("literal", "gemini", "gpt", "consensus")}}
     agreement = {name: _kappa(*values) for name, values in pairs.items()}
-    (HERE / "judge_grades.json").write_text(json.dumps({"summary": summary, "kappa": agreement, "runs": rows},
+    output_path.write_text(json.dumps({"summary": summary, "kappa": agreement, "runs": rows},
                                                         ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(json.dumps({"summary": summary, "kappa": agreement}, ensure_ascii=False, indent=1))
     return 0

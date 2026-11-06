@@ -10,6 +10,8 @@ Set 4 was frozen before the follow-up corrections: set4-before is f6544c3; retes
 retest5-* rerun the tasks touched by the last adjustments to references; they got worse.
 retest6-* rerun them after listing file-level calls under the function making them.
 Set 5 was frozen before seeing its packages: set5-final is 78d4930 and set5-off the same code without overload attribution.
+f2-* rerun sets 1 to 5 on d5af039; set 6 translates four tasks to pt/fr/de/it; noguide-* is d5af039 without the
+sentence asking to name identifiers; codex-* compare main (5196b28) and d5af039 in Codex (gpt-5.6-luna).
 """
 from __future__ import annotations
 
@@ -27,7 +29,10 @@ VARIANTS = {"before": HERE, "after": HERE, "set1-final": HERE,
             "retest4-set1": HERE, "retest4-set2": HERE / "set2", "retest4-set3": HERE / "set3",
             "retest5-set4": HERE / "set4", "retest5-set1": HERE,
             "retest6-set4": HERE / "set4", "retest6-set1": HERE,
-            "set5-final": HERE / "set5", "set5-off": HERE / "set5"}
+            "set5-final": HERE / "set5", "set5-off": HERE / "set5",
+            "f2-set1": HERE, "f2-set2": HERE / "set2", "f2-set3": HERE / "set3", "f2-set4": HERE / "set4",
+            "f2-set5": HERE / "set5", "f2-set6": HERE / "set6", "noguide-set1": HERE, "noguide-set2": HERE / "set2",
+            "codex-main": HERE, "codex-final": HERE}
 
 
 def _steps(events: list[dict]) -> list[dict]:
