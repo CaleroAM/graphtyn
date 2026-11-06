@@ -55,8 +55,13 @@ class MemoryJobManager:
         # file. Share the writer lock with _write so polling never observes a
         # transient access error during an atomic update.
         with self._lock:
-            try: return json.loads(self._path(job_id).read_text(encoding="utf-8"))
-            except FileNotFoundError: raise ValueError("job no encontrado")
+            for attempt in range(5):
+                try: return json.loads(self._path(job_id).read_text(encoding="utf-8"))
+                except FileNotFoundError: raise ValueError("job no encontrado")
+                # Another process (a reindex worker) may be replacing the file right now.
+                except (PermissionError, json.JSONDecodeError):
+                    if attempt == 4: raise
+                    time.sleep(0.05)
 
     def list(self, limit: int = 50) -> list[dict[str, Any]]:
         with self._lock:
