@@ -1,0 +1,36 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada de la resolución de llamadas sobre self a métodos heredados, en tareas nuevas: Graphtyn main frente a la rama corregida.",
+ "repository": {
+  "name": "pallets/flask",
+  "url": "https://github.com/pallets/flask",
+  "commit": "d086db856be187255b8ec61ef409357393020f32"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "I_FLASK_EXC_CLASS_CODE_IMPACT"
+  ],
+  "arms": {
+   "graphtyn (main)": "Graphtyn main 1192669, MCP lean, regla targeted",
+   "graphtyn (fix)": "Graphtyn fix/inherited-self-calls, MCP lean, regla targeted"
+  },
+  "repetitions": 2,
+  "order": "alternado por repetición",
+  "stop_rule": "targeted",
+  "grading": "Dos jueces (Gemini y GPT, sin herramientas) por hecho; consenso como medida principal. Rúbrica escrita leyendo el código antes de ejecutar."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio; cada versión de Graphtyn se ejecuta desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario pidió corregir los métodos heredados tras fusionar #44 (2026-11-06).",
+  "total_token_ceiling": 1500000
+ }
+}
