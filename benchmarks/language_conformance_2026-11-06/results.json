@@ -1,0 +1,127 @@
+{
+ "versions": {
+  "main": {
+   "sessions": 16,
+   "complete": 16,
+   "facts": 136,
+   "facts_total": 152,
+   "mean_tokens": 59084,
+   "median_tokens": 30340,
+   "mean_tools": 2.6
+  },
+  "fix": {
+   "sessions": 16,
+   "complete": 16,
+   "facts": 143,
+   "facts_total": 152,
+   "mean_tokens": 53291,
+   "median_tokens": 31059,
+   "mean_tools": 2.4
+  }
+ },
+ "tasks": {
+  "L_COBRA_EXECUTEC_FLOW": {
+   "main": {
+    "facts": 20,
+    "facts_total": 20,
+    "mean_tokens": 42423
+   },
+   "fix": {
+    "facts": 18,
+    "facts_total": 20,
+    "mean_tokens": 29866
+   }
+  },
+  "L_COBRA_MERGE_FLAGS_IMPACT": {
+   "main": {
+    "facts": 18,
+    "facts_total": 18,
+    "mean_tokens": 27098
+   },
+   "fix": {
+    "facts": 17,
+    "facts_total": 18,
+    "mean_tokens": 28496
+   }
+  },
+  "L_GSON_DOPEEK_FLOW": {
+   "main": {
+    "facts": 20,
+    "facts_total": 22,
+    "mean_tokens": 119770
+   },
+   "fix": {
+    "facts": 20,
+    "facts_total": 22,
+    "mean_tokens": 67294
+   }
+  },
+  "L_GSON_POPSTACK_IMPACT": {
+   "main": {
+    "facts": 17,
+    "facts_total": 18,
+    "mean_tokens": 93196
+   },
+   "fix": {
+    "facts": 16,
+    "facts_total": 18,
+    "mean_tokens": 32074
+   }
+  },
+  "L_RIPGREP_GLOB_PARSE_FLOW": {
+   "main": {
+    "facts": 19,
+    "facts_total": 24,
+    "mean_tokens": 46853
+   },
+   "fix": {
+    "facts": 23,
+    "facts_total": 24,
+    "mean_tokens": 121843
+   }
+  },
+  "L_RIPGREP_MATCH_LIMIT_IMPACT": {
+   "main": {
+    "facts": 16,
+    "facts_total": 16,
+    "mean_tokens": 27088
+   },
+   "fix": {
+    "facts": 15,
+    "facts_total": 16,
+    "mean_tokens": 28414
+   }
+  },
+  "L_SLIM_MAP_IMPACT": {
+   "main": {
+    "facts": 14,
+    "facts_total": 16,
+    "mean_tokens": 29354
+   },
+   "fix": {
+    "facts": 16,
+    "facts_total": 16,
+    "mean_tokens": 29285
+   }
+  },
+  "L_SLIM_RUN_FLOW": {
+   "main": {
+    "facts": 12,
+    "facts_total": 18,
+    "mean_tokens": 86889
+   },
+   "fix": {
+    "facts": 18,
+    "facts_total": 18,
+    "mean_tokens": 89056
+   }
+  }
+ },
+ "pairs": {
+  "pairs": 16,
+  "fix_more_facts": 4,
+  "fix_fewer_facts": 6,
+  "fix_fewer_tokens": 7,
+  "median_token_change": 0.02
+ }
+}
