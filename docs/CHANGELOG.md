@@ -39,6 +39,22 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Cada lenguaje produce lo que declara, y una prueba de conformidad
+  (`tests/test_language_conformance.py`) lo comprueba con un ejemplo por lenguaje:
+  - **Java:** no extraía ninguna llamada a métodos (`method_invocation`) y perdía los
+    `implements`.
+  - **PHP:** guardaba `$this->helper()` con el nombre `this` y no leía `extends` ni
+    `implements`. `parent::` cuenta como `super`, y `self::` y `static::` como la propia clase.
+  - **Go:** registra `type X struct` como símbolo, da a cada método el tipo de su receptor,
+    trata la variable receptora (`c` en `func (c *Child)`) como el propio objeto y toma los
+    campos embebidos como bases, así que `c.Helper()` llega al método promovido.
+  - **Rust:** los métodos de un bloque `impl` pertenecen a su tipo, así que `self.own()` se
+    enlaza, y los supertraits (`trait Shape: Base`) cuentan como herencia. `impl Trait for
+    Type` no se modela.
+  - **Campos con tipo:** TypeScript, JavaScript, PHP, Go y Rust ahora registran sus campos con
+    tipo, de modo que `this.repo.save()` se resuelve por el tipo de `repo`.
+  - **JavaScript:** declara la herencia que ya extraía.
+  Hay que reindexar para notarlo.
 - Las clases de Python registran sus clases base (`class Flask(App)`), y las de TypeScript
   y JavaScript las de `extends` e `implements`. Antes el grafo no tenía ninguna relación
   `hereda` en esos lenguajes. Hay que reindexar para notarlo.

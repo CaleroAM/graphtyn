@@ -23,7 +23,7 @@ def unique_symbol_id(
 
 _OWN_RECEIVERS = {"self", "cls", "this", "$this"}
 _PARENT_RECEIVERS = {"super"}
-_TYPE_KINDS = {"class", "interface", "struct", "trait", "protocol", "enum", "record", "object", "abstract_class"}
+_TYPE_KINDS = {"class", "interface", "struct", "trait", "protocol", "enum", "record", "object", "abstract_class", "type"}
 _MAX_ANCESTRY = 8
 
 
@@ -42,23 +42,32 @@ class ClassAncestry:
     def __init__(self, nodes: dict[str, dict[str, Any]], links: list[dict[str, Any]]):
         self.nodes = nodes
         self.types = {}
+        by_directory: dict[tuple[str, str], list[str]] = {}
         for node_id, node in nodes.items():
             if node.get("kind") in _TYPE_KINDS:
                 self.types.setdefault((node.get("file"), node.get("name")), node_id)
+                by_directory.setdefault((str(PurePosixPath(str(node.get("file") or "")).parent), str(node.get("name"))),
+                                        []).append(node_id)
+        # A Go method or an out-of-line C++ member may live beside its type, not in its file.
+        self.beside = {key: ids[0] for key, ids in by_directory.items() if len(ids) == 1}
         self.bases: dict[str, list[str]] = {}
         for link in links:
             if link.get("label") in ("hereda", "implementa") and link.get("confidence") != "AMBIGUOUS":
                 self.bases.setdefault(str(link.get("source")), []).append(str(link.get("target")))
-        self._levels: dict[tuple[str, str], list[set[tuple[str, str]]]] = {}
+        self._levels: dict[tuple[str, str], list[set[str]]] = {}
 
-    def _ancestry(self, rel_file: str, container: str) -> list[set[tuple[str, str]]]:
-        """(file, class name) of the caller's class, then of each generation of bases."""
+    def owner(self, rel_file: str, name: str) -> str | None:
+        """The type a member of `name` in `rel_file` belongs to: in that file, or alone beside it."""
+        return self.types.get((rel_file, name)) or self.beside.get((str(PurePosixPath(rel_file).parent), name))
+
+    def _ancestry(self, rel_file: str, container: str) -> list[set[str]]:
+        """The caller's type, then each generation of its bases."""
         key = (rel_file, container)
         if key not in self._levels:
-            start = self.types.get(key)
+            start = self.owner(rel_file, container)
             levels, frontier, seen = [], [start] if start else [], {start}
             while frontier and len(levels) <= _MAX_ANCESTRY:
-                levels.append({(self.nodes[item].get("file"), self.nodes[item].get("name")) for item in frontier})
+                levels.append(set(frontier))
                 frontier = [base for item in frontier for base in self.bases.get(item, ()) if base not in seen]
                 seen.update(frontier)
             self._levels[key] = levels
@@ -69,13 +78,15 @@ class ClassAncestry:
         receiver = str(call.get("receiver") or "")
         # `super(Subcommand, self).__init__()` arrives with `self` as its receiver.
         parent = receiver in _PARENT_RECEIVERS or (call.get("receiver_chain") or [""])[0] in _PARENT_RECEIVERS
-        own = receiver in _OWN_RECEIVERS and not parent
+        own = (receiver in _OWN_RECEIVERS or bool(call.get("self_receiver"))) and not parent
         if not (own or parent) or rel_file.endswith(".rb") or not call.get("container"):
             return None
         levels = self._ancestry(rel_file, _simple(call["container"]))
+        owners = {target: self.owner(str(self.nodes.get(target, {}).get("file") or ""),
+                                     _simple(self.nodes.get(target, {}).get("container")))
+                  for target in targets} if levels else {}
         for level in levels if own else levels[1:]:
-            found = {target for target in targets
-                     if (self.nodes.get(target, {}).get("file"), _simple(self.nodes.get(target, {}).get("container"))) in level}
+            found = {target for target, owner in owners.items() if owner in level}
             if found:
                 return found, str(self.nodes[next(iter(found))].get("container") or "")
         return None

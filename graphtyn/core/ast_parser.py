@@ -780,7 +780,7 @@ class ASTParser:
         node_by_id = {node["id"]: node for node in nodes}
 
         def _simple_type(value: str) -> str:
-            value = re.sub(r"\b(?:ref|out|in|params)\s+", "", str(value or "")).strip()
+            value = re.sub(r"\b(?:ref|out|in|params)\s+", "", str(value or "")).strip().strip("*& ")  # Go `*Base`, C++ `Base*`
             value = re.sub(r"[?\[\]].*", "", value)
             value = value.split("<", 1)[0]
             return value.rsplit(".", 1)[-1]
