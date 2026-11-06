@@ -298,9 +298,11 @@ def write_openclaw_config(discovered: dict[str, Any], replacement: dict[str, Any
             "import json,os,shutil,sys,tempfile; "
             "from pathlib import Path; "
             "p=Path(sys.argv[1]); data=sys.stdin.read(); p.parent.mkdir(parents=True,exist_ok=True); "
-            "shutil.copy2(p,sys.argv[2]); "
+            "st=os.stat(p); shutil.copy2(p,sys.argv[2]); "
             "fd,t=tempfile.mkstemp(prefix='.'+p.name+'.',suffix='.tmp',dir=str(p.parent)); "
-            "os.fchmod(fd,os.stat(sys.argv[2]).st_mode & 0o777); "
+            "os.fchmod(fd,st.st_mode & 0o777); "
+            # Written as root over SSH: keep the owner, or OpenClaw can no longer read its config.
+            "[os.fchown(fd,st.st_uid,st.st_gid), os.chown(sys.argv[2],st.st_uid,st.st_gid)] if os.geteuid()==0 else None; "
             "f=os.fdopen(fd,'w',encoding='utf-8'); f.write(json.dumps(json.loads(data),ensure_ascii=False,indent=2)+'\\n'); f.flush(); os.fsync(f.fileno()); f.close(); os.replace(t,p)"
         )
         command = "python3 -c " + shlex.quote(script) + " " + shlex.quote(config_path) + " " + shlex.quote(backup)
@@ -312,13 +314,16 @@ def write_openclaw_config(discovered: dict[str, Any], replacement: dict[str, Any
                     "reason": (completed.stderr or completed.stdout).strip()[-500:] or "falló la actualización remota"}
     else:
         target = Path(config_path)
-        mode = target.stat().st_mode & 0o777
+        original = target.stat()
+        mode = original.st_mode & 0o777
         shutil.copy2(target, backup)
         fd, temporary = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as stream:
                 stream.write(payload); stream.flush(); os.fsync(stream.fileno())
             os.chmod(temporary, mode)
+            if hasattr(os, "chown") and os.geteuid() == 0:
+                os.chown(temporary, original.st_uid, original.st_gid)
             os.replace(temporary, target)
         finally:
             try: os.unlink(temporary)

@@ -107,3 +107,23 @@ def test_a_bound_token_cannot_ask_as_another_agent(tmp_path, monkeypatch):
 
     assert api_main._agent_scope_denial("Bearer t-n", "openclaw/nexus") is None
     assert api_main._agent_scope_denial("Bearer t-n", "openclaw/career").status_code == 403
+
+
+def test_the_ssh_writer_keeps_the_mode_and_writes_the_backup(tmp_path, monkeypatch):
+    import stat
+
+    from graphtyn.core import openclaw_integration
+
+    config_path = tmp_path / "openclaw.json"
+    config_path.write_text(json.dumps({"old": True}), encoding="utf-8")
+    config_path.chmod(0o600)
+    # Run the remote script locally: the same python3 -c command the SSH session would run.
+    monkeypatch.setattr(openclaw_integration, "ssh_command", lambda target: ["sh", "-c"])
+
+    written = openclaw_integration.write_openclaw_config(
+        {"kind": "ssh", "target": "root@vm", "config_path": str(config_path)}, {"new": True})
+
+    assert written["ok"], written
+    assert json.loads(config_path.read_text(encoding="utf-8")) == {"new": True}
+    assert stat.S_IMODE(config_path.stat().st_mode) == 0o600
+    assert json.loads(open(written["backup"], encoding="utf-8").read()) == {"old": True}
