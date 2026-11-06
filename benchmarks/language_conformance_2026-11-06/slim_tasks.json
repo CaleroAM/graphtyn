@@ -1,0 +1,128 @@
+{
+ "tasks": [
+  {
+   "id": "L_SLIM_MAP_IMPACT",
+   "request": "Si cambio map en RouteCollectorProxy de Slim, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "get_post",
+     "any": [
+      "get(",
+      "post("
+     ]
+    },
+    {
+     "id": "put_patch",
+     "any": [
+      "put(",
+      "patch("
+     ]
+    },
+    {
+     "id": "delete_options",
+     "any": [
+      "delete(",
+      "options("
+     ]
+    },
+    {
+     "id": "any",
+     "any": [
+      "any("
+     ]
+    },
+    {
+     "id": "app_inherits",
+     "any": [
+      "App extends RouteCollectorProxy",
+      "App.php"
+     ]
+    },
+    {
+     "id": "group_prefix",
+     "any": [
+      "groupPattern"
+     ]
+    },
+    {
+     "id": "collector",
+     "any": [
+      "routeCollector->map",
+      "RouteCollector::map"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "RouteCollectorProxyTest"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "L_SLIM_RUN_FLOW",
+   "request": "¿Cómo atiende Slim una petición desde App::run hasta que envía la respuesta? Explica los pasos y las clases que intervienen. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "request_from_globals",
+     "any": [
+      "ServerRequestCreatorFactory",
+      "createServerRequestFromGlobals"
+     ]
+    },
+    {
+     "id": "app_handle",
+     "any": [
+      "handle"
+     ]
+    },
+    {
+     "id": "middleware_dispatcher",
+     "any": [
+      "MiddlewareDispatcher"
+     ]
+    },
+    {
+     "id": "route_runner",
+     "any": [
+      "RouteRunner"
+     ]
+    },
+    {
+     "id": "routing_if_needed",
+     "any": [
+      "RoutingMiddleware",
+      "performRouting",
+      "ROUTING_RESULTS"
+     ]
+    },
+    {
+     "id": "route_run",
+     "any": [
+      "->run(",
+      "Route::run"
+     ]
+    },
+    {
+     "id": "head_empty_body",
+     "any": [
+      "HEAD"
+     ]
+    },
+    {
+     "id": "emitter",
+     "any": [
+      "ResponseEmitter"
+     ]
+    },
+    {
+     "id": "emit_details",
+     "any": [
+      "emitHeaders",
+      "emitStatusLine"
+     ]
+    }
+   ]
+  }
+ ]
+}

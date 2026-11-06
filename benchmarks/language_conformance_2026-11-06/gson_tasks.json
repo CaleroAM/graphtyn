@@ -1,0 +1,144 @@
+{
+ "tasks": [
+  {
+   "id": "L_GSON_POPSTACK_IMPACT",
+   "request": "Si cambio popStack en JsonTreeReader de Gson, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "arrays",
+     "any": [
+      "endArray"
+     ]
+    },
+    {
+     "id": "objects",
+     "any": [
+      "endObject"
+     ]
+    },
+    {
+     "id": "strings",
+     "any": [
+      "nextString"
+     ]
+    },
+    {
+     "id": "booleans",
+     "any": [
+      "nextBoolean"
+     ]
+    },
+    {
+     "id": "nulls",
+     "any": [
+      "nextNull"
+     ]
+    },
+    {
+     "id": "numbers",
+     "any": [
+      "nextDouble",
+      "nextInt",
+      "nextLong"
+     ]
+    },
+    {
+     "id": "skip",
+     "any": [
+      "skipValue"
+     ]
+    },
+    {
+     "id": "path_index",
+     "any": [
+      "pathIndices"
+     ]
+    },
+    {
+     "id": "clears_slot",
+     "any": [
+      "stack[stackSize] = null",
+      "--stackSize"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "L_GSON_DOPEEK_FLOW",
+   "request": "¿Cómo decide JsonReader de Gson el siguiente token en doPeek? Explica los pasos, las funciones que llama y los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "scope_stack",
+     "any": [
+      "JsonScope",
+      "peekStack"
+     ]
+    },
+    {
+     "id": "whitespace",
+     "any": [
+      "nextNonWhitespace"
+     ]
+    },
+    {
+     "id": "lenient",
+     "any": [
+      "checkLenient"
+     ]
+    },
+    {
+     "id": "unterminated",
+     "any": [
+      "Unterminated array",
+      "Unterminated object"
+     ]
+    },
+    {
+     "id": "names",
+     "any": [
+      "PEEKED_DOUBLE_QUOTED_NAME",
+      "PEEKED_UNQUOTED_NAME",
+      "Expected name"
+     ]
+    },
+    {
+     "id": "colon",
+     "any": [
+      "Expected ':'"
+     ]
+    },
+    {
+     "id": "prefix",
+     "any": [
+      "consumeNonExecutePrefix"
+     ]
+    },
+    {
+     "id": "closed",
+     "any": [
+      "JsonReader is closed"
+     ]
+    },
+    {
+     "id": "keyword",
+     "any": [
+      "peekKeyword"
+     ]
+    },
+    {
+     "id": "number",
+     "any": [
+      "peekNumber"
+     ]
+    },
+    {
+     "id": "unquoted",
+     "any": [
+      "PEEKED_UNQUOTED",
+      "Expected value"
+     ]
+    }
+   ]
+  }
+ ]
+}

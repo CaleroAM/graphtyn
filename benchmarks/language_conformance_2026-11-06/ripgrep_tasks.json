@@ -1,0 +1,141 @@
+{
+ "tasks": [
+  {
+   "id": "L_RIPGREP_MATCH_LIMIT_IMPACT",
+   "request": "Si cambio has_exceeded_match_limit en ripgrep, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "find",
+     "any": [
+      "find"
+     ]
+    },
+    {
+     "id": "shortest_match",
+     "any": [
+      "shortest_match"
+     ]
+    },
+    {
+     "id": "after_context",
+     "any": [
+      "after_context_by_line"
+     ]
+    },
+    {
+     "id": "slow_line",
+     "any": [
+      "match_by_line_slow"
+     ]
+    },
+    {
+     "id": "fast_line",
+     "any": [
+      "match_by_line_fast",
+      "match_by_line_fast_invert"
+     ]
+    },
+    {
+     "id": "find_by_line_fast",
+     "any": [
+      "find_by_line_fast"
+     ]
+    },
+    {
+     "id": "max_matches",
+     "any": [
+      "max_matches"
+     ]
+    },
+    {
+     "id": "count",
+     "any": [
+      "count"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "L_RIPGREP_GLOB_PARSE_FLOW",
+   "request": "¿Cómo convierte globset un patrón en tokens en Parser::parse? Explica los pasos, las funciones que llama y los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "build",
+     "any": [
+      "GlobBuilder"
+     ]
+    },
+    {
+     "id": "any",
+     "any": [
+      "Token::Any"
+     ]
+    },
+    {
+     "id": "star",
+     "any": [
+      "parse_star"
+     ]
+    },
+    {
+     "id": "recursive",
+     "any": [
+      "RecursivePrefix"
+     ]
+    },
+    {
+     "id": "class",
+     "any": [
+      "parse_class"
+     ]
+    },
+    {
+     "id": "alternates",
+     "any": [
+      "push_alternate",
+      "pop_alternate"
+     ]
+    },
+    {
+     "id": "comma",
+     "any": [
+      "parse_comma"
+     ]
+    },
+    {
+     "id": "escape",
+     "any": [
+      "parse_backslash",
+      "DanglingEscape"
+     ]
+    },
+    {
+     "id": "literal",
+     "any": [
+      "Token::Literal"
+     ]
+    },
+    {
+     "id": "alt_errors",
+     "any": [
+      "UnopenedAlternates",
+      "UnclosedAlternates"
+     ]
+    },
+    {
+     "id": "class_errors",
+     "any": [
+      "UnclosedClass",
+      "InvalidRange"
+     ]
+    },
+    {
+     "id": "regex",
+     "any": [
+      "to_regex_with"
+     ]
+    }
+   ]
+  }
+ ]
+}
