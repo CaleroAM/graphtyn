@@ -1203,6 +1203,11 @@ def _run_reindex_job(job_id: str, payload: dict) -> None:
                              message="Índice actualizado", result=result)
     except Exception as exc:
         _set_reindex_job(job_id, status="failed", error=str(exc), message="La reindexación falló")
+def _start_reindex_worker(job_id: str, payload: dict) -> None:
+    from .reindex_worker import start
+    start(job_id, payload, reindex_jobs, _run_reindex_job)
+
+
 @app.post("/api/reindex")
 def reindex_project(payload: dict = Body(...), wait: bool = Query(False),
                     wait_timeout_s: float = Query(30, ge=.1, le=30)):
@@ -1229,8 +1234,7 @@ def reindex_project(payload: dict = Body(...), wait: bool = Query(False),
         else:
             job = reindex_jobs.create("reindex", normalized)
             job = reindex_jobs.update(job["id"], message="En cola", cancel_requested=False)
-            threading.Thread(target=_run_reindex_job, args=(job["id"], normalized),
-                             name=f"graphtyn-{job['id']}", daemon=True).start()
+            _start_reindex_worker(job["id"], normalized)
             body = {**_public_reindex_job(job), "ok": True, "deduplicated": False}
     if not wait:
         return JSONResponse(body, status_code=202)

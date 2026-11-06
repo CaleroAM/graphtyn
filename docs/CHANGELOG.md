@@ -32,6 +32,11 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- El dashboard ejecuta cada reindexado en un proceso aparte. Antes un proyecto grande
+  ocupaba el intérprete del servidor durante minutos y las consultas de estado
+  agotaban el tiempo: `graphtyn reindex` abandonaba la espera aunque el índice
+  terminara bien. Si el proceso muere, el trabajo queda como fallido con su código de
+  salida.
 - En archivos de prueba de Ruby y JavaScript, cada bloque `test "…" do`, `it "…"`,
   `it('…', () => …)` o `setup`/`before` es un nodo que llama a lo que ejecuta. Antes
   esas llamadas se atribuían al archivo: en Rails, 13.800 llamadas pasan a su bloque.

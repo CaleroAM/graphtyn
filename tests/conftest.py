@@ -12,6 +12,8 @@ _SESSION_HOME = tempfile.mkdtemp(prefix="graphtyn-test-home-")
 os.environ["GRAPHTYN_HOME"] = _SESSION_HOME
 # Hand-written test indexes carry no parser version: they must not start real rebuilds.
 os.environ["GRAPHTYN_AUTO_REINDEX"] = "0"
+# Reindex jobs run in-process so tests can patch the scan; test_reindex_worker covers the process.
+os.environ["GRAPHTYN_REINDEX_WORKER"] = "thread"
 atexit.register(shutil.rmtree, _SESSION_HOME, ignore_errors=True)
 
 
