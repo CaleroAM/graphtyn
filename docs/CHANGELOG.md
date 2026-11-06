@@ -15,12 +15,59 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- `impact` entiende un paquete escrito en dos palabras: en «reload en Active Record»
+  ya no toma `record` como símbolo, y sólo considera las definiciones de
+  `activerecord/`. Antes, los consumidores listados eran sobre todo de `record`.
+- Las obligaciones de guardado (validaciones, callbacks, transacción, adaptador) sólo
+  se exigen si la tarea trata de guardar. Decir «transacción» al preguntar por otro
+  código ya no hace esperar evidencia de `save`.
+- Una llamada dentro de una sobrecarga se atribuye a ella y no al archivo: en fmt, las
+  llamadas atribuidas al archivo pasan de 3.233 a 271. Hay que reindexar para notarlo.
+- `call_outline` no se detiene en una semilla que no lleva a nada nuevo y, si no caben
+  todas las etapas, conserva las que deletrean una palabra de la pregunta.
 - Decir «en este proyecto» o «in this repository» ya no convierte una pregunta
   sobre código en un `overview`. Antes, «¿Qué hace la función X en este proyecto?»
   devolvía el resumen del repositorio, a menudo sin esa función; y «en este
   repositorio» activaba `persistence`. Esas frases tampoco influyen ya en qué
   código se selecciona. Las preguntas sobre el proyecto entero siguen siendo
   `overview`.
+- `impact` ya no afirma que un símbolo no tiene consumidores cuando el grafo sí
+  los tiene. Con varias sobrecargas (`vformat_to` en fmt tiene 9), estas agotaban
+  el presupuesto de nodos antes de recorrer a los consumidores, y el paquete
+  declaraba cero y evidencia suficiente. Ahora ocupan como mucho la mitad del
+  presupuesto, y `direct_consumers` cuenta sobre todo el grafo y lista con
+  `archivo:línea` los que no entran.
+- «¿Quién llama a X?», «¿Dónde se usa X?» y «¿Qué se rompe si cambio X?» pasan a
+  `impact`, también si la frase incluye «si cambia X».
+- La clasificación reconoce el alcance, las preguntas sobre el proyecto y las de
+  consumidores también en portugués, francés, alemán e italiano.
+- `impact` añade `direct_consumers.text_references`: usos que el índice no resuelve,
+  como las llamadas con plantilla de C++, hallados con una búsqueda de texto acotada
+  y marcados como pistas sin verificar. Si no caben todos, el paquete ya no le dice
+  al agente que pare.
+- «¿Qué hace X?» sobre un símbolo nombrado devuelve su cuerpo entero y quién lo
+  llama. Antes elegía líneas según las palabras de la pregunta (`con` coincidía con
+  `config_`), dejaba 69 de las 233 líneas de `activeExpireCycle` y declaraba la
+  evidencia completa. Un cuerpo que no cabe se informa como `source_body:<símbolo>`
+  en `missing`.
+  Ese extracto empieza en el comentario de la declaración, no dentro de la función
+  anterior.
+- Un nombre como `within_new_transaction` ya no exige evidencia de transacciones por
+  contener esa palabra: el paquete pedía seguir buscando sin motivo.
+- Las llamadas con plantilla de C++ (`write_exponent<Char>(...)`) se atribuyen a la
+  función real, no a `Char`. También en Rust y otros lenguajes con esa sintaxis. Se
+  aplica al reindexar: cambia `PARSER_VERSION`, así que la caché estructural se rehace.
+- `impact` cuenta por archivo los consumidores y usos que no caben en la lista, en vez
+  de declararlos pendientes y mandar al agente a buscarlos. Si la búsqueda se corta por
+  tiempo, sigue avisando. Una llamada atribuida a un archivo se lista con la función
+  que la hace, y los usos del mismo componente del símbolo van primero.
+- Las palabras cortas o comunes de la pregunta ya no eligen líneas del extracto por
+  subcadena. Una pregunta corta sobre un aspecto de un símbolo nombrado recibe código
+  enfocado; una explicación larga de varias partes, no.
+- Medición con agentes en Antigravity (122 sesiones): con tareas no vistas, un 59 %, un
+  30 % y un 54 % menos de tokens. La calidad empata o mejora en dos conjuntos y baja de
+  51/54 a 48/54 en el tercero. Excepciones en
+  `benchmarks/intent_impact_2026-11-04/report.md`.
 - El README ya no dice que Antigravity carece de hooks, ni indica `agy mcp list`
   para verificar la entrada de proyecto: ese comando sólo muestra los servidores
   globales.

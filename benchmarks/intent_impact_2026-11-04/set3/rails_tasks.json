@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V3_RAILS_WITHIN_TX_WHAT",
+      "request": "¿Cómo funciona within_new_transaction? Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "begin",
+          "any": [
+            "begin_transaction"
+          ]
+        },
+        {
+          "id": "rollback",
+          "any": [
+            "rollback_transaction"
+          ]
+        },
+        {
+          "id": "commit",
+          "any": [
+            "commit_transaction"
+          ]
+        },
+        {
+          "id": "failure",
+          "any": [
+            "after_failure_actions"
+          ]
+        },
+        {
+          "id": "aborting",
+          "any": [
+            "aborting"
+          ]
+        },
+        {
+          "id": "throw_away",
+          "any": [
+            "throw_away!"
+          ]
+        },
+        {
+          "id": "incomplete",
+          "any": [
+            "incomplete!"
+          ]
+        },
+        {
+          "id": "conn_failed",
+          "any": [
+            "ConnectionFailed"
+          ]
+        },
+        {
+          "id": "caller",
+          "any": [
+            "database_statements"
+          ]
+        }
+      ]
+    }
+  ]
+}

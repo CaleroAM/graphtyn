@@ -6,6 +6,10 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .impact_references import attach_text_references, consumer_summary, direct_consumers
+from .intent_classifier import names_code, without_project_scope
+from .vocabulary import COMMON_WORDS
+
 
 _PRECISION_MARKERS = (
     "exact", "exacto", "exacta", "orden", "sequence", "secuencia",
@@ -65,11 +69,48 @@ _COMMENT_LINE = re.compile(r"\s*(?:/\*|\*|//|#(?!\s*(?:if|else|elif|endif|define
 
 
 def _focus_terms(request: str) -> list[str]:
-    words = [word.lower() for word in re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w]{2,}", request)]
-    terms = [word for word in words if word not in _FOCUS_STOPWORDS and len(word) >= 3]
+    found = re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w]{2,}", request)
+    words = [word.lower() for word in found]
+    # Short lowercase words match inside identifiers ("con" in `config_`); DEL or `err` are spelled on purpose.
+    terms = [word.lower() for word in found if word.lower() not in _FOCUS_STOPWORDS
+             and (len(word) >= 4 or not word.islower()) and word.lower() not in COMMON_WORDS]
     for word in words:
         terms.extend(_FOCUS_EXPANSIONS.get(word, ()))
     return list(dict.fromkeys(terms))
+
+
+# Explaining a named symbol needs its body: its signature and calls do not say what it does.
+_BEHAVIOR_QUESTION = re.compile(
+    r"\b(?:qu[eé] hace|c[oó]mo funciona|expl[ií]ca(?:me)?|what does|how does|how do|explain|o que faz|como funciona|"
+    r"que fait|comment fonctionne|was macht|wie funktioniert|cosa fa|come funziona)\b", re.IGNORECASE)
+
+
+# Asks what one symbol does and names nothing inside it: the whole body is the answer.
+_WHOLE_SYMBOL_QUESTION = re.compile(
+    r"^\W*(?:expl[ií]ca(?:me)?\s+|explain\s+|expliquez\s+|erkl[aä]re\s+|spiega\s+)?"
+    r"(?:qu[eé] hace|c[oó]mo funciona|what does|what|how does|how|o que faz|como funciona|que fait|comment fonctionne|"
+    r"was macht|wie funktioniert|cosa fa|come funziona)?\s*"
+    r"(?:(?:la|el|the|a|o|le|die|der|das|il)\s+)?"
+    r"(?:(?:funci[oó]n|m[eé]todo|clase|function|method|class|fun[cç][aã]o|fonction|m[eé]thode|funktion|methode|funzione|metodo)\s+)?"
+    r"[`'\"]?(?P<symbol>[A-Za-z_][\w:.#]*)[`'\"]?(?:\(\))?\s*(?:do|does|work|works|macht|fa)?\s*[?.!]?\s*$", re.IGNORECASE)
+_ELIDED_LINES = re.compile(r"\(\d+ lines omitted\)")
+_LISTED_CALLERS = 15
+_SINGLE_ASPECT_WORDS = 16
+
+
+def whole_symbol_name(request: str) -> str | None:
+    """The symbol a question asks to explain as a whole, if that is all it asks."""
+    question = re.split(r"[?.!](?:\s|$)", without_project_scope(request).strip(), maxsplit=1)[0]
+    match = _WHOLE_SYMBOL_QUESTION.match(question) if _BEHAVIOR_QUESTION.search(question) else None
+    return re.split(r"::|\.|#", match["symbol"])[-1].lower() if match else None
+
+
+def elided_bodies(output: dict[str, Any]) -> list[str]:
+    """Whole bodies the package was asked for but delivers with lines missing."""
+    wanted = (output.get("source_coverage") or {}).get("whole_bodies") or []
+    return [f"source_body:{symbol}" for symbol in wanted
+            if any(str(item.get("symbol") or "").lower() == symbol and _ELIDED_LINES.search(str(item.get("text") or ""))
+                   for item in output.get("source_evidence") or [])]
 
 
 def select_evidence_mode(request: str, requested: str = "auto", intent: str = "flow") -> str:
@@ -77,7 +118,10 @@ def select_evidence_mode(request: str, requested: str = "auto", intent: str = "f
     if requested in {"compact", "balanced", "precision"}:
         return requested
     text = str(request or "").lower()
-    if any(marker in text for marker in _PRECISION_MARKERS):
+    # A multi-part explanation stays out: more text there flips its stop signal, not its coverage.
+    short_question = len(re.split(r"[?.!](?:\s|$)", text.strip(), maxsplit=1)[0].split()) <= _SINGLE_ASPECT_WORDS
+    if any(marker in text for marker in _PRECISION_MARKERS) or (
+            _BEHAVIOR_QUESTION.search(text) and short_question and names_code(request)):
         return "precision"
     if intent == "flow" and len(re.findall(r"\b(?:and|y|then|después|además|también)\b", text)) >= 2:
         return "balanced"
@@ -188,6 +232,49 @@ def _focused_excerpt(path: Path, start: int, end: int, line_budget: int,
         rendered.append(f"{number}: {lines[number - 1].strip()}")
         previous = number
     return "\n".join(rendered), start, end
+
+
+def _whole_body_excerpt(path: Path, start: int, end: int, char_budget: int = 14_000) -> tuple[str, int, int]:
+    """A complete body with real line numbers: comments go first, then the middle."""
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return "", 0, 0
+    start = max(1, min(start, len(lines)))
+    end = max(start, min(end, len(lines)))
+    body = list(range(start, end + 1))
+    cost = {number: len(lines[number - 1].strip()) + len(str(number)) + 3 for number in body}
+    keep = body
+    if sum(cost.values()) > char_budget:
+        keep = [number for number in body if not _COMMENT_LINE.match(lines[number - 1])]
+    dropped_code: set[int] = set()
+    while sum(cost[number] for number in keep) > char_budget and len(keep) > 8:
+        middle = keep.pop(len(keep) // 2)
+        dropped_code.add(middle)
+    rendered, previous = [], start - 1
+    for number in keep:
+        if number > previous + 1:
+            gap = range(previous + 1, number)
+            label = "lines" if any(value in dropped_code for value in gap) else "comment lines"
+            rendered.append(f"…: ({len(gap)} {label} omitted)")
+        rendered.append(f"{number}: {lines[number - 1].strip()}")
+        previous = number
+    return "\n".join(rendered), start, end
+
+
+def _declaration_comment_start(path: Path, line: int, limit: int = 12) -> int:
+    """First line of the comment above a declaration, never another symbol's code."""
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return line
+    start = line
+    while start > 1 and line - start < limit and (
+            not lines[start - 2].strip() or _COMMENT_LINE.match(lines[start - 2])):
+        start -= 1
+    while start < line and not lines[start - 1].strip():
+        start += 1
+    return start
 
 
 _TYPE_KINDS = {"class", "struct", "interface", "type", "union"}
@@ -335,7 +422,8 @@ def _rank_candidates(result: dict[str, Any], request: str, candidates: list[dict
 
 def _select_excerpts(root: Path, candidates: list[dict[str, Any]], required_symbols: list[str],
                      obligation_counts: dict[str, int], focus_terms: list[str], mode: str,
-                     max_snippets: int, line_budget: int, char_budget: int) -> list[dict[str, Any]]:
+                     max_snippets: int, line_budget: int, char_budget: int,
+                     whole_body: bool = False) -> list[dict[str, Any]]:
     """Read bounded, focused excerpts of the ranked candidates."""
     def relevance(node: dict[str, Any]) -> int:
         searchable = (" ".join(str(node.get(key) or "") for key in ("name", "signature", "details"))
@@ -367,13 +455,15 @@ def _select_excerpts(root: Path, candidates: list[dict[str, Any]], required_symb
         if mode == "precision":
             # Short declaration comments often define failure behavior (for
             # example callback abort semantics) that the AST body omits.
-            start = max(1, start - 12)
+            start = _declaration_comment_start(source, start) if whole_body and required else max(1, start - 12)
         declared_end = int(node.get("end_line") or start + line_budget - 1)
         if node.get("kind") in _TYPE_KINDS and source.suffix.lower() in _BRACE_SUFFIXES:
             # Macro-heavy headers make parsers close a type at its first
             # member body; the braces in the source give the real extent.
             declared_end = max(declared_end, _brace_block_end(source, int(node.get("line") or start)) or 0)
-        if focus_terms:
+        if whole_body and required:
+            text, actual_start, actual_end = _whole_body_excerpt(source, start, declared_end)
+        elif focus_terms:
             text, actual_start, actual_end = _focused_excerpt(
                 source, start, declared_end, line_budget * (2 if required else 1), focus_terms,
                 char_budget=6_000 if required else 2_500)
@@ -456,7 +546,8 @@ def _record_source_coverage(result: dict[str, Any], excerpts: list[dict[str, Any
         source_guidance = (
             "Answer from relations, operations and exact source excerpts. Cite file:line. "
             "Use excerpt order for conditions and control flow; do not re-read these excerpts. "
-            "Look up only a part of the request they do not address."
+            "Look up only a part of the request they do not address. "
+            "Lines marked as omitted were not read: read those exact ranges if the answer needs them."
         )
         # Source evidence strengthens factual claims.  It must not erase the
         # implementation order and exploration limits chosen by the planner.
@@ -466,17 +557,41 @@ def _record_source_coverage(result: dict[str, Any], excerpts: list[dict[str, Any
         )
 
 
+def _attach_whole_body_context(graph: dict[str, Any] | None, result: dict[str, Any], symbols: list[str]) -> None:
+    """Declare whether each body is complete, and who calls the explained symbol."""
+    coverage = result.setdefault("source_coverage", {})
+    coverage["whole_bodies"] = symbols
+    result["guidance"] = (str(result.get("guidance") or "") + " Explain each stage of the body and name its constants, "
+                          "flags and callees exactly as written.").strip()
+    elided = elided_bodies(result)
+    if elided:
+        coverage["complete"] = False
+        result["missing"] = list(dict.fromkeys([*result.get("missing", []), *elided]))
+        result["complete_for"] = []
+        result["do_not_expand"] = False
+    if graph:
+        by_id = {node.get("id"): node for node in graph.get("nodes", [])}
+        anchors = {node_id for node_id, node in by_id.items() if str(node.get("name") or "").lower() in symbols}
+        summary = consumer_summary(direct_consumers(graph, by_id, anchors), by_id, set())
+        summary["omitted"] += max(0, len(summary["others"]) - _LISTED_CALLERS)
+        summary["others"] = summary["others"][:_LISTED_CALLERS]
+        result["direct_consumers"] = summary
+
+
 def attach_source_evidence(
     root: Path,
     result: dict[str, Any],
     request: str,
     requested_mode: str = "auto",
+    graph: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Add a few exact symbol bodies when structural evidence is insufficient.
 
-    This runs after graph selection, so it never scans the repository or sends
-    unrelated files. Limits are deliberately small and deterministic.
+    This runs after graph selection and sends no unrelated files. Limits are
+    deliberately small and deterministic. With `graph`, an impact package also
+    gets a bounded scan for uses the index did not resolve.
     """
+    attach_text_references(root, graph, result)
     mode = select_evidence_mode(request, requested_mode, str(result.get("intent") or "flow"))
     result["evidence_mode"] = mode
     obligations = list(dict.fromkeys([
@@ -494,10 +609,18 @@ def attach_source_evidence(
     char_budget = 5_000 if mode == "balanced" else 20_000
     candidates, request_terms = _collect_candidates(result, request)
     required_symbols = _explicit_source_symbols(request, candidates) if mode == "precision" else []
+    whole_symbol = whole_symbol_name(request) if mode == "precision" else None
+    available = {str(node.get("name") or "").lower() for node in candidates}
+    whole_symbol = whole_symbol if whole_symbol in available else None
+    if whole_symbol and whole_symbol not in required_symbols:
+        required_symbols.append(whole_symbol)
     obligation_counts = _rank_candidates(result, request, candidates, request_terms, required_symbols)
-    focus_terms = _focus_terms(request) if mode == "precision" else []
+    # The words of "what does X do" say nothing about which lines of X matter.
+    focus_terms = _focus_terms(request) if mode == "precision" and not whole_symbol else []
     excerpts = _select_excerpts(root, candidates, required_symbols, obligation_counts, focus_terms, mode,
-                                max_snippets, line_budget, char_budget)
+                                max_snippets, line_budget, char_budget, whole_body=bool(whole_symbol))
     _record_source_coverage(result, excerpts, required_symbols, obligations, mode, max_snippets, line_budget)
+    if whole_symbol:
+        _attach_whole_body_context(graph, result, [whole_symbol])
     _sync_stopping(result)
     return result

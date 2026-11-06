@@ -3095,7 +3095,7 @@ def _execute_http_graph_tool(name: str, args: dict, root: Path) -> dict | JSONRe
             graph, request, str(args.get("intent") or "auto"),
             max(4, min(24, int(args.get("limit") or 10))),
         )
-        data = attach_learning(attach_source_evidence(root, data, request, str(args.get("evidence_mode") or "auto")), root)
+        data = attach_learning(attach_source_evidence(root, data, request, str(args.get("evidence_mode") or "auto"), graph=graph), root)
         record_query(root, data, source="mcp-http", request=request)
         return data
     if name == "graph_validate_answer":

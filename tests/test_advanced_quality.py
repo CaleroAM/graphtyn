@@ -8,9 +8,10 @@ from graphtyn.core.answer_validation import detect_incomplete_answer, validate_c
 from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.benchmark_protocol import paired_statistics, validate_protocol
 from graphtyn.core.change_analyst import _terms, classify_intent, query_intent
+from graphtyn.core.impact_references import _scan, consumer_summary, direct_consumers
+from graphtyn.core.source_evidence import attach_source_evidence, select_evidence_mode
 from graphtyn.core.graph_hygiene import normalize_graph
 from graphtyn.core.semantic_index import build_semantic_index, hashed_embedding, semantic_search
-from graphtyn.core.source_evidence import attach_source_evidence, select_evidence_mode
 
 
 def graph():
@@ -134,8 +135,6 @@ def test_intent_classifier_does_not_read_comprueba_as_prueba():
     "What does the function apply_discount do in this project?",
     "Explain the method guardar in this repository",
     "¿Cómo funciona processCommand en este proyecto?",
-    "¿Dónde se usa `calcular_total` en este repositorio?",
-    "¿Quién llama a calcular_total en este proyecto?",
     "¿Cómo se crea un pedido en este proyecto?",
     "Trace how orders are created in this repo",
     "Resumen de la función calcular_total",
@@ -161,6 +160,156 @@ def test_naming_the_project_as_scope_does_not_make_a_code_question_an_overview(r
 ])
 def test_a_question_about_the_project_itself_stays_an_overview(request_text):
     assert classify_intent(request_text) == "overview"
+
+
+@pytest.mark.parametrize("request_text", [
+    "¿Quién llama a calcular_total en este proyecto?",
+    "¿Dónde se usa `calcular_total` en este repositorio?",
+    "Si cambio calcular_total en este proyecto, ¿qué se rompe?",
+    "¿Qué se rompe si cambia calcular_total?",
+    "Who calls lookupCommand?",
+    "What would break if I change create_or_update?",
+    "Where is vformat_to used in this repo?",
+    "Quem chama calcular_total neste projeto?",
+    "Qui appelle calculer_total dans ce projet ?",
+    "Wer ruft berechne_summe in diesem Projekt auf?",
+    "Chi chiama calcola_totale in questo progetto?",
+    "Assess repository contract change.",
+])
+def test_questions_about_consumers_or_breakage_are_impact(request_text):
+    assert classify_intent(request_text) == "impact"
+
+
+def test_a_flow_request_that_mentions_callers_stays_a_flow():
+    assert classify_intent("Traza el flujo de save y quién llama a cada etapa") == "flow"
+
+
+@pytest.mark.parametrize("request_text,intent", [
+    ("O que faz a função calcular_total neste projeto?", "flow"),
+    ("Que fait la fonction calculer_total dans ce projet ?", "flow"),
+    ("Was macht die Funktion berechne_summe in diesem Projekt?", "flow"),
+    ("Cosa fa la funzione calcola_totale in questo progetto?", "flow"),
+    ("O que faz este projeto?", "overview"),
+    ("Que fait ce projet ?", "overview"),
+    ("Was macht dieses Projekt?", "overview"),
+    ("Cosa fa questo progetto?", "overview"),
+    ("How does this project work?", "overview"),
+    ("How does this project validate the session token?", "flow"),
+])
+def test_scope_and_project_questions_work_in_other_languages(request_text, intent):
+    assert classify_intent(request_text) == intent
+
+
+def _overloaded_graph(overloads, callers):
+    nodes = [{"id": f"s:o{n}", "name": "render", "kind": "function", "file": f"lib/o{n}.h", "line": n + 1}
+             for n in range(overloads)]
+    nodes += [{"id": f"s:c{n}", "name": f"caller_{n}", "kind": "function", "file": f"src/c{n}.c", "line": 5}
+              for n in range(callers)]
+    links = [{"source": f"s:c{n}", "target": f"s:o{n % overloads}", "label": "llama", "confidence": "EXTRACTED", "line": 9}
+             for n in range(callers)]
+    return {"nodes": nodes, "links": links}
+
+
+def test_overloads_cannot_hide_consumers_behind_a_false_zero():
+    result = query_intent(_overloaded_graph(overloads=9, callers=3), "¿Quién llama a render?", "auto", 10)
+
+    assert result["intent"] == "impact"
+    assert result["negative_evidence"] == {}
+    assert result["direct_consumers"]["indexed"] == 3
+    assert {node["name"] for node in result["nodes"]} >= {"caller_0", "caller_1", "caller_2"}
+    assert len(result["omitted_homonyms"]) == 9 - 5
+
+
+def test_consumers_beyond_the_budget_are_still_reported_with_their_location():
+    result = query_intent(_overloaded_graph(overloads=1, callers=30), "¿Quién llama a render?", "auto", 10)
+    shown = {node["name"] for node in result["nodes"]}
+    listed = {name for name, _at in result["direct_consumers"]["others"]}
+
+    assert result["direct_consumers"]["indexed"] == 30
+    assert len(shown - {"render"}) + len(listed) == 30
+    assert ["caller_29", "src/c29.c:9"] in result["direct_consumers"]["others"] or "caller_29" in shown
+    assert result["do_not_expand"] is True
+
+
+def test_consumers_beyond_the_list_are_counted_per_file():
+    result = query_intent(_overloaded_graph(overloads=1, callers=80), "¿Quién llama a render?", "auto", 10)
+
+    assert result["direct_consumers"]["omitted"] > 0
+    assert result["direct_consumers"]["omitted_by_file"], "the rest is accounted for per file"
+    assert "all_direct_consumers" not in result["missing"]
+    assert result["do_not_expand"] is True
+
+
+def _templated_project(tmp_path):
+    (tmp_path / "lib.h").write_text("int render(int x);\n// render is documented here\n")
+    (tmp_path / "use.h").write_text("int helper() {\n  return render<char>(1);\n}\n")
+    return tmp_path, {"nodes": [
+        {"id": "s:render", "name": "render", "kind": "function", "file": "lib.h", "line": 1},
+        {"id": "s:helper", "name": "helper", "kind": "function", "file": "use.h", "line": 1},
+    ], "links": []}
+
+
+def test_a_use_the_index_missed_is_reported_instead_of_a_zero(tmp_path):
+    root, data = _templated_project(tmp_path)
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    consumers = result["direct_consumers"]
+    assert consumers["indexed"] == 0 and consumers["total"] == 1
+    assert consumers["text_references"] == [["helper", "use.h:2"]]
+    assert result["negative_evidence"] == {}
+    assert "unverified" in result["guidance"]
+
+
+def test_without_any_use_the_zero_stands_and_comments_do_not_count(tmp_path):
+    root, data = _templated_project(tmp_path)
+    (root / "use.h").write_text("int helper() {\n  return 1;\n}\n")
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    assert result["direct_consumers"]["total"] == 0
+    assert "text_references" not in result["direct_consumers"]
+    assert result["negative_evidence"]["consumers"] == 0
+
+
+def test_textual_uses_beyond_the_list_are_counted_per_file(tmp_path):
+    root, data = _templated_project(tmp_path)
+    for n in range(45):
+        (root / f"u{n}.h").write_text("int h() {\n  return render<char>(1);\n}\n")
+        data["nodes"].append({"id": f"s:h{n}", "name": f"h{n}", "kind": "function", "file": f"u{n}.h", "line": 1})
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    consumers = result["direct_consumers"]
+    assert sum(consumers["text_references_more_by_file"].values()) == consumers["total"] - len(consumers["text_references"])
+    assert "text_references_incomplete" not in consumers and "all_text_references" not in result["missing"]
+    assert result["missing"] == ["consumers"], "unverified leads alone do not prove the consumers"
+
+
+def test_a_scan_cut_short_still_withdraws_the_stop_signal(tmp_path, monkeypatch):
+    root, data = _templated_project(tmp_path)
+    monkeypatch.setattr("graphtyn.core.impact_references._SCAN_SECONDS", -1)
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    assert result["direct_consumers"]["text_references_incomplete"] is True
+    assert "all_text_references" in result["missing"] and result["do_not_expand"] is False
+
+
+@pytest.mark.parametrize("request_text,mode", [
+    ("¿Qué hace la función aplicar_descuento en este proyecto?", "precision"),
+    ("How does processCommand work?", "precision"),
+    ("¿Qué hace este proyecto?", "compact"),
+])
+def test_explaining_a_named_symbol_asks_for_its_source(request_text, mode):
+    assert select_evidence_mode(request_text, "auto", "flow") == mode
+
+
+def test_a_symbol_without_consumers_still_reports_the_zero():
+    result = query_intent(_overloaded_graph(overloads=1, callers=0), "¿Quién llama a render?", "auto", 10)
+
+    assert result["direct_consumers"]["indexed"] == 0
+    assert result["negative_evidence"]["consumers"] == 0
 
 
 def test_the_repository_pattern_still_signals_persistence():
@@ -854,3 +1003,153 @@ def test_overview_projection_is_compact_bounded_and_does_not_duplicate_matches()
     assert len(encoded) <= result["payload_budget_tokens"] * 4
     assert all(len(node.get("details", "")) <= 240 for node in result["nodes"])
     assert set(result["detail_refs"]) == {node["id"] for node in result["nodes"]}
+
+
+def test_template_arguments_are_not_the_callee(tmp_path):
+    from graphtyn.core.tree_sitter_backend import parse_file
+
+    source = tmp_path / "a.h"
+    source.write_text("void g(S s, S* p) { write_exp<char>(1); detail::write_exp<char>(1); ns::f<std::vector<int>>(2);"
+                      " s.template m<int>(1); p->m<int>(1); int x = (1 < 2); h(x); }\n", encoding="utf-8")
+    facts = parse_file(source, "a.h")
+    if facts is None:
+        pytest.skip("tree-sitter grammar unavailable")
+
+    assert [(call["name"], call["receiver"]) for call in facts["calls"]] == [
+        ("write_exp", ""), ("write_exp", "detail"), ("f", "ns"), ("m", "s"), ("m", "p"), ("h", "")]
+
+
+def test_textual_uses_in_the_symbols_own_component_are_listed_first(tmp_path):
+    root, data = _templated_project(tmp_path)
+    home = "zzz_home"
+    (root / home).mkdir()
+    (root / home / "lib.h").write_text("int render(int x);\n")
+    data["nodes"][0]["file"] = f"{home}/lib.h"
+    for folder in (home, "aaa_other"):
+        (root / folder).mkdir(exist_ok=True)
+        (root / folder / "use.h").write_text("int h() {\n  return render<char>(1);\n}\n")
+        data["nodes"].append({"id": f"s:{folder}", "name": f"h_{folder}", "kind": "function", "file": f"{folder}/use.h", "line": 1})
+    result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
+                                    graph=data)
+
+    listed = [at for _name, at in result["direct_consumers"]["text_references"]]
+    assert listed.index(f"{home}/use.h:2") < listed.index("aaa_other/use.h:2")
+
+
+def test_a_resolved_call_from_file_scope_is_not_also_a_textual_use(tmp_path):
+    root, data = _templated_project(tmp_path)
+    data["nodes"].append({"id": "f:use", "name": "use.h", "kind": "file"})
+    data["links"].append({"source": "f:use", "target": data["nodes"][0]["id"], "label": "llama", "file": "use.h", "line": 2})
+    references, _ = _scan(root, data, {data["nodes"][0]["name"]}, {data["nodes"][0]["id"]}, data["nodes"][:1])
+
+    assert ["", "use.h:2"] not in references and not [at for _name, at in references if at == "use.h:2"]
+
+
+def test_a_call_attributed_to_a_file_is_listed_under_the_function_making_it():
+    file_node = {"id": "f", "name": "format.h", "kind": "file", "file": "fmt/format.h"}
+    target = {"id": "t", "name": "write_exponent", "kind": "function", "file": "fmt/format.h", "line": 5}
+    edge = {"source": "f", "target": "t", "label": "llama", "file": "fmt/format.h", "line": 90, "resolution": {"caller": "write"}}
+    by_id = {"f": file_node, "t": target}
+
+    summary = consumer_summary(direct_consumers({"links": [edge, dict(edge)]}, by_id, {"t"}), by_id, {"f", "t"})
+
+    assert summary["others"] == [["write", "fmt/format.h:90"]]
+    assert summary["total"] == 1
+
+
+def _impact_graph():
+    def symbol(name, path, line, kind="method"):
+        return {"id": f"s:{path}:{line}", "name": name, "kind": kind, "file": path, "line": line, "end_line": line + 3}
+
+    reload_ar = symbol("reload", "activerecord/lib/persistence.rb", 10)
+    reload_conf = symbol("reload", "activesupport/lib/config.rb", 5)
+    record = symbol("record", "activesupport/lib/reporter.rb", 3)
+    lock = symbol("lock!", "activerecord/lib/locking.rb", 8)
+    logger = symbol("log", "activesupport/lib/logger.rb", 1)
+    return {"nodes": [reload_ar, reload_conf, record, lock, logger],
+            "links": [{"source": lock["id"], "target": reload_ar["id"], "label": "llama", "file": lock["file"], "line": 9},
+                      {"source": logger["id"], "target": record["id"], "label": "llama", "file": logger["file"], "line": 2}]}
+
+
+def test_a_package_written_in_two_words_scopes_impact_and_is_not_a_symbol():
+    result = query_intent(_impact_graph(), "Si cambio reload en Active Record, ¿qué se rompe?", "impact", 10)
+
+    assert {(node["name"], node["file"]) for node in result["matched"]} == {("reload", "activerecord/lib/persistence.rb")}
+    assert "omitted_homonyms" not in result
+    assert "log" not in {node["name"] for node in result["nodes"]}
+
+
+def test_package_words_need_a_directory_of_that_name():
+    from graphtyn.core.path_signals import named_package_roots, package_name_words
+
+    nodes = _impact_graph()["nodes"]
+    assert package_name_words(nodes, "reload en Active Record") == {"activerecord": {"active", "record"}}
+    assert package_name_words(nodes, "an active user record") == {}
+    assert named_package_roots(nodes, "reload en active_record") == {"activerecord"}
+    assert named_package_roots(nodes[:1], "reload en Active Record") == set()
+
+
+def test_every_requested_name_reaches_the_text_scan():
+    from graphtyn.core.impact_references import one_per_name
+
+    anchors = [{"name": "a", "id": index} for index in range(6)] + [{"name": "b", "id": 9}]
+
+    assert [node["name"] for node in one_per_name(anchors, 5)] == ["a", "b", "a", "a", "a"]
+
+
+def test_save_obligations_apply_only_to_tasks_about_saving():
+    from graphtyn.core.change_analyst import _requested_concerns
+
+    save_flow = {"validation_gate", "save_callbacks", "transaction_entry", "transaction_rollback"}
+    assert save_flow <= set(_requested_concerns("Traza save: validaciones, callbacks y transacción"))
+    assert save_flow <= set(_requested_concerns("Al guardar un registro, ¿qué validaciones, callbacks y transacción corren?"))
+    assert not save_flow & set(_requested_concerns("¿Qué hace reload dentro de una transacción si hay validaciones?"))
+    # A name written as code decides, even when the prose also mentions saving.
+    assert not save_flow & set(_requested_concerns("Al guardar, ¿qué hace touch_later con la transacción?"))
+    assert save_flow <= set(_requested_concerns("¿Qué hace _create_record con validaciones, callbacks y transacción?"))
+
+
+def test_a_call_belongs_to_the_overload_that_contains_it():
+    from graphtyn.core.ast_parser import _enclosing_overload
+
+    nodes = {"a": {"line": 1, "end_line": 9}, "b": {"line": 10, "end_line": 30}, "inner": {"line": 12, "end_line": 14}}
+
+    assert _enclosing_overload(["a", "b"], 5, nodes) == "a"
+    assert _enclosing_overload(["a", "b", "inner"], 13, nodes) == "inner"
+    assert _enclosing_overload(["a", "b"], 99, nodes) is None
+    assert _enclosing_overload(["a"], 99, nodes) == "a"
+
+
+def _outline_graph():
+    def function(name, line):
+        return {"id": name, "name": name, "kind": "function", "file": "lib/a.c", "line": line}
+
+    names = ["overload", "shared", "entry", "stage", *[f"helper{index}" for index in range(5)], "parse_width"]
+    links = [("overload", "shared"), ("entry", "stage"), *[("stage", f"helper{index}") for index in range(5)],
+             ("stage", "parse_width")]
+    return {"nodes": [function(name, index + 1) for index, name in enumerate(names)],
+            "links": [{"source": source, "target": target, "label": "llama", "line": 1, "confidence": "EXTRACTED"}
+                      for source, target in links]}
+
+
+def test_a_seed_that_leads_nowhere_does_not_use_up_the_next_entry_point():
+    from graphtyn.core.retrieval_signals import NameFrequency, call_outline
+
+    graph = _outline_graph()
+    by_name = {node["name"]: node for node in graph["nodes"]}
+    selected = [by_name["overload"], by_name["shared"], by_name["entry"]]
+
+    outline = call_outline(graph, selected, NameFrequency(graph["nodes"], [], set()), 12)
+
+    assert ("entry", "stage") in {(item["caller"], item["callee"]) for item in outline}
+
+
+def test_outline_keeps_the_stage_spelling_a_request_word_when_it_does_not_fit():
+    from graphtyn.core.retrieval_signals import NameFrequency, call_outline
+
+    graph = _outline_graph()
+    by_name = {node["name"]: node for node in graph["nodes"]}
+
+    outline = call_outline(graph, [by_name["entry"]], NameFrequency(graph["nodes"], ["width"], set()), 3)
+
+    assert "parse_width" in {item["callee"] for item in outline}

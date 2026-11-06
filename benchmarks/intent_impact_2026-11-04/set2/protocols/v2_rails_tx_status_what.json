@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "status": "AUTHORIZED_EXECUTION",
+  "purpose": "Segundo conjunto, congelado antes de corregir el fallo que mostró el primero: Graphtyn anterior frente a final.",
+  "repository": {
+    "name": "rails/rails",
+    "url": "https://github.com/rails/rails",
+    "commit": "3f0b675158e8284241bb1213c00375bc1fb9c52f"
+  },
+  "design": {
+    "clients": [
+      "antigravity"
+    ],
+    "tasks": [
+      "V2_RAILS_TX_STATUS_WHAT"
+    ],
+    "arms": {
+      "before": "3de6e0e",
+      "after": "versión final de la rama"
+    },
+    "repetitions": 2,
+    "stop_rule": "targeted",
+    "grading": "Rúbrica literal escrita leyendo el código fuente, antes de implementar."
+  },
+  "client_config": {
+    "models": {
+      "antigravity": "gemini-3.8-flash-high"
+    }
+  },
+  "authorization": {
+    "source": "El usuario pidió resolver lo faltante (2026-11-04).",
+    "total_token_ceiling": 4000000
+  }
+}

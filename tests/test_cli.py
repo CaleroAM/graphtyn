@@ -130,7 +130,7 @@ def test_query_intent_uses_persisted_workspace_graph(tmp_path, monkeypatch, caps
     monkeypatch.setattr(graphtyn_cli, "attach_learning", lambda result, _root: result)
     monkeypatch.setattr(
         "graphtyn.core.source_evidence.attach_source_evidence",
-        lambda _root, result, _request, _mode: result,
+        lambda _root, result, _request, _mode, graph=None: result,
     )
     args = type("Args", (), {
         "request": "trace Persisted", "intent": "flow", "limit": 10,

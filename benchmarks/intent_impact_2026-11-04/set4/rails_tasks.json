@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V4_RAILS_COMMIT_TX_WHAT",
+      "request": "¿Qué hace commit_transaction en este proyecto? Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "before",
+          "any": [
+            "before_commit_records"
+          ]
+        },
+        {
+          "id": "dirty",
+          "any": [
+            "dirty_current_transaction"
+          ]
+        },
+        {
+          "id": "records",
+          "any": [
+            "commit_records"
+          ]
+        },
+        {
+          "id": "rollback_error",
+          "any": [
+            "TransactionRollbackError"
+          ]
+        },
+        {
+          "id": "invalidate",
+          "any": [
+            "invalidate!"
+          ]
+        },
+        {
+          "id": "pop",
+          "any": [
+            "stack.pop"
+          ]
+        },
+        {
+          "id": "lock",
+          "any": [
+            "synchronize"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V4_RAILS_RELOAD_IMPACT",
+      "request": "Si cambio reload en Active Record, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "pessimistic",
+          "any": [
+            "pessimistic"
+          ]
+        },
+        {
+          "id": "singular",
+          "any": [
+            "singular_association"
+          ]
+        },
+        {
+          "id": "collection",
+          "any": [
+            "collection_association",
+            "collection_proxy"
+          ]
+        },
+        {
+          "id": "through",
+          "any": [
+            "has_one_through"
+          ]
+        },
+        {
+          "id": "persistence",
+          "any": [
+            "persistence.rb"
+          ]
+        },
+        {
+          "id": "autosave",
+          "any": [
+            "autosave_association"
+          ]
+        },
+        {
+          "id": "dirty",
+          "any": [
+            "dirty.rb"
+          ]
+        },
+        {
+          "id": "relation",
+          "any": [
+            "relation.rb"
+          ]
+        }
+      ]
+    }
+  ]
+}

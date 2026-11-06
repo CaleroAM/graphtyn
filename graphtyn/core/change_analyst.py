@@ -7,8 +7,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots
+from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots, package_name_words as _package_name_words
 from . import retrieval_signals as _signals
+from .impact_references import CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers, impact_targets as _impact_targets, one_per_name as _one_per_name
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
 from .intent_classifier import _INTENT_MARKERS, classify_intent, is_change_request as _is_change_request, without_project_scope
 from .ranking_weights import trace_stage, weighted_score
@@ -728,7 +729,7 @@ def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
     when the selected evidence covers each named concern, without requiring a
     second graph call simply because the prompt used q1/q2 notation.
     """
-    text = str(request or "").lower()
+    text, prose = str(request or "").lower(), _signals.CODE_IDENTIFIER.sub(" ", str(request or "")).lower()  # names are not concerns
     concerns: dict[str, re.Pattern[str]] = {}
     if re.search(r"(?:dos|2) archivos|archivos? de datos|tabla.*manifiesto|manifiesto.*tabla", text):
         concerns["artifacts"] = re.compile(r"parquet|manifest|manifiesto|feature_store", re.I)
@@ -750,25 +751,105 @@ def _requested_concerns(request: str) -> dict[str, re.Pattern[str]]:
         if "manifiesto" in text or "manifest" in text:
             concerns["runtime_manifest_generation"] = re.compile(
                 r"preparar_almacen(?:_inferencia)?|prepare[^/\s]*manifest", re.I)
-    if re.search(r"validaci[oó]n|validaciones?|validations?", text):
+    if re.search(r"validaci[oó]n|validaciones?|validations?", prose):
         concerns["validation_gate"] = re.compile(
             r"perform_validations|_run_validation_callbacks", re.I)
-    if re.search(r"callbacks?|retrollamadas?", text):
+    if re.search(r"callbacks?|retrollamadas?", prose):
         concerns["save_callbacks"] = re.compile(r"_run_save_callbacks", re.I)
         if re.search(r"_create_record|registro nuevo|new record|creaci[oó]n|create", text):
             concerns["create_callbacks"] = re.compile(r"_run_create_callbacks", re.I)
-    if re.search(r"transacci[oó]n|transacciones?|transactions?", text):
+    if re.search(r"transacci[oó]n|transacciones?|transactions?", prose):
         concerns["transaction_entry"] = re.compile(r"with_transaction_returning_status", re.I)
         concerns["transaction_rollback"] = re.compile(r"rollback|with_transaction_returning_status", re.I)
-    if re.search(r"adaptador|adapter|llamada final|base de datos", text):
+    if re.search(r"adaptador|adapter|llamada final|base de datos", prose):
         concerns["persistence_adapter"] = re.compile(
             r"connection\.(?:insert|update|delete)|connection_adapters?", re.I)
-    if re.search(r"aborta|fall[ao]|error|rollback", text):
+    if re.search(r"aborta|fall[ao]|error|rollback", prose):
         concerns["save_failure_result"] = re.compile(
             r"recordinvalid|recordnotsaved|return\s+false|perform_validations", re.I)
         if re.search(r"aborta|abort", text):
             concerns["callback_abort"] = re.compile(r"throw\s*:abort|abort", re.I)
-    return concerns
+    return _signals.scoped_to_save_flow(concerns, str(request or ""))
+
+
+# Overloads of a common name must not spend the budget meant for their consumers.
+_IMPACT_ANCHOR_SHARE = 0.5
+
+
+def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names: set[str], request: str,
+                    request_terms: list[str], max_nodes: int, requested_ceiling: int) -> dict[str, Any]:
+    by_id = {node.get("id"): node for node in all_nodes}
+    named = _impact_targets(all_nodes, explicit_names, _named_package_roots(all_nodes, request))
+    all_consumers = _direct_consumers(graph, by_id, {node.get("id") for node in named})
+    incoming = {node.get("id"): 0 for node in named}
+    for edges in all_consumers.values():
+        for edge in edges:
+            incoming[edge["target"]] += 1
+    # Most consumed overloads first, the project's own before its tests; the others are still counted and reported.
+    anchors = sorted(named, key=lambda node: (bool(_TEST_PATH.search(str(node.get("file") or ""))), -incoming[node.get("id")], str(node.get("id"))))[
+        :max(1, int(max_nodes * _IMPACT_ANCHOR_SHARE))]
+    omitted_anchors = named[len(anchors):] and [node for node in named if node not in anchors]
+    adjacency: dict[str, list[tuple[str, dict]]] = {}
+    for link in graph.get("links", []):
+        source, target, label = link.get("source"), link.get("target"), str(link.get("label") or "")
+        if label in _CONSUMER_LABELS:
+            adjacency.setdefault(target, []).append((source, link))
+            if label in {"implementa", "hereda"}:
+                adjacency.setdefault(source, []).append((target, link))
+        elif label == "contiene":
+            # Include the declaring file/container but never fan out from
+            # that file into every sibling symbol.
+            adjacency.setdefault(target, []).append((source, link))
+    selected_ids = {node.get("id") for node in anchors}
+    frontier = [(node.get("id"), 0) for node in anchors]
+    while frontier and len(selected_ids) < max_nodes:
+        current, hop = frontier.pop(0)
+        if hop >= 2 or str(current).startswith("file:"):
+            continue
+        neighbors = sorted(adjacency.get(current, []), key=lambda item: (
+            str(item[1].get("label") or "") == "contiene",
+            str(item[1].get("confidence") or "") == "AMBIGUOUS", str(item[0])))
+        for neighbor, _edge in neighbors:
+            if neighbor in selected_ids or neighbor not in by_id:
+                continue
+            selected_ids.add(neighbor)
+            frontier.append((neighbor, hop + 1))
+            if len(selected_ids) >= max_nodes:
+                break
+    nodes = anchors + sorted((by_id[node_id] for node_id in selected_ids
+                              if node_id not in {node.get("id") for node in anchors}),
+                             key=lambda node: (not re.search(r"test", str(node.get("file") or ""), re.I),
+                                               -int(node.get("degree") or 0), str(node.get("id"))))
+    node_ids = {node.get("id") for node in nodes}
+    links = [link for link in graph.get("links", [])
+             if link.get("source") in node_ids and link.get("target") in node_ids]
+    consumers = _consumer_summary(all_consumers, by_id, node_ids)
+    missing = [] if len(nodes) > len(anchors) else ["consumers"]
+    result = {
+        "request": str(request or "").strip(), "intent": "impact", "intent_terms": request_terms,
+        "matched": _one_per_name(anchors, 5), "nodes": nodes[:max_nodes], "links": links,
+        "complete_for": ["impact"] if not missing else [], "missing": missing,
+        "direct_consumers": consumers,
+        "negative_evidence": ({"consumers": 0, "meaning": "no incoming indexed consumer relation"}
+                              if not all_consumers else {}),
+        "guidance": "Report only directional consumers/contracts in links and direct_consumers; cite file and line; verify AMBIGUOUS.",
+        "planner": "adaptive-impact-v2",
+        "budget": {"requested_ceiling": requested_ceiling, "max_nodes": max_nodes, "selected_nodes": len(nodes[:max_nodes])},
+        "stopping": {"sufficient_evidence": bool(anchors), "reason": "exact target and directional traversal completed"},
+        "operation_limit": 4,
+    }
+    if omitted_anchors:
+        result["omitted_homonyms"] = [f"{node.get('file') or ''}:{node.get('line') or ''}" for node in omitted_anchors]
+        result["guidance"] += (" omitted_homonyms are other definitions of the same name (overloads or overrides, "
+                               "which may chain with super): changing the name affects them too, so report them.")
+    implementation = _implementation_context(graph, request, anchors[:5], nodes[:max_nodes])
+    if implementation:
+        result["implementation_context"] = implementation
+        result["guidance"] += " " + _EDIT_EXECUTION_GUIDANCE
+    from .answer_validation import validate_context_package
+    result["validation"] = validate_context_package(graph, result)
+    result["do_not_expand"] = _intent_can_stop(result)
+    return result
 
 
 def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_nodes: int = 12) -> dict[str, Any]:
@@ -789,7 +870,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         r"\b(?:verifiers?|verificadores?|verificar|comprobar|instalaci[oó]n|backup|respaldo)\b",
         request_lower,
     ))
-    requested_concerns = _requested_concerns(request_lower)
+    requested_concerns = _requested_concerns(request)
     expansions = list(dict.fromkeys(
         expansion for word, values in _QUERY_EXPANSIONS.items() if word in request_lower for expansion in values
     ))
@@ -818,7 +899,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         "transaction", "transactions", "validation", "validations",
         "commit", "rails",
     }
-    symbol_terms = [term for term in direct_terms if term not in generic_symbol_terms]
+    package_words = set().union(*_package_name_words(graph.get("nodes", []), request).values())
+    symbol_terms = [term for term in direct_terms if term not in generic_symbol_terms and term not in package_words]
     explicit_identifiers = {
         identifier.lower()
         for identifier in re.findall(r"\b[A-Z][A-Z0-9_]{4,}\b", str(request or ""))
@@ -881,65 +963,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     command_names = _signals.command_handlers(request, all_nodes, anchor_excluded_kinds)
     explicit_names |= command_names
     if selected_intent == "impact" and explicit_names:
-        anchors = [node for node in all_nodes if str(node.get("name") or "").lower() in explicit_names]
-        by_id = {node.get("id"): node for node in all_nodes}
-        consumer_labels = {"llama", "usa", "referencia", "implementa", "hereda", "suscribe", "escucha",
-                           "despacha", "invoca ruta", "valida con", "crea", "despacha evento"}
-        adjacency: dict[str, list[tuple[str, dict]]] = {}
-        for link in graph.get("links", []):
-            source, target, label = link.get("source"), link.get("target"), str(link.get("label") or "")
-            if label in consumer_labels:
-                adjacency.setdefault(target, []).append((source, link))
-                if label in {"implementa", "hereda"}:
-                    adjacency.setdefault(source, []).append((target, link))
-            elif label == "contiene":
-                # Include the declaring file/container but never fan out from
-                # that file into every sibling symbol.
-                adjacency.setdefault(target, []).append((source, link))
-        selected_ids = {node.get("id") for node in anchors}
-        frontier = [(node.get("id"), 0) for node in anchors]
-        traversed = []
-        while frontier and len(selected_ids) < max_nodes:
-            current, hop = frontier.pop(0)
-            if hop >= 2 or str(current).startswith("file:"):
-                continue
-            neighbors = sorted(adjacency.get(current, []), key=lambda item: (
-                str(item[1].get("confidence") or "") == "AMBIGUOUS", str(item[0])))
-            for neighbor, edge in neighbors:
-                if neighbor in selected_ids or neighbor not in by_id:
-                    continue
-                selected_ids.add(neighbor)
-                traversed.append(edge)
-                frontier.append((neighbor, hop + 1))
-                if len(selected_ids) >= max_nodes:
-                    break
-        nodes = anchors + sorted((by_id[node_id] for node_id in selected_ids
-                                  if node_id not in {node.get("id") for node in anchors}),
-                                 key=lambda node: (not re.search(r"test", str(node.get("file") or ""), re.I),
-                                                   -int(node.get("degree") or 0), str(node.get("id"))))
-        node_ids = {node.get("id") for node in nodes}
-        links = [link for link in graph.get("links", [])
-                 if link.get("source") in node_ids and link.get("target") in node_ids]
-        result = {
-            "request": str(request or "").strip(), "intent": "impact", "intent_terms": request_terms,
-            "matched": anchors[:5], "nodes": nodes[:max_nodes], "links": links,
-            "complete_for": ["impact"], "missing": [] if len(nodes) > len(anchors) else ["consumers"],
-            "negative_evidence": ({"consumers": 0, "meaning": "no incoming indexed consumer relation"}
-                                  if not any(node.get("kind") != "file" and node not in anchors for node in nodes) else {}),
-            "guidance": "Report only directional consumers/contracts in links; cite file and line; verify AMBIGUOUS.",
-            "planner": "adaptive-impact-v2",
-            "budget": {"requested_ceiling": requested_ceiling, "max_nodes": max_nodes, "selected_nodes": len(nodes[:max_nodes])},
-            "stopping": {"sufficient_evidence": bool(anchors), "reason": "exact target and directional traversal completed"},
-            "operation_limit": 4,
-        }
-        implementation = _implementation_context(graph, request, anchors[:5], nodes[:max_nodes])
-        if implementation:
-            result["implementation_context"] = implementation
-            result["guidance"] += " " + _EDIT_EXECUTION_GUIDANCE
-        from .answer_validation import validate_context_package
-        result["validation"] = validate_context_package(graph, result)
-        result["do_not_expand"] = _intent_can_stop(result)
-        return result
+        return _impact_package(graph, all_nodes, explicit_names, request, request_terms, max_nodes, requested_ceiling)
     ranked = []
     strong_semantic_ids: set[str] = set()
     operation_filters = tuple(markers)

@@ -1,0 +1,34 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Quinto conjunto: efecto de la atribución por sobrecarga en flow, con agentes.",
+ "repository": {
+  "name": "fmtlib/fmt",
+  "url": "https://github.com/fmtlib/fmt",
+  "commit": "0fc31633e7d53ac895ae0a688b83b7d44f0b0c1f"
+ },
+ "design": {
+  "clients": [
+   "antigravity"
+  ],
+  "tasks": [
+   "FMT_DYNAMIC_WIDTH_FLOW"
+  ],
+  "arms": {
+   "no_overload": "78d4930 sin atribución por sobrecarga",
+   "after": "78d4930"
+  },
+  "repetitions": 2,
+  "stop_rule": "targeted",
+  "grading": "Rúbrica literal: la del banco de tareas para fmt; escrita leyendo el código fuente para Rails."
+ },
+ "client_config": {
+  "models": {
+   "antigravity": "gemini-3.8-flash-high"
+  }
+ },
+ "authorization": {
+  "source": "El usuario pidió resolver los tres puntos pendientes (2026-11-04).",
+  "total_token_ceiling": 1500000
+ }
+}

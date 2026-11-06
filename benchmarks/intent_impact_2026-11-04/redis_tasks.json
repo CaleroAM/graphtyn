@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "REDIS_ACTIVE_EXPIRE_WHAT",
+      "request": "¿Qué hace la función activeExpireCycle en este proyecto? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "fast_mode",
+          "any": [
+            "ACTIVE_EXPIRE_CYCLE_FAST"
+          ]
+        },
+        {
+          "id": "slow_mode",
+          "any": [
+            "ACTIVE_EXPIRE_CYCLE_SLOW"
+          ]
+        },
+        {
+          "id": "time_limit",
+          "any": [
+            "timelimit"
+          ]
+        },
+        {
+          "id": "db_count",
+          "any": [
+            "dbs_per_call",
+            "CRON_DBS_PER_CALL"
+          ]
+        },
+        {
+          "id": "try_expire",
+          "any": [
+            "activeExpireCycleTryExpire"
+          ]
+        },
+        {
+          "id": "stale_threshold",
+          "any": [
+            "acceptable_stale",
+            "stale_perc"
+          ]
+        },
+        {
+          "id": "cron_caller",
+          "any": [
+            "databasesCron"
+          ]
+        },
+        {
+          "id": "sleep_caller",
+          "any": [
+            "beforeSleep"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REDIS_EVICT_CALLERS",
+      "request": "¿Quién llama a performEvictions en este proyecto y qué hace cada llamador con el resultado? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "process_command",
+          "any": [
+            "processCommand"
+          ]
+        },
+        {
+          "id": "time_proc",
+          "any": [
+            "evictionTimeProc"
+          ]
+        },
+        {
+          "id": "evict_fail",
+          "any": [
+            "EVICT_FAIL"
+          ]
+        },
+        {
+          "id": "evict_running",
+          "any": [
+            "EVICT_RUNNING"
+          ]
+        },
+        {
+          "id": "oom_flag",
+          "any": [
+            "out_of_memory"
+          ]
+        },
+        {
+          "id": "denyoom",
+          "any": [
+            "denyoom",
+            "is_denyoom_command"
+          ]
+        },
+        {
+          "id": "ae_nomore",
+          "any": [
+            "AE_NOMORE"
+          ]
+        }
+      ]
+    }
+  ]
+}

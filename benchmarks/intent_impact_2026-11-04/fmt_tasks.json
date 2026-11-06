@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "FMT_WRITE_PADDED_IMPACT",
+      "request": "Si cambio write_padded en este repositorio, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "write_char",
+          "any": [
+            "write_char"
+          ]
+        },
+        {
+          "id": "write_ptr",
+          "any": [
+            "write_ptr"
+          ]
+        },
+        {
+          "id": "write_nonfinite",
+          "any": [
+            "write_nonfinite"
+          ]
+        },
+        {
+          "id": "write_float",
+          "any": [
+            "do_write_float"
+          ]
+        },
+        {
+          "id": "write_int",
+          "any": [
+            "write_int"
+          ]
+        },
+        {
+          "id": "std_formatter",
+          "any": [
+            "std.h"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FMT_VPRINT_HOW",
+      "request": "¿Cómo funciona vprint en este repositorio? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "buffered_check",
+          "any": [
+            "is_buffered"
+          ]
+        },
+        {
+          "id": "flockfile",
+          "any": [
+            "has_flockfile"
+          ]
+        },
+        {
+          "id": "buffered_path",
+          "any": [
+            "vprint_buffered"
+          ]
+        },
+        {
+          "id": "file_buffer",
+          "any": [
+            "file_print_buffer"
+          ]
+        },
+        {
+          "id": "format_to",
+          "any": [
+            "vformat_to"
+          ]
+        },
+        {
+          "id": "print_helper",
+          "any": [
+            "detail::print",
+            "fwrite_all"
+          ]
+        }
+      ]
+    }
+  ]
+}

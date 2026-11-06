@@ -1,0 +1,217 @@
+{
+  "purpose": "Etiquetas congeladas antes de implementar; no se usan para ajustar.",
+  "prompts": [
+    {
+      "request": "¿Quién invoca a guardar_factura en este proyecto?",
+      "intent": "impact"
+    },
+    {
+      "request": "¿Qué se rompería si modifico la firma de cerrar_sesion?",
+      "intent": "impact"
+    },
+    {
+      "request": "¿Quiénes usan ValidadorToken en este repositorio?",
+      "intent": "impact"
+    },
+    {
+      "request": "¿Dónde se llama a enviar_correo?",
+      "intent": "impact"
+    },
+    {
+      "request": "¿Qué depende de ConfigLoader en el proyecto?",
+      "intent": "impact"
+    },
+    {
+      "request": "¿Qué hace el método reintentar del proyecto?",
+      "intent": "flow"
+    },
+    {
+      "request": "Explícame la función parse_header en este repo",
+      "intent": "flow"
+    },
+    {
+      "request": "¿Cómo valida el proyecto el token de sesión?",
+      "intent": "flow"
+    },
+    {
+      "request": "¿Dónde se calcula el IVA en este proyecto?",
+      "intent": "flow"
+    },
+    {
+      "request": "Sigue el camino de una petición POST en este repositorio",
+      "intent": "flow"
+    },
+    {
+      "request": "¿Para qué sirve este repositorio?",
+      "intent": "overview"
+    },
+    {
+      "request": "Dame una visión general del proyecto",
+      "intent": "overview"
+    },
+    {
+      "request": "¿Cuáles son los puntos de entrada de este proyecto?",
+      "intent": "overview"
+    },
+    {
+      "request": "Describe este proyecto",
+      "intent": "overview"
+    },
+    {
+      "request": "¿Qué subsistemas tiene este repositorio?",
+      "intent": "overview"
+    },
+    {
+      "request": "¿Qué pruebas cubren aplicar_iva en este proyecto?",
+      "intent": "tests"
+    },
+    {
+      "request": "¿Cómo se persiste la factura en la base de datos de este proyecto?",
+      "intent": "persistence"
+    },
+    {
+      "request": "Who calls parseHeader in this project?",
+      "intent": "impact"
+    },
+    {
+      "request": "What breaks if I change the signature of closeSession?",
+      "intent": "impact"
+    },
+    {
+      "request": "Where is TokenValidator used in this repository?",
+      "intent": "impact"
+    },
+    {
+      "request": "List the callers of send_email in this codebase",
+      "intent": "impact"
+    },
+    {
+      "request": "What depends on ConfigLoader in this project?",
+      "intent": "impact"
+    },
+    {
+      "request": "What does retryRequest do in this repo?",
+      "intent": "flow"
+    },
+    {
+      "request": "How does this project validate the session token?",
+      "intent": "flow"
+    },
+    {
+      "request": "Walk me through the login flow in this repository",
+      "intent": "flow"
+    },
+    {
+      "request": "Where is tax calculated in this project?",
+      "intent": "flow"
+    },
+    {
+      "request": "What is this repository for?",
+      "intent": "overview"
+    },
+    {
+      "request": "Summarize this project",
+      "intent": "overview"
+    },
+    {
+      "request": "What are the entry points of this codebase?",
+      "intent": "overview"
+    },
+    {
+      "request": "Which technologies does this repository use?",
+      "intent": "overview"
+    },
+    {
+      "request": "Which tests cover apply_tax in this project?",
+      "intent": "tests"
+    },
+    {
+      "request": "Which repository method writes the invoice to the database?",
+      "intent": "persistence"
+    },
+    {
+      "request": "O que faz a função calcular_imposto neste projeto?",
+      "intent": "flow"
+    },
+    {
+      "request": "Quem chama validar_token neste repositório?",
+      "intent": "impact"
+    },
+    {
+      "request": "O que quebra se eu mudar fechar_sessao?",
+      "intent": "impact"
+    },
+    {
+      "request": "O que faz este projeto?",
+      "intent": "overview"
+    },
+    {
+      "request": "Dê uma visão geral deste repositório",
+      "intent": "overview"
+    },
+    {
+      "request": "Como funciona processarPedido neste projeto?",
+      "intent": "flow"
+    },
+    {
+      "request": "Que fait la fonction calculer_taxe dans ce projet ?",
+      "intent": "flow"
+    },
+    {
+      "request": "Qui appelle valider_jeton dans ce dépôt ?",
+      "intent": "impact"
+    },
+    {
+      "request": "Qu'est-ce qui casse si je modifie fermer_session ?",
+      "intent": "impact"
+    },
+    {
+      "request": "Que fait ce projet ?",
+      "intent": "overview"
+    },
+    {
+      "request": "Donne une vue d'ensemble de ce dépôt",
+      "intent": "overview"
+    },
+    {
+      "request": "Was macht die Funktion berechne_steuer in diesem Projekt?",
+      "intent": "flow"
+    },
+    {
+      "request": "Wer ruft pruefe_token in diesem Repository auf?",
+      "intent": "impact"
+    },
+    {
+      "request": "Was bricht, wenn ich schliesse_sitzung ändere?",
+      "intent": "impact"
+    },
+    {
+      "request": "Was macht dieses Projekt?",
+      "intent": "overview"
+    },
+    {
+      "request": "Gib mir einen Überblick über dieses Repository",
+      "intent": "overview"
+    },
+    {
+      "request": "Cosa fa la funzione calcola_imposta in questo progetto?",
+      "intent": "flow"
+    },
+    {
+      "request": "Chi chiama valida_token in questo repository?",
+      "intent": "impact"
+    },
+    {
+      "request": "Cosa si rompe se cambio chiudi_sessione?",
+      "intent": "impact"
+    },
+    {
+      "request": "Cosa fa questo progetto?",
+      "intent": "overview"
+    },
+    {
+      "request": "Dammi una panoramica di questo repository",
+      "intent": "overview"
+    }
+  ]
+}

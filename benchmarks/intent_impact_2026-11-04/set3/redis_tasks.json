@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V3_REDIS_SCAN_WHAT",
+      "request": "¿Qué hace la función scanGenericCommand en este proyecto? Responde con evidencia archivo:línea.",
+      "rubric": [
+        {
+          "id": "novalues",
+          "any": [
+            "NOVALUES"
+          ]
+        },
+        {
+          "id": "max_iter",
+          "any": [
+            "maxiterations"
+          ]
+        },
+        {
+          "id": "kvstore_scan",
+          "any": [
+            "kvstoreScan"
+          ]
+        },
+        {
+          "id": "dict_scan",
+          "any": [
+            "dictScan"
+          ]
+        },
+        {
+          "id": "type_filter",
+          "any": [
+            "getObjectTypeByName"
+          ]
+        },
+        {
+          "id": "pattern",
+          "any": [
+            "stringmatchlen"
+          ]
+        },
+        {
+          "id": "listpack",
+          "any": [
+            "listpack"
+          ]
+        },
+        {
+          "id": "callers",
+          "any": [
+            "hscanCommand",
+            "sscanCommand",
+            "zscanCommand"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "V3_REDIS_FREE_CLIENT_WHAT",
+      "request": "What does freeClient do in this repository? Cite file:line.",
+      "rubric": [
+        {
+          "id": "protected",
+          "any": [
+            "CLIENT_PROTECTED"
+          ]
+        },
+        {
+          "id": "async",
+          "any": [
+            "freeClientAsync"
+          ]
+        },
+        {
+          "id": "cache_master",
+          "any": [
+            "replicationCacheMaster"
+          ]
+        },
+        {
+          "id": "watch",
+          "any": [
+            "unwatchAllKeys"
+          ]
+        },
+        {
+          "id": "unlink",
+          "any": [
+            "unlinkClient"
+          ]
+        },
+        {
+          "id": "multi",
+          "any": [
+            "freeClientMultiState"
+          ]
+        },
+        {
+          "id": "master_lost",
+          "any": [
+            "replicationHandleMasterDisconnection"
+          ]
+        },
+        {
+          "id": "module_event",
+          "any": [
+            "REDISMODULE_EVENT_CLIENT_CHANGE"
+          ]
+        }
+      ]
+    }
+  ]
+}

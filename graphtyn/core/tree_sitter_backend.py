@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v21-kotlin-swift-scala"
+PARSER_VERSION = "treesitter-v23-calls-in-overloads"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -193,6 +193,17 @@ def _parameters(node):
     return parameters
 
 
+_TEMPLATE_TARGETS = {"template_function", "template_method", "qualified_identifier", "field_expression", "generic_function"}
+_TEMPLATE_ARGS = re.compile(r"<[^<>()]*>")
+
+
+def _without_template_args(raw: str) -> str:
+    """`detail::write<Char>` calls `write`: its template arguments are not the callee."""
+    while (bare := _TEMPLATE_ARGS.sub("", raw)) != raw:
+        raw = bare
+    return re.sub(r"\btemplate\s+", "", raw)  # `s.template m<T>()`
+
+
 def _call_name(source: bytes, node, ruby: bool = False) -> str:
     target = node.child_by_field_name("function") or node.child_by_field_name("method")
     if target is None and node.named_child_count:
@@ -209,6 +220,8 @@ def _call_name(source: bytes, node, ruby: bool = False) -> str:
             named = target.named_children[0]
         raw = _text(source, named) if named is not None else raw.split("<", 1)[0]
     # A Ruby method name keeps its ! or ? suffix: route! and route are different methods.
+    if target is not None and target.type in _TEMPLATE_TARGETS:
+        raw = _without_template_args(raw)
     names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*[!?]?" if ruby else r"[A-Za-z_][A-Za-z0-9_]*", raw)
     return names[-1] if names else ""
 
@@ -484,6 +497,8 @@ def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, 
     if name:
         target = node.child_by_field_name("function") or node.child_by_field_name("method")
         raw_target = _text(ctx.source, target) if target is not None else ""
+        if target is not None and target.type in _TEMPLATE_TARGETS:
+            raw_target = _without_template_args(raw_target)
         target_names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", raw_target)
         chain = target_names[:-1]
         receiver_node = node.child_by_field_name("receiver")

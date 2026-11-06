@@ -115,6 +115,15 @@ def _same_language_targets(call: Dict[str, Any], targets: set, rel_file: str, no
             if Path(str(node_by_id.get(target, {}).get("file") or "")).suffix == suffix}
 
 
+def _enclosing_overload(candidates: List[str], line: int, node_by_id: Dict[str, Dict[str, Any]]) -> Optional[str]:
+    """The overload whose lines contain a call; several same-named callers do not make it file-level."""
+    if len(candidates) == 1:
+        return candidates[0]
+    spans = [(int(node_by_id[node_id].get("end_line") or 0) - int(node_by_id[node_id].get("line") or 0), node_id)
+             for node_id in candidates if int(node_by_id[node_id].get("line") or 0) <= line <= int(node_by_id[node_id].get("end_line") or 0)]
+    return min(spans)[1] if spans else None
+
+
 class ASTParser:
     """
     Deterministic zero-token multi-language code graph parser for Graphtyn.
@@ -835,7 +844,7 @@ class ASTParser:
                     target for target in symbols_by_file_name.get((rel_file, call.get("caller", "")), ())
                     if not call.get("container") or node_by_id.get(target, {}).get("container") == call.get("container")
                 ]
-                source_id = caller_ids[0] if len(caller_ids) == 1 else f_id
+                source_id = _enclosing_overload(caller_ids, int(call.get("line") or 0), node_by_id) or f_id
                 if ruby_ancestry and rel_file.endswith(".rb") and not call.get("receiver") and source_id != f_id:
                     # Ruby dispatches self calls and `super` along the includers' ancestors.
                     dispatched = ruby_ancestry.call_links(source_id, call, rel_file)

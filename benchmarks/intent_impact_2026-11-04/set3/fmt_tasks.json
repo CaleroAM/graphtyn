@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "V3_FMT_PARSE_SPECS_WHAT",
+      "request": "Explica qué hace parse_format_specs. Cita archivo:línea.",
+      "rubric": [
+        {
+          "id": "state",
+          "any": [
+            "enter_state"
+          ]
+        },
+        {
+          "id": "presentation",
+          "any": [
+            "parse_presentation_type"
+          ]
+        },
+        {
+          "id": "width",
+          "any": [
+            "parse_width"
+          ]
+        },
+        {
+          "id": "precision",
+          "any": [
+            "parse_precision"
+          ]
+        },
+        {
+          "id": "locale",
+          "any": [
+            "set_localized"
+          ]
+        },
+        {
+          "id": "alt",
+          "any": [
+            "set_alt"
+          ]
+        },
+        {
+          "id": "invalid",
+          "any": [
+            "invalid format specifier"
+          ]
+        },
+        {
+          "id": "numeric",
+          "any": [
+            "requires numeric argument"
+          ]
+        }
+      ]
+    }
+  ]
+}

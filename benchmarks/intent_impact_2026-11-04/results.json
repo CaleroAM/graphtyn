@@ -1,0 +1,1954 @@
+{
+  "FMT_DYNAMIC_WIDTH_FLOW": {
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        112108,
+        119356
+      ],
+      "cached_input_tokens": [
+        208441,
+        171692
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        14,
+        14
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 136.4
+    },
+    "set5-off": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        138693,
+        150782
+      ],
+      "cached_input_tokens": [
+        221451,
+        296462
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        17,
+        18
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 192.6
+    }
+  },
+  "FMT_PRINTF_FLOW": {
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        105162,
+        108733
+      ],
+      "cached_input_tokens": [
+        131147,
+        135927
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        12,
+        12
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 141.6
+    },
+    "set5-off": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        101198,
+        115059
+      ],
+      "cached_input_tokens": [
+        116853,
+        73256
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        11,
+        10
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 129.8
+    }
+  },
+  "FMT_VPRINT_HOW": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        33727,
+        30514
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 59.3
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        113612,
+        98025
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        8,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 105.8
+    },
+    "set1-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        95958,
+        33487
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        5
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        7,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 64.2
+    }
+  },
+  "FMT_WRITE_PADDED_IMPACT": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        47102,
+        48720
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        3,
+        3
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 86.4
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        31239,
+        35386
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        1,
+        1
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 59.1
+    },
+    "set1-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44278,
+        47431
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 209.7
+    },
+    "retest4-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        50957,
+        117329
+      ],
+      "cached_input_tokens": [
+        0,
+        129234
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        14
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 97.6
+    },
+    "retest5-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        109820,
+        118501
+      ],
+      "cached_input_tokens": [
+        158095,
+        133411
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        14,
+        14
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 148.2
+    },
+    "retest6-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44314,
+        48001
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 65.0
+    }
+  },
+  "RAILS_CREATE_RECORD_CALLERS": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        194037,
+        164567
+      ],
+      "cached_input_tokens": [
+        110376,
+        109529
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        19,
+        17
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 121.8
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        41612,
+        39934
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        2
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 45.6
+    },
+    "set1-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44994,
+        41047
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 58.4
+    }
+  },
+  "RAILS_TOUCH_IMPACT": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        127349,
+        104146
+      ],
+      "cached_input_tokens": [
+        0,
+        55398
+      ],
+      "rubric": [
+        5,
+        5
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        8,
+        9
+      ],
+      "mcp_calls": [
+        3,
+        4
+      ],
+      "seconds": 163.9
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        45899,
+        44899
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 81.8
+    },
+    "set1-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        168584,
+        162850
+      ],
+      "cached_input_tokens": [
+        211642,
+        276311
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        20,
+        22
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 154.6
+    },
+    "retest4-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        58816,
+        50839
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 115.6
+    },
+    "retest5-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        60478,
+        63112
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 146.4
+    },
+    "retest6-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        64314,
+        55459
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 147.4
+    }
+  },
+  "REDIS_ACTIVE_EXPIRE_WHAT": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        83255,
+        90633
+      ],
+      "cached_input_tokens": [
+        0,
+        50274
+      ],
+      "rubric": [
+        7,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        6,
+        9
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 68.2
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        74164,
+        43140
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        5
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        5,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 63.5
+    },
+    "set1-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44149,
+        43651
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 57.3
+    },
+    "retest-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        47653,
+        45997
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        6
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 60.7
+    },
+    "retest4-set1": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        46808,
+        51105
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 71.5
+    }
+  },
+  "REDIS_EVICT_CALLERS": {
+    "before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        136532,
+        115523
+      ],
+      "cached_input_tokens": [
+        88204,
+        31464
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        14,
+        10
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 83.9
+    },
+    "after": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        66316,
+        66723
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        5,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 50.2
+    },
+    "set1-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        106107,
+        93077
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        8,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 111.9
+    }
+  },
+  "V2_FMT_SPECS_WHAT": {
+    "set2-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        43051,
+        42825
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        2,
+        2
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 63.2
+    },
+    "set2-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        46567,
+        61263
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        3,
+        3
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 69.0
+    }
+  },
+  "V2_FMT_WRITE_BYTES_IMPACT": {
+    "set2-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        40901,
+        137440
+      ],
+      "cached_input_tokens": [
+        0,
+        14582
+      ],
+      "rubric": [
+        5,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        10
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 68.0
+    },
+    "set2-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        31224,
+        31593
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 48.0
+    }
+  },
+  "V2_RAILS_TX_STATUS_WHAT": {
+    "set2-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        101470,
+        87471
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        8,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 46.8
+    },
+    "set2-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        43218,
+        42606
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 59.5
+    }
+  },
+  "V2_RAILS_UPDATE_RECORD_CALLERS": {
+    "set2-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        150142,
+        170540
+      ],
+      "cached_input_tokens": [
+        99193,
+        94404
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        15,
+        17
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 92.9
+    },
+    "set2-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        40151,
+        43322
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 52.4
+    }
+  },
+  "V2_REDIS_ASYNC_DELETE_CALLERS": {
+    "set2-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        163545,
+        171535
+      ],
+      "cached_input_tokens": [
+        0,
+        44312
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        12,
+        15
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 72.4
+    },
+    "set2-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        53921,
+        39793
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        4,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 45.3
+    }
+  },
+  "V2_REDIS_POOL_WHAT": {
+    "set2-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        92599,
+        66737
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        7,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 63.9
+    },
+    "set2-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        43828,
+        45181
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        5,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 64.3
+    },
+    "retest-set2": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44385,
+        44649
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        5,
+        6
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 62.7
+    },
+    "retest4-set2": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        50320,
+        45106
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 81.0
+    }
+  },
+  "V3_FMT_PARSE_SPECS_WHAT": {
+    "set3-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        58784,
+        75706
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        4,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 71.3
+    },
+    "set3-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44879,
+        45496
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 59.2
+    }
+  },
+  "V3_RAILS_WITHIN_TX_WHAT": {
+    "set3-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        53828,
+        80088
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 9,
+      "tool_calls": [
+        4,
+        6
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 53.7
+    },
+    "set3-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        90601,
+        101602
+      ],
+      "cached_input_tokens": [
+        5579,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 9,
+      "tool_calls": [
+        7,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 72.6
+    },
+    "retest4-set3": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        44014,
+        42578
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        9,
+        9
+      ],
+      "rubric_total": 9,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 57.8
+    }
+  },
+  "V3_REDIS_FREE_CLIENT_WHAT": {
+    "set3-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        102364,
+        81380
+      ],
+      "cached_input_tokens": [
+        0,
+        31151
+      ],
+      "rubric": [
+        6,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        7,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 81.0
+    },
+    "set3-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        48357,
+        47332
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 68.3
+    }
+  },
+  "V3_REDIS_SCAN_WHAT": {
+    "set3-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        116910,
+        114627
+      ],
+      "cached_input_tokens": [
+        16228,
+        67848
+      ],
+      "rubric": [
+        5,
+        4
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        9,
+        11
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 82.2
+    },
+    "set3-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        52798,
+        47963
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        6
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 78.7
+    }
+  },
+  "V4_FMT_EXPONENT_CALLERS": {
+    "set4-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        29201,
+        28631
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 4,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 30.8
+    },
+    "set4-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        92818,
+        29380
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 4,
+      "tool_calls": [
+        7,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 49.9
+    },
+    "retest5-set4": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        75845,
+        89567
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 4,
+      "tool_calls": [
+        6,
+        7
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 39.3
+    },
+    "retest6-set4": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        27415,
+        28293
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        4,
+        4
+      ],
+      "rubric_total": 4,
+      "tool_calls": [
+        2,
+        2
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 21.2
+    }
+  },
+  "V4_RAILS_COMMIT_TX_WHAT": {
+    "set4-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        159283,
+        69981
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        11,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 66.3
+    },
+    "set4-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        38492,
+        38701
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 37.3
+    }
+  },
+  "V4_RAILS_RELOAD_IMPACT": {
+    "set4-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        183161,
+        179370
+      ],
+      "cached_input_tokens": [
+        403247,
+        397866
+      ],
+      "rubric": [
+        8,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        25,
+        27
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 176.7
+    },
+    "set4-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        72434,
+        58753
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 178.0
+    },
+    "retest5-set4": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        66864,
+        111632
+      ],
+      "cached_input_tokens": [
+        0,
+        230685
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        15
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 189.9
+    },
+    "retest6-set4": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        72626,
+        58679
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        4,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 142.0
+    },
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        51407,
+        51282
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        8,
+        8
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 94.7
+    }
+  },
+  "V4_REDIS_MIGRATE_RETRY": {
+    "set4-before": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        102816,
+        120633
+      ],
+      "cached_input_tokens": [
+        15981,
+        14570
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        8,
+        9
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 69.9
+    },
+    "set4-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        60167,
+        77432
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        7,
+        7
+      ],
+      "rubric_total": 8,
+      "tool_calls": [
+        4,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 56.7
+    }
+  },
+  "V5_RAILS_PERFORM_IMPACT": {
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        49438,
+        48176
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        5,
+        5
+      ],
+      "rubric_total": 6,
+      "tool_calls": [
+        3,
+        3
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 81.6
+    }
+  },
+  "V5_RAILS_TOUCH_LATER_TX_WHAT": {
+    "set5-final": {
+      "statuses": [
+        "complete",
+        "complete"
+      ],
+      "tokens": [
+        57018,
+        69534
+      ],
+      "cached_input_tokens": [
+        0,
+        0
+      ],
+      "rubric": [
+        6,
+        6
+      ],
+      "rubric_total": 7,
+      "tool_calls": [
+        4,
+        5
+      ],
+      "mcp_calls": [
+        1,
+        1
+      ],
+      "seconds": 69.5
+    }
+  }
+}
