@@ -480,12 +480,13 @@ def _command_service(args, root: Path, parser) -> None:
     if args.service_action == "install":
         resolved_kind = native_service_kind() if args.kind == "auto" else args.kind
         output_path = Path(args.output).expanduser() if args.output else default_service_output(resolved_kind)
+        from .core.listen import browser_host, listen_hosts
         output = service_artifact(root, kind=resolved_kind, output=output_path, interval=args.interval,
                                   watch=args.watch, host=args.host, port=args.port,
                                   tokens_file=(Path(args.tokens_file) if args.tokens_file else None),
                                   embed_model=args.embed_model, ollama_host=args.ollama_host)
         result = {"ok": True, "kind": resolved_kind, "output": str(output),
-                  "dashboard": f"http://{args.host}:{args.port}"}
+                  "dashboard": f"http://{browser_host(listen_hosts(args.host))}:{args.port}"}
         if args.enable:
             if resolved_kind == "compose":
                 parser.error("--enable no aplica a Compose; use docker compose up -d")
@@ -980,19 +981,27 @@ def _command_serve(args, root: Path, parser) -> None:
     if args.mcp_token:
         os.environ["GRAPHTYN_MCP_TOKEN"] = args.mcp_token
     os.environ["GRAPHTYN_MCP_PATH"] = str(root)
+    from .core.listen import bind_socket, browser_host, listen_hosts
+    hosts = listen_hosts(args.host)
     scheme = "https" if args.ssl_certfile and args.ssl_keyfile else "http"
-    dashboard_host = "127.0.0.1" if args.host in {"0.0.0.0", "::"} else args.host
     print("\n🌌 Graphtyn está listo")
-    print(f"   Dashboard: {scheme}://{dashboard_host}:{args.port}")
+    print(f"   Dashboard: {scheme}://{browser_host(hosts)}:{args.port}")
     print(f"   Proyecto:  {root}")
-    print(f"   Servidor:  {args.host}:{args.port} · Recarga={args.reload} · Watch={args.watch}\n", flush=True)
+    print(f"   Servidor:  {', '.join(hosts)}:{args.port} · Recarga={args.reload} · Watch={args.watch}\n", flush=True)
     if args.reload:
-        uvicorn.run("graphtyn.api.main:app", host=args.host, port=args.port, reload=True,
+        if len(hosts) > 1:
+            raise SystemExit("--reload admite un solo --host")
+        uvicorn.run("graphtyn.api.main:app", host=hosts[0], port=args.port, reload=True,
                     ssl_certfile=args.ssl_certfile, ssl_keyfile=args.ssl_keyfile)
     else:
         from .api.main import app
-        uvicorn.run(app, host=args.host, port=args.port,
-                    ssl_certfile=args.ssl_certfile, ssl_keyfile=args.ssl_keyfile)
+        if len(hosts) == 1:
+            uvicorn.run(app, host=hosts[0], port=args.port,
+                        ssl_certfile=args.ssl_certfile, ssl_keyfile=args.ssl_keyfile)
+        else:
+            # One server for every address: loopback for the browser, a bridge for VMs or containers.
+            config = uvicorn.Config(app, port=args.port, ssl_certfile=args.ssl_certfile, ssl_keyfile=args.ssl_keyfile)
+            uvicorn.Server(config).run(sockets=[bind_socket(host, args.port) for host in hosts])
 
 def _command_gitignore(args, root: Path, parser) -> None:
     from .api.main import _save_project_config, _load_project_config

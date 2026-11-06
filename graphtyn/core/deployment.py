@@ -108,18 +108,18 @@ def apply_setup(project: Path, *, agents: list[str], sources: list[dict[str, str
             "token_file": str(token_file) if token_file else None}
 
 def service_artifact(project: Path, *, kind: str, output: Path, interval: float = 10,
-                     watch: bool = False, host: str = "127.0.0.1", port: int = 9210,
+                     watch: bool = False, host: str | list[str] | None = "127.0.0.1", port: int = 9210,
                      tokens_file: Path | None = None, embed_model: str | None = None,
                      ollama_host: str | None = None) -> Path:
     project, output = project.resolve(), output.expanduser().resolve()
-    host = str(host or "127.0.0.1").strip()
-    if not re.fullmatch(r"[A-Za-z0-9._:-]+", host):
-        raise ValueError("host de servicio inválido")
+    from .listen import LOOPBACK, listen_hosts
+    hosts = listen_hosts(host)
+    host_flags = " ".join(f"--host {item}" for item in hosts)
     port = int(port)
     if not 1 <= port <= 65535:
         raise ValueError("port debe estar entre 1 y 65535")
     tokens_file = tokens_file.expanduser().resolve() if tokens_file else None
-    if host not in {"127.0.0.1", "localhost", "::1"} and not tokens_file:
+    if any(item not in LOOPBACK for item in hosts) and not tokens_file:
         raise ValueError("un servicio expuesto fuera de loopback requiere --tokens-file")
     if tokens_file:
         try:
@@ -148,7 +148,7 @@ def service_artifact(project: Path, *, kind: str, output: Path, interval: float 
         # beside sys.executable even when it points into Nix/store or /usr.
         executable = _graphtyn_executable()
         watch_flag = " --watch" if watch else ""
-        content = f"""[Unit]\nDescription=Graphtyn persistent dashboard\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nEnvironment=GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}\n{environment}ExecStart=\"{executable}\" serve --host {host} --port {port}{watch_flag} --path \"{project}\"\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
+        content = f"""[Unit]\nDescription=Graphtyn persistent dashboard\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nEnvironment=GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}\n{environment}ExecStart=\"{executable}\" serve {host_flags} --port {port}{watch_flag} --path \"{project}\"\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
     elif kind == "windows":
         executable = _graphtyn_executable()
         watch_flag = " --watch" if watch else ""
@@ -159,13 +159,13 @@ def service_artifact(project: Path, *, kind: str, output: Path, interval: float 
         content = (f'@echo off\r\nsetlocal\r\nset "GRAPHTYN_HOME={data_home()}"\r\n'
                    f'set "GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}"\r\n'
                    f'{windows_environment}'
-                   f'"{executable}" serve --host {host} --port {port}{watch_flag} --path "{project}"\r\n')
+                   f'"{executable}" serve {host_flags} --port {port}{watch_flag} --path "{project}"\r\n')
     elif kind == "compose":
-        bind_host = "127.0.0.1" if host in {"localhost", "::1"} else host
+        published = ", ".join(f'"{"127.0.0.1" if item in {"localhost", "::1"} else item}:{port}:{port}"' for item in hosts)
         secret_file = tokens_file or Path("./memory-tokens.json")
         optional_embedding = (f"      GRAPHTYN_EMBED_MODEL: {embed_model}\n" if embed_model else "")
         optional_ollama = (f"      OLLAMA_HOST: {ollama_host}\n" if ollama_host else "")
-        content = f"""services:\n  graphtyn:\n    image: graphtyn:latest\n    command: [\"serve\",\"--host\",\"0.0.0.0\",\"--port\",\"{port}\",\"--path\",\"/workspace\",\"--watch\"]\n    ports: [\"{bind_host}:{port}:{port}\"]\n    volumes:\n      - {project}:/workspace:ro\n      - graphtyn-state:/state\n    environment:\n      GRAPHTYN_HOME: /state\n      GRAPHTYN_MEMORY_TOKENS_FILE: /run/secrets/graphtyn_tokens\n{optional_embedding}{optional_ollama}    secrets: [graphtyn_tokens]\n    restart: unless-stopped\nsecrets:\n  graphtyn_tokens:\n    file: {secret_file}\nvolumes:\n  graphtyn-state:\n"""
+        content = f"""services:\n  graphtyn:\n    image: graphtyn:latest\n    command: [\"serve\",\"--host\",\"0.0.0.0\",\"--port\",\"{port}\",\"--path\",\"/workspace\",\"--watch\"]\n    ports: [{published}]\n    volumes:\n      - {project}:/workspace:ro\n      - graphtyn-state:/state\n    environment:\n      GRAPHTYN_HOME: /state\n      GRAPHTYN_MEMORY_TOKENS_FILE: /run/secrets/graphtyn_tokens\n{optional_embedding}{optional_ollama}    secrets: [graphtyn_tokens]\n    restart: unless-stopped\nsecrets:\n  graphtyn_tokens:\n    file: {secret_file}\nvolumes:\n  graphtyn-state:\n"""
     else: raise ValueError("kind debe ser auto, systemd, windows o compose")
     output.write_text(content, encoding="utf-8"); return output
 
