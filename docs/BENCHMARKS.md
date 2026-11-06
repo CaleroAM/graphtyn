@@ -27,6 +27,7 @@
 | Hook de primer turno en Antigravity | NEGATIVE para ahorro general; nueve tareas, 42 sesiones (n=2–3); ver `benchmarks/antigravity_hook_2026-11-03/report.md` |
 | Clasificación, `impact` y explicación de símbolos en Antigravity | POSITIVE en `d5af039` según dos jueces; veintidós tareas nuevas más repeticiones, 212 sesiones (n=2) en Antigravity y Codex sobre redis/redis, fmtlib/fmt y rails/rails públicos en commits fijos; ver `benchmarks/intent_impact_2026-11-04/report.md` |
 | Clasificación de intención con preguntas de otro modelo | POSITIVE con brecha de sobreajuste; 59/72 en un lote final evaluado una vez (33/72 en `main`); ver `benchmarks/intent_classification_2026-11-05/report.md` |
+| Sin grafo, Graphtyn y Graphify 0.9.103, simultáneo | MIXED; Claude: Graphtyn 100 % de hechos frente a 97 % de Graphify, −39 % de tokens en la mediana; Codex: Graphtyn −80 % frente a Graphify pero 72 % de hechos frente a 85 %, por dos fallos concretos; 96 sesiones (n=2); ver `benchmarks/graphify_head_to_head_2026-11-06/report.md` |
 | 36 tareas multilenguaje | PENDING |
 
 ### Calificación con jueces

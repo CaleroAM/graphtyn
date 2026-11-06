@@ -89,7 +89,8 @@ def main() -> int:
             answer = answer_path.read_text(encoding="utf-8", errors="replace") if answer_path.exists() else ""
             task = specs[summary["task_id"]]
             literal = {fact["id"]: any(term.casefold() in answer.casefold() for term in fact["any"]) for fact in task["rubric"]}
-            runs.append({"variant": variant, "task": task["id"], "repetition": summary["repetition"],
+            runs.append({"variant": variant, "arm": summary.get("arm", ""), "task": task["id"],
+                         "repetition": summary["repetition"],
                          "tokens": summary["usage"].get("total_tokens"), "literal": literal,
                          "prompt": _prompt(task, answer), "facts": [fact["id"] for fact in task["rubric"]]})
     jobs = [(run, judge) for run in runs for judge in JUDGES
@@ -111,14 +112,17 @@ def main() -> int:
             pairs["judges"][1].append(judged["gpt"][fact])
             pairs["literal_consensus"][0].append(run["literal"][fact])
             pairs["literal_consensus"][1].append(consensus[fact])
-        rows.append({key: run[key] for key in ("variant", "task", "repetition", "tokens", "literal")}
+        rows.append({key: run[key] for key in ("variant", "arm", "task", "repetition", "tokens", "literal")}
                     | {"gemini": judged["gemini"], "gpt": judged["gpt"], "consensus": consensus})
     summary = {}
-    for variant in args.variant:
-        group = [row for row in rows if row["variant"] == variant]
-        summary[variant] = {"runs": len(group), "facts": sum(len(row["literal"]) for row in group),
-                            **{key: sum(sum(row[key].values()) for row in group)
-                               for key in ("literal", "gemini", "gpt", "consensus")}}
+    # One group per variant, split by arm when a variant runs several (baseline, graphtyn, graphify).
+    for key in dict.fromkeys((row["variant"], row["arm"]) for row in rows):
+        group = [row for row in rows if (row["variant"], row["arm"]) == key]
+        label = key[0] if len({row["arm"] for row in rows if row["variant"] == key[0]}) == 1 else "/".join(key)
+        summary[label] = {"runs": len(group), "facts": sum(len(row["literal"]) for row in group),
+                          "tokens": sum(int(row["tokens"] or 0) for row in group),
+                          **{name: sum(sum(row[name].values()) for row in group)
+                             for name in ("literal", "gemini", "gpt", "consensus")}}
     agreement = {name: _kappa(*values) for name, values in pairs.items()}
     output_path.write_text(json.dumps({"summary": summary, "kappa": agreement, "runs": rows},
                                                         ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
