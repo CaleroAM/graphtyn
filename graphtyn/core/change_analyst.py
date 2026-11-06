@@ -904,7 +904,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     symbol_terms = [term for term in direct_terms if term not in generic_symbol_terms and term not in package_words]
     if selected_intent == "impact":
         # "ensure_sync en Flask" asks for ensure_sync's consumers; in a flow, the project's own class anchors it.
-        scoped = _scope_words(graph.get("nodes", []), request)
+        scoped = _scope_words(graph.get("nodes", []), request, symbol_terms)
         symbol_terms = [term for term in symbol_terms if term not in scoped] or symbol_terms
     explicit_identifiers = {
         identifier.lower()

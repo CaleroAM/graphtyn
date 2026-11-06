@@ -31,14 +31,19 @@ _SCOPE_PHRASE = re.compile(
     r"([A-Za-z][A-Za-z0-9_-]*)", re.IGNORECASE)
 
 
-def scope_words(all_nodes: list[dict[str, Any]], request: str) -> set[str]:
-    """Words naming a component after a preposition ("ensure_sync en Flask"): where to look, not what.
+def scope_words(all_nodes: list[dict[str, Any]], request: str, symbol_terms: Any = ()) -> set[str]:
+    """Words naming where to look after a preposition, not what changes.
 
-    Flask also names a class of its repository, so taken as a symbol it filled an impact
-    package with every use of that class.
+    "ensure_sync en Flask" names a component (Flask is also a class of its repository, and
+    taken as a symbol it filled an impact package with every use of that class), "popStack
+    en JsonTreeReader de Gson" names the owner of the member and the project's root.
     """
-    scopes = _scope_names(all_nodes)
-    return {word.lower() for word in _SCOPE_PHRASE.findall(str(request or "")) if _normalized(word) in scopes}
+    scopes = _scope_names(all_nodes) | _package_roots(all_nodes)
+    terms = {str(term).lower() for term in symbol_terms}
+    owners = {str(node.get("container") or "").lower() for node in all_nodes
+              if str(node.get("name") or "").lower() in terms} - {""}
+    return {word.lower() for word in _SCOPE_PHRASE.findall(str(request or ""))
+            if _normalized(word) in scopes or word.lower() in owners}
 
 
 def named_package_roots(all_nodes: list[dict[str, Any]], request: str) -> set[str]:

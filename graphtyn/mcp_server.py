@@ -13,6 +13,7 @@ from typing import Dict, Any
 from .core import index_freshness
 from .core.ast_parser import ASTParser
 from .core.change_analyst import analyze_change, query_intent
+from .core.impact_context import shrink_impact_context
 from .core.retrieval_signals import render_call_outline
 from .core.work_memory import attach_learning
 from .core.history import HistoryTracker
@@ -427,6 +428,9 @@ def _bound_evidence_payload(output: dict, matched_aliases: set[str], token_budge
     output["estimated_tokens"] = 0
     output["payload_tokens"] = 0
     output["payload_truncated"] = False
+    # An impact package's context (call lines, callers of callers, tests) is optional: it gives way
+    # first, and only evidence removed after it counts as truncation.
+    shrink_impact_context(output, lambda: _serialized_tokens(output) > token_budget)
     original_tokens = _serialized_tokens(output)
 
     # Details and hints improve recall but declarations and operations are more

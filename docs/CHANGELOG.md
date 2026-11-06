@@ -7,6 +7,15 @@ compatibles con PEP 440.
 
 ### Añadido
 
+- Los paquetes de impacto dicen qué alcanza un cambio, no solo quién llama:
+  - cada consumidor lleva la línea de código de la llamada, para ver qué hace con el resultado;
+  - `target_effects`: los `return`, `raise` y `throw` del propio símbolo (completos aunque ocupen
+    varias líneas);
+  - `indirect_consumers`: quién llama a los consumidores directos, y a través de cuál;
+  - `related_tests`: las pruebas que usan el símbolo, llaman a un consumidor o llevan su nombre.
+  Si la pregunta pide pruebas o consumidores indirectos y no hay, el paquete lo declara en
+  `missing` en vez de darse por completo. Este contexto es lo primero que cede al presupuesto
+  de tokens, antes que entidades y relaciones.
 - `graphtyn harness openclaw tokens --installation ID --tokens-file F`: da a cada agente
   de OpenClaw su propio servidor MCP (`graphtyn-<agente>`) con un token de lectura ligado
   a `openclaw/<agente>`. Cada token se limita a los proyectos de código registrados más
@@ -39,6 +48,9 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- En una pregunta de impacto, la clase dueña del método («popStack en JsonTreeReader») y el
+  directorio raíz del proyecto («de Gson») indican dónde buscar, no qué cambia. Antes,
+  `Gson` llenaba el paquete con cada prueba que crea un `Gson`.
 - En un workspace (`crates/globset` en Cargo, `packages/x` en un monorepo de JavaScript), cada
   miembro cuenta como paquete. Si la pregunta nombra uno («`Parser::parse` en globset»), ese
   paquete decide entre homónimos cualificados de otros miembros y pesa más que un archivo
