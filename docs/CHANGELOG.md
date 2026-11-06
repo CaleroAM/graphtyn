@@ -22,6 +22,10 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- En archivos de prueba de Ruby y JavaScript, cada bloque `test "…" do`, `it "…"`,
+  `it('…', () => …)` o `setup`/`before` es un nodo que llama a lo que ejecuta. Antes
+  esas llamadas se atribuían al archivo: en Rails, 13.800 llamadas pasan a su bloque.
+  Hay que reindexar para notarlo.
 - La clasificación automática de intención reconoce cómo se pide cada tipo de evidencia
   en español, inglés, portugués, francés, alemán e italiano. Con preguntas que escribió y
   etiquetó otro modelo, acierta 59 de 72 en un lote nuevo, frente a 33 en la versión

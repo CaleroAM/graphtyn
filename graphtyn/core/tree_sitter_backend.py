@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v24-qualified-ruby-bases"
+PARSER_VERSION = "treesitter-v25-test-blocks"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -231,8 +231,57 @@ def _ancestor_name(source: bytes, node, types: set[str]) -> str:
     while ancestor is not None:
         if ancestor.type in types:
             return _name(source, ancestor)
+        if _TEST_BLOCKS in types and ancestor.type in {"call", "call_expression"}:
+            name = _test_block_name(source, ancestor)
+            if name:
+                return name
         ancestor = ancestor.parent
     return ""
+
+
+# Test frameworks declare examples with a call and a block: `test "saves" do`, `it("saves", () => {})`.
+# In a test file each one is the caller of what it runs, as Minitest's generated `test_saves` method is.
+_TEST_BLOCKS = "test_block"
+_TEST_BLOCK_PACKS = {"ruby", "javascript", "typescript"}
+_TEST_EXAMPLES = {"test": "test", "it": "it", "specify": "it", "example": "it", "scenario": "scenario"}
+_TEST_HOOKS = {"setup", "teardown", "before", "after", "around", "beforeEach", "afterEach", "beforeAll", "afterAll"}
+_TEST_FILE = re.compile(r"(?:^|/)(?:tests?|specs?|__tests__)(?:/|$)|[_.](?:test|spec)s?\.[^/.]+$", re.I)
+
+
+def _test_block_name(source: bytes, node) -> str:
+    """`test_saves_record` for `test "saves record" do`, `setup_block` for `setup do`, else ''.
+
+    A hook block is not named like the framework method it calls (`setup`), or that call
+    would resolve to the block itself.
+    """
+    if node.type == "call":
+        method = node.child_by_field_name("method")
+        if node.child_by_field_name("receiver") is not None or method is None or node.child_by_field_name("block") is None:
+            return ""
+        verb, arguments = _text(source, method), node.child_by_field_name("arguments")
+    else:
+        function, arguments = node.child_by_field_name("function"), node.child_by_field_name("arguments")
+        if function is None or function.type != "identifier" or arguments is None or not any(
+                child.type in {"arrow_function", "function_expression", "function"} for child in arguments.named_children):
+            return ""
+        verb = _text(source, function)
+    if verb in _TEST_HOOKS:
+        return f"{verb}_block"
+    first = arguments.named_children[0] if verb in _TEST_EXAMPLES and arguments is not None and arguments.named_child_count else None
+    if first is None or first.type not in {"string", "template_string", "string_literal"}:
+        return ""
+    title = re.sub(r"\W+", "_", _text(source, first).strip("'\"`")).strip("_").lower()[:80]
+    return f"{_TEST_EXAMPLES[verb]}_{title}" if title else ""
+
+
+def _test_block_symbol(ctx: "_FileContext", node, line: int, end_line: int, evidence: str) -> Optional[dict[str, Any]]:
+    if _TEST_BLOCKS not in ctx.callable_declarations:
+        return None
+    name = _test_block_name(ctx.source, node)
+    return {"name": name, "kind": "method", "file": ctx.rel_path, "line": line, "end_line": end_line,
+            "evidence": evidence, "bases": [], "parser": "tree-sitter", "test_block": True,
+            "container": _ancestor_name(ctx.source, node, ctx.type_declarations),
+            "namespace": _ancestor_namespace(ctx.source, node)} if name else None
 
 
 def _ancestor_namespace(source: bytes, node) -> str:
@@ -491,8 +540,11 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
 
 
 def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, operations: list,
-                imports: list, ruby_mixins: list) -> None:
-    """A call or instantiation, its operation and Ruby require/mixin side facts."""
+                imports: list, ruby_mixins: list, symbols: list | None = None) -> None:
+    """A call or instantiation, its operation, Ruby require/mixin side facts and test blocks."""
+    block = _test_block_symbol(ctx, node, line, node.end_point.row + 1, evidence)
+    if block and symbols is not None:
+        symbols.append(block)
     name = _call_name(ctx.source, node, ruby=ctx.pack.name == "ruby")
     if name:
         target = node.child_by_field_name("function") or node.child_by_field_name("method")
@@ -586,7 +638,7 @@ _TYPE_DECLARATIONS = frozenset({"class_declaration", "class_definition", "interf
 _CALLABLE_DECLARATIONS = frozenset({"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item", "method", "singleton_method"})
 
 
-def _declaration_types(pack_name: str) -> tuple[set[str], set[str], set[str]]:
+def _declaration_types(pack_name: str, rel_path: str = "") -> tuple[set[str], set[str], set[str]]:
     """Import, type and callable node types, with the additions of one language pack."""
     import_types = set(_IMPORT_TYPES)
     if pack_name == "kotlin":
@@ -598,6 +650,8 @@ def _declaration_types(pack_name: str) -> tuple[set[str], set[str], set[str]]:
     if pack_name in _JVM_APPLE_PACKS:
         type_declarations |= {"object_declaration", "protocol_declaration", "trait_definition", "object_definition"}
         callable_declarations |= {"init_declaration", "protocol_function_declaration"}
+    if pack_name in _TEST_BLOCK_PACKS and _TEST_FILE.search(rel_path):
+        callable_declarations.add(_TEST_BLOCKS)
     return import_types, type_declarations, callable_declarations
 
 
@@ -624,7 +678,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     namespace = ""
 
     symbol_types, call_types = _SYMBOL_TYPES, _CALL_TYPES
-    import_types, type_declarations, callable_declarations = _declaration_types(pack.name)
+    import_types, type_declarations, callable_declarations = _declaration_types(pack.name, rel_path)
 
     ctx = _FileContext(source, rel_path, ext, pack, frozenset(type_declarations), frozenset(callable_declarations))
     ruby_locals: dict[int, set[str]] = {}
@@ -658,7 +712,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
             if symbol:
                 symbols.append(symbol)
         elif node.type in call_types:
-            _call_facts(ctx, node, line, evidence, calls, operations, imports, ruby_mixins)
+            _call_facts(ctx, node, line, evidence, calls, operations, imports, ruby_mixins, symbols)
         elif pack.name == "ruby" and node.type == "identifier" and _is_ruby_bare_call(ctx, node, ruby_locals):
             _ruby_bare_call_facts(ctx, node, line, evidence, calls, operations)
         elif pack.name == "ruby" and node.type == "super" and (node.parent is None or node.parent.type != "call"):
