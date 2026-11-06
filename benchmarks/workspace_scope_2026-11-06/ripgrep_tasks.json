@@ -1,0 +1,140 @@
+{
+ "tasks": [
+  {
+   "id": "S_PCRE2_BUILD_MANY_FLOW",
+   "request": "¿Qué hace RegexMatcherBuilder::build_many en pcre2? Explica los pasos y los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "right_crate",
+     "any": [
+      "crates/pcre2/src/matcher.rs"
+     ]
+    },
+    {
+     "id": "escape",
+     "any": [
+      "pcre2::escape",
+      "fixed_strings"
+     ]
+    },
+    {
+     "id": "group",
+     "any": [
+      "(?:"
+     ]
+    },
+    {
+     "id": "alternation",
+     "any": [
+      "join"
+     ]
+    },
+    {
+     "id": "empty",
+     "any": [
+      "[^\\S\\s]"
+     ]
+    },
+    {
+     "id": "smart_case",
+     "any": [
+      "case_smart",
+      "has_uppercase_literal",
+      "caseless"
+     ]
+    },
+    {
+     "id": "whole_line",
+     "any": [
+      "whole_line",
+      "(?m:^)"
+     ]
+    },
+    {
+     "id": "word",
+     "any": [
+      "(?<!\\w)"
+     ]
+    },
+    {
+     "id": "compile_error",
+     "any": [
+      "Error::regex",
+      "map_err"
+     ]
+    },
+    {
+     "id": "capture_names",
+     "any": [
+      "capture_names"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "S_REGEX_BUILD_MANY_FLOW",
+   "request": "¿Qué hace RegexMatcherBuilder::build_many en el crate regex de ripgrep? Explica los pasos y los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "right_crate",
+     "any": [
+      "crates/regex/src/matcher.rs"
+     ]
+    },
+    {
+     "id": "configured_hir",
+     "any": [
+      "config.build_many",
+      "ConfiguredHIR"
+     ]
+    },
+    {
+     "id": "whole_line_word",
+     "any": [
+      "into_whole_line",
+      "into_word"
+     ]
+    },
+    {
+     "id": "to_regex",
+     "any": [
+      "to_regex"
+     ]
+    },
+    {
+     "id": "non_matching",
+     "any": [
+      "non_matching_bytes"
+     ]
+    },
+    {
+     "id": "fast_line",
+     "any": [
+      "InnerLiterals",
+      "fast_line_regex"
+     ]
+    },
+    {
+     "id": "line_terminator",
+     "any": [
+      "line_terminator"
+     ]
+    },
+    {
+     "id": "fixed_literals",
+     "any": [
+      "Hir::literal",
+      "is_fixed_strings"
+     ]
+    },
+    {
+     "id": "parse_errors",
+     "any": [
+      "Error::generic",
+      "ast::parse"
+     ]
+    }
+   ]
+  }
+ ]
+}
