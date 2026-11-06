@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from pathlib import Path
 from typing import Dict, Any
 
+from .core import index_freshness
 from .core.ast_parser import ASTParser
 from .core.change_analyst import analyze_change, query_intent
 from .core.retrieval_signals import render_call_outline
@@ -201,7 +202,7 @@ def _graph_workspace(default_workspace: Path, args: dict[str, Any]) -> Path:
 
 def _tag_graph_result(result: dict[str, Any], workspace: Path) -> dict[str, Any]:
     result["project_context"] = _workspace_context(workspace)
-    return result
+    return index_freshness.annotate(result, workspace)
 
 
 def _validate_expected_project(workspace: Path, args: dict[str, Any]) -> None:
@@ -261,6 +262,7 @@ def get_workspace_graph_with_meta(workspace: Path, parser: ASTParser) -> tuple[d
                 if entry and entry[0] == signature:
                     return entry[1], True
             graph = json.loads(cached.read_text(encoding="utf-8"))
+            index_freshness.check(workspace, graph)
             with _GRAPH_CACHE_LOCK:
                 _GRAPH_CACHE[key] = (signature, graph)
                 if len(_GRAPH_CACHE) > 8:
