@@ -29,6 +29,7 @@
 | Clasificación de intención con preguntas de otro modelo | POSITIVE con brecha de sobreajuste; 59/72 en un lote final evaluado una vez (33/72 en `main`); ver `benchmarks/intent_classification_2026-11-05/report.md` |
 | Sin grafo, Graphtyn y Graphify 0.9.103, simultáneo | MIXED; Claude: Graphtyn 100 % de hechos frente a 97 % de Graphify, −39 % de tokens en la mediana; Codex: Graphtyn −80 % frente a Graphify pero 72 % de hechos frente a 85 %, por dos fallos concretos; 96 sesiones (n=2); ver `benchmarks/graphify_head_to_head_2026-11-06/report.md` |
 | Correcciones tras la comparación con Graphify | POSITIVE para consumidores directos en Codex: 9/10 frente a 5/10 en `main`, mismos tokens; 80/96 hechos frente a 70/96, la mitad por variación en flujos con paquete idéntico; seis tareas nuevas, 24 sesiones (n=2); ver `benchmarks/h2h_fix_validation_2026-11-06/report.md` |
+| Llamadas sobre `self` a métodos heredados | NEUTRAL en respuestas de Codex (32/52 frente a 29/52, 2 parejas mejor y 2 peor); POSITIVE en el grafo: los consumidores pasan de referencias de texto a relaciones `EXTRACTED`; cuatro tareas nuevas, 16 sesiones (n=2); ver `benchmarks/inherited_self_calls_2026-11-06/report.md` |
 | 36 tareas multilenguaje | PENDING |
 
 ### Calificación con jueces

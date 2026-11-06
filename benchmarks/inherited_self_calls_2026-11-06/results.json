@@ -1,0 +1,79 @@
+{
+ "versions": {
+  "main": {
+   "sessions": 8,
+   "complete": 8,
+   "facts": 29,
+   "facts_total": 52,
+   "mean_tokens": 27146,
+   "median_tokens": 27086,
+   "mean_tools": 1.0
+  },
+  "fix": {
+   "sessions": 8,
+   "complete": 8,
+   "facts": 32,
+   "facts_total": 52,
+   "mean_tokens": 27650,
+   "median_tokens": 27558,
+   "mean_tools": 1.0
+  }
+ },
+ "tasks": {
+  "I_FLASK_EXC_CLASS_CODE_IMPACT": {
+   "main": {
+    "facts": 7,
+    "facts_total": 14,
+    "mean_tokens": 27826
+   },
+   "fix": {
+    "facts": 6,
+    "facts_total": 14,
+    "mean_tokens": 28027
+   }
+  },
+  "I_FLASK_GET_COOKIE_NAME_IMPACT": {
+   "main": {
+    "facts": 8,
+    "facts_total": 14,
+    "mean_tokens": 27119
+   },
+   "fix": {
+    "facts": 14,
+    "facts_total": 14,
+    "mean_tokens": 28012
+   }
+  },
+  "I_FLASK_INJECT_URL_DEFAULTS_IMPACT": {
+   "main": {
+    "facts": 7,
+    "facts_total": 10,
+    "mean_tokens": 27020
+   },
+   "fix": {
+    "facts": 5,
+    "facts_total": 10,
+    "mean_tokens": 27256
+   }
+  },
+  "I_FLASK_SHOULD_SET_COOKIE_IMPACT": {
+   "main": {
+    "facts": 7,
+    "facts_total": 14,
+    "mean_tokens": 26621
+   },
+   "fix": {
+    "facts": 7,
+    "facts_total": 14,
+    "mean_tokens": 27307
+   }
+  }
+ },
+ "pairs": {
+  "pairs": 8,
+  "fix_more_facts": 2,
+  "fix_fewer_facts": 2,
+  "fix_fewer_tokens": 0,
+  "median_token_change": 0.018
+ }
+}
