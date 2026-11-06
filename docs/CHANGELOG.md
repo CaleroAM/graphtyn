@@ -39,6 +39,10 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- En un workspace (`crates/globset` en Cargo, `packages/x` en un monorepo de JavaScript), cada
+  miembro cuenta como paquete. Si la pregunta nombra uno («`Parser::parse` en globset»), ese
+  paquete decide entre homónimos cualificados de otros miembros y pesa más que un archivo
+  llamado como el símbolo (`parse.rs`).
 - Cada lenguaje produce lo que declara, y una prueba de conformidad
   (`tests/test_language_conformance.py`) lo comprueba con un ejemplo por lenguaje:
   - **Java:** no extraía ninguna llamada a métodos (`method_invocation`) y perdía los

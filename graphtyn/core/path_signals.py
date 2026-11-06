@@ -52,8 +52,14 @@ def named_package_roots(all_nodes: list[dict[str, Any]], request: str) -> set[st
     return (written & roots) | set(package_name_words(all_nodes, request))
 
 
+# A workspace member is a package of its own: crates/globset in a Cargo workspace,
+# packages/router in a JavaScript monorepo.
+_WORKSPACE_DIRS = frozenset({"crates", "packages", "libs", "modules", "apps", "services", "plugins", "components", "projects"})
+
+
 def package_root(node: dict[str, Any]) -> str:
-    return str(node.get("file") or "").replace("\\", "/").split("/", 1)[0].lower()
+    parts = str(node.get("file") or "").replace("\\", "/").lower().split("/")
+    return parts[1] if parts[0] in _WORKSPACE_DIRS and len(parts) > 2 else parts[0]
 
 
 def in_named_scope(node: dict[str, Any], scopes: set[str]) -> bool:

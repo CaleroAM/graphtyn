@@ -1259,3 +1259,27 @@ def test_impact_on_a_method_named_with_its_project_keeps_only_that_method():
     assert {node["name"] for node in result["matched"]} == {"ensure_sync"}
     # Naming only the class keeps it as the target.
     assert {node["name"] for node in query_intent(graph, "Si cambio Flask, ¿qué se rompe?", "impact", 10)["matched"]} == {"Flask"}
+
+
+def test_a_named_workspace_member_picks_its_homonym_over_a_file_named_after_the_symbol():
+    from graphtyn.core.path_signals import named_package_roots, package_root
+
+    def method(node_id, path, line, degree):
+        return {"id": node_id, "name": "parse", "kind": "function", "container": "Parser", "file": path,
+                "line": line, "end_line": line + 10, "degree": degree, "signature": "fn parse(&mut self)",
+                "operations": [{"kind": "call", "name": "push_token", "line": line + 1, "text": "self.push_token(tok)"}]}
+
+    graph = {"nodes": [
+        {"id": "t1", "name": "Parser", "kind": "struct", "file": "crates/globset/src/glob.rs", "line": 1},
+        method("glob", "crates/globset/src/glob.rs", 40, 3),
+        {"id": "t2", "name": "Parser", "kind": "struct", "file": "crates/core/flags/parse.rs", "line": 1},
+        method("flags", "crates/core/flags/parse.rs", 40, 9),
+        {"id": "other", "name": "main", "kind": "function", "file": "tools/run.rs", "line": 1}],
+        "links": []}
+    request = "¿Cómo convierte globset un patrón en tokens en Parser::parse?"
+
+    assert package_root({"file": "crates/globset/src/glob.rs"}) == "globset"
+    assert named_package_roots(graph["nodes"], request) == {"globset"}
+    assert query_intent(graph, request, "flow", 4)["matched"][0]["id"] == "glob"
+    # Without the package, the qualified homonyms rank as before.
+    assert query_intent(graph, "¿Cómo funciona Parser::parse?", "flow", 4)["matched"][0]["id"] == "flags"

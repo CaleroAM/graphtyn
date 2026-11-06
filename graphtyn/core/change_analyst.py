@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots, package_name_words as _package_name_words, in_named_scope as _in_named_scope, scope_words as _scope_words
+from .path_signals import package_root as _package_root
 from . import retrieval_signals as _signals
 from .impact_references import CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers, impact_targets as _impact_targets, one_per_name as _one_per_name
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
@@ -947,11 +948,11 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     qualified_nodes = [node for node in all_nodes if qualified_match(node)]
     qualified_node_ids = {node.get("id") for node in qualified_nodes}
     qualified_package_roots = {
-        str(node.get("file") or "").replace("\\", "/").split("/", 1)[0]
-        for node in qualified_nodes
-        if "/" in str(node.get("file") or "").replace("\\", "/")
+        _package_root(node) for node in qualified_nodes if "/" in str(node.get("file") or "").replace("\\", "/")
     }
-    qualified_package_roots |= _named_package_roots(all_nodes, request)
+    named_roots = _named_package_roots(all_nodes, request)
+    # "Parser::parse in globset" picks the Parser of the named package among homonyms in others.
+    qualified_package_roots = (qualified_package_roots & named_roots) or (qualified_package_roots | named_roots)
     # A struct member that shares a request word (`lru`, `maxmemory`) is data,
     # not the component a flow asks about; outside impact analysis it must not
     # anchor the package to the header that declares it.
@@ -1110,7 +1111,9 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
             canonical_header = path.stem == str(node.get("name") or "").lower()
             inline_header = "-inl" in path.stem or "detail" in path.parts
             public_signature = "format_string" in str(node.get("signature") or "").lower()
+            # A package the request names outweighs a file named after the symbol (`parse.rs`).
             return (prior_scores.get(node.get("id"), 0)
+                    + int(_in_named_scope(node, named_roots)) * 10_000
                     + int(canonical_header) * 5_000
                     + int(public_signature) * 2_000
                     - int(inline_header) * 500)
@@ -1481,7 +1484,8 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
         (node for node in nodes
          if str(node.get("name") or "").lower() in symbol_terms
          and node.get("kind") not in {"file", "module", "documentation_section", "doc", "image", "media"}),
-        key=lambda node: (not qualified_match(node), -int(node.get("degree") or 0), str(node.get("id") or "")),
+        key=lambda node: (not qualified_match(node), not _in_named_scope(node, qualified_package_roots),
+                          -int(node.get("degree") or 0), str(node.get("id") or "")),
     )
     remaining_matches = [node for node in nodes if node not in exact_matched]
     if any(term in direct_terms for term in ("capture", "captured")):
