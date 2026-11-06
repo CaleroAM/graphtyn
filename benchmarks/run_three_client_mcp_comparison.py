@@ -346,8 +346,8 @@ def command_for(client: str, model: str, prompt: str, repo: Path, timeout: int,
                 claude_bare: bool = False, graphify_bin: Path | None = None,
                 prefetch: bool = False, system_prompt: str | None = None,
                 full_payload: bool = False, opencode_plugins: bool = False) -> list[str]:
-    if graphify_bin is not None and client != "claude":
-        raise ValueError("the Graphify arm is only implemented for Claude Code")
+    if graphify_bin is not None and client not in {"claude", "codex"}:
+        raise ValueError("the Graphify arm is only implemented for Claude Code and Codex")
     if prefetch and client not in HOOK_CLIENTS:
         raise ValueError(f"the prompt-hook arm is only implemented for {', '.join(HOOK_CLIENTS)}")
     if prefetch and graphtyn_executable is None:
@@ -370,6 +370,12 @@ def command_for(client: str, model: str, prompt: str, repo: Path, timeout: int,
             command.extend([
                 "-c", f"mcp_servers.graphtyn_benchmark.command={json.dumps(str(graphtyn_executable))}",
                 "-c", "mcp_servers.graphtyn_benchmark.args=" + json.dumps(args),
+            ])
+        if graphify_bin is not None:
+            # The same official graphify-mcp server and prebuilt graph as the Claude arm.
+            command.extend([
+                "-c", f"mcp_servers.graphify_benchmark.command={json.dumps(str(graphify_bin / 'graphify-mcp'))}",
+                "-c", "mcp_servers.graphify_benchmark.args=" + json.dumps([str((repo / GRAPHIFY_GRAPH).resolve())]),
             ])
         if prefetch:
             from graphtyn.core.prompt_context import (CODEX_CONTEXT_TOKEN_LIMIT, HOOK_TIMEOUT_SECONDS,
@@ -739,7 +745,7 @@ def main() -> int:
     parser.add_argument("--client", action="append", choices=CLIENTS,
                         help="Run only selected clients; intended for audited continuation after a stop")
     parser.add_argument("--arm", choices=ARMS,
-                        help="Run only one arm; graphify runs only that arm (Claude Code)")
+                        help="Run only one arm; graphify runs only that arm (Claude Code or Codex)")
     parser.add_argument("--arms", help="Comma-separated arms alternated per repetition, e.g. graphtyn,graphtyn_hook")
     parser.add_argument("--graphify-bin", type=Path,
                         help="bin/ of an isolated Graphify install (graphify, graphify-mcp); required for --arm graphify")

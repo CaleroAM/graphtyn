@@ -1,0 +1,111 @@
+{
+ "tasks": [
+  {
+   "id": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "request": "Si cambio ensure_sync en Flask, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "dispatch",
+     "any": [
+      "dispatch_request"
+     ]
+    },
+    {
+     "id": "before_request",
+     "any": [
+      "preprocess_request"
+     ]
+    },
+    {
+     "id": "after_request",
+     "any": [
+      "process_response"
+     ]
+    },
+    {
+     "id": "teardown",
+     "any": [
+      "do_teardown_request"
+     ]
+    },
+    {
+     "id": "error_handlers",
+     "any": [
+      "handle_http_exception",
+      "handle_user_exception",
+      "handle_exception"
+     ]
+    },
+    {
+     "id": "class_views",
+     "any": [
+      "views.py"
+     ]
+    },
+    {
+     "id": "contexts",
+     "any": [
+      "ctx.py",
+      "copy_current_request_context"
+     ]
+    },
+    {
+     "id": "template_signals",
+     "any": [
+      "templating.py"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "request": "¿Cómo carga Flask la configuración desde variables de entorno con Config.from_prefixed_env? Explica el orden, la conversión de valores y las claves anidadas. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "prefix",
+     "any": [
+      "FLASK_"
+     ]
+    },
+    {
+     "id": "sorted_keys",
+     "any": [
+      "sorted("
+     ]
+    },
+    {
+     "id": "strip_prefix",
+     "any": [
+      "removeprefix"
+     ]
+    },
+    {
+     "id": "json_values",
+     "any": [
+      "json.loads",
+      "loads"
+     ]
+    },
+    {
+     "id": "failed_parse_keeps_string",
+     "any": [
+      "except Exception"
+     ]
+    },
+    {
+     "id": "nested_keys",
+     "any": [
+      "__"
+     ]
+    },
+    {
+     "id": "intermediate_dicts",
+     "any": [
+      "current[part] = {}",
+      "{}"
+     ]
+    }
+   ]
+  }
+ ]
+}

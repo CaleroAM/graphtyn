@@ -1,0 +1,117 @@
+{
+ "tasks": [
+  {
+   "id": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "request": "Si cambio lookupKeyWrite en Redis, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "list_commands",
+     "any": [
+      "t_list.c"
+     ]
+    },
+    {
+     "id": "hash_commands",
+     "any": [
+      "t_hash.c"
+     ]
+    },
+    {
+     "id": "zset_commands",
+     "any": [
+      "t_zset.c"
+     ]
+    },
+    {
+     "id": "stream_commands",
+     "any": [
+      "t_stream.c"
+     ]
+    },
+    {
+     "id": "string_commands",
+     "any": [
+      "t_string.c"
+     ]
+    },
+    {
+     "id": "set_commands",
+     "any": [
+      "t_set.c"
+     ]
+    },
+    {
+     "id": "expire_commands",
+     "any": [
+      "expire.c"
+     ]
+    },
+    {
+     "id": "hyperloglog",
+     "any": [
+      "hyperloglog.c"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "H2H_REDIS_MULTIBULK_FLOW",
+   "request": "¿Cómo analiza Redis una petición RESP en processMultibulkBuffer? Explica los pasos, los límites y los errores que produce. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "inline_line_limit",
+     "any": [
+      "PROTO_INLINE_MAX_SIZE",
+      "CLIENT_READ_TOO_BIG_MBULK_COUNT_STRING"
+     ]
+    },
+    {
+     "id": "invalid_count",
+     "any": [
+      "CLIENT_READ_INVALID_MULTIBUCK_LENGTH"
+     ]
+    },
+    {
+     "id": "unauthenticated_count",
+     "any": [
+      "CLIENT_READ_UNAUTH_MBUCK_COUNT"
+     ]
+    },
+    {
+     "id": "argv_allocation",
+     "any": [
+      "argv_len",
+      "1024"
+     ]
+    },
+    {
+     "id": "expected_dollar",
+     "any": [
+      "CLIENT_READ_EXPECTED_DOLLAR"
+     ]
+    },
+    {
+     "id": "bulk_length_limit",
+     "any": [
+      "proto_max_bulk_len",
+      "CLIENT_READ_INVALID_BUCK_LENGTH"
+     ]
+    },
+    {
+     "id": "unauthenticated_bulk",
+     "any": [
+      "CLIENT_READ_UNAUTH_BUCK_LENGTH",
+      "16384"
+     ]
+    },
+    {
+     "id": "big_argument",
+     "any": [
+      "PROTO_MBULK_BIG_ARG",
+      "sdsMakeRoomForNonGreedy"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,39 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Comparación simultánea preregistrada: sin grafo frente a Graphtyn frente a Graphify, con las versiones actuales.",
+ "repository": {
+  "name": "rails/rails",
+  "url": "https://github.com/rails/rails",
+  "commit": "3f0b675158e8284241bb1213c00375bc1fb9c52f"
+ },
+ "design": {
+  "clients": [
+   "claude",
+   "codex"
+  ],
+  "tasks": [
+   "H2H_RAILS_UPDATE_COUNTERS_IMPACT"
+  ],
+  "arms": {
+   "baseline": "sin grafo ni MCP",
+   "graphtyn": "Graphtyn main 69c2085, MCP lean, regla targeted",
+   "graphify": "Graphify 0.9.103 (graphifyy[mcp]), graphify-mcp oficial con sus 10 herramientas, grafo de solo código sin LLM"
+  },
+  "repetitions": 2,
+  "order": "contrabalanceado por repetición",
+  "stop_rule": "targeted",
+  "grading": "Dos jueces (Gemini y GPT, sin herramientas) por hecho de la rúbrica; consenso como medida principal. Rúbrica literal escrita leyendo el código antes de ejecutar, como medida secundaria."
+ },
+ "client_config": {
+  "models": {
+   "claude": "claude-sonnet-5-5",
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Graphify instalado en ~/.cache/graphtyn-bench/graphify-0.9.103, fuera del repositorio; sin skill, hook ni instrucciones de proyecto; nunca registrado como graphtyn. Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio.",
+ "authorization": {
+  "source": "El usuario autorizó instalar Graphify en un entorno aislado para esta comparación (2026-11-06).",
+  "total_token_ceiling": 13000000
+ }
+}

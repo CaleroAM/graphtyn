@@ -1,0 +1,110 @@
+{
+ "tasks": [
+  {
+   "id": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "request": "Si cambio count_digits en fmt, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "write_int",
+     "any": [
+      "write_int"
+     ]
+    },
+    {
+     "id": "decimal_formatting",
+     "any": [
+      "do_format_decimal",
+      "format_decimal"
+     ]
+    },
+    {
+     "id": "exponent",
+     "any": [
+      "write_exponent"
+     ]
+    },
+    {
+     "id": "significand_size",
+     "any": [
+      "get_significand_size"
+     ]
+    },
+    {
+     "id": "error_code",
+     "any": [
+      "format_error_code",
+      "format-inl.h"
+     ]
+    },
+    {
+     "id": "chrono_year",
+     "any": [
+      "write_year_extended"
+     ]
+    },
+    {
+     "id": "chrono",
+     "any": [
+      "chrono.h"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "request": "En fmt, ¿cómo se comprueba en tiempo de compilación una cadena de formato como fmt::format(\"{:d}\", x)? Explica qué clase la analiza, cómo se validan los índices automáticos, manuales y con nombre, y cómo se comprueban las especificaciones de cada argumento. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "checker",
+     "any": [
+      "format_string_checker"
+     ]
+    },
+    {
+     "id": "consteval",
+     "any": [
+      "FMT_CONSTEVAL"
+     ]
+    },
+    {
+     "id": "parser",
+     "any": [
+      "parse_format_string"
+     ]
+    },
+    {
+     "id": "automatic_index",
+     "any": [
+      "next_arg_id"
+     ]
+    },
+    {
+     "id": "manual_index",
+     "any": [
+      "check_arg_id"
+     ]
+    },
+    {
+     "id": "named_index",
+     "any": [
+      "argument not found",
+      "named_args"
+     ]
+    },
+    {
+     "id": "per_argument_parse",
+     "any": [
+      "parse_funcs",
+      "invoke_parse"
+     ]
+    },
+    {
+     "id": "empty_specs",
+     "any": [
+      "on_replacement_field"
+     ]
+    }
+   ]
+  }
+ ]
+}
