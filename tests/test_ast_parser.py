@@ -806,3 +806,32 @@ def test_a_qualified_ruby_base_is_not_dropped_among_homonyms(tmp_path):
                if link.get("label") == "hereda" and nodes.get(link["source"], {}).get("name") == "MailDeliveryJob"]
 
     assert parents == [("activejob_base.rb", parents[0][1])] and parents[0][1] != "AMBIGUOUS"
+
+
+def test_test_blocks_are_the_callers_of_what_they_run(tmp_path):
+    pytest.importorskip("tree_sitter_ruby")
+    pytest.importorskip("tree_sitter_javascript")
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "test").mkdir()
+    (tmp_path / "src").mkdir()
+    (tmp_path / "lib" / "billing.rb").write_text("class Billing\n  def charge(amount)\n    amount\n  end\nend\n",
+                                                 encoding="utf-8")
+    (tmp_path / "test" / "billing_test.rb").write_text(
+        'class BillingTest < Minitest::Test\n  setup do\n    charge(0)\n  end\n\n'
+        '  test "charges the amount" do\n    charge(10)\n  end\nend\n', encoding="utf-8")
+    (tmp_path / "src" / "pay.js").write_text("export function pay(x) { return x }\n", encoding="utf-8")
+    (tmp_path / "src" / "pay.test.js").write_text(
+        "import { pay } from './pay'\ndescribe('pay', () => {\n  it('pays once', () => { pay(1) })\n})\n",
+        encoding="utf-8")
+    # Outside a test file the same DSL is ordinary code.
+    (tmp_path / "lib" / "workflow.rb").write_text('class Workflow\n  def run\n    it "x" do\n      charge(1)\n    end\n  end\nend\n',
+                                                  encoding="utf-8")
+
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    calls = {(nodes[link["source"]].get("name"), nodes[link["target"]].get("name"))
+             for link in graph["links"] if link.get("label") == "llama"}
+
+    assert {("test_charges_the_amount", "charge"), ("setup_block", "charge"), ("it_pays_once", "pay")} <= calls
+    assert ("run", "charge") in calls
+    assert not any(node.get("name") == "it_x" for node in graph["nodes"])
