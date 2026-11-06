@@ -7,6 +7,13 @@ compatibles con PEP 440.
 
 ### Añadido
 
+- `graphtyn harness openclaw tokens --installation ID --tokens-file F`: da a cada agente
+  de OpenClaw su propio servidor MCP (`graphtyn-<agente>`) con un token de lectura ligado
+  a `openclaw/<agente>`. Cada token se limita a los proyectos de código registrados más
+  el cerebro y la familia del propio agente, y cada agente bloquea los servidores de los
+  demás. Con un token compartido, cualquier agente podía leer el cerebro privado de otro
+  y consultar en nombre de otro. El token compartido se revoca solo después de escribir
+  `openclaw.json`, del que queda una copia.
 - `graphtyn serve --host` y `graphtyn service install --host` se pueden repetir: el
   servicio escucha a la vez en `127.0.0.1` para el navegador y en una red privada para
   agentes en VMs o contenedores (por ejemplo `--host 127.0.0.1 --host <ip-del-host-en-esa-red>`),

@@ -241,7 +241,7 @@ def _start_project_memory_watch(root: Path, *, interval: float = 5) -> dict:
 
 def _command_harness(args, root: Path, parser) -> None:
     from .core.openclaw_integration import (connect_openclaw, discover_openclaw,
-        configure_openclaw_mcp, list_installations, set_parent, paths_for_installation,
+        configure_openclaw_mcp, configure_per_agent_mcp, list_installations, set_parent, paths_for_installation,
         set_agent_memory_enabled)
 
     def parse_pairs(values, option):
@@ -277,6 +277,9 @@ def _command_harness(args, root: Path, parser) -> None:
     elif args.openclaw_action == "memory-policy":
         result = set_agent_memory_enabled(args.installation, args.agent,
             args.state == "enabled", reason=args.reason)
+    elif args.openclaw_action == "tokens":
+        result = configure_per_agent_mcp(args.installation, Path(args.tokens_file), mcp_url=args.mcp_url,
+                                         keep_shared_token=args.keep_shared_token)
     elif args.openclaw_action == "connect":
         detected = discover_openclaw(args.config, ssh_target=args.ssh_target,
                                      data_root=args.data_root)

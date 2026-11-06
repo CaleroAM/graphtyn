@@ -58,6 +58,15 @@ def _add_setup_commands(subparsers: argparse._SubParsersAction) -> None:
     relate_oc.add_argument("--parent", default=None)
     relate_oc.add_argument("--independent", action="store_true")
     relate_oc.add_argument("--confirm", action="store_true", help="Confirma que la relación es correcta")
+    tokens_oc = openclaw_sub.add_parser(
+        "tokens", help="Un servidor MCP y un token de lectura ligado a cada agente, en lugar de uno compartido")
+    tokens_oc.add_argument("--installation", required=True)
+    tokens_oc.add_argument("--tokens-file", required=True,
+                           help="Archivo de tokens que usa el servicio de Graphtyn (GRAPHTYN_MEMORY_TOKENS_FILE)")
+    tokens_oc.add_argument("--mcp-url", default=None, help="URL MCP de Graphtyn; por defecto la ya configurada")
+    tokens_oc.add_argument("--keep-shared-token", action="store_true",
+                           help="No revoca el token compartido que usaban los agentes")
+    tokens_oc.add_argument("--ssh-config", default=None, help="Archivo SSH alternativo")
     memory_policy_oc = openclaw_sub.add_parser(
         "memory-policy", help="Activa o desactiva la memoria de un agente sólo en esta instalación")
     memory_policy_oc.add_argument("--installation", required=True)

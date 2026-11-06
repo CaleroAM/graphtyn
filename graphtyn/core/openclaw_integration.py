@@ -281,6 +281,15 @@ def configure_openclaw_mcp(discovered: dict[str, Any], *, mcp_url: str | None = 
     replacement["mcp"]["servers"]["graphtyn"] = {
         **existing, "url": url, "headers": {**headers, "Authorization": f"Bearer {token}"},
         "toolFilter": tool_filter}
+    written = write_openclaw_config(discovered, replacement)
+    if not written["ok"]:
+        return {"ok": False, "configured": False, "reason": written["reason"]}
+    return {"ok": True, "configured": True, "changed": True,
+            "url": url, "tool_count": len(tool_filter["include"]), "backup": written["backup"]}
+
+
+def write_openclaw_config(discovered: dict[str, Any], replacement: dict[str, Any]) -> dict[str, Any]:
+    """Replace openclaw.json atomically, locally or over SSH, keeping a timestamped backup."""
     payload = json.dumps(replacement, ensure_ascii=False, indent=2) + "\n"
     config_path = str(discovered["config_path"])
     backup = f"{config_path}.graphtyn-backup-{time.time_ns()}"
@@ -289,9 +298,11 @@ def configure_openclaw_mcp(discovered: dict[str, Any], *, mcp_url: str | None = 
             "import json,os,shutil,sys,tempfile; "
             "from pathlib import Path; "
             "p=Path(sys.argv[1]); data=sys.stdin.read(); p.parent.mkdir(parents=True,exist_ok=True); "
-            "shutil.copy2(p,sys.argv[2]); "
+            "st=os.stat(p); shutil.copy2(p,sys.argv[2]); "
             "fd,t=tempfile.mkstemp(prefix='.'+p.name+'.',suffix='.tmp',dir=str(p.parent)); "
-            "os.fchmod(fd,os.stat(sys.argv[2]).st_mode & 0o777); "
+            "os.fchmod(fd,st.st_mode & 0o777); "
+            # Written as root over SSH: keep the owner, or OpenClaw can no longer read its config.
+            "[os.fchown(fd,st.st_uid,st.st_gid), os.chown(sys.argv[2],st.st_uid,st.st_gid)] if os.geteuid()==0 else None; "
             "f=os.fdopen(fd,'w',encoding='utf-8'); f.write(json.dumps(json.loads(data),ensure_ascii=False,indent=2)+'\\n'); f.flush(); os.fsync(f.fileno()); f.close(); os.replace(t,p)"
         )
         command = "python3 -c " + shlex.quote(script) + " " + shlex.quote(config_path) + " " + shlex.quote(backup)
@@ -299,23 +310,60 @@ def configure_openclaw_mcp(discovered: dict[str, Any], *, mcp_url: str | None = 
                                    input=payload, capture_output=True,
                                    text=True, timeout=20)
         if completed.returncode:
-            return {"ok": False, "configured": False,
+            return {"ok": False,
                     "reason": (completed.stderr or completed.stdout).strip()[-500:] or "falló la actualización remota"}
     else:
         target = Path(config_path)
-        mode = target.stat().st_mode & 0o777
+        original = target.stat()
+        mode = original.st_mode & 0o777
         shutil.copy2(target, backup)
         fd, temporary = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as stream:
                 stream.write(payload); stream.flush(); os.fsync(stream.fileno())
             os.chmod(temporary, mode)
+            if hasattr(os, "chown") and os.geteuid() == 0:
+                os.chown(temporary, original.st_uid, original.st_gid)
             os.replace(temporary, target)
         finally:
             try: os.unlink(temporary)
             except FileNotFoundError: pass
-    return {"ok": True, "configured": True, "changed": True,
-            "url": url, "tool_count": len(tool_filter["include"]), "backup": backup}
+    return {"ok": True, "backup": backup}
+
+
+def configure_per_agent_mcp(installation_id: str, tokens_file: Path, *, mcp_url: str | None = None,
+                            keep_shared_token: bool = False) -> dict[str, Any]:
+    """Give every agent of a registered installation its own bound Graphtyn MCP server.
+
+    The new tokens are written first and the shared token is revoked only after
+    openclaw.json was replaced, so OpenClaw is never left without a valid token.
+    """
+    from . import openclaw_agent_tokens as per_agent
+    installation = get_installation(installation_id)
+    config = _read_config(installation["config_path"],
+                          ssh_target=installation["target"] if installation.get("kind") == "ssh" else None)
+    servers = (config.get("mcp") or {}).get("servers") or {}
+    current = servers.get(per_agent.SHARED_SERVER) or next(
+        (server for name, server in servers.items() if name.startswith(per_agent.SERVER_PREFIX)), {})
+    url = str(mcp_url or current.get("url") or "").strip()
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc or not parsed.path.rstrip("/").endswith("/mcp"):
+        raise ValueError("indica --mcp-url: una URL HTTP(S) de Graphtyn que termine en /mcp")
+    registered = {row["id"]: row for row in installation.get("agents") or []}
+    agents = [{**registered.get(row["id"], {}), "id": row["id"]} for row in _agent_entries(config)]
+    previous = per_agent.shared_token(config)
+    tokens = per_agent.ensure_agent_tokens(tokens_file, installation_id, agents, per_agent.code_projects())
+    written = write_openclaw_config(installation, per_agent.per_agent_config(config, url, tokens))
+    if not written["ok"]:
+        return {"ok": False, "reason": written["reason"]}
+    revoked = not keep_shared_token and per_agent.revoke_shared(tokens_file, previous)
+    projects = per_agent._read_tokens(tokens_file)
+    return {"ok": True, "url": url, "backup": written["backup"],
+            "servers": {agent: per_agent.server_name(agent) for agent in tokens},
+            "projects": {agent: len(projects[token]["projects"]) for agent, token in tokens.items()},
+            "revoked_shared_token": per_agent.fingerprint(previous) if revoked else None,
+            "note": "Las herramientas de cada agente pasan a llamarse graphtyn-<agente>__<herramienta>; "
+                    "actualiza las instrucciones que citen graphtyn__<herramienta>."}
 
 
 def _registered_path(agent_id: str, source_config: Path | None = None) -> str | None:
