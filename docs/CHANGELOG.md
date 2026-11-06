@@ -7,6 +7,11 @@ compatibles con PEP 440.
 
 ### Añadido
 
+- `graphtyn serve --host` y `graphtyn service install --host` se pueden repetir: el
+  servicio escucha a la vez en `127.0.0.1` para el navegador y en una red privada para
+  agentes en VMs o contenedores (por ejemplo `--host 127.0.0.1 --host <ip-del-host-en-esa-red>`),
+  sin exponerse con `0.0.0.0` a la red local. En Linux arranca aunque esa red aún no
+  exista. Fuera de loopback sigue exigiendo `--tokens-file`.
 - Un índice construido con otra versión del parser se detecta al cargarlo. Las
   respuestas del grafo llevan `index_status` y una nota para el agente, y el índice se
   reconstruye una vez en segundo plano con el motor con que se creó, sin reindexar a

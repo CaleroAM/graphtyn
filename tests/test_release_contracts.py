@@ -111,9 +111,10 @@ def test_architecture_is_canonical_and_readme_has_compact_map():
 
 def test_serve_defaults_to_loopback_and_announces_dashboard_url():
     cli = (ROOT / "graphtyn" / "cli.py").read_text(encoding="utf-8")
+    from graphtyn.core.listen import listen_hosts
     args = build_parser().parse_args(["serve"])
-    assert args.host == "127.0.0.1"
-    assert 'print(f"   Dashboard: {scheme}://{dashboard_host}:{args.port}")' in cli
+    assert listen_hosts(args.host) == ["127.0.0.1"]
+    assert 'print(f"   Dashboard: {scheme}://{browser_host(hosts)}:{args.port}")' in cli
 
 
 def test_every_language_pack_grammar_is_a_core_dependency():

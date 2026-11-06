@@ -91,7 +91,8 @@ def _add_admin_commands(subparsers: argparse._SubParsersAction) -> None:
     service_install.add_argument("--kind", choices=["auto", "systemd", "windows", "compose"], default="auto")
     service_install.add_argument("--output", default=None); service_install.add_argument("--interval", type=float, default=10)
     service_install.add_argument("--path", default=".")
-    service_install.add_argument("--host", default="127.0.0.1", help="Interfaz de escucha; fuera de loopback requiere --tokens-file")
+    service_install.add_argument("--host", action="append", default=None,
+                                 help="Interfaz de escucha, repetible (127.0.0.1 y una red de VMs); fuera de loopback requiere --tokens-file")
     service_install.add_argument("--port", type=int, default=9210)
     service_install.add_argument("--tokens-file", default=None, help="Archivo JSON de tokens HTTP")
     service_install.add_argument("--embed-model", default=None, help="Modelo local de embeddings de Ollama")
@@ -652,7 +653,8 @@ def _add_integration_commands(subparsers: argparse._SubParsersAction) -> None:
     serve_p.add_argument("--reload", action="store_true", help="Habilitar recarga automática en vivo")
     serve_p.add_argument("--watch", action="store_true", help="Reindexa automáticamente proyectos al cambiar archivos")
     serve_p.add_argument("--mcp-token", default=None, help="Activa MCP HTTP con este token Bearer (preferible: GRAPHTYN_MCP_TOKEN)")
-    serve_p.add_argument("--host", default="127.0.0.1", help="Host (predeterminado: sólo acceso local)")
+    serve_p.add_argument("--host", action="append", default=None,
+                         help="Interfaz de escucha, repetible o separada por comas (predeterminado: 127.0.0.1)")
     serve_p.add_argument("--port", type=int, default=9210, help="Puerto")
     serve_p.add_argument("--path", default=".", help="Ruta del proyecto")
     serve_p.add_argument("--ssl-certfile", default=None)
