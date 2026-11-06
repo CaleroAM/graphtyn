@@ -1,0 +1,65 @@
+{
+ "tasks": [
+  {
+   "id": "V_RAILS_SAVE_COLLECTION_FLOW",
+   "request": "¿Cómo guarda Rails las asociaciones de colección en save_collection_association? Explica los pasos, las condiciones de autosave y los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "loaded_only",
+     "any": [
+      "association_instance_get"
+     ]
+    },
+    {
+     "id": "reset_scope",
+     "any": [
+      "reset_scope"
+     ]
+    },
+    {
+     "id": "records",
+     "any": [
+      "associated_records_to_validate_or_save"
+     ]
+    },
+    {
+     "id": "destroy_marked",
+     "any": [
+      "marked_for_destruction"
+     ]
+    },
+    {
+     "id": "insert",
+     "any": [
+      "insert_record"
+     ]
+    },
+    {
+     "id": "validation_error",
+     "any": [
+      "errors.add"
+     ]
+    },
+    {
+     "id": "save_without_validation",
+     "any": [
+      "validate: false"
+     ]
+    },
+    {
+     "id": "raise",
+     "any": [
+      "RecordInvalid"
+     ]
+    },
+    {
+     "id": "registration",
+     "any": [
+      "define_non_cyclic_method",
+      "around_save_collection_association"
+     ]
+    }
+   ]
+  }
+ ]
+}

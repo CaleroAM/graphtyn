@@ -1,0 +1,242 @@
+[
+ {
+  "version": "main",
+  "task": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 29099,
+  "tools": 1,
+  "facts": 5,
+  "facts_total": 7
+ },
+ {
+  "version": "main",
+  "task": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 28727,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 7
+ },
+ {
+  "version": "main",
+  "task": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 28671,
+  "tools": 1,
+  "facts": 2,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 28768,
+  "tools": 1,
+  "facts": 6,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27051,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 5
+ },
+ {
+  "version": "main",
+  "task": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27188,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 5
+ },
+ {
+  "version": "main",
+  "task": "V_RAILS_SAVE_COLLECTION_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 38651,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "V_RAILS_SAVE_COLLECTION_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 38032,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "V_REDIS_INLINE_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 30412,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "V_REDIS_INLINE_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 30095,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "V_REDIS_ZSETADD_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 31062,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 10
+ },
+ {
+  "version": "main",
+  "task": "V_REDIS_ZSETADD_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 31036,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 10
+ },
+ {
+  "version": "fix",
+  "task": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27988,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 7
+ },
+ {
+  "version": "fix",
+  "task": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27812,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 7
+ },
+ {
+  "version": "fix",
+  "task": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27147,
+  "tools": 1,
+  "facts": 6,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27114,
+  "tools": 1,
+  "facts": 5,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 27861,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 5
+ },
+ {
+  "version": "fix",
+  "task": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 27937,
+  "tools": 1,
+  "facts": 3,
+  "facts_total": 5
+ },
+ {
+  "version": "fix",
+  "task": "V_RAILS_SAVE_COLLECTION_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 38921,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "V_RAILS_SAVE_COLLECTION_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 37733,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "V_REDIS_INLINE_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 30490,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "V_REDIS_INLINE_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 30271,
+  "tools": 1,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "V_REDIS_ZSETADD_FLOW",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 31033,
+  "tools": 1,
+  "facts": 10,
+  "facts_total": 10
+ },
+ {
+  "version": "fix",
+  "task": "V_REDIS_ZSETADD_FLOW",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 31329,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 10
+ }
+]

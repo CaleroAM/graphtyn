@@ -26,6 +26,21 @@ def package_name_words(all_nodes: list[dict[str, Any]], request: str) -> dict[st
     return named
 
 
+_SCOPE_PHRASE = re.compile(
+    r"\b(?:en|in|de|del|of|no|na|do|da|dans|du|im|nel|nella|di)\s+(?:(?:el|la|the|o|a|le|der|die|das|il|lo)\s+)?"
+    r"([A-Za-z][A-Za-z0-9_-]*)", re.IGNORECASE)
+
+
+def scope_words(all_nodes: list[dict[str, Any]], request: str) -> set[str]:
+    """Words naming a component after a preposition ("ensure_sync en Flask"): where to look, not what.
+
+    Flask also names a class of its repository, so taken as a symbol it filled an impact
+    package with every use of that class.
+    """
+    scopes = _scope_names(all_nodes)
+    return {word.lower() for word in _SCOPE_PHRASE.findall(str(request or "")) if _normalized(word) in scopes}
+
+
 def named_package_roots(all_nodes: list[dict[str, Any]], request: str) -> set[str]:
     """Components a request names ("ActiveRecord" → activerecord/ in Rails).
 

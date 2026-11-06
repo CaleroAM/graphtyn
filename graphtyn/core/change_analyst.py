@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots, package_name_words as _package_name_words, in_named_scope as _in_named_scope
+from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots, package_name_words as _package_name_words, in_named_scope as _in_named_scope, scope_words as _scope_words
 from . import retrieval_signals as _signals
 from .impact_references import CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers, impact_targets as _impact_targets, one_per_name as _one_per_name
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
@@ -901,6 +901,10 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     }
     package_words = set().union(*_package_name_words(graph.get("nodes", []), request).values())
     symbol_terms = [term for term in direct_terms if term not in generic_symbol_terms and term not in package_words]
+    if selected_intent == "impact":
+        # "ensure_sync en Flask" asks for ensure_sync's consumers; in a flow, the project's own class anchors it.
+        scoped = _scope_words(graph.get("nodes", []), request)
+        symbol_terms = [term for term in symbol_terms if term not in scoped] or symbol_terms
     explicit_identifiers = {
         identifier.lower()
         for identifier in re.findall(r"\b[A-Z][A-Z0-9_]{4,}\b", str(request or ""))
