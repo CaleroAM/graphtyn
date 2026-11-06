@@ -103,7 +103,8 @@ label every result with its source.
 When an OpenClaw agent asks about or works on a registered project, retrieve that
 project's shared context before answering with `memory_project_context` (exposed
 in OpenClaw as `graphtyn__memory_project_context` when using the Graphtyn MCP
-server). Pass the exact project name or ID, a concise query about the task, and
+server, or `graphtyn-<agent>__memory_project_context` when each agent has its own
+server and token from `graphtyn harness openclaw tokens`). Pass the exact project name or ID, a concise query about the task, and
 the caller's canonical identity such as `openclaw/nexus`; never substitute
 `memory_agent_context`, which reads a private brain and explicitly published
 family memories. For tasks spanning projects, query each named project
