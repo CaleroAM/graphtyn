@@ -1,0 +1,64 @@
+{
+ "tasks": [
+  {
+   "id": "C_RIPGREP_DETECT_BINARY_IMPACT",
+   "request": "What breaks if I change detect_binary in ripgrep? List the direct consumers, what each one does with the result, who calls them and which tests cover it. Cite file:line.",
+   "rubric": [
+    {
+     "id": "matched",
+     "any": [
+      "sink_matched"
+     ]
+    },
+    {
+     "id": "context",
+     "any": [
+      "sink_before_context",
+      "sink_after_context",
+      "sink_other_context"
+     ]
+    },
+    {
+     "id": "glue",
+     "any": [
+      "glue.rs"
+     ]
+    },
+    {
+     "id": "already_found",
+     "any": [
+      "binary_byte_offset"
+     ]
+    },
+    {
+     "id": "quit_vs_convert",
+     "any": [
+      "quit_byte",
+      "BinaryDetection::Quit",
+      "Convert"
+     ]
+    },
+    {
+     "id": "sink_binary_data",
+     "any": [
+      "binary_data"
+     ]
+    },
+    {
+     "id": "find_byte",
+     "any": [
+      "find_byte"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "binary1",
+      "binary_detection",
+      "reports_binary"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "tasks": [
+  {
+   "id": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+   "request": "Si cambio writerForAppendable en Gson, ¿qué se rompe? Enumera los consumidores directos, qué hace cada uno con el resultado, quién los llama y qué pruebas lo cubren. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "gson_tojson",
+     "any": [
+      "Gson.java:642",
+      "Gson.java:724",
+      "Gson.toJson"
+     ]
+    },
+    {
+     "id": "typeadapter",
+     "any": [
+      "TypeAdapter"
+     ]
+    },
+    {
+     "id": "jsonelement",
+     "any": [
+      "JsonElement.toString",
+      "JsonElement.java:424"
+     ]
+    },
+    {
+     "id": "returns_writer",
+     "any": [
+      "instanceof Writer"
+     ]
+    },
+    {
+     "id": "wraps",
+     "any": [
+      "AppendableWriter"
+     ]
+    },
+    {
+     "id": "jsonwriter",
+     "any": [
+      "newJsonWriter",
+      "JsonWriter"
+     ]
+    },
+    {
+     "id": "string_builder",
+     "any": [
+      "StringBuilder"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "StreamsTest"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,68 @@
+{
+ "tasks": [
+  {
+   "id": "C_FLASK_SPLIT_BLUEPRINT_PATH_IMPACT",
+   "request": "Si cambio _split_blueprint_path en Flask, ¿qué se rompe? Enumera los consumidores directos, qué hace cada uno con el resultado, quién los llama y qué pruebas lo cubren. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "blueprints_property",
+     "any": [
+      "Request.blueprints",
+      "wrappers.py"
+     ]
+    },
+    {
+     "id": "url_defaults",
+     "any": [
+      "inject_url_defaults"
+     ]
+    },
+    {
+     "id": "recursion",
+     "any": [
+      "rpartition",
+      "recursiv"
+     ]
+    },
+    {
+     "id": "returns_parents",
+     "any": [
+      "parent",
+      "padre",
+      "upwards"
+     ]
+    },
+    {
+     "id": "error_handlers",
+     "any": [
+      "_find_error_handler",
+      "handle_http_exception",
+      "handle_user_exception",
+      "handle_exception"
+     ]
+    },
+    {
+     "id": "request_hooks",
+     "any": [
+      "preprocess_request",
+      "process_response",
+      "do_teardown_request",
+      "update_template_context"
+     ]
+    },
+    {
+     "id": "url_for",
+     "any": [
+      "url_for"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "test_blueprints"
+     ]
+    }
+   ]
+  }
+ ]
+}

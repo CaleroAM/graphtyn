@@ -1,0 +1,36 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada de los paquetes de impacto completos (líneas de llamada, efectos, consumidores indirectos y pruebas), en tareas nuevas: Graphtyn main frente a la rama.",
+ "repository": {
+  "name": "rails/rails",
+  "url": "https://github.com/rails/rails",
+  "commit": "3f0b675158e8284241bb1213c00375bc1fb9c52f"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "C_RAILS_CHANGES_APPLIED_IMPACT"
+  ],
+  "arms": {
+   "graphtyn (main)": "Graphtyn main 741d371, MCP lean, regla targeted",
+   "graphtyn (fix)": "Graphtyn feat/impact-completeness ee0db04, MCP lean, regla targeted"
+  },
+  "repetitions": 2,
+  "order": "alternado por repetición",
+  "stop_rule": "targeted",
+  "grading": "Dos jueces (Gemini y GPT, sin herramientas) por hecho; consenso como medida principal. Rúbrica escrita leyendo el código antes de ejecutar."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio; cada versión de Graphtyn se ejecuta desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario aprobó fusionar #46 y seguir con los paquetes de impacto completos (2026-11-06).",
+  "total_token_ceiling": 1500000
+ }
+}

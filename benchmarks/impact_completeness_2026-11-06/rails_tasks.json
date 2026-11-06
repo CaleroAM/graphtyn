@@ -1,0 +1,67 @@
+{
+ "tasks": [
+  {
+   "id": "C_RAILS_CHANGES_APPLIED_IMPACT",
+   "request": "Si cambio changes_applied en Rails, ¿qué se rompe? Enumera los consumidores directos, qué hace cada uno con el resultado, quién los llama y qué pruebas lo cubren. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "touch_row",
+     "any": [
+      "_touch_row"
+     ]
+    },
+    {
+     "id": "update_record",
+     "any": [
+      "_update_record"
+     ]
+    },
+    {
+     "id": "create_record",
+     "any": [
+      "_create_record"
+     ]
+    },
+    {
+     "id": "previous_changes",
+     "any": [
+      "mutations_before_last_save",
+      "previous_changes"
+     ]
+    },
+    {
+     "id": "forget",
+     "any": [
+      "forget_attribute_assignments"
+     ]
+    },
+    {
+     "id": "reset",
+     "any": [
+      "mutations_from_database"
+     ]
+    },
+    {
+     "id": "finalize",
+     "any": [
+      "finalize_changes"
+     ]
+    },
+    {
+     "id": "indirect",
+     "any": [
+      "create_or_update",
+      "touch"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "dirty_test.rb",
+      "attributes_dirty_test.rb"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,72 @@
+{
+ "tasks": [
+  {
+   "id": "C_REDIS_ALSO_PROPAGATE_EX_IMPACT",
+   "request": "Si cambio alsoPropagateEx en Redis, ¿qué se rompe? Enumera los consumidores directos, qué hace cada uno con el resultado, quién los llama y qué pruebas lo cubren. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "wrapper",
+     "any": [
+      "alsoPropagate("
+     ]
+    },
+    {
+     "id": "call_command",
+     "any": [
+      "void call",
+      "call()",
+      "server.c:4380"
+     ]
+    },
+    {
+     "id": "modules",
+     "any": [
+      "RM_Replicate"
+     ]
+    },
+    {
+     "id": "target_filter",
+     "any": [
+      "allowed_propagate_targets",
+      "shouldPropagate"
+     ]
+    },
+    {
+     "id": "refcount",
+     "any": [
+      "incrRefCount",
+      "argvcopy"
+     ]
+    },
+    {
+     "id": "appends",
+     "any": [
+      "redisOpArrayAppend",
+      "also_propagate"
+     ]
+    },
+    {
+     "id": "forced",
+     "any": [
+      "alsoPropagateForced"
+     ]
+    },
+    {
+     "id": "commands",
+     "any": [
+      "t_set.c",
+      "t_stream.c",
+      "bitops.c",
+      "t_hash.c"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "propagate.tcl"
+     ]
+    }
+   ]
+  }
+ ]
+}
