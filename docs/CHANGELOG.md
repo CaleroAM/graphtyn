@@ -15,6 +15,23 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- La clasificación automática de intención reconoce cómo se pide cada tipo de evidencia
+  en español, inglés, portugués, francés, alemán e italiano. Con preguntas que escribió y
+  etiquetó otro modelo, acierta 59 de 72 en un lote nuevo, frente a 33 en la versión
+  anterior. Antes mandaba casi todo `impact` y `bindings` a `flow`. Ver
+  `benchmarks/intent_classification_2026-11-05/report.md`.
+- La herencia cualificada de Ruby (`class MailDeliveryJob < ActiveJob::Base`) se
+  resuelve con la búsqueda de constantes de Ruby: antes se descartaba como ambigua entre
+  todos los `Base`. En Rails, las herencias ambiguas pasan de 1.428 a 158. Hay que
+  reindexar para notarlo.
+- `impact` sobre un paquete nombrado incluye las redefiniciones de otros paquetes cuya
+  clase desciende de él: cambiar `perform` en Active Job afecta a `MailDeliveryJob`.
+- Dos palabras también nombran un componente que no es directorio raíz, por un
+  directorio o un espacio de nombres: «Action Dispatch» es
+  `actionpack/lib/action_dispatch` y `ActionDispatch::`.
+- En «¿qué hace X…?», X cuenta como código nombrado si es un símbolo, en seis idiomas:
+  «¿Qué hace lock! al guardar en una transacción?» ya no exige evidencia de `save`.
+- El glosario traduce «dinámico» a `dynamic`.
 - `impact` entiende un paquete escrito en dos palabras: en «reload en Active Record»
   ya no toma `record` como símbolo, y sólo considera las definiciones de
   `activerecord/`. Antes, los consumidores listados eran sobre todo de `record`.
