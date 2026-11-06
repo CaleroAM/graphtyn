@@ -1,0 +1,4336 @@
+{
+ "summary": {
+  "claude/baseline": {
+   "runs": 16,
+   "facts": 118,
+   "tokens": 1868307,
+   "literal": 105,
+   "gemini": 116,
+   "gpt": 117,
+   "consensus": 116
+  },
+  "claude/graphify": {
+   "runs": 16,
+   "facts": 118,
+   "tokens": 2171632,
+   "literal": 108,
+   "gemini": 114,
+   "gpt": 115,
+   "consensus": 114
+  },
+  "claude/graphtyn": {
+   "runs": 16,
+   "facts": 118,
+   "tokens": 1625786,
+   "literal": 111,
+   "gemini": 118,
+   "gpt": 118,
+   "consensus": 118
+  },
+  "codex/baseline": {
+   "runs": 16,
+   "facts": 118,
+   "tokens": 1660724,
+   "literal": 70,
+   "gemini": 105,
+   "gpt": 106,
+   "consensus": 105
+  },
+  "codex/graphify": {
+   "runs": 16,
+   "facts": 118,
+   "tokens": 3110528,
+   "literal": 83,
+   "gemini": 100,
+   "gpt": 102,
+   "consensus": 100
+  },
+  "codex/graphtyn": {
+   "runs": 16,
+   "facts": 118,
+   "tokens": 746674,
+   "literal": 75,
+   "gemini": 86,
+   "gpt": 85,
+   "consensus": 85
+  }
+ },
+ "kappa": {
+  "judges": 0.951,
+  "literal_consensus": 0.508
+ },
+ "runs": [
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 1,
+   "tokens": 83464,
+   "literal": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 2,
+   "tokens": 83484,
+   "literal": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 1,
+   "tokens": 100154,
+   "literal": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 2,
+   "tokens": 100204,
+   "literal": {
+    "dispatch": true,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 1,
+   "tokens": 89721,
+   "literal": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 2,
+   "tokens": 89564,
+   "literal": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 1,
+   "tokens": 82171,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 2,
+   "tokens": 82294,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": false,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 1,
+   "tokens": 97183,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 2,
+   "tokens": 96528,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 1,
+   "tokens": 61176,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": false
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 2,
+   "tokens": 61029,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 1,
+   "tokens": 204808,
+   "literal": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 2,
+   "tokens": 229819,
+   "literal": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 1,
+   "tokens": 234040,
+   "literal": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 2,
+   "tokens": 283375,
+   "literal": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 1,
+   "tokens": 255374,
+   "literal": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 2,
+   "tokens": 254306,
+   "literal": {
+    "checker": true,
+    "consteval": false,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 1,
+   "tokens": 86222,
+   "literal": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 2,
+   "tokens": 85289,
+   "literal": {
+    "write_int": false,
+    "decimal_formatting": true,
+    "exponent": false,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": false,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": false,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 1,
+   "tokens": 101153,
+   "literal": {
+    "write_int": false,
+    "decimal_formatting": true,
+    "exponent": false,
+    "significand_size": false,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": false,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": false,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": false,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 2,
+   "tokens": 98963,
+   "literal": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": false,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": false,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": false,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 1,
+   "tokens": 58617,
+   "literal": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 2,
+   "tokens": 59003,
+   "literal": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 1,
+   "tokens": 85060,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 2,
+   "tokens": 83977,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 1,
+   "tokens": 132214,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 2,
+   "tokens": 132470,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 1,
+   "tokens": 61006,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 2,
+   "tokens": 60959,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": true,
+    "lock_in_transaction": true,
+    "take_bang": true,
+    "rollback_on_failure": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 1,
+   "tokens": 124559,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 2,
+   "tokens": 118289,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 1,
+   "tokens": 107239,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 2,
+   "tokens": 103869,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 1,
+   "tokens": 59145,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 2,
+   "tokens": 58611,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 1,
+   "tokens": 88600,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 2,
+   "tokens": 118368,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 1,
+   "tokens": 108069,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 2,
+   "tokens": 102870,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 1,
+   "tokens": 58951,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 2,
+   "tokens": 59171,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 1,
+   "tokens": 155488,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": false,
+    "unauthenticated_count": false,
+    "argv_allocation": true,
+    "expected_dollar": false,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "baseline",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 2,
+   "tokens": 156415,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": false,
+    "unauthenticated_count": false,
+    "argv_allocation": true,
+    "expected_dollar": false,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 1,
+   "tokens": 187630,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphify",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 2,
+   "tokens": 185671,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 1,
+   "tokens": 169945,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "claude",
+   "arm": "graphtyn",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 2,
+   "tokens": 169208,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": false,
+    "unauthenticated_count": false,
+    "argv_allocation": true,
+    "expected_dollar": false,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": true,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 1,
+   "tokens": 91462,
+   "literal": {
+    "dispatch": false,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 2,
+   "tokens": 68367,
+   "literal": {
+    "dispatch": true,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 1,
+   "tokens": 86337,
+   "literal": {
+    "dispatch": false,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 2,
+   "tokens": 79023,
+   "literal": {
+    "dispatch": false,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": true,
+    "after_request": true,
+    "teardown": true,
+    "error_handlers": true,
+    "class_views": true,
+    "contexts": true,
+    "template_signals": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 1,
+   "tokens": 29199,
+   "literal": {
+    "dispatch": false,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": false,
+    "contexts": false,
+    "template_signals": false
+   },
+   "gemini": {
+    "dispatch": false,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": false,
+    "contexts": false,
+    "template_signals": false
+   },
+   "gpt": {
+    "dispatch": false,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": false,
+    "contexts": false,
+    "template_signals": false
+   },
+   "consensus": {
+    "dispatch": false,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": false,
+    "contexts": false,
+    "template_signals": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_FLASK_ENSURE_SYNC_IMPACT",
+   "repetition": 2,
+   "tokens": 28901,
+   "literal": {
+    "dispatch": true,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": false,
+    "contexts": false,
+    "template_signals": false
+   },
+   "gemini": {
+    "dispatch": true,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": false,
+    "contexts": false,
+    "template_signals": false
+   },
+   "gpt": {
+    "dispatch": true,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": false,
+    "contexts": false,
+    "template_signals": false
+   },
+   "consensus": {
+    "dispatch": true,
+    "before_request": false,
+    "after_request": false,
+    "teardown": false,
+    "error_handlers": false,
+    "class_views": false,
+    "contexts": false,
+    "template_signals": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 1,
+   "tokens": 44516,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": false,
+    "strip_prefix": false,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": false
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 2,
+   "tokens": 44296,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": false,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 1,
+   "tokens": 114634,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": false,
+    "strip_prefix": false,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": false
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 2,
+   "tokens": 85339,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": false,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": false
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 1,
+   "tokens": 30910,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": false,
+    "strip_prefix": false,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": false
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_FLASK_PREFIXED_ENV_FLOW",
+   "repetition": 2,
+   "tokens": 44699,
+   "literal": {
+    "prefix": true,
+    "sorted_keys": false,
+    "strip_prefix": false,
+    "json_values": true,
+    "failed_parse_keeps_string": false,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gemini": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "gpt": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   },
+   "consensus": {
+    "prefix": true,
+    "sorted_keys": true,
+    "strip_prefix": true,
+    "json_values": true,
+    "failed_parse_keeps_string": true,
+    "nested_keys": true,
+    "intermediate_dicts": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 1,
+   "tokens": 171137,
+   "literal": {
+    "checker": true,
+    "consteval": false,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 2,
+   "tokens": 155400,
+   "literal": {
+    "checker": true,
+    "consteval": false,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 1,
+   "tokens": 277009,
+   "literal": {
+    "checker": true,
+    "consteval": false,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 2,
+   "tokens": 241427,
+   "literal": {
+    "checker": true,
+    "consteval": false,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 1,
+   "tokens": 96336,
+   "literal": {
+    "checker": true,
+    "consteval": false,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_FMT_COMPILE_CHECK_FLOW",
+   "repetition": 2,
+   "tokens": 129434,
+   "literal": {
+    "checker": true,
+    "consteval": false,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gemini": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "gpt": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   },
+   "consensus": {
+    "checker": true,
+    "consteval": true,
+    "parser": true,
+    "automatic_index": true,
+    "manual_index": true,
+    "named_index": true,
+    "per_argument_parse": true,
+    "empty_specs": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 1,
+   "tokens": 113835,
+   "literal": {
+    "write_int": false,
+    "decimal_formatting": false,
+    "exponent": false,
+    "significand_size": false,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 2,
+   "tokens": 138500,
+   "literal": {
+    "write_int": false,
+    "decimal_formatting": false,
+    "exponent": false,
+    "significand_size": false,
+    "error_code": true,
+    "chrono_year": false,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 1,
+   "tokens": 239032,
+   "literal": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": false,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": false,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": false,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": false,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 2,
+   "tokens": 217346,
+   "literal": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 1,
+   "tokens": 30362,
+   "literal": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_FMT_COUNT_DIGITS_IMPACT",
+   "repetition": 2,
+   "tokens": 29729,
+   "literal": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gemini": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "gpt": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   },
+   "consensus": {
+    "write_int": true,
+    "decimal_formatting": true,
+    "exponent": true,
+    "significand_size": true,
+    "error_code": true,
+    "chrono_year": true,
+    "chrono": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 1,
+   "tokens": 38598,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 2,
+   "tokens": 104827,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 1,
+   "tokens": 257469,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 2,
+   "tokens": 184961,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": true,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": false,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 1,
+   "tokens": 46875,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "repetition": 2,
+   "tokens": 38355,
+   "literal": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": false,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gemini": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "gpt": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   },
+   "consensus": {
+    "find_first": true,
+    "delegates": true,
+    "savepoint": false,
+    "unique_violation": true,
+    "refetch": false,
+    "lock_in_transaction": true,
+    "take_bang": false,
+    "rollback_on_failure": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 1,
+   "tokens": 71785,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 2,
+   "tokens": 70288,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 1,
+   "tokens": 213518,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": false
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": false
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 2,
+   "tokens": 280358,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 1,
+   "tokens": 37381,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": true,
+    "relation": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "repetition": 2,
+   "tokens": 37101,
+   "literal": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": false,
+    "relation": true
+   },
+   "gemini": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": false,
+    "relation": true
+   },
+   "gpt": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": false,
+    "relation": true
+   },
+   "consensus": {
+    "belongs_to": true,
+    "increment_counter": true,
+    "decrement_counter": true,
+    "increment_bang": false,
+    "relation": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 1,
+   "tokens": 94235,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 2,
+   "tokens": 112898,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 1,
+   "tokens": 165269,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 2,
+   "tokens": 167512,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 1,
+   "tokens": 29961,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_REDIS_LOOKUP_WRITE_IMPACT",
+   "repetition": 2,
+   "tokens": 29381,
+   "literal": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gemini": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "gpt": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   },
+   "consensus": {
+    "list_commands": true,
+    "hash_commands": true,
+    "zset_commands": true,
+    "stream_commands": true,
+    "string_commands": true,
+    "set_commands": true,
+    "expire_commands": true,
+    "hyperloglog": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 1,
+   "tokens": 174239,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": false,
+    "unauthenticated_count": false,
+    "argv_allocation": false,
+    "expected_dollar": false,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": false,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "baseline",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 2,
+   "tokens": 166341,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": false,
+    "unauthenticated_count": false,
+    "argv_allocation": false,
+    "expected_dollar": false,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": false,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 1,
+   "tokens": 190310,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphify",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 2,
+   "tokens": 310984,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": true
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 1,
+   "tokens": 29609,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": false,
+    "unauthenticated_bulk": false,
+    "big_argument": false
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": false,
+    "unauthenticated_bulk": false,
+    "big_argument": false
+   },
+   "gpt": {
+    "inline_line_limit": false,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": false,
+    "unauthenticated_bulk": false,
+    "big_argument": false
+   },
+   "consensus": {
+    "inline_line_limit": false,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": false,
+    "unauthenticated_bulk": false,
+    "big_argument": false
+   }
+  },
+  {
+   "variant": "codex",
+   "arm": "graphtyn",
+   "task": "H2H_REDIS_MULTIBULK_FLOW",
+   "repetition": 2,
+   "tokens": 78441,
+   "literal": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": false
+   },
+   "gemini": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": false
+   },
+   "gpt": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": false
+   },
+   "consensus": {
+    "inline_line_limit": true,
+    "invalid_count": true,
+    "unauthenticated_count": true,
+    "argv_allocation": false,
+    "expected_dollar": true,
+    "bulk_length_limit": true,
+    "unauthenticated_bulk": true,
+    "big_argument": false
+   }
+  }
+ ]
+}

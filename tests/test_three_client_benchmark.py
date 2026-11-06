@@ -254,7 +254,18 @@ def test_claude_graphify_arm_registers_only_the_graphify_server():
     assert config["mcpServers"]["graphify_benchmark"]["args"] == ["/tmp/work/graphify-out/graph.json"]
     assert "query_graph" in _MODULE.benchmark_prompt({"request": "q"}, False, graphify=True)
     with pytest.raises(ValueError):
-        _MODULE.command_for("codex", "m", "p", workspace, 30, graphify_bin=Path("/opt/graphify/bin"))
+        _MODULE.command_for("opencode", "m", "p", workspace, 30, graphify_bin=Path("/opt/graphify/bin"))
+
+
+def test_codex_graphify_arm_registers_only_the_graphify_server():
+    workspace = Path("/tmp/work")
+    command = _MODULE.command_for("codex", "model", "prompt", workspace, 30, graphify_bin=Path("/opt/graphify/bin"))
+    settings = [command[index + 1] for index, part in enumerate(command) if part == "-c"]
+
+    assert 'mcp_servers.graphify_benchmark.command="/opt/graphify/bin/graphify-mcp"' in settings
+    assert 'mcp_servers.graphify_benchmark.args=["/tmp/work/graphify-out/graph.json"]' in settings
+    assert not any(setting.startswith("mcp_servers.graphtyn_benchmark") for setting in settings)
+    assert "--ignore-user-config" in command
 
 
 def test_graphify_arm_builds_its_graph_and_requires_the_install(tmp_path, monkeypatch):

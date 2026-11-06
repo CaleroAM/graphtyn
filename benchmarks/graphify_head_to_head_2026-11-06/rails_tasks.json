@@ -1,0 +1,97 @@
+{
+ "tasks": [
+  {
+   "id": "H2H_RAILS_UPDATE_COUNTERS_IMPACT",
+   "request": "Si cambio update_counters en Active Record, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "belongs_to",
+     "any": [
+      "belongs_to_association"
+     ]
+    },
+    {
+     "id": "increment_counter",
+     "any": [
+      "increment_counter"
+     ]
+    },
+    {
+     "id": "decrement_counter",
+     "any": [
+      "decrement_counter"
+     ]
+    },
+    {
+     "id": "increment_bang",
+     "any": [
+      "increment!",
+      "persistence.rb"
+     ]
+    },
+    {
+     "id": "relation",
+     "any": [
+      "relation.rb"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "H2H_RAILS_FIND_OR_CREATE_FLOW",
+   "request": "¿Cómo funcionan find_or_create_by y create_or_find_by en Active Record y en qué se diferencian ante una condición de carrera? Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "find_first",
+     "any": [
+      "find_by"
+     ]
+    },
+    {
+     "id": "delegates",
+     "any": [
+      "create_or_find_by"
+     ]
+    },
+    {
+     "id": "savepoint",
+     "any": [
+      "requires_new"
+     ]
+    },
+    {
+     "id": "unique_violation",
+     "any": [
+      "RecordNotUnique"
+     ]
+    },
+    {
+     "id": "refetch",
+     "any": [
+      "rewhere"
+     ]
+    },
+    {
+     "id": "lock_in_transaction",
+     "any": [
+      "create_or_find_by_lock",
+      "lock("
+     ]
+    },
+    {
+     "id": "take_bang",
+     "any": [
+      "take!"
+     ]
+    },
+    {
+     "id": "rollback_on_failure",
+     "any": [
+      "_last_transaction_return_status",
+      "Rollback"
+     ]
+    }
+   ]
+  }
+ ]
+}
