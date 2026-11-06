@@ -254,6 +254,14 @@ def _add_benchmark_commands(subparsers: argparse._SubParsersAction) -> None:
         context_p.add_argument("--parts", type=int, default=1, help=argparse.SUPPRESS)
         context_p.add_argument("--path", default="",
                                help="Raíz del proyecto; el hook usa el índice más cercano al cwd si se omite")
+    guard_p = subparsers.add_parser(
+        "tool-guard", help="Hook PreToolUse de Claude Code: notas sobre paquetes y ediciones simultáneas, y huecos")
+    guard_p.add_argument("action", choices=["install", "uninstall", "status", "hook", "gaps"])
+    guard_p.add_argument("--consent", action="store_true",
+                         help="Autoriza registrar lecturas, búsquedas y ediciones del agente en este proyecto")
+    guard_p.add_argument("--days", type=int, default=7, help="Días que resume `gaps`")
+    guard_p.add_argument("--path", default="",
+                         help="Raíz del proyecto; el hook usa el índice más cercano al cwd si se omite")
     export_html_p = subparsers.add_parser(
         "export-html", help="Exporta un graph.html autocontenido y sin red para compartir el grafo")
     export_html_p.add_argument("--output", default="graph.html", help="Archivo de salida dentro del proyecto")

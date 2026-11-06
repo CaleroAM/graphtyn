@@ -823,6 +823,34 @@ def _command_claude_context(args, root: Path, parser, client: str = "claude") ->
         update_agent_manifest(root, **{manifest_key: {"enabled": False}})
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
+def _command_tool_guard(args, root: Path, parser) -> None:
+    from .core import tool_guard
+    if args.action == "hook":
+        # A hook must never break the agent's tool call: report on stderr and exit 0.
+        try:
+            payload = json.loads(sys.stdin.read() or "{}")
+            outcome = tool_guard.handle_tool_hook(payload if isinstance(payload, dict) else {},
+                                                  root if args.path else None)
+            output = tool_guard.hook_output(outcome)
+            if output:
+                print(output)
+        except Exception as exc:  # noqa: BLE001 - surfaced only on stderr
+            print(f"graphtyn tool-guard: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return
+    from .core.history import HistoryTracker
+    if args.action == "gaps":
+        result = {"ok": True, **tool_guard.gaps(HistoryTracker(root), max(1, args.days))}
+    elif args.action == "status":
+        result = {"ok": True, "installed": tool_guard.installed(root)}
+    elif args.action == "install":
+        if not args.consent:
+            raise SystemExit("El hook de herramientas de Claude Code requiere --consent explícito")
+        result = tool_guard.install(root)
+    else:
+        result = tool_guard.uninstall(root)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
+
 def _command_codex_context(args, root: Path, parser) -> None:
     _command_claude_context(args, root, parser, client="codex")
 
@@ -1064,6 +1092,7 @@ def main():
         'codex-context': _command_codex_context,
         'opencode-context': _command_opencode_context,
         'antigravity-context': _command_antigravity_context,
+        'tool-guard': _command_tool_guard,
         'prs': _command_prs,
         'report': _command_report,
         'global': _command_global,
