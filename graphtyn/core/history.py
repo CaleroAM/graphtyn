@@ -51,12 +51,14 @@ class HistoryTracker:
             conn.execute("CREATE TABLE IF NOT EXISTS settings (name TEXT PRIMARY KEY, value TEXT NOT NULL)")
             conn.commit()
 
-    def log_event(self, session_id: str, action_type: str, summary: str, details: Dict[str, Any]) -> int:
+    def log_event(self, session_id: str, action_type: str, summary: str, details: Dict[str, Any],
+                  timestamp: float | None = None) -> int:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO observations (session_id, timestamp, action_type, summary, details) VALUES (?, ?, ?, ?, ?)",
-                (session_id, time.time(), action_type, summary, json.dumps(details, ensure_ascii=False))
+                (session_id, time.time() if timestamp is None else timestamp, action_type, summary,
+                 json.dumps(details, ensure_ascii=False))
             )
             conn.commit()
             return cursor.lastrowid

@@ -29,7 +29,9 @@ def agent_activity(path: str = Query(..., min_length=1), limit: int = Query(30, 
     tracker = HistoryTracker(root)
     prune_queries(tracker)
     queries = recent_queries(tracker, SUMMARY_LIMIT)
-    return {"ok": True, "queries": queries[:limit], "usage": usage_summary(queries, SUMMARY_DAYS),
+    from ..core.tool_guard import gaps
+    usage = {**usage_summary(queries, SUMMARY_DAYS), "after_package": gaps(tracker, SUMMARY_DAYS)}
+    return {"ok": True, "queries": queries[:limit], "usage": usage,
             "logging": logging_enabled(tracker), "retention_days": RETENTION_DAYS}
 
 
