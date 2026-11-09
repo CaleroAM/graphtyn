@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import posixpath
 import re
 from pathlib import PurePosixPath
 from typing import Any
@@ -29,6 +30,65 @@ _MAX_ANCESTRY = 8
 
 def _simple(name: Any) -> str:
     return re.split(r"::|\.", str(name or ""))[-1]
+
+
+_JS_SUFFIXES = (".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts")
+_JS_IMPORT = re.compile(r"\bimport\s+(?:type\s+)?(?P<clause>[^;]+?)\s+from\s+['\"](?P<module>[^'\"]+)['\"]")
+_JS_REQUIRE = re.compile(r"(?P<clause>\{[^}]*\}|[A-Za-z_$][\w$]*)\s*=\s*require\(\s*['\"](?P<module>[^'\"]+)['\"]")
+_JS_NAME = re.compile(r"[A-Za-z_$][\w$]*")
+
+
+def _js_clause(clause: str) -> list[tuple[str, str]]:
+    """(local, imported) pairs: `x`, `{a, b as c}`, `* as ns`, `x, {a}` and `{a: c}` from require."""
+    clause, pairs = clause.strip(), []
+    braces = re.search(r"\{([^}]*)\}", clause)
+    for part in (braces.group(1).split(",") if braces else []):
+        names = [name for name in re.split(r"\s+as\s+|\s*:\s*", part.replace("type ", " ").strip()) if name]
+        if names and all(_JS_NAME.fullmatch(name) for name in names):
+            pairs.append((names[-1], names[0]))
+    namespace = re.search(r"\*\s+as\s+([A-Za-z_$][\w$]*)", clause)
+    if namespace:
+        pairs.append((namespace.group(1), "*"))
+    default = clause.split(",", 1)[0].strip()
+    if _JS_NAME.fullmatch(default):
+        pairs.append((default, "default"))
+    return pairs
+
+
+_GO_IMPLEMENTERS = 50
+
+
+def go_implementations(nodes: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    """A Go type implements an interface when its methods include every method the interface requires."""
+    required: dict[str, set[str]] = {}
+    declared: dict[tuple[str, str], set[str]] = {}
+    types: dict[tuple[str, str], str] = {}
+    interfaces: dict[tuple[str, str], str] = {}
+    for node_id, node in nodes.items():
+        path = str(node.get("file") or "")
+        if not path.endswith(".go"):
+            continue
+        key = (path, str(node.get("name") or ""))
+        if node.get("kind") == "interface":
+            interfaces[key] = node_id
+        elif node.get("kind") in {"struct", "type"}:
+            types[(str(PurePosixPath(path).parent), str(node.get("name") or ""))] = node_id
+        elif node.get("kind") == "method" and node.get("container"):
+            owner = (path, str(node["container"]))
+            required.setdefault(f"{path}\0{node['container']}", set()).add(str(node.get("name") or ""))
+            declared.setdefault((str(PurePosixPath(path).parent), str(node["container"])), set()).add(str(node.get("name") or ""))
+    links = []
+    for (path, name), interface_id in interfaces.items():
+        methods = required.get(f"{path}\0{name}", set())
+        if not methods:
+            continue
+        found = [type_id for key, type_id in types.items() if methods <= declared.get(key, set())]
+        for type_id in found[:_GO_IMPLEMENTERS]:
+            links.append({"source": type_id, "target": interface_id, "label": "implementa",
+                          "color": "rgba(245, 158, 11, 0.4)", "confidence": "INFERRED",
+                          "file": nodes[type_id].get("file"), "line": nodes[type_id].get("line"),
+                          "resolution": {"strategy": "go-method-set", "methods": sorted(methods)}})
+    return links
 
 
 class ClassAncestry:
@@ -99,6 +159,7 @@ class CandidateRanker:
         self.nodes = nodes
         self.imports = imports
         self._contexts: dict[str, tuple[set[str], dict[str, str], dict[str, str]]] = {}
+        self._js: dict[str, dict[str, tuple[str, str]]] = {}
 
     @staticmethod
     def _python_module(rel_file: str, raw_module: str) -> str:
@@ -138,16 +199,53 @@ class CandidateRanker:
         self._contexts[rel_file] = namespaces, aliases, symbols
         return self._contexts[rel_file]
 
+    def _js_bindings(self, rel_file: str) -> dict[str, tuple[str, str]]:
+        """local name → (module, imported name) for `import`/`require` in a JavaScript or TypeScript file."""
+        cached = self._js.get(rel_file)
+        if cached is not None:
+            return cached
+        bindings: dict[str, tuple[str, str]] = {}
+        for item in self.imports.get(rel_file, []) if rel_file.endswith(_JS_SUFFIXES) else []:
+            text = str(item.get("text") or "")
+            match = _JS_IMPORT.search(text) or _JS_REQUIRE.search(text)
+            if match:
+                for local, imported in _js_clause(match.group("clause")):
+                    bindings[local] = (match.group("module"), imported)
+        self._js[rel_file] = bindings
+        return bindings
+
+    def _js_filter(self, rel_file: str, called_name: str, targets: set[str]) -> set[str] | None:
+        """Targets an imported JavaScript name can reach: none from a package, the imported file otherwise."""
+        binding = self._js_bindings(rel_file).get(called_name)
+        if binding is None:
+            return None
+        module, imported = binding
+        if not module.startswith((".", "/")):
+            return set()  # `import {setTimeout as delay} from 'node:timers/promises'`
+        base = posixpath.normpath(posixpath.join(posixpath.dirname(rel_file), module))
+        if base.endswith(_JS_SUFFIXES):
+            base = posixpath.splitext(base)[0]  # TypeScript imports `./x.js` for x.ts
+        stems = {base, posixpath.join(base, "index")}
+        return {target for target in targets
+                if posixpath.splitext(str(self.nodes.get(target, {}).get("file") or ""))[0] in stems
+                and (imported in {"default", "*"} or self.nodes.get(target, {}).get("name") == imported)}
+
     def imported_target_name(self, rel_file: str, called_name: str) -> str:
+        binding = self._js_bindings(rel_file).get(called_name)
+        if binding and binding[1] not in {"default", "*"}:
+            return binding[1]
         imported = self._import_context(rel_file)[2].get(called_name, "")
         return imported.rsplit(".", 1)[-1] if imported else called_name
 
     def is_imported(self, rel_file: str, called_name: str) -> bool:
-        return called_name in self._import_context(rel_file)[2]
+        return called_name in self._import_context(rel_file)[2] or called_name in self._js_bindings(rel_file)
 
     def filter_imported_targets(self, rel_file: str, called_name: str,
                                 targets: set[str]) -> set[str]:
-        """Restrict imported calls to the module Python would actually load."""
+        """Restrict imported calls to the module Python (or JavaScript) would actually load."""
+        reachable = self._js_filter(rel_file, called_name, targets)
+        if reachable is not None:
+            return reachable
         imported = self._import_context(rel_file)[2].get(called_name, "")
         if not imported:
             return targets

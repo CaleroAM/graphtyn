@@ -1,0 +1,1000 @@
+{
+ "summary": {
+  "codex-main": {
+   "runs": 10,
+   "facts": 84,
+   "tokens": 1159033,
+   "literal": 65,
+   "gemini": 76,
+   "gpt": 76,
+   "consensus": 73
+  },
+  "codex-fix": {
+   "runs": 10,
+   "facts": 84,
+   "tokens": 895439,
+   "literal": 65,
+   "gemini": 72,
+   "gpt": 75,
+   "consensus": 71
+  }
+ },
+ "kappa": {
+  "judges": 0.666,
+  "literal_consensus": 0.492
+ },
+ "runs": [
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_COBRA_ACTIVE_HELP_ENV_VAR_IMPACT",
+   "repetition": 1,
+   "tokens": 29510,
+   "literal": {
+    "config": true,
+    "bash": true,
+    "fish": true,
+    "powershell": true,
+    "delegates": true,
+    "format": true,
+    "global_disable": false,
+    "indirect": true,
+    "tests": true
+   },
+   "gemini": {
+    "config": true,
+    "bash": true,
+    "fish": true,
+    "powershell": true,
+    "delegates": true,
+    "format": true,
+    "global_disable": false,
+    "indirect": true,
+    "tests": true
+   },
+   "gpt": {
+    "config": true,
+    "bash": true,
+    "fish": true,
+    "powershell": true,
+    "delegates": true,
+    "format": false,
+    "global_disable": false,
+    "indirect": false,
+    "tests": true
+   },
+   "consensus": {
+    "config": true,
+    "bash": true,
+    "fish": true,
+    "powershell": true,
+    "delegates": true,
+    "format": false,
+    "global_disable": false,
+    "indirect": false,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_FLASK_SPLIT_BLUEPRINT_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 180564,
+   "literal": {
+    "blueprints_property": true,
+    "url_defaults": true,
+    "recursion": true,
+    "returns_parents": true,
+    "error_handlers": false,
+    "request_hooks": false,
+    "url_for": true,
+    "tests": true
+   },
+   "gemini": {
+    "blueprints_property": true,
+    "url_defaults": true,
+    "recursion": true,
+    "returns_parents": true,
+    "error_handlers": true,
+    "request_hooks": true,
+    "url_for": true,
+    "tests": true
+   },
+   "gpt": {
+    "blueprints_property": true,
+    "url_defaults": true,
+    "recursion": true,
+    "returns_parents": true,
+    "error_handlers": true,
+    "request_hooks": true,
+    "url_for": true,
+    "tests": true
+   },
+   "consensus": {
+    "blueprints_property": true,
+    "url_defaults": true,
+    "recursion": true,
+    "returns_parents": true,
+    "error_handlers": true,
+    "request_hooks": true,
+    "url_for": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_FMT_PARSE_NONNEGATIVE_INT_IMPACT",
+   "repetition": 1,
+   "tokens": 30649,
+   "literal": {
+    "arg_id": true,
+    "dynamic_spec": true,
+    "printf_header": true,
+    "printf_precision": true,
+    "error_value": true,
+    "overflow": false,
+    "advances": false,
+    "assert": false,
+    "tests": true
+   },
+   "gemini": {
+    "arg_id": true,
+    "dynamic_spec": true,
+    "printf_header": true,
+    "printf_precision": true,
+    "error_value": true,
+    "overflow": true,
+    "advances": true,
+    "assert": false,
+    "tests": true
+   },
+   "gpt": {
+    "arg_id": true,
+    "dynamic_spec": true,
+    "printf_header": true,
+    "printf_precision": true,
+    "error_value": true,
+    "overflow": true,
+    "advances": true,
+    "assert": false,
+    "tests": true
+   },
+   "consensus": {
+    "arg_id": true,
+    "dynamic_spec": true,
+    "printf_header": true,
+    "printf_precision": true,
+    "error_value": true,
+    "overflow": true,
+    "advances": true,
+    "assert": false,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+   "repetition": 1,
+   "tokens": 232717,
+   "literal": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": false,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "gemini": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "gpt": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "consensus": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+   "repetition": 2,
+   "tokens": 188479,
+   "literal": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": false,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "gemini": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "gpt": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "consensus": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_RAILS_CHANGES_APPLIED_IMPACT",
+   "repetition": 1,
+   "tokens": 147212,
+   "literal": {
+    "touch_row": true,
+    "update_record": true,
+    "create_record": true,
+    "previous_changes": true,
+    "forget": false,
+    "reset": true,
+    "finalize": false,
+    "indirect": true,
+    "tests": true
+   },
+   "gemini": {
+    "touch_row": true,
+    "update_record": true,
+    "create_record": true,
+    "previous_changes": true,
+    "forget": true,
+    "reset": true,
+    "finalize": true,
+    "indirect": true,
+    "tests": true
+   },
+   "gpt": {
+    "touch_row": true,
+    "update_record": true,
+    "create_record": true,
+    "previous_changes": true,
+    "forget": true,
+    "reset": true,
+    "finalize": false,
+    "indirect": true,
+    "tests": true
+   },
+   "consensus": {
+    "touch_row": true,
+    "update_record": true,
+    "create_record": true,
+    "previous_changes": true,
+    "forget": true,
+    "reset": true,
+    "finalize": false,
+    "indirect": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_REDIS_ALSO_PROPAGATE_EX_IMPACT",
+   "repetition": 1,
+   "tokens": 162408,
+   "literal": {
+    "wrapper": false,
+    "call_command": false,
+    "modules": true,
+    "target_filter": true,
+    "refcount": true,
+    "appends": true,
+    "forced": false,
+    "commands": true,
+    "tests": true
+   },
+   "gemini": {
+    "wrapper": true,
+    "call_command": true,
+    "modules": true,
+    "target_filter": true,
+    "refcount": true,
+    "appends": true,
+    "forced": false,
+    "commands": true,
+    "tests": true
+   },
+   "gpt": {
+    "wrapper": true,
+    "call_command": true,
+    "modules": true,
+    "target_filter": true,
+    "refcount": true,
+    "appends": true,
+    "forced": false,
+    "commands": true,
+    "tests": true
+   },
+   "consensus": {
+    "wrapper": true,
+    "call_command": true,
+    "modules": true,
+    "target_filter": true,
+    "refcount": true,
+    "appends": true,
+    "forced": false,
+    "commands": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_RIPGREP_DETECT_BINARY_IMPACT",
+   "repetition": 1,
+   "tokens": 128134,
+   "literal": {
+    "matched": true,
+    "context": true,
+    "glue": true,
+    "already_found": false,
+    "quit_vs_convert": true,
+    "sink_binary_data": true,
+    "find_byte": false,
+    "tests": false
+   },
+   "gemini": {
+    "matched": true,
+    "context": true,
+    "glue": true,
+    "already_found": false,
+    "quit_vs_convert": true,
+    "sink_binary_data": true,
+    "find_byte": false,
+    "tests": false
+   },
+   "gpt": {
+    "matched": true,
+    "context": true,
+    "glue": true,
+    "already_found": true,
+    "quit_vs_convert": true,
+    "sink_binary_data": true,
+    "find_byte": false,
+    "tests": true
+   },
+   "consensus": {
+    "matched": true,
+    "context": true,
+    "glue": true,
+    "already_found": false,
+    "quit_vs_convert": true,
+    "sink_binary_data": true,
+    "find_byte": false,
+    "tests": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+   "repetition": 1,
+   "tokens": 29248,
+   "literal": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": false,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "gemini": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": false,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "gpt": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "consensus": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": false,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+   "repetition": 2,
+   "tokens": 30112,
+   "literal": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": false,
+    "detection": true,
+    "stream": false,
+    "exception": true,
+    "tests": true
+   },
+   "gemini": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": false,
+    "exception": true,
+    "tests": true
+   },
+   "gpt": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": false,
+    "exception": true,
+    "tests": true
+   },
+   "consensus": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": false,
+    "exception": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_COBRA_ACTIVE_HELP_ENV_VAR_IMPACT",
+   "repetition": 1,
+   "tokens": 30327,
+   "literal": {
+    "config": true,
+    "bash": true,
+    "fish": true,
+    "powershell": true,
+    "delegates": true,
+    "format": true,
+    "global_disable": false,
+    "indirect": true,
+    "tests": true
+   },
+   "gemini": {
+    "config": true,
+    "bash": true,
+    "fish": true,
+    "powershell": true,
+    "delegates": true,
+    "format": true,
+    "global_disable": false,
+    "indirect": true,
+    "tests": true
+   },
+   "gpt": {
+    "config": true,
+    "bash": true,
+    "fish": true,
+    "powershell": true,
+    "delegates": true,
+    "format": false,
+    "global_disable": false,
+    "indirect": true,
+    "tests": true
+   },
+   "consensus": {
+    "config": true,
+    "bash": true,
+    "fish": true,
+    "powershell": true,
+    "delegates": true,
+    "format": false,
+    "global_disable": false,
+    "indirect": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_FLASK_SPLIT_BLUEPRINT_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 43231,
+   "literal": {
+    "blueprints_property": true,
+    "url_defaults": true,
+    "recursion": true,
+    "returns_parents": false,
+    "error_handlers": false,
+    "request_hooks": false,
+    "url_for": true,
+    "tests": false
+   },
+   "gemini": {
+    "blueprints_property": true,
+    "url_defaults": true,
+    "recursion": true,
+    "returns_parents": false,
+    "error_handlers": false,
+    "request_hooks": false,
+    "url_for": true,
+    "tests": false
+   },
+   "gpt": {
+    "blueprints_property": true,
+    "url_defaults": true,
+    "recursion": true,
+    "returns_parents": true,
+    "error_handlers": true,
+    "request_hooks": true,
+    "url_for": true,
+    "tests": false
+   },
+   "consensus": {
+    "blueprints_property": true,
+    "url_defaults": true,
+    "recursion": true,
+    "returns_parents": false,
+    "error_handlers": false,
+    "request_hooks": false,
+    "url_for": true,
+    "tests": false
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_FMT_PARSE_NONNEGATIVE_INT_IMPACT",
+   "repetition": 1,
+   "tokens": 116762,
+   "literal": {
+    "arg_id": true,
+    "dynamic_spec": true,
+    "printf_header": true,
+    "printf_precision": true,
+    "error_value": true,
+    "overflow": true,
+    "advances": false,
+    "assert": false,
+    "tests": true
+   },
+   "gemini": {
+    "arg_id": true,
+    "dynamic_spec": true,
+    "printf_header": true,
+    "printf_precision": true,
+    "error_value": true,
+    "overflow": true,
+    "advances": true,
+    "assert": false,
+    "tests": true
+   },
+   "gpt": {
+    "arg_id": true,
+    "dynamic_spec": true,
+    "printf_header": true,
+    "printf_precision": true,
+    "error_value": true,
+    "overflow": true,
+    "advances": true,
+    "assert": false,
+    "tests": true
+   },
+   "consensus": {
+    "arg_id": true,
+    "dynamic_spec": true,
+    "printf_header": true,
+    "printf_precision": true,
+    "error_value": true,
+    "overflow": true,
+    "advances": true,
+    "assert": false,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+   "repetition": 1,
+   "tokens": 31126,
+   "literal": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": false,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "gemini": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "gpt": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "consensus": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+   "repetition": 2,
+   "tokens": 95230,
+   "literal": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": false,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "gemini": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "gpt": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   },
+   "consensus": {
+    "gson_tojson": true,
+    "typeadapter": true,
+    "jsonelement": true,
+    "returns_writer": true,
+    "wraps": true,
+    "jsonwriter": true,
+    "string_builder": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_RAILS_CHANGES_APPLIED_IMPACT",
+   "repetition": 1,
+   "tokens": 168650,
+   "literal": {
+    "touch_row": true,
+    "update_record": true,
+    "create_record": true,
+    "previous_changes": true,
+    "forget": false,
+    "reset": true,
+    "finalize": false,
+    "indirect": true,
+    "tests": true
+   },
+   "gemini": {
+    "touch_row": true,
+    "update_record": true,
+    "create_record": true,
+    "previous_changes": true,
+    "forget": true,
+    "reset": true,
+    "finalize": false,
+    "indirect": true,
+    "tests": true
+   },
+   "gpt": {
+    "touch_row": true,
+    "update_record": true,
+    "create_record": true,
+    "previous_changes": true,
+    "forget": true,
+    "reset": true,
+    "finalize": false,
+    "indirect": true,
+    "tests": true
+   },
+   "consensus": {
+    "touch_row": true,
+    "update_record": true,
+    "create_record": true,
+    "previous_changes": true,
+    "forget": true,
+    "reset": true,
+    "finalize": false,
+    "indirect": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_REDIS_ALSO_PROPAGATE_EX_IMPACT",
+   "repetition": 1,
+   "tokens": 176948,
+   "literal": {
+    "wrapper": false,
+    "call_command": false,
+    "modules": true,
+    "target_filter": true,
+    "refcount": false,
+    "appends": true,
+    "forced": true,
+    "commands": true,
+    "tests": true
+   },
+   "gemini": {
+    "wrapper": true,
+    "call_command": true,
+    "modules": true,
+    "target_filter": true,
+    "refcount": true,
+    "appends": true,
+    "forced": true,
+    "commands": true,
+    "tests": true
+   },
+   "gpt": {
+    "wrapper": true,
+    "call_command": true,
+    "modules": true,
+    "target_filter": true,
+    "refcount": true,
+    "appends": true,
+    "forced": true,
+    "commands": true,
+    "tests": true
+   },
+   "consensus": {
+    "wrapper": true,
+    "call_command": true,
+    "modules": true,
+    "target_filter": true,
+    "refcount": true,
+    "appends": true,
+    "forced": true,
+    "commands": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_RIPGREP_DETECT_BINARY_IMPACT",
+   "repetition": 1,
+   "tokens": 169833,
+   "literal": {
+    "matched": true,
+    "context": true,
+    "glue": false,
+    "already_found": false,
+    "quit_vs_convert": true,
+    "sink_binary_data": true,
+    "find_byte": false,
+    "tests": true
+   },
+   "gemini": {
+    "matched": true,
+    "context": true,
+    "glue": false,
+    "already_found": false,
+    "quit_vs_convert": false,
+    "sink_binary_data": true,
+    "find_byte": false,
+    "tests": false
+   },
+   "gpt": {
+    "matched": true,
+    "context": true,
+    "glue": false,
+    "already_found": true,
+    "quit_vs_convert": false,
+    "sink_binary_data": true,
+    "find_byte": false,
+    "tests": false
+   },
+   "consensus": {
+    "matched": true,
+    "context": true,
+    "glue": false,
+    "already_found": false,
+    "quit_vs_convert": false,
+    "sink_binary_data": true,
+    "find_byte": false,
+    "tests": false
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+   "repetition": 1,
+   "tokens": 31356,
+   "literal": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": false,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "gemini": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "gpt": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "consensus": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+   "repetition": 2,
+   "tokens": 31976,
+   "literal": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": false,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "gemini": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "gpt": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   },
+   "consensus": {
+    "create": true,
+    "container": true,
+    "preset": true,
+    "decoration": true,
+    "detection": true,
+    "stream": true,
+    "exception": true,
+    "tests": true
+   }
+  }
+ ]
+}

@@ -1,0 +1,418 @@
+{
+ "009e4e05cef3a8d8985e1194ed14f806bf259387ff020f6b808b327320c63d31": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": false,
+  "tests": true
+ },
+ "0f74ad28b7ea45502463210ad8d2f5302fe4f462811b77b8d40845fac26a81da": {
+  "already_found": true,
+  "context": true,
+  "find_byte": false,
+  "glue": false,
+  "matched": true,
+  "quit_vs_convert": false,
+  "sink_binary_data": true,
+  "tests": false
+ },
+ "15ffdf3188b5479cf2732fd236c9811f7012a7813b6dd54fe39f543c53bc65d8": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": false,
+  "global_disable": false,
+  "indirect": true,
+  "powershell": true,
+  "tests": true
+ },
+ "185bd6839efafa426599ff7df59e98841bc7ab90e662bc89eab2d028c5591fb9": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "25ce92f59906d989d853816c4a487b5966bfbf7bc59b2cfd9460cb6ad2e46afa": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": false,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "2adac04152418b2b67c9b47cbcd064cb1badc71991abf0dad299af59bc16bb91": {
+  "blueprints_property": true,
+  "error_handlers": true,
+  "recursion": true,
+  "request_hooks": true,
+  "returns_parents": true,
+  "tests": true,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "2fbe9c416138119488d38e85227a8b92717dfe80c1ba59006f5444a5580968a1": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": false,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "3002477e825764a9d050ed5c596938c9271919f98590734a552056fcfd89dd9e": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": true,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "4106a3f6d8283d0fd251c815040bf4890a1bd29085808818d08ea9a9b03348c6": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": false,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "4d097a56a93e0a8094ad51079369783a39199581405b84e2185a584740e6d80c": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": false,
+  "tests": true
+ },
+ "4d3ebdcbe37bde327c31edec73714299c2dbcd21abb49d964fdee6745c2488d5": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "5336ce430ca0b619bc90061f46e725b77db9356849f37773a0a46b81dd0f5165": {
+  "advances": true,
+  "arg_id": true,
+  "assert": false,
+  "dynamic_spec": true,
+  "error_value": true,
+  "overflow": true,
+  "printf_header": true,
+  "printf_precision": true,
+  "tests": true
+ },
+ "539ed870add26db28652249562a7bc5e4082007978b814412695f9dea49ac911": {
+  "create_record": true,
+  "finalize": true,
+  "forget": true,
+  "indirect": true,
+  "previous_changes": true,
+  "reset": true,
+  "tests": true,
+  "touch_row": true,
+  "update_record": true
+ },
+ "55d37957efc194e56bb4bb4e61e54d61264188f2ed5215e9c054bdbf141636eb": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "5731a7f1cdbf3b8289d29cb7d98ccc0da9597c0219e9fc7d3b1d76e04c567597": {
+  "create_record": true,
+  "finalize": false,
+  "forget": true,
+  "indirect": true,
+  "previous_changes": true,
+  "reset": true,
+  "tests": true,
+  "touch_row": true,
+  "update_record": true
+ },
+ "593003dcd7381cd066fc56196b691e2308e03d3c0c4f0e1c34a8668cc220d3dd": {
+  "advances": true,
+  "arg_id": true,
+  "assert": false,
+  "dynamic_spec": true,
+  "error_value": true,
+  "overflow": true,
+  "printf_header": true,
+  "printf_precision": true,
+  "tests": true
+ },
+ "5b661ad258a475a3564d8a6b4d974fb09b84d038c74284260b4be26a09bf8d6b": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "5dc36b3f9ef408a87cde62b3239c9f82c8ecc851d5639327c1981d17c8aab914": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "6bd5c4aef5d1bedab364df67743470c79ca28c3c1ea44855fff6b56cfebda8a8": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "76a3754a159bc090c5eeecd9996ddcb04adc273d46050e0bed2accd70dee118b": {
+  "already_found": false,
+  "context": true,
+  "find_byte": false,
+  "glue": false,
+  "matched": true,
+  "quit_vs_convert": false,
+  "sink_binary_data": true,
+  "tests": false
+ },
+ "78279c13b3e4e184365dd01f493779fecb193bd68eeaa2c6286f634cbcd14454": {
+  "create_record": true,
+  "finalize": false,
+  "forget": true,
+  "indirect": true,
+  "previous_changes": true,
+  "reset": true,
+  "tests": true,
+  "touch_row": true,
+  "update_record": true
+ },
+ "881a5d0deea51bb857d017d761fcb8a9c385497680aa55766ebc26e23125984f": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "9e2fedb5fc4879b1b7e6e1f2fe170a879ffd91910ad8b935cb86c73979c6b0f7": {
+  "already_found": false,
+  "context": true,
+  "find_byte": false,
+  "glue": true,
+  "matched": true,
+  "quit_vs_convert": true,
+  "sink_binary_data": true,
+  "tests": false
+ },
+ "9eaea3ba0695a32e04de528ac96fe99795460648d7e77217cfc456421d1d7e50": {
+  "advances": true,
+  "arg_id": true,
+  "assert": false,
+  "dynamic_spec": true,
+  "error_value": true,
+  "overflow": true,
+  "printf_header": true,
+  "printf_precision": true,
+  "tests": true
+ },
+ "9f0df2ecb5de3a37b71641a5e0b5cc5bb3dc1d97f5a52f3802fc2a5f1198ea19": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": true,
+  "global_disable": false,
+  "indirect": true,
+  "powershell": true,
+  "tests": true
+ },
+ "a220a23a9a3c546cb52e7888fa707b63d10417935e907f8320a50500a0750b59": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": true,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "a29079ab3d9b20a548a5710d457a53e182f3b58e34b5a5deeb38ead92f60ad47": {
+  "blueprints_property": true,
+  "error_handlers": true,
+  "recursion": true,
+  "request_hooks": true,
+  "returns_parents": true,
+  "tests": true,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "b0aede2cf091d166a45b0c0292392fb08950240305407ac37b28898093148eae": {
+  "create_record": true,
+  "finalize": false,
+  "forget": true,
+  "indirect": true,
+  "previous_changes": true,
+  "reset": true,
+  "tests": true,
+  "touch_row": true,
+  "update_record": true
+ },
+ "b598f6039573a9f4c378d3b6628b54292fe43c2e6159bf0ec45660dc755dc945": {
+  "blueprints_property": true,
+  "error_handlers": false,
+  "recursion": true,
+  "request_hooks": false,
+  "returns_parents": false,
+  "tests": false,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "cd76870b3c1141d82ddf07f4d7d34627abd7a6519c568431ea874d17418b34a4": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "d809d728a9d0441f5d2c649d8435e59797c3ce6d574d792b550f52cfb92c0da5": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "d83c04010060468a92d14b57843bf45638316491fa273955770beb861f9d8f94": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "db1dfcfdf6eed7f567710ca3da916495b31a0fbe6fbbb9bce5f00202a92fca1f": {
+  "already_found": true,
+  "context": true,
+  "find_byte": false,
+  "glue": true,
+  "matched": true,
+  "quit_vs_convert": true,
+  "sink_binary_data": true,
+  "tests": true
+ },
+ "df4e049cd427d12c52cc0e776f6865ba25530a7e448c0f65ea37b08f037da8c2": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "e431df90b86f9ab8375b727449d4c2449528cd31f55c345d7169ce4711f58c1e": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "e4a904ef1ca91754853d86d3db91b9547037c027778b6a931a017c1157f3b84e": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "e799be2fe82471dedd2fb9b929046a6862bac7e018eabc6f825c432399c55423": {
+  "blueprints_property": true,
+  "error_handlers": true,
+  "recursion": true,
+  "request_hooks": true,
+  "returns_parents": true,
+  "tests": false,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "e9bc6bdc56f8bdf28f782643a50d0ad4bdd6a0eae6abc77b6c3f8a2da17cde26": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": false,
+  "global_disable": false,
+  "indirect": false,
+  "powershell": true,
+  "tests": true
+ },
+ "ea5dc1866556365fd2e5e08e59b23858e317b40a5205f2938b0ff2e2f618b5e7": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": true,
+  "global_disable": false,
+  "indirect": true,
+  "powershell": true,
+  "tests": true
+ },
+ "fdd3ee6618d0de078aee44359a2d6a1ec548258e384c073f7481ad7b13e4e4ec": {
+  "advances": true,
+  "arg_id": true,
+  "assert": false,
+  "dynamic_spec": true,
+  "error_value": true,
+  "overflow": true,
+  "printf_header": true,
+  "printf_precision": true,
+  "tests": true
+ }
+}

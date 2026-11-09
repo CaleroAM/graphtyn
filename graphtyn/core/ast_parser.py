@@ -12,7 +12,7 @@ from .tree_sitter_backend import (
 )
 from .overview_report import collect_project_evidence
 from .graph_hygiene import normalize_graph
-from .relation_resolution import CandidateRanker, ClassAncestry, unique_symbol_id
+from .relation_resolution import CandidateRanker, ClassAncestry, go_implementations, unique_symbol_id
 from .ruby_mro import RubyAncestry, lexical_candidates as ruby_lexical_candidates
 from .source_files import git_visible_files
 from .type_evidence import apply_type_evidence
@@ -124,6 +124,13 @@ def _enclosing_overload(candidates: List[str], line: int, node_by_id: Dict[str, 
     return min(spans)[1] if spans else None
 
 
+def _bare_reachable(call: Dict[str, Any], targets: Set[str], node_by_id: Dict[str, Dict[str, Any]]) -> Set[str]:
+    """A call without a receiver cannot reach a method of an object literal."""
+    if call.get("receiver"):
+        return targets
+    return {target for target in targets if not node_by_id.get(target, {}).get("object_member")}
+
+
 def _inheritance_links(pending: List[tuple], symbol_name_ids: Dict[str, Set[str]], node_by_id: Dict[str, Dict[str, Any]],
                        rank_candidate: Any, suppressed: Dict[str, int]) -> List[Dict[str, Any]]:
     """`hereda`/`implementa` edges for the bases each declaration writes.
@@ -135,6 +142,9 @@ def _inheritance_links(pending: List[tuple], symbol_name_ids: Dict[str, Set[str]
     for source_id, written, rel_file, line, evidence in pending:
         base_name = written.rsplit("::", 1)[-1]
         candidates = symbol_name_ids.get(base_name, set())
+        if rel_file.endswith(".rs"):
+            # Rust inherits only from traits: `impl std::error::Error for E` is not the crate's own `Error` struct.
+            candidates = {target for target in candidates if node_by_id.get(target, {}).get("kind") == "interface"}
         if not candidates:
             continue
         # The imported name decides between homonym bases (`from .app import Flask`).
@@ -295,7 +305,7 @@ class ASTParser:
                     "parameter_count": sym.get("parameter_count"), "signature": sym.get("signature", ""),
                     "required_parameter_count": sym.get("required_parameter_count"),
                     "is_constructor": sym.get("is_constructor", False),
-                    "assembly": file_assembly,
+                    "assembly": file_assembly, **({"object_member": True} if sym.get("object_member") else {}),
                 }
                 if kind in ("class", "interface", "struct", "union", "enum", "module") and import_evidence:
                     symbol_node["imports"] = import_evidence
@@ -800,7 +810,7 @@ class ASTParser:
                 return call.get("receiver_type", "")
             current = _simple_type(call.get("receiver_type", ""))
             first = chain[0]
-            if first in ("this", "base"):
+            if first in ("this", "base", "self", "cls"):
                 current = _simple_type(call.get("container", ""))
             elif first[:1].isupper():
                 current = _simple_type(first)
@@ -815,7 +825,8 @@ class ASTParser:
 
         rank_candidate = CandidateRanker(node_by_id, tree_imports)
 
-        links.extend(_inheritance_links(pending_inheritance, symbol_name_ids, node_by_id, rank_candidate, suppressed_relations))
+        links.extend([*_inheritance_links(pending_inheritance, symbol_name_ids, node_by_id, rank_candidate, suppressed_relations),
+                      *go_implementations(node_by_id)])
 
         for source_id, mixin_name, rel_file, line, evidence, mixin_kind, qualified_name in pending_mixins:
             candidates = symbol_name_ids.get(mixin_name, set())
@@ -880,9 +891,9 @@ class ASTParser:
                 # Resolve lexical shadowing before import filtering. Python
                 # binds a nested or module-local definition ahead of an
                 # imported name with the same spelling.
-                targets = lexical_targets or rank_candidate.filter_imported_targets(
+                targets = _bare_reachable(call, lexical_targets or rank_candidate.filter_imported_targets(
                     rel_file, call["name"], targets,
-                )
+                ), node_by_id)
                 if not targets:
                     continue
                 is_creation = call.get("call_kind") in ("new_expression", "object_creation_expression")

@@ -648,7 +648,7 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
             if inheritance == 0:
                 negative.append("no hereda relation for matched symbol")
             output.update({"negative_evidence": negative} if negative else {})
-    requested_checks = []
+    requested_checks = list(result.get("answer_checks") or [])  # an impact package brings its own
     if any(term.startswith(("dependenc", "import", "using")) for term in evidence_terms):
         requested_checks.append("dependencies: enumerate imports/usings from evidence")
     if any(term.startswith(("interface", "implement")) for term in evidence_terms):

@@ -7,6 +7,10 @@ compatibles con PEP 440.
 
 ### Añadido
 
+- El paquete de impacto añade `target_calls` (lo que llama el propio símbolo, externos incluidos),
+  los lectores de una propiedad de Python entre los consumidores indirectos (`request.blueprints`)
+  y `answer_checks` sacados del propio paquete: cada consumidor por su nombre, los efectos, los
+  indirectos y las pruebas.
 - Los paquetes de impacto dicen qué alcanza un cambio, no solo quién llama:
   - cada consumidor lleva la línea de código de la llamada, para ver qué hace con el resultado;
   - `target_effects`: los `return`, `raise` y `throw` del propio símbolo (completos aunque ocupen
@@ -48,6 +52,23 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Precisión del grafo, a partir de una revisión de 120 llamadas `EXTRACTED` en diez repositorios
+  (5 erróneas, en dos patrones):
+  - el tipo de un receptor ya no se infiere de declaraciones escritas dentro de cadenas o
+    comentarios («TypeToken type argument…» hacía que `type` fuera un `TypeToken`);
+  - una llamada sin receptor no llega a un método de un objeto literal (`{delay(n) {...}}`);
+  - JavaScript y TypeScript leen sus `import` y `require`: un nombre importado de un paquete no
+    se enlaza con un homónimo del proyecto, y uno relativo solo llega al archivo importado
+    (`./x.js` incluido para `x.ts`);
+  - en Rust, `impl std::error::Error for E` ya no hereda de un struct `Error` del proyecto: en
+    Rust solo se hereda de traits.
+- Huecos de extracción:
+  - Rust: `impl Trait for Type` cuenta como herencia cuando el tipo está declarado en el archivo;
+  - Go: un parámetro `c *Command`, o `c := &Command{}`, da tipo a la variable; un tipo implementa
+    una interfaz del proyecto si tiene todos sus métodos;
+  - Python: los atributos con tipo (`x: Router = …`, `self.x: T`, `self.x = T()`) son campos, y
+    `self.campo.metodo()` se resuelve por el tipo del campo.
+- «Cite file:line» y «archivo:línea» ya no hacen que `line` sea un símbolo pedido.
 - En una pregunta de impacto, la clase dueña del método («popStack en JsonTreeReader») y el
   directorio raíz del proyecto («de Gson») indican dónde buscar, no qué cambia. Antes,
   `Gson` llenaba el paquete con cada prueba que crea un `Gson`.

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v28-language-conformance"
+PARSER_VERSION = "treesitter-v29-literal-free-declarations"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -45,7 +45,7 @@ LANGUAGE_PACKS = (
                  capabilities=("symbols", "imports", "calls", "members", "inheritance")),
     LanguagePack("php", (".php",), "tree_sitter_php", factories=((".php", "language_php"),),
                  capabilities=("symbols", "imports", "calls", "members", "inheritance")),
-    LanguagePack("python", (".py",), "tree_sitter_python", capabilities=("symbols", "imports", "calls", "inheritance")),
+    LanguagePack("python", (".py",), "tree_sitter_python", capabilities=("symbols", "imports", "calls", "members", "inheritance")),
     LanguagePack("java", (".java",), "tree_sitter_java", capabilities=("symbols", "imports", "calls", "members", "inheritance")),
     LanguagePack("go", (".go",), "tree_sitter_go", capabilities=("symbols", "imports", "calls", "members", "inheritance")),
     LanguagePack("rust", (".rs",), "tree_sitter_rust", capabilities=("symbols", "imports", "calls", "members", "inheritance")),
@@ -151,6 +151,14 @@ def _language_for_extension(ext: str, source: bytes = b""):
     return Language(factory())
 
 
+_ESM_PACKS = {"javascript", "typescript"}
+# (name, type) declarations, then (type, name) ones: Go writes `c *Command` and `c := &Command{}`.
+_DECLARATION_PATTERNS = {
+    "default": (r"(?=\bvar\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*new\s+([A-Za-z_][A-Za-z0-9_]*))",
+                r"(?=\b([A-Z][A-Za-z0-9_.<>]*)\s+([A-Za-z_][A-Za-z0-9_]*)\b)"),
+    "go": (r"(?=\b([a-z_][A-Za-z0-9_]*)(?:\s+(?:\*|\[\])?|\s*:=\s*&?)(?:[a-z_][A-Za-z0-9_]*\.)?([A-Z][A-Za-z0-9_]*)\b)",
+           r"(?=\b([A-Z][A-Za-z0-9_.<>]*)\s+([A-Za-z_][A-Za-z0-9_]*)\b)"),
+}
 _OWNER_DECLARATIONS = {"rust": "impl_item", "go": "type_spec"}
 _HERITAGE_FIELDS = ("bases", "superclass", "superclasses", "interfaces", "bounds")
 _HERITAGE_TYPES = frozenset({"base_list", "superclass", "base_class_clause", "delegation_specifiers", "extends_clause",
@@ -190,6 +198,85 @@ def _go_type(source: bytes, node: Any) -> tuple[str, list[str]]:
                 if field.type == "field_declaration" and field.child_by_field_name("name") is None
                 and field.child_by_field_name("type") is not None]
     return kind, embedded
+
+
+def _without_literals(root: Any, lines: list[str]) -> str:
+    """The source with comments and string literals blanked, every line keeping its length.
+
+    Receiver types are inferred from `Type name` declarations found by pattern; a message such
+    as "TypeToken type argument must not..." made `type` a TypeToken.
+    """
+    masked, encoded = [list(line) for line in lines], [line.encode("utf-8") for line in lines]
+
+    def column(row: int, offset: int) -> int:
+        return len(encoded[row][:offset].decode("utf-8", errors="replace")) if row < len(encoded) else 0
+
+    stack = [root]
+    while stack:
+        node = stack.pop()
+        if "comment" in node.type or "string" in node.type or node.type in {"heredoc_body", "char_literal", "character_literal"}:
+            (start_row, start_col), (end_row, end_col) = node.start_point, node.end_point
+            for row in range(start_row, min(end_row, len(masked) - 1) + 1):
+                first = column(row, start_col) if row == start_row else 0
+                last = column(row, end_col) if row == end_row else len(masked[row])
+                masked[row][first:last] = " " * max(0, last - first)
+            continue
+        stack.extend(node.children)
+    return "\n".join("".join(line) for line in masked)
+
+
+def _with_trait_impls(pack: str, symbols: list[dict[str, Any]], root: Any, source: bytes) -> list[dict[str, Any]]:
+    """`impl fmt::Display for Child` makes Child implement Display, when Child is declared in the file."""
+    if pack != "rust":
+        return symbols
+    types = {symbol["name"]: symbol for symbol in symbols if symbol.get("kind") in {"struct", "enum", "type", "interface"}}
+    stack = [root]
+    while stack:
+        node = stack.pop()
+        trait = node.child_by_field_name("trait") if node.type == "impl_item" else None
+        owner = types.get(_name(source, node)) if trait is not None else None
+        if owner is not None:
+            names = re.findall(r"[A-Za-z_]\w*", _text(source, trait).split("<", 1)[0])
+            if names and names[-1] not in owner["bases"]:
+                owner["bases"].append(names[-1])
+        stack.extend(node.named_children)
+    return symbols
+
+
+def _python_members(pack: str, root: Any, source: bytes, rel_path: str) -> list[dict[str, Any]]:
+    """Typed attributes of a Python class: `x: Router = ...` in its body, `self.x: T` or `self.x = T()` in a method."""
+    if pack != "python":
+        return []
+    members, stack = [], [root]
+    while stack:
+        node = stack.pop()
+        stack.extend(node.named_children)
+        if node.type != "assignment":
+            continue
+        left, written, right = (node.child_by_field_name(field) for field in ("left", "type", "right"))
+        owner = node.parent
+        while owner is not None and owner.type != "class_definition":
+            owner = owner.parent
+        if owner is None or left is None:
+            continue
+        if left.type == "attribute" and _text(source, left.child_by_field_name("object")) in {"self", "cls"}:
+            name = _text(source, left.child_by_field_name("attribute"))
+        elif left.type == "identifier" and node.parent is not None and node.parent.parent is not None \
+                and node.parent.parent.parent is not None and node.parent.parent.parent.id == owner.id:
+            name = _text(source, left)
+        else:
+            continue
+        type_name = _text(source, written).strip() if written is not None else ""
+        if not type_name and right is not None and right.type == "call":
+            callee = re.findall(r"[A-Za-z_]\w*", _text(source, right.child_by_field_name("function")))
+            type_name = callee[-1] if callee and callee[-1][:1].isupper() else ""
+        if name and type_name:
+            line = node.start_point.row + 1
+            members.append({"container": _name(source, owner), "name": name, "kind": "field", "type": type_name,
+                            "file": rel_path, "line": line, "end_line": node.end_point.row + 1,
+                            "signature": " ".join(_text(source, node).split())[:200],
+                            "evidence": " ".join(_text(source, node).split())[:200], "parser": "tree-sitter"})
+    return members
 
 
 def _python_bases(source: bytes, superclasses: Any) -> list[str]:
@@ -640,6 +727,9 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
             "required_parameter_count": required_parameter_count,
             "is_constructor": node.type == "constructor_declaration",
             "signature": signature or evidence,
+            # `{delay(n) {...}}` is reached as `options.delay(n)`, never by a bare `delay(n)`.
+            **({"object_member": True} if node.type == "method_definition" and node.parent is not None
+               and node.parent.type == "object" else {}),
         }
     return None
 
@@ -694,6 +784,8 @@ def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, 
         })
         if ctx.pack.name == "ruby" and name in {"require", "require_relative", "load", "autoload"}:
             imports.append({"text": evidence, "line": line})
+        if ctx.pack.name in _ESM_PACKS and name == "require" and node.parent is not None:
+            imports.append({"text": " ".join(_text(ctx.source, node.parent.parent or node.parent).split())[:600], "line": line})
         if ctx.pack.name == "ruby" and name in {"include", "prepend", "extend"}:
             argument_text = _text(ctx.source, args) if args is not None else ""
             mixin_names = re.findall(r"\b[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*\b", argument_text)
@@ -732,6 +824,7 @@ _SYMBOL_TYPES = {
     "trait_item": "interface",
     "type_declaration": "type",
     "type_spec": "type",
+    "method_elem": "method",  # a method a Go interface requires
     "trait_declaration": "interface",
     "class_specifier": "class",
     "struct_specifier": "struct",
@@ -876,8 +969,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
                 "caller": _ancestor_name(source, node, callable_declarations),
                 "container": _ancestor_name(source, node, type_declarations),
             })
-        elif node.type in import_types:
-            imports.append({"text": evidence, "line": line})
+        elif node.type in import_types:  # a JavaScript import spans lines: `import {\n a,\n b } from 'x'`
+            imports.append({"text": " ".join(_text(source, node).split())[:600] if pack.name in _ESM_PACKS else evidence, "line": line})
         elif node.type in {"namespace_declaration", "file_scoped_namespace_declaration", "namespace_definition"}:
             name_node = node.child_by_field_name("name")
             if name_node is not None:
@@ -898,7 +991,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
 
     source_text = source.decode("utf-8", errors="replace")
     source_lines = source_text.splitlines()
-    joined = "\n".join(source_lines)
+    joined = _without_literals(tree.root_node, source_lines)
     # prefix_end[n] is len("\n".join(source_lines[:n])): the text a call on
     # line n may use to infer its receiver's declared type.
     prefix_end = [0]
@@ -915,10 +1008,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         non-overlapping scan a per-identifier pattern would perform.
         """
         found: tuple[dict, dict] = ({}, {})
-        patterns = (
-            r"(?=\bvar\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*new\s+([A-Za-z_][A-Za-z0-9_]*))",
-            r"(?=\b([A-Z][A-Za-z0-9_.<>]*)\s+([A-Za-z_][A-Za-z0-9_]*)\b)",
-        )
+        patterns = _DECLARATION_PATTERNS.get(pack.name, _DECLARATION_PATTERNS["default"])
         for slot, pattern in enumerate(patterns):
             last_end: dict[str, int] = {}
             for match in re.finditer(pattern, joined):
@@ -987,10 +1077,10 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "language": pack.name,
         "parser": "tree-sitter",
         "has_error": bool(tree.root_node.has_error),
-        "symbols": symbols,
+        "symbols": _with_trait_impls(pack.name, symbols, tree.root_node, source),
         "calls": calls,
         "imports": imports,
-        "members": members,
+        "members": members + _python_members(pack.name, tree.root_node, source, rel_path),
         "operations": operations,
         "namespace": namespace,
     }

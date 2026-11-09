@@ -12,7 +12,7 @@ import re
 from pathlib import Path
 from typing import Any, Callable
 
-from .impact_references import direct_consumers
+from .impact_references import _scan, direct_consumers
 from .path_signals import TEST_PATH
 
 _CODE_CHARS = 160
@@ -25,6 +25,9 @@ _TARGETS = 3
 _EFFECT = re.compile(r"^(?:return|raise|throw|yield)\b|\bthrow\s+new\b|\b(?:Err|panic!|bail!)\(|\berrors?\.New\(")
 _TESTS_REQUESTED = re.compile(r"\b(?:tests?|pruebas?|testing|specs?)\b", re.IGNORECASE)
 _INDIRECT_REQUESTED = re.compile(r"indirect|transitiv", re.IGNORECASE)
+_TRIVIAL_CALLS = {"Some", "None", "Ok", "Err", "is_some", "is_none", "is_ok", "is_err", "unwrap", "expect", "clone",
+                  "into", "as_ref", "to_string", "start", "end", "push", "append", "extend", "format", "print",
+                  "println", "isinstance", "super", "self", "this", "String", "Vec", "Box", "new"}
 _NOT_CODE = {"documentation_section", "doc", "image", "media", "table"}
 _GENERIC_TOKENS = {"find", "with", "from", "into", "self", "this", "value", "data", "make", "create", "update",
                    "handle", "process", "test", "tests", "spec", "main", "util", "utils", "helper", "base", "impl"}
@@ -118,6 +121,32 @@ def _effects(anchors: list[dict], source: _Source) -> list[list[str]]:
     return effects
 
 
+def _target_calls(anchors: list[dict], source: _Source) -> list[list[str]]:
+    """What the target itself calls, external callees included (`find_byte`, `quit_byte`)."""
+    rows = []
+    for node in [node for node in anchors if node.get("kind") in {"function", "method"}][:_TARGETS]:
+        calls = [op for op in node.get("operations") or [] if op.get("kind") == "call"
+                 and len(str(op.get("name") or "")) > 3 and str(op.get("name")) not in _TRIVIAL_CALLS]
+        for op in calls[:_EFFECTS_PER_TARGET + 2]:
+            rows.append([str(node.get("name") or ""), f"{node.get('file')}:{op.get('line')}", str(op.get("name"))])
+    return rows
+
+
+def _property_readers(root: Path, graph: dict[str, Any], by_id: dict[Any, dict], callers: set[Any],
+                      source: _Source) -> list[list[str]]:
+    """Readers of a direct consumer that is a Python property: `request.blueprints` calls nothing."""
+    rows = []
+    properties = [by_id[node_id] for node_id in callers
+                  if str(by_id[node_id].get("file") or "").endswith(".py") and by_id[node_id].get("kind") == "method"
+                  and (by_id[node_id].get("parameter_count") or 0) <= 1][:2]
+    for node in properties:
+        found, _truncated = _scan(Path(root), graph, {str(node.get("name"))}, {node.get("id")}, [node])
+        for owner, place in found[:_LISTED_INDIRECT]:
+            path, _, number = place.rpartition(":")
+            rows.append([owner, place, source.line(path, int(number)) if number.isdigit() else "", str(node.get("name"))])
+    return rows
+
+
 def _name_tokens(name: str) -> set[str]:
     words = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", name)
     return {word.lower() for word in words if len(word) >= 4 and word.lower() not in _GENERIC_TOKENS}
@@ -151,6 +180,20 @@ def _tests(anchors: list[dict], graph: dict[str, Any], rows: list[list[Any]], in
     return [[path, reason] for path, (_rank, reason) in sorted(reasons.items(), key=lambda item: (item[1][0], item[0]))][:_LISTED_TESTS]
 
 
+def _answer_checks(rows: list[list[Any]], effects: list, target_calls: list, indirect: list, tests: list) -> list[str]:
+    """What the answer must cover, from what this package found: an agent tends to stop at the caller list."""
+    consumers = list(dict.fromkeys(str(row[0]) for row in rows if row and row[0]))[:8]
+    checks = [f"consumers: name each direct consumer ({', '.join(consumers)}) and what it does with the result, from its call line"] \
+        if consumers else []
+    if effects or target_calls:
+        checks.append("target: state what the target returns, raises or calls (target_effects, target_calls)")
+    if indirect:
+        checks.append("indirect: name who calls the direct consumers and through which one (indirect_consumers)")
+    if tests:
+        checks.append("tests: list the related_tests that exercise it")
+    return checks
+
+
 def attach_impact_context(root: Path, graph: dict[str, Any] | None, data: dict[str, Any], request: str) -> None:
     """Call lines, the target's own effects, callers of callers and related tests for an impact package."""
     consumers = data.get("direct_consumers")
@@ -172,11 +215,16 @@ def attach_impact_context(root: Path, graph: dict[str, Any] | None, data: dict[s
     effects = _effects(anchors, source)
     if effects:
         data["target_effects"] = effects
+    target_calls = _target_calls(anchors, source)
+    if target_calls:
+        data["target_calls"] = target_calls
     callers = {node_id for node_id in direct if by_id[node_id].get("kind") != "file"}
     second = {node_id: links for node_id, links in direct_consumers(graph, by_id, callers).items()
               if node_id not in anchor_ids and node_id not in callers}
     names = {node_id: str(by_id[node_id].get("name") or "") for node_id in callers}
     indirect = _caller_rows(second, by_id, source, via=names)
+    known = {(row[0], row[1]) for row in indirect}
+    indirect += [row for row in _property_readers(root, graph, by_id, callers, source) if (row[0], row[1]) not in known]
     if indirect:
         data["indirect_consumers"] = {"total": len(indirect), "listed": indirect[:_LISTED_INDIRECT]}
     rows = [*(consumers.get("others") or []), *(consumers.get("text_references") or []),
@@ -184,6 +232,7 @@ def attach_impact_context(root: Path, graph: dict[str, Any] | None, data: dict[s
     tests = _tests(anchors, graph, rows, indirect)
     if tests:
         data["related_tests"] = tests
+    data["answer_checks"] = _answer_checks(rows, effects, target_calls, indirect, tests)
     data["guidance"] = (str(data.get("guidance") or "") + " Each consumer row ends with the code at the call: say what "
                         "that caller does with the result. target_effects are the target's own returns and raises; "
                         "indirect_consumers call a direct consumer (last field); related_tests exercise them.").strip()
@@ -208,8 +257,10 @@ def shrink_impact_context(output: dict[str, Any], over_budget: Callable[[], bool
         if not over_budget():
             break
         del row[2:]
+    while over_budget() and output.get("target_calls"):
+        output["target_calls"].pop()
     while over_budget() and output.get("target_effects"):
         output["target_effects"].pop()
-    for key in ("indirect_consumers", "related_tests", "target_effects"):
+    for key in ("indirect_consumers", "related_tests", "target_effects", "target_calls"):
         if not output.get(key) or (key == "indirect_consumers" and not indirect.get("listed")):
             output.pop(key, None)
