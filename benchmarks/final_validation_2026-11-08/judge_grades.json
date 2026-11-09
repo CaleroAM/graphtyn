@@ -1,0 +1,3613 @@
+{
+ "summary": {
+  "codex-main": {
+   "runs": 20,
+   "facts": 146,
+   "tokens": 619234,
+   "literal": 58,
+   "gemini": 95,
+   "gpt": 99,
+   "consensus": 95,
+   "majority": 97
+  },
+  "codex-fix": {
+   "runs": 20,
+   "facts": 146,
+   "tokens": 620060,
+   "literal": 66,
+   "gemini": 110,
+   "gpt": 111,
+   "consensus": 110,
+   "majority": 110
+  },
+  "antigravity-main": {
+   "runs": 6,
+   "facts": 44,
+   "tokens": 341662,
+   "literal": 38,
+   "gemini": 39,
+   "gpt": 39,
+   "consensus": 39,
+   "majority": 39
+  },
+  "antigravity-fix": {
+   "runs": 6,
+   "facts": 44,
+   "tokens": 353220,
+   "literal": 39,
+   "gemini": 40,
+   "gpt": 41,
+   "consensus": 40,
+   "majority": 40
+  },
+  "claude-main": {
+   "runs": 6,
+   "facts": 44,
+   "tokens": 528437,
+   "literal": 38,
+   "gemini": 41,
+   "gpt": 41,
+   "consensus": 41,
+   "majority": 41
+  },
+  "claude-fix": {
+   "runs": 6,
+   "facts": 44,
+   "tokens": 469155,
+   "literal": 39,
+   "gemini": 41,
+   "gpt": 41,
+   "consensus": 41,
+   "majority": 41
+  }
+ },
+ "kappa": {
+  "judges": 0.962,
+  "literal_consensus": 0.493
+ },
+ "runs": [
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_COBRA_GEN_MAN_FLOW",
+   "repetition": 1,
+   "tokens": 30407,
+   "literal": {
+    "init_help": false,
+    "name": false,
+    "preamble": false,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": true,
+    "children": false,
+    "history": true
+   },
+   "gemini": {
+    "init_help": true,
+    "name": true,
+    "preamble": true,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": false,
+    "children": true,
+    "history": true
+   },
+   "gpt": {
+    "init_help": true,
+    "name": true,
+    "preamble": true,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": true,
+    "children": true,
+    "history": true
+   },
+   "consensus": {
+    "init_help": true,
+    "name": true,
+    "preamble": true,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": false,
+    "children": true,
+    "history": true
+   },
+   "majority": {
+    "init_help": true,
+    "name": true,
+    "preamble": true,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": false,
+    "children": true,
+    "history": true
+   },
+   "tiebreak": {
+    "children": true,
+    "example": true,
+    "history": true,
+    "init_help": false,
+    "name": true,
+    "options": true,
+    "parent": false,
+    "preamble": true,
+    "see_also": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_COBRA_TRIM_RIGHT_SPACE_IMPACT",
+   "repetition": 1,
+   "tokens": 27026,
+   "literal": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": true
+   },
+   "gemini": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "gpt": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "consensus": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "majority": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_EXPRESS_COMPILE_ETAG_IMPACT",
+   "repetition": 1,
+   "tokens": 28073,
+   "literal": {
+    "set": false,
+    "send": false,
+    "default": true,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "gemini": {
+    "set": false,
+    "send": false,
+    "default": false,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "gpt": {
+    "set": false,
+    "send": false,
+    "default": false,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "consensus": {
+    "set": false,
+    "send": false,
+    "default": false,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "majority": {
+    "set": false,
+    "send": false,
+    "default": false,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_EXPRESS_SEND_FILE_FLOW",
+   "repetition": 1,
+   "tokens": 28328,
+   "literal": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": false,
+    "errors": true
+   },
+   "gemini": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": true,
+    "errors": true
+   },
+   "gpt": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": true,
+    "errors": true
+   },
+   "consensus": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": true,
+    "errors": true
+   },
+   "majority": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": true,
+    "errors": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_FLASK_FULL_DISPATCH_FLOW",
+   "repetition": 1,
+   "tokens": 30916,
+   "literal": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gemini": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gpt": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "consensus": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "majority": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_FLASK_GET_DEBUG_FLAG_IMPACT",
+   "repetition": 1,
+   "tokens": 29085,
+   "literal": {
+    "run": false,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": false
+   },
+   "gemini": {
+    "run": true,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": false
+   },
+   "gpt": {
+    "run": true,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": false
+   },
+   "consensus": {
+    "run": true,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": false
+   },
+   "majority": {
+    "run": true,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_FMT_DO_FORMAT_DECIMAL_FLOW",
+   "repetition": 1,
+   "tokens": 30953,
+   "literal": {
+    "assert": false,
+    "int128": false,
+    "two_digits": true,
+    "fast32": false,
+    "last_digit": false,
+    "returns": false
+   },
+   "gemini": {
+    "assert": true,
+    "int128": true,
+    "two_digits": true,
+    "fast32": true,
+    "last_digit": false,
+    "returns": false
+   },
+   "gpt": {
+    "assert": true,
+    "int128": true,
+    "two_digits": true,
+    "fast32": true,
+    "last_digit": false,
+    "returns": true
+   },
+   "consensus": {
+    "assert": true,
+    "int128": true,
+    "two_digits": true,
+    "fast32": true,
+    "last_digit": false,
+    "returns": false
+   },
+   "majority": {
+    "assert": true,
+    "int128": true,
+    "two_digits": true,
+    "fast32": true,
+    "last_digit": false,
+    "returns": false
+   },
+   "tiebreak": {
+    "assert": false,
+    "fast32": false,
+    "int128": true,
+    "last_digit": false,
+    "returns": false,
+    "two_digits": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_FMT_GET_ARG_CHECKED_IMPACT",
+   "repetition": 1,
+   "tokens": 29085,
+   "literal": {
+    "field": true,
+    "spec_field": true,
+    "named": false,
+    "index": false,
+    "compile": false,
+    "tests": false
+   },
+   "gemini": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": false,
+    "tests": false
+   },
+   "gpt": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": false,
+    "tests": false
+   },
+   "consensus": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": false,
+    "tests": false
+   },
+   "majority": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_GSON_CLASS_ADAPTER_FACTORY_FLOW",
+   "repetition": 1,
+   "tokens": 30299,
+   "literal": {
+    "null_checks": false,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": false,
+    "not_factory": false,
+    "create": false,
+    "put": true,
+    "compare": false
+   },
+   "gemini": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gpt": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "consensus": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "majority": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_GSON_GET_INDENT_IMPACT",
+   "repetition": 1,
+   "tokens": 28775,
+   "literal": {
+    "set_style": false,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "gemini": {
+    "set_style": false,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "gpt": {
+    "set_style": false,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "consensus": {
+    "set_style": false,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "majority": {
+    "set_style": false,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_KY_RESPONSE_DATA_FLOW",
+   "repetition": 1,
+   "tokens": 31333,
+   "literal": {
+    "request": false,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": false,
+    "empty": false,
+    "not_json": false,
+    "parse": false,
+    "returns": false
+   },
+   "gemini": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": false
+   },
+   "gpt": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "consensus": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": false
+   },
+   "majority": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "tiebreak": {
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "read": true,
+    "request": true,
+    "returns": true,
+    "timed_out": true,
+    "total_timeout": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_KY_RETRY_TIMING_DELAY_IMPACT",
+   "repetition": 1,
+   "tokens": 28940,
+   "literal": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": false,
+    "clamp": false,
+    "indirect": false
+   },
+   "gemini": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": false,
+    "clamp": false,
+    "indirect": false
+   },
+   "gpt": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": true,
+    "clamp": false,
+    "indirect": false
+   },
+   "consensus": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": false,
+    "clamp": false,
+    "indirect": false
+   },
+   "majority": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": true,
+    "clamp": false,
+    "indirect": false
+   },
+   "tiebreak": {
+    "clamp": false,
+    "consumer": true,
+    "date": true,
+    "header": false,
+    "indirect": false,
+    "malformed": true,
+    "seconds": false,
+    "timestamp": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_RAILS_REJECT_NEW_RECORD_IMPACT",
+   "repetition": 1,
+   "tokens": 37015,
+   "literal": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "gemini": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "gpt": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "consensus": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "majority": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_RAILS_VALID_AUTHENTICITY_TOKEN_FLOW",
+   "repetition": 1,
+   "tokens": 52848,
+   "literal": {
+    "not_string": false,
+    "decode": true,
+    "raw": false,
+    "masked": false,
+    "global": false,
+    "per_form": false,
+    "malformed": false,
+    "caller": false
+   },
+   "gemini": {
+    "not_string": true,
+    "decode": true,
+    "raw": true,
+    "masked": true,
+    "global": true,
+    "per_form": true,
+    "malformed": true,
+    "caller": false
+   },
+   "gpt": {
+    "not_string": true,
+    "decode": true,
+    "raw": true,
+    "masked": true,
+    "global": true,
+    "per_form": true,
+    "malformed": true,
+    "caller": false
+   },
+   "consensus": {
+    "not_string": true,
+    "decode": true,
+    "raw": true,
+    "masked": true,
+    "global": true,
+    "per_form": true,
+    "malformed": true,
+    "caller": false
+   },
+   "majority": {
+    "not_string": true,
+    "decode": true,
+    "raw": true,
+    "masked": true,
+    "global": true,
+    "per_form": true,
+    "malformed": true,
+    "caller": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT",
+   "repetition": 1,
+   "tokens": 28416,
+   "literal": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": false,
+    "flag": false
+   },
+   "gemini": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": false,
+    "flag": false
+   },
+   "gpt": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": false,
+    "flag": false
+   },
+   "consensus": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": false,
+    "flag": false
+   },
+   "majority": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": false,
+    "flag": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_REDIS_MEMORY_DOCTOR_FLOW",
+   "repetition": 1,
+   "tokens": 31000,
+   "literal": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": false,
+    "slave_buf": false,
+    "scripts": false,
+    "count": true
+   },
+   "gemini": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": true,
+    "slave_buf": true,
+    "scripts": true,
+    "count": true
+   },
+   "gpt": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": true,
+    "slave_buf": true,
+    "scripts": true,
+    "count": true
+   },
+   "consensus": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": true,
+    "slave_buf": true,
+    "scripts": true,
+    "count": true
+   },
+   "majority": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": true,
+    "slave_buf": true,
+    "scripts": true,
+    "count": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_RIPGREP_ONLY_MATCHING_MULTILINE_FLOW",
+   "repetition": 1,
+   "tokens": 29124,
+   "literal": {
+    "lines": true,
+    "trim": false,
+    "matches": true,
+    "prelude": false,
+    "max_columns": true,
+    "color": true,
+    "terminator": false,
+    "count": false
+   },
+   "gemini": {
+    "lines": true,
+    "trim": true,
+    "matches": true,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": true,
+    "count": false
+   },
+   "gpt": {
+    "lines": true,
+    "trim": true,
+    "matches": true,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": true,
+    "count": false
+   },
+   "consensus": {
+    "lines": true,
+    "trim": true,
+    "matches": true,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": true,
+    "count": false
+   },
+   "majority": {
+    "lines": true,
+    "trim": true,
+    "matches": true,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": true,
+    "count": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_RIPGREP_PRINT_STATS_IMPACT",
+   "repetition": 1,
+   "tokens": 28461,
+   "literal": {
+    "search": false,
+    "parallel": true,
+    "json": false,
+    "elapsed": false,
+    "text": false,
+    "stats_flag": false
+   },
+   "gemini": {
+    "search": true,
+    "parallel": true,
+    "json": true,
+    "elapsed": false,
+    "text": false,
+    "stats_flag": false
+   },
+   "gpt": {
+    "search": true,
+    "parallel": true,
+    "json": true,
+    "elapsed": false,
+    "text": false,
+    "stats_flag": false
+   },
+   "consensus": {
+    "search": true,
+    "parallel": true,
+    "json": true,
+    "elapsed": false,
+    "text": false,
+    "stats_flag": false
+   },
+   "majority": {
+    "search": true,
+    "parallel": true,
+    "json": true,
+    "elapsed": false,
+    "text": false,
+    "stats_flag": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_SLIM_REGISTER_BODY_PARSER_IMPACT",
+   "repetition": 1,
+   "tokens": 28608,
+   "literal": {
+    "constructor": false,
+    "defaults": false,
+    "json": false,
+    "form": false,
+    "xml": false,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gemini": {
+    "constructor": false,
+    "defaults": false,
+    "json": false,
+    "form": false,
+    "xml": false,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gpt": {
+    "constructor": false,
+    "defaults": false,
+    "json": false,
+    "form": false,
+    "xml": false,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "consensus": {
+    "constructor": false,
+    "defaults": false,
+    "json": false,
+    "form": false,
+    "xml": false,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "majority": {
+    "constructor": false,
+    "defaults": false,
+    "json": false,
+    "form": false,
+    "xml": false,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "X_SLIM_RESOLVE_BY_PREDICATE_FLOW",
+   "repetition": 1,
+   "tokens": 30542,
+   "literal": {
+    "prepare": false,
+    "already_callable": false,
+    "default_method": true,
+    "notation": false,
+    "invoke": true,
+    "assert": true,
+    "bind": false,
+    "predicates": true
+   },
+   "gemini": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": true
+   },
+   "gpt": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": true
+   },
+   "consensus": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": true
+   },
+   "majority": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_COBRA_GEN_MAN_FLOW",
+   "repetition": 1,
+   "tokens": 30868,
+   "literal": {
+    "init_help": true,
+    "name": false,
+    "preamble": false,
+    "options": false,
+    "example": true,
+    "see_also": true,
+    "parent": true,
+    "children": false,
+    "history": true
+   },
+   "gemini": {
+    "init_help": true,
+    "name": true,
+    "preamble": true,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": true,
+    "children": true,
+    "history": true
+   },
+   "gpt": {
+    "init_help": true,
+    "name": true,
+    "preamble": true,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": true,
+    "children": true,
+    "history": true
+   },
+   "consensus": {
+    "init_help": true,
+    "name": true,
+    "preamble": true,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": true,
+    "children": true,
+    "history": true
+   },
+   "majority": {
+    "init_help": true,
+    "name": true,
+    "preamble": true,
+    "options": true,
+    "example": true,
+    "see_also": true,
+    "parent": true,
+    "children": true,
+    "history": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_COBRA_TRIM_RIGHT_SPACE_IMPACT",
+   "repetition": 1,
+   "tokens": 27581,
+   "literal": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": false,
+    "effect": true,
+    "indirect": true
+   },
+   "gemini": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "gpt": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "consensus": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "majority": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_EXPRESS_COMPILE_ETAG_IMPACT",
+   "repetition": 1,
+   "tokens": 27998,
+   "literal": {
+    "set": false,
+    "send": false,
+    "default": true,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "gemini": {
+    "set": false,
+    "send": false,
+    "default": false,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "gpt": {
+    "set": false,
+    "send": false,
+    "default": false,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "consensus": {
+    "set": false,
+    "send": false,
+    "default": false,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "majority": {
+    "set": false,
+    "send": false,
+    "default": false,
+    "passthrough": false,
+    "weak": true,
+    "strong": true,
+    "unknown": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_EXPRESS_SEND_FILE_FLOW",
+   "repetition": 1,
+   "tokens": 28148,
+   "literal": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": false,
+    "errors": true
+   },
+   "gemini": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": true,
+    "errors": true
+   },
+   "gpt": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": true,
+    "errors": true
+   },
+   "consensus": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": true,
+    "errors": true
+   },
+   "majority": {
+    "required": false,
+    "string": false,
+    "callback": false,
+    "absolute": false,
+    "encode": false,
+    "etag": false,
+    "send": false,
+    "sendfile": true,
+    "errors": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_FLASK_FULL_DISPATCH_FLOW",
+   "repetition": 1,
+   "tokens": 31453,
+   "literal": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gemini": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gpt": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "consensus": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "majority": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_FLASK_GET_DEBUG_FLAG_IMPACT",
+   "repetition": 1,
+   "tokens": 29417,
+   "literal": {
+    "run": false,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": true
+   },
+   "gemini": {
+    "run": true,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": true
+   },
+   "gpt": {
+    "run": true,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": true
+   },
+   "consensus": {
+    "run": true,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": true
+   },
+   "majority": {
+    "run": true,
+    "load_app": true,
+    "cli_run": true,
+    "make_config": true,
+    "env": true,
+    "falsy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_FMT_DO_FORMAT_DECIMAL_FLOW",
+   "repetition": 1,
+   "tokens": 31064,
+   "literal": {
+    "assert": false,
+    "int128": false,
+    "two_digits": true,
+    "fast32": false,
+    "last_digit": false,
+    "returns": false
+   },
+   "gemini": {
+    "assert": true,
+    "int128": true,
+    "two_digits": true,
+    "fast32": true,
+    "last_digit": false,
+    "returns": true
+   },
+   "gpt": {
+    "assert": true,
+    "int128": true,
+    "two_digits": true,
+    "fast32": true,
+    "last_digit": false,
+    "returns": true
+   },
+   "consensus": {
+    "assert": true,
+    "int128": true,
+    "two_digits": true,
+    "fast32": true,
+    "last_digit": false,
+    "returns": true
+   },
+   "majority": {
+    "assert": true,
+    "int128": true,
+    "two_digits": true,
+    "fast32": true,
+    "last_digit": false,
+    "returns": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_FMT_GET_ARG_CHECKED_IMPACT",
+   "repetition": 1,
+   "tokens": 29116,
+   "literal": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": false,
+    "tests": false
+   },
+   "gemini": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": true,
+    "tests": false
+   },
+   "gpt": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": true,
+    "tests": false
+   },
+   "consensus": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": true,
+    "tests": false
+   },
+   "majority": {
+    "field": true,
+    "spec_field": true,
+    "named": true,
+    "index": true,
+    "compile": true,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_GSON_CLASS_ADAPTER_FACTORY_FLOW",
+   "repetition": 1,
+   "tokens": 30251,
+   "literal": {
+    "null_checks": false,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": false,
+    "not_factory": false,
+    "create": false,
+    "put": false,
+    "compare": false
+   },
+   "gemini": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gpt": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "consensus": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "majority": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_GSON_GET_INDENT_IMPACT",
+   "repetition": 1,
+   "tokens": 30271,
+   "literal": {
+    "set_style": true,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "gemini": {
+    "set_style": true,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "gpt": {
+    "set_style": true,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "consensus": {
+    "set_style": true,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "majority": {
+    "set_style": true,
+    "newline": true,
+    "per_level": false,
+    "with_indent": false,
+    "pretty": false,
+    "returns": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_KY_RESPONSE_DATA_FLOW",
+   "repetition": 1,
+   "tokens": 31189,
+   "literal": {
+    "request": false,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": false,
+    "empty": false,
+    "not_json": false,
+    "parse": false,
+    "returns": false
+   },
+   "gemini": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "gpt": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "consensus": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "majority": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_KY_RETRY_TIMING_DELAY_IMPACT",
+   "repetition": 1,
+   "tokens": 31394,
+   "literal": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": false,
+    "clamp": false,
+    "indirect": false
+   },
+   "gemini": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": false,
+    "clamp": true,
+    "indirect": false
+   },
+   "gpt": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": false,
+    "clamp": true,
+    "indirect": false
+   },
+   "consensus": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": false,
+    "clamp": true,
+    "indirect": false
+   },
+   "majority": {
+    "consumer": true,
+    "header": false,
+    "malformed": false,
+    "seconds": false,
+    "timestamp": false,
+    "date": false,
+    "clamp": true,
+    "indirect": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_RAILS_REJECT_NEW_RECORD_IMPACT",
+   "repetition": 1,
+   "tokens": 36867,
+   "literal": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "gemini": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "gpt": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "consensus": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "majority": {
+    "one_to_one": false,
+    "collection": true,
+    "destroy": false,
+    "reject_if": false,
+    "setter": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_RAILS_VALID_AUTHENTICITY_TOKEN_FLOW",
+   "repetition": 1,
+   "tokens": 46857,
+   "literal": {
+    "not_string": false,
+    "decode": true,
+    "raw": false,
+    "masked": false,
+    "global": false,
+    "per_form": false,
+    "malformed": false,
+    "caller": true
+   },
+   "gemini": {
+    "not_string": true,
+    "decode": true,
+    "raw": true,
+    "masked": true,
+    "global": true,
+    "per_form": true,
+    "malformed": true,
+    "caller": true
+   },
+   "gpt": {
+    "not_string": true,
+    "decode": true,
+    "raw": true,
+    "masked": true,
+    "global": true,
+    "per_form": true,
+    "malformed": true,
+    "caller": true
+   },
+   "consensus": {
+    "not_string": true,
+    "decode": true,
+    "raw": true,
+    "masked": true,
+    "global": true,
+    "per_form": true,
+    "malformed": true,
+    "caller": true
+   },
+   "majority": {
+    "not_string": true,
+    "decode": true,
+    "raw": true,
+    "masked": true,
+    "global": true,
+    "per_form": true,
+    "malformed": true,
+    "caller": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT",
+   "repetition": 1,
+   "tokens": 30803,
+   "literal": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": false,
+    "flag": false
+   },
+   "gemini": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": false
+   },
+   "gpt": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": false
+   },
+   "consensus": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": false
+   },
+   "majority": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": false
+   },
+   "tiebreak": {
+    "cluster": false,
+    "flag": false,
+    "fork": true,
+    "init": true,
+    "listeners": false,
+    "shutdown": true,
+    "unix": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_REDIS_MEMORY_DOCTOR_FLOW",
+   "repetition": 1,
+   "tokens": 31116,
+   "literal": {
+    "empty": false,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": false,
+    "slave_buf": false,
+    "scripts": false,
+    "count": true
+   },
+   "gemini": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": true,
+    "slave_buf": true,
+    "scripts": true,
+    "count": true
+   },
+   "gpt": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": true,
+    "slave_buf": true,
+    "scripts": true,
+    "count": true
+   },
+   "consensus": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": true,
+    "slave_buf": true,
+    "scripts": true,
+    "count": true
+   },
+   "majority": {
+    "empty": true,
+    "peak": true,
+    "frag": true,
+    "alloc_frag": true,
+    "rss": true,
+    "client_buf": true,
+    "slave_buf": true,
+    "scripts": true,
+    "count": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_RIPGREP_ONLY_MATCHING_MULTILINE_FLOW",
+   "repetition": 1,
+   "tokens": 28779,
+   "literal": {
+    "lines": true,
+    "trim": false,
+    "matches": false,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": false,
+    "count": false
+   },
+   "gemini": {
+    "lines": true,
+    "trim": true,
+    "matches": true,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": true,
+    "count": true
+   },
+   "gpt": {
+    "lines": true,
+    "trim": true,
+    "matches": true,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": true,
+    "count": true
+   },
+   "consensus": {
+    "lines": true,
+    "trim": true,
+    "matches": true,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": true,
+    "count": true
+   },
+   "majority": {
+    "lines": true,
+    "trim": true,
+    "matches": true,
+    "prelude": true,
+    "max_columns": true,
+    "color": true,
+    "terminator": true,
+    "count": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_RIPGREP_PRINT_STATS_IMPACT",
+   "repetition": 1,
+   "tokens": 27641,
+   "literal": {
+    "search": false,
+    "parallel": true,
+    "json": false,
+    "elapsed": false,
+    "text": false,
+    "stats_flag": false
+   },
+   "gemini": {
+    "search": true,
+    "parallel": true,
+    "json": true,
+    "elapsed": true,
+    "text": false,
+    "stats_flag": false
+   },
+   "gpt": {
+    "search": true,
+    "parallel": true,
+    "json": true,
+    "elapsed": true,
+    "text": false,
+    "stats_flag": false
+   },
+   "consensus": {
+    "search": true,
+    "parallel": true,
+    "json": true,
+    "elapsed": true,
+    "text": false,
+    "stats_flag": false
+   },
+   "majority": {
+    "search": true,
+    "parallel": true,
+    "json": true,
+    "elapsed": true,
+    "text": false,
+    "stats_flag": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_SLIM_REGISTER_BODY_PARSER_IMPACT",
+   "repetition": 1,
+   "tokens": 27724,
+   "literal": {
+    "constructor": true,
+    "defaults": true,
+    "json": false,
+    "form": false,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gemini": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gpt": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "consensus": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "majority": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "X_SLIM_RESOLVE_BY_PREDICATE_FLOW",
+   "repetition": 1,
+   "tokens": 31523,
+   "literal": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": false
+   },
+   "gemini": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": true
+   },
+   "gpt": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": true
+   },
+   "consensus": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": true
+   },
+   "majority": {
+    "prepare": true,
+    "already_callable": true,
+    "default_method": true,
+    "notation": true,
+    "invoke": true,
+    "assert": true,
+    "bind": true,
+    "predicates": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "X_COBRA_TRIM_RIGHT_SPACE_IMPACT",
+   "repetition": 1,
+   "tokens": 44597,
+   "literal": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": false,
+    "indirect": true
+   },
+   "gemini": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": false,
+    "indirect": false
+   },
+   "gpt": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": false,
+    "indirect": false
+   },
+   "consensus": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": false,
+    "indirect": false
+   },
+   "majority": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": false,
+    "indirect": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "X_FLASK_FULL_DISPATCH_FLOW",
+   "repetition": 1,
+   "tokens": 73292,
+   "literal": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gemini": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gpt": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "consensus": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "majority": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "X_GSON_CLASS_ADAPTER_FACTORY_FLOW",
+   "repetition": 1,
+   "tokens": 43799,
+   "literal": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gemini": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gpt": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "consensus": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "majority": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "X_KY_RESPONSE_DATA_FLOW",
+   "repetition": 1,
+   "tokens": 83380,
+   "literal": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": false,
+    "not_json": true,
+    "parse": true,
+    "returns": false
+   },
+   "gemini": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "gpt": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "consensus": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "majority": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT",
+   "repetition": 1,
+   "tokens": 55374,
+   "literal": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "gemini": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "gpt": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "consensus": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "majority": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "X_SLIM_REGISTER_BODY_PARSER_IMPACT",
+   "repetition": 1,
+   "tokens": 41220,
+   "literal": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gemini": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gpt": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "consensus": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "majority": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "X_COBRA_TRIM_RIGHT_SPACE_IMPACT",
+   "repetition": 1,
+   "tokens": 30691,
+   "literal": {
+    "usage": true,
+    "help": true,
+    "template": false,
+    "flags": true,
+    "effect": true,
+    "indirect": true
+   },
+   "gemini": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "gpt": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "consensus": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "majority": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "X_FLASK_FULL_DISPATCH_FLOW",
+   "repetition": 1,
+   "tokens": 90974,
+   "literal": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gemini": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gpt": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "consensus": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "majority": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "X_GSON_CLASS_ADAPTER_FACTORY_FLOW",
+   "repetition": 1,
+   "tokens": 46433,
+   "literal": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gemini": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gpt": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "consensus": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "majority": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "X_KY_RESPONSE_DATA_FLOW",
+   "repetition": 1,
+   "tokens": 98923,
+   "literal": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": false
+   },
+   "gemini": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "gpt": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "consensus": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "majority": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT",
+   "repetition": 1,
+   "tokens": 44658,
+   "literal": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "gemini": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "gpt": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "consensus": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "majority": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": false,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "tiebreak": {
+    "cluster": false,
+    "flag": true,
+    "fork": true,
+    "init": true,
+    "listeners": false,
+    "shutdown": true,
+    "unix": true
+   }
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "X_SLIM_REGISTER_BODY_PARSER_IMPACT",
+   "repetition": 1,
+   "tokens": 41541,
+   "literal": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gemini": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gpt": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "consensus": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "majority": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "X_COBRA_TRIM_RIGHT_SPACE_IMPACT",
+   "repetition": 1,
+   "tokens": 85497,
+   "literal": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": true
+   },
+   "gemini": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "gpt": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "consensus": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "majority": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "X_FLASK_FULL_DISPATCH_FLOW",
+   "repetition": 1,
+   "tokens": 98761,
+   "literal": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gemini": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gpt": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "consensus": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "majority": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "X_GSON_CLASS_ADAPTER_FACTORY_FLOW",
+   "repetition": 1,
+   "tokens": 61229,
+   "literal": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": false,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gemini": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gpt": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "consensus": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "majority": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "X_KY_RESPONSE_DATA_FLOW",
+   "repetition": 1,
+   "tokens": 134903,
+   "literal": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": false,
+    "not_json": false,
+    "parse": true,
+    "returns": false
+   },
+   "gemini": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "gpt": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "consensus": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "majority": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT",
+   "repetition": 1,
+   "tokens": 58418,
+   "literal": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "gemini": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "gpt": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "consensus": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "majority": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "X_SLIM_REGISTER_BODY_PARSER_IMPACT",
+   "repetition": 1,
+   "tokens": 89629,
+   "literal": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gemini": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gpt": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "consensus": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "majority": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "X_COBRA_TRIM_RIGHT_SPACE_IMPACT",
+   "repetition": 1,
+   "tokens": 56937,
+   "literal": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": true
+   },
+   "gemini": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "gpt": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "consensus": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "majority": {
+    "usage": true,
+    "help": true,
+    "template": true,
+    "flags": true,
+    "effect": true,
+    "indirect": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "X_FLASK_FULL_DISPATCH_FLOW",
+   "repetition": 1,
+   "tokens": 98341,
+   "literal": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gemini": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "gpt": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "consensus": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "majority": {
+    "deprecation": true,
+    "first_request": true,
+    "signal": true,
+    "preprocess": true,
+    "dispatch": true,
+    "errors": true,
+    "finalize": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "X_GSON_CLASS_ADAPTER_FACTORY_FLOW",
+   "repetition": 1,
+   "tokens": 61330,
+   "literal": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": false,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gemini": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "gpt": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "consensus": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "majority": {
+    "null_checks": true,
+    "tree_dummy": true,
+    "cache": true,
+    "annotation": true,
+    "not_factory": true,
+    "create": true,
+    "put": true,
+    "compare": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "X_KY_RESPONSE_DATA_FLOW",
+   "repetition": 1,
+   "tokens": 133256,
+   "literal": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": false,
+    "not_json": true,
+    "parse": true,
+    "returns": false
+   },
+   "gemini": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "gpt": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "consensus": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "majority": {
+    "request": true,
+    "total_timeout": true,
+    "read": true,
+    "timed_out": true,
+    "empty": true,
+    "not_json": true,
+    "parse": true,
+    "returns": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT",
+   "repetition": 1,
+   "tokens": 61897,
+   "literal": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "gemini": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "gpt": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "consensus": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "majority": {
+    "init": true,
+    "shutdown": true,
+    "fork": true,
+    "listeners": true,
+    "cluster": false,
+    "unix": true,
+    "flag": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "X_SLIM_REGISTER_BODY_PARSER_IMPACT",
+   "repetition": 1,
+   "tokens": 57394,
+   "literal": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gemini": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "gpt": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "consensus": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "majority": {
+    "constructor": true,
+    "defaults": true,
+    "json": true,
+    "form": true,
+    "xml": true,
+    "storage": true,
+    "parse": false,
+    "tests": true
+   },
+   "tiebreak": null
+  }
+ ]
+}

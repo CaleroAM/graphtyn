@@ -46,7 +46,8 @@ GRAPH_ONLY = frozenset({"express", "ky"})
 # Validation folders whose runs are finished: their tasks are no longer held out.
 SPENT = ("intent_impact_2026-11-04", *(f"intent_impact_2026-11-04/set{number}" for number in range(2, 7)),
          "graphify_head_to_head_2026-11-06", "h2h_fix_validation_2026-11-06", "inherited_self_calls_2026-11-06",
-         "language_conformance_2026-11-06", "workspace_scope_2026-11-06")
+         "language_conformance_2026-11-06", "workspace_scope_2026-11-06", "impact_completeness_2026-11-06",
+         "final_validation_2026-11-08")
 GRAPH_TOLERANCE = 0.10
 MEAN_TOLERANCE = 0.01
 TASK_TOLERANCE = 1

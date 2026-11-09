@@ -33,6 +33,7 @@
 | Conformidad por lenguaje (Java, PHP, Go y Rust) | NEUTRAL en respuestas tras recalcular (+5,6 %, IC 95 % [−3,5 %, +16 %]); POSITIVE en el grafo. Publicado como POSITIVE moderado en Codex: 143/152 hechos frente a 136/152, media de tokens −10 %; Java gasta la mitad y PHP llega a 34/34; ocho tareas nuevas en gson, Slim, cobra y ripgrep públicos, 32 sesiones (n=2); ver `benchmarks/language_conformance_2026-11-06/report.md` |
 | Alcance por miembro de workspace | NEUTRAL en dos tareas de reserva (mismos hechos en el paquete); su evidencia es la tarea que lo reveló y una prueba unitaria; ver `benchmarks/workspace_scope_2026-11-06/report.md` |
 | Calibración de los jueces | La regla principal pasa a mayoría de tres (Gemini, GPT y Claude como desempate) con las citas `archivo:línea` resueltas; recalculadas con intervalos, solo las correcciones tras Graphify mejoran fuera del cero (+6,4 %, IC 95 % [+0,9 %, +12,7 %]); la conformidad por lenguaje queda en +5,6 % [−3,5 %, +16 %]; ver `benchmarks/judge_calibration_2026-11-08/report.md` |
+| Validación final (paquete de impacto completo, precisión y extracción) | POSITIVE en Codex: +9,1 % de hechos, IC 95 % [+3,9 %, +16,2 %], 9 tareas mejores y ninguna peor, mismos tokens; NEUTRAL en Claude (−13 % de tokens, no significativo) y Antigravity; 20 tareas nuevas en diez corpus, 64 sesiones (n=1), jueces calibrados; ver `benchmarks/final_validation_2026-11-08/report.md` |
 | 36 tareas multilenguaje | PENDING |
 
 ### Calificación con jueces
