@@ -52,6 +52,9 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- `graphtyn reindex` con un `GRAPHTYN_HOME` distinto del habitual ya no delega en el servicio
+  local, que reindexaba con su propio almacén y su propio código. Una prueba, un benchmark o un
+  CI con otro almacén reescribía así los índices reales de los proyectos registrados.
 - Precisión del grafo, a partir de una revisión de 120 llamadas `EXTRACTED` en diez repositorios
   (5 erróneas, en dos patrones):
   - el tipo de un receptor ya no se infiere de declaraciones escritas dentro de cadenas o

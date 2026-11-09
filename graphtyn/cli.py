@@ -525,6 +525,16 @@ def _command_init(args, root: Path, parser) -> None:
     if initialized["gitignore_added"]:
         print("✓ .graphtyn/ agregado a .gitignore")
 
+def _foreign_home() -> bool:
+    """Whether this process keeps its indexes outside the default store a local service writes to.
+
+    The service reindexes into its own GRAPHTYN_HOME, so a CI run, a benchmark or a test with
+    another home must index locally instead of rewriting the user's stores.
+    """
+    configured = os.environ.get("GRAPHTYN_HOME")
+    return bool(configured) and Path(configured).expanduser().resolve() != (Path.home() / ".graphtyn").resolve()
+
+
 def _command_reindex(args, root: Path, parser) -> None:
     profiles = {"fast": "ast_pure", "balanced": "ast_local_llm", "deep": "ast_cloud", "verified": "ast_cloud"}
     if args.mode:
@@ -533,6 +543,8 @@ def _command_reindex(args, root: Path, parser) -> None:
                        "full": args.mode in {"deep", "verified"}}).encode("utf-8")
     req = urllib.request.Request("http://127.0.0.1:9210/api/reindex", data=data, headers={"Content-Type": "application/json"})
     try:
+        if _foreign_home():
+            raise OSError("GRAPHTYN_HOME names another store than the local service's")
         with urllib.request.urlopen(req, timeout=15) as resp:
             res = json.loads(resp.read().decode())
     except Exception:

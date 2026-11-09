@@ -1,4 +1,5 @@
 """Edges the precision audit found wrong, and the extraction gaps it left, stay fixed."""
+from pathlib import Path
 from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.change_analyst import _terms, query_intent
 from graphtyn.core.impact_context import attach_impact_context
@@ -109,3 +110,14 @@ def test_a_bare_ruby_constant_does_not_reach_a_class_under_another_top_level_mod
 
     assert "configure" not in callers  # Ruby's own File
     assert "load" in callers  # ActiveRecord::FixtureSet::File, visible from inside ActiveRecord
+
+
+def test_reindex_with_another_home_never_goes_through_the_local_service(monkeypatch, tmp_path):
+    from graphtyn import cli
+
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    assert cli._foreign_home()
+    monkeypatch.setenv("GRAPHTYN_HOME", str(Path.home() / ".graphtyn"))
+    assert not cli._foreign_home()
+    monkeypatch.delenv("GRAPHTYN_HOME")
+    assert not cli._foreign_home()
