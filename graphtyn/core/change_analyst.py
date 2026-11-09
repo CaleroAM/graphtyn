@@ -1219,7 +1219,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
             continue
         candidates = [
             item for item in ranked
-            if str(item[1].get("name") or "").lower() == explicit_name
+            if str(item[1].get("name") or "").lower() == explicit_name and item[1].get("kind") not in anchor_excluded_kinds
             and not re.search(r"(?:^|/)(?:tests?|fixtures?)(?:/|$|[_.])",
                               str(item[1].get("file") or ""), re.I)
         ]
@@ -1489,7 +1489,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     exact_matched = sorted(
         (node for node in nodes
          if str(node.get("name") or "").lower() in symbol_terms
-         and node.get("kind") not in {"file", "module", "documentation_section", "doc", "image", "media"}),
+         and node.get("kind") not in anchor_excluded_kinds),  # a field named like a request word is data
         key=lambda node: (not qualified_match(node), not _in_named_scope(node, qualified_package_roots),
                           -int(node.get("degree") or 0), str(node.get("id") or "")),
     )
