@@ -1,8 +1,8 @@
 {
   "graphs": {
     "cobra": {
-      "extracted_calls": 533,
-      "inheritance": 0,
+      "extracted_calls": 1272,
+      "inheritance": 1,
       "typed_fields": 104
     },
     "express": {
@@ -11,38 +11,38 @@
       "typed_fields": 0
     },
     "flask": {
-      "extracted_calls": 237,
+      "extracted_calls": 239,
       "inheritance": 79,
-      "typed_fields": 0
+      "typed_fields": 75
     },
     "fmt": {
-      "extracted_calls": 2276,
+      "extracted_calls": 2277,
       "inheritance": 372,
-      "typed_fields": 759
+      "typed_fields": 771
     },
     "gson": {
-      "extracted_calls": 5758,
+      "extracted_calls": 5784,
       "inheritance": 387,
       "typed_fields": 1095
     },
     "ky": {
-      "extracted_calls": 184,
+      "extracted_calls": 159,
       "inheritance": 6,
       "typed_fields": 28
     },
     "rails": {
-      "extracted_calls": 19804,
+      "extracted_calls": 19967,
       "inheritance": 4971,
       "typed_fields": 0
     },
     "redis": {
-      "extracted_calls": 18070,
+      "extracted_calls": 18071,
       "inheritance": 53,
-      "typed_fields": 4077
+      "typed_fields": 4104
     },
     "ripgrep": {
-      "extracted_calls": 2360,
-      "inheritance": 1,
+      "extracted_calls": 2569,
+      "inheritance": 124,
       "typed_fields": 737
     },
     "slim": {
@@ -54,7 +54,7 @@
   "schema_version": "1.1",
   "tasks": {
     "FLASK_BLUEPRINT_REGISTER_FLOW": {
-      "covered": 5,
+      "covered": 4,
       "do_not_expand": true,
       "total": 8
     },
@@ -214,7 +214,7 @@
       "total": 8
     },
     "I_FLASK_EXC_CLASS_CODE_IMPACT": {
-      "covered": 5,
+      "covered": 6,
       "do_not_expand": true,
       "total": 7
     },
@@ -264,7 +264,7 @@
       "total": 8
     },
     "L_SLIM_MAP_IMPACT": {
-      "covered": 5,
+      "covered": 7,
       "do_not_expand": true,
       "total": 8
     },
@@ -399,7 +399,7 @@
       "total": 8
     },
     "REDIS_EVICT_CALLERS": {
-      "covered": 3,
+      "covered": 5,
       "do_not_expand": true,
       "total": 7
     },
@@ -579,7 +579,7 @@
       "total": 7
     },
     "V_FLASK_FIND_ERROR_HANDLER_IMPACT": {
-      "covered": 7,
+      "covered": 8,
       "do_not_expand": true,
       "total": 8
     },
