@@ -1,0 +1,99 @@
+{
+ "tasks": [
+  {
+   "id": "X_FLASK_GET_DEBUG_FLAG_IMPACT",
+   "request": "Si cambio get_debug_flag en Flask, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "run",
+     "any": [
+      "run("
+     ]
+    },
+    {
+     "id": "load_app",
+     "any": [
+      "load_app"
+     ]
+    },
+    {
+     "id": "cli_run",
+     "any": [
+      "cli.py:972",
+      "run_command"
+     ]
+    },
+    {
+     "id": "make_config",
+     "any": [
+      "make_config",
+      "DEBUG"
+     ]
+    },
+    {
+     "id": "env",
+     "any": [
+      "FLASK_DEBUG"
+     ]
+    },
+    {
+     "id": "falsy",
+     "any": [
+      "\"false\"",
+      "\"0\"",
+      "'no'"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_FLASK_FULL_DISPATCH_FLOW",
+   "request": "¿Cómo procesa Flask una petición en full_dispatch_request? Explica los pasos y el manejo de errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "deprecation",
+     "any": [
+      "should_ignore_error",
+      "DeprecationWarning"
+     ]
+    },
+    {
+     "id": "first_request",
+     "any": [
+      "_got_first_request"
+     ]
+    },
+    {
+     "id": "signal",
+     "any": [
+      "request_started"
+     ]
+    },
+    {
+     "id": "preprocess",
+     "any": [
+      "preprocess_request"
+     ]
+    },
+    {
+     "id": "dispatch",
+     "any": [
+      "dispatch_request"
+     ]
+    },
+    {
+     "id": "errors",
+     "any": [
+      "handle_user_exception"
+     ]
+    },
+    {
+     "id": "finalize",
+     "any": [
+      "finalize_request"
+     ]
+    }
+   ]
+  }
+ ]
+}

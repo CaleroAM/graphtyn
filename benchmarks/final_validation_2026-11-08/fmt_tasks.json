@@ -1,0 +1,98 @@
+{
+ "tasks": [
+  {
+   "id": "X_FMT_GET_ARG_CHECKED_IMPACT",
+   "request": "What breaks if I change get_arg_checked in fmt? List the direct consumers with file:line evidence.",
+   "rubric": [
+    {
+     "id": "field",
+     "any": [
+      "field",
+      "compile.h:177"
+     ]
+    },
+    {
+     "id": "spec_field",
+     "any": [
+      "spec_field",
+      "compile.h:237"
+     ]
+    },
+    {
+     "id": "named",
+     "any": [
+      "is_named_arg",
+      "arg.value"
+     ]
+    },
+    {
+     "id": "index",
+     "any": [
+      "detail::get"
+     ]
+    },
+    {
+     "id": "compile",
+     "any": [
+      "FMT_COMPILE",
+      "compile-time",
+      "compile time"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "compile-test"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_FMT_DO_FORMAT_DECIMAL_FLOW",
+   "request": "How does fmt write an unsigned integer in do_format_decimal? Explain the steps and optimizations. Cite file:line.",
+   "rubric": [
+    {
+     "id": "assert",
+     "any": [
+      "FMT_ASSERT",
+      "count_digits"
+     ]
+    },
+    {
+     "id": "int128",
+     "any": [
+      "pow10_19",
+      "19 digits",
+      "FMT_USE_INT128"
+     ]
+    },
+    {
+     "id": "two_digits",
+     "any": [
+      "write2digits",
+      "% 100"
+     ]
+    },
+    {
+     "id": "fast32",
+     "any": [
+      "write2digits_i",
+      "1ull << 39"
+     ]
+    },
+    {
+     "id": "last_digit",
+     "any": [
+      "'0' + value"
+     ]
+    },
+    {
+     "id": "returns",
+     "any": [
+      "out + n"
+     ]
+    }
+   ]
+  }
+ ]
+}

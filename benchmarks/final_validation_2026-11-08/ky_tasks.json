@@ -1,0 +1,119 @@
+{
+ "tasks": [
+  {
+   "id": "X_KY_RETRY_TIMING_DELAY_IMPACT",
+   "request": "What breaks if I change calculateRetryTimingDelay in ky? List the direct consumers with file:line evidence.",
+   "rubric": [
+    {
+     "id": "consumer",
+     "any": [
+      "calculateRetryDelay",
+      "Ky.ts:740"
+     ]
+    },
+    {
+     "id": "header",
+     "any": [
+      "getRetryTimingHeader",
+      "afterStatusCodes"
+     ]
+    },
+    {
+     "id": "malformed",
+     "any": [
+      "calculateDelay"
+     ]
+    },
+    {
+     "id": "seconds",
+     "any": [
+      "* 1000",
+      "delayPattern"
+     ]
+    },
+    {
+     "id": "timestamp",
+     "any": [
+      "timestampThresholdSeconds",
+      "allowTimestamp"
+     ]
+    },
+    {
+     "id": "date",
+     "any": [
+      "parseDate"
+     ]
+    },
+    {
+     "id": "clamp",
+     "any": [
+      "Math.max(0"
+     ]
+    },
+    {
+     "id": "indirect",
+     "any": [
+      "retryFromError"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_KY_RESPONSE_DATA_FLOW",
+   "request": "¿Cómo obtiene ky los datos de una respuesta en getResponseData? Explica los pasos y los límites de tiempo. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "request",
+     "any": [
+      "getResponseRequest"
+     ]
+    },
+    {
+     "id": "total_timeout",
+     "any": [
+      "TimeoutError",
+      "throwIfTotalTimeoutExhausted"
+     ]
+    },
+    {
+     "id": "read",
+     "any": [
+      "readResponseText",
+      "getErrorDataTimeout"
+     ]
+    },
+    {
+     "id": "timed_out",
+     "any": [
+      "timedOut"
+     ]
+    },
+    {
+     "id": "empty",
+     "any": [
+      "!text"
+     ]
+    },
+    {
+     "id": "not_json",
+     "any": [
+      "isJsonContentType"
+     ]
+    },
+    {
+     "id": "parse",
+     "any": [
+      "parseJson",
+      "raceWithTimeout"
+     ]
+    },
+    {
+     "id": "returns",
+     "any": [
+      "return data"
+     ]
+    }
+   ]
+  }
+ ]
+}
