@@ -31,7 +31,7 @@ def test_gate_flags_a_new_false_completion_only():
 
 def test_every_gated_corpus_has_tasks_in_the_bank():
     assert all(gate._tasks(corpus) for corpus in gate.CORPORA if corpus not in gate.GRAPH_ONLY)
-    # Corpora kept only for their graph floor have no tasks yet.
+    # Corpora kept only for their graph floor have no tasks.
     assert gate.GRAPH_ONLY <= set(gate.CORPORA) and not any(gate._tasks(corpus) for corpus in gate.GRAPH_ONLY)
 
 
