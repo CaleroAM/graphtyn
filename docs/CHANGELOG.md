@@ -62,6 +62,9 @@ compatibles con PEP 440.
     (`./x.js` incluido para `x.ts`);
   - en Rust, `impl std::error::Error for E` ya no hereda de un struct `Error` del proyecto: en
     Rust solo se hereda de traits.
+  - en Ruby, una constante sin espacio de nombres (`File.open`, `JSON.dump`) no llega a una clase
+    de otro módulo de primer nivel: desde Rails o ActiveStorage, `File` es el de Ruby y no
+    `ActiveRecord::FixtureSet::File`.
 - Huecos de extracción:
   - Rust: `impl Trait for Type` cuenta como herencia cuando el tipo está declarado en el archivo;
   - Go: un parámetro `c *Command`, o `c := &Command{}`, da tipo a la variable; un tipo implementa

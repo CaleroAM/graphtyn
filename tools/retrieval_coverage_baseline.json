@@ -31,7 +31,7 @@
       "typed_fields": 28
     },
     "rails": {
-      "extracted_calls": 19967,
+      "extracted_calls": 19882,
       "inheritance": 4971,
       "typed_fields": 0
     },

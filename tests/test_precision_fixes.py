@@ -95,3 +95,17 @@ def test_an_impact_package_lists_what_the_target_calls_and_who_reads_a_property(
     assert ["split_path", "helpers.py:3", "rpartition"] in package["target_calls"]
     assert ["handle", "app.py:3", "return request.blueprints", "blueprints"] in package["indirect_consumers"]["listed"]
     assert any(check.startswith("consumers: name each direct consumer (blueprints") for check in package["answer_checks"])
+
+
+def test_a_bare_ruby_constant_does_not_reach_a_class_under_another_top_level_module(tmp_path):
+    graph = _graph(tmp_path, {
+        "activerecord/lib/file.rb": "module ActiveRecord\n  class FixtureSet\n    class File\n      def self.open(path)\n        path\n"
+                                    "      end\n    end\n  end\nend\n",
+        "railties/lib/task.rb": "module Rails\n  class Task\n    def configure\n      File.open('x')\n    end\n  end\nend\n",
+        "activerecord/lib/loader.rb": "module ActiveRecord\n  class FixtureSet\n    class Loader\n      def load\n"
+                                      "        File.open('y')\n      end\n    end\n  end\nend\n",
+    })
+    callers = {caller for caller, _file, name in _calls(graph) if name == "open"}
+
+    assert "configure" not in callers  # Ruby's own File
+    assert "load" in callers  # ActiveRecord::FixtureSet::File, visible from inside ActiveRecord

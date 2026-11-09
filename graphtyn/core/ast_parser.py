@@ -13,7 +13,7 @@ from .tree_sitter_backend import (
 from .overview_report import collect_project_evidence
 from .graph_hygiene import normalize_graph
 from .relation_resolution import CandidateRanker, ClassAncestry, go_implementations, unique_symbol_id
-from .ruby_mro import RubyAncestry, lexical_candidates as ruby_lexical_candidates
+from .ruby_mro import RubyAncestry, lexical_candidates as ruby_lexical_candidates, qualified_name as ruby_qualified_name
 from .source_files import git_visible_files
 from .type_evidence import apply_type_evidence
 
@@ -124,11 +124,38 @@ def _enclosing_overload(candidates: List[str], line: int, node_by_id: Dict[str, 
     return min(spans)[1] if spans else None
 
 
-def _bare_reachable(call: Dict[str, Any], targets: Set[str], node_by_id: Dict[str, Dict[str, Any]]) -> Set[str]:
-    """A call without a receiver cannot reach a method of an object literal."""
-    if call.get("receiver"):
+_RUBY_OWNERS: Dict[int, Dict[tuple, str]] = {}
+
+
+def _bare_reachable(call: Dict[str, Any], targets: Set[str], node_by_id: Dict[str, Dict[str, Any]],
+                    source_id: str = "") -> Set[str]:
+    """Targets a call can reach by how it is written.
+
+    A call without a receiver cannot reach a method of an object literal. A bare Ruby constant
+    receiver cannot reach a class under another top-level module: `File.open` in Rails::API::Task
+    is Ruby's File, not ActiveRecord::FixtureSet::File. Only the top level is compared, because the
+    recorded nesting below it is not always complete.
+    """
+    receiver = str(call.get("receiver") or "")
+    if not receiver:
+        return {target for target in targets if not node_by_id.get(target, {}).get("object_member")}
+    source = node_by_id.get(source_id, {})
+    if not str(source.get("file") or "").endswith(".rb") or not re.fullmatch(r"[A-Z]\w*", receiver):
         return targets
-    return {target for target in targets if not node_by_id.get(target, {}).get("object_member")}
+    owners = _RUBY_OWNERS.get(id(node_by_id))
+    if owners is None:
+        owners = {(node.get("file"), node.get("name")): node_id for node_id, node in node_by_id.items()
+                  if node.get("kind") in ("class", "module")}
+        _RUBY_OWNERS.clear()
+        _RUBY_OWNERS[id(node_by_id)] = owners
+    top = ruby_qualified_name(source).split("::", 1)[0]
+    kept = set()
+    for target in targets:
+        owner = owners.get((node_by_id.get(target, {}).get("file"), node_by_id.get(target, {}).get("container")))
+        owner_name = ruby_qualified_name(node_by_id[owner]) if owner else ""
+        if "::" not in owner_name or owner_name.split("::", 1)[0] == top:
+            kept.add(target)
+    return kept
 
 
 def _inheritance_links(pending: List[tuple], symbol_name_ids: Dict[str, Set[str]], node_by_id: Dict[str, Dict[str, Any]],
@@ -893,7 +920,7 @@ class ASTParser:
                 # imported name with the same spelling.
                 targets = _bare_reachable(call, lexical_targets or rank_candidate.filter_imported_targets(
                     rel_file, call["name"], targets,
-                ), node_by_id)
+                ), node_by_id, source_id)
                 if not targets:
                     continue
                 is_creation = call.get("call_kind") in ("new_expression", "object_creation_expression")
