@@ -32,6 +32,15 @@ JUDGES = {
 }
 
 
+# Breaks ties between the two judges, fact by fact: the final verdict is the majority of three.
+# Calibration against a source-checked review showed the both-judges rule missing facts the answer
+# stated, and one judge crediting facts the answer never named (benchmarks/judge_calibration_2026-11-08).
+TIEBREAK = {
+    "claude": lambda prompt, cwd: ["claude", "-p", prompt, "--model", "claude-sonnet-5-5", "--tools", "",
+                                   "--strict-mcp-config", "--setting-sources", "project", "--output-format", "text"],
+}
+
+
 def _specs(root: Path) -> dict[str, dict]:
     return {task["id"]: {**task, "corpus": path.name.removesuffix("_tasks.json")} for path in root.glob("**/*_tasks.json")
             for task in json.loads(path.read_text(encoding="utf-8"))["tasks"]}
@@ -91,9 +100,10 @@ def _prompt(task: dict, answer: str, citations: list[str] | None = None) -> str:
 
 
 def _ask(judge: str, prompt: str, cwd: str) -> dict[str, bool] | None:
+    command = (JUDGES.get(judge) or TIEBREAK[judge])(prompt, cwd)
     for _attempt in range(2):
         try:
-            output = subprocess.run(JUDGES[judge](prompt, cwd), capture_output=True, text=True, timeout=240,
+            output = subprocess.run(command, capture_output=True, text=True, timeout=240,
                                     stdin=subprocess.DEVNULL, cwd=cwd).stdout
             match = re.search(r"\{[^{}]*\}", output, re.S)
             if match:
@@ -120,6 +130,8 @@ def main() -> int:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--output", default="judge_grades.json", help="file name inside the tasks root")
     parser.add_argument("--cache", default="judge_cache.json", help="file name inside the tasks root")
+    parser.add_argument("--tiebreak", action="store_true",
+                        help="ask a third judge where the two disagree; adds the `majority` verdict")
     parser.add_argument("--repos", type=Path, action="append", default=[],
                         help="directory holding the pinned corpora by name; resolves the answers' citations")
     args = parser.parse_args()
@@ -146,6 +158,14 @@ def main() -> int:
         for (run, judge), verdict in zip(jobs, pool.map(lambda job: _ask(job[1], job[0]["prompt"], cwd), jobs)):
             if verdict is not None:
                 cache[hashlib.sha256(f"{judge}\n{run['prompt']}".encode()).hexdigest()] = verdict
+    key = lambda judge, run: hashlib.sha256(f"{judge}\n{run['prompt']}".encode()).hexdigest()  # noqa: E731
+    split = [run for run in runs if args.tiebreak and all(key(judge, run) in cache for judge in JUDGES)
+             and any(bool(cache[key("gemini", run)].get(fact)) != bool(cache[key("gpt", run)].get(fact)) for fact in run["facts"])
+             and key("claude", run) not in cache]
+    with tempfile.TemporaryDirectory(prefix="graphtyn-judge-") as cwd, ThreadPoolExecutor(args.workers) as pool:
+        for run, verdict in zip(split, pool.map(lambda run: _ask("claude", run["prompt"], cwd), split)):
+            if verdict is not None:
+                cache[key("claude", run)] = verdict
     cache_path.write_text(json.dumps(cache, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     rows, pairs = [], {"judges": ([], []), "literal_consensus": ([], [])}
     for run in runs:
@@ -154,13 +174,17 @@ def main() -> int:
             continue
         judged = {judge: {fact: bool(verdict.get(fact)) for fact in run["facts"]} for judge, verdict in verdicts.items()}
         consensus = {fact: judged["gemini"][fact] and judged["gpt"][fact] for fact in run["facts"]}
+        third = cache.get(key("claude", run)) if args.tiebreak else None
+        majority = {fact: judged["gemini"][fact] if judged["gemini"][fact] == judged["gpt"][fact]
+                    else bool((third or {}).get(fact)) for fact in run["facts"]}
         for fact in run["facts"]:
             pairs["judges"][0].append(judged["gemini"][fact])
             pairs["judges"][1].append(judged["gpt"][fact])
             pairs["literal_consensus"][0].append(run["literal"][fact])
             pairs["literal_consensus"][1].append(consensus[fact])
-        rows.append({key: run[key] for key in ("variant", "arm", "task", "repetition", "tokens", "literal")}
-                    | {"gemini": judged["gemini"], "gpt": judged["gpt"], "consensus": consensus})
+        rows.append({name: run[name] for name in ("variant", "arm", "task", "repetition", "tokens", "literal")}
+                    | {"gemini": judged["gemini"], "gpt": judged["gpt"], "consensus": consensus}
+                    | ({"majority": majority, "tiebreak": third} if args.tiebreak else {}))
     summary = {}
     # One group per variant, split by arm when a variant runs several (baseline, graphtyn, graphify).
     for key in dict.fromkeys((row["variant"], row["arm"]) for row in rows):
@@ -169,7 +193,7 @@ def main() -> int:
         summary[label] = {"runs": len(group), "facts": sum(len(row["literal"]) for row in group),
                           "tokens": sum(int(row["tokens"] or 0) for row in group),
                           **{name: sum(sum(row[name].values()) for row in group)
-                             for name in ("literal", "gemini", "gpt", "consensus")}}
+                             for name in ("literal", "gemini", "gpt", "consensus", *(("majority",) if args.tiebreak else ()))}}
     agreement = {name: _kappa(*values) for name, values in pairs.items()}
     output_path.write_text(json.dumps({"summary": summary, "kappa": agreement, "runs": rows},
                                                         ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

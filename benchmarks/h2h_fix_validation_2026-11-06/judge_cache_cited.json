@@ -1,0 +1,538 @@
+{
+ "0041278f29597afda517be0c16ba17ce71f976c5fb5168dcbe8db5a183c3c7db": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": false,
+  "registration": false,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "08361f800e9983daa266ee7f6c93f3939d136661454a6950cb2cddc546655c83": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ },
+ "0f10bd6c22542dd4cc62a7b7ebf67e79f2e0c644e4dbe50d6299f509398b800e": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "162cc5bab7fcf1954c05d591d81b5fb6e5a2781c4be58820ffbb001160fff332": {
+  "argv_allocation": false,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "16ef9ccdaf7ef18985488c2a419728663879b3f77fa2e6a2f92314371903ac33": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "1cad9cbee876d270bb895c32c12adf530abf9f01b44901128e8870e64d06ece4": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ },
+ "1d55383a8a91f44e70dbad79d1b1399f159b68211447cd9fde0266e3fd96ed54": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "2451dcd1bbb44d1bb127eac9dabdde89aee5d5db131a8d602344b7b4da95aea5": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": false,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "24a8ff431fdc532181013d3975081daad5fd555d9bb8fa8d7317bb9f8e3a8c35": {
+  "after_request": true,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": true,
+  "safe_mode": false,
+  "signal": true,
+  "subclass_signature": false
+ },
+ "29190db2d7a6c9592b843f6269185953cdb249862383e4fd65545f2cd7456dfe": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "2a812f86d838d6cbb773a1865699bb50326666a3e0812fccfaddf5c8937e7878": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": false,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": false,
+  "user_exception": false
+ },
+ "31e0c6b665d7e439fa9ec057aa2b9065532f9956e596d02b1d2c774992eb9204": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "35547d7a7e59626c661dd91888bcdc8df5c07e05cbff883915ae4c36c1793594": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "3783709ff5f7cc347ca4f57b981497915bd4ab65b57779e8d2e96e5806870c36": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "426f4cb3849a1f4c582e17ba6e5d3c82e6278a13cab049af97d04d60d2a82a27": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "42a2db6281b84e01cc38ce6c0f4ff3d7344ded1720e627e06b34b4d1994b4937": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "44a727f0b94f37d6c8725dbd5a65810699a7937398eb55309b48ce7876bcb10e": {
+  "after_request": false,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": false,
+  "safe_mode": true,
+  "signal": false,
+  "subclass_signature": false
+ },
+ "45545c8b86f4c8c7fb8c7bbf39ea46095b0571de16dba488ae208a8df117929c": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ },
+ "4ca8ea3e776f333b66644ac27fc9d84738f36cdee2b083c454382f5f741f31a4": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ },
+ "607c0a636f1ccd1d6a2ee22078d85e606bfdb72271f51f9de77fbdb1f4dca2c1": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": false,
+  "user_exception": true
+ },
+ "62e2bcf6e489902bc572ccfd590468499bc8cdaecd7cbd70e1c7a4ebbb1162ed": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": false,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "654b7b9edf23885a306c1a5fc6023c5a9c412627f74ff3c3603e8d618ef8a3d5": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "69fcbe1dfd92c8c8c4cdda547640170d938c1c716184feefbd1d185a8765d497": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "6c1ddb9e1f2900b866395c14ddf799dd00dfa181b9ca66d201053e2a7dfea47a": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "7c8f5290ed650789093d723369241832a90dae66c71d22dd6b95c3101e4c43cb": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "7fb17608ad486c552c5df30bfdad6273931911fc6693aa8aefa53f684dbd2dfe": {
+  "after_request": false,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": false,
+  "safe_mode": true,
+  "signal": false,
+  "subclass_signature": false
+ },
+ "8598b7e087c71a47178bc2cc24237ffea720e3323266b44100b493476c366c35": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "882bde72b410d3511182105d1e22917ba8ca4ee8a710b575ce82daa3703e4fb3": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": false,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "891c0982ca81de1c9e2bf47b713787b795962d039e3b98813dad39be42b53b22": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "89fbe138cb73d2e56438f945d7d6e3585c49375df3ea0d60a330366d0cceb76c": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "8be464e9ff8718fec534f6bca06aad2f65078adc55bfd260783d1833c7ea4702": {
+  "after_request": true,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": true,
+  "safe_mode": false,
+  "signal": true,
+  "subclass_signature": false
+ },
+ "8f198c9311e5e0911969d6895371a8d57688dcf901b3d4192d552c52c6ea91de": {
+  "argv_allocation": false,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "920fcd87b1d04153765c9d140ced8e5432d8a00c32f9315c1b967d5404aa35fe": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": false,
+  "registration": false,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "977e4f92870c9e871deb219ed4568a92db2cf1e4e77ae2b8004bc3c10373974c": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "9d3693ccd6abe10df7ec417bc6035ebb10ba753be26b8513b5a09b5206915233": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "a0de23c01d923133a3837461fa7b7e462f85041b1fac9199f2520f3aac66fc46": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "a1fc004bd162c4146405d2d15081fbc687941cd0e6c802e61d323ad551b67fb6": {
+  "after_request": true,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": true,
+  "safe_mode": true,
+  "signal": true,
+  "subclass_signature": true
+ },
+ "a328cbdcec04583c59b9dfabe470abaeef30ffc1749a16698ff43a8d376626b1": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": false,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": false,
+  "user_exception": false
+ },
+ "a4e5c0dac2000419b85af6ce1fcace3694a7f0161cafe78701fdae0f680eb9b3": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ },
+ "c27b7631cc432208de06e22749f430070ce3fcb227769f3bffc353581db415c6": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "c589bc38ab750ca0201c00b5e355a04698147e8cbf90eff3274e6ba3670b335f": {
+  "after_request": true,
+  "error_path": true,
+  "normal_dispatch": true,
+  "response_conversion": true,
+  "safe_mode": true,
+  "signal": true,
+  "subclass_signature": true
+ },
+ "c675371c9a79171d4b3c20a8a00072cf735ebaf38161de9998b8d94e3dbe3895": {
+  "after_request": true,
+  "error_path": false,
+  "normal_dispatch": false,
+  "response_conversion": true,
+  "safe_mode": false,
+  "signal": true,
+  "subclass_signature": false
+ },
+ "c7644bca7700ed4f4ead811b10f4c6ee5718a96e8d1e64ac81987cf2536b3435": {
+  "after_request": true,
+  "error_path": false,
+  "normal_dispatch": false,
+  "response_conversion": true,
+  "safe_mode": false,
+  "signal": true,
+  "subclass_signature": false
+ },
+ "cb346bbe6269e9a7905e86710db87f5a82b62e030a013048a862a65e37b073e2": {
+  "defined_in_base": true,
+  "exception_code": true,
+  "http_exception": true,
+  "lookup_order": true,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "cbaa8cd2f16c238110957a92d21c75f81218182da4ce40a68bca6db264537d89": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "cceb82fbc1c62e4b7198955c79d2b349581f6864e742bf409cc8f66ed4b4c272": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "d287c491b163f63f419f553d82b3b847fc7ebff9d8aedd9bf24bde3c1a072a91": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "d3751d76b2c086ee49120ea4dfcadc89526331e9b07d226b2d507310414044e4": {
+  "defined_in_base": true,
+  "exception_code": false,
+  "http_exception": true,
+  "lookup_order": false,
+  "no_handler_behaviour": false,
+  "tests": false,
+  "unhandled_exception": true,
+  "user_exception": true
+ },
+ "d432ce8037f2c1c94387b23c88ab9d87263e7e994297a7a79c7ed3a791d91908": {
+  "argv_allocation": true,
+  "crlf": true,
+  "input_bytes": true,
+  "master_inline": true,
+  "objects": true,
+  "replica_ack": true,
+  "split": true,
+  "too_big": true,
+  "unbalanced_quotes": true
+ },
+ "dcf9ee438decb834a8ca0591b9b46733637feac0ce25ddea7d9a81df83d9e57d": {
+  "destroy_marked": true,
+  "insert": true,
+  "loaded_only": true,
+  "raise": true,
+  "records": true,
+  "registration": true,
+  "reset_scope": true,
+  "save_without_validation": true,
+  "validation_error": true
+ },
+ "ed75df3e447d61cb601aa3c4ff84ad213f9005147b5048b287a2a68554808c11": {
+  "context_factory": true,
+  "test_client_session": false,
+  "test_context": true,
+  "tests": false,
+  "wsgi": true
+ },
+ "f009412c194e71806874f50dbb6c2852c86f2d96ff9b63a6cef9dcce1e2d7436": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": false,
+  "skiplist_update": true,
+  "unknown_encoding": true
+ },
+ "fe992deb8f0c67e95fd390bbfffe4a8e0cb3aa925f6b6276ed001f0ec95c305b": {
+  "convert": true,
+  "gt_lt": true,
+  "incr": true,
+  "listpack_limits": true,
+  "listpack_update": true,
+  "nan_input": true,
+  "nx_nop": true,
+  "skiplist_insert": true,
+  "skiplist_update": false,
+  "unknown_encoding": true
+ }
+}

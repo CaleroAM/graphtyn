@@ -1,0 +1,1473 @@
+{
+ "summary": {
+  "codex-main": {
+   "runs": 12,
+   "facts": 96,
+   "tokens": 368792,
+   "literal": 46,
+   "gemini": 75,
+   "gpt": 77,
+   "consensus": 75,
+   "majority": 75
+  },
+  "codex-fix": {
+   "runs": 12,
+   "facts": 96,
+   "tokens": 365636,
+   "literal": 47,
+   "gemini": 81,
+   "gpt": 82,
+   "consensus": 80,
+   "majority": 81
+  }
+ },
+ "kappa": {
+  "judges": 0.912,
+  "literal_consensus": 0.346
+ },
+ "runs": [
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+   "repetition": 1,
+   "tokens": 29099,
+   "literal": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "gemini": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "gpt": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "consensus": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "majority": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+   "repetition": 2,
+   "tokens": 28727,
+   "literal": {
+    "normal_dispatch": false,
+    "error_path": false,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "gemini": {
+    "normal_dispatch": false,
+    "error_path": false,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "gpt": {
+    "normal_dispatch": false,
+    "error_path": false,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "consensus": {
+    "normal_dispatch": false,
+    "error_path": false,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "majority": {
+    "normal_dispatch": false,
+    "error_path": false,
+    "safe_mode": false,
+    "subclass_signature": false,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+   "repetition": 1,
+   "tokens": 28671,
+   "literal": {
+    "http_exception": false,
+    "user_exception": false,
+    "unhandled_exception": false,
+    "defined_in_base": true,
+    "lookup_order": false,
+    "exception_code": false,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "gemini": {
+    "http_exception": false,
+    "user_exception": false,
+    "unhandled_exception": false,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "gpt": {
+    "http_exception": false,
+    "user_exception": false,
+    "unhandled_exception": false,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "consensus": {
+    "http_exception": false,
+    "user_exception": false,
+    "unhandled_exception": false,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "majority": {
+    "http_exception": false,
+    "user_exception": false,
+    "unhandled_exception": false,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+   "repetition": 2,
+   "tokens": 28768,
+   "literal": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": false,
+    "exception_code": false,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "gemini": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "gpt": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "consensus": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "majority": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+   "repetition": 1,
+   "tokens": 27051,
+   "literal": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "gemini": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "gpt": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "consensus": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "majority": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+   "repetition": 2,
+   "tokens": 27188,
+   "literal": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "gemini": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "gpt": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "consensus": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "majority": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_RAILS_SAVE_COLLECTION_FLOW",
+   "repetition": 1,
+   "tokens": 38651,
+   "literal": {
+    "loaded_only": false,
+    "reset_scope": false,
+    "records": true,
+    "destroy_marked": false,
+    "insert": true,
+    "validation_error": false,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "gemini": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "gpt": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "consensus": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "majority": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_RAILS_SAVE_COLLECTION_FLOW",
+   "repetition": 2,
+   "tokens": 38032,
+   "literal": {
+    "loaded_only": true,
+    "reset_scope": false,
+    "records": false,
+    "destroy_marked": false,
+    "insert": true,
+    "validation_error": false,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "gemini": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "gpt": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "consensus": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "majority": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "tiebreak": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": false,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_REDIS_INLINE_FLOW",
+   "repetition": 1,
+   "tokens": 30412,
+   "literal": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": false,
+    "objects": false,
+    "input_bytes": false
+   },
+   "gemini": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "gpt": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "consensus": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "majority": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_REDIS_INLINE_FLOW",
+   "repetition": 2,
+   "tokens": 30095,
+   "literal": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": false,
+    "master_inline": true,
+    "argv_allocation": false,
+    "objects": false,
+    "input_bytes": false
+   },
+   "gemini": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": false,
+    "objects": true,
+    "input_bytes": true
+   },
+   "gpt": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": false,
+    "objects": true,
+    "input_bytes": true
+   },
+   "consensus": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": false,
+    "objects": true,
+    "input_bytes": true
+   },
+   "majority": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": false,
+    "objects": true,
+    "input_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_REDIS_ZSETADD_FLOW",
+   "repetition": 1,
+   "tokens": 31062,
+   "literal": {
+    "nan_input": true,
+    "incr": false,
+    "nx_nop": true,
+    "gt_lt": false,
+    "listpack_update": false,
+    "listpack_limits": true,
+    "convert": false,
+    "skiplist_update": false,
+    "skiplist_insert": false,
+    "unknown_encoding": true
+   },
+   "gemini": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "gpt": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": true,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "consensus": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "majority": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "tiebreak": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "V_REDIS_ZSETADD_FLOW",
+   "repetition": 2,
+   "tokens": 31036,
+   "literal": {
+    "nan_input": true,
+    "incr": false,
+    "nx_nop": true,
+    "gt_lt": false,
+    "listpack_update": false,
+    "listpack_limits": true,
+    "convert": false,
+    "skiplist_update": false,
+    "skiplist_insert": false,
+    "unknown_encoding": true
+   },
+   "gemini": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": true,
+    "skiplist_insert": false,
+    "unknown_encoding": true
+   },
+   "gpt": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": true,
+    "skiplist_insert": false,
+    "unknown_encoding": true
+   },
+   "consensus": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": true,
+    "skiplist_insert": false,
+    "unknown_encoding": true
+   },
+   "majority": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": true,
+    "skiplist_insert": false,
+    "unknown_encoding": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+   "repetition": 1,
+   "tokens": 27988,
+   "literal": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": true,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "gemini": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": true,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "gpt": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": true,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "consensus": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": true,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "majority": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": true,
+    "response_conversion": true,
+    "after_request": true,
+    "signal": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_FLASK_FINALIZE_REQUEST_IMPACT",
+   "repetition": 2,
+   "tokens": 27812,
+   "literal": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": false,
+    "response_conversion": false,
+    "after_request": false,
+    "signal": false
+   },
+   "gemini": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": false,
+    "response_conversion": false,
+    "after_request": false,
+    "signal": false
+   },
+   "gpt": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": false,
+    "response_conversion": false,
+    "after_request": false,
+    "signal": false
+   },
+   "consensus": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": false,
+    "response_conversion": false,
+    "after_request": false,
+    "signal": false
+   },
+   "majority": {
+    "normal_dispatch": true,
+    "error_path": true,
+    "safe_mode": true,
+    "subclass_signature": false,
+    "response_conversion": false,
+    "after_request": false,
+    "signal": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+   "repetition": 1,
+   "tokens": 27147,
+   "literal": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": false,
+    "exception_code": false,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "gemini": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "gpt": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "consensus": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "majority": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_FLASK_FIND_ERROR_HANDLER_IMPACT",
+   "repetition": 2,
+   "tokens": 27114,
+   "literal": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": false,
+    "exception_code": false,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "gemini": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "gpt": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": false,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "consensus": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": false,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "majority": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": true,
+    "exception_code": true,
+    "no_handler_behaviour": false,
+    "tests": false
+   },
+   "tiebreak": {
+    "http_exception": true,
+    "user_exception": true,
+    "unhandled_exception": true,
+    "defined_in_base": true,
+    "lookup_order": false,
+    "exception_code": false,
+    "no_handler_behaviour": false,
+    "tests": false
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+   "repetition": 1,
+   "tokens": 27861,
+   "literal": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "gemini": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "gpt": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "consensus": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "majority": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_FLASK_REQUEST_CONTEXT_IMPACT",
+   "repetition": 2,
+   "tokens": 27937,
+   "literal": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "gemini": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "gpt": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "consensus": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "majority": {
+    "test_context": true,
+    "wsgi": true,
+    "context_factory": true,
+    "test_client_session": false,
+    "tests": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_RAILS_SAVE_COLLECTION_FLOW",
+   "repetition": 1,
+   "tokens": 38921,
+   "literal": {
+    "loaded_only": false,
+    "reset_scope": false,
+    "records": false,
+    "destroy_marked": false,
+    "insert": true,
+    "validation_error": false,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "gemini": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "gpt": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "consensus": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "majority": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_RAILS_SAVE_COLLECTION_FLOW",
+   "repetition": 2,
+   "tokens": 37733,
+   "literal": {
+    "loaded_only": false,
+    "reset_scope": false,
+    "records": false,
+    "destroy_marked": false,
+    "insert": true,
+    "validation_error": false,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "gemini": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "gpt": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": true
+   },
+   "consensus": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "majority": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": true,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   },
+   "tiebreak": {
+    "loaded_only": true,
+    "reset_scope": true,
+    "records": false,
+    "destroy_marked": true,
+    "insert": true,
+    "validation_error": true,
+    "save_without_validation": true,
+    "raise": true,
+    "registration": false
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_REDIS_INLINE_FLOW",
+   "repetition": 1,
+   "tokens": 30490,
+   "literal": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": false,
+    "objects": false,
+    "input_bytes": false
+   },
+   "gemini": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "gpt": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "consensus": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "majority": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_REDIS_INLINE_FLOW",
+   "repetition": 2,
+   "tokens": 30271,
+   "literal": {
+    "too_big": true,
+    "crlf": false,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": false,
+    "input_bytes": false
+   },
+   "gemini": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "gpt": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "consensus": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "majority": {
+    "too_big": true,
+    "crlf": true,
+    "split": true,
+    "unbalanced_quotes": true,
+    "replica_ack": true,
+    "master_inline": true,
+    "argv_allocation": true,
+    "objects": true,
+    "input_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_REDIS_ZSETADD_FLOW",
+   "repetition": 1,
+   "tokens": 31033,
+   "literal": {
+    "nan_input": false,
+    "incr": false,
+    "nx_nop": true,
+    "gt_lt": false,
+    "listpack_update": false,
+    "listpack_limits": false,
+    "convert": false,
+    "skiplist_update": false,
+    "skiplist_insert": false,
+    "unknown_encoding": true
+   },
+   "gemini": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "gpt": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": true,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "consensus": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "majority": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "tiebreak": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "V_REDIS_ZSETADD_FLOW",
+   "repetition": 2,
+   "tokens": 31329,
+   "literal": {
+    "nan_input": true,
+    "incr": false,
+    "nx_nop": true,
+    "gt_lt": false,
+    "listpack_update": false,
+    "listpack_limits": false,
+    "convert": false,
+    "skiplist_update": false,
+    "skiplist_insert": false,
+    "unknown_encoding": true
+   },
+   "gemini": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "gpt": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "consensus": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "majority": {
+    "nan_input": true,
+    "incr": true,
+    "nx_nop": true,
+    "gt_lt": true,
+    "listpack_update": true,
+    "listpack_limits": true,
+    "convert": true,
+    "skiplist_update": false,
+    "skiplist_insert": true,
+    "unknown_encoding": true
+   },
+   "tiebreak": null
+  }
+ ]
+}

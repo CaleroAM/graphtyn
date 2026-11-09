@@ -3,7 +3,11 @@
 Fecha: 2026-11-06. 32 sesiones de Codex: 8 tareas nuevas × 2 versiones de Graphtyn × 2
 repeticiones. Unos 1,9 millones de tokens.
 
-**Veredicto: POSITIVE, moderado.**
+**Veredicto: NEUTRAL en las respuestas, POSITIVE en el grafo** (revisado el 2026-11-08).
+
+Se publicó como «POSITIVE, moderado». Recalculado con las citas resueltas, la mayoría de tres
+jueces y un intervalo por tareas, la diferencia es de +5,6 % con un IC 95 % de [−3,5 %, +16 %]: no
+se distingue del cero con ocho tareas. Ver `benchmarks/judge_calibration_2026-11-08/report.md`.
 
 - **Hechos:** la rama corregida acertó 143/152 (94 %) y `main` 136/152 (89 %).
 - **Tokens:** la media bajó de 59.084 a 53.291; la mediana subió un 2 %.

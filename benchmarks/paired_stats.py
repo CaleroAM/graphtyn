@@ -74,7 +74,7 @@ def main() -> int:
     parser.add_argument("grades", type=Path, nargs="+", help="judge_grades.json files; their runs are pooled")
     parser.add_argument("--base", required=True)
     parser.add_argument("--new", required=True)
-    parser.add_argument("--rule", default="consensus", choices=["consensus", "either", "gemini", "gpt", "literal"])
+    parser.add_argument("--rule", default="consensus", choices=["consensus", "majority", "either", "gemini", "gpt", "literal"])
     args = parser.parse_args()
     rows = [row for path in args.grades for row in json.loads(path.read_text(encoding="utf-8"))["runs"]]
     tasks = per_task(rows, args.base, args.new, args.rule)
