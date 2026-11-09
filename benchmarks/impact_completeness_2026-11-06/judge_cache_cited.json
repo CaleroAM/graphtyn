@@ -1,0 +1,491 @@
+{
+ "014ad9cc9164901e6bf1d2e96259b86f1a6eaade63e92feb6443a2f08c80a5eb": {
+  "blueprints_property": true,
+  "error_handlers": true,
+  "recursion": true,
+  "request_hooks": true,
+  "returns_parents": true,
+  "tests": false,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "07b12866dec57e8f804f7a4aab569fc844173521243c5a3c7fc633a5e3239fbf": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "09a7bbf0d327da10149aa792aa263d4df26e5fe3e9d31f5eb34cc3bfd6946aa6": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "0a96387cd045a482070867bc9da34a90439a1c7a2ddf1e57454f40351c47dae5": {
+  "create_record": true,
+  "finalize": true,
+  "forget": true,
+  "indirect": true,
+  "previous_changes": true,
+  "reset": true,
+  "tests": true,
+  "touch_row": true,
+  "update_record": true
+ },
+ "0ab2678d96e0b8450a910423b3bcb823b1f292c56dd941fdb03490f49d7dbcd5": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": false,
+  "global_disable": false,
+  "indirect": true,
+  "powershell": true,
+  "tests": true
+ },
+ "12f56728818539f5982aa9be86651b3bd515e1ad5e9d4ed3c2907550f98938d7": {
+  "already_found": true,
+  "context": true,
+  "find_byte": false,
+  "glue": true,
+  "matched": true,
+  "quit_vs_convert": true,
+  "sink_binary_data": true,
+  "tests": false
+ },
+ "14641b8b969e995d995d116c2f495498c567874302bd35d6b510cd8a8fc7c028": {
+  "create_record": true,
+  "finalize": false,
+  "forget": true,
+  "indirect": true,
+  "previous_changes": true,
+  "reset": true,
+  "tests": true,
+  "touch_row": true,
+  "update_record": true
+ },
+ "187d6a89e20f0b4d9585a1efd4ba00df0c193d6d7d34d5b0da3dace9d7d115cc": {
+  "create_record": true,
+  "finalize": false,
+  "forget": true,
+  "indirect": true,
+  "previous_changes": true,
+  "reset": true,
+  "tests": true,
+  "touch_row": true,
+  "update_record": true
+ },
+ "1f0189e47fff2184231bff7a02457904dd9278bed4c2aef369534fe0975439eb": {
+  "already_found": false,
+  "context": true,
+  "find_byte": false,
+  "glue": true,
+  "matched": true,
+  "quit_vs_convert": true,
+  "sink_binary_data": true,
+  "tests": false
+ },
+ "205dc5c86ebc177b88d51bd82635bd009b2417fca4e88c3daccbd3b5813eb4f2": {
+  "advances": true,
+  "arg_id": true,
+  "assert": false,
+  "dynamic_spec": true,
+  "error_value": true,
+  "overflow": true,
+  "printf_header": true,
+  "printf_precision": true,
+  "tests": true
+ },
+ "23adedcc723734d6141d03d46d4c13a3329172cb9ad89fc5fed6451683092c49": {
+  "blueprints_property": true,
+  "error_handlers": true,
+  "recursion": true,
+  "request_hooks": true,
+  "returns_parents": false,
+  "tests": false,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "260c3535c6933b3c3b9f3188a6b01e039d307d61e6ee75c961185eb097ad1f79": {
+  "advances": true,
+  "arg_id": true,
+  "assert": false,
+  "dynamic_spec": true,
+  "error_value": true,
+  "overflow": true,
+  "printf_header": true,
+  "printf_precision": true,
+  "tests": true
+ },
+ "323fff4954eb07b42287d94edafaf9c6b0e273924c61b54a7bc95ec33581f3c9": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "38231db82a4fa6975c245b500975241809b5e018a5f05a3be3d80889bfb6fdf4": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "4138d862d74eb713c31ca10134d3fa9abed95deebc7ed0cfdcbf293c7eaf52ca": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "447230d8bc7594ad384ca6fc8a85884f5451b79f825391de2943ab26d4a03b0d": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": true,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "4613045661116fdb16b2a6d2520afab31a1f377b5f7b6effd11cf953d6477c15": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "493d1de06cda05145ee966a7cef74f2fea5d475cb434bbe84fb52220e5c6e925": {
+  "already_found": false,
+  "context": true,
+  "find_byte": false,
+  "glue": false,
+  "matched": true,
+  "quit_vs_convert": false,
+  "sink_binary_data": true,
+  "tests": false
+ },
+ "4ebf0e236066b7e906950c9dba20155ccf9aa67d461104849a5e74dbea5aadee": {
+  "blueprints_property": true,
+  "error_handlers": true,
+  "recursion": true,
+  "request_hooks": true,
+  "returns_parents": true,
+  "tests": true,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "51fac009944f28ac2ef35abf25ef9b7de0c81188b4f62ddd68aeee95cb2ffcf6": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "57b114f5d624c7ba3d66ea842b5e4cdbf712391286fb509e935e6992df9ac210": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": true,
+  "global_disable": false,
+  "indirect": true,
+  "powershell": true,
+  "tests": true
+ },
+ "5f7990fd0c76c243f0d241f1905629e848316e0c18d4fd45d5a0d83bd5af2afb": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": false,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "60cabb04415d6fcbd1b453728cfbf29f21e92611488fcb521feb2e62c82b213d": {
+  "create_record": true,
+  "finalize": true,
+  "forget": true,
+  "indirect": true,
+  "previous_changes": true,
+  "reset": true,
+  "tests": true,
+  "touch_row": true,
+  "update_record": true
+ },
+ "6446ebb3098f35364128ad0ad6f533236616e6a0b1ff5cf384197f1f911714a6": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": true,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "6dcf3bd767ef3c62f2af90689a1fc74556c34eebae0ca92db8c17b9e9ed73f37": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": true,
+  "global_disable": false,
+  "indirect": true,
+  "powershell": true,
+  "tests": true
+ },
+ "7a95b8556ad0ade912e80732de30a76eeed1fd79caefc047367cb5ea9e4e7651": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "8bd3d3ccdf8cf41a3787dbe0d532dbb639b07de69e80d758e4933b1fb64a7c05": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": false,
+  "global_disable": false,
+  "indirect": false,
+  "powershell": true,
+  "tests": true
+ },
+ "92f2e2188fdf903ce1c4fe880695215bacf4ff673d516ce0ed09e59701670f26": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "9d7890fc37199aa2f07f39e115790ce4297cef618a6d06c7aff696756583141f": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": false,
+  "tests": true
+ },
+ "a577a65f7c597e98b3d9937e8c62a80716afe2d25362f7779fadf0b88b1a0240": {
+  "container": true,
+  "create": true,
+  "decoration": false,
+  "detection": false,
+  "exception": true,
+  "preset": false,
+  "stream": false,
+  "tests": true
+ },
+ "ae1dc08763d4e39cfb7f5e5519bf4edf6aa2db2907fcb0c796d90a03b3809b23": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": false,
+  "global_disable": false,
+  "indirect": true,
+  "powershell": true,
+  "tests": true
+ },
+ "b30ebecabe2be8e7b0b5ac293ee4fdc63870f5891baa7cded76c3c919990cb6a": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "baa8dddc2c66a4339eaa0ff67422d75d974f20fd42a23f5b5c61c0a1fa1e8333": {
+  "blueprints_property": true,
+  "error_handlers": true,
+  "recursion": true,
+  "request_hooks": true,
+  "returns_parents": true,
+  "tests": true,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "bb669e35edc936a04846382d8ab1eb356545fc139ed9edb11ea741b4ef0603b2": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": false,
+  "exception": true,
+  "preset": true,
+  "stream": false,
+  "tests": true
+ },
+ "bbed148ce2804b0fe6f38a01b206ed8cb8c284e243d212b66b2c3b3c98ea905e": {
+  "blueprints_property": true,
+  "error_handlers": true,
+  "recursion": true,
+  "request_hooks": false,
+  "returns_parents": true,
+  "tests": false,
+  "url_defaults": true,
+  "url_for": true
+ },
+ "beb09cd223acd08e250c53e9c42202b5104d38b501eca7b64dddbb567d1a47c4": {
+  "advances": true,
+  "arg_id": true,
+  "assert": false,
+  "dynamic_spec": true,
+  "error_value": true,
+  "overflow": true,
+  "printf_header": true,
+  "printf_precision": true,
+  "tests": true
+ },
+ "c29d50bf0cce5dff226d66a1d966047b9f5ac6c85c86ee81c0faf09d0e539313": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "c5874a36cb956ba44923d101975ffefdc363122ed468fadb60038b7dac35ae39": {
+  "already_found": true,
+  "context": true,
+  "find_byte": false,
+  "glue": false,
+  "matched": true,
+  "quit_vs_convert": true,
+  "sink_binary_data": true,
+  "tests": true
+ },
+ "ccd9fb019d8c075dfff5765bea90a016876d16f3ea1e960e2bb31e925017fc84": {
+  "already_found": false,
+  "context": true,
+  "find_byte": false,
+  "glue": true,
+  "matched": true,
+  "quit_vs_convert": true,
+  "sink_binary_data": true,
+  "tests": false
+ },
+ "d914b0a4a579e7bc5c72fa00eb8c2ec30578a11ac7365189595b76287f7f4d29": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "e69fd4cf24347c4ea3f38b6b82a2b3a44393d27846c160d833db448cd73346b1": {
+  "advances": true,
+  "arg_id": true,
+  "assert": false,
+  "dynamic_spec": true,
+  "error_value": true,
+  "overflow": true,
+  "printf_header": true,
+  "printf_precision": true,
+  "tests": true
+ },
+ "ecf3a2db59ea556346e06cec5666db3d483bcf22d4c75d90c322c08aec978588": {
+  "already_found": false,
+  "context": true,
+  "find_byte": false,
+  "glue": false,
+  "matched": true,
+  "quit_vs_convert": true,
+  "sink_binary_data": true,
+  "tests": false
+ },
+ "eeffe5dcb19089c8ed1c4e9158be9b43ccf95a77e4645dd7731e96ba30122bc2": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": true,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "f35b9933388b684683066a5b1f2a80426b36c827ac554e0a2f1cf665fbc66a00": {
+  "appends": true,
+  "call_command": true,
+  "commands": true,
+  "forced": false,
+  "modules": true,
+  "refcount": true,
+  "target_filter": true,
+  "tests": true,
+  "wrapper": true
+ },
+ "f50fdbc6c2ac1b6dd9fb39b314ee0ebdfc85cca89ac206cc51d3eaacd6b8cc25": {
+  "gson_tojson": true,
+  "jsonelement": true,
+  "jsonwriter": true,
+  "returns_writer": true,
+  "string_builder": true,
+  "tests": true,
+  "typeadapter": true,
+  "wraps": true
+ },
+ "f75341f3b990973ecff07c868c69bfc103e910134e340195c076439b79db5f8b": {
+  "container": true,
+  "create": true,
+  "decoration": true,
+  "detection": true,
+  "exception": true,
+  "preset": true,
+  "stream": true,
+  "tests": true
+ },
+ "f908366f8df5fe5ba45460d327eb4e35e7cedb0a7cb3a51b802b2b4b30488a9f": {
+  "bash": true,
+  "config": true,
+  "delegates": true,
+  "fish": true,
+  "format": false,
+  "global_disable": false,
+  "indirect": false,
+  "powershell": true,
+  "tests": true
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "tasks": [
+  {
+   "id": "C_FMT_PARSE_NONNEGATIVE_INT_IMPACT",
+   "request": "What breaks if I change parse_nonnegative_int in fmt? List the direct consumers, what each one does with the result, who calls them and which tests cover it. Cite file:line.",
+   "rubric": [
+    {
+     "id": "arg_id",
+     "any": [
+      "parse_arg_id"
+     ]
+    },
+    {
+     "id": "dynamic_spec",
+     "any": [
+      "parse_dynamic_spec"
+     ]
+    },
+    {
+     "id": "printf_header",
+     "any": [
+      "parse_header"
+     ]
+    },
+    {
+     "id": "printf_precision",
+     "any": [
+      "vprintf"
+     ]
+    },
+    {
+     "id": "error_value",
+     "any": [
+      "error_value",
+      "INT_MAX"
+     ]
+    },
+    {
+     "id": "overflow",
+     "any": [
+      "overflow",
+      "digits10"
+     ]
+    },
+    {
+     "id": "advances",
+     "any": [
+      "begin = p"
+     ]
+    },
+    {
+     "id": "assert",
+     "any": [
+      "FMT_ASSERT"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "format-test",
+      "core-test",
+      "printf-test"
+     ]
+    }
+   ]
+  }
+ ]
+}

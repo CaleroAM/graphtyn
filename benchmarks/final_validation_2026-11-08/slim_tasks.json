@@ -1,0 +1,118 @@
+{
+ "tasks": [
+  {
+   "id": "X_SLIM_REGISTER_BODY_PARSER_IMPACT",
+   "request": "Si cambio registerBodyParser en BodyParsingMiddleware de Slim, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "constructor",
+     "any": [
+      "__construct"
+     ]
+    },
+    {
+     "id": "defaults",
+     "any": [
+      "registerDefaultBodyParsers"
+     ]
+    },
+    {
+     "id": "json",
+     "any": [
+      "application/json"
+     ]
+    },
+    {
+     "id": "form",
+     "any": [
+      "application/x-www-form-urlencoded"
+     ]
+    },
+    {
+     "id": "xml",
+     "any": [
+      "application/xml",
+      "text/xml"
+     ]
+    },
+    {
+     "id": "storage",
+     "any": [
+      "bodyParsers"
+     ]
+    },
+    {
+     "id": "parse",
+     "any": [
+      "parseBody",
+      "getBodyParser"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "BodyParsingMiddlewareTest"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_SLIM_RESOLVE_BY_PREDICATE_FLOW",
+   "request": "¿Cómo resuelve Slim un callable en CallableResolver::resolveByPredicate? Explica los pasos y los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "prepare",
+     "any": [
+      "prepareToResolve"
+     ]
+    },
+    {
+     "id": "already_callable",
+     "any": [
+      "is_callable"
+     ]
+    },
+    {
+     "id": "default_method",
+     "any": [
+      "defaultMethod"
+     ]
+    },
+    {
+     "id": "notation",
+     "any": [
+      "resolveSlimNotation"
+     ]
+    },
+    {
+     "id": "invoke",
+     "any": [
+      "__invoke"
+     ]
+    },
+    {
+     "id": "assert",
+     "any": [
+      "assertCallable",
+      "RuntimeException"
+     ]
+    },
+    {
+     "id": "bind",
+     "any": [
+      "bindToContainer"
+     ]
+    },
+    {
+     "id": "predicates",
+     "any": [
+      "isRoute",
+      "isMiddleware",
+      "resolveRoute",
+      "resolveMiddleware"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,105 @@
+{
+ "tasks": [
+  {
+   "id": "X_RAILS_REJECT_NEW_RECORD_IMPACT",
+   "request": "Si cambio reject_new_record? en Rails, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "one_to_one",
+     "any": [
+      "assign_nested_attributes_for_one_to_one_association"
+     ]
+    },
+    {
+     "id": "collection",
+     "any": [
+      "assign_nested_attributes_for_collection_association"
+     ]
+    },
+    {
+     "id": "destroy",
+     "any": [
+      "will_be_destroyed?",
+      "has_destroy_flag?"
+     ]
+    },
+    {
+     "id": "reject_if",
+     "any": [
+      "call_reject_if",
+      "reject_if"
+     ]
+    },
+    {
+     "id": "setter",
+     "any": [
+      "accepts_nested_attributes_for",
+      "_attributes="
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "nested_attributes_test"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_RAILS_VALID_AUTHENTICITY_TOKEN_FLOW",
+   "request": "¿Cómo valida Rails un token CSRF en valid_authenticity_token?? Explica los pasos y los casos de rechazo. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "not_string",
+     "any": [
+      "is_a?(String)",
+      "empty?"
+     ]
+    },
+    {
+     "id": "decode",
+     "any": [
+      "decode_csrf_token",
+      "ArgumentError"
+     ]
+    },
+    {
+     "id": "raw",
+     "any": [
+      "compare_with_real_token"
+     ]
+    },
+    {
+     "id": "masked",
+     "any": [
+      "unmask_token"
+     ]
+    },
+    {
+     "id": "global",
+     "any": [
+      "compare_with_global_token"
+     ]
+    },
+    {
+     "id": "per_form",
+     "any": [
+      "valid_per_form_csrf_token?"
+     ]
+    },
+    {
+     "id": "malformed",
+     "any": [
+      "malformed"
+     ]
+    },
+    {
+     "id": "caller",
+     "any": [
+      "any_authenticity_token_valid?"
+     ]
+    }
+   ]
+  }
+ ]
+}

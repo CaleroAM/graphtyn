@@ -716,7 +716,18 @@ _QUERY_EXPANSIONS = {
 }
 
 
+# "Cite file:line" asks for a citation format; `line` is not a symbol of the request.
+_CITATION_FORMAT = re.compile(r"\b(?:files?|archivos?|ficheros?|fichiers?|arquivos?|dateien?|datei)\s*:\s*"
+                              r"(?:lines?|l[ií]neas?|lignes?|linhas?|zeilen?)\b", re.IGNORECASE)
+
+
+# "List the direct consumers" is an instruction; `list` is not a symbol of the request there.
+_INSTRUCTION = re.compile(r"\b(?:list|name|show|enumerate|describe|explain|trace|cite)\s+(?=(?:the|all|every|each|its|their)\b)",
+                          re.IGNORECASE)
+
+
 def _terms(request: str) -> list[str]:
+    request = _INSTRUCTION.sub(" ", _CITATION_FORMAT.sub(" ", str(request or "")))
     return list(dict.fromkeys(
         normalized for token in re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w.]+", without_project_scope(request))
         if len(normalized := token.lower().strip(".")) >= 3 and normalized not in _STOP
@@ -904,7 +915,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     symbol_terms = [term for term in direct_terms if term not in generic_symbol_terms and term not in package_words]
     if selected_intent == "impact":
         # "ensure_sync en Flask" asks for ensure_sync's consumers; in a flow, the project's own class anchors it.
-        scoped = _scope_words(graph.get("nodes", []), request)
+        scoped = _scope_words(graph.get("nodes", []), request, symbol_terms)
         symbol_terms = [term for term in symbol_terms if term not in scoped] or symbol_terms
     explicit_identifiers = {
         identifier.lower()
@@ -1213,7 +1224,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
             continue
         candidates = [
             item for item in ranked
-            if str(item[1].get("name") or "").lower() == explicit_name
+            if str(item[1].get("name") or "").lower() == explicit_name and item[1].get("kind") not in anchor_excluded_kinds
             and not re.search(r"(?:^|/)(?:tests?|fixtures?)(?:/|$|[_.])",
                               str(item[1].get("file") or ""), re.I)
         ]
@@ -1483,7 +1494,7 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
     exact_matched = sorted(
         (node for node in nodes
          if str(node.get("name") or "").lower() in symbol_terms
-         and node.get("kind") not in {"file", "module", "documentation_section", "doc", "image", "media"}),
+         and node.get("kind") not in anchor_excluded_kinds),  # a field named like a request word is data
         key=lambda node: (not qualified_match(node), not _in_named_scope(node, qualified_package_roots),
                           -int(node.get("degree") or 0), str(node.get("id") or "")),
     )

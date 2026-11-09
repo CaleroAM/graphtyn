@@ -18,7 +18,7 @@ CLASSES = {"Base", "Child"}
 # name: (extension, base file, child file, expected symbols, expected calls, expected bases)
 FIXTURES = {
     "python": ("py", "class Base:\n    def helper(self):\n        return 1\n",
-               "from base import Base\n\nclass Child(Base):\n    def own(self):\n        return 2\n\n"
+               "from base import Base\n\nclass Child(Base):\n    base: Base = Base()\n\n    def own(self):\n        return 2\n\n"
                "    def run(self):\n        self.own()\n        return self.helper()\n",
                CLASSES | {"helper", "own", "run"}, {("run", "own"), ("run", "helper")}, {("Child", "Base")}),
     "javascript": ("js", "export class Base {\n  helper() { return 1; }\n}\n",
@@ -64,13 +64,16 @@ FIXTURES = {
     # Rust inherits through supertraits; `impl Trait for Type` is not modelled.
     "rust": ("rs", "pub trait Base {}\n\npub fn helper() -> i32 { 1 }\n",
              "use crate::base::helper;\n\npub trait Shape: Base {}\n\npub struct Child { base: Shape }\n\nimpl Child {\n"
-             "    fn own(&self) -> i32 { 2 }\n    fn run(&self) -> i32 { self.own(); helper() }\n}\n",
-             {"Base", "Child", "Shape", "helper", "own", "run"}, {("run", "own"), ("run", "helper")}, {("Shape", "Base")}),
+             "    fn own(&self) -> i32 { 2 }\n    fn run(&self) -> i32 { self.own(); helper() }\n}\n\nimpl Base for Child {}\n",
+             {"Base", "Child", "Shape", "helper", "own", "run"}, {("run", "own"), ("run", "helper")},
+             {("Shape", "Base"), ("Child", "Base")}),
     # Go promotes the methods of an embedded type: Child embeds Base.
-    "go": ("go", "package app\n\ntype Base struct{}\n\nfunc (b *Base) Helper() int { return 1 }\n",
+    "go": ("go", "package app\n\ntype Helping interface {\n\tHelper() int\n}\n\ntype Base struct{}\n\n"
+           "func (b *Base) Helper() int { return 1 }\n",
            "package app\n\nimport \"fmt\"\n\ntype Child struct {\n\tBase\n\tname string\n}\n\n"
            "func (c *Child) Own() int { return 2 }\n\nfunc (c *Child) Run() int { fmt.Println(c.Own()); return c.Helper() }\n",
-           CLASSES | {"Helper", "Own", "Run"}, {("Run", "Own"), ("Run", "Helper")}, {("Child", "Base")}),
+           CLASSES | {"Helper", "Own", "Run"}, {("Run", "Own"), ("Run", "Helper")},
+           {("Child", "Base"), ("Base", "Helping")}),
     "c": ("c", "int helper(void) { return 1; }\n",
           "#include \"base.h\"\n\nstruct child { struct base *base; };\n\nstatic int own(void) { return 2; }\n\n"
           "int run(void) { own(); return helper(); }\n",

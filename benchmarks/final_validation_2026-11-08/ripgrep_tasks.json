@@ -1,0 +1,107 @@
+{
+ "tasks": [
+  {
+   "id": "X_RIPGREP_PRINT_STATS_IMPACT",
+   "request": "What breaks if I change print_stats in ripgrep? List the direct consumers with file:line evidence.",
+   "rubric": [
+    {
+     "id": "search",
+     "any": [
+      "search("
+     ]
+    },
+    {
+     "id": "parallel",
+     "any": [
+      "search_parallel"
+     ]
+    },
+    {
+     "id": "json",
+     "any": [
+      "SearchMode::JSON",
+      "summary"
+     ]
+    },
+    {
+     "id": "elapsed",
+     "any": [
+      "elapsed_total",
+      "duration_since"
+     ]
+    },
+    {
+     "id": "text",
+     "any": [
+      "matched lines",
+      "files contained matches"
+     ]
+    },
+    {
+     "id": "stats_flag",
+     "any": [
+      "--stats",
+      "Some(ref stats)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_RIPGREP_ONLY_MATCHING_MULTILINE_FLOW",
+   "request": "¿Cómo imprime ripgrep solo las coincidencias en modo multilínea en sink_slow_multi_line_only_matching? Explica los pasos. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "lines",
+     "any": [
+      "LineStep"
+     ]
+    },
+    {
+     "id": "trim",
+     "any": [
+      "trim_line_terminator",
+      "trim_ascii_prefix"
+     ]
+    },
+    {
+     "id": "matches",
+     "any": [
+      "midx"
+     ]
+    },
+    {
+     "id": "prelude",
+     "any": [
+      "write_prelude"
+     ]
+    },
+    {
+     "id": "max_columns",
+     "any": [
+      "exceeds_max_columns",
+      "write_exceeded_line"
+     ]
+    },
+    {
+     "id": "color",
+     "any": [
+      "write_spec",
+      "colors.matched"
+     ]
+    },
+    {
+     "id": "terminator",
+     "any": [
+      "write_line_term"
+     ]
+    },
+    {
+     "id": "count",
+     "any": [
+      "line_number"
+     ]
+    }
+   ]
+  }
+ ]
+}

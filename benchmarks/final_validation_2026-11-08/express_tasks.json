@@ -1,0 +1,118 @@
+{
+ "tasks": [
+  {
+   "id": "X_EXPRESS_COMPILE_ETAG_IMPACT",
+   "request": "Si cambio compileETag en express, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "set",
+     "any": [
+      "app.set",
+      "etag fn"
+     ]
+    },
+    {
+     "id": "send",
+     "any": [
+      "res.send",
+      "response.js:162"
+     ]
+    },
+    {
+     "id": "default",
+     "any": [
+      "defaultConfiguration",
+      "'weak'"
+     ]
+    },
+    {
+     "id": "passthrough",
+     "any": [
+      "typeof val === 'function'"
+     ]
+    },
+    {
+     "id": "weak",
+     "any": [
+      "wetag"
+     ]
+    },
+    {
+     "id": "strong",
+     "any": [
+      "'strong'"
+     ]
+    },
+    {
+     "id": "unknown",
+     "any": [
+      "TypeError",
+      "unknown value"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_EXPRESS_SEND_FILE_FLOW",
+   "request": "How does express send a file in res.sendFile? Explain the steps and the errors. Cite file:line.",
+   "rubric": [
+    {
+     "id": "required",
+     "any": [
+      "path argument is required"
+     ]
+    },
+    {
+     "id": "string",
+     "any": [
+      "path must be a string"
+     ]
+    },
+    {
+     "id": "callback",
+     "any": [
+      "typeof options === 'function'"
+     ]
+    },
+    {
+     "id": "absolute",
+     "any": [
+      "pathIsAbsolute",
+      "specify root"
+     ]
+    },
+    {
+     "id": "encode",
+     "any": [
+      "encodeURI"
+     ]
+    },
+    {
+     "id": "etag",
+     "any": [
+      "enabled('etag')"
+     ]
+    },
+    {
+     "id": "send",
+     "any": [
+      "send(req"
+     ]
+    },
+    {
+     "id": "sendfile",
+     "any": [
+      "sendfile(res"
+     ]
+    },
+    {
+     "id": "errors",
+     "any": [
+      "EISDIR",
+      "ECONNABORTED"
+     ]
+    }
+   ]
+  }
+ ]
+}

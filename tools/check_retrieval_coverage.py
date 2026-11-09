@@ -38,15 +38,16 @@ CORPORA = {
     "slim": ("https://github.com/slimphp/Slim", "3675bf6baac66b07032575b7bef4200b60b7974b"),
     "cobra": ("https://github.com/spf13/cobra", "adbc8813901bba65827259daa8e22ff94ec1f30e"),
     "ripgrep": ("https://github.com/BurntSushi/ripgrep", "91f5d22ef48bde459d90a8c7dbeab416e97d0f2b"),
-    # JavaScript and TypeScript have no tasks yet; their graphs still keep a floor.
     "express": ("https://github.com/expressjs/express", "43fca52d28a422c8be48fd489cbd4f2d6152bab6"),
     "ky": ("https://github.com/sindresorhus/ky", "3541888878c4d303a8bc2ad61815f4e048f55a5d"),
 }
-GRAPH_ONLY = frozenset({"express", "ky"})
+# Corpora kept only for their graph floor, without tasks (none since the final validation).
+GRAPH_ONLY: frozenset[str] = frozenset()
 # Validation folders whose runs are finished: their tasks are no longer held out.
 SPENT = ("intent_impact_2026-11-04", *(f"intent_impact_2026-11-04/set{number}" for number in range(2, 7)),
          "graphify_head_to_head_2026-11-06", "h2h_fix_validation_2026-11-06", "inherited_self_calls_2026-11-06",
-         "language_conformance_2026-11-06", "workspace_scope_2026-11-06")
+         "language_conformance_2026-11-06", "workspace_scope_2026-11-06", "impact_completeness_2026-11-06",
+         "final_validation_2026-11-08")
 GRAPH_TOLERANCE = 0.10
 MEAN_TOLERANCE = 0.01
 TASK_TOLERANCE = 1

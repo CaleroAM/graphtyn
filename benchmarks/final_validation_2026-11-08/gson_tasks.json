@@ -1,0 +1,101 @@
+{
+ "tasks": [
+  {
+   "id": "X_GSON_GET_INDENT_IMPACT",
+   "request": "What breaks if I change getIndent in FormattingStyle? List the direct consumers with file:line evidence.",
+   "rubric": [
+    {
+     "id": "set_style",
+     "any": [
+      "setFormattingStyle"
+     ]
+    },
+    {
+     "id": "newline",
+     "any": [
+      "newline()",
+      "JsonWriter.java:782"
+     ]
+    },
+    {
+     "id": "per_level",
+     "any": [
+      "stackSize"
+     ]
+    },
+    {
+     "id": "with_indent",
+     "any": [
+      "withIndent"
+     ]
+    },
+    {
+     "id": "pretty",
+     "any": [
+      "setPrettyPrinting"
+     ]
+    },
+    {
+     "id": "returns",
+     "any": [
+      "this.indent"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_GSON_CLASS_ADAPTER_FACTORY_FLOW",
+   "request": "¿Cómo decide Gson en isClassJsonAdapterFactory si una fábrica es la de @JsonAdapter de una clase? Explica los pasos. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "null_checks",
+     "any": [
+      "requireNonNull"
+     ]
+    },
+    {
+     "id": "tree_dummy",
+     "any": [
+      "TREE_TYPE_CLASS_DUMMY_FACTORY"
+     ]
+    },
+    {
+     "id": "cache",
+     "any": [
+      "adapterFactoryMap"
+     ]
+    },
+    {
+     "id": "annotation",
+     "any": [
+      "getAnnotation"
+     ]
+    },
+    {
+     "id": "not_factory",
+     "any": [
+      "isAssignableFrom"
+     ]
+    },
+    {
+     "id": "create",
+     "any": [
+      "createAdapter"
+     ]
+    },
+    {
+     "id": "put",
+     "any": [
+      "putFactoryAndGetCurrent"
+     ]
+    },
+    {
+     "id": "compare",
+     "any": [
+      "areSameFactories"
+     ]
+    }
+   ]
+  }
+ ]
+}

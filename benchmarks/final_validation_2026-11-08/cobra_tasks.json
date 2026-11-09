@@ -1,0 +1,116 @@
+{
+ "tasks": [
+  {
+   "id": "X_COBRA_TRIM_RIGHT_SPACE_IMPACT",
+   "request": "Si cambio trimRightSpace en cobra, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "usage",
+     "any": [
+      "defaultUsageFunc"
+     ]
+    },
+    {
+     "id": "help",
+     "any": [
+      "defaultHelpFunc"
+     ]
+    },
+    {
+     "id": "template",
+     "any": [
+      "trimTrailingWhitespaces",
+      "templateFuncs"
+     ]
+    },
+    {
+     "id": "flags",
+     "any": [
+      "FlagUsages"
+     ]
+    },
+    {
+     "id": "effect",
+     "any": [
+      "TrimRightFunc",
+      "IsSpace"
+     ]
+    },
+    {
+     "id": "indirect",
+     "any": [
+      "UsageFunc",
+      "HelpFunc"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_COBRA_GEN_MAN_FLOW",
+   "request": "¿Cómo genera cobra la página de manual en genMan? Explica las secciones y las condiciones. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "init_help",
+     "any": [
+      "InitDefaultHelpCmd",
+      "InitDefaultHelpFlag"
+     ]
+    },
+    {
+     "id": "name",
+     "any": [
+      "CommandPath",
+      "dashCommandName"
+     ]
+    },
+    {
+     "id": "preamble",
+     "any": [
+      "manPreamble"
+     ]
+    },
+    {
+     "id": "options",
+     "any": [
+      "manPrintOptions"
+     ]
+    },
+    {
+     "id": "example",
+     "any": [
+      "EXAMPLE"
+     ]
+    },
+    {
+     "id": "see_also",
+     "any": [
+      "SEE ALSO",
+      "hasSeeAlso"
+     ]
+    },
+    {
+     "id": "parent",
+     "any": [
+      "VisitParents",
+      "DisableAutoGenTag"
+     ]
+    },
+    {
+     "id": "children",
+     "any": [
+      "IsAvailableCommand",
+      "IsAdditionalHelpTopicCommand",
+      "byName"
+     ]
+    },
+    {
+     "id": "history",
+     "any": [
+      "HISTORY",
+      "Auto generated"
+     ]
+    }
+   ]
+  }
+ ]
+}

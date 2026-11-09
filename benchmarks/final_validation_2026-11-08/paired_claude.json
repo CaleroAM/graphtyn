@@ -1,0 +1,61 @@
+{
+ "rule": "majority",
+ "tasks": 6,
+ "pairs": 6,
+ "fact_share_difference": 0.0,
+ "fact_share_difference_95ci": [
+  0.0,
+  0.0
+ ],
+ "token_ratio": 0.874,
+ "token_ratio_95ci": [
+  0.747,
+  1.017
+ ],
+ "tasks_better": 0,
+ "tasks_worse": 0,
+ "per_task": [
+  {
+   "task": "X_COBRA_TRIM_RIGHT_SPACE_IMPACT",
+   "pairs": 1,
+   "base_share": 0.8333333333333334,
+   "new_share": 0.8333333333333334,
+   "log_token_ratio": -0.4065358941849355
+  },
+  {
+   "task": "X_FLASK_FULL_DISPATCH_FLOW",
+   "pairs": 1,
+   "base_share": 1.0,
+   "new_share": 1.0,
+   "log_token_ratio": -0.004261759248414761
+  },
+  {
+   "task": "X_GSON_CLASS_ADAPTER_FACTORY_FLOW",
+   "pairs": 1,
+   "base_share": 1.0,
+   "new_share": 1.0,
+   "log_token_ratio": 0.001648186144861165
+  },
+  {
+   "task": "X_KY_RESPONSE_DATA_FLOW",
+   "pairs": 1,
+   "base_share": 1.0,
+   "new_share": 1.0,
+   "log_token_ratio": -0.012283911486957337
+  },
+  {
+   "task": "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT",
+   "pairs": 1,
+   "base_share": 0.8571428571428571,
+   "new_share": 0.8571428571428571,
+   "log_token_ratio": 0.05784765172702194
+  },
+  {
+   "task": "X_SLIM_REGISTER_BODY_PARSER_IMPACT",
+   "pairs": 1,
+   "base_share": 0.875,
+   "new_share": 0.875,
+   "log_token_ratio": -0.4457391600831458
+  }
+ ]
+}

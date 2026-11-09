@@ -256,7 +256,8 @@ def test_a_use_the_index_missed_is_reported_instead_of_a_zero(tmp_path):
 
     consumers = result["direct_consumers"]
     assert consumers["indexed"] == 0 and consumers["total"] == 1
-    assert consumers["text_references"] == [["helper", "use.h:2"]]
+    # Each use carries the code at that line.
+    assert consumers["text_references"] == [["helper", "use.h:2", "return render<char>(1);"]]
     assert result["negative_evidence"] == {}
     assert "unverified" in result["guidance"]
 
@@ -1032,7 +1033,7 @@ def test_textual_uses_in_the_symbols_own_component_are_listed_first(tmp_path):
     result = attach_source_evidence(root, query_intent(data, "¿Quién llama a render?", "auto", 10), "¿Quién llama a render?",
                                     graph=data)
 
-    listed = [at for _name, at in result["direct_consumers"]["text_references"]]
+    listed = [row[1] for row in result["direct_consumers"]["text_references"]]
     assert listed.index(f"{home}/use.h:2") < listed.index("aaa_other/use.h:2")
 
 

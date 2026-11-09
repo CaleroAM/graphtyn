@@ -1,0 +1,63 @@
+{
+ "tasks": [
+  {
+   "id": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+   "request": "What breaks if I change determineResponseFactory in Slim? List the direct consumers, what each one does with the result, who calls them and which tests cover it. Cite file:line.",
+   "rubric": [
+    {
+     "id": "create",
+     "any": [
+      "AppFactory::create",
+      "create("
+     ]
+    },
+    {
+     "id": "container",
+     "any": [
+      "createFromContainer"
+     ]
+    },
+    {
+     "id": "preset",
+     "any": [
+      "static::$responseFactory",
+      "responseFactory"
+     ]
+    },
+    {
+     "id": "decoration",
+     "any": [
+      "attemptResponseFactoryDecoration"
+     ]
+    },
+    {
+     "id": "detection",
+     "any": [
+      "Psr17FactoryProvider",
+      "isResponseFactoryAvailable"
+     ]
+    },
+    {
+     "id": "stream",
+     "any": [
+      "streamFactory",
+      "isStreamFactoryAvailable"
+     ]
+    },
+    {
+     "id": "exception",
+     "any": [
+      "RuntimeException",
+      "Could not detect"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "AppFactoryTest"
+     ]
+    }
+   ]
+  }
+ ]
+}

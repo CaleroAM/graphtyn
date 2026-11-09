@@ -1,0 +1,70 @@
+{
+ "tasks": [
+  {
+   "id": "C_COBRA_ACTIVE_HELP_ENV_VAR_IMPACT",
+   "request": "Si cambio activeHelpEnvVar en cobra, ¿qué se rompe? Enumera los consumidores directos, qué hace cada uno con el resultado, quién los llama y qué pruebas lo cubren. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "config",
+     "any": [
+      "GetActiveHelpConfig"
+     ]
+    },
+    {
+     "id": "bash",
+     "any": [
+      "writePreamble"
+     ]
+    },
+    {
+     "id": "fish",
+     "any": [
+      "genFishComp"
+     ]
+    },
+    {
+     "id": "powershell",
+     "any": [
+      "genPowerShellComp"
+     ]
+    },
+    {
+     "id": "delegates",
+     "any": [
+      "configEnvVar"
+     ]
+    },
+    {
+     "id": "format",
+     "any": [
+      "ACTIVE_HELP",
+      "activeHelpEnvVarSuffix"
+     ]
+    },
+    {
+     "id": "global_disable",
+     "any": [
+      "COBRA_ACTIVE_HELP",
+      "activeHelpGlobalEnvVar"
+     ]
+    },
+    {
+     "id": "indirect",
+     "any": [
+      "initCompleteCmd",
+      "GenBashCompletion",
+      "GenFishCompletion",
+      "genPowerShellCompletion"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "active_help_test.go",
+      "completions_test.go"
+     ]
+    }
+   ]
+  }
+ ]
+}

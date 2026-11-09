@@ -1,0 +1,120 @@
+{
+ "tasks": [
+  {
+   "id": "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT",
+   "request": "Si cambio closeListeningSockets en Redis, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "init",
+     "any": [
+      "initListeners"
+     ]
+    },
+    {
+     "id": "shutdown",
+     "any": [
+      "finishShutdown"
+     ]
+    },
+    {
+     "id": "fork",
+     "any": [
+      "closeChildUnusedResourceAfterFork"
+     ]
+    },
+    {
+     "id": "listeners",
+     "any": [
+      "server.listeners",
+      "CONN_TYPE_MAX"
+     ]
+    },
+    {
+     "id": "cluster",
+     "any": [
+      "clistener"
+     ]
+    },
+    {
+     "id": "unix",
+     "any": [
+      "unlink",
+      "unixsocket"
+     ]
+    },
+    {
+     "id": "flag",
+     "any": [
+      "unlink_unix_socket"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "X_REDIS_MEMORY_DOCTOR_FLOW",
+   "request": "¿Cómo genera Redis el informe de MEMORY DOCTOR en getMemoryDoctorReport? Explica las comprobaciones y los umbrales. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "empty",
+     "any": [
+      "empty",
+      "5MB",
+      "1024*1024*5"
+     ]
+    },
+    {
+     "id": "peak",
+     "any": [
+      "big_peak",
+      "1.5"
+     ]
+    },
+    {
+     "id": "frag",
+     "any": [
+      "high_frag",
+      "total_frag"
+     ]
+    },
+    {
+     "id": "alloc_frag",
+     "any": [
+      "high_alloc_frag",
+      "allocator_frag"
+     ]
+    },
+    {
+     "id": "rss",
+     "any": [
+      "high_proc_rss",
+      "rss_extra"
+     ]
+    },
+    {
+     "id": "client_buf",
+     "any": [
+      "big_client_buf"
+     ]
+    },
+    {
+     "id": "slave_buf",
+     "any": [
+      "big_slave_buf"
+     ]
+    },
+    {
+     "id": "scripts",
+     "any": [
+      "many_scripts"
+     ]
+    },
+    {
+     "id": "count",
+     "any": [
+      "num_reports"
+     ]
+    }
+   ]
+  }
+ ]
+}

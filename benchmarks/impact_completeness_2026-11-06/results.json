@@ -1,0 +1,127 @@
+{
+ "versions": {
+  "main": {
+   "sessions": 10,
+   "complete": 10,
+   "facts": 73,
+   "facts_total": 84,
+   "mean_tokens": 115903,
+   "median_tokens": 137673,
+   "mean_tools": 5.0
+  },
+  "fix": {
+   "sessions": 10,
+   "complete": 10,
+   "facts": 71,
+   "facts_total": 84,
+   "mean_tokens": 89544,
+   "median_tokens": 69230,
+   "mean_tools": 3.7
+  }
+ },
+ "tasks": {
+  "C_COBRA_ACTIVE_HELP_ENV_VAR_IMPACT": {
+   "main": {
+    "facts": 6,
+    "facts_total": 9,
+    "mean_tokens": 29510
+   },
+   "fix": {
+    "facts": 7,
+    "facts_total": 9,
+    "mean_tokens": 30327
+   }
+  },
+  "C_FLASK_SPLIT_BLUEPRINT_PATH_IMPACT": {
+   "main": {
+    "facts": 8,
+    "facts_total": 8,
+    "mean_tokens": 180564
+   },
+   "fix": {
+    "facts": 4,
+    "facts_total": 8,
+    "mean_tokens": 43231
+   }
+  },
+  "C_FMT_PARSE_NONNEGATIVE_INT_IMPACT": {
+   "main": {
+    "facts": 8,
+    "facts_total": 9,
+    "mean_tokens": 30649
+   },
+   "fix": {
+    "facts": 8,
+    "facts_total": 9,
+    "mean_tokens": 116762
+   }
+  },
+  "C_GSON_WRITER_FOR_APPENDABLE_IMPACT": {
+   "main": {
+    "facts": 16,
+    "facts_total": 16,
+    "mean_tokens": 210598
+   },
+   "fix": {
+    "facts": 16,
+    "facts_total": 16,
+    "mean_tokens": 63178
+   }
+  },
+  "C_RAILS_CHANGES_APPLIED_IMPACT": {
+   "main": {
+    "facts": 8,
+    "facts_total": 9,
+    "mean_tokens": 147212
+   },
+   "fix": {
+    "facts": 8,
+    "facts_total": 9,
+    "mean_tokens": 168650
+   }
+  },
+  "C_REDIS_ALSO_PROPAGATE_EX_IMPACT": {
+   "main": {
+    "facts": 8,
+    "facts_total": 9,
+    "mean_tokens": 162408
+   },
+   "fix": {
+    "facts": 9,
+    "facts_total": 9,
+    "mean_tokens": 176948
+   }
+  },
+  "C_RIPGREP_DETECT_BINARY_IMPACT": {
+   "main": {
+    "facts": 5,
+    "facts_total": 8,
+    "mean_tokens": 128134
+   },
+   "fix": {
+    "facts": 3,
+    "facts_total": 8,
+    "mean_tokens": 169833
+   }
+  },
+  "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT": {
+   "main": {
+    "facts": 14,
+    "facts_total": 16,
+    "mean_tokens": 29680
+   },
+   "fix": {
+    "facts": 16,
+    "facts_total": 16,
+    "mean_tokens": 31666
+   }
+  }
+ },
+ "pairs": {
+  "pairs": 10,
+  "fix_more_facts": 4,
+  "fix_fewer_facts": 2,
+  "fix_fewer_tokens": 3,
+  "median_token_change": 0.067
+ }
+}

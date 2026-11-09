@@ -1,0 +1,202 @@
+[
+ {
+  "version": "main",
+  "task": "C_COBRA_ACTIVE_HELP_ENV_VAR_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 29510,
+  "tools": 1,
+  "facts": 6,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "C_FLASK_SPLIT_BLUEPRINT_PATH_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 180564,
+  "tools": 9,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "C_FMT_PARSE_NONNEGATIVE_INT_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 30649,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 232717,
+  "tools": 14,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 188479,
+  "tools": 7,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "C_RAILS_CHANGES_APPLIED_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 147212,
+  "tools": 6,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "C_REDIS_ALSO_PROPAGATE_EX_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 162408,
+  "tools": 5,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "main",
+  "task": "C_RIPGREP_DETECT_BINARY_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 128134,
+  "tools": 5,
+  "facts": 5,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 29248,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 8
+ },
+ {
+  "version": "main",
+  "task": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 30112,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "C_COBRA_ACTIVE_HELP_ENV_VAR_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 30327,
+  "tools": 1,
+  "facts": 7,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "C_FLASK_SPLIT_BLUEPRINT_PATH_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 43231,
+  "tools": 2,
+  "facts": 4,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "C_FMT_PARSE_NONNEGATIVE_INT_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 116762,
+  "tools": 8,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 31126,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "C_GSON_WRITER_FOR_APPENDABLE_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 95230,
+  "tools": 4,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "C_RAILS_CHANGES_APPLIED_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 168650,
+  "tools": 6,
+  "facts": 8,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "C_REDIS_ALSO_PROPAGATE_EX_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 176948,
+  "tools": 7,
+  "facts": 9,
+  "facts_total": 9
+ },
+ {
+  "version": "fix",
+  "task": "C_RIPGREP_DETECT_BINARY_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 169833,
+  "tools": 6,
+  "facts": 3,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+  "repetition": 1,
+  "status": "complete",
+  "tokens": 31356,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 8
+ },
+ {
+  "version": "fix",
+  "task": "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT",
+  "repetition": 2,
+  "status": "complete",
+  "tokens": 31976,
+  "tools": 1,
+  "facts": 8,
+  "facts_total": 8
+ }
+]

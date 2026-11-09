@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .impact_context import attach_impact_context
 from .impact_references import attach_text_references, consumer_summary, direct_consumers
 from .intent_classifier import names_code, without_project_scope
 from .vocabulary import COMMON_WORDS
@@ -608,6 +609,7 @@ def attach_source_evidence(
     gets a bounded scan for uses the index did not resolve.
     """
     attach_text_references(root, graph, result)
+    attach_impact_context(root, graph, result, request)
     mode = select_evidence_mode(request, requested_mode, str(result.get("intent") or "flow"))
     result["evidence_mode"] = mode
     obligations = list(dict.fromkeys([

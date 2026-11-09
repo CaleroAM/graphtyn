@@ -1,8 +1,8 @@
 {
   "graphs": {
     "cobra": {
-      "extracted_calls": 533,
-      "inheritance": 0,
+      "extracted_calls": 1272,
+      "inheritance": 1,
       "typed_fields": 104
     },
     "express": {
@@ -11,38 +11,38 @@
       "typed_fields": 0
     },
     "flask": {
-      "extracted_calls": 237,
+      "extracted_calls": 239,
       "inheritance": 79,
-      "typed_fields": 0
+      "typed_fields": 75
     },
     "fmt": {
-      "extracted_calls": 2276,
+      "extracted_calls": 2277,
       "inheritance": 372,
-      "typed_fields": 759
+      "typed_fields": 771
     },
     "gson": {
-      "extracted_calls": 5758,
+      "extracted_calls": 5784,
       "inheritance": 387,
       "typed_fields": 1095
     },
     "ky": {
-      "extracted_calls": 184,
+      "extracted_calls": 159,
       "inheritance": 6,
       "typed_fields": 28
     },
     "rails": {
-      "extracted_calls": 19804,
+      "extracted_calls": 19882,
       "inheritance": 4971,
       "typed_fields": 0
     },
     "redis": {
-      "extracted_calls": 18070,
+      "extracted_calls": 18071,
       "inheritance": 53,
-      "typed_fields": 4077
+      "typed_fields": 4104
     },
     "ripgrep": {
-      "extracted_calls": 2360,
-      "inheritance": 1,
+      "extracted_calls": 2569,
+      "inheritance": 124,
       "typed_fields": 737
     },
     "slim": {
@@ -53,8 +53,48 @@
   },
   "schema_version": "1.1",
   "tasks": {
+    "C_COBRA_ACTIVE_HELP_ENV_VAR_IMPACT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "C_FLASK_SPLIT_BLUEPRINT_PATH_IMPACT": {
+      "covered": 6,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "C_FMT_PARSE_NONNEGATIVE_INT_IMPACT": {
+      "covered": 9,
+      "do_not_expand": false,
+      "total": 9
+    },
+    "C_GSON_WRITER_FOR_APPENDABLE_IMPACT": {
+      "covered": 7,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "C_RAILS_CHANGES_APPLIED_IMPACT": {
+      "covered": 9,
+      "do_not_expand": false,
+      "total": 9
+    },
+    "C_REDIS_ALSO_PROPAGATE_EX_IMPACT": {
+      "covered": 8,
+      "do_not_expand": false,
+      "total": 9
+    },
+    "C_RIPGREP_DETECT_BINARY_IMPACT": {
+      "covered": 7,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "C_SLIM_DETERMINE_RESPONSE_FACTORY_IMPACT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
     "FLASK_BLUEPRINT_REGISTER_FLOW": {
-      "covered": 5,
+      "covered": 4,
       "do_not_expand": true,
       "total": 8
     },
@@ -214,7 +254,7 @@
       "total": 8
     },
     "I_FLASK_EXC_CLASS_CODE_IMPACT": {
-      "covered": 5,
+      "covered": 6,
       "do_not_expand": true,
       "total": 7
     },
@@ -264,7 +304,7 @@
       "total": 8
     },
     "L_SLIM_MAP_IMPACT": {
-      "covered": 5,
+      "covered": 7,
       "do_not_expand": true,
       "total": 8
     },
@@ -399,7 +439,7 @@
       "total": 8
     },
     "REDIS_EVICT_CALLERS": {
-      "covered": 3,
+      "covered": 5,
       "do_not_expand": true,
       "total": 7
     },
@@ -579,7 +619,7 @@
       "total": 7
     },
     "V_FLASK_FIND_ERROR_HANDLER_IMPACT": {
-      "covered": 7,
+      "covered": 8,
       "do_not_expand": true,
       "total": 8
     },
@@ -602,6 +642,106 @@
       "covered": 10,
       "do_not_expand": true,
       "total": 10
+    },
+    "X_COBRA_GEN_MAN_FLOW": {
+      "covered": 9,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "X_COBRA_TRIM_RIGHT_SPACE_IMPACT": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "X_EXPRESS_COMPILE_ETAG_IMPACT": {
+      "covered": 4,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "X_EXPRESS_SEND_FILE_FLOW": {
+      "covered": 2,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "X_FLASK_FULL_DISPATCH_FLOW": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "X_FLASK_GET_DEBUG_FLAG_IMPACT": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "X_FMT_DO_FORMAT_DECIMAL_FLOW": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "X_FMT_GET_ARG_CHECKED_IMPACT": {
+      "covered": 4,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "X_GSON_CLASS_ADAPTER_FACTORY_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "X_GSON_GET_INDENT_IMPACT": {
+      "covered": 3,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "X_KY_RESPONSE_DATA_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "X_KY_RETRY_TIMING_DELAY_IMPACT": {
+      "covered": 4,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "X_RAILS_REJECT_NEW_RECORD_IMPACT": {
+      "covered": 1,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "X_RAILS_VALID_AUTHENTICITY_TOKEN_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "X_REDIS_CLOSE_LISTENING_SOCKETS_IMPACT": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "X_REDIS_MEMORY_DOCTOR_FLOW": {
+      "covered": 9,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "X_RIPGREP_ONLY_MATCHING_MULTILINE_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "X_RIPGREP_PRINT_STATS_IMPACT": {
+      "covered": 4,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "X_SLIM_REGISTER_BODY_PARSER_IMPACT": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "X_SLIM_RESOLVE_BY_PREDICATE_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
     }
   }
 }

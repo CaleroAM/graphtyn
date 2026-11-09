@@ -1,0 +1,36 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación final preregistrada: 20 tareas nuevas, una repetición, Graphtyn main frente a la rama con todas las correcciones; jueces calibrados (mayoría de tres, citas resueltas).",
+ "repository": {
+  "name": "expressjs/express",
+  "url": "https://github.com/expressjs/express",
+  "commit": "43fca52d28a422c8be48fd489cbd4f2d6152bab6"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "X_EXPRESS_SEND_FILE_FLOW"
+  ],
+  "arms": {
+   "graphtyn (main)": "Graphtyn main, MCP lean, regla targeted",
+   "graphtyn (fix)": "Graphtyn feat/impact-completeness, MCP lean, regla targeted"
+  },
+  "repetitions": 1,
+  "order": "alternado por tarea",
+  "stop_rule": "targeted",
+  "grading": "Gemini y GPT con citas resueltas y Claude como desempate; regla de mayoría; intervalos por tareas."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio; cada versión desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario pidió resolver todos los puntos, incluida la validación final con más tareas (2026-11-08).",
+  "total_token_ceiling": 2500000
+ }
+}
