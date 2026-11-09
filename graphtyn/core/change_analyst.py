@@ -721,8 +721,13 @@ _CITATION_FORMAT = re.compile(r"\b(?:files?|archivos?|ficheros?|fichiers?|arquiv
                               r"(?:lines?|l[ií]neas?|lignes?|linhas?|zeilen?)\b", re.IGNORECASE)
 
 
+# "List the direct consumers" is an instruction; `list` is not a symbol of the request there.
+_INSTRUCTION = re.compile(r"\b(?:list|name|show|enumerate|describe|explain|trace|cite)\s+(?=(?:the|all|every|each|its|their)\b)",
+                          re.IGNORECASE)
+
+
 def _terms(request: str) -> list[str]:
-    request = _CITATION_FORMAT.sub(" ", str(request or ""))
+    request = _INSTRUCTION.sub(" ", _CITATION_FORMAT.sub(" ", str(request or "")))
     return list(dict.fromkeys(
         normalized for token in re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ_][\w.]+", without_project_scope(request))
         if len(normalized := token.lower().strip(".")) >= 3 and normalized not in _STOP

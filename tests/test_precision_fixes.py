@@ -81,6 +81,9 @@ def test_a_citation_format_is_not_a_requested_symbol():
     assert "line" not in _terms("What breaks if I change detect_binary? Cite file:line.")
     assert "línea" not in _terms("Si cambio x, ¿qué se rompe? Cita archivo:línea.")
     assert "line" in _terms("Si cambio line en ColorSpecs, ¿qué se rompe?")
+    # An imperative that introduces what to report is not a symbol either.
+    assert "list" not in _terms("What breaks if I change getIndent? List the direct consumers with file:line evidence.")
+    assert "list" in _terms("What breaks if I change list in Registry?")
 
 
 def test_an_impact_package_lists_what_the_target_calls_and_who_reads_a_property(tmp_path):

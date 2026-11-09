@@ -74,7 +74,8 @@ compatibles con PEP 440.
     una interfaz del proyecto si tiene todos sus métodos;
   - Python: los atributos con tipo (`x: Router = …`, `self.x: T`, `self.x = T()`) son campos, y
     `self.campo.metodo()` se resuelve por el tipo del campo.
-- «Cite file:line» y «archivo:línea» ya no hacen que `line` sea un símbolo pedido.
+- «Cite file:line» y «archivo:línea» ya no hacen que `line` sea un símbolo pedido, ni «List the
+  direct consumers» que lo sea `list`.
 - En una pregunta de impacto, la clase dueña del método («popStack en JsonTreeReader») y el
   directorio raíz del proyecto («de Gson») indican dónde buscar, no qué cambia. Antes,
   `Gson` llenaba el paquete con cada prueba que crea un `Gson`.
