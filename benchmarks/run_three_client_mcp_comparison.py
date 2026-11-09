@@ -735,6 +735,13 @@ def preflight(models: dict[str, str]) -> list[Preflight]:
     return rows
 
 
+def _complete_run(run_dir: Path) -> bool:
+    try:
+        return json.loads((run_dir / "summary.json").read_text(encoding="utf-8")).get("session_status") == "complete"
+    except (OSError, ValueError):
+        return False
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--protocol", type=Path, required=True)
@@ -765,6 +772,11 @@ def main() -> int:
                         help="How the arm instructions phrase the stop rule (strict reproduces earlier runs)")
     parser.add_argument("--opencode-plugins", action="store_true",
                         help="Run OpenCode without --pure in every arm (the hook arm always needs plugins)")
+    parser.add_argument("--skip-complete", action="store_true",
+                        help="Resume: keep the cells whose run already finished complete and run only the rest")
+    parser.add_argument("--session-estimate", type=int,
+                        help="Tokens one session is expected to use (from a pilot); a cell that would exceed "
+                             "--total-token-ceiling is not started, so a later --skip-complete run can finish it")
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
     args.output_dir = args.output_dir.resolve()
@@ -825,13 +837,20 @@ def main() -> int:
         graphify_bin = args.graphify_bin.resolve() if args.graphify_bin else None
         if "graphify" in {cell[2] for cell in cells} and graphify_bin is None:
             raise SystemExit("--arm graphify requires --graphify-bin")
-        for repetition, client, arm in cells:
+        for index, (repetition, client, arm) in enumerate(cells):
             treatment = arm in TREATMENT_ARMS
-            if args.total_token_ceiling is not None and total >= args.total_token_ceiling:
-                raise SystemExit(f"total token ceiling reached before {client}/{task['id']}")
             run_id = f"{client}_{task['id']}_{arm}"
             if args.repetitions > 1:
                 run_id += f"_r{repetition}"
+            if args.skip_complete and _complete_run(args.output_dir / "runs" / run_id):
+                print(f"SKIP_COMPLETE {run_id}")
+                continue
+            if args.total_token_ceiling is not None and total >= args.total_token_ceiling:
+                raise SystemExit(f"total token ceiling reached before {client}/{task['id']}")
+            if (args.total_token_ceiling is not None and args.session_estimate
+                    and total + args.session_estimate > args.total_token_ceiling):
+                raise SystemExit(f"not starting {run_id}: {total} + estimated {args.session_estimate} would exceed "
+                                 f"{args.total_token_ceiling}; finish later with --skip-complete")
             workspace = args.output_dir / "workspaces" / run_id
             shutil.rmtree(workspace, ignore_errors=True)  # left by an attempt that failed while copying
             executable = isolated_executable(args.graphtyn_executable.resolve(), workspace)
@@ -866,6 +885,9 @@ def main() -> int:
                 raise SystemExit(f"{client} did not report total tokens; stopped")
             total += measured
             (args.output_dir / "results.json").write_text(json.dumps(results, ensure_ascii=False, indent=2) + "\n")
+            remaining = len(cells) - index - 1
+            print(f"PROGRESS {run_id} tokens={measured} total_tokens={total} remaining_cells={remaining} "
+                  f"projected_total={total + remaining * round(total / max(1, len(results)))}")
             if args.total_token_ceiling is not None and total > args.total_token_ceiling:
                 raise SystemExit(f"total token ceiling exceeded after {run_id}: {total}")
         print(f"PHASE_1_COMPLETE sessions={len(results)} total_tokens={total}")

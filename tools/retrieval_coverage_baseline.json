@@ -1,5 +1,57 @@
 {
-  "schema_version": "1.0",
+  "graphs": {
+    "cobra": {
+      "extracted_calls": 533,
+      "inheritance": 0,
+      "typed_fields": 104
+    },
+    "express": {
+      "extracted_calls": 243,
+      "inheritance": 0,
+      "typed_fields": 0
+    },
+    "flask": {
+      "extracted_calls": 237,
+      "inheritance": 79,
+      "typed_fields": 0
+    },
+    "fmt": {
+      "extracted_calls": 2276,
+      "inheritance": 372,
+      "typed_fields": 759
+    },
+    "gson": {
+      "extracted_calls": 5758,
+      "inheritance": 387,
+      "typed_fields": 1095
+    },
+    "ky": {
+      "extracted_calls": 184,
+      "inheritance": 6,
+      "typed_fields": 28
+    },
+    "rails": {
+      "extracted_calls": 19804,
+      "inheritance": 4971,
+      "typed_fields": 0
+    },
+    "redis": {
+      "extracted_calls": 18070,
+      "inheritance": 53,
+      "typed_fields": 4077
+    },
+    "ripgrep": {
+      "extracted_calls": 2360,
+      "inheritance": 1,
+      "typed_fields": 737
+    },
+    "slim": {
+      "extracted_calls": 524,
+      "inheritance": 76,
+      "typed_fields": 168
+    }
+  },
+  "schema_version": "1.1",
   "tasks": {
     "FLASK_BLUEPRINT_REGISTER_FLOW": {
       "covered": 5,
@@ -42,12 +94,12 @@
       "total": 8
     },
     "FLASK_URL_FOR_FLOW": {
-      "covered": 7,
+      "covered": 6,
       "do_not_expand": true,
       "total": 7
     },
     "FMT_CHRONO_DURATION_FLOW": {
-      "covered": 1,
+      "covered": 0,
       "do_not_expand": false,
       "total": 8
     },
@@ -57,7 +109,7 @@
       "total": 8
     },
     "FMT_COMPILE_FLOW": {
-      "covered": 5,
+      "covered": 6,
       "do_not_expand": false,
       "total": 8
     },
@@ -67,7 +119,7 @@
       "total": 8
     },
     "FMT_FLOAT_FLOW": {
-      "covered": 7,
+      "covered": 6,
       "do_not_expand": true,
       "total": 7
     },
@@ -82,12 +134,12 @@
       "total": 8
     },
     "FMT_INT_SPEC_FLOW": {
-      "covered": 5,
+      "covered": 6,
       "do_not_expand": false,
       "total": 7
     },
     "FMT_NAMED_ARGS_FLOW": {
-      "covered": 1,
+      "covered": 0,
       "do_not_expand": false,
       "total": 8
     },
@@ -97,19 +149,459 @@
       "total": 7
     },
     "FMT_PRINTF_FLOW": {
-      "covered": 6,
+      "covered": 8,
       "do_not_expand": false,
       "total": 8
     },
     "FMT_PRINT_FLOW": {
       "covered": 8,
-      "do_not_expand": true,
+      "do_not_expand": false,
       "total": 8
     },
     "FMT_RANGES_FLOW": {
       "covered": 4,
       "do_not_expand": false,
       "total": 8
+    },
+    "FMT_VPRINT_HOW": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "FMT_WRITE_PADDED_IMPACT": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "H2H_FLASK_ENSURE_SYNC_IMPACT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "H2H_FLASK_PREFIXED_ENV_FLOW": {
+      "covered": 7,
+      "do_not_expand": false,
+      "total": 7
+    },
+    "H2H_FMT_COMPILE_CHECK_FLOW": {
+      "covered": 1,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "H2H_FMT_COUNT_DIGITS_IMPACT": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "H2H_RAILS_FIND_OR_CREATE_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "H2H_RAILS_UPDATE_COUNTERS_IMPACT": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 5
+    },
+    "H2H_REDIS_LOOKUP_WRITE_IMPACT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "H2H_REDIS_MULTIBULK_FLOW": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "I_FLASK_EXC_CLASS_CODE_IMPACT": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "I_FLASK_GET_COOKIE_NAME_IMPACT": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "I_FLASK_INJECT_URL_DEFAULTS_IMPACT": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 5
+    },
+    "I_FLASK_SHOULD_SET_COOKIE_IMPACT": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "L_COBRA_EXECUTEC_FLOW": {
+      "covered": 10,
+      "do_not_expand": true,
+      "total": 10
+    },
+    "L_COBRA_MERGE_FLAGS_IMPACT": {
+      "covered": 9,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "L_GSON_DOPEEK_FLOW": {
+      "covered": 10,
+      "do_not_expand": false,
+      "total": 11
+    },
+    "L_GSON_POPSTACK_IMPACT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "L_RIPGREP_GLOB_PARSE_FLOW": {
+      "covered": 10,
+      "do_not_expand": true,
+      "total": 12
+    },
+    "L_RIPGREP_MATCH_LIMIT_IMPACT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "L_SLIM_MAP_IMPACT": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "L_SLIM_RUN_FLOW": {
+      "covered": 4,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "RAILS_AFTER_COMMIT_FLOW": {
+      "covered": 3,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "RAILS_COUNTER_CACHE_FLOW": {
+      "covered": 3,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "RAILS_CREATE_RECORD_CALLERS": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "RAILS_DESTROY_FLOW": {
+      "covered": 7,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "RAILS_ENUM_FLOW": {
+      "covered": 5,
+      "do_not_expand": false,
+      "total": 9
+    },
+    "RAILS_FIND_FLOW": {
+      "covered": 8,
+      "do_not_expand": false,
+      "total": 9
+    },
+    "RAILS_HAS_MANY_LOAD_FLOW": {
+      "covered": 3,
+      "do_not_expand": false,
+      "total": 9
+    },
+    "RAILS_MIGRATION_RUN_FLOW": {
+      "covered": 0,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "RAILS_RELATION_LOAD_FLOW": {
+      "covered": 1,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "RAILS_RELOAD_FLOW": {
+      "covered": 2,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "RAILS_RENDER_JSON_FLOW": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "RAILS_ROUTING_DISPATCH_FLOW": {
+      "covered": 1,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "RAILS_SAVE_FLOW": {
+      "covered": 8,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "RAILS_STRONG_PARAMS_FLOW": {
+      "covered": 7,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "RAILS_TOUCH_FLOW": {
+      "covered": 3,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "RAILS_TOUCH_IMPACT": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "RAILS_UPDATE_FLOW": {
+      "covered": 4,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "RAILS_VALIDATION_FLOW": {
+      "covered": 5,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "REDIS_ACTIVE_EXPIRE_WHAT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "REDIS_AOF_REWRITE_FLOW": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "REDIS_BLPOP_FLOW": {
+      "covered": 6,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "REDIS_CLUSTER_REDIRECT_FLOW": {
+      "covered": 1,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "REDIS_COMMAND_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "REDIS_DEL_LAZYFREE_FLOW": {
+      "covered": 0,
+      "do_not_expand": false,
+      "total": 9
+    },
+    "REDIS_EVICTION_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "REDIS_EVICT_CALLERS": {
+      "covered": 3,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "REDIS_EXPIRE_FLOW": {
+      "covered": 5,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "REDIS_HSET_FLOW": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "REDIS_INCR_FLOW": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "REDIS_KEYSPACE_NOTIFY_FLOW": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "REDIS_LPUSH_FLOW": {
+      "covered": 5,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "REDIS_MULTI_EXEC_FLOW": {
+      "covered": 7,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "REDIS_OUTPUT_LIMIT_FLOW": {
+      "covered": 7,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "REDIS_PSYNC_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "REDIS_PUBLISH_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "REDIS_RDB_SAVE_PERSISTENCE": {
+      "covered": 1,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "REDIS_SCAN_FLOW": {
+      "covered": 3,
+      "do_not_expand": false,
+      "total": 8
+    },
+    "REDIS_SET_OPTIONS_FLOW": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "S_PCRE2_BUILD_MANY_FLOW": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 10
+    },
+    "S_REGEX_BUILD_MANY_FLOW": {
+      "covered": 9,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "V2_FMT_SPECS_WHAT": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "V2_FMT_WRITE_BYTES_IMPACT": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "V2_RAILS_TX_STATUS_WHAT": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "V2_RAILS_UPDATE_RECORD_CALLERS": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "V2_REDIS_ASYNC_DELETE_CALLERS": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "V2_REDIS_POOL_WHAT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V3_FMT_PARSE_SPECS_WHAT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V3_RAILS_WITHIN_TX_WHAT": {
+      "covered": 9,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "V3_REDIS_FREE_CLIENT_WHAT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V3_REDIS_SCAN_WHAT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V4_FMT_EXPONENT_CALLERS": {
+      "covered": 4,
+      "do_not_expand": true,
+      "total": 4
+    },
+    "V4_RAILS_COMMIT_TX_WHAT": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "V4_RAILS_RELOAD_IMPACT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V4_REDIS_MIGRATE_RETRY": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V5_RAILS_PERFORM_IMPACT": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "V5_RAILS_TOUCH_LATER_TX_WHAT": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "V6_DE_REDIS_ACTIVE_EXPIRE_WHAT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V6_FR_FMT_WRITE_PADDED_IMPACT": {
+      "covered": 6,
+      "do_not_expand": true,
+      "total": 6
+    },
+    "V6_IT_RAILS_WITHIN_TX_WHAT": {
+      "covered": 9,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "V6_PT_RAILS_RELOAD_IMPACT": {
+      "covered": 8,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V_FLASK_FINALIZE_REQUEST_IMPACT": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 7
+    },
+    "V_FLASK_FIND_ERROR_HANDLER_IMPACT": {
+      "covered": 7,
+      "do_not_expand": true,
+      "total": 8
+    },
+    "V_FLASK_REQUEST_CONTEXT_IMPACT": {
+      "covered": 3,
+      "do_not_expand": true,
+      "total": 5
+    },
+    "V_RAILS_SAVE_COLLECTION_FLOW": {
+      "covered": 9,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "V_REDIS_INLINE_FLOW": {
+      "covered": 9,
+      "do_not_expand": true,
+      "total": 9
+    },
+    "V_REDIS_ZSETADD_FLOW": {
+      "covered": 10,
+      "do_not_expand": true,
+      "total": 10
     }
   }
 }

@@ -1,0 +1,315 @@
+{
+ "02cb8b445d78e4aa5b40ae39b199cee3c033ef386048db854d5ebb744a09f0a4": {
+  "blueprint_names": false,
+  "registration": false,
+  "registry": false,
+  "test": true,
+  "url_for": true
+ },
+ "0b5990b9a2f5a37fc0ab7d24715789d6f1c4e7fea17f5f6680ad8673657bcc7c": {
+  "config": true,
+  "defined_in_base": true,
+  "delete_cookie": true,
+  "open_session": true,
+  "save_session": true,
+  "set_cookie": true,
+  "test_override": true
+ },
+ "0eb813f99ea4695f093b0195d5e2d7c36ecc819a49a5344ac7de7bc11d594a56": {
+  "config": true,
+  "defined_in_base": true,
+  "delete_cookie": false,
+  "open_session": true,
+  "save_session": true,
+  "set_cookie": false,
+  "test_override": true
+ },
+ "16b002ef1bf03598600116e7a0f9047c0f3a1a6629edd5ab1b2121dd1fbf3adf": {
+  "consumer_class": true,
+  "defined_in_base": false,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": true
+ },
+ "1b53a45349b7a5d673bb756fdae8418f3cebc050728520a94a9995aee3a3f22d": {
+  "consumer_class": true,
+  "defined_in_base": false,
+  "modified": true,
+  "process_response": false,
+  "refresh": false,
+  "save_session": true,
+  "skips_set_cookie": false
+ },
+ "1ed47224d71096fb38d51126e6391465ae79371118014be4ae01bb533e4833f0": {
+  "blueprint_names": false,
+  "registration": false,
+  "registry": true,
+  "test": true,
+  "url_for": true
+ },
+ "2df7f2d3093ed90c64175cb7c2a7870a5c28100702828c28e3408d2fe3958f92": {
+  "config": true,
+  "defined_in_base": true,
+  "delete_cookie": false,
+  "open_session": true,
+  "save_session": true,
+  "set_cookie": false,
+  "test_override": true
+ },
+ "3254ef28e8ad153f0393fd78c7caea6d993ca3883d3741ef0c54a524e48581d5": {
+  "decorator": false,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": false,
+  "register": true
+ },
+ "48d0b6e8b205837e9c823175efc5613bcb4051c3f59b55849b5a46c58b58b34f": {
+  "consumer_class": false,
+  "defined_in_base": true,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": false
+ },
+ "4b57876dd5ba03cd8b04fcd66bf58ba8c6b02adb5dc3fc91938bf0c716c50daa": {
+  "blueprint_names": false,
+  "registration": false,
+  "registry": false,
+  "test": true,
+  "url_for": true
+ },
+ "57ac7a4c69c9dee0039c73a21b847a7da87b078022db4285415d0fe86992a8ca": {
+  "blueprint_names": false,
+  "registration": false,
+  "registry": true,
+  "test": true,
+  "url_for": true
+ },
+ "5abfef80a0a2026c90919885ede16c8c491cc5a814ce02420b3ffce402900631": {
+  "blueprint_names": true,
+  "registration": false,
+  "registry": true,
+  "test": true,
+  "url_for": true
+ },
+ "6519ada383854376f0f59a32da4178418b5d5c94798cc42a169c92497119c46f": {
+  "consumer_class": true,
+  "defined_in_base": false,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": true
+ },
+ "66dcec4ba20ec880aa13b5ffd77d914cc1fd2d438e9e2f63db24181bb947027c": {
+  "decorator": false,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": false,
+  "register": true
+ },
+ "670823303c12bbee5a7ec8d12541057b58ca0fec284ca5daad3fcbd443364a9f": {
+  "config": true,
+  "defined_in_base": false,
+  "delete_cookie": false,
+  "open_session": true,
+  "save_session": true,
+  "set_cookie": false,
+  "test_override": false
+ },
+ "67c98fc8da1950db94570cdb8cc674258cc0dc8afc3e559db90f5314a016bd2e": {
+  "consumer_class": true,
+  "defined_in_base": false,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": true
+ },
+ "6e0c1fe5ab64bbe8a9aaf0578ac0b002f9a5f4d304ce5cd167b43d312c46f96f": {
+  "consumer_class": false,
+  "defined_in_base": true,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": false
+ },
+ "7556f2d70e4cd753c8119f2ac2bf97394eeabb5e2d4ddfac31ffc0d8f6fa97d2": {
+  "blueprint_names": true,
+  "registration": false,
+  "registry": true,
+  "test": true,
+  "url_for": true
+ },
+ "7b1288771b618e062fdbe6604fce0cda4246d7aefbfffb13ff2b4a2bd39d5ce4": {
+  "blueprint_names": false,
+  "registration": false,
+  "registry": true,
+  "test": true,
+  "url_for": true
+ },
+ "7c2d1e880102ad3653642bfd0695889f1e940e75343dbae595ef5a4a52d18ccf": {
+  "blueprint_names": false,
+  "registration": false,
+  "registry": true,
+  "test": true,
+  "url_for": true
+ },
+ "80fd252ec82ab4c7c4add83ca5ee0d5d940bb941de6e0af34cefcb27acc83896": {
+  "config": true,
+  "defined_in_base": true,
+  "delete_cookie": true,
+  "open_session": true,
+  "save_session": true,
+  "set_cookie": true,
+  "test_override": true
+ },
+ "81175bc0e3362b977b30985eab3f779e2a52b7e4aacea64f95e74c7a71850acb": {
+  "decorator": true,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": false,
+  "register": true
+ },
+ "8668eec8d13a939b85d6b395f03f2a8e39ef32422908deedf5ba6355730ab910": {
+  "consumer_class": false,
+  "defined_in_base": false,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": false
+ },
+ "9491ae714343d14c2dc68c9d51b7bb505f1e46fc7c6abc75e50e1f193531b31c": {
+  "decorator": true,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": false,
+  "register": true
+ },
+ "9989f309fecb61e4eccc5b4ef38eb16745cc18fc46c31e7957bbdacb38291b2e": {
+  "consumer_class": false,
+  "defined_in_base": false,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": false
+ },
+ "9f10248506dd26a3e2921e01379871af953a04509d3876f860799345fa9e2b27": {
+  "decorator": true,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": true,
+  "register": true
+ },
+ "b709833e4c271b0912bf78ac5a20da3bccbfa7de69626ad83d2e787b4a963db1": {
+  "decorator": false,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": false,
+  "register": true
+ },
+ "b9f3d2826e56aba89d8d9194b5ef86a3397975afc331e7cb1cf756291b90061e": {
+  "config": true,
+  "defined_in_base": true,
+  "delete_cookie": true,
+  "open_session": true,
+  "save_session": true,
+  "set_cookie": true,
+  "test_override": true
+ },
+ "bc917f07e74f4725566cc44a397796918099943e4c860db3c9bacb286c5eca09": {
+  "consumer_class": true,
+  "defined_in_base": true,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": false
+ },
+ "c8cdc457099542722a73a6992dc17682ee0167b62ba8799369d2d5d670f85e68": {
+  "decorator": true,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": false,
+  "register": true
+ },
+ "c9596dc873488e36fedddec4c3c05d95460bb089b4e5e79797de90f2b8a06c75": {
+  "decorator": true,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": true,
+  "register": true
+ },
+ "c95bc8ac376a8046560aaf7bfa55355427d00becb42b42090afa00389c67b856": {
+  "decorator": false,
+  "find_handler": true,
+  "handler_spec": true,
+  "handlers": false,
+  "instance": false,
+  "invalid_code": false,
+  "register": true
+ },
+ "dd0758b8babd514cf9f9c4afd8c07ee9df05dd23ba07afc55641814e339d8dcf": {
+  "config": true,
+  "defined_in_base": false,
+  "delete_cookie": false,
+  "open_session": true,
+  "save_session": true,
+  "set_cookie": false,
+  "test_override": false
+ },
+ "e52007e275f69b64b6cb2355343b181671670f7d2e83f8a52a0dcf6e7ec8d6ba": {
+  "consumer_class": false,
+  "defined_in_base": true,
+  "modified": true,
+  "process_response": false,
+  "refresh": true,
+  "save_session": true,
+  "skips_set_cookie": false
+ },
+ "e63a937379680185d38c2767ab48ebb2db45ddc7a20175a521cde9e6e9ee4b7f": {
+  "config": true,
+  "defined_in_base": true,
+  "delete_cookie": true,
+  "open_session": true,
+  "save_session": true,
+  "set_cookie": true,
+  "test_override": true
+ },
+ "e89e11d701951056c45981105f4ba68c58efd47b7769f89ba6e598c1e14c8a58": {
+  "blueprint_names": false,
+  "registration": false,
+  "registry": false,
+  "test": true,
+  "url_for": true
+ },
+ "e8b38d0d1c3b43b29239b095570f1a922a75f89d5f5168f7efe3e17973079da5": {
+  "blueprint_names": false,
+  "registration": false,
+  "registry": false,
+  "test": true,
+  "url_for": true
+ }
+}

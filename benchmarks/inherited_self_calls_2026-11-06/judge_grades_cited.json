@@ -1,0 +1,874 @@
+{
+ "summary": {
+  "codex-main": {
+   "runs": 8,
+   "facts": 52,
+   "tokens": 217172,
+   "literal": 32,
+   "gemini": 29,
+   "gpt": 32,
+   "consensus": 28,
+   "majority": 29
+  },
+  "codex-fix": {
+   "runs": 8,
+   "facts": 52,
+   "tokens": 221204,
+   "literal": 34,
+   "gemini": 35,
+   "gpt": 35,
+   "consensus": 34,
+   "majority": 34
+  }
+ },
+ "kappa": {
+  "judges": 0.856,
+  "literal_consensus": 0.676
+ },
+ "runs": [
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+   "repetition": 1,
+   "tokens": 27894,
+   "literal": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "gemini": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "gpt": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "consensus": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "majority": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+   "repetition": 2,
+   "tokens": 27758,
+   "literal": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": true,
+    "instance": false,
+    "handlers": false
+   },
+   "gemini": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": true,
+    "instance": false,
+    "handlers": false
+   },
+   "gpt": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "consensus": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "majority": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": true,
+    "instance": false,
+    "handlers": false
+   },
+   "tiebreak": {
+    "register": true,
+    "find_handler": true,
+    "decorator": true,
+    "handler_spec": true,
+    "invalid_code": true,
+    "instance": false,
+    "handlers": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 27142,
+   "literal": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": true
+   },
+   "gemini": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": true
+   },
+   "gpt": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": true
+   },
+   "consensus": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": true
+   },
+   "majority": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+   "repetition": 2,
+   "tokens": 27096,
+   "literal": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": false,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": false
+   },
+   "gemini": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": false,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": false
+   },
+   "gpt": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": false,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": false
+   },
+   "consensus": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": false,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": false
+   },
+   "majority": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": false,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+   "repetition": 1,
+   "tokens": 27075,
+   "literal": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": true
+   },
+   "gemini": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "gpt": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": true,
+    "registration": false
+   },
+   "consensus": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "majority": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "tiebreak": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+   "repetition": 2,
+   "tokens": 26965,
+   "literal": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": true
+   },
+   "gemini": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "gpt": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": true,
+    "registration": false
+   },
+   "consensus": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "majority": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "tiebreak": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+   "repetition": 1,
+   "tokens": 26621,
+   "literal": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "gemini": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "gpt": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "consensus": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "majority": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "tiebreak": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+   "repetition": 2,
+   "tokens": 26621,
+   "literal": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "gemini": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "gpt": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "consensus": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "majority": {
+    "save_session": true,
+    "consumer_class": false,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+   "repetition": 1,
+   "tokens": 27944,
+   "literal": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "gemini": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "gpt": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "consensus": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "majority": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "I_FLASK_EXC_CLASS_CODE_IMPACT",
+   "repetition": 2,
+   "tokens": 28110,
+   "literal": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "gemini": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "gpt": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "consensus": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "majority": {
+    "register": true,
+    "find_handler": true,
+    "decorator": false,
+    "handler_spec": true,
+    "invalid_code": false,
+    "instance": false,
+    "handlers": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 28265,
+   "literal": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": true
+   },
+   "gemini": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": true,
+    "set_cookie": true,
+    "test_override": true
+   },
+   "gpt": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": true,
+    "set_cookie": true,
+    "test_override": true
+   },
+   "consensus": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": true,
+    "set_cookie": true,
+    "test_override": true
+   },
+   "majority": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": true,
+    "set_cookie": true,
+    "test_override": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "I_FLASK_GET_COOKIE_NAME_IMPACT",
+   "repetition": 2,
+   "tokens": 27759,
+   "literal": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": false,
+    "set_cookie": false,
+    "test_override": true
+   },
+   "gemini": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": true,
+    "set_cookie": true,
+    "test_override": true
+   },
+   "gpt": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": true,
+    "set_cookie": true,
+    "test_override": true
+   },
+   "consensus": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": true,
+    "set_cookie": true,
+    "test_override": true
+   },
+   "majority": {
+    "open_session": true,
+    "save_session": true,
+    "defined_in_base": true,
+    "config": true,
+    "delete_cookie": true,
+    "set_cookie": true,
+    "test_override": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+   "repetition": 1,
+   "tokens": 27306,
+   "literal": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": true
+   },
+   "gemini": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "gpt": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "consensus": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "majority": {
+    "url_for": true,
+    "test": true,
+    "registry": false,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "I_FLASK_INJECT_URL_DEFAULTS_IMPACT",
+   "repetition": 2,
+   "tokens": 27206,
+   "literal": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": true
+   },
+   "gemini": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "gpt": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "consensus": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "majority": {
+    "url_for": true,
+    "test": true,
+    "registry": true,
+    "blueprint_names": false,
+    "registration": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+   "repetition": 1,
+   "tokens": 27258,
+   "literal": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": false,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "gemini": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "gpt": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "consensus": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "majority": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": false,
+    "process_response": false
+   },
+   "tiebreak": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": false,
+    "skips_set_cookie": false,
+    "process_response": false
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "I_FLASK_SHOULD_SET_COOKIE_IMPACT",
+   "repetition": 2,
+   "tokens": 27356,
+   "literal": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": true,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "gemini": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "gpt": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "consensus": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "majority": {
+    "save_session": true,
+    "consumer_class": true,
+    "defined_in_base": false,
+    "modified": true,
+    "refresh": true,
+    "skips_set_cookie": true,
+    "process_response": false
+   },
+   "tiebreak": null
+  }
+ ]
+}
