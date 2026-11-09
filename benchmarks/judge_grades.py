@@ -33,20 +33,61 @@ JUDGES = {
 
 
 def _specs(root: Path) -> dict[str, dict]:
-    return {task["id"]: task for path in root.glob("**/*_tasks.json")
+    return {task["id"]: {**task, "corpus": path.name.removesuffix("_tasks.json")} for path in root.glob("**/*_tasks.json")
             for task in json.loads(path.read_text(encoding="utf-8"))["tasks"]}
 
 
-def _prompt(task: dict, answer: str) -> str:
+_CITATION = re.compile(r"([\w./-]+\.[A-Za-z0-9]+):(\d+)")
+_CITED = 40
+
+
+def resolve_citations(answer: str, root: Path | None) -> list[str]:
+    """The answer's own `file:line` citations, mapped to the symbol around each line and its code.
+
+    A judge without the code cannot tell that `app.py:890` is `handle_user_exception`, so an answer
+    that cites a consumer by its line lost the fact. The mapping is read from the pinned corpus.
+    """
+    if root is None:
+        return []
+    from graphtyn.core.tree_sitter_backend import parse_file
+
+    symbols: dict[str, list[dict]] = {}
+    resolved, seen = [], set()
+    for raw, number in _CITATION.findall(answer):
+        path = raw.split("/workspaces/", 1)[-1].split("/", 1)[-1] if "/workspaces/" in raw else raw.lstrip("./")
+        source = root / path
+        if (path, number) in seen or not source.is_file():
+            continue
+        seen.add((path, number))
+        if path not in symbols:
+            facts = parse_file(source, path) or {}
+            symbols[path] = [item for item in facts.get("symbols") or [] if item.get("line") and item.get("end_line")]
+        line = int(number)
+        around = [item for item in symbols[path] if item["line"] <= line <= item["end_line"]]
+        owner = min(around, key=lambda item: item["end_line"] - item["line"], default=None)
+        name = f"{owner.get('container') + '.' if owner and owner.get('container') else ''}{owner['name']}" if owner else ""
+        lines = source.read_text(encoding="utf-8", errors="replace").splitlines()
+        code = " ".join(lines[line - 1].split())[:160] if 0 < line <= len(lines) else ""
+        resolved.append(f"- {path}:{line} → {name or '(file level)'}: {code}")
+        if len(resolved) >= _CITED:
+            break
+    return resolved
+
+
+def _prompt(task: dict, answer: str, citations: list[str] | None = None) -> str:
     facts = "\n".join(f"- {fact['id']}: {', '.join(fact['any'])}" for fact in task["rubric"])
     keys = ", ".join(f'"{fact["id"]}": true|false' for fact in task["rubric"])
+    appendix = ("\n\nThe answer's own file:line citations, resolved by the harness from the source "
+                "(symbol around the line: code at the line):\n" + "\n".join(citations)) if citations else ""
+    cited_rule = (" A fact the answer points to only by a citation counts when the resolved citation shows that "
+                  "the cited code is the fact's symbol or behaviour and the answer says what it is.") if citations else ""
     return ("You are grading an answer about source code. Do NOT use tools or read files. Reply with JSON only.\n"
-            f"Question: {task['request']}\n\nAnswer:\n{answer[:MAX_ANSWER]}\n\n"
+            f"Question: {task['request']}\n\nAnswer:\n{answer[:MAX_ANSWER]}{appendix}\n\n"
             "Facts (id: identifiers or files that evidence it):\n"
             f"{facts}\n\n"
             "For each fact, answer true only if the answer states that fact explicitly, by name or by an unambiguous "
-            "description of the same code or behaviour; a vague or generic statement is false. Ignore the language "
-            f"of the answer.\nReturn {{{keys}}}.")
+            f"description of the same code or behaviour; a vague or generic statement is false.{cited_rule} Ignore the "
+            f"language of the answer.\nReturn {{{keys}}}.")
 
 
 def _ask(judge: str, prompt: str, cwd: str) -> dict[str, bool] | None:
@@ -77,9 +118,14 @@ def main() -> int:
     parser.add_argument("--run-root", type=Path, required=True)
     parser.add_argument("--variant", action="append", required=True)
     parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--output", default="judge_grades.json", help="file name inside the tasks root")
+    parser.add_argument("--cache", default="judge_cache.json", help="file name inside the tasks root")
+    parser.add_argument("--repos", type=Path, action="append", default=[],
+                        help="directory holding the pinned corpora by name; resolves the answers' citations")
     args = parser.parse_args()
+    corpus_root = lambda corpus: next((base / corpus for base in args.repos if (base / corpus).is_dir()), None)  # noqa: E731
     specs = _specs(args.tasks_root)
-    cache_path, output_path = args.tasks_root / "judge_cache.json", args.tasks_root / "judge_grades.json"
+    cache_path, output_path = args.tasks_root / args.cache, args.tasks_root / args.output
     cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {}
     runs = []
     for variant in args.variant:
@@ -92,7 +138,8 @@ def main() -> int:
             runs.append({"variant": variant, "arm": summary.get("arm", ""), "task": task["id"],
                          "repetition": summary["repetition"],
                          "tokens": summary["usage"].get("total_tokens"), "literal": literal,
-                         "prompt": _prompt(task, answer), "facts": [fact["id"] for fact in task["rubric"]]})
+                         "prompt": _prompt(task, answer, resolve_citations(answer, corpus_root(task["corpus"]))),
+                         "facts": [fact["id"] for fact in task["rubric"]]})
     jobs = [(run, judge) for run in runs for judge in JUDGES
             if hashlib.sha256(f"{judge}\n{run['prompt']}".encode()).hexdigest() not in cache]
     with tempfile.TemporaryDirectory(prefix="graphtyn-judge-") as cwd, ThreadPoolExecutor(args.workers) as pool:

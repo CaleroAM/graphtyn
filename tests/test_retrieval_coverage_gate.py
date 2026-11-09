@@ -30,7 +30,16 @@ def test_gate_flags_a_new_false_completion_only():
 
 
 def test_every_gated_corpus_has_tasks_in_the_bank():
-    assert all(gate._tasks(corpus) for corpus in gate.CORPORA)
+    assert all(gate._tasks(corpus) for corpus in gate.CORPORA if corpus not in gate.GRAPH_ONLY)
+    # Corpora kept only for their graph floor have no tasks yet.
+    assert gate.GRAPH_ONLY <= set(gate.CORPORA) and not any(gate._tasks(corpus) for corpus in gate.GRAPH_ONLY)
+
+
+def test_a_graph_that_loses_extracted_calls_fails_the_gate():
+    baseline = {"gson": {"extracted_calls": 5758, "inheritance": 387, "typed_fields": 0}}
+    assert gate.compare_graphs({"gson": {"extracted_calls": 5600, "inheritance": 387, "typed_fields": 0}}, baseline) == []
+    assert gate.compare_graphs({"gson": {"extracted_calls": 350, "inheritance": 387, "typed_fields": 0}}, baseline) == [
+        "gson: extracted_calls 350 (baseline 5758)"]
 
 
 def test_checkout_refuses_a_non_git_directory(tmp_path):
