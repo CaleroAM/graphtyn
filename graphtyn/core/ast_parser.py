@@ -988,7 +988,12 @@ class ASTParser:
                     if call_key in seen_calls:
                         continue
                     seen_calls.add(call_key)
-                    exact = best_score >= 6
+                    target_node = node_by_id.get(target_id, {})
+                    # `app.use()` in a test reaches `app.use = function` in lib/ only because the variable is
+                    # named like the object: a convention, not a type.
+                    by_name_only = (target_node.get("object_member") and target_node.get("file") != rel_file
+                                    and receiver_type == call.get("receiver"))
+                    exact = best_score >= 6 and not by_name_only
                     links.extend(implementations.call_links({
                         "source": source_id, "target": target_id, "label": "llama",
                         "color": "rgba(56, 189, 248, 0.35)",

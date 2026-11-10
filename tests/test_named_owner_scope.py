@@ -1,7 +1,8 @@
 """`the matched method of the Sink trait`: the named owner's member, its implementations, and generic bounds."""
 from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.impact_references import _calls_first, named_owner_members
-from graphtyn.core.tree_sitter_backend import _bounded_generics, parse_file
+from graphtyn.core.declaration_facts import bounded_generics as _bounded_generics
+from graphtyn.core.tree_sitter_backend import parse_file
 
 
 def test_the_named_owner_keeps_its_member_and_what_implements_it():
