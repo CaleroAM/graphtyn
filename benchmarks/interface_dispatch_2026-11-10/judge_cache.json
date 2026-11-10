@@ -1,0 +1,361 @@
+{
+ "0263fe081e81e397ead5f86826aaa9d21e8c0384e9119f80ef481fe45f969cb0": {
+  "annotation": true,
+  "builder": false,
+  "caller": true,
+  "enum": true,
+  "interface": true,
+  "policies": true
+ },
+ "13e8764d5c5fa9d2b87cf7f0c9e68219a86f34f545780ec4b08ae79edb8ce8dd": {
+  "abstract": true,
+  "init_every_request": false,
+  "method_view": true,
+  "sync": true,
+  "tests": true,
+  "view_function": true
+ },
+ "198248f315af41f1fd5dc03a396fb55d7aa48c77557086a4917a10cb095af4a0": {
+  "defaults": true,
+  "forwarding": true,
+  "matcher_tests": true,
+  "pcre2_impl": true,
+  "regex_impl": true,
+  "searcher_test": true,
+  "trait": true
+ },
+ "1a11b30dc155ca3a61e86280e117d7d093c7344d975169804a7a6dfebde3424c": {
+  "advanced": false,
+  "error_handler": true,
+  "error_middleware": true,
+  "impl": true,
+  "middleware": false,
+  "route": true,
+  "route_group": true
+ },
+ "20839c32f99c51706780cf891d86a1bab85ff35500263ddd5ab8fa9200fa3429": {
+  "defaults": true,
+  "forwarding": true,
+  "matcher_tests": true,
+  "pcre2_impl": true,
+  "regex_impl": true,
+  "searcher_test": true,
+  "trait": true
+ },
+ "3158eed7ad408d99f93d68de1c55b16ff73dc3d0fbe4cbffe9b97a5de14f2d44": {
+  "annotation": true,
+  "builder": false,
+  "caller": true,
+  "enum": true,
+  "interface": true,
+  "policies": true
+ },
+ "3315cde16f6edbaaf1a918cad6a9ab638767c3fea7bb74e310d99c250bce33c9": {
+  "advanced": false,
+  "error_handler": true,
+  "error_middleware": true,
+  "impl": true,
+  "middleware": false,
+  "route": false,
+  "route_group": true
+ },
+ "38996930ff766f4f2b9dca7629f10d02fae0d4f045726259381b75357543286a": {
+  "abstract": true,
+  "init_every_request": false,
+  "method_view": true,
+  "sync": true,
+  "tests": true,
+  "view_function": true
+ },
+ "3b044dc62e79d8567030e4a20969bfabfbc96136379f94f39ce5a08a01acdff8": {
+  "advanced": false,
+  "error_handler": true,
+  "error_middleware": true,
+  "impl": true,
+  "middleware": false,
+  "route": true,
+  "route_group": true
+ },
+ "3c96762d50d8a471f916df9b6e0bf3da109ffef650cd07becc17fd2034fd3c3a": {
+  "advanced": false,
+  "error_handler": true,
+  "error_middleware": true,
+  "impl": true,
+  "middleware": false,
+  "route": true,
+  "route_group": true
+ },
+ "49b8285660313f5c63bdb5f24de97a903b06f8ec5b2b15be980522856595c9b4": {
+  "caller": true,
+  "forwarding": false,
+  "json": true,
+  "sinks_module": true,
+  "standard": true,
+  "summary": true,
+  "test_sink": false
+ },
+ "4e18c8f41d265d1d241c9ea4c96553829787e46b083b4bfce482764a0a7cd983": {
+  "advanced": false,
+  "error_handler": true,
+  "error_middleware": true,
+  "impl": true,
+  "middleware": false,
+  "route": false,
+  "route_group": true
+ },
+ "5a139b758c8ca416411a268fd440f2698d3e96c93d105195d19ecb4ad5f7b63f": {
+  "advanced": false,
+  "error_handler": true,
+  "error_middleware": true,
+  "impl": true,
+  "middleware": false,
+  "route": true,
+  "route_group": true
+ },
+ "5a7e558f9903693753d9ba0df57b3387492099797e99a70baf8a3762aa5aae1e": {
+  "defaults": false,
+  "forwarding": true,
+  "matcher_tests": true,
+  "pcre2_impl": true,
+  "regex_impl": true,
+  "searcher_test": true,
+  "trait": true
+ },
+ "6e82c2c02d1495c32e084c328d2d1e7c5af748ab2aa66833188ef59908f3ebdb": {
+  "defaults": true,
+  "forwarding": true,
+  "matcher_tests": true,
+  "pcre2_impl": true,
+  "regex_impl": true,
+  "searcher_test": true,
+  "trait": true
+ },
+ "710c22b280458877ff5189c5e70630cebe6c83f54dcc36480d4de0e030b3e0e5": {
+  "annotation": true,
+  "builder": false,
+  "caller": true,
+  "enum": true,
+  "interface": true,
+  "policies": true
+ },
+ "724fb22ed27a562644ad3f0d7482598a8f21b7e125b8a1d081ddd3e134bf38c9": {
+  "abstract": true,
+  "caller": true,
+  "custom": true,
+  "impl": true,
+  "null_session": false,
+  "test_client": true
+ },
+ "74451061e0da411067e47f5a9d4882381485621a650cf47df26269297684bbfc": {
+  "annotation": true,
+  "builder": false,
+  "caller": true,
+  "enum": true,
+  "interface": true,
+  "policies": true
+ },
+ "78260a7bc704e6597329694c8cf8e9aaaff405a31050c3a2b8c57463f9b67a55": {
+  "defaults": true,
+  "forwarding": true,
+  "matcher_tests": true,
+  "pcre2_impl": true,
+  "regex_impl": true,
+  "searcher_test": true,
+  "trait": true
+ },
+ "79339d19635361146afd7104a4d45c2fbaeaefa8b4443daa89e65f06c159a067": {
+  "abstract": true,
+  "init_every_request": false,
+  "method_view": true,
+  "sync": true,
+  "tests": true,
+  "view_function": true
+ },
+ "79a692cccb601584d12283bb216c16a767546d541279c384a5ec5b862de2126b": {
+  "abstract": true,
+  "init_every_request": false,
+  "method_view": true,
+  "sync": true,
+  "tests": true,
+  "view_function": true
+ },
+ "7b6d1c0d2db855888242ce9b82cf8ef7704e5b30e8d87db25b85455914ec0224": {
+  "abstract": true,
+  "caller": true,
+  "custom": true,
+  "impl": true,
+  "null_session": false,
+  "test_client": true
+ },
+ "83afc73b7a820b4925cd313f55f703055276e0fa0ed70d8f9e4bd13047b20fde": {
+  "abstract": true,
+  "caller": true,
+  "custom": true,
+  "impl": true,
+  "null_session": true,
+  "test_client": true
+ },
+ "8ee5cac407a20965f85d987149fa2f895c1e05a8222acf01c015197acc431ab5": {
+  "annotation": false,
+  "builder": false,
+  "caller": true,
+  "enum": false,
+  "interface": true,
+  "policies": false
+ },
+ "91133cdd5bd81310e1caa1fd89a2d531eb14d7c390f1c233bf4c01eaf93609b7": {
+  "caller": true,
+  "forwarding": false,
+  "json": true,
+  "sinks_module": true,
+  "standard": true,
+  "summary": true,
+  "test_sink": false
+ },
+ "a22ca29c13c14edf13be6a647d6e04f6818b30a6eda82f977bed01b71623a31b": {
+  "abstract": true,
+  "init_every_request": false,
+  "method_view": true,
+  "sync": true,
+  "tests": true,
+  "view_function": true
+ },
+ "a568be75d840dd11bdb1f1853e5fe81f4320a47bddfab807a7450f1a3b21b007": {
+  "abstract": true,
+  "caller": true,
+  "custom": true,
+  "impl": true,
+  "null_session": true,
+  "test_client": true
+ },
+ "a6ce64b9845bed55e5812bc230630bb6ce0fbf6d43402e1fc16b38da06d2e78b": {
+  "abstract": true,
+  "init_every_request": false,
+  "method_view": true,
+  "sync": true,
+  "tests": true,
+  "view_function": true
+ },
+ "a7874c00633776467fcd167b06d8db41a160a616fcf78fecfad7c478eebbdf96": {
+  "annotation": false,
+  "builder": false,
+  "caller": true,
+  "enum": false,
+  "interface": true,
+  "policies": false
+ },
+ "b8ecde29362dc09e99b5dfd998cd2bbdc36d2aeda183e534b628f88a31a5f3f4": {
+  "caller": true,
+  "forwarding": false,
+  "json": true,
+  "sinks_module": true,
+  "standard": true,
+  "summary": true,
+  "test_sink": false
+ },
+ "c156ff290df8df9c831220eba9024d1bf9fbd8712f69654b19d85cfbfe496d62": {
+  "caller": true,
+  "forwarding": false,
+  "json": true,
+  "sinks_module": false,
+  "standard": true,
+  "summary": true,
+  "test_sink": false
+ },
+ "c3c97993e814c61b90369ba01f8b53b756993be4797a0f4d85fea3072dfa28ac": {
+  "defaults": true,
+  "forwarding": false,
+  "matcher_tests": true,
+  "pcre2_impl": true,
+  "regex_impl": true,
+  "searcher_test": true,
+  "trait": true
+ },
+ "db3fe3d162fe607af6c6f2567c8831792b94a417bf54348833d25d859fcfa038": {
+  "abstract": true,
+  "caller": true,
+  "custom": true,
+  "impl": true,
+  "null_session": true,
+  "test_client": true
+ },
+ "e2e7b7ad1acf7bc7b9e792287672d236ec657425589c5ac33ffe24d379182b2e": {
+  "defaults": true,
+  "forwarding": false,
+  "matcher_tests": true,
+  "pcre2_impl": true,
+  "regex_impl": true,
+  "searcher_test": true,
+  "trait": true
+ },
+ "e3ad823c8e674db55599a0abcbffb21e720d523059de6c88d371a6096671bb5a": {
+  "abstract": true,
+  "init_every_request": false,
+  "method_view": true,
+  "sync": true,
+  "tests": true,
+  "view_function": false
+ },
+ "e4372ba02f24c0287e77e69981d49886e1b5f0401f308add6a2d4afe27fbd59f": {
+  "caller": true,
+  "forwarding": false,
+  "json": true,
+  "sinks_module": true,
+  "standard": true,
+  "summary": true,
+  "test_sink": false
+ },
+ "e7c63a0353485c0e9981a4efa358dc40218874e60d3c01ed6f6290f9a7ac132c": {
+  "abstract": true,
+  "caller": true,
+  "custom": true,
+  "impl": true,
+  "null_session": true,
+  "test_client": true
+ },
+ "eb3367c044b33c856b3d77d571ad96995c53281cb2bc970a3a27446f8f2ba662": {
+  "caller": true,
+  "forwarding": false,
+  "json": true,
+  "sinks_module": false,
+  "standard": true,
+  "summary": true,
+  "test_sink": false
+ },
+ "ee4d6cff006eb8f9eb64ea1b2039bd3532eb32b53a3cd1a54b1968dfc3bfc6c1": {
+  "defaults": false,
+  "forwarding": false,
+  "matcher_tests": true,
+  "pcre2_impl": true,
+  "regex_impl": true,
+  "searcher_test": true,
+  "trait": true
+ },
+ "f09d4f7e152e4fd45462649746a1bdb34272389fa581fbe32dadb2160e094150": {
+  "advanced": false,
+  "error_handler": true,
+  "error_middleware": true,
+  "impl": true,
+  "middleware": true,
+  "route": true,
+  "route_group": true
+ },
+ "f4d38d2e3d8a43627c818cd25b09203923d68704db3c7ee64dbd698dee46a1a6": {
+  "caller": true,
+  "forwarding": false,
+  "json": true,
+  "sinks_module": true,
+  "standard": true,
+  "summary": true,
+  "test_sink": false
+ },
+ "fecaea13e2eaf5b043f484fa51cafa031e6501a6316601a5030a999b0b12c231": {
+  "advanced": false,
+  "error_handler": true,
+  "error_middleware": true,
+  "impl": true,
+  "middleware": false,
+  "route": true,
+  "route_group": true
+ }
+}

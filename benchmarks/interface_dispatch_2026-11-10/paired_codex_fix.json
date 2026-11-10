@@ -1,0 +1,61 @@
+{
+ "rule": "majority",
+ "tasks": 6,
+ "pairs": 6,
+ "fact_share_difference": -0.0119,
+ "fact_share_difference_95ci": [
+  -0.2262,
+  0.119
+ ],
+ "token_ratio": 0.932,
+ "token_ratio_95ci": [
+  0.811,
+  1.007
+ ],
+ "tasks_better": 3,
+ "tasks_worse": 1,
+ "per_task": [
+  {
+   "task": "D_FLASK_SAVE_SESSION_IMPACT",
+   "pairs": 1,
+   "base_share": 1.0,
+   "new_share": 1.0,
+   "log_token_ratio": -0.01857273111170345
+  },
+  {
+   "task": "D_FLASK_VIEW_DISPATCH_IMPACT",
+   "pairs": 1,
+   "base_share": 0.8333333333333334,
+   "new_share": 0.8333333333333334,
+   "log_token_ratio": 0.001819535693460736
+  },
+  {
+   "task": "D_GSON_TRANSLATE_NAME_IMPACT",
+   "pairs": 1,
+   "base_share": 0.8333333333333334,
+   "new_share": 0.3333333333333333,
+   "log_token_ratio": -0.41329224675304255
+  },
+  {
+   "task": "D_RIPGREP_FIND_AT_IMPACT",
+   "pairs": 1,
+   "base_share": 0.8571428571428571,
+   "new_share": 1.0,
+   "log_token_ratio": 0.026169098495585973
+  },
+  {
+   "task": "D_RIPGREP_SINK_MATCHED_IMPACT",
+   "pairs": 1,
+   "base_share": 0.5714285714285714,
+   "new_share": 0.7142857142857143,
+   "log_token_ratio": 0.0001901321424113497
+  },
+  {
+   "task": "D_SLIM_RESOLVE_IMPACT",
+   "pairs": 1,
+   "base_share": 0.5714285714285714,
+   "new_share": 0.7142857142857143,
+   "log_token_ratio": -0.02133365059559214
+  }
+ ]
+}
