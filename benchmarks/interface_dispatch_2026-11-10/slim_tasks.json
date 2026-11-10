@@ -1,0 +1,55 @@
+{
+ "tasks": [
+  {
+   "id": "D_SLIM_RESOLVE_IMPACT",
+   "request": "What breaks if I change resolve in CallableResolverInterface of Slim? List the direct consumers and the implementations with file:line evidence.",
+   "rubric": [
+    {
+     "id": "impl",
+     "any": [
+      "CallableResolver.php:50",
+      "CallableResolver::resolve"
+     ]
+    },
+    {
+     "id": "middleware",
+     "any": [
+      "MiddlewareDispatcher"
+     ]
+    },
+    {
+     "id": "route_group",
+     "any": [
+      "RouteGroup"
+     ]
+    },
+    {
+     "id": "route",
+     "any": [
+      "Route.php:347",
+      "Route::run",
+      "Route.php"
+     ]
+    },
+    {
+     "id": "error_middleware",
+     "any": [
+      "ErrorMiddleware"
+     ]
+    },
+    {
+     "id": "error_handler",
+     "any": [
+      "ErrorHandler"
+     ]
+    },
+    {
+     "id": "advanced",
+     "any": [
+      "AdvancedCallableResolverInterface"
+     ]
+    }
+   ]
+  }
+ ]
+}

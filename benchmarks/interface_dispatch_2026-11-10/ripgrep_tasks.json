@@ -1,0 +1,107 @@
+{
+ "tasks": [
+  {
+   "id": "D_RIPGREP_SINK_MATCHED_IMPACT",
+   "request": "What breaks if I change the matched method of the Sink trait in ripgrep? List the direct consumers and the implementations with file:line evidence.",
+   "rubric": [
+    {
+     "id": "standard",
+     "any": [
+      "StandardSink"
+     ]
+    },
+    {
+     "id": "summary",
+     "any": [
+      "SummarySink"
+     ]
+    },
+    {
+     "id": "json",
+     "any": [
+      "JSONSink"
+     ]
+    },
+    {
+     "id": "forwarding",
+     "any": [
+      "Box<S>",
+      "&'a mut S",
+      "sink.rs:225",
+      "sink.rs:278"
+     ]
+    },
+    {
+     "id": "sinks_module",
+     "any": [
+      "UTF8",
+      "Lossy",
+      "Bytes"
+     ]
+    },
+    {
+     "id": "test_sink",
+     "any": [
+      "KitchenSink"
+     ]
+    },
+    {
+     "id": "caller",
+     "any": [
+      "sink_matched"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "D_RIPGREP_FIND_AT_IMPACT",
+   "request": "What breaks if I change find_at in the Matcher trait of ripgrep? List the direct consumers and the implementations with file:line evidence.",
+   "rubric": [
+    {
+     "id": "trait",
+     "any": [
+      "crates/matcher/src/lib.rs:571"
+     ]
+    },
+    {
+     "id": "regex_impl",
+     "any": [
+      "crates/regex/src/matcher.rs"
+     ]
+    },
+    {
+     "id": "pcre2_impl",
+     "any": [
+      "crates/pcre2/src/matcher.rs"
+     ]
+    },
+    {
+     "id": "forwarding",
+     "any": [
+      "lib.rs:1138",
+      "&M"
+     ]
+    },
+    {
+     "id": "defaults",
+     "any": [
+      "find_iter",
+      "fn find("
+     ]
+    },
+    {
+     "id": "searcher_test",
+     "any": [
+      "testutil.rs"
+     ]
+    },
+    {
+     "id": "matcher_tests",
+     "any": [
+      "tests/util.rs"
+     ]
+    }
+   ]
+  }
+ ]
+}
