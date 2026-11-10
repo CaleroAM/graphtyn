@@ -152,6 +152,135 @@ class ClassAncestry:
         return None
 
 
+# Above this many implementations a call is summarized, not fanned out: a one-method
+# `String()` interface with fifty implementers would otherwise add fifty unverifiable
+# consumers to every impact package that touches any of its call sites.
+_DISPATCH_FANOUT = 8
+_DISPATCH_OWNERS = {"interface", "protocol", "trait"}
+_CALLABLE_KINDS = {"method", "function"}
+
+
+class Implementations:
+    """The concrete methods a call on an interface, trait or abstract method may run.
+
+    Static resolution stops at the declaration (`Shape.area`); the code that runs is an
+    override in an implementing type. Precision policy, from strongest to weakest:
+
+    - The edge to the declaration keeps its own confidence: it is the static target.
+    - Each override gets a method-level `implementa` edge to the declaration, as strong as
+      the weakest `hereda`/`implementa` edge on the path between their types. These are
+      bounded by the number of overrides, not call sites, so they are always emitted:
+      impact on the declaration lists every override as affected.
+    - A call site gets one INFERRED `llama` edge per override only while the declaration
+      has at most `_DISPATCH_FANOUT` overrides. The runtime type is never known
+      structurally, so a dispatched edge is never EXTRACTED. Above the cap the call keeps
+      only the declaration edge, with `resolution.implementations` as the count.
+    - A receiver typed as a concrete class already resolves to its own override through
+      ranking (receiver match), so it never fans out. A `super` call runs the parent's
+      body by definition and never fans out either.
+    """
+
+    def __init__(self, nodes: dict[str, dict[str, Any]], links: list[dict[str, Any]]):
+        self.nodes = nodes
+        self.ancestry = ClassAncestry(nodes, links)
+        self.children: dict[str, list[tuple[str, str]]] = {}
+        for link in links:
+            if link.get("label") in ("hereda", "implementa") and link.get("confidence") != "AMBIGUOUS":
+                self.children.setdefault(str(link.get("target")), []).append(
+                    (str(link.get("source")), str(link.get("confidence") or "EXTRACTED")))
+        self.methods: dict[tuple[str, str], list[str]] = {}
+        for node_id, node in nodes.items():
+            if node.get("kind") in _CALLABLE_KINDS and node.get("container"):
+                owner = self.ancestry.owner(str(node.get("file") or ""), _simple(node["container"]))
+                if owner:
+                    self.methods.setdefault((owner, str(node.get("name") or "")), []).append(node_id)
+        self._found: dict[str, list[tuple[str, str]]] = {}
+
+    def _owner(self, target_id: str) -> str | None:
+        node = self.nodes.get(target_id, {})
+        if node.get("kind") not in _CALLABLE_KINDS or not node.get("container"):
+            return None
+        return self.ancestry.owner(str(node.get("file") or ""), _simple(node["container"]))
+
+    def is_dispatchable(self, target_id: str) -> bool:
+        """An interface, trait or protocol member (defaults included), or a method marked abstract."""
+        owner = self._owner(target_id)
+        if owner is None:
+            return False
+        return bool(self.nodes[target_id].get("abstract")) or self.nodes[owner].get("kind") in _DISPATCH_OWNERS
+
+    def _same_signature(self, target_id: str, owner: str | None, candidates: Any) -> list[str]:
+        """Among overloads, only the one with the declaration's arity overrides it.
+
+        `serialize(Object)` is not implemented by `serialize(Object, Type)`. Without overloads on
+        either side the name decides: Python and JavaScript overrides may add optional parameters.
+        """
+        candidates = list(candidates)
+        name, arity = self.nodes[target_id].get("name"), self.nodes[target_id].get("parameter_count")
+        if arity is None or (len(candidates) < 2 and len(self.methods.get((owner, str(name)), ())) < 2):
+            return candidates
+        return [method_id for method_id in candidates
+                if self.nodes[method_id].get("parameter_count") in (None, arity)]
+
+    def implementations(self, target_id: str) -> list[tuple[str, str]]:
+        """(method id, confidence) for every same-named method of a descendant type."""
+        if target_id in self._found:
+            return self._found[target_id]
+        name, owner = str(self.nodes[target_id].get("name") or ""), self._owner(target_id)
+        found: list[tuple[str, str]] = []
+        frontier, seen = [(owner, "EXTRACTED")] if owner else [], {owner}
+        for _depth in range(_MAX_ANCESTRY):
+            following = []
+            for type_id, confidence in frontier:
+                for child, edge_confidence in self.children.get(type_id, ()):
+                    if child in seen:
+                        continue
+                    seen.add(child)
+                    weakest = "INFERRED" if "INFERRED" in (confidence, edge_confidence) else "EXTRACTED"
+                    following.append((child, weakest))
+                    found.extend((method_id, weakest) for method_id in self._same_signature(
+                        target_id, owner, self.methods.get((child, name), ())) if method_id != target_id)
+            frontier = following
+            if not frontier:
+                break
+        self._found[target_id] = sorted(found)
+        return self._found[target_id]
+
+    def override_links(self) -> list[dict[str, Any]]:
+        """`implementa` edges from each override to the declaration it implements, and the count on it."""
+        links = []
+        for target_id, node in self.nodes.items():
+            if node.get("kind") not in _CALLABLE_KINDS or not self.is_dispatchable(target_id):
+                continue
+            found = self.implementations(target_id)
+            if found:
+                node["implementations"] = len(found)
+            for method_id, confidence in found:
+                method = self.nodes[method_id]
+                links.append({"source": method_id, "target": target_id, "label": "implementa",
+                              "color": "rgba(245, 158, 11, 0.4)", "confidence": confidence,
+                              "file": method.get("file"), "line": method.get("line"),
+                              "resolution": {"strategy": "override", "declaration": target_id}})
+        return links
+
+    def call_links(self, link: dict[str, Any]) -> list[dict[str, Any]]:
+        """The declaration edge, then one INFERRED edge per override while the fan-out is small."""
+        resolution = link.get("resolution") or {}
+        target_id = str(link.get("target"))
+        parent = resolution.get("receiver") in _PARENT_RECEIVERS \
+            or (resolution.get("receiver_chain") or [""])[0] in _PARENT_RECEIVERS
+        if parent or not self.is_dispatchable(target_id):
+            return [link]
+        found = self.implementations(target_id)
+        resolution["implementations"] = len(found)
+        resolution["dispatch"] = "none" if not found else "expanded" if len(found) <= _DISPATCH_FANOUT else "summarized"
+        if resolution["dispatch"] != "expanded":
+            return [link]
+        return [link, *({**link, "target": method_id, "confidence": "INFERRED",
+                         "resolution": {**resolution, "strategy": "interface-dispatch", "declaration": target_id}}
+                        for method_id, _confidence in found)]
+
+
 class CandidateRanker:
     """Rank possible relation targets from structural and import evidence."""
 

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v29-literal-free-declarations"
+PARSER_VERSION = "treesitter-v30-interface-dispatch"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -153,11 +153,23 @@ def _language_for_extension(ext: str, source: bytes = b""):
 
 _ESM_PACKS = {"javascript", "typescript"}
 # (name, type) declarations, then (type, name) ones: Go writes `c *Command` and `c := &Command{}`.
+# How a language writes "variable `name` has type `type`", as lookaheads so that every
+# start is seen. Python and Rust annotate after the name (`shape: Shape`), so the
+# C-style `Type name` pattern would only mistype them, and both bind a constructor
+# result (`c = Circle(...)`, `let c = Circle::new()`, `Direction::North`).
+_TYPED_NAME = r"(?=\b(?P<name>[a-z_][A-Za-z0-9_]*)\s*:\s*{prefix}(?P<type>[A-Z][A-Za-z0-9_]+)\b)"  # one letter is a generic
 _DECLARATION_PATTERNS = {
-    "default": (r"(?=\bvar\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*new\s+([A-Za-z_][A-Za-z0-9_]*))",
-                r"(?=\b([A-Z][A-Za-z0-9_.<>]*)\s+([A-Za-z_][A-Za-z0-9_]*)\b)"),
-    "go": (r"(?=\b([a-z_][A-Za-z0-9_]*)(?:\s+(?:\*|\[\])?|\s*:=\s*&?)(?:[a-z_][A-Za-z0-9_]*\.)?([A-Z][A-Za-z0-9_]*)\b)",
-           r"(?=\b([A-Z][A-Za-z0-9_.<>]*)\s+([A-Za-z_][A-Za-z0-9_]*)\b)"),
+    "default": (r"(?=\bvar\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*new\s+(?P<type>[A-Za-z_][A-Za-z0-9_]*))",
+                r"(?=\b(?P<type>[A-Z][A-Za-z0-9_.<>]*)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\b)"),
+    "go": (r"(?=\b(?P<name>[a-z_][A-Za-z0-9_]*)(?:\s+(?:\*|\[\])?|\s*:=\s*&?)(?:[a-z_][A-Za-z0-9_]*\.)?(?P<type>[A-Z][A-Za-z0-9_]*)\b)",
+           r"(?=\b(?P<type>[A-Z][A-Za-z0-9_.<>]*)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\b)"),
+    "typescript": (r"(?=\b(?:var|let|const)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*new\s+(?P<type>[A-Za-z_][A-Za-z0-9_]*))",
+                   r"(?=\b(?P<type>[A-Z][A-Za-z0-9_.<>]*)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\b)",
+                   r"(?=[(,]\s*(?:(?:public|private|protected|readonly)\s+)*(?P<name>[a-z_][A-Za-z0-9_]*)\??\s*:\s*(?P<type>[A-Z][A-Za-z0-9_]*)\b)"),
+    "python": (_TYPED_NAME.format(prefix=r"[\"']?(?:Optional\[)?(?:[A-Za-z_][A-Za-z0-9_]*\.)*"),
+               r"(?=\b(?P<name>[a-z_][A-Za-z0-9_]*)\s*=\s*(?:[A-Za-z_][A-Za-z0-9_]*\.)*(?P<type>[A-Z][A-Za-z0-9_]*)\()"),
+    "rust": (_TYPED_NAME.format(prefix=r"&?(?:'[a-z_]+\s+)?(?:mut\s+)?(?:dyn\s+|impl\s+)?(?:[A-Za-z_][A-Za-z0-9_]*::)*"),
+             r"(?=\b(?P<name>[a-z_][A-Za-z0-9_]*)\s*=\s*(?:[a-z_][A-Za-z0-9_]*::)*(?P<type>[A-Z][A-Za-z0-9_]*)\s*(?:::|\{))"),
 }
 _OWNER_DECLARATIONS = {"rust": "impl_item", "go": "type_spec"}
 _HERITAGE_FIELDS = ("bases", "superclass", "superclasses", "interfaces", "bounds")
@@ -665,7 +677,50 @@ def _member_facts(ctx: _FileContext, node, line: int, end_line: int, evidence: s
                 "parameter_count": parameters.named_child_count if parameters is not None else None,
                 "required_parameter_count": parameters.named_child_count if parameters is not None else None,
                 "is_constructor": False, "signature": evidence,
+                **({"abstract": True} if _ABSTRACT_MODIFIER.search(evidence.split(method_name, 1)[0]) else {}),
             })
+
+
+_BODILESS_MEMBERS = frozenset({"function_signature_item", "method_elem", "method_signature", "abstract_method_signature"})
+_ABSTRACT_MODIFIER = re.compile(r"\b(?:abstract|virtual)\b")
+_PYTHON_ABSTRACT_BASES = re.compile(r"\b(?:ABC|ABCMeta|Protocol)\b")
+
+
+def _python_statements(source: bytes, body) -> list[Any]:
+    """The statements of a block, without its docstring and comments."""
+    return [child for child in body.named_children if child.type != "comment" and not (
+        child.type == "expression_statement" and child.named_children and child.named_children[0].type == "string")]
+
+
+def _abstract(ctx: _FileContext, node, name: str, signature: str) -> bool:
+    """Whether a declaration leaves its body to implementers, so a call to it runs an override.
+
+    Bodiless members of interfaces, traits and Go interfaces; an `abstract` or `virtual`
+    modifier; in Python, `@abstractmethod`, a body that only raises NotImplementedError, every
+    method of a `Protocol`, and a class deriving from ABC or Protocol.
+    """
+    if node.type in _BODILESS_MEMBERS or _ABSTRACT_MODIFIER.search(signature.split(name, 1)[0]):
+        return True
+    if ctx.pack.name != "python":
+        return False
+    owner = node if node.type == "class_definition" else node.parent
+    while owner is not None and owner.type != "class_definition":
+        owner = owner.parent
+    superclasses = owner.child_by_field_name("superclasses") if owner is not None else None
+    written = _text(ctx.source, superclasses) if superclasses is not None else ""
+    if node.type == "class_definition":
+        return bool(_PYTHON_ABSTRACT_BASES.search(written))
+    if owner is None or node.type != "function_definition":
+        return False
+    if re.search(r"\bProtocol\b", written):
+        return True
+    parent, body = node.parent, node.child_by_field_name("body")
+    if parent is not None and parent.type == "decorated_definition" \
+            and "abstractmethod" in ctx.source[parent.start_byte:node.start_byte].decode("utf-8", errors="replace"):
+        return True
+    statements = _python_statements(ctx.source, body) if body is not None else []
+    return len(statements) == 1 and statements[0].type == "raise_statement" \
+        and "NotImplementedError" in _text(ctx.source, statements[0])
 
 
 def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: str) -> Optional[dict[str, Any]]:
@@ -674,6 +729,8 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
     if node.type in {"class_specifier", "struct_specifier", "union_specifier", "enum_specifier"} \
             and node.child_by_field_name("body") is None:
         name = ""
+    if node.type == "method_signature" and (node.parent is None or node.parent.type != "interface_body"):
+        name = ""  # an overload signature inside a class, or a member of an object type literal
     if not name and node.type == "constructor_declaration":
         name_node = node.child_by_field_name("name")
         name = _text(ctx.source, name_node) if name_node else "constructor"
@@ -743,6 +800,7 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
             # `{delay(n) {...}}` is reached as `options.delay(n)`, never by a bare `delay(n)`.
             **({"object_member": True} if node.type == "method_definition" and node.parent is not None
                and node.parent.type == "object" else {}),
+            **({"abstract": True} if _abstract(ctx, node, name, signature or evidence) else {}),
         }
     return None
 
@@ -835,9 +893,13 @@ _SYMBOL_TYPES = {
     "struct_item": "struct",
     "enum_item": "enum",
     "trait_item": "interface",
+    "function_signature_item": "function",  # a method a Rust trait requires, or an extern fn
     "type_declaration": "type",
     "type_spec": "type",
     "method_elem": "method",  # a method a Go interface requires
+    "method_signature": "method",  # a method a TypeScript interface requires
+    "abstract_method_signature": "method",
+    "abstract_class_declaration": "class",
     "trait_declaration": "interface",
     "class_specifier": "class",
     "struct_specifier": "struct",
@@ -857,7 +919,7 @@ _SYMBOL_TYPES = {
 
 _CALL_TYPES = frozenset({"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression", "function_call_expression", "member_call_expression", "nullsafe_member_call_expression", "scoped_call_expression", "method_invocation"})
 _IMPORT_TYPES = frozenset({"using_directive", "import_statement", "import_from_statement", "import_declaration", "package_clause", "use_declaration", "namespace_use_declaration", "preproc_include"})
-_TYPE_DECLARATIONS = frozenset({"class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item", "trait_declaration", "class_specifier", "struct_specifier", "union_specifier", "class"})
+_TYPE_DECLARATIONS = frozenset({"class_declaration", "abstract_class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item", "trait_declaration", "class_specifier", "struct_specifier", "union_specifier", "class"})
 _CALLABLE_DECLARATIONS = frozenset({"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item", "method", "singleton_method"})
 
 
@@ -1012,26 +1074,26 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     for index, text in enumerate(source_lines):
         prefix_end.append(prefix_end[-1] + len(text) + (1 if index else 0))
     declarations: dict[str, tuple[list[tuple[int, str]], list[tuple[int, str]]]] = {}
-    identifier_declarations: tuple[dict, dict] | None = None
+    identifier_declarations: tuple[dict, ...] | None = None
 
-    def _identifier_declarations() -> tuple[dict, dict]:
+    def _identifier_declarations() -> tuple[dict, ...]:
         """Index `var x = new T` and `T x` for every identifier in one pass.
 
         Overlapping lookaheads expose every start. Accepting a start only at or
         after the previous accepted end for the same identifier reproduces the
         non-overlapping scan a per-identifier pattern would perform.
         """
-        found: tuple[dict, dict] = ({}, {})
         patterns = _DECLARATION_PATTERNS.get(pack.name, _DECLARATION_PATTERNS["default"])
+        found: tuple[dict, ...] = tuple({} for _pattern in patterns)
         for slot, pattern in enumerate(patterns):
             last_end: dict[str, int] = {}
             for match in re.finditer(pattern, joined):
-                name, type_name = ((match.group(1), match.group(2)) if slot == 0
-                                   else (match.group(2), match.group(1)))
+                name, type_name = match.group("name"), match.group("type")
+                end = max(match.end("name"), match.end("type"))
                 if match.start() < last_end.get(name, -1):
                     continue
-                last_end[name] = match.end(2)
-                found[slot].setdefault(name, []).append((match.end(2), type_name))
+                last_end[name] = end
+                found[slot].setdefault(name, []).append((end, type_name))
         return found
 
     def _receiver_declarations(receiver: str) -> tuple[list[tuple[int, str]], list[tuple[int, str]]]:

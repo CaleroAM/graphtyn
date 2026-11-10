@@ -12,7 +12,7 @@ from .tree_sitter_backend import (
 )
 from .overview_report import collect_project_evidence
 from .graph_hygiene import normalize_graph
-from .relation_resolution import CandidateRanker, ClassAncestry, go_implementations, unique_symbol_id
+from .relation_resolution import CandidateRanker, Implementations, go_implementations, unique_symbol_id
 from .ruby_mro import RubyAncestry, lexical_candidates as ruby_lexical_candidates, qualified_name as ruby_qualified_name
 from .source_files import git_visible_files
 from .type_evidence import apply_type_evidence
@@ -105,6 +105,28 @@ VALID_EXTS = (
     ".unity", ".prefab", ".asset", ".asmdef", ".shader", ".uxml", ".json",
     ".yaml", ".yml", ".toml", ".ini", ".cfg",
 )
+
+def _simple_type(value: str) -> str:
+    """`*Base`, `Base*`, `List<T>`, `T[]`, `pkg.Base` and `ref Base` all name the type `Base`."""
+    value = re.sub(r"\b(?:ref|out|in|params)\s+", "", str(value or "")).strip().strip("*& ")
+    value = re.sub(r"[?\[\]].*", "", value)
+    value = value.split("<", 1)[0]
+    return value.rsplit(".", 1)[-1]
+
+
+def _receiver_misses(call: Dict[str, Any], receiver_type: str, targets: set, source_id: str, node_by_id: Dict[str, Any]) -> bool:
+    """A typed receiver that no candidate belongs to, or a variable whose only candidate is the caller.
+
+    The first is normally a framework call (`enum.ToString`). The second is recursion through a
+    declared variable (`blueprint.register(...)` inside `Blueprint.register`): the caller is never
+    its own target, and the call must not fall through to an unrelated class with that method.
+    Calls on the caller's own object or on a class name keep falling through to a base.
+    """
+    owned = {target for target in targets if node_by_id.get(target, {}).get("container") == receiver_type}
+    declared = bool(call.get("receiver_type")) and call.get("receiver") != receiver_type and not call.get("self_receiver") \
+        and (call.get("receiver_chain") or [""])[0] not in ("this", "base", "self", "cls", "super")
+    return bool(receiver_type) and (not owned or (declared and owned == {source_id}))
+
 
 def _same_language_targets(call: Dict[str, Any], targets: set, rel_file: str, node_by_id: Dict[str, Any]) -> set:
     """A bare Ruby identifier is only a probable call: keep targets in its own language."""
@@ -332,7 +354,7 @@ class ASTParser:
                     "parameter_count": sym.get("parameter_count"), "signature": sym.get("signature", ""),
                     "required_parameter_count": sym.get("required_parameter_count"),
                     "is_constructor": sym.get("is_constructor", False),
-                    "assembly": file_assembly, **({"object_member": True} if sym.get("object_member") else {}),
+                    "assembly": file_assembly, **{key: True for key in ("object_member", "abstract") if sym.get(key)},
                 }
                 if kind in ("class", "interface", "struct", "union", "enum", "module") and import_evidence:
                     symbol_node["imports"] = import_evidence
@@ -816,12 +838,6 @@ class ASTParser:
         # Pass 4: Resolve precise tree-sitter inheritance and call evidence.
         node_by_id = {node["id"]: node for node in nodes}
 
-        def _simple_type(value: str) -> str:
-            value = re.sub(r"\b(?:ref|out|in|params)\s+", "", str(value or "")).strip().strip("*& ")  # Go `*Base`, C++ `Base*`
-            value = re.sub(r"[?\[\]].*", "", value)
-            value = value.split("<", 1)[0]
-            return value.rsplit(".", 1)[-1]
-
         member_types: Dict[tuple[str, str], str] = {}
         for file_members in tree_members.values():
             for member in file_members:
@@ -891,7 +907,8 @@ class ASTParser:
                 if target_file is not None:
                     symbols_by_file_name.setdefault((target_file, symbol_name), []).append(target)
         ruby_ancestry = RubyAncestry(nodes, links) if any(path.endswith(".rb") for path in tree_calls) else None
-        class_ancestry = ClassAncestry(node_by_id, links)
+        implementations = Implementations(node_by_id, links)
+        links.extend(implementations.override_links())
         for rel_file, calls in tree_calls.items():
             f_id = f"file:{rel_file}"
             seen_calls = set()
@@ -931,14 +948,13 @@ class ASTParser:
                 if not targets:
                     continue
                 receiver_type = _chain_receiver_type(call) or call.get("receiver_type") or call.get("receiver", "")
-                known_containers = {node_by_id.get(target, {}).get("container") for target in targets}
                 # A typed receiver that matches none of the project candidates
                 # is normally a framework/BCL call (e.g. enum.ToString), not a
                 # call to an unrelated same-named method in this repository.
-                inherited = class_ancestry.dispatch(call, rel_file, targets)
+                inherited = implementations.ancestry.dispatch(call, rel_file, targets)
                 if inherited:
                     targets, receiver_type = inherited
-                elif receiver_type and receiver_type not in known_containers and call.get("receiver"):
+                elif call.get("receiver") and _receiver_misses(call, receiver_type, targets, source_id, node_by_id):
                     continue
                 if call.get("bound_locally"):
                     suppressed_relations["bound_calls"] += 1
@@ -973,7 +989,7 @@ class ASTParser:
                         continue
                     seen_calls.add(call_key)
                     exact = best_score >= 6
-                    links.append({
+                    links.extend(implementations.call_links({
                         "source": source_id, "target": target_id, "label": "llama",
                         "color": "rgba(56, 189, 248, 0.35)",
                         "confidence": "AMBIGUOUS" if len(best) > 1 else ("EXTRACTED" if exact else "INFERRED"),
@@ -986,7 +1002,7 @@ class ASTParser:
                             "caller": call.get("caller", ""),
                             "called_name": call.get("name", ""), "target_name": target_name,
                         },
-                    })
+                    }))
 
         # Pass 5: Cross-symbol fallback resolution for legacy parsers.
         from .laravel_resolver import add_laravel_relations
