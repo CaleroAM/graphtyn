@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import json
 import re
+import time
+from pathlib import Path
 from typing import Any
 
 from .lean_package import lean_payload, serialized_tokens
@@ -42,11 +44,71 @@ def named_identifiers(request: str) -> list[str]:
     return list(dict.fromkeys(_IDENTIFIER.findall(_CITATION_REQUEST.sub("", str(request or "")))))
 
 
+_ACRONYM_LENGTH = 4
+_HITS_PER_NAME = 3
+_SCAN_SECONDS = 1.5
+_MAX_FILE_BYTES = 1_000_000
+_NAMES_CACHE: dict[int, tuple[int, list[str]]] = {}
+
+
+def _graph_names(graph: dict[str, Any]) -> list[str]:
+    cached = _NAMES_CACHE.get(id(graph))
+    if cached and cached[0] == len(graph.get("nodes", [])):
+        return cached[1]
+    names = sorted({str(node.get("name") or "").lower() for node in graph.get("nodes", []) if node.get("name")})
+    _NAMES_CACHE.clear()
+    _NAMES_CACHE[id(graph)] = (len(graph.get("nodes", [])), names)
+    return names
+
+
+def requested_identifiers(request: str, graph: dict[str, Any] | None = None) -> list[str]:
+    """Named identifiers, without prose acronyms: a short all-caps word (`API`, `JWT`) counts only when
+    some symbol of the project starts with it (`GET` → `getCommand`)."""
+    names = named_identifiers(request)
+    if graph is None:
+        return names
+    known = _graph_names(graph)
+    return [name for name in names
+            if not (name.isupper() and len(name) <= _ACRONYM_LENGTH)
+            or any(symbol.startswith(name.lower()) for symbol in known)]
+
+
+def identifier_hits(root: Path, graph: dict[str, Any], names: list[str]) -> dict[str, list[list[str]]]:
+    """Where identifiers the graph has no symbol for appear in the indexed files: [file:line, code].
+
+    A configuration key or a local variable is not a symbol; three exact locations save the agent a search.
+    """
+    hits: dict[str, list[list[str]]] = {name: [] for name in names}
+    patterns = {name: re.compile(r"(?<![\w])" + re.escape(name) + r"(?![\w])") for name in names}
+    paths = sorted({str(node.get("file") or str(node.get("id") or "").removeprefix("file:"))
+                    for node in graph.get("nodes", []) if node.get("kind") == "file" or node.get("file")})
+    deadline, base = time.monotonic() + _SCAN_SECONDS, Path(root).resolve()
+    for path in paths:
+        if time.monotonic() > deadline or all(len(found) >= _HITS_PER_NAME for found in hits.values()):
+            break
+        source = (base / path).resolve()
+        try:
+            if not source.is_relative_to(base) or source.stat().st_size > _MAX_FILE_BYTES:
+                continue
+            raw = source.read_bytes()
+        except OSError:
+            continue
+        wanted = [name for name in names if len(hits[name]) < _HITS_PER_NAME and name.encode() in raw]
+        if not wanted:
+            continue
+        for number, line in enumerate(raw.decode("utf-8", errors="replace").splitlines(), 1):
+            for name in wanted:
+                if len(hits[name]) < _HITS_PER_NAME and patterns[name].search(line):
+                    hits[name].append([f"{path}:{number}", " ".join(line.split())[:160]])
+    return hits
+
+
 def evidence_tokens(lean: dict[str, Any]) -> int:
     return serialized_tokens({key: lean.get(key) for key in ("entities", "relations", "source_evidence")})
 
 
-def _verdict(result: dict[str, Any], request: str) -> dict[str, Any]:
+def _verdict(result: dict[str, Any], request: str, graph: dict[str, Any] | None = None,
+             root: Path | None = None) -> dict[str, Any]:
     lean = lean_payload(result)
     verdict: dict[str, Any] = {}
     parts = len(request_parts(request))
@@ -56,22 +118,48 @@ def _verdict(result: dict[str, Any], request: str) -> dict[str, Any]:
     text = json.dumps(lean, ensure_ascii=False).lower()
     # Whole identifiers: `lua_pcallk` does not show that `lua_pcall` was found.
     # A name in capitals only has to start a word (`BLPOP` → `blpopCommand`, `UTF` → `utf8`).
-    unmatched = [name for name in named_identifiers(request)
+    unmatched = [name for name in requested_identifiers(request, graph)
                  if not re.search(r"(?<![\w])" + re.escape(name.lower()) + ("" if name.isupper() else r"(?![\w])"), text)]
+    if unmatched and graph is not None and root is not None:
+        # A symbol the graph has but did not select is a real gap; a name that is only text gets its
+        # locations; a name found nowhere is reported as absent instead of sending the agent to search.
+        names = _graph_names(graph)
+        exact = set(names)
+        # Like the match above, a name in capitals names a symbol it starts (`UNLINK` → `unlinkCommand`).
+        is_symbol = lambda name: name.lower() in exact or (name.isupper() and any(  # noqa: E731
+            symbol.startswith(name.lower()) for symbol in names))
+        textual = [name for name in unmatched if not is_symbol(name)]
+        found = identifier_hits(root, graph, textual) if textual else {}
+        located = {name: places for name, places in found.items() if places}
+        if located:
+            verdict["identifier_hits"] = located
+        absent = [name for name in textual if name not in located]
+        if absent:
+            verdict["absent_identifiers"] = absent
+        unmatched = [name for name in unmatched if is_symbol(name)]
     if unmatched:
         verdict["unmatched_identifiers"] = unmatched
     return verdict
 
 
 def mark_insufficient_evidence(result: dict[str, Any], request: str,
-                               mirror: dict[str, Any] | None = None) -> bool:
+                               mirror: dict[str, Any] | None = None, graph: dict[str, Any] | None = None,
+                               root: Path | None = None) -> bool:
     """Withdraw a completeness claim the evidence cannot support; return whether it did.
 
     `mirror` (the internal package `result` was rendered from) receives the same verdict.
     """
     if not result.get("do_not_expand"):
         return False
-    verdict = _verdict(result, request)
+    verdict = _verdict(result, request, graph, root)
+    located = {key: verdict.pop(key) for key in ("identifier_hits", "absent_identifiers") if key in verdict}
+    if located:
+        result["identifier_lookup"] = located
+        result["guidance"] = (f"{result.get('guidance') or ''} identifier_lookup.identifier_hits shows where named "
+                              "identifiers that are not symbols appear [file:line, code]; absent_identifiers appear in no "
+                              "indexed file: say so instead of searching.").strip()
+        if mirror is not None:
+            mirror["identifier_lookup"] = located
     if not verdict:
         return False
     missing = (["request_parts"] if "request_parts" in verdict else []) + (
