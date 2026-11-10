@@ -1,0 +1,46 @@
+"""`the matched method of the Sink trait`: the named owner's member, its implementations, and generic bounds."""
+from graphtyn.core.ast_parser import ASTParser
+from graphtyn.core.impact_references import _calls_first, impact_targets
+from graphtyn.core.tree_sitter_backend import _bounded_generics
+
+
+def test_the_named_owner_keeps_its_member_and_what_implements_it():
+    nodes = [{"id": "decl", "name": "matched", "kind": "function", "container": "Sink"},
+             {"id": "impl", "name": "matched", "kind": "function", "container": "JSONSink"},
+             {"id": "other", "name": "matched", "kind": "function", "container": "Gitignore"},
+             {"id": "trait", "name": "Sink", "kind": "trait"}]
+    links = [{"source": "impl", "target": "decl", "label": "implementa"}]
+
+    chosen = impact_targets(nodes, {"matched"}, set(), links, "the matched method of the Sink trait")
+
+    assert [node["id"] for node in chosen] == ["decl", "impl"]
+    # Written in lower case, `sink` is a word, not the owner.
+    assert len(impact_targets(nodes, {"matched"}, set(), links, "what does the sink do when matched")) == 3
+
+
+def test_member_calls_come_before_prose_mentions():
+    references = [["doc", "a.rs:1", False], ["run", "b.rs:2", True], ["log", "c.rs:3", False]]
+    assert _calls_first(references) == [["run", "b.rs:2"], ["doc", "a.rs:1"], ["log", "c.rs:3"]]
+
+
+def test_a_field_of_a_generic_type_takes_the_bound():
+    members = [{"name": "sink", "type": "S"}, {"name": "out", "type": "W"}, {"name": "repo", "type": "Repo"}]
+    text = "struct Core<S> { sink: S }\nimpl<'s, S: Sink, W: io::Write> Core<S> {}\nimpl<W: Display> X for W {}\n"
+    typed = {member["name"]: member["type"] for member in _bounded_generics(members, text)}
+    assert typed == {"sink": "Sink", "out": "W", "repo": "Repo"}  # W is bound twice: left as written
+
+
+def test_a_call_through_a_generic_field_reaches_the_trait_and_its_implementations(tmp_path):
+    (tmp_path / "lib.rs").write_text(
+        "pub trait Sink {\n    fn matched(&mut self) -> bool;\n}\n\n"
+        "impl<S: Sink> Sink for Box<S> {\n    fn matched(&mut self) -> bool { (**self).matched() }\n}\n\n"
+        "pub struct Printer;\nimpl Sink for Printer {\n    fn matched(&mut self) -> bool { true }\n}\n\n"
+        "pub struct Core<S> {\n    sink: S,\n}\n\nimpl<S: Sink> Core<S> {\n"
+        "    fn sink_matched(&mut self) -> bool { self.sink.matched() }\n}\n", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+
+    targets = {nodes[link["target"]].get("container") for link in graph["links"] if link.get("label") == "llama"
+               and nodes[link["source"]].get("name") == "sink_matched"}
+
+    assert "Sink" in targets and "Printer" in targets and "S" not in targets

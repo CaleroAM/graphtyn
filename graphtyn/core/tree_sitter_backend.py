@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v30-interface-dispatch"
+PARSER_VERSION = "treesitter-v31-generic-bounds"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -266,6 +266,31 @@ def _with_trait_impls(pack: str, symbols: list[dict[str, Any]], root: Any, sourc
                 owner["bases"].append(names[-1])
         stack.extend(node.named_children)
     return symbols
+
+
+# `S: Sink`, `S: 'a + Sink`, `S: ?Sized + io::Write` (Rust, Swift, Kotlin) and `T extends Foo` (Java, TypeScript).
+_GENERIC_BOUND = re.compile(r"(?<![\w:.'])([A-Z][A-Za-z0-9]{0,2})\s*(?::|\s+extends)\s*"
+                            r"(?:(?:'\w+|\?Sized)\s*\+\s*)*(?:\w+::)*([A-Z][A-Za-z0-9_]+)")
+
+
+def _bounded_generics(members: list[dict[str, Any]], text: str) -> list[dict[str, Any]]:
+    """A field typed by a generic parameter (`sink: S` with `S: Sink`) is typed by its bound.
+
+    Without the bound, `self.sink.matched()` matched a forwarding impl whose type is also
+    called `S` (`impl<S: Sink> Sink for &mut S`). A name bound to two traits stays as written.
+    """
+    generic = {member.get("type") for member in members if re.fullmatch(r"[A-Z][A-Za-z0-9]{0,2}", str(member.get("type") or ""))}
+    if not generic:
+        return members
+    bounds: dict[str, set[str]] = {}
+    for name, bound in _GENERIC_BOUND.findall(text):
+        if name in generic:
+            bounds.setdefault(name, set()).add(bound)
+    for member in members:
+        bound = bounds.get(member.get("type"))
+        if bound and len(bound) == 1:
+            member["type"] = next(iter(bound))
+    return members
 
 
 def _python_members(pack: str, root: Any, source: bytes, rel_path: str) -> list[dict[str, Any]]:
@@ -1156,7 +1181,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "symbols": _with_trait_impls(pack.name, symbols, tree.root_node, source),
         "calls": calls,
         "imports": imports,
-        "members": members + _python_members(pack.name, tree.root_node, source, rel_path),
+        "members": _bounded_generics(members + _python_members(pack.name, tree.root_node, source, rel_path), joined),
         "operations": operations,
         "namespace": namespace,
     }

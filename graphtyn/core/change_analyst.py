@@ -791,7 +791,8 @@ _IMPACT_ANCHOR_SHARE = 0.5
 def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names: set[str], request: str,
                     request_terms: list[str], max_nodes: int, requested_ceiling: int) -> dict[str, Any]:
     by_id = {node.get("id"): node for node in all_nodes}
-    named = _impact_targets(all_nodes, explicit_names, _named_package_roots(all_nodes, request), graph.get("links", []))
+    named = _impact_targets(all_nodes, explicit_names, _named_package_roots(all_nodes, request), graph.get("links", []),
+                            request)
     all_consumers = _direct_consumers(graph, by_id, {node.get("id") for node in named})
     incoming = {node.get("id"): 0 for node in named}
     for edges in all_consumers.values():

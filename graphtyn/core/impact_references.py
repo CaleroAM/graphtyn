@@ -35,18 +35,39 @@ _ANCESTRY_DEPTH = 8
 
 
 def impact_targets(nodes: list[dict], names: set[str], package_roots: set[str],
-                   links: list[dict] | None = None) -> list[dict]:
+                   links: list[dict] | None = None, request: str = "") -> list[dict]:
     """Definitions a change affects: those of the package the request names, when it has them.
 
     A homonym elsewhere still counts when its class descends from that package
     (`ActionMailer::MailDeliveryJob#perform` overrides `ActiveJob::Base#perform`).
     """
-    named = [node for node in nodes if str(node.get("name") or "").lower() in names]
+    named = _owned_by_named_type([node for node in nodes if str(node.get("name") or "").lower() in names], request, links)
     inside = [node for node in named if in_named_scope(node, package_roots)]
     outside = [node for node in named if not in_named_scope(node, package_roots)]
     if not inside or not outside or not links:
         return inside or named
     return inside + _overrides(outside, nodes, links, package_roots)
+
+
+_TYPE_KINDS = {"class", "module", "struct", "interface", "trait", "protocol", "enum"}
+
+
+def _owned_by_named_type(named: list[dict], request: str, links: list[dict] | None) -> list[dict]:
+    """`the matched method of the Sink trait`: the member of the named type and what implements it.
+
+    Without this, every `matched` in the repository competes for the anchors, and the most
+    called homonym (`Gitignore::matched`) displaces the declaration that was asked about.
+    """
+    words = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", request or ""))
+    # The owner is written as declared (`Sink`, not `sink`) and is not the member's own name.
+    members = [node for node in named if node.get("kind") not in _TYPE_KINDS
+               and (owner := str(node.get("container") or "")) in words and owner != node.get("name")]
+    if not members:
+        return named
+    member_ids = {node.get("id") for node in members}
+    implementing = {link.get("source") for link in links or ()
+                    if link.get("label") in {"implementa", "hereda"} and link.get("target") in member_ids}
+    return members + [node for node in named if node.get("id") in implementing and node.get("id") not in member_ids]
 
 
 def _overrides(candidates: list[dict], nodes: list[dict], links: list[dict], package_roots: set[str]) -> list[dict]:
@@ -157,17 +178,19 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anc
     symbols = _symbols_by_file(graph)
     pattern = re.compile(r"(?<![\w])(?:" + "|".join(re.escape(name) for name in sorted(names)) + r")(?![\w])")
     needles = [name.encode() for name in names]
+    # `self.sink.matched(` is a use; "matched lines" in a message is not, and must not fill the list first.
+    call = re.compile(r"(?:\.|::|->)\s*(?:" + "|".join(re.escape(name) for name in sorted(names)) + r")\s*[(<!]")
     # In a monorepo, uses inside the symbol's own component matter first and fill the list.
-    homes = {str(node.get("file")).split("/", 1)[0] for node in anchors if node.get("file")}
+    homes = {package_root(node) for node in anchors if node.get("file")}
     paths = sorted({str(node.get("file")) for node in nodes if node.get("file")},
-                   key=lambda path: (bool(TEST_PATH.search(path)), path.split("/", 1)[0] not in homes, path))
+                   key=lambda path: (bool(TEST_PATH.search(path)), package_root({"file": path}) not in homes, path))
     references, seen = [], set()
     deadline = time.monotonic() + _SCAN_SECONDS
     for path in paths:
         if path.endswith(_SKIPPED_SUFFIXES) or VENDORED_PATH.search(path):
             continue
         if time.monotonic() > deadline:
-            return references, True
+            return _calls_first(references), True
         try:
             source = root / path
             if source.stat().st_size > _MAX_FILE_BYTES:
@@ -187,8 +210,13 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anc
             if owner in names or key in resolved_symbols or key in seen:
                 continue
             seen.add(key)
-            references.append([owner, f"{path}:{number}"])
-    return references, False
+            references.append([owner, f"{path}:{number}", bool(call.search(text))])
+    return _calls_first(references), False
+
+
+def _calls_first(references: list[list]) -> list[list[str]]:
+    """Member-call syntax first, in scan order; the flag is dropped."""
+    return [reference[:2] for reference in sorted(references, key=lambda reference: not reference[2])]
 
 
 def attach_text_references(root: Path, graph: dict[str, Any] | None, data: dict[str, Any]) -> None:

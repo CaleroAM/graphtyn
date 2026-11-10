@@ -26,6 +26,13 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Una pregunta de impacto que nombra al dueño de un método («el método `matched` del trait
+  `Sink`») ancla ese miembro y sus implementaciones, en vez de repartir las anclas entre todos los
+  homónimos del repositorio. Las referencias de texto ponen primero las llamadas (`.matched(`) y
+  los usos del mismo miembro del workspace, antes que las menciones en prosa.
+- Un campo con tipo genérico (`sink: S` con `S: Sink`, o `T extends Foo`) toma el tipo de su cota,
+  así que `self.sink.matched()` llega al trait y a sus implementaciones y no a un impl de reenvío
+  cuyo tipo también se llama `S`.
 - Una llamada recursiva a través de una variable tipada (`blueprint.register(...)` dentro de
   `Blueprint.register`) ya no cae en un método homónimo de otra clase.
 
