@@ -58,6 +58,9 @@ compatibles con PEP 440.
   variable local) llega con hasta tres ubicaciones en `identifier_lookup`; y uno que no aparece en
   ningún archivo se informa como ausente. Solo un símbolo que existe y no se seleccionó sigue
   siendo un hueco. En 68 preguntas reales, ese hueco pasa de 32 a 9 preguntas.
+- El indexado vuelve a acercarse a su tiempo anterior: el paso que pone en blanco cadenas y
+  comentarios usa un cursor de tree-sitter (un 40 % más rápido) y solo corre en archivos con
+  receptores que haya que tipar. El grafo resultante es idéntico.
 - `graphtyn reindex` con un `GRAPHTYN_HOME` distinto del habitual ya no delega en el servicio
   local, que reindexaba con su propio almacén y su propio código. Una prueba, un benchmark o un
   CI con otro almacén reescribía así los índices reales de los proyectos registrados.
