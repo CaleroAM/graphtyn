@@ -26,9 +26,13 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Los métodos de un enum de Java, C# o PHP, incluidos los cuerpos de sus constantes, tienen ahora
+  al enum como dueño. Así `FieldNamingPolicy.IDENTITY.translateName` implementa
+  `FieldNamingStrategy.translateName`, y `separateCamelCase(...)` se resuelve dentro del enum.
 - Una pregunta de impacto que nombra al dueño de un método («el método `matched` del trait
   `Sink`») ancla ese miembro y sus implementaciones, en vez de repartir las anclas entre todos los
-  homónimos del repositorio. Las referencias de texto ponen primero las llamadas (`.matched(`) y
+  homónimos del repositorio; los demás homónimos se siguen informando en `omitted_homonyms`.
+  Las referencias de texto ponen primero las llamadas (`.matched(`) y
   los usos del mismo miembro del workspace, antes que las menciones en prosa.
 - Un campo con tipo genérico (`sink: S` con `S: Sink`, o `T extends Foo`) toma el tipo de su cota,
   así que `self.sink.matched()` llega al trait y a sus implementaciones y no a un impl de reenvío

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 
-PARSER_VERSION = "treesitter-v31-generic-bounds"
+PARSER_VERSION = "treesitter-v31-generic-bounds-enums"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -944,7 +944,7 @@ _SYMBOL_TYPES = {
 
 _CALL_TYPES = frozenset({"invocation_expression", "call_expression", "call", "new_expression", "object_creation_expression", "function_call_expression", "member_call_expression", "nullsafe_member_call_expression", "scoped_call_expression", "method_invocation"})
 _IMPORT_TYPES = frozenset({"using_directive", "import_statement", "import_from_statement", "import_declaration", "package_clause", "use_declaration", "namespace_use_declaration", "preproc_include"})
-_TYPE_DECLARATIONS = frozenset({"class_declaration", "abstract_class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item", "trait_declaration", "class_specifier", "struct_specifier", "union_specifier", "class"})
+_TYPE_DECLARATIONS = frozenset({"class_declaration", "abstract_class_declaration", "class_definition", "interface_declaration", "struct_declaration", "record_declaration", "struct_item", "trait_item", "trait_declaration", "class_specifier", "struct_specifier", "union_specifier", "class", "enum_declaration"})
 _CALLABLE_DECLARATIONS = frozenset({"function_declaration", "function_definition", "method_declaration", "method_definition", "constructor_declaration", "function_item", "method", "singleton_method"})
 
 

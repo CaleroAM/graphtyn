@@ -1,6 +1,6 @@
 """`the matched method of the Sink trait`: the named owner's member, its implementations, and generic bounds."""
 from graphtyn.core.ast_parser import ASTParser
-from graphtyn.core.impact_references import _calls_first, impact_targets
+from graphtyn.core.impact_references import _calls_first, named_owner_members
 from graphtyn.core.tree_sitter_backend import _bounded_generics
 
 
@@ -11,11 +11,12 @@ def test_the_named_owner_keeps_its_member_and_what_implements_it():
              {"id": "trait", "name": "Sink", "kind": "trait"}]
     links = [{"source": "impl", "target": "decl", "label": "implementa"}]
 
-    chosen = impact_targets(nodes, {"matched"}, set(), links, "the matched method of the Sink trait")
+    named = nodes[:3]
+    chosen = named_owner_members(named, "the matched method of the Sink trait", links)
 
     assert [node["id"] for node in chosen] == ["decl", "impl"]
     # Written in lower case, `sink` is a word, not the owner.
-    assert len(impact_targets(nodes, {"matched"}, set(), links, "what does the sink do when matched")) == 3
+    assert named_owner_members(named, "what does the sink do when matched", links) == []
 
 
 def test_member_calls_come_before_prose_mentions():
@@ -44,3 +45,19 @@ def test_a_call_through_a_generic_field_reaches_the_trait_and_its_implementation
                and nodes[link["source"]].get("name") == "sink_matched"}
 
     assert "Sink" in targets and "Printer" in targets and "S" not in targets
+
+
+def test_enum_constant_bodies_implement_the_interface_of_their_enum(tmp_path):
+    (tmp_path / "Strategy.java").write_text("package app;\npublic interface Strategy { String translate(String f); }\n",
+                                            encoding="utf-8")
+    (tmp_path / "Policy.java").write_text(
+        "package app;\npublic enum Policy implements Strategy {\n  IDENTITY() {\n"
+        "    @Override public String translate(String f) { return f; }\n  },\n  UPPER() {\n"
+        "    @Override public String translate(String f) { return up(f); }\n  };\n"
+        "  static String up(String s) { return s; }\n}\n", encoding="utf-8")
+    graph = ASTParser().scan_directory(tmp_path, respect_git=False)
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    implementations = [nodes[link["source"]] for link in graph["links"] if link.get("label") == "implementa"
+                       and nodes[link["target"]].get("name") == "translate"]
+
+    assert [node.get("container") for node in implementations] == ["Policy", "Policy"]

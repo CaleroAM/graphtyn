@@ -35,13 +35,13 @@ _ANCESTRY_DEPTH = 8
 
 
 def impact_targets(nodes: list[dict], names: set[str], package_roots: set[str],
-                   links: list[dict] | None = None, request: str = "") -> list[dict]:
+                   links: list[dict] | None = None) -> list[dict]:
     """Definitions a change affects: those of the package the request names, when it has them.
 
     A homonym elsewhere still counts when its class descends from that package
     (`ActionMailer::MailDeliveryJob#perform` overrides `ActiveJob::Base#perform`).
     """
-    named = _owned_by_named_type([node for node in nodes if str(node.get("name") or "").lower() in names], request, links)
+    named = [node for node in nodes if str(node.get("name") or "").lower() in names]
     inside = [node for node in named if in_named_scope(node, package_roots)]
     outside = [node for node in named if not in_named_scope(node, package_roots)]
     if not inside or not outside or not links:
@@ -52,18 +52,20 @@ def impact_targets(nodes: list[dict], names: set[str], package_roots: set[str],
 _TYPE_KINDS = {"class", "module", "struct", "interface", "trait", "protocol", "enum"}
 
 
-def _owned_by_named_type(named: list[dict], request: str, links: list[dict] | None) -> list[dict]:
+def named_owner_members(named: list[dict], request: str, links: list[dict] | None) -> list[dict]:
     """`the matched method of the Sink trait`: the member of the named type and what implements it.
 
-    Without this, every `matched` in the repository competes for the anchors, and the most
-    called homonym (`Gitignore::matched`) displaces the declaration that was asked about.
+    These are the anchors; the other homonyms are still reported, as omitted ones. Without this,
+    every `matched` in the repository competes for the anchors, and the most called homonym
+    (`Gitignore::matched`) displaces the declaration that was asked about. Implementations with
+    no edge (Java enum constant bodies) must stay visible, so nothing is dropped here.
     """
     words = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", request or ""))
     # The owner is written as declared (`Sink`, not `sink`) and is not the member's own name.
     members = [node for node in named if node.get("kind") not in _TYPE_KINDS
                and (owner := str(node.get("container") or "")) in words and owner != node.get("name")]
     if not members:
-        return named
+        return []
     member_ids = {node.get("id") for node in members}
     implementing = {link.get("source") for link in links or ()
                     if link.get("label") in {"implementa", "hereda"} and link.get("target") in member_ids}
