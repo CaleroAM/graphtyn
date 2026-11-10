@@ -8,6 +8,7 @@ runtime or a grammar is unavailable and can fall back to legacy extractors.
 from __future__ import annotations
 
 import bisect
+import functools
 import importlib
 import importlib.util
 import re
@@ -1091,15 +1092,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
 
     source_text = source.decode("utf-8", errors="replace")
     source_lines = source_text.splitlines()
-    masked: list[str] = []
-
-    def _masked() -> str:
-        """Source with literals and comments blanked, computed once and only when read."""
-        if not masked:
-            masked.append(_without_literals(tree.root_node, source_lines))
-        return masked[0]
-
-    # Receiver typing and generic bounds read declarations; nothing else needs the mask.
+    # Receiver typing and generic bounds read declarations: blank literals once, only if read.
+    _masked = functools.cache(functools.partial(_without_literals, tree.root_node, source_lines))
     joined = _masked() if any(_typed_receiver(call, pack.name) for call in calls) else "\n".join(source_lines)
     # prefix_end[n] is len("\n".join(source_lines[:n])): the text a call on
     # line n may use to infer its receiver's declared type.
