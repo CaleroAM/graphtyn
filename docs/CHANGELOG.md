@@ -52,6 +52,12 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Un identificador nombrado en la pregunta que no aparece en el paquete ya no siempre retira la
+  señal de parada: un acrónimo de la prosa (`API`, `JWT`) sin ningún símbolo que empiece por él no
+  cuenta; un nombre que solo está en el texto del código (una clave de configuración, una
+  variable local) llega con hasta tres ubicaciones en `identifier_lookup`; y uno que no aparece en
+  ningún archivo se informa como ausente. Solo un símbolo que existe y no se seleccionó sigue
+  siendo un hueco. En 68 preguntas reales, ese hueco pasa de 32 a 9 preguntas.
 - `graphtyn reindex` con un `GRAPHTYN_HOME` distinto del habitual ya no delega en el servicio
   local, que reindexaba con su propio almacén y su propio código. Una prueba, un benchmark o un
   CI con otro almacén reescribía así los índices reales de los proyectos registrados.

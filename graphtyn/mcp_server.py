@@ -708,7 +708,7 @@ def build_intent_package(workspace: Path, graph: dict, request: str, intent: str
         # Precision keeps more entities, but excerpts stay within the default budget (measured in the agent benchmarks).
         result["source_evidence"] = evidence_result(raw, max_nodes=limit).get("source_evidence", [])
         _synchronize_bounded_source_coverage(result)
-    mark_insufficient_evidence(result, request, mirror=raw)
+    mark_insufficient_evidence(result, request, mirror=raw, graph=graph, root=workspace)
     if stages is not None:
         stages.update(retrieval=retrieval_ms, coverage=coverage_ms,
                       render=(time.perf_counter() - started) * 1000)
