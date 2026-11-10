@@ -13,7 +13,7 @@ import importlib.util
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 
 PARSER_VERSION = "treesitter-v31-generic-bounds-enums"
@@ -273,7 +273,7 @@ _GENERIC_BOUND = re.compile(r"(?<![\w:.'])([A-Z][A-Za-z0-9]{0,2})\s*(?::|\s+exte
                             r"(?:(?:'\w+|\?Sized)\s*\+\s*)*(?:\w+::)*([A-Z][A-Za-z0-9_]+)")
 
 
-def _bounded_generics(members: list[dict[str, Any]], text: str) -> list[dict[str, Any]]:
+def _bounded_generics(members: list[dict[str, Any]], text: Callable[[], str]) -> list[dict[str, Any]]:
     """A field typed by a generic parameter (`sink: S` with `S: Sink`) is typed by its bound.
 
     Without the bound, `self.sink.matched()` matched a forwarding impl whose type is also
@@ -283,7 +283,7 @@ def _bounded_generics(members: list[dict[str, Any]], text: str) -> list[dict[str
     if not generic:
         return members
     bounds: dict[str, set[str]] = {}
-    for name, bound in _GENERIC_BOUND.findall(text):
+    for name, bound in _GENERIC_BOUND.findall(text()):
         if name in generic:
             bounds.setdefault(name, set()).add(bound)
     for member in members:
@@ -1091,8 +1091,16 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
 
     source_text = source.decode("utf-8", errors="replace")
     source_lines = source_text.splitlines()
-    joined = (_without_literals(tree.root_node, source_lines) if any(_typed_receiver(call, pack.name) for call in calls)
-              else "\n".join(source_lines))  # only receiver typing reads declarations
+    masked: list[str] = []
+
+    def _masked() -> str:
+        """Source with literals and comments blanked, computed once and only when read."""
+        if not masked:
+            masked.append(_without_literals(tree.root_node, source_lines))
+        return masked[0]
+
+    # Receiver typing and generic bounds read declarations; nothing else needs the mask.
+    joined = _masked() if any(_typed_receiver(call, pack.name) for call in calls) else "\n".join(source_lines)
     # prefix_end[n] is len("\n".join(source_lines[:n])): the text a call on
     # line n may use to infer its receiver's declared type.
     prefix_end = [0]
@@ -1181,7 +1189,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "symbols": _with_trait_impls(pack.name, symbols, tree.root_node, source),
         "calls": calls,
         "imports": imports,
-        "members": _bounded_generics(members + _python_members(pack.name, tree.root_node, source, rel_path), joined),
+        "members": _bounded_generics(members + _python_members(pack.name, tree.root_node, source, rel_path), _masked),
         "operations": operations,
         "namespace": namespace,
     }

@@ -1,7 +1,7 @@
 """`the matched method of the Sink trait`: the named owner's member, its implementations, and generic bounds."""
 from graphtyn.core.ast_parser import ASTParser
 from graphtyn.core.impact_references import _calls_first, named_owner_members
-from graphtyn.core.tree_sitter_backend import _bounded_generics
+from graphtyn.core.tree_sitter_backend import _bounded_generics, parse_file
 
 
 def test_the_named_owner_keeps_its_member_and_what_implements_it():
@@ -27,7 +27,7 @@ def test_member_calls_come_before_prose_mentions():
 def test_a_field_of_a_generic_type_takes_the_bound():
     members = [{"name": "sink", "type": "S"}, {"name": "out", "type": "W"}, {"name": "repo", "type": "Repo"}]
     text = "struct Core<S> { sink: S }\nimpl<'s, S: Sink, W: io::Write> Core<S> {}\nimpl<W: Display> X for W {}\n"
-    typed = {member["name"]: member["type"] for member in _bounded_generics(members, text)}
+    typed = {member["name"]: member["type"] for member in _bounded_generics(members, lambda: text)}
     assert typed == {"sink": "Sink", "out": "W", "repo": "Repo"}  # W is bound twice: left as written
 
 
@@ -61,3 +61,12 @@ def test_enum_constant_bodies_implement_the_interface_of_their_enum(tmp_path):
                        and nodes[link["target"]].get("name") == "translate"]
 
     assert [node.get("container") for node in implementations] == ["Policy", "Policy"]
+
+
+def test_a_bound_written_in_a_comment_does_not_type_the_field(tmp_path):
+    # No call here has a receiver to type, so the literal mask is computed only for the bounds.
+    source = ("// Earlier this was `impl<S: Other> Core<S>`.\nstruct Core<S> { sink: S }\n"
+              "impl<S: Sink> Core<S> {\n    fn run(&self) {}\n}\n")
+    (tmp_path / "core.rs").write_text(source, encoding="utf-8")
+    facts = parse_file(tmp_path / "core.rs", "core.rs") or {}
+    assert {member["name"]: member["type"] for member in facts["members"]}.get("sink") == "Sink"
