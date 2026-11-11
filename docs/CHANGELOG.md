@@ -33,6 +33,8 @@ compatibles con PEP 440.
   Los stubs de pruebas, los parches de globales (`Math.random = ...`) y las asignaciones dentro de
   una función no cuentan. Cada nombre de una cadena de alias (`res.set = res.header = function`) es
   el mismo método, y la recursión `this.set(...)` dentro de `app.set` no se desvía a `res.set`.
+  Un getter definido con `defineGetter(req, 'host', function host() {})` o
+  `Object.defineProperty(req, 'host', {get: ...})` es dueño de las llamadas que hace dentro.
 - En TypeScript, `this.#retry()` llama al miembro privado `#retry`: antes no se registraba ninguna
   llamada a miembros `#privados`.
 - Los métodos de un enum de Java, C# o PHP, incluidos los cuerpos de sus constantes, tienen ahora

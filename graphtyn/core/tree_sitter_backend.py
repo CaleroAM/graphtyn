@@ -16,10 +16,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
-from .declaration_facts import ASSIGNED_FUNCTIONS, assigned_method, assigned_method_symbol, bounded_generics
+from .declaration_facts import (ASSIGNED_FUNCTIONS, assigned_method, assigned_method_symbol, bounded_generics,
+                                defined_property_symbol)
 
 
-PARSER_VERSION = "treesitter-v33-alias-chains"
+PARSER_VERSION = "treesitter-v34-defined-getters"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -819,6 +820,10 @@ def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, 
     block = _test_block_symbol(ctx, node, line, node.end_point.row + 1, evidence)
     if block and symbols is not None:
         symbols.append(block)
+    getter = node.type == "call_expression" and defined_property_symbol(
+        ctx.source, node, ctx.rel_path, _TEST_FILE.search(ctx.rel_path) is not None)
+    if getter and symbols is not None:
+        symbols.append({**getter, "namespace": _ancestor_namespace(ctx.source, node)})
     name = _call_name(ctx.source, node, ruby=ctx.pack.name == "ruby")
     if name:
         target = node.child_by_field_name("function") or node.child_by_field_name("method")

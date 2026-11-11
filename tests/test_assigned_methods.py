@@ -52,3 +52,13 @@ def test_a_recursive_self_call_does_not_fall_back_to_a_homonym(tmp_path):
         "lib/response.js": "var res = Object.create(http.ServerResponse.prototype);\n"
                            "res.set = function header(field, val) { return this; };\n"})
     assert not any(call[0] == "set" and call[1] == "res" for call in calls)
+
+
+def test_a_getter_defined_on_an_object_owns_the_calls_inside_it(tmp_path):
+    # Express defines `req.host` with `defineGetter(req, 'host', function host() {...})`.
+    _nodes, calls = _graph(tmp_path, {"lib/request.js": "var req = Object.create(http.IncomingMessage.prototype);\n"
+                                      "req.get = function header(name) { return this.headers[name]; };\n"
+                                      "defineGetter(req, 'host', function host() { return this.get('Host'); });\n"
+                                      "Object.defineProperty(req, 'xhr', {get: function () { return this.get('X'); }});\n"
+                                      "function defineGetter(obj, name, getter) {}\n"})
+    assert {("host", "req", "get", "EXTRACTED"), ("xhr", "req", "get", "EXTRACTED")} <= calls

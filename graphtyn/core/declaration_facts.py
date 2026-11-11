@@ -44,13 +44,55 @@ def _assigned_function(assignment):
     return right if right is not None and right.type in ASSIGNED_FUNCTIONS else None
 
 
-def assigned_method(source: bytes, node) -> tuple[str, str] | None:
-    """(object, method) for `res.send = function send() {}` or `Foo.prototype.bar = () => {}`."""
+def _key(pair) -> str:
+    key = pair.child_by_field_name("key")
+    return key.text.decode("utf-8", errors="replace").strip("'\"") if key is not None and key.text else ""
+
+
+def _defined_property(source: bytes, node) -> tuple[str, str] | None:
+    """(object, property) for `defineGetter(req, 'host', function host() {})` or
+    `Object.defineProperty(req, 'host', {get: () => ...})` on a top-level object."""
     parent = node.parent
-    if node.type not in ASSIGNED_FUNCTIONS or parent is None or parent.type != "assignment_expression" \
-            or parent.child_by_field_name("right") is None or parent.child_by_field_name("right").id != node.id:
+    if parent is not None and parent.type == "pair" and _key(parent) == "get" and parent.parent is not None \
+            and parent.parent.type == "object":
+        parent = parent.parent.parent
+    if parent is None or parent.type != "arguments" or parent.named_child_count != 3:
+        return None
+    owner, name = parent.named_children[0], parent.named_children[1]
+    if owner.type != "identifier" or name.type != "string" or not _top_level_object(source, _text(source, owner)):
+        return None
+    return _text(source, owner), _text(source, name).strip("'\"`")
+
+
+def assigned_method(source: bytes, node) -> tuple[str, str] | None:
+    """(object, method) for `res.send = function send() {}`, `Foo.prototype.bar = () => {}` or a defined getter."""
+    parent = node.parent
+    if node.type not in ASSIGNED_FUNCTIONS or parent is None:
+        return None
+    if parent.type != "assignment_expression":
+        return _defined_property(source, node)
+    if parent.child_by_field_name("right") is None or parent.child_by_field_name("right").id != node.id:
         return None
     return _member_target(source, parent.child_by_field_name("left"))
+
+
+def defined_property_symbol(source: bytes, call, rel_path: str, test_file: bool) -> dict[str, Any] | None:
+    """A getter a call defines on a top-level object, so the calls inside it have their owner."""
+    arguments = call.child_by_field_name("arguments")
+    if test_file or arguments is None or arguments.named_child_count != 3:
+        return None
+    last = arguments.named_children[2]
+    function = last if last.type in ASSIGNED_FUNCTIONS else next(
+        (pair.child_by_field_name("value") for pair in last.named_children if pair.type == "pair" and _key(pair) == "get"),
+        None) if last.type == "object" else None
+    target = assigned_method(source, function) if function is not None else None
+    if not target or target[0] in _PATCHED_GLOBALS:
+        return None
+    lines = _text(source, call).splitlines()
+    return {"name": target[1], "kind": "method", "file": rel_path, "line": call.start_point.row + 1,
+            "end_line": call.end_point.row + 1, "evidence": lines[0].strip()[:240] if lines else "",
+            "bases": [], "parser": "tree-sitter", "container": target[0], "object_member": True,
+            "getter": True, "parameter_count": 0}
 
 
 def assigned_method_symbol(source: bytes, assignment, rel_path: str, test_file: bool) -> dict[str, Any] | None:
