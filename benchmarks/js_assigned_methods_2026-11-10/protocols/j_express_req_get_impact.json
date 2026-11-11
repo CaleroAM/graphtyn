@@ -1,0 +1,36 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada de los métodos de JavaScript asignados a un objeto y las llamadas a #privados de TypeScript, en tareas nuevas: main frente a fix/js-assigned-methods.",
+ "repository": {
+  "name": "expressjs/express",
+  "url": "https://github.com/expressjs/express",
+  "commit": "43fca52d28a422c8be48fd489cbd4f2d6152bab6"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "J_EXPRESS_REQ_GET_IMPACT"
+  ],
+  "arms": {
+   "graphtyn (main)": "main",
+   "graphtyn (fix)": "fix/js-assigned-methods"
+  },
+  "repetitions": 1,
+  "order": "alternado por tarea",
+  "stop_rule": "targeted",
+  "grading": "Mayoría de tres jueces con citas resueltas; intervalos por tareas."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Copia del repositorio y GRAPHTYN_HOME propio por sesión; cada versión desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario pidió hacer los pendientes, entre ellos las sesiones de cliente de #52 (2026-11-10).",
+  "total_token_ceiling": 320000
+ }
+}

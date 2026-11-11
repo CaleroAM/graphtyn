@@ -1,0 +1,122 @@
+{
+ "tasks": [
+  {
+   "id": "J_EXPRESS_REQ_GET_IMPACT",
+   "request": "Si cambio req.get (alias req.header) en lib/request.js de Express, ¿qué otros métodos y getters de la request dependen de él? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "range",
+     "any": [
+      "req.range",
+      "Range"
+     ]
+    },
+    {
+     "id": "protocol",
+     "any": [
+      "X-Forwarded-Proto",
+      "req.protocol"
+     ]
+    },
+    {
+     "id": "host",
+     "any": [
+      "X-Forwarded-Host",
+      "req.host"
+     ]
+    },
+    {
+     "id": "xhr",
+     "any": [
+      "X-Requested-With",
+      "req.xhr"
+     ]
+    },
+    {
+     "id": "referrer",
+     "any": [
+      "referrer",
+      "referer"
+     ]
+    },
+    {
+     "id": "required_name",
+     "any": [
+      "TypeError",
+      "name argument is required"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "J_EXPRESS_RES_SET_IMPACT",
+   "request": "Si cambio res.set (alias res.header) en lib/response.js de Express, ¿qué métodos de la respuesta se ven afectados? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "send",
+     "any": [
+      "res.send",
+      "Content-Length",
+      "ETag"
+     ]
+    },
+    {
+     "id": "json",
+     "any": [
+      "res.json",
+      "application/json"
+     ]
+    },
+    {
+     "id": "jsonp",
+     "any": [
+      "res.jsonp",
+      "text/javascript",
+      "nosniff"
+     ]
+    },
+    {
+     "id": "type",
+     "any": [
+      "res.type",
+      "contentType"
+     ]
+    },
+    {
+     "id": "attachment",
+     "any": [
+      "res.attachment",
+      "Content-Disposition"
+     ]
+    },
+    {
+     "id": "append",
+     "any": [
+      "res.append"
+     ]
+    },
+    {
+     "id": "location",
+     "any": [
+      "res.location",
+      "Location"
+     ]
+    },
+    {
+     "id": "links",
+     "any": [
+      "res.links",
+      "Link"
+     ]
+    },
+    {
+     "id": "charset",
+     "any": [
+      "mime.contentType",
+      "charset"
+     ]
+    }
+   ]
+  }
+ ]
+}
