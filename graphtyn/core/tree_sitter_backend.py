@@ -16,11 +16,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
+from .ruby_constants import ruby_constant_calls
 from .declaration_facts import (ASSIGNED_FUNCTIONS, assigned_method, assigned_method_symbol, bounded_generics,
                                 defined_property_symbol)
 
 
-PARSER_VERSION = "treesitter-v34-defined-getters"
+PARSER_VERSION = "treesitter-v36-ruby-constants"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -804,7 +805,7 @@ def _symbol_fact(ctx: _FileContext, node, line: int, end_line: int, evidence: st
             "namespace": _ancestor_namespace(ctx.source, node),
             "parameter_count": parameter_count,
             "required_parameter_count": required_parameter_count,
-            "is_constructor": node.type == "constructor_declaration",
+            "is_constructor": node.type == "constructor_declaration" or (ctx.pack.name == "ruby" and name == "initialize"),
             "signature": signature or evidence,
             # `{delay(n) {...}}` is reached as `options.delay(n)`, never by a bare `delay(n)`.
             **({"object_member": True} if node.type == "method_definition" and node.parent is not None
@@ -1169,7 +1170,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "parser": "tree-sitter",
         "has_error": bool(tree.root_node.has_error),
         "symbols": _with_trait_impls(pack.name, symbols, tree.root_node, source),
-        "calls": calls,
+        "calls": ruby_constant_calls(calls) if pack.name == "ruby" else calls,
         "imports": imports,
         "members": bounded_generics(members + _python_members(pack.name, tree.root_node, source, rel_path), _masked),
         "operations": operations,
