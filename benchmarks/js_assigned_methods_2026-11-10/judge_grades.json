@@ -1,0 +1,782 @@
+{
+ "summary": {
+  "codex-main": {
+   "runs": 4,
+   "facts": 30,
+   "tokens": 202273,
+   "literal": 24,
+   "gemini": 24,
+   "gpt": 24,
+   "consensus": 24,
+   "majority": 24
+  },
+  "codex-fix": {
+   "runs": 4,
+   "facts": 30,
+   "tokens": 117447,
+   "literal": 13,
+   "gemini": 14,
+   "gpt": 15,
+   "consensus": 14,
+   "majority": 14
+  },
+  "codex-fix2": {
+   "runs": 4,
+   "facts": 30,
+   "tokens": 135104,
+   "literal": 15,
+   "gemini": 21,
+   "gpt": 22,
+   "consensus": 21,
+   "majority": 21
+  },
+  "codex-fix3": {
+   "runs": 1,
+   "facts": 6,
+   "tokens": 31301,
+   "literal": 4,
+   "gemini": 4,
+   "gpt": 4,
+   "consensus": 4,
+   "majority": 4
+  }
+ },
+ "kappa": {
+  "judges": 0.953,
+  "literal_consensus": 0.846
+ },
+ "runs": [
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "J_EXPRESS_REQ_GET_IMPACT",
+   "repetition": 1,
+   "tokens": 84613,
+   "literal": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "gemini": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "gpt": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "consensus": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "majority": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "J_EXPRESS_RES_SET_IMPACT",
+   "repetition": 1,
+   "tokens": 60263,
+   "literal": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "gemini": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "gpt": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "consensus": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "majority": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "J_KY_GET_RESPONSE_REQUEST_IMPACT",
+   "repetition": 1,
+   "tokens": 28475,
+   "literal": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": true,
+    "progress": false
+   },
+   "gemini": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": true,
+    "progress": false
+   },
+   "gpt": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": true,
+    "progress": false
+   },
+   "consensus": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": true,
+    "progress": false
+   },
+   "majority": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": true,
+    "progress": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "J_KY_RACE_TOTAL_TIMEOUT_IMPACT",
+   "repetition": 1,
+   "tokens": 28922,
+   "literal": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "gemini": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "gpt": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "consensus": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "majority": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "J_EXPRESS_REQ_GET_IMPACT",
+   "repetition": 1,
+   "tokens": 28666,
+   "literal": {
+    "range": false,
+    "protocol": true,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": false
+   },
+   "gemini": {
+    "range": false,
+    "protocol": true,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": true
+   },
+   "gpt": {
+    "range": false,
+    "protocol": true,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": true
+   },
+   "consensus": {
+    "range": false,
+    "protocol": true,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": true
+   },
+   "majority": {
+    "range": false,
+    "protocol": true,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "J_EXPRESS_RES_SET_IMPACT",
+   "repetition": 1,
+   "tokens": 30195,
+   "literal": {
+    "send": false,
+    "json": false,
+    "jsonp": false,
+    "type": false,
+    "attachment": false,
+    "append": false,
+    "location": false,
+    "links": false,
+    "charset": false
+   },
+   "gemini": {
+    "send": false,
+    "json": false,
+    "jsonp": false,
+    "type": false,
+    "attachment": false,
+    "append": false,
+    "location": false,
+    "links": false,
+    "charset": false
+   },
+   "gpt": {
+    "send": false,
+    "json": false,
+    "jsonp": false,
+    "type": false,
+    "attachment": false,
+    "append": false,
+    "location": false,
+    "links": false,
+    "charset": false
+   },
+   "consensus": {
+    "send": false,
+    "json": false,
+    "jsonp": false,
+    "type": false,
+    "attachment": false,
+    "append": false,
+    "location": false,
+    "links": false,
+    "charset": false
+   },
+   "majority": {
+    "send": false,
+    "json": false,
+    "jsonp": false,
+    "type": false,
+    "attachment": false,
+    "append": false,
+    "location": false,
+    "links": false,
+    "charset": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "J_KY_GET_RESPONSE_REQUEST_IMPACT",
+   "repetition": 1,
+   "tokens": 29390,
+   "literal": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   },
+   "gemini": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   },
+   "gpt": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": true,
+    "progress": false
+   },
+   "consensus": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   },
+   "majority": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   },
+   "tiebreak": {
+    "after_response": true,
+    "body_read": true,
+    "decorate": true,
+    "http_error": true,
+    "limit": true,
+    "progress": false,
+    "response_data": true,
+    "setter": false
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "J_KY_RACE_TOTAL_TIMEOUT_IMPACT",
+   "repetition": 1,
+   "tokens": 29196,
+   "literal": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "gemini": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "gpt": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "consensus": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "majority": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "J_EXPRESS_REQ_GET_IMPACT",
+   "repetition": 1,
+   "tokens": 30427,
+   "literal": {
+    "range": true,
+    "protocol": false,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": false
+   },
+   "gemini": {
+    "range": true,
+    "protocol": false,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": false
+   },
+   "gpt": {
+    "range": true,
+    "protocol": false,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": false
+   },
+   "consensus": {
+    "range": true,
+    "protocol": false,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": false
+   },
+   "majority": {
+    "range": true,
+    "protocol": false,
+    "host": false,
+    "xhr": false,
+    "referrer": true,
+    "required_name": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "J_EXPRESS_RES_SET_IMPACT",
+   "repetition": 1,
+   "tokens": 31543,
+   "literal": {
+    "send": false,
+    "json": false,
+    "jsonp": false,
+    "type": false,
+    "attachment": false,
+    "append": false,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "gemini": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "gpt": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "consensus": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "majority": {
+    "send": true,
+    "json": true,
+    "jsonp": true,
+    "type": true,
+    "attachment": true,
+    "append": true,
+    "location": true,
+    "links": true,
+    "charset": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "J_KY_GET_RESPONSE_REQUEST_IMPACT",
+   "repetition": 1,
+   "tokens": 28932,
+   "literal": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   },
+   "gemini": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   },
+   "gpt": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": true,
+    "progress": false
+   },
+   "consensus": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   },
+   "majority": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   },
+   "tiebreak": {
+    "http_error": true,
+    "decorate": true,
+    "response_data": true,
+    "body_read": true,
+    "after_response": true,
+    "limit": true,
+    "setter": false,
+    "progress": false
+   }
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "J_KY_RACE_TOTAL_TIMEOUT_IMPACT",
+   "repetition": 1,
+   "tokens": 44202,
+   "literal": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "gemini": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "gpt": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "consensus": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "majority": {
+    "json_shortcut": true,
+    "should_retry": true,
+    "before_request": true,
+    "after_response": true,
+    "before_retry": true,
+    "sentinel": false,
+    "remaining": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix3",
+   "arm": "graphtyn",
+   "task": "J_EXPRESS_REQ_GET_IMPACT",
+   "repetition": 1,
+   "tokens": 31301,
+   "literal": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "gemini": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "gpt": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "consensus": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "majority": {
+    "range": true,
+    "protocol": true,
+    "host": true,
+    "xhr": true,
+    "referrer": false,
+    "required_name": false
+   },
+   "tiebreak": null
+  }
+ ]
+}

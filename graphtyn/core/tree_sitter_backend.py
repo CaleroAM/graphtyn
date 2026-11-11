@@ -14,10 +14,13 @@ import importlib.util
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
+
+from .declaration_facts import (ASSIGNED_FUNCTIONS, assigned_method, assigned_method_symbol, bounded_generics,
+                                defined_property_symbol)
 
 
-PARSER_VERSION = "treesitter-v31-generic-bounds-enums"
+PARSER_VERSION = "treesitter-v34-defined-getters"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
@@ -269,31 +272,6 @@ def _with_trait_impls(pack: str, symbols: list[dict[str, Any]], root: Any, sourc
     return symbols
 
 
-# `S: Sink`, `S: 'a + Sink`, `S: ?Sized + io::Write` (Rust, Swift, Kotlin) and `T extends Foo` (Java, TypeScript).
-_GENERIC_BOUND = re.compile(r"(?<![\w:.'])([A-Z][A-Za-z0-9]{0,2})\s*(?::|\s+extends)\s*"
-                            r"(?:(?:'\w+|\?Sized)\s*\+\s*)*(?:\w+::)*([A-Z][A-Za-z0-9_]+)")
-
-
-def _bounded_generics(members: list[dict[str, Any]], text: Callable[[], str]) -> list[dict[str, Any]]:
-    """A field typed by a generic parameter (`sink: S` with `S: Sink`) is typed by its bound.
-
-    Without the bound, `self.sink.matched()` matched a forwarding impl whose type is also
-    called `S` (`impl<S: Sink> Sink for &mut S`). A name bound to two traits stays as written.
-    """
-    generic = {member.get("type") for member in members if re.fullmatch(r"[A-Z][A-Za-z0-9]{0,2}", str(member.get("type") or ""))}
-    if not generic:
-        return members
-    bounds: dict[str, set[str]] = {}
-    for name, bound in _GENERIC_BOUND.findall(text()):
-        if name in generic:
-            bounds.setdefault(name, set()).add(bound)
-    for member in members:
-        bound = bounds.get(member.get("type"))
-        if bound and len(bound) == 1:
-            member["type"] = next(iter(bound))
-    return members
-
-
 def _python_members(pack: str, root: Any, source: bytes, rel_path: str) -> list[dict[str, Any]]:
     """Typed attributes of a Python class: `x: Router = ...` in its body, `self.x: T` or `self.x = T()` in a method."""
     if pack != "python":
@@ -437,13 +415,18 @@ def _call_name(source: bytes, node, ruby: bool = False) -> str:
     # A Ruby method name keeps its ! or ? suffix: route! and route are different methods.
     if target is not None and target.type in _TEMPLATE_TARGETS:
         raw = _without_template_args(raw)
-    names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*[!?]?" if ruby else r"[A-Za-z_][A-Za-z0-9_]*", raw)
+    # `this.#retry()` calls the private `#retry`, a different member from a public `retry`.
+    names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*[!?]?" if ruby else r"#?[A-Za-z_][A-Za-z0-9_]*", raw)
     return names[-1] if names else ""
 
 
 def _ancestor_name(source: bytes, node, types: set[str]) -> str:
     ancestor = node.parent
     while ancestor is not None:
+        if ancestor.type in ASSIGNED_FUNCTIONS and ("function_declaration" in types or "class_declaration" in types):
+            assigned = assigned_method(source, ancestor)
+            if assigned:  # the caller is the method, its owner the object it is assigned to
+                return assigned[1] if "function_declaration" in types else assigned[0]
         if ancestor.type in types:
             return _name(source, ancestor)
         if _TEST_BLOCKS in types and ancestor.type in {"call", "call_expression"}:
@@ -837,6 +820,10 @@ def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, 
     block = _test_block_symbol(ctx, node, line, node.end_point.row + 1, evidence)
     if block and symbols is not None:
         symbols.append(block)
+    getter = node.type == "call_expression" and defined_property_symbol(
+        ctx.source, node, ctx.rel_path, _TEST_FILE.search(ctx.rel_path) is not None)
+    if getter and symbols is not None:
+        symbols.append({**getter, "namespace": _ancestor_namespace(ctx.source, node)})
     name = _call_name(ctx.source, node, ruby=ctx.pack.name == "ruby")
     if name:
         target = node.child_by_field_name("function") or node.child_by_field_name("method")
@@ -1033,6 +1020,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
             _ruby_bare_call_facts(ctx, node, line, evidence, calls, operations)
         elif node.type in {"assignment_expression", "assignment", "augmented_assignment_expression"}:
             left = node.child_by_field_name("left")
+            if symbol := assigned_method_symbol(source, node, rel_path, _TEST_FILE.search(rel_path) is not None):
+                symbols.append({**symbol, "namespace": _ancestor_namespace(source, node)})
             operations.append({
                 "kind": "assign", "name": _text(source, left)[:80] if left is not None else "",
                 "line": line, "text": " ".join(_text(source, node).split())[:300],
@@ -1182,7 +1171,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         "symbols": _with_trait_impls(pack.name, symbols, tree.root_node, source),
         "calls": calls,
         "imports": imports,
-        "members": _bounded_generics(members + _python_members(pack.name, tree.root_node, source, rel_path), _masked),
+        "members": bounded_generics(members + _python_members(pack.name, tree.root_node, source, rel_path), _masked),
         "operations": operations,
         "namespace": namespace,
     }

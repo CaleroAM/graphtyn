@@ -1,0 +1,114 @@
+{
+ "tasks": [
+  {
+   "id": "J_KY_RACE_TOTAL_TIMEOUT_IMPACT",
+   "request": "Si cambio el método privado #raceWithTotalTimeout de la clase Ky en ky, ¿qué partes del ciclo de una petición se ven afectadas? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "json_shortcut",
+     "any": [
+      "parseJson",
+      "create"
+     ]
+    },
+    {
+     "id": "should_retry",
+     "any": [
+      "shouldRetry",
+      "calculateRetryDelay"
+     ]
+    },
+    {
+     "id": "before_request",
+     "any": [
+      "beforeRequest",
+      "runBeforeRequestHooks"
+     ]
+    },
+    {
+     "id": "after_response",
+     "any": [
+      "afterResponse",
+      "runAfterResponseHooks"
+     ]
+    },
+    {
+     "id": "before_retry",
+     "any": [
+      "beforeRetry",
+      "retryFromError"
+     ]
+    },
+    {
+     "id": "sentinel",
+     "any": [
+      "timedOut"
+     ]
+    },
+    {
+     "id": "remaining",
+     "any": [
+      "getRemainingTotalTimeout"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "J_KY_GET_RESPONSE_REQUEST_IMPACT",
+   "request": "Si cambio el método privado #getResponseRequest de la clase Ky en ky, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "http_error",
+     "any": [
+      "HTTPError",
+      "#run"
+     ]
+    },
+    {
+     "id": "decorate",
+     "any": [
+      "decorateResponse"
+     ]
+    },
+    {
+     "id": "response_data",
+     "any": [
+      "getResponseData"
+     ]
+    },
+    {
+     "id": "body_read",
+     "any": [
+      "raceBodyRead"
+     ]
+    },
+    {
+     "id": "after_response",
+     "any": [
+      "runAfterResponseHooks",
+      "afterResponse"
+     ]
+    },
+    {
+     "id": "limit",
+     "any": [
+      "limitResponseSize"
+     ]
+    },
+    {
+     "id": "setter",
+     "any": [
+      "setResponseRequest"
+     ]
+    },
+    {
+     "id": "progress",
+     "any": [
+      "onDownloadProgress",
+      "progress"
+     ]
+    }
+   ]
+  }
+ ]
+}
