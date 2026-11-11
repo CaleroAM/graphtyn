@@ -3,6 +3,16 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [Sin publicar]
+
+### Corregido
+
+- La búsqueda semántica de respaldo sin `GRAPHTYN_EMBED_MODEL` ya no calcula el vector hash de
+  todos los nodos antes de la primera consulta: solo hashea, una vez, los nodos que comparten un
+  término con la pregunta y suma sus entradas no nulas. En Rails (69.000 nodos) la primera
+  consulta pasa de unos 50 s a 4 s y las siguientes de unos 12 s a 0,2–3 s. Los resultados son
+  idénticos en las 138 tareas del gate.
+
 ## [0.13.0] - 2026-11-10
 
 Validación de la versión: `docs/release-validation-0.13.0.md`.

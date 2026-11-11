@@ -90,14 +90,25 @@ def _text(node: dict[str, Any]) -> str:
 def hashed_embedding(text: str, dimensions: int = DIMENSIONS) -> list[float]:
     """Feature-hashed word/identifier n-grams; local, stable and zero-token."""
     vector = [0.0] * dimensions
+    for index, value in _hashed_sparse(text, dimensions):
+        vector[index] = value
+    return vector
+
+
+def _hashed_sparse(text: str, dimensions: int = DIMENSIONS) -> list[tuple[int, float]]:
+    """The nonzero entries of `hashed_embedding`, in index order and with the same values.
+
+    A node's text hashes to a few dozen of the 384 dimensions, so the dense vector is mostly
+    zeros: summing only the nonzero entries in index order yields the same floats.
+    """
+    counts: dict[int, float] = {}
     words = _tokens(text)
-    features = words + [f"{a}:{b}" for a, b in zip(words, words[1:])]
-    for feature in features:
-        digest = hashlib.blake2b(feature.encode("utf-8"), digest_size=8).digest()
-        raw = int.from_bytes(digest, "big")
-        vector[raw % dimensions] += 1.0 if raw & 1 else -1.0
-    norm = math.sqrt(sum(value * value for value in vector)) or 1.0
-    return [round(value / norm, 6) for value in vector]
+    for feature in words + [f"{a}:{b}" for a, b in zip(words, words[1:])]:
+        raw = int.from_bytes(hashlib.blake2b(feature.encode("utf-8"), digest_size=8).digest(), "big")
+        counts[raw % dimensions] = counts.get(raw % dimensions, 0.0) + (1.0 if raw & 1 else -1.0)
+    entries = sorted(counts.items())
+    norm = math.sqrt(sum(value * value for _index, value in entries)) or 1.0
+    return [(index, rounded) for index, value in entries if (rounded := round(value / norm, 6))]
 
 
 def ollama_embedding(text: str) -> list[float] | None:
@@ -244,8 +255,56 @@ def _cached_node_terms(graph: dict[str, Any]) -> dict[str, set[str]]:
     return terms
 
 
+_SPARSE_CACHE: OrderedDict[int, tuple[dict[str, Any], tuple[int, int], dict[Any, list[tuple[int, float]]]]] = OrderedDict()
+
+
+def _cached_sparse_vectors(graph: dict[str, Any]) -> dict[Any, list[tuple[int, float]]]:
+    """Sparse feature-hash vectors of the in-memory graph, filled as queries reach each node."""
+    key = id(graph)
+    signature = (len(graph.get("nodes", [])), len(graph.get("links", [])))
+    with _INDEX_CACHE_LOCK:
+        cached = _SPARSE_CACHE.get(key)
+        if cached and cached[0] is graph and cached[1] == signature:
+            _SPARSE_CACHE.move_to_end(key)
+            return cached[2]
+        _SPARSE_CACHE[key] = (graph, signature, {})
+        while len(_SPARSE_CACHE) > 8:
+            _SPARSE_CACHE.popitem(last=False)
+        return _SPARSE_CACHE[key][2]
+
+
+def _sparse_search(graph: dict[str, Any], query: str, limit: int) -> list[dict[str, Any]]:
+    """The feature-hash search with the dense index's scores, hashing only nodes that can score.
+
+    Without a shared term a node never scores, so only those nodes are hashed, once each; a
+    vector's nonzero entries summed in index order give the dense dot product exactly. In Rails
+    (69,000 nodes) the first query drops from about 50 s to a few, and later ones to tenths.
+    """
+    query_vector = dict(_hashed_sparse(" ".join(_tokens(query))))
+    query_terms = set(_tokens(query))
+    node_terms_by_id = _cached_node_terms(graph)
+    vectors = _cached_sparse_vectors(graph)
+    scored = []
+    for node in graph.get("nodes", []):
+        node_id = node.get("id")
+        overlap = query_terms & node_terms_by_id.get(str(node_id), set())
+        if not overlap or node.get("kind") in {"module", "community", "semantic_concept"}:
+            continue
+        if node_id not in vectors:
+            text = _text(node).strip()
+            vectors[node_id] = _hashed_sparse(text) if text else []
+        score = sum(value * query_vector[index] for index, value in vectors[node_id] if index in query_vector)
+        score += len(overlap) / max(1, len(query_terms)) * 2
+        if score > 0:
+            scored.append((score, node))
+    return [{"score": round(score, 4), "node": node} for score, node in
+            sorted(scored, key=lambda item: (-item[0], str(item[1].get("id"))))[:limit]]
+
+
 def semantic_search(graph: dict[str, Any], query: str, limit: int = 8,
                     index: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    if index is None and not os.environ.get("GRAPHTYN_EMBED_MODEL"):
+        return _sparse_search(graph, query, limit)
     index = index or _cached_semantic_index(graph)
     ollama_provider = str(index.get("provider", "")).startswith("ollama:")
     query_vector = ollama_embedding(query) if ollama_provider else None

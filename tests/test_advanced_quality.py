@@ -49,21 +49,30 @@ def test_local_semantic_index_is_incremental_and_searchable(tmp_path):
 
 def test_semantic_search_reuses_index_for_same_in_memory_graph(monkeypatch):
     data = graph()
-    original = semantic_index.build_semantic_index
+    original = semantic_index._hashed_sparse
     calls = 0
 
-    def counted(graph_data, output=None):
+    def counted(text, dimensions=semantic_index.DIMENSIONS):
         nonlocal calls
         calls += 1
-        return original(graph_data, output)
+        return original(text, dimensions)
 
-    semantic_index._INDEX_CACHE.clear()
+    semantic_index._SPARSE_CACHE.clear()
     semantic_index._TERM_CACHE.clear()
-    monkeypatch.setattr(semantic_index, "build_semantic_index", counted)
+    monkeypatch.setattr(semantic_index, "_hashed_sparse", counted)
 
     assert semantic_index.semantic_search(data, "signed cookie")
-    assert semantic_index.semantic_search(data, "HTTP router")
-    assert calls == 1
+    first = calls
+    assert semantic_index.semantic_search(data, "signed cookie")
+    assert calls == first + 1  # only the query is hashed again; node vectors are reused
+
+
+def test_sparse_search_scores_exactly_like_the_dense_index():
+    data = graph()
+    dense = semantic_index.semantic_search(data, "signed cookie verification", index=build_semantic_index(data))
+    assert semantic_index.semantic_search(data, "signed cookie verification") == dense
+    assert [value for value in hashed_embedding("Flask session cookie") if value] == \
+        [value for _index, value in semantic_index._hashed_sparse("Flask session cookie")]
 
 
 def test_ollama_embeddings_are_normalized_for_cosine_similarity(monkeypatch):
