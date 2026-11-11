@@ -1,0 +1,61 @@
+{
+ "tasks": [
+  {
+   "id": "S_COBRA_COMMAND_NAME_IMPACT",
+   "request": "Si cambio Command.Name en cobra, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "find_next",
+     "any": [
+      "findNext"
+     ]
+    },
+    {
+     "id": "suggestions",
+     "any": [
+      "SuggestionsFor"
+     ]
+    },
+    {
+     "id": "command_path",
+     "any": [
+      "CommandPath"
+     ]
+    },
+    {
+     "id": "use_line",
+     "any": [
+      "UseLine"
+     ]
+    },
+    {
+     "id": "name_and_aliases",
+     "any": [
+      "NameAndAliases"
+     ]
+    },
+    {
+     "id": "sorter",
+     "any": [
+      "commandSorterByName"
+     ]
+    },
+    {
+     "id": "completions",
+     "any": [
+      "completions.go"
+     ]
+    },
+    {
+     "id": "docs",
+     "any": [
+      "GenMarkdown",
+      "md_docs.go",
+      "man_docs.go",
+      "rest_docs.go"
+     ]
+    }
+   ]
+  }
+ ]
+}

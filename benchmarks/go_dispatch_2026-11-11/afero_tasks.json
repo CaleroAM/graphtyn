@@ -1,0 +1,119 @@
+{
+ "tasks": [
+  {
+   "id": "G_AFERO_OPENFILE_IMPACT",
+   "request": "Si cambio el método OpenFile de la interfaz Fs en afero, ¿qué implementaciones y consumidores se ven afectados? Enumera con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "os_fs",
+     "any": [
+      "OsFs"
+     ]
+    },
+    {
+     "id": "memmap",
+     "any": [
+      "MemMapFs"
+     ]
+    },
+    {
+     "id": "basepath",
+     "any": [
+      "BasePathFs"
+     ]
+    },
+    {
+     "id": "readonly",
+     "any": [
+      "ReadOnlyFs"
+     ]
+    },
+    {
+     "id": "copy_on_write",
+     "any": [
+      "CopyOnWriteFs"
+     ]
+    },
+    {
+     "id": "cache_on_read",
+     "any": [
+      "CacheOnReadFs"
+     ]
+    },
+    {
+     "id": "write_file",
+     "any": [
+      "WriteFile"
+     ]
+    },
+    {
+     "id": "temp_file",
+     "any": [
+      "TempFile"
+     ]
+    },
+    {
+     "id": "copy_to_layer",
+     "any": [
+      "copyToLayer"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "G_AFERO_LSTAT_IMPACT",
+   "request": "Si cambio LstatIfPossible de la interfaz Lstater en afero, ¿qué implementaciones y consumidores se ven afectados? Enumera con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "memmap",
+     "any": [
+      "MemMapFs"
+     ]
+    },
+    {
+     "id": "os_fs",
+     "any": [
+      "OsFs"
+     ]
+    },
+    {
+     "id": "basepath",
+     "any": [
+      "BasePathFs"
+     ]
+    },
+    {
+     "id": "copy_on_write",
+     "any": [
+      "CopyOnWriteFs"
+     ]
+    },
+    {
+     "id": "readonly",
+     "any": [
+      "ReadOnlyFs"
+     ]
+    },
+    {
+     "id": "sftp",
+     "any": [
+      "sftpfs",
+      "sftp.go"
+     ]
+    },
+    {
+     "id": "walk_helper",
+     "any": [
+      "lstatIfPossible"
+     ]
+    },
+    {
+     "id": "sftp_remove_all",
+     "any": [
+      "RemoveAll"
+     ]
+    }
+   ]
+  }
+ ]
+}

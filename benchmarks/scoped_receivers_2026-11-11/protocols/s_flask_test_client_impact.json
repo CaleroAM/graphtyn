@@ -1,0 +1,40 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada del tipado de receptores con ámbito: main frente a feat/scoped-receiver-typing (#56).",
+ "repository": {
+  "name": "pallets/flask",
+  "url": "https://github.com/pallets/flask",
+  "commit": "d086db856be187255b8ec61ef409357393020f32"
+ },
+ "design": {
+  "clients": [
+   "codex",
+   "claude",
+   "antigravity"
+  ],
+  "tasks": [
+   "S_FLASK_TEST_CLIENT_IMPACT"
+  ],
+  "arms": {
+   "graphtyn (main)": "main",
+   "graphtyn (fix)": "feat/scoped-receiver-typing"
+  },
+  "repetitions": 1,
+  "order": "alternado por tarea",
+  "stop_rule": "targeted",
+  "grading": "Mayoría de tres jueces con citas resueltas; intervalos por tareas."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna",
+   "claude": "claude-sonnet-5-5",
+   "antigravity": "gemini-3.8-flash-high"
+  }
+ },
+ "isolation": "Copia del repositorio y GRAPHTYN_HOME propio por sesión; cada versión desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario pidió hacer los pendientes salvo OpenClaw (2026-11-11).",
+  "total_token_ceiling": 1200000
+ }
+}
