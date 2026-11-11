@@ -854,9 +854,8 @@ def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names
     }
     if omitted_anchors:
         result["omitted_homonyms"] = homonym_rows(graph, omitted_anchors, anchors)
-        result["guidance"] += (" omitted_homonyms are other definitions of the same name (overloads or overrides, "
-                               "which may chain with super), as [owner.name, file:line] plus `implements` when one "
-                               "implements a selected anchor: changing the name affects them too, so report them by owner.")
+        result["guidance"] += (" omitted_homonyms are other definitions of the same name (overloads, overrides or "
+                               "implementations, which may chain with super): changing it affects them, so report them by owner.")
     implementation = _implementation_context(graph, request, anchors[:5], nodes[:max_nodes])
     if implementation:
         result["implementation_context"] = implementation

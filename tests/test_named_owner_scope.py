@@ -78,6 +78,7 @@ def test_omitted_homonyms_name_their_owner_and_what_they_implement():
     anchor = {"id": "a", "name": "OpenFile", "container": "Fs", "file": "afero.go", "line": 74}
     impl = {"id": "b", "name": "OpenFile", "container": "OsFs", "file": "os.go", "line": 64}
     other = {"id": "c", "name": "OpenFile", "container": "Client", "file": "sftp/client.go", "line": 9}
+    test = {"id": "d", "name": "OpenFile", "container": "fakeFs", "file": "afero_test.go", "line": 30}
     graph = {"links": [{"source": "b", "target": "a", "label": "implementa"}]}
-    assert homonym_rows(graph, [impl, other], [anchor]) == [
-        ["OsFs.OpenFile", "os.go:64", "implements Fs.OpenFile"], ["Client.OpenFile", "sftp/client.go:9"]]
+    assert homonym_rows(graph, [test, impl, other], [anchor]) == [
+        ["OsFs.OpenFile", "os.go:64", "implements Fs.OpenFile"], ["Client.OpenFile", "sftp/client.go:9"], "afero_test.go:30"]

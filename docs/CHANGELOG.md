@@ -12,6 +12,10 @@ compatibles con PEP 440.
   término con la pregunta y suma sus entradas no nulas. En Rails (69.000 nodos) la primera
   consulta pasa de unos 50 s a 4 s y las siguientes de unos 12 s a 0,2–3 s. Los resultados son
   idénticos en las 138 tareas del gate.
+- En una pregunta de impacto, `omitted_homonyms` nombra el dueño de cada definición del proyecto
+  (`OsFs.OpenFile`, `os.go:64`) y dice si implementa el método pedido; las de pruebas siguen como
+  `archivo:línea`. Con solo `archivo:línea`, una sesión sobre la interfaz `Fs` de afero citó `os.go:64`
+  sin decir que era `OsFs`, una de las implementaciones pedidas.
 
 ## [0.13.0] - 2026-11-10
 
