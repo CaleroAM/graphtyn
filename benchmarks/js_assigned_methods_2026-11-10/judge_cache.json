@@ -1,0 +1,266 @@
+{
+ "18339c54d2e4654d1d63b1a705b387fae97e397f0c85a1845f9d6ade1964f0cd": {
+  "append": true,
+  "attachment": true,
+  "charset": false,
+  "json": true,
+  "jsonp": true,
+  "links": true,
+  "location": true,
+  "send": true,
+  "type": true
+ },
+ "195b2c731adad543c21cbd46692dd8290d16e100a35a00e4e257e3b9439f6755": {
+  "append": false,
+  "attachment": false,
+  "charset": false,
+  "json": false,
+  "jsonp": false,
+  "links": false,
+  "location": false,
+  "send": false,
+  "type": false
+ },
+ "2074e01c681e2e83062323df6eef9f51b8febae4c4843c5d58d8e2a9817c2d4f": {
+  "host": true,
+  "protocol": true,
+  "range": true,
+  "referrer": false,
+  "required_name": false,
+  "xhr": true
+ },
+ "26df8911f8e03f7429b567b788156ff2d8cb7914a8c88d3cdb2fa0b7926f6f78": {
+  "append": true,
+  "attachment": true,
+  "charset": false,
+  "json": true,
+  "jsonp": true,
+  "links": true,
+  "location": true,
+  "send": true,
+  "type": true
+ },
+ "277db886690b1eab628df068688c1b1e6ce7889a6d805bcad3ea2c75c793755a": {
+  "host": false,
+  "protocol": true,
+  "range": false,
+  "referrer": true,
+  "required_name": true,
+  "xhr": false
+ },
+ "2c277085000f7de6c0b9d8c8e25f90f7279d0483a05a013196cbf61c578fce49": {
+  "after_response": true,
+  "body_read": true,
+  "decorate": true,
+  "http_error": true,
+  "limit": true,
+  "progress": false,
+  "response_data": true,
+  "setter": false
+ },
+ "2d84ceedeae1a6e5839a49436b73f9dc59051e974b14304a6bccd6b5e6910aed": {
+  "host": false,
+  "protocol": false,
+  "range": true,
+  "referrer": true,
+  "required_name": false,
+  "xhr": false
+ },
+ "5d54984ab4824c40719aceb2e0cdb6b9e2ccbbfe6e75015b95f61d424acd8426": {
+  "after_response": true,
+  "body_read": true,
+  "decorate": true,
+  "http_error": true,
+  "limit": true,
+  "progress": false,
+  "response_data": true,
+  "setter": true
+ },
+ "64f04fdb362f42420e4c3165bd63215530ae871f1aa9293d3ddb07d855776b1f": {
+  "after_response": true,
+  "body_read": true,
+  "decorate": true,
+  "http_error": true,
+  "limit": true,
+  "progress": false,
+  "response_data": true,
+  "setter": true
+ },
+ "68a5a91ee699a3e043ad42e13385e6bd90d81e1f1f18fd2d30014af4218ea77f": {
+  "after_response": true,
+  "before_request": true,
+  "before_retry": true,
+  "json_shortcut": true,
+  "remaining": false,
+  "sentinel": false,
+  "should_retry": true
+ },
+ "6931a256159149d0c23d16f243cd88de81f13569304f5bc6474f15bdc46d30d2": {
+  "after_response": true,
+  "body_read": true,
+  "decorate": true,
+  "http_error": true,
+  "limit": true,
+  "progress": false,
+  "response_data": true,
+  "setter": false
+ },
+ "69d58007d0d997f50321d7aa9deb138adb5b6ad9ffde5606d051f2e9f31d187a": {
+  "append": false,
+  "attachment": false,
+  "charset": false,
+  "json": false,
+  "jsonp": false,
+  "links": false,
+  "location": false,
+  "send": false,
+  "type": false
+ },
+ "7715fe290674da339771c9cdcbc21daf922ee6b12192a492c773ee6e52a17f58": {
+  "after_response": true,
+  "before_request": true,
+  "before_retry": true,
+  "json_shortcut": true,
+  "remaining": false,
+  "sentinel": false,
+  "should_retry": true
+ },
+ "81d98e879a57786738fe5f91e0fce76ca589db68c10370e723bcae6a85377adb": {
+  "after_response": true,
+  "before_request": true,
+  "before_retry": true,
+  "json_shortcut": true,
+  "remaining": false,
+  "sentinel": false,
+  "should_retry": true
+ },
+ "8aaabd6b874597e95b7a7cb4f2e37d45a4daa30187ea71fe989f98ca802ad4d3": {
+  "host": true,
+  "protocol": true,
+  "range": true,
+  "referrer": false,
+  "required_name": false,
+  "xhr": true
+ },
+ "9264cbd77ba9c5e806cc8b1e0e269a77bf2e0d0465daaf580af3372e02a852bb": {
+  "host": false,
+  "protocol": false,
+  "range": true,
+  "referrer": true,
+  "required_name": false,
+  "xhr": false
+ },
+ "93547e0a02a6f417195da3f636db29107bccc7d767b80a53c09ce3e4d4c3494e": {
+  "after_response": true,
+  "before_request": true,
+  "before_retry": true,
+  "json_shortcut": true,
+  "remaining": false,
+  "sentinel": false,
+  "should_retry": true
+ },
+ "9373dd1186c9a4cd02aa28169094302d05a8d0c52bda519d4eb24d3748764e2e": {
+  "after_response": true,
+  "before_request": true,
+  "before_retry": true,
+  "json_shortcut": true,
+  "remaining": false,
+  "sentinel": false,
+  "should_retry": true
+ },
+ "abb03ae94a4095996ff21364accb2709f58daba9bf199c79f0e95961590de7dd": {
+  "after_response": true,
+  "body_read": true,
+  "decorate": true,
+  "http_error": true,
+  "limit": true,
+  "progress": false,
+  "response_data": true,
+  "setter": true
+ },
+ "ac89b124c6b0453a2216bee562aa7b8d432755000d1492a5a2e9bc24259f29fc": {
+  "after_response": true,
+  "body_read": true,
+  "decorate": true,
+  "http_error": true,
+  "limit": true,
+  "progress": false,
+  "response_data": true,
+  "setter": false
+ },
+ "b11948588c91d26c1241814accc23a57181c6736e2015a3b6dd40945186aeceb": {
+  "append": true,
+  "attachment": true,
+  "charset": false,
+  "json": true,
+  "jsonp": true,
+  "links": true,
+  "location": true,
+  "send": true,
+  "type": true
+ },
+ "b87b7c547031d8c1163ec713ef961bc86ddb92d80f8b2fe05dfe89dc32dcdba6": {
+  "after_response": true,
+  "body_read": true,
+  "decorate": true,
+  "http_error": true,
+  "limit": true,
+  "progress": false,
+  "response_data": true,
+  "setter": true
+ },
+ "bcc4567593fb4dd56d9d50b00e89876276c02d58443978c260e57bd3f378e92c": {
+  "append": true,
+  "attachment": true,
+  "charset": false,
+  "json": true,
+  "jsonp": true,
+  "links": true,
+  "location": true,
+  "send": true,
+  "type": true
+ },
+ "c5c66768b8de4a7d2ae5c548132b75d9ce1a15c7f672ed9d05d22145a8fa58d3": {
+  "host": false,
+  "protocol": true,
+  "range": false,
+  "referrer": true,
+  "required_name": true,
+  "xhr": false
+ },
+ "cdc7b0251d64324d75daa5d30ea144f0741c9b09da8c0c7230a81a2dc8492686": {
+  "host": true,
+  "protocol": true,
+  "range": true,
+  "referrer": false,
+  "required_name": false,
+  "xhr": true
+ },
+ "d033396d0bf0bf46c3afeb7458124aec9e121c6362d375a901c97f590ac45634": {
+  "after_response": true,
+  "before_request": true,
+  "before_retry": true,
+  "json_shortcut": true,
+  "remaining": false,
+  "sentinel": false,
+  "should_retry": true
+ },
+ "ecec7aacd955ff6930140eed096e54f94cfced4202cb1ac61c98c1c41676b14b": {
+  "host": true,
+  "protocol": true,
+  "range": true,
+  "referrer": false,
+  "required_name": false,
+  "xhr": true
+ },
+ "fac77dda76a878653efa42096038f2c0e3496417564738ecce6308110ae9cd83": {
+  "after_response": true,
+  "body_read": true,
+  "decorate": true,
+  "http_error": true,
+  "limit": true,
+  "progress": false,
+  "response_data": true,
+  "setter": false
+ }
+}
