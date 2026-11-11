@@ -1284,3 +1284,22 @@ def test_a_named_workspace_member_picks_its_homonym_over_a_file_named_after_the_
     assert query_intent(graph, request, "flow", 4)["matched"][0]["id"] == "glob"
     # Without the package, the qualified homonyms rank as before.
     assert query_intent(graph, "¿Cómo funciona Parser::parse?", "flow", 4)["matched"][0]["id"] == "flags"
+
+
+def test_semantic_index_embeds_in_batches_and_never_mixes_embedding_spaces(monkeypatch, tmp_path):
+    monkeypatch.setenv("GRAPHTYN_EMBED_MODEL", "local-test")
+    batches = []
+
+    def embeddings(texts, *, batch_size=24):
+        batches.append(len(texts))
+        return [[0.6, 0.8] for _ in texts]
+
+    monkeypatch.setattr(semantic_index, "ollama_embeddings", embeddings)
+    index = build_semantic_index(graph(), tmp_path / "ollama.json")
+    assert batches == [2] and index["provider"] == "ollama:local-test:cosine-v1" and index["dimensions"] == 2
+
+    # One node Ollama could not embed: the whole index is feature-hashed, not half and half.
+    monkeypatch.setattr(semantic_index, "ollama_embeddings", lambda texts, **_: [[0.6, 0.8]] + [None] * (len(texts) - 1))
+    partial = build_semantic_index(graph(), tmp_path / "partial.json")
+    assert partial["provider"] == "feature-hash-v2"
+    assert {len(row["vector"]) for row in partial["rows"]} == {semantic_index.DIMENSIONS}

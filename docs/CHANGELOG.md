@@ -85,6 +85,12 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- El índice semántico con `GRAPHTYN_EMBED_MODEL` ya no mezcla espacios de embeddings: si Ollama no
+  podía embeber un nodo, el índice se etiquetaba como hash pero conservaba los vectores de Ollama, y
+  la búsqueda comparaba vectores incomparables. Ahora, si falta alguno, todo el índice usa hash.
+  Además embebe por lotes en vez de un nodo por petición (1.272 nodos de Slim: 76 s → 47 s).
+  En 72 tareas de 8 corpus públicos, la cobertura con `nomic-embed-text` es idéntica a la del
+  hash (83,2 %): la búsqueda semántica es un respaldo que casi no interviene en código.
 - Un identificador nombrado en la pregunta que no aparece en el paquete ya no siempre retira la
   señal de parada: un acrónimo de la prosa (`API`, `JWT`) sin ningún símbolo que empiece por él no
   cuenta; un nombre que solo está en el texto del código (una clave de configuración, una

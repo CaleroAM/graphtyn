@@ -159,9 +159,13 @@ def ollama_embeddings(texts: list[str], *, batch_size: int = 24) -> list[list[fl
 
 
 def build_semantic_index(graph: dict[str, Any], output: Path | None = None) -> dict[str, Any]:
-    rows = []
+    """Embed every node once, reusing unchanged vectors; an index never mixes embedding spaces.
+
+    Ollama vectors and feature hashes are not comparable. If Ollama cannot embed every
+    pending node, the whole index falls back to feature hashes instead of keeping some
+    Ollama rows under a feature-hash label.
+    """
     requested_provider = f"ollama:{os.environ.get('GRAPHTYN_EMBED_MODEL')}:cosine-v1" if os.environ.get("GRAPHTYN_EMBED_MODEL") else "feature-hash-v2"
-    provider = requested_provider
     previous = {}
     if output and output.exists():
         try:
@@ -170,29 +174,31 @@ def build_semantic_index(graph: dict[str, Any], output: Path | None = None) -> d
                 previous = {row.get("id"): row for row in loaded.get("rows", [])}
         except (OSError, ValueError, TypeError):
             pass
-    reused = 0
-    embedded = 0
+    entries = []
     for node in graph.get("nodes", []):
         if node.get("kind") in {"module", "community", "semantic_concept"}:
             continue
         text = _text(node).strip()
-        if not text:
-            continue
-        digest = hashlib.sha256(text.encode()).hexdigest()
-        cached = previous.get(node.get("id"), {})
-        if cached.get("sha256") == digest and cached.get("vector"):
-            vector = cached["vector"]
-            reused += 1
+        if text:
+            entries.append((node.get("id"), text, hashlib.sha256(text.encode()).hexdigest()))
+    vectors = {node_id: previous[node_id]["vector"] for node_id, _body, digest in entries
+               if previous.get(node_id, {}).get("sha256") == digest and previous[node_id].get("vector")}
+    pending = [(node_id, text) for node_id, text, _digest in entries if node_id not in vectors]
+    provider = requested_provider
+    if requested_provider.startswith("ollama:") and pending:
+        embedded = ollama_embeddings([text for _node_id, text in pending], batch_size=64)
+        if all(vector is not None for vector in embedded):
+            vectors.update((node_id, vector) for (node_id, _body), vector in zip(pending, embedded))
         else:
-            vector = ollama_embedding(text)
-            if vector is None:
-                vector = hashed_embedding(text)
-                if requested_provider.startswith("ollama:"):
-                    provider = "feature-hash-v2"
-            embedded += 1
-        rows.append({"id": node.get("id"), "sha256": digest, "vector": vector})
+            provider, vectors = "feature-hash-v2", {}
+            pending = [(node_id, text) for node_id, text, _digest in entries]
+    if provider == "feature-hash-v2":
+        vectors.update((node_id, hashed_embedding(text)) for node_id, text in pending if node_id not in vectors)
+    rows = [{"id": node_id, "sha256": digest, "vector": vectors[node_id]} for node_id, _body, digest in entries]
+    reused = len(entries) - len(pending)
     index = {"version": 2, "provider": provider, "dimensions": len(rows[0]["vector"]) if rows else 0,
-             "incremental": {"reused": reused, "embedded": embedded, "removed": max(0, len(previous) - reused)}, "rows": rows}
+             "incremental": {"reused": reused, "embedded": len(pending), "removed": max(0, len(previous) - reused)},
+             "rows": rows}
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(index, separators=(",", ":")), encoding="utf-8")
