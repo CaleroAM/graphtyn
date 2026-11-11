@@ -1,4 +1,15 @@
 {
+ "05e97d9a944edd1b0c2bb6011988294e663ca0673f49de451e9ad43b01a4ad4c": {
+  "basepath": true,
+  "cache_on_read": true,
+  "copy_on_write": true,
+  "copy_to_layer": false,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "temp_file": true,
+  "write_file": true
+ },
  "0a310b9fec9c4484f8b3f7f8042809c4e9d7f03828013059eb72f093b0464d79": {
   "basepath": true,
   "cache_on_read": true,
@@ -28,6 +39,16 @@
   "readonly": true,
   "temp_file": true,
   "write_file": true
+ },
+ "1421b294adec76b915976f0c276c5b7e60f6d23e3acd464e647c98ba87695dca": {
+  "basepath": true,
+  "copy_on_write": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "sftp": true,
+  "sftp_remove_all": true,
+  "walk_helper": true
  },
  "143a2436324127bae55aaa59fb7a60dfa786fcd502c69add1d1783624da94ba2": {
   "allow_null": true,
@@ -78,6 +99,16 @@
   "json_object_add": true,
   "null_key": true,
   "tests": false
+ },
+ "44e7e0e23da3e389cd453a77ed9fe7164f278ca15de3ae24fdce8911d8b82756": {
+  "basepath": true,
+  "copy_on_write": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "sftp": true,
+  "sftp_remove_all": true,
+  "walk_helper": true
  },
  "46386462796cd9f8b6586e150fb6b39b49db19ef53a19729f22cae04d4315dee": {
   "basepath": true,
@@ -151,6 +182,17 @@
   "temp_file": true,
   "write_file": true
  },
+ "653a4e179728d1add9937de0241c350534741cad6dbe6e66ae9b153f42748595": {
+  "basepath": true,
+  "cache_on_read": true,
+  "copy_on_write": true,
+  "copy_to_layer": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "temp_file": true,
+  "write_file": true
+ },
  "66c7a3da55a922cb51a943a0f5a936801ccaa68f0f7403151a7864521a8ab86f": {
   "basic_tests": true,
   "client_class": true,
@@ -166,6 +208,16 @@
   "json_object_add": true,
   "null_key": true,
   "tests": true
+ },
+ "6b65c25a0a1fee649012c87bf8cc2c62f3530a75fbbf20e01b70cdc084860e84": {
+  "basepath": true,
+  "copy_on_write": true,
+  "memmap": true,
+  "os_fs": false,
+  "readonly": false,
+  "sftp": true,
+  "sftp_remove_all": true,
+  "walk_helper": true
  },
  "6dfd639e2ff752688b1c9c7ee683f82f0fe9162a615859257a43300494492b43": {
   "command_path": true,
@@ -352,6 +404,27 @@
   "should_skip": false,
   "skip_entry": true,
   "walk_next": true
+ },
+ "ad0d40b48b8e7a86095b1402a0503884c366d7dd9dc25e6a76ce575e1d382d51": {
+  "basepath": true,
+  "cache_on_read": true,
+  "copy_on_write": true,
+  "copy_to_layer": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "temp_file": true,
+  "write_file": true
+ },
+ "b309c5965ca04343acc87fe2e2007fc36fbff52afc8fc05db35522f6d366bb9a": {
+  "basepath": true,
+  "copy_on_write": true,
+  "memmap": true,
+  "os_fs": false,
+  "readonly": false,
+  "sftp": true,
+  "sftp_remove_all": true,
+  "walk_helper": true
  },
  "b5b5a34d9b85b7f2dc0638d1badfde36827ed3522d86a9ffffe94d19899ed620": {
   "allow_null": true,

@@ -30,6 +30,26 @@
    "consensus": 16,
    "majority": 16
   },
+  "codex-fixgo": {
+   "runs": 2,
+   "facts": 17,
+   "tokens": 62768,
+   "literal": 14,
+   "gemini": 15,
+   "gpt": 14,
+   "consensus": 14,
+   "majority": 15
+  },
+  "codex-fixgo2": {
+   "runs": 1,
+   "facts": 8,
+   "tokens": 29649,
+   "literal": 8,
+   "gemini": 8,
+   "gpt": 8,
+   "consensus": 8,
+   "majority": 8
+  },
   "claude-main": {
    "runs": 4,
    "facts": 28,
@@ -72,8 +92,8 @@
   }
  },
  "kappa": {
-  "judges": 0.855,
-  "literal_consensus": 0.8
+  "judges": 0.85,
+  "literal_consensus": 0.815
  },
  "runs": [
   {
@@ -196,15 +216,15 @@
     "copy_to_layer": true
    },
    "tiebreak": {
-    "os_fs": false,
-    "memmap": false,
     "basepath": true,
-    "readonly": false,
-    "copy_on_write": true,
     "cache_on_read": true,
-    "write_file": true,
+    "copy_on_write": true,
+    "copy_to_layer": true,
+    "memmap": false,
+    "os_fs": false,
+    "readonly": false,
     "temp_file": true,
-    "copy_to_layer": true
+    "write_file": true
    }
   },
   {
@@ -360,11 +380,11 @@
     "tests": false
    },
    "tiebreak": {
-    "json_object_add": true,
-    "json_null": true,
-    "null_key": true,
     "allow_null": false,
     "find": true,
+    "json_null": true,
+    "json_object_add": true,
+    "null_key": true,
     "tests": false
    }
   },
@@ -756,6 +776,195 @@
     "write_file": true,
     "temp_file": true,
     "copy_to_layer": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fixgo",
+   "arm": "graphtyn",
+   "task": "G_AFERO_LSTAT_IMPACT",
+   "repetition": 1,
+   "tokens": 29683,
+   "literal": {
+    "memmap": true,
+    "os_fs": false,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "gemini": {
+    "memmap": true,
+    "os_fs": false,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "gpt": {
+    "memmap": true,
+    "os_fs": false,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "consensus": {
+    "memmap": true,
+    "os_fs": false,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "majority": {
+    "memmap": true,
+    "os_fs": false,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fixgo",
+   "arm": "graphtyn",
+   "task": "G_AFERO_OPENFILE_IMPACT",
+   "repetition": 1,
+   "tokens": 33085,
+   "literal": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": false
+   },
+   "gemini": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   },
+   "gpt": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": false
+   },
+   "consensus": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": false
+   },
+   "majority": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   },
+   "tiebreak": {
+    "basepath": true,
+    "cache_on_read": true,
+    "copy_on_write": true,
+    "copy_to_layer": true,
+    "memmap": true,
+    "os_fs": true,
+    "readonly": true,
+    "temp_file": true,
+    "write_file": true
+   }
+  },
+  {
+   "variant": "codex-fixgo2",
+   "arm": "graphtyn",
+   "task": "G_AFERO_LSTAT_IMPACT",
+   "repetition": 1,
+   "tokens": 29649,
+   "literal": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "gemini": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "gpt": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "consensus": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "majority": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
    },
    "tiebreak": null
   },
@@ -1240,14 +1449,14 @@
     "docs": true
    },
    "tiebreak": {
-    "find_next": true,
-    "suggestions": true,
     "command_path": true,
-    "use_line": true,
+    "completions": true,
+    "docs": true,
+    "find_next": true,
     "name_and_aliases": true,
     "sorter": false,
-    "completions": true,
-    "docs": true
+    "suggestions": true,
+    "use_line": true
    }
   },
   {
@@ -1461,14 +1670,14 @@
     "docs": false
    },
    "tiebreak": {
-    "find_next": true,
-    "suggestions": true,
     "command_path": true,
-    "use_line": true,
+    "completions": true,
+    "docs": false,
+    "find_next": true,
     "name_and_aliases": true,
     "sorter": true,
-    "completions": true,
-    "docs": false
+    "suggestions": true,
+    "use_line": true
    }
   },
   {
