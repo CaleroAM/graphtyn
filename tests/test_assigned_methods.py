@@ -33,3 +33,22 @@ def test_private_members_are_called_by_their_hash_name(tmp_path):
     _nodes, calls = _graph(tmp_path, {"ky.ts": "export class Ky {\n  #delay(): number { return 1; }\n"
                                                "  retry(): number { return 0; }\n  run() { return this.#delay(); }\n}\n"})
     assert ("run", "Ky", "#delay", "EXTRACTED") in calls and not any(call[2] == "retry" for call in calls)
+
+
+def test_every_name_of_an_alias_chain_is_the_method(tmp_path):
+    # Express: `res.set = res.header = function header()`; its own methods call `this.set(...)`.
+    nodes, calls = _graph(tmp_path, {"lib/response.js": "var res = Object.create(http.ServerResponse.prototype);\n"
+                                     "res.set =\nres.header = function header(field, val) { return this; };\n"
+                                     "res.type = function type(t) { return this.set('Content-Type', t); };\n"})
+    methods = {(node.get("container"), node.get("name")) for node in nodes.values() if node.get("kind") == "method"}
+    assert methods == {("res", "set"), ("res", "header"), ("res", "type")}
+    assert ("type", "res", "set", "EXTRACTED") in calls
+
+
+def test_a_recursive_self_call_does_not_fall_back_to_a_homonym(tmp_path):
+    _nodes, calls = _graph(tmp_path, {
+        "lib/application.js": "var app = exports = module.exports = {};\n"
+                              "app.set = function set(setting, val) { if (val) { this.set('x', 1); } return this; };\n",
+        "lib/response.js": "var res = Object.create(http.ServerResponse.prototype);\n"
+                           "res.set = function header(field, val) { return this; };\n"})
+    assert not any(call[0] == "set" and call[1] == "res" for call in calls)

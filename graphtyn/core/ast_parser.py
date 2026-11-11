@@ -969,6 +969,8 @@ class ASTParser:
                 if call.get("runtime_builtin") and not local_targets and not rank_candidate.is_imported(rel_file, call["name"]):
                     suppressed_relations["runtime_calls"] += 1
                     continue
+                if source_id in targets and call.get("receiver") == "this" and node_by_id.get(source_id, {}).get("object_member"):
+                    continue  # recursion (`this.set(k, v)` inside `app.set = function`), not `res.set` elsewhere
                 ranked = sorted((
                     (rank_candidate(
                         target, rel_file, call.get("container", ""), receiver_type,

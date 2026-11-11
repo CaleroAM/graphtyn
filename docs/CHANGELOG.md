@@ -31,7 +31,8 @@ compatibles con PEP 440.
   las llamadas a él se resuelven: en express, las llamadas del grafo pasan de 308 a 1.937. Desde
   otro archivo la llamada es `INFERRED`, porque solo la une el nombre de la variable (`app`, `res`).
   Los stubs de pruebas, los parches de globales (`Math.random = ...`) y las asignaciones dentro de
-  una función no cuentan.
+  una función no cuentan. Cada nombre de una cadena de alias (`res.set = res.header = function`) es
+  el mismo método, y la recursión `this.set(...)` dentro de `app.set` no se desvía a `res.set`.
 - En TypeScript, `this.#retry()` llama al miembro privado `#retry`: antes no se registraba ninguna
   llamada a miembros `#privados`.
 - Los métodos de un enum de Java, C# o PHP, incluidos los cuerpos de sus constantes, tienen ahora

@@ -25,13 +25,8 @@ def _top_level_object(source: bytes, owner: str) -> bool:
                      + rb"\b", source) is not None
 
 
-def assigned_method(source: bytes, node) -> tuple[str, str] | None:
-    """(object, method) for `res.send = function send() {}` or `Foo.prototype.bar = () => {}`."""
-    parent = node.parent
-    if node.type not in ASSIGNED_FUNCTIONS or parent is None or parent.type != "assignment_expression" \
-            or parent.child_by_field_name("right") is None or parent.child_by_field_name("right").id != node.id:
-        return None
-    left = parent.child_by_field_name("left")
+def _member_target(source: bytes, left) -> tuple[str, str] | None:
+    """(object, method) named by the left side `res.send` or `Foo.prototype.bar` of an assignment."""
     if left is None or left.type != "member_expression":
         return None
     owner, method = left.child_by_field_name("object"), left.child_by_field_name("property")
@@ -41,6 +36,23 @@ def assigned_method(source: bytes, node) -> tuple[str, str] | None:
     return (names[-1], _text(source, method)) if names and names[-1] not in {"this", "exports", "module"} else None
 
 
+def _assigned_function(assignment):
+    """The function at the end of `res.set = res.header = function header() {}`, or None."""
+    right = assignment.child_by_field_name("right")
+    while right is not None and right.type == "assignment_expression":
+        right = right.child_by_field_name("right")
+    return right if right is not None and right.type in ASSIGNED_FUNCTIONS else None
+
+
+def assigned_method(source: bytes, node) -> tuple[str, str] | None:
+    """(object, method) for `res.send = function send() {}` or `Foo.prototype.bar = () => {}`."""
+    parent = node.parent
+    if node.type not in ASSIGNED_FUNCTIONS or parent is None or parent.type != "assignment_expression" \
+            or parent.child_by_field_name("right") is None or parent.child_by_field_name("right").id != node.id:
+        return None
+    return _member_target(source, parent.child_by_field_name("left"))
+
+
 def assigned_method_symbol(source: bytes, assignment, rel_path: str, test_file: bool) -> dict[str, Any] | None:
     """The method an assignment defines, reached through its object and never by a bare call.
 
@@ -48,8 +60,9 @@ def assigned_method_symbol(source: bytes, assignment, rel_path: str, test_file: 
     """
     if assignment.type != "assignment_expression" or test_file:
         return None
-    right = assignment.child_by_field_name("right")
-    assigned = assigned_method(source, right) if right is not None else None
+    # Each name of a chain (`res.set = res.header = function header`) is the same method.
+    right = _assigned_function(assignment)
+    assigned = _member_target(source, assignment.child_by_field_name("left")) if right is not None else None
     if not assigned or assigned[0] in _PATCHED_GLOBALS or not _top_level_object(source, assigned[0]):
         return None
     lines = _text(source, assignment).splitlines()

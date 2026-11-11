@@ -19,7 +19,7 @@ from typing import Any, Optional
 from .declaration_facts import ASSIGNED_FUNCTIONS, assigned_method, assigned_method_symbol, bounded_generics
 
 
-PARSER_VERSION = "treesitter-v32-assigned-methods"
+PARSER_VERSION = "treesitter-v33-alias-chains"
 
 
 _TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
