@@ -3,7 +3,9 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
-## [Sin publicar]
+## [0.13.0] - 2026-11-10
+
+Validación de la versión: `docs/release-validation-0.13.0.md`.
 
 ### Añadido
 
