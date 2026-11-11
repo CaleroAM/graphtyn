@@ -3,6 +3,35 @@
 Este proyecto usa [Semantic Versioning](https://semver.org/) y versiones
 compatibles con PEP 440.
 
+## [Sin publicar]
+
+### Corregido
+
+- El tipo del receptor de una llamada (`x.save()`) sale solo de las declaraciones que la llamada
+  puede ver: su bloque, su función o método, su tipo y el archivo, ganando la más cercana. Antes
+  valía cualquier `x` declarada antes en el archivo, así que el parámetro `x: Repo` de una función
+  tipaba la `x` de otra:
+  - los parámetros y locales de otra función, los de un prototipo de C++ o de un tipo función de
+    TypeScript y los campos de un struct de Go o Rust ya no tipan una variable suelta;
+  - un enlace sin tipo más cercano (`var x = load()`, `x := load()`, `let x = load()`, un parámetro
+    sin anotar, el `x` de una lambda) oculta al tipado de fuera, y la llamada queda sin tipo en
+    vez de con uno ajeno;
+  - en `let v = v.parse()` el lado derecho sigue leyendo la `v` de fuera, y `let x = x.clone()`,
+    `let x = &x` o `x := x` conservan el tipo de `x`;
+  - un método de Python ve las variables del módulo, no los atributos del cuerpo de su clase;
+  - en Java, C#, C++ y Scala un campo es visible en toda su clase aunque se declare más abajo, y
+    el método de C++ definido fuera (`Clase::metodo() { ... }`) ve los campos de su clase si está
+    en el mismo archivo; `buscar().save()` usa el tipo de retorno de `buscar` dentro de su clase;
+  - un campo alcanzado a través de un objeto (`this.repo.save()`, `self.repo.save()`,
+    `s.repo.Save()`) se sigue buscando en todo el archivo, como antes.
+
+  Varias llamadas que antes acertaban el tipo por una declaración ajena quedan ahora sin tipo y
+  pierden su arista (la variable de un `range` de Go, una fixture de pytest sin anotar). Para
+  compensar lo que sí está declarado a la vista, se reconocen además `Tipo<?> x` y
+  `Map<String, Tipo> x`, `std::shared_ptr<Tipo> x` en C++, `const x: Tipo` en TypeScript, `const`/`let x = new Tipo()` en JavaScript y,
+  en Go, `var x = &Tipo{}`, `x := new(Tipo)` y `x := v.(*Tipo)`; `x := pkg.Load()` ya no toma
+  `Load` por un tipo, ni `xs: Tipo[]` el de su elemento.
+
 ## [0.13.0] - 2026-11-10
 
 Validación de la versión: `docs/release-validation-0.13.0.md`.

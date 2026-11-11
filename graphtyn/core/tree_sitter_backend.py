@@ -7,7 +7,6 @@ runtime or a grammar is unavailable and can fall back to legacy extractors.
 
 from __future__ import annotations
 
-import bisect
 import functools
 import importlib
 import importlib.util
@@ -16,14 +15,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
+from .receiver_scope import LexicalScopes, type_receivers
 from .declaration_facts import (ASSIGNED_FUNCTIONS, assigned_method, assigned_method_symbol, bounded_generics,
                                 defined_property_symbol)
 
 
-PARSER_VERSION = "treesitter-v34-defined-getters"
-
-
-_TYPE_NAME_END = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.<>")
+PARSER_VERSION = "treesitter-v35-scoped-receivers"
 
 
 @dataclass(frozen=True)
@@ -106,7 +103,6 @@ _RUNTIME_BUILTINS = {
 # with the same name (e.g. Parameters#require) is only its target when the call
 # has a receiver, so these are flagged for bare calls only.
 _RUBY_SELF_RECEIVERS = {"self", "dup", "clone"}
-_SELF_RECEIVERS = {"python": {"self", "cls"}, "php": {"$this"}, "swift": {"self"}, "rust": {"self"}}
 _RUBY_BARE_BUILTINS = {
     "require", "require_relative", "load", "include", "extend", "prepend", "raise", "fail",
     "puts", "print", "p", "pp", "printf", "sprintf", "format", "sleep", "rand", "loop",
@@ -156,25 +152,6 @@ def _language_for_extension(ext: str, source: bytes = b""):
 
 
 _ESM_PACKS = {"javascript", "typescript"}
-# (name, type) declarations, then (type, name) ones: Go writes `c *Command` and `c := &Command{}`.
-# How a language writes "variable `name` has type `type`", as lookaheads so that every
-# start is seen. Python and Rust annotate after the name (`shape: Shape`), so the
-# C-style `Type name` pattern would only mistype them, and both bind a constructor
-# result (`c = Circle(...)`, `let c = Circle::new()`, `Direction::North`).
-_TYPED_NAME = r"(?=\b(?P<name>[a-z_][A-Za-z0-9_]*)\s*:\s*{prefix}(?P<type>[A-Z][A-Za-z0-9_]+)\b)"  # one letter is a generic
-_DECLARATION_PATTERNS = {
-    "default": (r"(?=\bvar\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*new\s+(?P<type>[A-Za-z_][A-Za-z0-9_]*))",
-                r"(?=\b(?P<type>[A-Z][A-Za-z0-9_.<>]*)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\b)"),
-    "go": (r"(?=\b(?P<name>[a-z_][A-Za-z0-9_]*)(?:\s+(?:\*|\[\])?|\s*:=\s*&?)(?:[a-z_][A-Za-z0-9_]*\.)?(?P<type>[A-Z][A-Za-z0-9_]*)\b)",
-           r"(?=\b(?P<type>[A-Z][A-Za-z0-9_.<>]*)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\b)"),
-    "typescript": (r"(?=\b(?:var|let|const)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*new\s+(?P<type>[A-Za-z_][A-Za-z0-9_]*))",
-                   r"(?=\b(?P<type>[A-Z][A-Za-z0-9_.<>]*)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\b)",
-                   r"(?=[(,]\s*(?:(?:public|private|protected|readonly)\s+)*(?P<name>[a-z_][A-Za-z0-9_]*)\??\s*:\s*(?P<type>[A-Z][A-Za-z0-9_]*)\b)"),
-    "python": (_TYPED_NAME.format(prefix=r"[\"']?(?:Optional\[)?(?:[A-Za-z_][A-Za-z0-9_]*\.)*"),
-               r"(?=\b(?P<name>[a-z_][A-Za-z0-9_]*)\s*=\s*(?:[A-Za-z_][A-Za-z0-9_]*\.)*(?P<type>[A-Z][A-Za-z0-9_]*)\()"),
-    "rust": (_TYPED_NAME.format(prefix=r"&?(?:'[a-z_]+\s+)?(?:mut\s+)?(?:dyn\s+|impl\s+)?(?:[A-Za-z_][A-Za-z0-9_]*::)*"),
-             r"(?=\b(?P<name>[a-z_][A-Za-z0-9_]*)\s*=\s*(?:[a-z_][A-Za-z0-9_]*::)*(?P<type>[A-Z][A-Za-z0-9_]*)\s*(?:::|\{))"),
-}
 _OWNER_DECLARATIONS = {"rust": "impl_item", "go": "type_spec"}
 _HERITAGE_FIELDS = ("bases", "superclass", "superclasses", "interfaces", "bounds")
 _HERITAGE_TYPES = frozenset({"base_list", "superclass", "base_class_clause", "delegation_specifiers", "extends_clause",
@@ -217,13 +194,6 @@ def _go_type(source: bytes, node: Any) -> tuple[str, list[str]]:
 
 
 _LITERAL_TYPES = frozenset({"heredoc_body", "char_literal", "character_literal"})
-
-
-def _typed_receiver(call: dict[str, Any], pack: str) -> bool:
-    """Whether a call's receiver type will be looked up among the file's declarations."""
-    receiver = call.get("receiver", "")
-    return bool(receiver) and receiver != "this" and receiver not in _SELF_RECEIVERS.get(pack, ()) \
-        and not call.get("self_receiver")
 
 
 def _without_literals(root: Any, lines: list[str]) -> str:
@@ -526,6 +496,17 @@ def _parameter_names(source: bytes, parameters) -> set[str]:
     return names
 
 
+def _scope_parameters(source: bytes, node) -> set[str]:
+    """Parameter names of a function-like scope, including a lone `x => ...` / `x -> ...`."""
+    single = node.child_by_field_name("parameter")
+    if single is not None:
+        return {_text(source, single)}
+    parameters = _parameters(node)
+    if parameters is not None and parameters.type == "identifier":
+        return {_text(source, parameters)}
+    return _parameter_names(source, parameters)
+
+
 def _is_parameter_binding(source: bytes, node, name: str, callable_types: set[str]) -> bool:
     """Whether a call name is a parameter in its current lexical closure."""
     ancestor = node.parent
@@ -610,6 +591,7 @@ class _FileContext:
     pack: Any
     type_declarations: frozenset
     callable_declarations: frozenset
+    scopes: LexicalScopes
 
 
 _MEMBER_TYPES = frozenset({"field_declaration", "property_declaration", "event_declaration", "event_field_declaration",
@@ -857,6 +839,7 @@ def _call_facts(ctx: _FileContext, node, line: int, evidence: str, calls: list, 
             "caller": _ancestor_name(ctx.source, node, ctx.callable_declarations),
             "container": owner or container,
             **({"self_receiver": True} if variable and receiver == variable else {}),
+            "_scope": (ctx.scopes.current, node.start_point),
             **_call_binding_metadata(ctx.source, node, name, ctx.callable_declarations, ctx.ext),
         })
         operation_text = " ".join(_text(ctx.source, node).split())[:300]
@@ -980,8 +963,10 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     symbol_types, call_types = _SYMBOL_TYPES, _CALL_TYPES
     import_types, type_declarations, callable_declarations = _declaration_types(pack.name, rel_path)
 
-    ctx = _FileContext(source, rel_path, ext, pack, frozenset(type_declarations), frozenset(callable_declarations))
+    ctx = _FileContext(source, rel_path, ext, pack, frozenset(type_declarations), frozenset(callable_declarations),
+                       LexicalScopes(pack.name))
     ruby_locals: dict[int, set[str]] = {}
+    scope_types = ctx.scopes.kinds
 
     def visit(node) -> None:
         nonlocal namespace
@@ -993,6 +978,7 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
         end_line = node.end_point.row + 1
         node_lines = _text(source, node).splitlines()
         evidence = node_lines[0].strip()[:240] if node_lines else ""
+        scoped = node.type in scope_types and ctx.scopes.enter(node)
 
         if node.type in _MEMBER_TYPES:
             _member_facts(ctx, node, line, end_line, evidence, members, symbols)
@@ -1068,6 +1054,8 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
 
         for child in node.named_children:
             visit(child)
+        if scoped:
+            ctx.scopes.leave()
 
     visit(tree.root_node)
 
@@ -1082,86 +1070,11 @@ def parse_file(file_path: Path, rel_path: str) -> Optional[dict[str, Any]]:
     source_text = source.decode("utf-8", errors="replace")
     source_lines = source_text.splitlines()
     _masked = functools.cache(functools.partial(_without_literals, tree.root_node, source_lines))  # read by typing only
-    joined = _masked() if any(_typed_receiver(call, pack.name) for call in calls) else "\n".join(source_lines)
-    # prefix_end[n] is len("\n".join(source_lines[:n])): the text a call on
-    # line n may use to infer its receiver's declared type.
-    prefix_end = [0]
-    for index, text in enumerate(source_lines):
-        prefix_end.append(prefix_end[-1] + len(text) + (1 if index else 0))
-    declarations: dict[str, tuple[list[tuple[int, str]], list[tuple[int, str]]]] = {}
-    identifier_declarations: tuple[dict, ...] | None = None
-
-    def _identifier_declarations() -> tuple[dict, ...]:
-        """Index `var x = new T` and `T x` for every identifier in one pass.
-
-        Overlapping lookaheads expose every start. Accepting a start only at or
-        after the previous accepted end for the same identifier reproduces the
-        non-overlapping scan a per-identifier pattern would perform.
-        """
-        patterns = _DECLARATION_PATTERNS.get(pack.name, _DECLARATION_PATTERNS["default"])
-        found: tuple[dict, ...] = tuple({} for _pattern in patterns)
-        for slot, pattern in enumerate(patterns):
-            last_end: dict[str, int] = {}
-            for match in re.finditer(pattern, joined):
-                name, type_name = match.group("name"), match.group("type")
-                end = max(match.end("name"), match.end("type"))
-                if match.start() < last_end.get(name, -1):
-                    continue
-                last_end[name] = end
-                found[slot].setdefault(name, []).append((end, type_name))
-        return found
-
-    def _receiver_declarations(receiver: str) -> tuple[list[tuple[int, str]], list[tuple[int, str]]]:
-        nonlocal identifier_declarations
-        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", receiver):
-            if identifier_declarations is None:
-                identifier_declarations = _identifier_declarations()
-            return tuple(index.get(receiver, []) for index in identifier_declarations)
-        # Necessary conditions, checked with plain string search: both patterns
-        # need whitespace before the receiver, preceded by `var` or by the last
-        # character of a type name respectively.
-        typed = declared = False
-        position = joined.find(receiver)
-        while position != -1 and not (typed and declared):
-            cursor = position - 1
-            while cursor >= 0 and joined[cursor].isspace():
-                cursor -= 1
-            if cursor >= 0 and cursor < position - 1:
-                typed = typed or joined[cursor] in _TYPE_NAME_END
-                declared = declared or bool(re.search(r"\bvar$", joined[max(0, cursor - 3):cursor + 1]))
-            position = joined.find(receiver, position + 1)
-        escaped = re.escape(receiver)
-        return (
-            [(match.end(), match.group(1)) for match in re.finditer(
-                rf"\bvar\s+{escaped}\s*=\s*new\s+([A-Za-z_][A-Za-z0-9_]*)", joined)] if declared else [],
-            [(match.end(), match.group(1)) for match in re.finditer(
-                rf"\b([A-Z][A-Za-z0-9_.<>]*)\s+{escaped}\b", joined)] if typed else [],
-        )
-
-    for call in calls:
-        receiver = call.get("receiver", "")
-        if pack.name == "ruby" and not receiver and call.get("name") in _RUBY_BARE_BUILTINS:
-            call["runtime_builtin"] = True
-        receiver_type = ""
-        if receiver == "this" or receiver in _SELF_RECEIVERS.get(pack.name, ()) or call.get("self_receiver"):  # own class
-            receiver_type = call.get("container", "")
-        elif receiver:
-            # Each receiver is resolved once per file. A match inside the
-            # prefix ends at or before its final newline, so filtering full-text
-            # matches by end offset equals searching every prefix again.
-            if receiver not in declarations:
-                declarations[receiver] = _receiver_declarations(receiver)
-            limit = prefix_end[min(int(call["line"]), len(source_lines))]
-            matches = []
-            for found in declarations[receiver]:
-                count = bisect.bisect_right(found, (limit, "\uffff"))
-                if count:
-                    matches.append(found[count - 1][1])
-            if matches:
-                receiver_type = re.sub(r"[.<].*", "", matches[-1].split(".")[-1])
-            elif receiver[:1].isupper():
-                receiver_type = receiver
-        call["receiver_type"] = receiver_type
+    if pack.name == "ruby":
+        for call in calls:
+            if not call.get("receiver") and call.get("name") in _RUBY_BARE_BUILTINS:
+                call["runtime_builtin"] = True
+    type_receivers(calls, pack.name, ctx.scopes, source_lines, _masked, functools.partial(_scope_parameters, source))
 
     return {
         "file": rel_path,
