@@ -13,6 +13,7 @@ from .tree_sitter_backend import (
 from .overview_report import collect_project_evidence
 from .graph_hygiene import normalize_graph
 from .relation_resolution import CandidateRanker, Implementations, go_implementations, unique_symbol_id
+from .ruby_constants import ruby_lexical_pick, ruby_receiver_type
 from .ruby_mro import RubyAncestry, lexical_candidates as ruby_lexical_candidates, qualified_name as ruby_qualified_name
 from .source_files import git_visible_files
 from .type_evidence import apply_type_evidence
@@ -947,7 +948,8 @@ class ASTParser:
                     targets = {target for target in targets if node_by_id.get(target, {}).get("kind") in ("method", "function")}
                 if not targets:
                     continue
-                receiver_type = _chain_receiver_type(call) or call.get("receiver_type") or call.get("receiver", "")
+                receiver_type = (ruby_receiver_type(call["ruby_constant"], targets, node_by_id) if call.get("ruby_constant")
+                                 else _chain_receiver_type(call) or call.get("receiver_type") or call.get("receiver", ""))
                 # A typed receiver that matches none of the project candidates
                 # is normally a framework/BCL call (e.g. enum.ToString), not a
                 # call to an unrelated same-named method in this repository.
@@ -981,7 +983,8 @@ class ASTParser:
                 if not ranked:
                     continue
                 best_score = ranked[0][0]
-                best = [target for score, target in ranked if score == best_score]
+                best = ruby_lexical_pick([target for score, target in ranked if score == best_score], call,
+                                         node_by_id.get(source_id, {}), node_by_id)
                 if len(best) > 4 or (len(best) > 1 and call.get("call_kind") == "identifier"):
                     suppressed_relations["ambiguous_calls"] += 1
                     continue

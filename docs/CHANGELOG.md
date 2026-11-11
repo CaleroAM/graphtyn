@@ -5,6 +5,15 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Corregido
+
+- En Ruby, `X.new(...)` llega a `X#initialize` y `X.new.metodo` a `X#metodo`; antes la creación de objetos no
+  dejaba ninguna arista y el receptor encadenado quedaba tipado como `X.new`. Una constante escrita
+  (`Associations::Builder`, `Builder`) se resuelve desde el anidamiento de quien llama, como hace Ruby:
+  dentro de `module ActionMailer`, `Builder` es `ActionMailer::Builder` antes que cualquier otro. Una
+  clase compacta (`class ActiveStorage::Blob`) y un `def self.new` propio conservan sus llamadas. En
+  Rails las llamadas del grafo pasan de 94.558 a 107.384.
+
 ## [0.13.1] - 2026-11-14
 
 Validación de la versión: `docs/release-validation-0.13.1.md`.
