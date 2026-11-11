@@ -1,0 +1,557 @@
+{
+ "0a310b9fec9c4484f8b3f7f8042809c4e9d7f03828013059eb72f093b0464d79": {
+  "basepath": true,
+  "cache_on_read": true,
+  "copy_on_write": true,
+  "copy_to_layer": false,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "temp_file": true,
+  "write_file": true
+ },
+ "0d6650f934fb00940a808ee85e6a9ea2f7e07e4e370801fe9dbc3f5751d84fde": {
+  "allow_null": false,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "11eb36e60452d4505d21cba3bff1211cb1b2739e45e844dfd827c97b9b32eba6": {
+  "basepath": true,
+  "cache_on_read": true,
+  "copy_on_write": true,
+  "copy_to_layer": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "temp_file": true,
+  "write_file": true
+ },
+ "143a2436324127bae55aaa59fb7a60dfa786fcd502c69add1d1783624da94ba2": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "2cc5ae284b436898810b168e8b0a74d12c6002fca9aeb26f360f1e2b60d06219": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "3244f7418ec1428fef614d77f82e7a30ae4eab77106571d5353366f8baaedc57": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "39c8e0ebd064d7a02ad780ce7bb66a3c61122f358b4407d7f10547678d75823c": {
+  "add_parents": true,
+  "generate_work": false,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": true
+ },
+ "40409334044a4900bc7b362021722cc7b50bee4366bdcc1b1a9f2519f57e83f4": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "42574fdbba47edab48b5e1d583daa4ec45589a5fd317926a3686e287f4bcda93": {
+  "allow_null": false,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": false
+ },
+ "46386462796cd9f8b6586e150fb6b39b49db19ef53a19729f22cae04d4315dee": {
+  "basepath": true,
+  "cache_on_read": true,
+  "copy_on_write": true,
+  "copy_to_layer": true,
+  "memmap": false,
+  "os_fs": false,
+  "readonly": false,
+  "temp_file": true,
+  "write_file": true
+ },
+ "473dd1f2800fd28b7ab444b69cec07c249f2831aeaa71d1b8a2a7631b6af2e48": {
+  "command_path": true,
+  "completions": true,
+  "docs": false,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "4a61221b1b52bf0e8821a117a65a087b639b676a5d0bbcb5a4186a41cb1dcaf1": {
+  "add_parents": false,
+  "generate_work": false,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": false
+ },
+ "52b81c1eaaf30ef0d02e70b9581c0f08caf52c7873decd13b7594b77587b4e72": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": false,
+  "suggestions": true,
+  "use_line": true
+ },
+ "55c81a06662a9fd60b266386daa98ac0866129b90bf5157cea4396aa3aa330bf": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": false,
+  "suggestions": true,
+  "use_line": true
+ },
+ "5fc5bb8d1a081eb27975cadccadbc30b80ddfeee84727795aa2b893f7a3dbef2": {
+  "add_parents": true,
+  "generate_work": false,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": true
+ },
+ "62254dc3ff03a0769e375d50043be86bf43f92b2fc38fb38c1573754ea7f144f": {
+  "basepath": true,
+  "cache_on_read": true,
+  "copy_on_write": true,
+  "copy_to_layer": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "temp_file": true,
+  "write_file": true
+ },
+ "66c7a3da55a922cb51a943a0f5a936801ccaa68f0f7403151a7864521a8ab86f": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "6852197c6ae0440af9e2f8b254fa376709177ea827619d715bcb7bc35569ab67": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "6dfd639e2ff752688b1c9c7ee683f82f0fe9162a615859257a43300494492b43": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "7c46f9b54a75ac1c01fb117886a6e47aeeb5f43bf32719508eeb2468954412f5": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "7fbf9d403ec29a04fa18aeb8ee248fcbee8d06f1cd37e2ca994732b9d189def1": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": false
+ },
+ "81243cbdbf7e7cfc2545622c2b84df0ebba663a7acb578d67f2435e302c8ff87": {
+  "add_parents": true,
+  "generate_work": true,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": true
+ },
+ "835fc87c8fe6af8b2bba2512f4b28bad9204921796cbf0ca25fcb1b035b38970": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "86d2b03d53c88fada1683f963439eb4825000b8ba73b4dce0b068e45639d7bea": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "8acb44ff25dece7f62addb6f648f0af85021b75166db0622d6d329a982807cc5": {
+  "command_path": true,
+  "completions": true,
+  "docs": false,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "8d501674ad5df3d7617de7d56c01c8d3a1a91586a277f0c20954cf27e42525b6": {
+  "basepath": true,
+  "copy_on_write": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": false,
+  "sftp": true,
+  "sftp_remove_all": true,
+  "walk_helper": false
+ },
+ "8d55a1aefeb879bae899d8db44f43e2a46b67e17ce107c6eae31e4cfb82ca036": {
+  "add_parents": true,
+  "generate_work": false,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": false
+ },
+ "93116d684a9af6f07d73ae4fc9320fa80e024d7232bb12778566b32efe83338f": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": false,
+  "suggestions": true,
+  "use_line": true
+ },
+ "95d54f327ccebe2fe069ca9f40edff053f1d20308008b728ca51293fc5925765": {
+  "add_parents": false,
+  "generate_work": false,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": false
+ },
+ "965bbee5e43addd7f179eef67d150479923e986893d7191fa59bfc350ee8e325": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "9696e9f2ef3ab33791e32551a8002d7a5f6f06fe3e98a31c3d0c797769ac10c5": {
+  "basepath": true,
+  "copy_on_write": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "sftp": true,
+  "sftp_remove_all": false,
+  "walk_helper": true
+ },
+ "96bf0cdfc504aed1796ec03ce7512096ad594663d4870eee724335e8a4d43f96": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "97ffb6181b6fcf4510f248b04316778806a548b5f94fbb16826a8ba8e0e7f479": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "98e8a5dd7161005a3e1e7e47d9af7ce51f36d92fd41a9fafefe28aeba653b552": {
+  "allow_null": false,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "99dfb5487cc406876765204b9db02ec28c3bb0123df866c04025c8f2f8b6e55e": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "a44202af1381dff5cdd482264cd954cac9d3c6c61fc517d9b579c7944233b994": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "a691268eda8d6c320026f20555d44a4e3a6f716cbb60768bbdf26bdd7de253e4": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "ab4973eab346abba715de92a570cb5847ab033f38d6662a05f07d1294c62b32f": {
+  "add_parents": true,
+  "generate_work": false,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": true
+ },
+ "b5b5a34d9b85b7f2dc0638d1badfde36827ed3522d86a9ffffe94d19899ed620": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "b60ec687e39ae941b70195c7633ef290c9f781f3e8ed3de936655eb081a0ded8": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "bd6c6450bdb507050f6533b563da996c2a90d3a08c640ca8a48ad1218b01aab7": {
+  "add_parents": true,
+  "generate_work": false,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": false
+ },
+ "c0308614b4906a7eea65054b0f27e5f2d78bf9031b8a0d360fde91f97ac369af": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "c91474ae994d02339cf72db52d6b30e6453e4fdac57105699316e1b5fe83175e": {
+  "add_parents": true,
+  "generate_work": true,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": true
+ },
+ "ca8290e6dc2df7a4ffcabe87c428c34061ad9b79df250d99b9bdd2617697301c": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "d1885145e14f8f37a440a387114c129f678e8c78ef42bf39913eac39a47fd546": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "d33e43e27af078b4667e699469d36b2221d4e5e72c370bcf7ff497df1b4ec9b3": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "d56ee59666fc4ee862e0e9af397082931aa8d3308f91491ed1ff6413bf6b3c5c": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "d57b2a0e1a9bd97cf005d1192400291cebe04341d28ce23269ac7850d5d6598e": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "dc16b556d608851af984e250006c1f05e36f09fae700f7c1f20e6d7a716df6e4": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "e32d190bfd1b18057ef7d1677850a6ccb7836c0e48b497688b38c1ebd523e6ed": {
+  "allow_null": true,
+  "find": true,
+  "json_null": true,
+  "json_object_add": true,
+  "null_key": true,
+  "tests": true
+ },
+ "e5fc54a698249e56244b3d1b5254204c8a34a53064c6f09a1f7ef04956c4795d": {
+  "add_parents": true,
+  "generate_work": true,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": true
+ },
+ "e86f88b84ed3e7a52c4d9cf393656b095bb1a17d29c859b1c7d2014bc655d599": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "ea785ac8b6b8a3a113f4df14c1878464b3d3d5644aa51245ebb8646d4f197805": {
+  "command_path": true,
+  "completions": true,
+  "docs": true,
+  "find_next": true,
+  "name_and_aliases": true,
+  "sorter": true,
+  "suggestions": true,
+  "use_line": true
+ },
+ "eb8f8e1aa8114fe08e738fe4f3fc931df18abb47562f8f1307954ea39ee63d83": {
+  "add_parents": true,
+  "generate_work": false,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": true
+ },
+ "ecb25c9c3e1ad41bce7a941117a2763e5c8764e200f38f74570d79f0a9cc6b3c": {
+  "basepath": true,
+  "copy_on_write": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": false,
+  "sftp": true,
+  "sftp_remove_all": true,
+  "walk_helper": false
+ },
+ "f3270dbfc9f1fe3dbe17ee87cbfa2684b5f9ba76e1e6f291716465a46577f5e9": {
+  "basepath": true,
+  "cache_on_read": true,
+  "copy_on_write": true,
+  "copy_to_layer": true,
+  "memmap": false,
+  "os_fs": false,
+  "readonly": false,
+  "temp_file": true,
+  "write_file": true
+ },
+ "f42b99f609846d52760113ce3cead451d0163576beddefc33503b56c991371ff": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "f99fadeae4613fa5b65d4a360a14e7f701430d19608269525f6560bdaeab0f9b": {
+  "basic_tests": true,
+  "client_class": true,
+  "fixture": true,
+  "flask_client": true,
+  "testing_tests": true,
+  "use_cookies": true
+ },
+ "faafa407696c26c10d4af329f4a1a245ccbbf6647fe0170d700382e0595d4541": {
+  "add_parents": true,
+  "generate_work": true,
+  "inner": false,
+  "read_dir": true,
+  "run_one": false,
+  "should_skip": false,
+  "skip_entry": true,
+  "walk_next": true
+ },
+ "fd6aad9d60c19627b27612906f510f311c6fb97ac13cf1397114d1bae8bc81c3": {
+  "basepath": true,
+  "copy_on_write": true,
+  "memmap": true,
+  "os_fs": true,
+  "readonly": true,
+  "sftp": true,
+  "sftp_remove_all": false,
+  "walk_helper": true
+ }
+}

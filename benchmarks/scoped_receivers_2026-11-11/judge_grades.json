@@ -1,0 +1,1629 @@
+{
+ "summary": {
+  "codex-main": {
+   "runs": 6,
+   "facts": 45,
+   "tokens": 187881,
+   "literal": 30,
+   "gemini": 33,
+   "gpt": 36,
+   "consensus": 32,
+   "majority": 33
+  },
+  "codex-fix": {
+   "runs": 4,
+   "facts": 28,
+   "tokens": 129692,
+   "literal": 18,
+   "gemini": 22,
+   "gpt": 22,
+   "consensus": 22,
+   "majority": 22
+  },
+  "codex-v012": {
+   "runs": 2,
+   "facts": 17,
+   "tokens": 104967,
+   "literal": 15,
+   "gemini": 16,
+   "gpt": 16,
+   "consensus": 16,
+   "majority": 16
+  },
+  "claude-main": {
+   "runs": 4,
+   "facts": 28,
+   "tokens": 252010,
+   "literal": 25,
+   "gemini": 25,
+   "gpt": 25,
+   "consensus": 25,
+   "majority": 25
+  },
+  "claude-fix": {
+   "runs": 4,
+   "facts": 28,
+   "tokens": 253436,
+   "literal": 23,
+   "gemini": 24,
+   "gpt": 24,
+   "consensus": 24,
+   "majority": 24
+  },
+  "antigravity-main": {
+   "runs": 4,
+   "facts": 28,
+   "tokens": 274775,
+   "literal": 24,
+   "gemini": 24,
+   "gpt": 25,
+   "consensus": 24,
+   "majority": 24
+  },
+  "antigravity-fix": {
+   "runs": 4,
+   "facts": 28,
+   "tokens": 238563,
+   "literal": 23,
+   "gemini": 23,
+   "gpt": 23,
+   "consensus": 22,
+   "majority": 23
+  }
+ },
+ "kappa": {
+  "judges": 0.855,
+  "literal_consensus": 0.8
+ },
+ "runs": [
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "G_AFERO_LSTAT_IMPACT",
+   "repetition": 1,
+   "tokens": 29512,
+   "literal": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": true
+   },
+   "gemini": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": false,
+    "sftp_remove_all": true
+   },
+   "gpt": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": false,
+    "sftp_remove_all": true
+   },
+   "consensus": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": false,
+    "sftp_remove_all": true
+   },
+   "majority": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": false,
+    "sftp": true,
+    "walk_helper": false,
+    "sftp_remove_all": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "G_AFERO_OPENFILE_IMPACT",
+   "repetition": 1,
+   "tokens": 31945,
+   "literal": {
+    "os_fs": false,
+    "memmap": false,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": false
+   },
+   "gemini": {
+    "os_fs": false,
+    "memmap": false,
+    "basepath": true,
+    "readonly": false,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   },
+   "gpt": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": false
+   },
+   "consensus": {
+    "os_fs": false,
+    "memmap": false,
+    "basepath": true,
+    "readonly": false,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": false
+   },
+   "majority": {
+    "os_fs": false,
+    "memmap": false,
+    "basepath": true,
+    "readonly": false,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   },
+   "tiebreak": {
+    "os_fs": false,
+    "memmap": false,
+    "basepath": true,
+    "readonly": false,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "S_COBRA_COMMAND_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 31735,
+   "literal": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": true
+   },
+   "gemini": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "gpt": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "consensus": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "majority": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "S_FLASK_TEST_CLIENT_IMPACT",
+   "repetition": 1,
+   "tokens": 32349,
+   "literal": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gemini": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gpt": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "consensus": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "majority": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "S_GSON_LINKED_TREE_MAP_PUT_IMPACT",
+   "repetition": 1,
+   "tokens": 30579,
+   "literal": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": false,
+    "allow_null": false,
+    "find": false,
+    "tests": false
+   },
+   "gemini": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": false
+   },
+   "gpt": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "consensus": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": false
+   },
+   "majority": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": false
+   },
+   "tiebreak": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": false,
+    "find": true,
+    "tests": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "S_RIPGREP_DIRENTRY_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 31761,
+   "literal": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": false,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "gemini": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": false,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "gpt": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": false,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "consensus": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": false,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "majority": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": false,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "S_COBRA_COMMAND_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 34227,
+   "literal": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "gemini": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "gpt": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "consensus": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "majority": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "S_FLASK_TEST_CLIENT_IMPACT",
+   "repetition": 1,
+   "tokens": 30501,
+   "literal": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gemini": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gpt": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "consensus": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "majority": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "S_GSON_LINKED_TREE_MAP_PUT_IMPACT",
+   "repetition": 1,
+   "tokens": 33299,
+   "literal": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": false,
+    "allow_null": false,
+    "find": false,
+    "tests": true
+   },
+   "gemini": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": false,
+    "find": true,
+    "tests": true
+   },
+   "gpt": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": false,
+    "find": true,
+    "tests": true
+   },
+   "consensus": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": false,
+    "find": true,
+    "tests": true
+   },
+   "majority": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": false,
+    "find": true,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "S_RIPGREP_DIRENTRY_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 31665,
+   "literal": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": false,
+    "read_dir": false,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "gemini": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "gpt": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "consensus": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "majority": {
+    "skip_entry": true,
+    "walk_next": false,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-v012",
+   "arm": "graphtyn",
+   "task": "G_AFERO_LSTAT_IMPACT",
+   "repetition": 1,
+   "tokens": 28133,
+   "literal": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": false
+   },
+   "gemini": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": false
+   },
+   "gpt": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": false
+   },
+   "consensus": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": false
+   },
+   "majority": {
+    "memmap": true,
+    "os_fs": true,
+    "basepath": true,
+    "copy_on_write": true,
+    "readonly": true,
+    "sftp": true,
+    "walk_helper": true,
+    "sftp_remove_all": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-v012",
+   "arm": "graphtyn",
+   "task": "G_AFERO_OPENFILE_IMPACT",
+   "repetition": 1,
+   "tokens": 76834,
+   "literal": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": false
+   },
+   "gemini": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   },
+   "gpt": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   },
+   "consensus": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   },
+   "majority": {
+    "os_fs": true,
+    "memmap": true,
+    "basepath": true,
+    "readonly": true,
+    "copy_on_write": true,
+    "cache_on_read": true,
+    "write_file": true,
+    "temp_file": true,
+    "copy_to_layer": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "S_COBRA_COMMAND_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 64807,
+   "literal": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "gemini": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "gpt": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "consensus": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "majority": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "S_FLASK_TEST_CLIENT_IMPACT",
+   "repetition": 1,
+   "tokens": 60714,
+   "literal": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gemini": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gpt": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "consensus": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "majority": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "S_GSON_LINKED_TREE_MAP_PUT_IMPACT",
+   "repetition": 1,
+   "tokens": 62299,
+   "literal": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "gemini": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "gpt": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "consensus": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "majority": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-main",
+   "arm": "graphtyn",
+   "task": "S_RIPGREP_DIRENTRY_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 64190,
+   "literal": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "gemini": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "gpt": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "consensus": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "majority": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "S_COBRA_COMMAND_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 65117,
+   "literal": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "gemini": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "gpt": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "consensus": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "majority": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "S_FLASK_TEST_CLIENT_IMPACT",
+   "repetition": 1,
+   "tokens": 60400,
+   "literal": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gemini": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gpt": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "consensus": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "majority": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "S_GSON_LINKED_TREE_MAP_PUT_IMPACT",
+   "repetition": 1,
+   "tokens": 63944,
+   "literal": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": false,
+    "tests": true
+   },
+   "gemini": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "gpt": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "consensus": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "majority": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "claude-fix",
+   "arm": "graphtyn",
+   "task": "S_RIPGREP_DIRENTRY_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 63975,
+   "literal": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "gemini": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "gpt": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "consensus": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "majority": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "S_COBRA_COMMAND_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 96956,
+   "literal": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": true
+   },
+   "gemini": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": true
+   },
+   "gpt": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": true
+   },
+   "consensus": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": true
+   },
+   "majority": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": true
+   },
+   "tiebreak": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": true
+   }
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "S_FLASK_TEST_CLIENT_IMPACT",
+   "repetition": 1,
+   "tokens": 53402,
+   "literal": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gemini": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gpt": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "consensus": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "majority": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "S_GSON_LINKED_TREE_MAP_PUT_IMPACT",
+   "repetition": 1,
+   "tokens": 64261,
+   "literal": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "gemini": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "gpt": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "consensus": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "majority": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-main",
+   "arm": "graphtyn",
+   "task": "S_RIPGREP_DIRENTRY_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 60156,
+   "literal": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "gemini": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "gpt": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "consensus": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "majority": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": true,
+    "should_skip": false,
+    "inner": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "S_COBRA_COMMAND_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 61933,
+   "literal": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": true
+   },
+   "gemini": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": true
+   },
+   "gpt": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": false
+   },
+   "consensus": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": false,
+    "completions": true,
+    "docs": false
+   },
+   "majority": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": false
+   },
+   "tiebreak": {
+    "find_next": true,
+    "suggestions": true,
+    "command_path": true,
+    "use_line": true,
+    "name_and_aliases": true,
+    "sorter": true,
+    "completions": true,
+    "docs": false
+   }
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "S_FLASK_TEST_CLIENT_IMPACT",
+   "repetition": 1,
+   "tokens": 54634,
+   "literal": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gemini": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "gpt": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "consensus": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "majority": {
+    "fixture": true,
+    "flask_client": true,
+    "client_class": true,
+    "use_cookies": true,
+    "testing_tests": true,
+    "basic_tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "S_GSON_LINKED_TREE_MAP_PUT_IMPACT",
+   "repetition": 1,
+   "tokens": 60354,
+   "literal": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "gemini": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "gpt": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "consensus": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "majority": {
+    "json_object_add": true,
+    "json_null": true,
+    "null_key": true,
+    "allow_null": true,
+    "find": true,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "antigravity-fix",
+   "arm": "graphtyn",
+   "task": "S_RIPGREP_DIRENTRY_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 61642,
+   "literal": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "gemini": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "gpt": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "consensus": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "majority": {
+    "skip_entry": true,
+    "walk_next": true,
+    "add_parents": true,
+    "read_dir": true,
+    "run_one": false,
+    "generate_work": false,
+    "should_skip": false,
+    "inner": false
+   },
+   "tiebreak": null
+  }
+ ]
+}
