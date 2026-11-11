@@ -249,3 +249,23 @@ def attach_text_references(root: Path, graph: dict[str, Any] | None, data: dict[
         data["missing"] = [*data.get("missing", []), "all_text_references"]
         data["complete_for"] = []
         data["do_not_expand"] = False
+
+
+def homonym_rows(graph: dict[str, Any], omitted: list[dict[str, Any]], anchors: list[dict[str, Any]]) -> list[list[str]]:
+    """Other definitions of the name, by owner: `OsFs.OpenFile` says more than `os.go:64`.
+
+    A session given only file:line listed `os.go:64` as a homonym and never said it was
+    `OsFs`, one of the implementations it was asked for.
+    """
+    anchor_names = {node.get("id"): f"{node.get('container') + '.' if node.get('container') else ''}{node.get('name')}"
+                    for node in anchors}
+    implements = {link.get("source"): anchor_names[link.get("target")] for link in graph.get("links", [])
+                  if link.get("label") == "implementa" and link.get("target") in anchor_names}
+    rows = []
+    for node in omitted:
+        owner = f"{node.get('container') + '.' if node.get('container') else ''}{node.get('name') or ''}"
+        row = [owner, f"{node.get('file') or ''}:{node.get('line') or ''}"]
+        if node.get("id") in implements:
+            row.append(f"implements {implements[node.get('id')]}")
+        rows.append(row)
+    return rows

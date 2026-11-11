@@ -71,3 +71,13 @@ def test_a_bound_written_in_a_comment_does_not_type_the_field(tmp_path):
     (tmp_path / "core.rs").write_text(source, encoding="utf-8")
     facts = parse_file(tmp_path / "core.rs", "core.rs") or {}
     assert {member["name"]: member["type"] for member in facts["members"]}.get("sink") == "Sink"
+
+
+def test_omitted_homonyms_name_their_owner_and_what_they_implement():
+    from graphtyn.core.impact_references import homonym_rows
+    anchor = {"id": "a", "name": "OpenFile", "container": "Fs", "file": "afero.go", "line": 74}
+    impl = {"id": "b", "name": "OpenFile", "container": "OsFs", "file": "os.go", "line": 64}
+    other = {"id": "c", "name": "OpenFile", "container": "Client", "file": "sftp/client.go", "line": 9}
+    graph = {"links": [{"source": "b", "target": "a", "label": "implementa"}]}
+    assert homonym_rows(graph, [impl, other], [anchor]) == [
+        ["OsFs.OpenFile", "os.go:64", "implements Fs.OpenFile"], ["Client.OpenFile", "sftp/client.go:9"]]
