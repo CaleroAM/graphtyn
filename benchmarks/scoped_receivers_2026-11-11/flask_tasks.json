@@ -1,0 +1,47 @@
+{
+ "tasks": [
+  {
+   "id": "S_FLASK_TEST_CLIENT_IMPACT",
+   "request": "Si cambio Flask.test_client, ¿qué se rompe? Enumera los consumidores directos (incluidas fixtures y pruebas) con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "fixture",
+     "any": [
+      "conftest",
+      "def client"
+     ]
+    },
+    {
+     "id": "flask_client",
+     "any": [
+      "FlaskClient"
+     ]
+    },
+    {
+     "id": "client_class",
+     "any": [
+      "test_client_class"
+     ]
+    },
+    {
+     "id": "use_cookies",
+     "any": [
+      "use_cookies"
+     ]
+    },
+    {
+     "id": "testing_tests",
+     "any": [
+      "test_testing.py"
+     ]
+    },
+    {
+     "id": "basic_tests",
+     "any": [
+      "test_basic.py"
+     ]
+    }
+   ]
+  }
+ ]
+}

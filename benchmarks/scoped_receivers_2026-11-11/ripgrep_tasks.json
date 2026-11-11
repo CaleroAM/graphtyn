@@ -1,0 +1,61 @@
+{
+ "tasks": [
+  {
+   "id": "S_RIPGREP_DIRENTRY_PATH_IMPACT",
+   "request": "Si cambio DirEntry::path en el crate ignore de ripgrep, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "skip_entry",
+     "any": [
+      "skip_entry"
+     ]
+    },
+    {
+     "id": "walk_next",
+     "any": [
+      "Walk::next",
+      "Iterator for Walk"
+     ]
+    },
+    {
+     "id": "add_parents",
+     "any": [
+      "add_parents"
+     ]
+    },
+    {
+     "id": "read_dir",
+     "any": [
+      "read_dir"
+     ]
+    },
+    {
+     "id": "run_one",
+     "any": [
+      "run_one",
+      "is_same_file_system"
+     ]
+    },
+    {
+     "id": "generate_work",
+     "any": [
+      "generate_work",
+      "check_symlink_loop"
+     ]
+    },
+    {
+     "id": "should_skip",
+     "any": [
+      "should_skip_entry"
+     ]
+    },
+    {
+     "id": "inner",
+     "any": [
+      "DirEntryInner"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "tasks": [
+  {
+   "id": "S_GSON_LINKED_TREE_MAP_PUT_IMPACT",
+   "request": "Si cambio LinkedTreeMap.put en gson, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "json_object_add",
+     "any": [
+      "JsonObject.add",
+      "members.put"
+     ]
+    },
+    {
+     "id": "json_null",
+     "any": [
+      "JsonNull.INSTANCE"
+     ]
+    },
+    {
+     "id": "null_key",
+     "any": [
+      "key == null"
+     ]
+    },
+    {
+     "id": "allow_null",
+     "any": [
+      "allowNullValues"
+     ]
+    },
+    {
+     "id": "find",
+     "any": [
+      "find(key, true)"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "LinkedTreeMapTest"
+     ]
+    }
+   ]
+  }
+ ]
+}

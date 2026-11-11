@@ -1,0 +1,38 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada del despacho a implementaciones en Go, sobre un corpus nuevo con muchas interfaces: v0.12.0 (sin despacho) frente a main.",
+ "repository": {
+  "name": "spf13/afero",
+  "url": "https://github.com/spf13/afero",
+  "commit": "d2bffea700c045694727c3172ad6521da4e218b0"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "G_AFERO_LSTAT_IMPACT"
+  ],
+  "arms": {
+   "graphtyn (v0.12.0)": "v0.12.0",
+   "graphtyn (main)": "main"
+  },
+  "repetitions": 1,
+  "order": "alternado por tarea",
+  "stop_rule": "targeted",
+  "grading": "Mayoría de tres jueces con citas resueltas; intervalos por tareas."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna",
+   "claude": "claude-sonnet-5-5",
+   "antigravity": "gemini-3.8-flash-high"
+  }
+ },
+ "isolation": "Copia del repositorio y GRAPHTYN_HOME propio por sesión; cada versión desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario pidió hacer los pendientes salvo OpenClaw (2026-11-11).",
+  "total_token_ceiling": 200000
+ }
+}
