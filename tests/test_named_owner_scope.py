@@ -71,3 +71,21 @@ def test_a_bound_written_in_a_comment_does_not_type_the_field(tmp_path):
     (tmp_path / "core.rs").write_text(source, encoding="utf-8")
     facts = parse_file(tmp_path / "core.rs", "core.rs") or {}
     assert {member["name"]: member["type"] for member in facts["members"]}.get("sink") == "Sink"
+
+
+def test_omitted_homonyms_name_their_owner_and_what_they_implement():
+    from graphtyn.core.impact_references import homonym_rows
+    anchor = {"id": "a", "name": "OpenFile", "container": "Fs", "file": "afero.go", "line": 74}
+    impl = {"id": "b", "name": "OpenFile", "container": "OsFs", "file": "os.go", "line": 64}
+    other = {"id": "c", "name": "OpenFile", "container": "Client", "file": "sftp/client.go", "line": 9}
+    test = {"id": "d", "name": "OpenFile", "container": "fakeFs", "file": "afero_test.go", "line": 30}
+    graph = {"links": [{"source": "b", "target": "a", "label": "implementa"}]}
+    assert homonym_rows(graph, [test, impl, other], [anchor]) == [
+        ["OsFs.OpenFile", "os.go:64", "implements Fs.OpenFile"], ["Client.OpenFile", "sftp/client.go:9"], "afero_test.go:30"]
+
+
+def test_coverage_counts_every_implementation_not_only_the_selected(tmp_path):
+    from graphtyn.mcp_server import evidence_result
+    result = {"matched": [{"id": "a", "name": "LstatIfPossible"}], "nodes": [{"id": "a", "name": "LstatIfPossible"}],
+              "links": [], "implementations_total": 6}
+    assert evidence_result(result)["coverage"]["implementations"] == 6

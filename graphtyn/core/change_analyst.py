@@ -10,7 +10,7 @@ from typing import Any
 from .path_signals import TEST_PATH as _TEST_PATH, VENDORED_PATH as _VENDORED_PATH, named_package_roots as _named_package_roots, package_name_words as _package_name_words, in_named_scope as _in_named_scope, scope_words as _scope_words
 from .path_signals import package_root as _package_root
 from . import retrieval_signals as _signals
-from .impact_references import CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers, impact_targets as _impact_targets, named_owner_members as _named_owner_members, one_per_name as _one_per_name
+from .impact_references import homonym_rows, owned_implementations, CONSUMER_LABELS as _CONSUMER_LABELS, consumer_summary as _consumer_summary, direct_consumers as _direct_consumers, impact_targets as _impact_targets, named_owner_members as _named_owner_members, one_per_name as _one_per_name
 from .retrieval_signals import BEHAVIOR_KINDS as _BEHAVIOR_KINDS, HomonymHints, NameFrequency as _NameFrequency, cap_homonyms, flow_markers, with_call_chain
 from .intent_classifier import _INTENT_MARKERS, classify_intent, is_change_request as _is_change_request, without_project_scope
 from .ranking_weights import trace_stage, weighted_score
@@ -853,9 +853,10 @@ def _impact_package(graph: dict[str, Any], all_nodes: list[dict], explicit_names
         "operation_limit": 4,
     }
     if omitted_anchors:
-        result["omitted_homonyms"] = [f"{node.get('file') or ''}:{node.get('line') or ''}" for node in omitted_anchors]
-        result["guidance"] += (" omitted_homonyms are other definitions of the same name (overloads or overrides, "
-                               "which may chain with super): changing the name affects them too, so report them.")
+        result["omitted_homonyms"] = homonym_rows(graph, omitted_anchors, anchors)
+        result["implementations_total"] = len(owned_implementations(graph, anchors))  # selected or not
+        result["guidance"] += (" omitted_homonyms are other definitions of the same name (overloads, overrides or "
+                               "implementations, which may chain with super): changing it affects them, so report them by owner.")
     implementation = _implementation_context(graph, request, anchors[:5], nodes[:max_nodes])
     if implementation:
         result["implementation_context"] = implementation
