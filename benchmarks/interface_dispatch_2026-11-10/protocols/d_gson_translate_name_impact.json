@@ -1,0 +1,36 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada del despacho a implementaciones (interfaces, traits y métodos abstractos), en tareas nuevas: main frente a feat/interface-dispatch.",
+ "repository": {
+  "name": "google/gson",
+  "url": "https://github.com/google/gson",
+  "commit": "65df6e5a99747f73d386f3a61d887a0257255e0f"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "D_GSON_TRANSLATE_NAME_IMPACT"
+  ],
+  "arms": {
+   "graphtyn (main)": "main",
+   "graphtyn (fix)": "feat/interface-dispatch"
+  },
+  "repetitions": 1,
+  "order": "alternado por tarea",
+  "stop_rule": "targeted",
+  "grading": "Mayoría de tres jueces con citas resueltas; intervalos por tareas."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Copia del repositorio y GRAPHTYN_HOME propio por sesión; cada versión desde un worktree congelado.",
+ "authorization": {
+  "source": "El usuario pidió implementar el despacho con Fable y lo demás con Opus (2026-11-10).",
+  "total_token_ceiling": 900000
+ }
+}

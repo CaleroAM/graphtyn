@@ -1,0 +1,996 @@
+{
+ "summary": {
+  "codex-main": {
+   "runs": 6,
+   "facts": 39,
+   "tokens": 196213,
+   "literal": 31,
+   "gemini": 32,
+   "gpt": 29,
+   "consensus": 29,
+   "majority": 30
+  },
+  "codex-fix": {
+   "runs": 6,
+   "facts": 39,
+   "tokens": 181376,
+   "literal": 31,
+   "gemini": 30,
+   "gpt": 30,
+   "consensus": 30,
+   "majority": 30
+  },
+  "codex-fix2": {
+   "runs": 6,
+   "facts": 39,
+   "tokens": 182730,
+   "literal": 32,
+   "gemini": 32,
+   "gpt": 31,
+   "consensus": 30,
+   "majority": 32
+  }
+ },
+ "kappa": {
+  "judges": 0.848,
+  "literal_consensus": 0.675
+ },
+ "runs": [
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "D_FLASK_SAVE_SESSION_IMPACT",
+   "repetition": 1,
+   "tokens": 29074,
+   "literal": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": false,
+    "custom": true
+   },
+   "gemini": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": true,
+    "custom": true
+   },
+   "gpt": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": true,
+    "custom": true
+   },
+   "consensus": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": true,
+    "custom": true
+   },
+   "majority": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": true,
+    "custom": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "D_FLASK_VIEW_DISPATCH_IMPACT",
+   "repetition": 1,
+   "tokens": 30200,
+   "literal": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "gemini": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "gpt": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "consensus": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "majority": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "D_GSON_TRANSLATE_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 42711,
+   "literal": {
+    "interface": false,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "gemini": {
+    "interface": true,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "gpt": {
+    "interface": true,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "consensus": {
+    "interface": true,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "majority": {
+    "interface": true,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "D_RIPGREP_FIND_AT_IMPACT",
+   "repetition": 1,
+   "tokens": 29795,
+   "literal": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": false,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "gemini": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": false,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "gpt": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": false,
+    "defaults": false,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "consensus": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": false,
+    "defaults": false,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "majority": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": false,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "tiebreak": {
+    "defaults": true,
+    "forwarding": false,
+    "matcher_tests": true,
+    "pcre2_impl": true,
+    "regex_impl": true,
+    "searcher_test": true,
+    "trait": true
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "D_RIPGREP_SINK_MATCHED_IMPACT",
+   "repetition": 1,
+   "tokens": 31554,
+   "literal": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "gemini": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "gpt": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": false,
+    "test_sink": false,
+    "caller": true
+   },
+   "consensus": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": false,
+    "test_sink": false,
+    "caller": true
+   },
+   "majority": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": false,
+    "test_sink": false,
+    "caller": true
+   },
+   "tiebreak": {
+    "caller": true,
+    "forwarding": false,
+    "json": true,
+    "sinks_module": false,
+    "standard": true,
+    "summary": true,
+    "test_sink": false
+   }
+  },
+  {
+   "variant": "codex-main",
+   "arm": "graphtyn",
+   "task": "D_SLIM_RESOLVE_IMPACT",
+   "repetition": 1,
+   "tokens": 32879,
+   "literal": {
+    "impl": true,
+    "middleware": true,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "gemini": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "gpt": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": false,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "consensus": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": false,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "majority": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": false,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "tiebreak": {
+    "advanced": false,
+    "error_handler": true,
+    "error_middleware": true,
+    "impl": true,
+    "middleware": false,
+    "route": false,
+    "route_group": true
+   }
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "D_FLASK_SAVE_SESSION_IMPACT",
+   "repetition": 1,
+   "tokens": 28539,
+   "literal": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": false,
+    "custom": true
+   },
+   "gemini": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": true,
+    "custom": true
+   },
+   "gpt": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": true,
+    "custom": true
+   },
+   "consensus": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": true,
+    "custom": true
+   },
+   "majority": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": true,
+    "custom": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "D_FLASK_VIEW_DISPATCH_IMPACT",
+   "repetition": 1,
+   "tokens": 30255,
+   "literal": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "gemini": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "gpt": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "consensus": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "majority": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "D_GSON_TRANSLATE_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 28252,
+   "literal": {
+    "interface": true,
+    "enum": true,
+    "policies": false,
+    "caller": true,
+    "annotation": false,
+    "builder": false
+   },
+   "gemini": {
+    "interface": true,
+    "enum": false,
+    "policies": false,
+    "caller": true,
+    "annotation": false,
+    "builder": false
+   },
+   "gpt": {
+    "interface": true,
+    "enum": false,
+    "policies": false,
+    "caller": true,
+    "annotation": false,
+    "builder": false
+   },
+   "consensus": {
+    "interface": true,
+    "enum": false,
+    "policies": false,
+    "caller": true,
+    "annotation": false,
+    "builder": false
+   },
+   "majority": {
+    "interface": true,
+    "enum": false,
+    "policies": false,
+    "caller": true,
+    "annotation": false,
+    "builder": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "D_RIPGREP_FIND_AT_IMPACT",
+   "repetition": 1,
+   "tokens": 30585,
+   "literal": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "gemini": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "gpt": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "consensus": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "majority": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "D_RIPGREP_SINK_MATCHED_IMPACT",
+   "repetition": 1,
+   "tokens": 31560,
+   "literal": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "gemini": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "gpt": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "consensus": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "majority": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix",
+   "arm": "graphtyn",
+   "task": "D_SLIM_RESOLVE_IMPACT",
+   "repetition": 1,
+   "tokens": 32185,
+   "literal": {
+    "impl": true,
+    "middleware": true,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "gemini": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "gpt": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "consensus": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "majority": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "D_FLASK_SAVE_SESSION_IMPACT",
+   "repetition": 1,
+   "tokens": 28828,
+   "literal": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": false,
+    "custom": true
+   },
+   "gemini": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": false,
+    "custom": true
+   },
+   "gpt": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": false,
+    "custom": true
+   },
+   "consensus": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": false,
+    "custom": true
+   },
+   "majority": {
+    "abstract": true,
+    "impl": true,
+    "caller": true,
+    "test_client": true,
+    "null_session": false,
+    "custom": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "D_FLASK_VIEW_DISPATCH_IMPACT",
+   "repetition": 1,
+   "tokens": 30225,
+   "literal": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "gemini": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "gpt": {
+    "abstract": true,
+    "view_function": false,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "consensus": {
+    "abstract": true,
+    "view_function": false,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "majority": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   },
+   "tiebreak": {
+    "abstract": true,
+    "view_function": true,
+    "method_view": true,
+    "sync": true,
+    "init_every_request": false,
+    "tests": true
+   }
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "D_GSON_TRANSLATE_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 29706,
+   "literal": {
+    "interface": true,
+    "enum": true,
+    "policies": false,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "gemini": {
+    "interface": true,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "gpt": {
+    "interface": true,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "consensus": {
+    "interface": true,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "majority": {
+    "interface": true,
+    "enum": true,
+    "policies": true,
+    "caller": true,
+    "annotation": true,
+    "builder": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "D_RIPGREP_FIND_AT_IMPACT",
+   "repetition": 1,
+   "tokens": 31434,
+   "literal": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "gemini": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "gpt": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": false,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "consensus": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": false,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "majority": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   },
+   "tiebreak": {
+    "trait": true,
+    "regex_impl": true,
+    "pcre2_impl": true,
+    "forwarding": true,
+    "defaults": true,
+    "searcher_test": true,
+    "matcher_tests": true
+   }
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "D_RIPGREP_SINK_MATCHED_IMPACT",
+   "repetition": 1,
+   "tokens": 32271,
+   "literal": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "gemini": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "gpt": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "consensus": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "majority": {
+    "standard": true,
+    "summary": true,
+    "json": true,
+    "forwarding": false,
+    "sinks_module": true,
+    "test_sink": false,
+    "caller": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex-fix2",
+   "arm": "graphtyn",
+   "task": "D_SLIM_RESOLVE_IMPACT",
+   "repetition": 1,
+   "tokens": 30266,
+   "literal": {
+    "impl": true,
+    "middleware": true,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "gemini": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "gpt": {
+    "impl": true,
+    "middleware": true,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "consensus": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "majority": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   },
+   "tiebreak": {
+    "impl": true,
+    "middleware": false,
+    "route_group": true,
+    "route": true,
+    "error_middleware": true,
+    "error_handler": true,
+    "advanced": false
+   }
+  }
+ ]
+}

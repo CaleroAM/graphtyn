@@ -1,0 +1,91 @@
+{
+ "tasks": [
+  {
+   "id": "D_FLASK_SAVE_SESSION_IMPACT",
+   "request": "Si cambio save_session en SessionInterface de Flask, ¿qué se rompe? Enumera los consumidores directos y las implementaciones con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "abstract",
+     "any": [
+      "NotImplementedError"
+     ]
+    },
+    {
+     "id": "impl",
+     "any": [
+      "SecureCookieSessionInterface"
+     ]
+    },
+    {
+     "id": "caller",
+     "any": [
+      "process_response"
+     ]
+    },
+    {
+     "id": "test_client",
+     "any": [
+      "session_transaction",
+      "testing.py"
+     ]
+    },
+    {
+     "id": "null_session",
+     "any": [
+      "is_null_session"
+     ]
+    },
+    {
+     "id": "custom",
+     "any": [
+      "test_session_interface"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "D_FLASK_VIEW_DISPATCH_IMPACT",
+   "request": "Si cambio dispatch_request en View de Flask, ¿qué se rompe? Enumera los consumidores directos y las implementaciones con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "abstract",
+     "any": [
+      "NotImplementedError"
+     ]
+    },
+    {
+     "id": "view_function",
+     "any": [
+      "as_view",
+      "views.py:110",
+      "views.py:116"
+     ]
+    },
+    {
+     "id": "method_view",
+     "any": [
+      "MethodView"
+     ]
+    },
+    {
+     "id": "sync",
+     "any": [
+      "ensure_sync"
+     ]
+    },
+    {
+     "id": "init_every_request",
+     "any": [
+      "init_every_request"
+     ]
+    },
+    {
+     "id": "tests",
+     "any": [
+      "test_views"
+     ]
+    }
+   ]
+  }
+ ]
+}

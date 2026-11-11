@@ -7,6 +7,39 @@ compatibles con PEP 440.
 
 ### Añadido
 
+- Una llamada sobre un método de interfaz, trait o abstracto alcanza a sus implementaciones
+  (Go, Java, Rust, Python, C#, TypeScript y PHP):
+  - cada implementación lleva una arista `implementa` hacia la declaración, así que el impacto
+    de la declaración lista sus implementaciones;
+  - la llamada añade una arista `llama` `INFERRED` por implementación mientras haya 8 o menos;
+    por encima solo queda la arista a la declaración, con el número en
+    `resolution.implementations` (y `implementations` en el nodo);
+  - un receptor tipado con la clase concreta llega solo a su propia implementación, y `super`
+    nunca se reparte;
+  - entre sobrecargas, solo implementa la de la misma aridad.
+- Rust extrae los métodos que un trait exige sin cuerpo; TypeScript, los de sus interfaces y sus
+  clases abstractas. Python marca como abstractos `@abstractmethod`, los cuerpos que solo lanzan
+  `NotImplementedError` y los métodos de un `Protocol`.
+- Los receptores declarados como `nombre: Tipo` (Python, Rust, parámetros de TypeScript) o creados
+  con un constructor (`x = Tipo()`, `let x = Tipo::new()`, `const x = new Tipo()`) ya tienen tipo,
+  así que sus llamadas se resuelven en vez de descartarse.
+
+### Corregido
+
+- Los métodos de un enum de Java, C# o PHP, incluidos los cuerpos de sus constantes, tienen ahora
+  al enum como dueño. Así `FieldNamingPolicy.IDENTITY.translateName` implementa
+  `FieldNamingStrategy.translateName`, y `separateCamelCase(...)` se resuelve dentro del enum.
+- Una pregunta de impacto que nombra al dueño de un método («el método `matched` del trait
+  `Sink`») ancla ese miembro y sus implementaciones, en vez de repartir las anclas entre todos los
+  homónimos del repositorio; los demás homónimos se siguen informando en `omitted_homonyms`.
+  Las referencias de texto ponen primero las llamadas (`.matched(`) y
+  los usos del mismo miembro del workspace, antes que las menciones en prosa.
+- Un campo con tipo genérico (`sink: S` con `S: Sink`, o `T extends Foo`) toma el tipo de su cota,
+  así que `self.sink.matched()` llega al trait y a sus implementaciones y no a un impl de reenvío
+  cuyo tipo también se llama `S`.
+- Una llamada recursiva a través de una variable tipada (`blueprint.register(...)` dentro de
+  `Blueprint.register`) ya no cae en un método homónimo de otra clase.
+
 - El paquete de impacto añade `target_calls` (lo que llama el propio símbolo, externos incluidos),
   los lectores de una propiedad de Python entre los consumidores indirectos (`request.blueprints`)
   y `answer_checks` sacados del propio paquete: cada consumidor por su nombre, los efectos, los

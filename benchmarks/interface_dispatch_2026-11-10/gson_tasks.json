@@ -1,0 +1,50 @@
+{
+ "tasks": [
+  {
+   "id": "D_GSON_TRANSLATE_NAME_IMPACT",
+   "request": "Si cambio translateName en FieldNamingStrategy de Gson, ¿qué se rompe? Enumera los consumidores directos y las implementaciones con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "interface",
+     "any": [
+      "FieldNamingStrategy.java:43"
+     ]
+    },
+    {
+     "id": "enum",
+     "any": [
+      "FieldNamingPolicy"
+     ]
+    },
+    {
+     "id": "policies",
+     "any": [
+      "IDENTITY",
+      "UPPER_CAMEL_CASE",
+      "LOWER_CASE_WITH_UNDERSCORES"
+     ]
+    },
+    {
+     "id": "caller",
+     "any": [
+      "ReflectiveTypeAdapterFactory",
+      "getFieldNames"
+     ]
+    },
+    {
+     "id": "annotation",
+     "any": [
+      "SerializedName"
+     ]
+    },
+    {
+     "id": "builder",
+     "any": [
+      "setFieldNamingStrategy",
+      "setFieldNamingPolicy"
+     ]
+    }
+   ]
+  }
+ ]
+}
