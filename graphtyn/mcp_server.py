@@ -13,6 +13,7 @@ from typing import Dict, Any
 from .core import index_freshness
 from .core.ast_parser import ASTParser
 from .core.change_analyst import analyze_change, query_intent
+from .core.impact_references import whole_graph_counts
 from .core.impact_context import shrink_impact_context
 from .core.retrieval_signals import render_call_outline
 from .core.work_memory import attach_learning
@@ -630,7 +631,7 @@ def evidence_result(result: dict, max_nodes: int = 24, max_links: int | None = N
         "complete": len(unique) <= len(selected) and len(result.get("links", [])) <= len(relations),
     })
     if matched_ids:
-        incoming_calls = max(incoming_calls, int((result.get("direct_consumers") or {}).get("total") or 0))  # whole graph
+        incoming_calls, implementations = whole_graph_counts(result, incoming_calls, implementations)
         output["coverage"] = {
             "incoming_calls_or_uses": incoming_calls,
             "outgoing_calls_or_uses": outgoing_calls,

@@ -82,3 +82,10 @@ def test_omitted_homonyms_name_their_owner_and_what_they_implement():
     graph = {"links": [{"source": "b", "target": "a", "label": "implementa"}]}
     assert homonym_rows(graph, [test, impl, other], [anchor]) == [
         ["OsFs.OpenFile", "os.go:64", "implements Fs.OpenFile"], ["Client.OpenFile", "sftp/client.go:9"], "afero_test.go:30"]
+
+
+def test_coverage_counts_every_implementation_not_only_the_selected(tmp_path):
+    from graphtyn.mcp_server import evidence_result
+    result = {"matched": [{"id": "a", "name": "LstatIfPossible"}], "nodes": [{"id": "a", "name": "LstatIfPossible"}],
+              "links": [], "implementations_total": 6}
+    assert evidence_result(result)["coverage"]["implementations"] == 6

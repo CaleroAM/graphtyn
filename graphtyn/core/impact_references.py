@@ -273,3 +273,18 @@ def homonym_rows(graph: dict[str, Any], omitted: list[dict[str, Any]], anchors: 
             row.append(f"implements {implements[node.get('id')]}")
         own.append(row)
     return own + tests
+
+
+def owned_implementations(graph: dict[str, Any], anchors: list[dict[str, Any]]) -> set[str]:
+    """Definitions with an `implementa` edge to an anchor, whatever the package selected."""
+    ids = {node.get("id") for node in anchors}
+    return {link.get("source") for link in graph.get("links", []) if link.get("label") == "implementa" and link.get("target") in ids}
+
+
+def whole_graph_counts(result: dict, incoming_calls: int, implementations: int) -> tuple[int, int]:
+    """Consumers and implementations in the whole graph, not only those the package selected.
+
+    A session read `implementations: 4` as the total of a Go interface that six types implement.
+    """
+    return (max(incoming_calls, int((result.get("direct_consumers") or {}).get("total") or 0)),
+            max(implementations, int(result.get("implementations_total") or 0)))
