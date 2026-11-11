@@ -25,34 +25,6 @@ Validación de la versión: `docs/release-validation-0.13.0.md`.
 - Los receptores declarados como `nombre: Tipo` (Python, Rust, parámetros de TypeScript) o creados
   con un constructor (`x = Tipo()`, `let x = Tipo::new()`, `const x = new Tipo()`) ya tienen tipo,
   así que sus llamadas se resuelven en vez de descartarse.
-
-### Corregido
-
-- En JavaScript, un método asignado a un objeto del nivel superior del archivo
-  (`res.send = function send() {}`, `Foo.prototype.bar = ...`) es ahora un símbolo de ese objeto, y
-  las llamadas a él se resuelven: en express, las llamadas del grafo pasan de 308 a 1.937. Desde
-  otro archivo la llamada es `INFERRED`, porque solo la une el nombre de la variable (`app`, `res`).
-  Los stubs de pruebas, los parches de globales (`Math.random = ...`) y las asignaciones dentro de
-  una función no cuentan. Cada nombre de una cadena de alias (`res.set = res.header = function`) es
-  el mismo método, y la recursión `this.set(...)` dentro de `app.set` no se desvía a `res.set`.
-  Un getter definido con `defineGetter(req, 'host', function host() {})` o
-  `Object.defineProperty(req, 'host', {get: ...})` es dueño de las llamadas que hace dentro.
-- En TypeScript, `this.#retry()` llama al miembro privado `#retry`: antes no se registraba ninguna
-  llamada a miembros `#privados`.
-- Los métodos de un enum de Java, C# o PHP, incluidos los cuerpos de sus constantes, tienen ahora
-  al enum como dueño. Así `FieldNamingPolicy.IDENTITY.translateName` implementa
-  `FieldNamingStrategy.translateName`, y `separateCamelCase(...)` se resuelve dentro del enum.
-- Una pregunta de impacto que nombra al dueño de un método («el método `matched` del trait
-  `Sink`») ancla ese miembro y sus implementaciones, en vez de repartir las anclas entre todos los
-  homónimos del repositorio; los demás homónimos se siguen informando en `omitted_homonyms`.
-  Las referencias de texto ponen primero las llamadas (`.matched(`) y
-  los usos del mismo miembro del workspace, antes que las menciones en prosa.
-- Un campo con tipo genérico (`sink: S` con `S: Sink`, o `T extends Foo`) toma el tipo de su cota,
-  así que `self.sink.matched()` llega al trait y a sus implementaciones y no a un impl de reenvío
-  cuyo tipo también se llama `S`.
-- Una llamada recursiva a través de una variable tipada (`blueprint.register(...)` dentro de
-  `Blueprint.register`) ya no cae en un método homónimo de otra clase.
-
 - El paquete de impacto añade `target_calls` (lo que llama el propio símbolo, externos incluidos),
   los lectores de una propiedad de Python entre los consumidores indirectos (`request.blueprints`)
   y `answer_checks` sacados del propio paquete: cada consumidor por su nombre, los efectos, los
@@ -97,6 +69,31 @@ Validación de la versión: `docs/release-validation-0.13.0.md`.
   `benchmarks/antigravity_hook_2026-11-03/report.md`.
 
 ### Corregido
+
+- En JavaScript, un método asignado a un objeto del nivel superior del archivo
+  (`res.send = function send() {}`, `Foo.prototype.bar = ...`) es ahora un símbolo de ese objeto, y
+  las llamadas a él se resuelven: en express, las llamadas del grafo pasan de 308 a 1.977. Desde
+  otro archivo la llamada es `INFERRED`, porque solo la une el nombre de la variable (`app`, `res`).
+  Los stubs de pruebas, los parches de globales (`Math.random = ...`) y las asignaciones dentro de
+  una función no cuentan. Cada nombre de una cadena de alias (`res.set = res.header = function`) es
+  el mismo método, y la recursión `this.set(...)` dentro de `app.set` no se desvía a `res.set`.
+  Un getter definido con `defineGetter(req, 'host', function host() {})` o
+  `Object.defineProperty(req, 'host', {get: ...})` es dueño de las llamadas que hace dentro.
+- En TypeScript, `this.#retry()` llama al miembro privado `#retry`: antes no se registraba ninguna
+  llamada a miembros `#privados`.
+- Los métodos de un enum de Java, C# o PHP, incluidos los cuerpos de sus constantes, tienen ahora
+  al enum como dueño. Así `FieldNamingPolicy.IDENTITY.translateName` implementa
+  `FieldNamingStrategy.translateName`, y `separateCamelCase(...)` se resuelve dentro del enum.
+- Una pregunta de impacto que nombra al dueño de un método («el método `matched` del trait
+  `Sink`») ancla ese miembro y sus implementaciones, en vez de repartir las anclas entre todos los
+  homónimos del repositorio; los demás homónimos se siguen informando en `omitted_homonyms`.
+  Las referencias de texto ponen primero las llamadas (`.matched(`) y
+  los usos del mismo miembro del workspace, antes que las menciones en prosa.
+- Un campo con tipo genérico (`sink: S` con `S: Sink`, o `T extends Foo`) toma el tipo de su cota,
+  así que `self.sink.matched()` llega al trait y a sus implementaciones y no a un impl de reenvío
+  cuyo tipo también se llama `S`.
+- Una llamada recursiva a través de una variable tipada (`blueprint.register(...)` dentro de
+  `Blueprint.register`) ya no cae en un método homónimo de otra clase.
 
 - El índice semántico con `GRAPHTYN_EMBED_MODEL` ya no mezcla espacios de embeddings: si Ollama no
   podía embeber un nodo, el índice se etiquetaba como hash pero conservaba los vectores de Ollama, y
