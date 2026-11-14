@@ -32,6 +32,7 @@ def test_release_documents_and_workflows_exist():
                 "docs/release-validation-0.11.0.md",
                 "docs/release-validation-0.12.0.md",
                 "docs/release-validation-0.13.0.md",
+                "docs/release-validation-0.13.1.md",
                 "install.ps1", "uninstall.ps1"]
     assert all((ROOT / item).is_file() for item in required)
 
