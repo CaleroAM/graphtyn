@@ -13,6 +13,10 @@ compatibles con PEP 440.
   dentro de `module ActionMailer`, `Builder` es `ActionMailer::Builder` antes que cualquier otro. Una
   clase compacta (`class ActiveStorage::Blob`) y un `def self.new` propio conservan sus llamadas. En
   Rails las llamadas del grafo pasan de 94.558 a 107.384.
+- Al podar las entidades sin relación con los extractos, un nombre compartido ya no ancla una entidad de
+  otro archivo: un extracto de `RouteSet#initialize` no ancla `BadRequest#initialize` ni, por su arista,
+  a `Request#GET`. Esa entidad de más bastaba para superar el umbral de evidencia escasa y declarar
+  completo un paquete con 1 de 8 hechos.
 
 ## [0.13.1] - 2026-11-14
 

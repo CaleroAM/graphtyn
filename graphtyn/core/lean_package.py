@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections import Counter
 from typing import Any
 
 
@@ -55,6 +56,38 @@ def _excerpt_lines(excerpts: list[dict]) -> dict[str, set[int]]:
     return printed
 
 
+def _excerpt_anchored(entities: dict, files: dict, excerpts: list[dict]) -> set[str]:
+    """Entities an excerpt shows or names.
+
+    A name identifies an entity only when no other entity of the package shares it: an excerpt of
+    `RouteSet#initialize` neither shows nor names `BadRequest#initialize`. A shared name anchors only
+    the entity in the excerpt's own file.
+    """
+    printed = _excerpt_lines(excerpts)
+    texts: dict[str, list[str]] = {}
+    symbols: set[tuple[str, str]] = set()
+    for excerpt in excerpts:
+        path = str(excerpt.get("file") or "")
+        texts.setdefault(path, []).append(str(excerpt.get("text") or ""))
+        symbols.add((path, str(excerpt.get("symbol") or "")))
+    holders = Counter(str(item.get("name") or "") for item in entities.values())
+    anchored = set()
+    for alias, item in entities.items():
+        name = str(item.get("name") or "")
+        file_alias, _, line = str(item.get("at") or "").partition(":")
+        path = str(files.get(file_alias) or "")
+        if line.isdigit() and int(line) in printed.get(path, set()):
+            anchored.add(alias)
+            continue
+        if not name:
+            continue
+        sources = texts.get(path, []) if holders[name] > 1 else [text for group in texts.values() for text in group]
+        if (path, name) in symbols or (holders[name] == 1 and any(symbol == name for _, symbol in symbols)) or any(
+                re.search(rf"\b{re.escape(name)}\b", text) for text in sources):
+            anchored.add(alias)
+    return anchored
+
+
 def lean_payload(result: dict) -> dict:
     """Answer-ready subset of an intent package.
 
@@ -74,15 +107,10 @@ def lean_payload(result: dict) -> dict:
     settled = (excerpts and output.get("do_not_expand")
                and (output.get("source_coverage") or {}).get("complete", True) and not relational)
     if settled and entities:
-        text = "\n".join(str(item.get("text") or "") for item in excerpts)
-        excerpt_symbols = {str(item.get("symbol") or "") for item in excerpts}
         anchored = set(output.get("matches") or [])
         for aliases in (output.get("obligation_evidence") or {}).values():
             anchored.update(aliases)
-        for alias, item in entities.items():
-            name = str(item.get("name") or "")
-            if name in excerpt_symbols or (name and re.search(rf"\b{re.escape(name)}\b", text)):
-                anchored.add(alias)
+        anchored.update(_excerpt_anchored(entities, files, excerpts))
         kept = set(anchored)
         for relation in relations:
             if relation[0] in anchored or relation[2] in anchored:

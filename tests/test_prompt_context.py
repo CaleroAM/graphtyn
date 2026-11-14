@@ -58,6 +58,25 @@ def test_lean_payload_drops_unrelated_entities_and_repeated_lines():
     assert lean["payload_tokens"] < lean_payload(_package(entities={}, relations=[]))["payload_tokens"] + 400
 
 
+def test_lean_payload_does_not_anchor_a_homonym_from_another_file():
+    """An excerpt of RouteSet#initialize neither shows nor names BadRequest#initialize."""
+    package = _package(
+        files={"F1": "route_set.rb", "F2": "exceptions.rb", "F3": "request.rb"},
+        entities={"N1": {"name": "initialize", "kind": "method", "at": "F1:12", "container": "RouteSet"},
+                  "N2": {"name": "initialize", "kind": "method", "at": "F2:5", "container": "BadRequest"},
+                  "N3": {"name": "GET", "kind": "method", "at": "F3:40", "container": "Request"},
+                  "N4": {"name": "draw", "kind": "method", "at": "F3:90", "container": "Mapper"}},
+        relations=[["N3", "llama", "N2", "E", 45]],
+        source_evidence=[{"symbol": "initialize", "file": "route_set.rb", "start_line": 12, "end_line": 14,
+                          "text": "12: def initialize(config)\n13:   draw\n14: end"}])
+
+    lean = lean_payload(package)
+
+    # N1 is the excerpt itself and N4 is named by it; the other initialize and its caller are unrelated.
+    assert set(lean["entities"]) == {"N1", "N4"}
+    assert lean["relations"] == []
+
+
 def test_lean_payload_keeps_relational_evidence_and_open_packages():
     impact = lean_payload(_package(intent="impact"))
     assert set(impact["entities"]) == {"N1", "N2", "N3", "N4"}
