@@ -7,6 +7,11 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Una pregunta cuyo paquete no cabía en el presupuesto podía no terminar nunca. Ocurría en Redis si
+  la pregunta nombraba `set`: un extracto de pocas líneas muy largas no se podía acortar por el medio
+  y el recorte se repetía sin avanzar. Ahora cada pasada lo acorta. Además, las operaciones sobrantes
+  se quitan contando los bytes en vez de volver a serializar el paquete tras cada una, lo que era
+  cuadrático con miles de operaciones. El resultado es el mismo en las 138 tareas del gate.
 - La búsqueda semántica de respaldo sin `GRAPHTYN_EMBED_MODEL` ya no calcula el vector hash de
   todos los nodos antes de la primera consulta: solo hashea, una vez, los nodos que comparten un
   término con la pregunta y suma sus entradas no nulas. En Rails (69.000 nodos) la primera

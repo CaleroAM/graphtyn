@@ -1312,3 +1312,38 @@ def test_semantic_index_embeds_in_batches_and_never_mixes_embedding_spaces(monke
     partial = build_semantic_index(graph(), tmp_path / "partial.json")
     assert partial["provider"] == "feature-hash-v2"
     assert {len(row["vector"]) for row in partial["rows"]} == {semantic_index.DIMENSIONS}
+
+
+def test_operation_trimming_is_exact_and_linear():
+    import copy
+    import time
+    from graphtyn.core.lean_package import serialized_tokens, trim_operations
+
+    def payload():
+        ops = [["call", f"set{i}", i, f"setGenericCommand(c, flags, key{i}, val, expire, unit, ok, abort); ñ"] for i in range(1200)]
+        return {"entities": {"N1": {"name": "setCommand", "ops": ops}, "N2": {"name": "lookup", "ops": ops[:3]},
+                             "N3": {"name": "notify", "ops": [["call", "x", 1, "y"]]}}, "relations": []}
+
+    expected = payload()
+    while serialized_tokens(expected) > 900:  # the loop it replaces
+        entity = next((e for e in reversed(list(expected["entities"].values())) if len(e["ops"]) > 1), None)
+        if not entity:
+            break
+        entity["ops"].pop()
+    trimmed = payload()
+    started = time.perf_counter()
+    trim_operations(trimmed, 900)
+    assert time.perf_counter() - started < 1.0
+    assert trimmed == expected and serialized_tokens(trimmed) <= 900
+    assert copy.deepcopy(trimmed)["entities"]["N3"]["ops"] == [["call", "x", 1, "y"]]
+
+
+def test_an_excerpt_of_few_long_lines_still_shrinks_until_the_payload_fits():
+    from graphtyn.mcp_server import _bound_evidence_payload
+    long_line = "x" * 3000
+    text = "\n".join(f"{n}: {long_line}" for n in range(1, 6))  # five lines: no middle left to drop
+    output = {"entities": {"N1": {"name": "setCommand", "ops": [["call", "a", 1, "b"]]}}, "relations": [],
+              "source_evidence": [{"file": "t_string.c", "text": text, "covers": []}], "files": {}}
+    _bound_evidence_payload(output, {"N1"}, 600)  # used to loop forever
+    assert output["payload_truncated"] and len(output["source_evidence"][0]["text"]) < len(text)
+    assert output["payload_tokens"] <= 600

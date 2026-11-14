@@ -24,7 +24,7 @@ from .core.storage import data_home, project_store_dir
 from .core.memory_scope import resolve_memory_scope
 from .core.history_import import configured_sources, _agent_id_matches
 from .core.source_evidence import attach_source_evidence, elided_bodies
-from .core.lean_package import lean_payload, serialized_tokens as _serialized_tokens
+from .core.lean_package import lean_payload, serialized_tokens as _serialized_tokens, trim_operations
 from .core.evidence_sufficiency import mark_insufficient_evidence
 from .core.intent_delta import _intent_delta
 from .core.answer_validation import validate_answer
@@ -443,12 +443,7 @@ def _bound_evidence_payload(output: dict, matched_aliases: set[str], token_budge
             entity.pop(field, None)
 
     # Preserve at least one operation per selected entity, then trim the tail.
-    while _serialized_tokens(output) > token_budget:
-        candidate = next((entity for entity in reversed(list(output.get("entities", {}).values()))
-                          if len(entity.get("ops") or []) > 1), None)
-        if not candidate:
-            break
-        candidate["ops"].pop()
+    trim_operations(output, token_budget)
 
     # Source excerpts are already graph-selected. Shorten the last excerpt
     # rather than discarding the first exact body that grounded the answer.
@@ -456,7 +451,9 @@ def _bound_evidence_payload(output: dict, matched_aliases: set[str], token_budge
         excerpt = output["source_evidence"][-1]
         text = str(excerpt.get("text") or "")
         if len(text) > 600:
-            excerpt["text"] = _drop_excerpt_middle(text, 800)
+            # A few very long lines leave no middle to drop: cut the tail so every pass shortens it.
+            shorter = _drop_excerpt_middle(text, 800)
+            excerpt["text"] = shorter if len(shorter) < len(text) else text[:max(600, len(text) - 800)]
             # The decisive line may have been in the removed lines. Reopen the
             # obligations instead of retaining a coverage claim we can no
             # longer prove; the named symbol itself is still present.
