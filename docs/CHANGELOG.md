@@ -5,6 +5,10 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+## [0.13.1] - 2026-11-14
+
+Validación de la versión: `docs/release-validation-0.13.1.md`.
+
 ### Corregido
 
 - Una pregunta cuyo paquete no cabía en el presupuesto podía no terminar nunca. Ocurría en Redis si

@@ -4,6 +4,7 @@
 - [Política de seguridad](SECURITY.md)
 - [Guía de contribución](CONTRIBUTING.md)
 - [Checklist de release](release-checklist.md)
+- [Validación de release 0.13.1](release-validation-0.13.1.md)
 - [Validación de release 0.13.0](release-validation-0.13.0.md)
 - [Validación de release 0.12.0](release-validation-0.12.0.md)
 - [Validación de release 0.11.0](release-validation-0.11.0.md)
