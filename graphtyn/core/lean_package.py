@@ -8,11 +8,33 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 
 
 def serialized_tokens(value: dict) -> int:
     """Approximate token count of the compact JSON a client receives."""
     return (len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) + 3) // 4
+
+
+def _compact_bytes(value: Any) -> int:
+    return len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+
+
+def trim_operations(output: dict, token_budget: int) -> None:
+    """Drop operations from the last entity that has more than one until the payload fits.
+
+    Re-serializing the whole payload after every removal was quadratic: an entity of Redis with
+    thousands of `set` operations kept one query busy for hours. Removing the last element of a
+    compact JSON list of two or more shortens it by that element plus its comma, so the byte
+    count is tracked exactly and the result is the one the old loop produced.
+    """
+    size = _compact_bytes(output)
+    entities = list(output.get("entities", {}).values())
+    while (size + 3) // 4 > token_budget:
+        candidate = next((entity for entity in reversed(entities) if len(entity.get("ops") or []) > 1), None)
+        if not candidate:
+            break
+        size -= _compact_bytes(candidate["ops"].pop()) + 1
 
 
 # Planner and diagnostics fields: useful to debug retrieval, not to answer.
