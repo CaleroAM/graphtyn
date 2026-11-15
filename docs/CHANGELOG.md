@@ -21,6 +21,11 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- La captura continua volvía a parsear en cada ciclo todos los historiales JSONL conocidos, aunque
+  no hubieran cambiado. Ahora un archivo con el mismo tamaño y la misma fecha de modificación se
+  responde de memoria. En un equipo real, con 581 historiales (2,9 GB), un ciclo pasa de unos 22 s a
+  menos de 0,03 s y detecta las mismas sesiones. Con un watcher cada 5 s, el servidor no salía nunca
+  de este trabajo, y tras la corrección anterior seguía gastando el 87 % de un núcleo.
 - La captura continua de memoria ya no ocupa un núcleo de CPU en reposo. En cada ciclo se reimportan
   todas las sesiones conocidas y, por cada una, se releía el registro de proyectos, se resolvía cada
   ruta registrada y se releía la política de cerebros de OpenClaw. Ahora se hace una vez por

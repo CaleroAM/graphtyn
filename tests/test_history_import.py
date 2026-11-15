@@ -859,3 +859,33 @@ def test_import_reads_project_paths_and_brain_policy_once_per_call(tmp_path, mon
     assert result["selected"] == 100 and len(result["ambiguous"]) == 100
     assert result["ambiguous"][0]["suggested_project"] == projects[1].name
     assert calls == {"list": 1, "installations": 1}
+
+
+def test_preview_reuses_an_unchanged_transcript_and_rereads_a_changed_one(tmp_path, monkeypatch):
+    import json as _json
+    from graphtyn.core import history_stream
+
+    transcript = tmp_path / "session.jsonl"
+    line = {"sessionId": "s1", "type": "user", "message": {"role": "user", "content": "hola"},
+            "cwd": str(tmp_path)}
+    transcript.write_text(_json.dumps(line) + "\n", encoding="utf-8")
+    parsed = []
+    real = history_stream._preview_jsonl_uncached
+    monkeypatch.setattr(history_stream, "_preview_jsonl_uncached",
+                        lambda *args: parsed.append(args[0]) or real(*args))
+    monkeypatch.setattr(history_stream, "_PREVIEW_CACHE", {})
+
+    first = history_stream.preview_jsonl(transcript, "claude")
+    first["sessions"][0]["workspace"] = "annotated by the caller"
+    second = history_stream.preview_jsonl(transcript, "claude")
+    assert len(parsed) == 1
+    assert second["sessions"][0]["workspace"] != "annotated by the caller"
+    assert second["sessions"][0]["message_count"] == 1
+
+    with transcript.open("a", encoding="utf-8") as stream:
+        stream.write(_json.dumps({**line, "message": {"role": "assistant", "content": "qué tal"},
+                                  "type": "assistant"}) + "\n")
+    third = history_stream.preview_jsonl(transcript, "claude")
+    assert len(parsed) == 2
+    assert third["sessions"][0]["message_count"] == 2
+    assert third["sessions"][0]["fingerprint"] != second["sessions"][0]["fingerprint"]
