@@ -26,30 +26,45 @@ Spanish.
 
 ## Why Graphtyn
 
-Every claim below comes from a reproducible benchmark on public repositories at fixed commits,
-with rubrics frozen before running and two LLM judges from different vendors. A fact counts only
-when both judges agree; against the maintainer's hand grades, judge agreement was kappa 0.95.
+Graphtyn's aim is to let agents answer code questions from `file:line` evidence while reading less.
+Every claim below comes from a reproducible benchmark:
+- public repositories at fixed commits;
+- rubrics frozen before running;
+- three LLM judges, scored by majority; against the maintainer's hand grades, that rule agreed
+  with kappa 0.95 and gave no false credit.
 
-Latest head-to-head (2026-11-06): no graph vs Graphtyn vs Graphify 0.9.103. The tasks were 8 new
-impact and flow tasks on redis, fmt, rails and flask, with 2 repetitions
-([report](benchmarks/graphify_head_to_head_2026-11-06/report.md)).
+Negative results are published too.
+
+**Latest head-to-head (2026-11-15):** no graph vs Graphtyn vs Graphify 0.9.106. It used 8 new
+impact and flow tasks on click, gin, koa and jsoup, none of which was ever used to tune Graphtyn,
+with 3 repetitions ([report](benchmarks/graphify_head_to_head_2026-11-15/report.md)):
 
 | Client | Arm | Facts found | Median tokens |
 |---|---|---:|---:|
-| Claude Code (Sonnet) | No graph | 116/118 | 87,411 |
-| Claude Code (Sonnet) | **Graphtyn** | **118/118** | **61,018** |
-| Claude Code (Sonnet) | Graphify | 114/118 | 105,554 |
-| Codex | No graph | 105/118 | 99,531 |
-| Codex | **Graphtyn** | 85/118 | **34,006** |
-| Codex | Graphify | 100/118 | 201,914 |
+| Claude Code (Sonnet) | No graph | **155/162** | 102,232 |
+| Claude Code (Sonnet) | Graphtyn | 146/157 | **93,121** |
+| Claude Code (Sonnet) | Graphify | 150/162 | 103,380 |
+| Codex | No graph | **137/162** | 99,213 |
+| Codex | Graphtyn | 90/162 | **30,999** |
+| Codex | Graphify | 136/162 | 176,603 |
 
-- **With Claude Code**, Graphtyn found the most facts and used the fewest tokens: 39 % fewer than
-  Graphify, which spent more than not using a graph at all.
-- **With Codex**, Graphtyn was by far the cheapest but lost facts. Nearly all the loss came from
-  two retrieval failures. Both were fixed afterwards and validated on new tasks
-  ([report](benchmarks/h2h_fix_validation_2026-11-06/report.md)).
+- **Tokens:** Graphtyn uses the fewest with both clients: 30 % fewer than Graphify with Claude
+  Code and 80 % fewer with Codex. Graphify spent more than not using a graph at all.
+- **Quality:** on these repositories, Graphtyn did **not** beat reading the code directly.
+  Two retrieval failures explain most of the gap:
+  - test callers crowded production consumers out of an impact package;
+  - a package declared itself complete while calls through an untyped receiver were still
+    unresolved.
+  Codex trusts the package and stops searching, so it is hit hardest. Both failures are open
+  issues.
+- **Earlier result:** in the previous head-to-head (2026-11-06; redis, fmt, rails and flask),
+  Graphtyn found the most facts with Claude Code: 118/118, against 114 for Graphify
+  ([report](benchmarks/graphify_head_to_head_2026-11-06/report.md)). On new repositories that
+  advantage did not hold.
 
-All benchmarks, including the negative ones, are listed in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+In short, today Graphtyn is the cheapest way to give an agent code context, and its answers are
+close to, but not yet better than, those of an agent reading the code itself. All benchmarks are
+listed in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 ## What it does
 

@@ -535,6 +535,14 @@ graphtyn benchmark --path . --ground-truth benchmarks/ground_truth.json \
 graphtyn benchmark-suite --protocol benchmarks/statistical_protocol_36_tasks.json
 ```
 
+La última comparación con Graphify 0.9.106 (2026-11-15) usó ocho tareas nuevas en click, gin,
+koa y jsoup, con tres repeticiones:
+- **Tokens:** Graphtyn es el que menos gasta con Claude Code y con Codex.
+- **Calidad:** Graphtyn no supera a leer el código directamente. Con Claude encuentra 146/157
+  hechos, frente a 155 sin grafo; con Codex, 90/162 frente a 137. Las causas son dos fallos de
+  recuperación que siguen abiertos.
+- **Informe:** [`benchmarks/graphify_head_to_head_2026-11-15/report.md`](benchmarks/graphify_head_to_head_2026-11-15/report.md).
+
 Resultados, hardware, metodología y comparaciones anonimizadas:
 [docs/BENCHMARKS.md](docs/BENCHMARKS.md). Protocolo de verificación:
 [docs/testing.md](docs/testing.md).

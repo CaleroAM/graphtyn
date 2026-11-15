@@ -7,6 +7,10 @@ compatibles con PEP 440.
 
 ### Cambiado
 
+- Nueva comparación con Graphify 0.9.106 sobre repositorios y tareas nuevos (click, gin, koa y jsoup;
+  144 sesiones). Graphtyn es el que menos tokens gasta, pero pierde calidad: con Claude, 146/157
+  hechos frente a 155 sin grafo; con Codex, 90/162 frente a 137. El README lo publica tal cual
+  (`benchmarks/graphify_head_to_head_2026-11-15/report.md`).
 - El README principal está en inglés, centrado en el grafo de código y en los resultados medidos
   frente a Graphify. El README en español pasa a `README.es.md`, y cada uno enlaza al otro.
 - Un test de regresión (`tests/test_idle_cycle_regression.py`, también en el job de Windows) falla
