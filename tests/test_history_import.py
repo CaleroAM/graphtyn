@@ -827,3 +827,35 @@ def test_memory_bootstrap_preview_uses_module_level_history_imports(tmp_path, mo
     result = json.loads(capsys.readouterr().out)
     assert result["dry_run"] is True
     assert result["count"] == 0
+
+
+def test_import_reads_project_paths_and_brain_policy_once_per_call(tmp_path, monkeypatch):
+    """A watcher re-imports every known session each cycle; per-session lookups made it cost a CPU core."""
+    from graphtyn.core import history_import, openclaw_integration
+
+    monkeypatch.setenv("GRAPHTYN_HOME", str(tmp_path / "home"))
+    projects = [tmp_path / f"p{index}" for index in range(5)]
+    for project in projects:
+        project.mkdir()
+        ProjectIdentityRegistry().register(project)
+    calls = {"list": 0, "installations": 0}
+    real_list, real_installations = ProjectIdentityRegistry.list, openclaw_integration.list_installations
+
+    def counted_list(self):
+        calls["list"] += 1
+        return real_list(self)
+
+    def counted_installations(*args, **kwargs):
+        calls["installations"] += 1
+        return real_installations(*args, **kwargs)
+
+    monkeypatch.setattr(history_import.ProjectIdentityRegistry, "list", counted_list)
+    monkeypatch.setattr(openclaw_integration, "list_installations", counted_installations)
+    sessions = [{"provider": "codex", "external_session_id": f"s{index}", "agent_id": "codex",
+                 "workspace": str(projects[index % 2]), "messages": []} for index in range(200)]
+
+    result = import_histories(projects[0], sessions, consent=True, dry_run=True)
+
+    assert result["selected"] == 100 and len(result["ambiguous"]) == 100
+    assert result["ambiguous"][0]["suggested_project"] == projects[1].name
+    assert calls == {"list": 1, "installations": 1}

@@ -22,6 +22,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Iterable
 from urllib.parse import unquote, urlparse
 
+from .project_hints import ProjectHints, brain_refusal, is_path_hint
 from .shared_memory import SharedMemoryStore
 from .ssh import ssh_command
 from .storage import data_home, atomic_write_json
@@ -1328,15 +1329,13 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
     selected, ambiguous, excluded = [], [], []
     authorized_agents = sorted({str(value).strip().casefold() for value in (agent_ids or [])
                                 if str(value).strip()})
+    hints, brain_disabled = ProjectHints(registry), brain_refusal(root)
     for raw in sessions:
         raw_agent = str(raw.get("agent_id") or "").strip().casefold()
-        try:
-            from .openclaw_integration import assert_agent_memory_enabled
-            assert_agent_memory_enabled(root, raw_agent)
-        except PermissionError as exc:
+        if brain_disabled:
             excluded.append({"session": raw.get("external_session_id"),
                              "agent_id": raw.get("agent_id"),
-                             "reason": str(exc)})
+                             "reason": brain_disabled})
             continue
         if (policy["restricted"] and not authorized_agents) or (
                 authorized_agents and not any(_agent_id_matches(owner, raw_agent) for owner in authorized_agents)):
@@ -1349,18 +1348,8 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
             # A filesystem path is strong project evidence only when it points
             # to a registered path. Matching just Path.name can silently mix
             # separate checkouts that happen to share a folder name.
-            path_hint = (workspace_hint.startswith("~") or Path(workspace_hint).is_absolute()
-                         or PurePosixPath(workspace_hint).is_absolute()
-                         or PureWindowsPath(workspace_hint).is_absolute())
-            if path_hint:
-                try:
-                    normalized_hint = str(Path(workspace_hint).expanduser().resolve())
-                except (OSError, RuntimeError, ValueError):
-                    normalized_hint = ""
-                matched = next((item for item in registry.list()
-                                if normalized_hint and normalized_hint in {
-                                    str(Path(value).expanduser().resolve())
-                                    for value in item.get("paths", [])}), None)
+            if is_path_hint(workspace_hint):
+                matched = hints.path_owner(workspace_hint)
                 if not matched or matched["id"] != project["id"]:
                     windows_hint = PureWindowsPath(workspace_hint)
                     suggested = windows_hint.name if windows_hint.is_absolute() else PurePosixPath(workspace_hint).name
@@ -1369,7 +1358,7 @@ def import_histories(workspace: str | Path, sessions: list[dict[str, Any]], *, c
                                       "reason": "ruta de proyecto no coincide exactamente"})
                     continue
             else:
-                hinted = registry.resolve(workspace_hint)
+                hinted = hints.named(workspace_hint)
                 if hinted and hinted["id"] != project["id"]:
                     ambiguous.append({"session": raw.get("external_session_id"), "workspace": workspace_hint,
                                       "suggested_project": hinted["canonical_name"]})

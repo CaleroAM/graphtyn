@@ -5,6 +5,15 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Corregido
+
+- La captura continua de memoria ya no ocupa un núcleo de CPU en reposo. En cada ciclo se reimportan
+  todas las sesiones conocidas y, por cada una, se releía el registro de proyectos, se resolvía cada
+  ruta registrada y se releía la política de cerebros de OpenClaw. Ahora se hace una vez por
+  importación, con el mismo resultado. Con 1.500 sesiones y 40 proyectos sintéticos la importación
+  pasa de 1,17 s a menos de 0,1 s. En un equipo real, con un watcher cada 5 s, el servidor gastaba de
+  media el 83 % de un núcleo, y el 77 % de las muestras del perfil estaban en ese bucle.
+
 ## [0.13.1] - 2026-11-14
 
 Validación de la versión: `docs/release-validation-0.13.1.md`.
