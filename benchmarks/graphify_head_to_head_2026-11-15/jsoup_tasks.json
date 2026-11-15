@@ -1,0 +1,111 @@
+{
+ "tasks": [
+  {
+   "id": "H3_JSOUP_SELECT_IMPACT",
+   "request": "Si cambio Element.select(String) en jsoup, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "charset_detection",
+     "any": [
+      "DataUtil",
+      "detectCharset",
+      "metaCharset"
+     ]
+    },
+    {
+     "id": "form_data",
+     "any": [
+      "FormElement.formData",
+      "option[selected]"
+     ]
+    },
+    {
+     "id": "unique_id_selector",
+     "any": [
+      "uniqueIdSelector"
+     ]
+    },
+    {
+     "id": "css_selector_component",
+     "any": [
+      "cssSelectorComponent"
+     ]
+    },
+    {
+     "id": "examples",
+     "any": [
+      "ListLinks",
+      "Wikipedia",
+      "HtmlToPlainText"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "H3_JSOUP_PARSE_FLOW",
+   "request": "¿Cómo convierte jsoup una cadena HTML en un Document con Jsoup.parse(String)? Traza el flujo hasta construir el árbol, con archivo:línea.",
+   "rubric": [
+    {
+     "id": "jsoup_delegates_to_parser",
+     "any": [
+      "Parser.parse",
+      "Jsoup.parse"
+     ]
+    },
+    {
+     "id": "html_tree_builder",
+     "any": [
+      "HtmlTreeBuilder",
+      "new Parser(treeBuilder)"
+     ]
+    },
+    {
+     "id": "initialise_parse",
+     "any": [
+      "initialiseParse",
+      "CharacterReader",
+      "new Document"
+     ]
+    },
+    {
+     "id": "run_parser_loop",
+     "any": [
+      "runParser",
+      "stepParser"
+     ]
+    },
+    {
+     "id": "tokeniser_read",
+     "any": [
+      "readToken",
+      "tokeniser.read",
+      "Tokeniser"
+     ]
+    },
+    {
+     "id": "insertion_mode_dispatch",
+     "any": [
+      "HtmlTreeBuilderState",
+      "dispatch.process",
+      "ForeignContent"
+     ]
+    },
+    {
+     "id": "eof_pops_stack",
+     "any": [
+      "EOF",
+      "pop()",
+      "onNodeClosed"
+     ]
+    },
+    {
+     "id": "close_parse",
+     "any": [
+      "closeParse",
+      "reader.close"
+     ]
+    }
+   ]
+  }
+ ]
+}

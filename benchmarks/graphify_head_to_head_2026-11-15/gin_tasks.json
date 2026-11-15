@@ -1,0 +1,121 @@
+{
+ "tasks": [
+  {
+   "id": "H3_GIN_NEXT_IMPACT",
+   "request": "Si cambio Context.Next en gin, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "handle_http_request",
+     "any": [
+      "handleHTTPRequest",
+      "gin.go"
+     ]
+    },
+    {
+     "id": "serve_error",
+     "any": [
+      "serveError"
+     ]
+    },
+    {
+     "id": "error_logger",
+     "any": [
+      "ErrorLoggerT",
+      "ErrorLogger"
+     ]
+    },
+    {
+     "id": "logger_middleware",
+     "any": [
+      "LoggerWithConfig",
+      "logger.go"
+     ]
+    },
+    {
+     "id": "recovery_middleware",
+     "any": [
+      "CustomRecoveryWithWriter",
+      "recovery.go"
+     ]
+    },
+    {
+     "id": "abort_index_coupling",
+     "any": [
+      "abortIndex",
+      "Abort",
+      "IsAborted"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "H3_GIN_REQUEST_FLOW",
+   "request": "¿Cómo atiende gin una petición HTTP desde Engine.ServeHTTP hasta los handlers? Explica también qué ocurre si no hay ruta. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "route_trees_updated_once",
+     "any": [
+      "updateRouteTrees",
+      "routeTreesUpdated"
+     ]
+    },
+    {
+     "id": "context_pool",
+     "any": [
+      "engine.pool.Get",
+      "pool.Put",
+      "c.reset"
+     ]
+    },
+    {
+     "id": "path_selection",
+     "any": [
+      "UseEscapedPath",
+      "UseRawPath",
+      "RemoveExtraSlash",
+      "cleanPath"
+     ]
+    },
+    {
+     "id": "tree_lookup",
+     "any": [
+      "getValue",
+      "c.Params"
+     ]
+    },
+    {
+     "id": "handler_chain",
+     "any": [
+      "c.Next",
+      "c.handlers",
+      "WriteHeaderNow"
+     ]
+    },
+    {
+     "id": "redirects",
+     "any": [
+      "redirectTrailingSlash",
+      "RedirectTrailingSlash",
+      "RedirectFixedPath"
+     ]
+    },
+    {
+     "id": "method_not_allowed",
+     "any": [
+      "HandleMethodNotAllowed",
+      "405",
+      "Allow"
+     ]
+    },
+    {
+     "id": "not_found",
+     "any": [
+      "allNoRoute",
+      "404",
+      "serveError"
+     ]
+    }
+   ]
+  }
+ ]
+}

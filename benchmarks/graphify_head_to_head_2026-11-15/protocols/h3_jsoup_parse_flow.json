@@ -1,0 +1,40 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Comparación preregistrada con tareas y repositorios nuevos: sin grafo frente a Graphtyn frente a Graphify, con la 0.13.x.",
+ "repository": {
+  "name": "jhy/jsoup",
+  "url": "https://github.com/jhy/jsoup",
+  "commit": "d90d57521d931db7bf7ee464a4c0a1a9293db088"
+ },
+ "design": {
+  "clients": [
+   "claude",
+   "codex"
+  ],
+  "tasks": [
+   "H3_JSOUP_PARSE_FLOW"
+  ],
+  "arms": {
+   "baseline": "sin grafo ni MCP",
+   "graphtyn": "Graphtyn main f566ac4 (0.13.1 + #64–#66), MCP lean, regla targeted",
+   "graphify": "Graphify 0.9.106 (graphifyy[mcp]), graphify-mcp oficial, grafo de solo código sin LLM"
+  },
+  "repetitions": 3,
+  "order": "contrabalanceado por repetición",
+  "stop_rule": "targeted",
+  "grading": "Tres jueces sin herramientas por hecho: Gemini, GPT y Claude como desempate. Medida principal: mayoría de tres, la regla calibrada contra notas humanas (kappa 0,95, sin crédito falso). Secundarias: consenso de Gemini y GPT, y rúbrica literal."
+ },
+ "client_config": {
+  "models": {
+   "claude": "claude-sonnet-5-5",
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Graphify en ~/.cache/graphtyn-bench/graphify-0.9.106, fuera del repositorio; sin skill, hook ni instrucciones de proyecto; nunca registrado como graphtyn. Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio.",
+ "independence": "Repositorios y tareas nuevos: ninguno está en el gate de recuperación ni se usó para ajustar Graphtyn. Rúbricas escritas leyendo el código, sin usar Graphtyn ni Graphify, y congeladas en git antes de ejecutar.",
+ "authorization": {
+  "source": "El usuario pidió repetir la comparación con Graphify sobre la 0.13.x (2026-11-15).",
+  "total_token_ceiling": 18000000
+ }
+}
