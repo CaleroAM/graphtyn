@@ -980,7 +980,7 @@ class TopicMemoryMixin:
                 "scope": "persisted_messages", "extraction_quality": "limited; processing is not recall",
                 "source_exclusions": "not measured"}
 
-    def process_topics(self, session_id, *, batch_messages=30, batch_tokens=6000):
+    def process_topics(self, session_id, *, batch_messages=30, batch_tokens=6000, coverage=True):
         session = self.get_session(session_id)
         if not session or not session["capture_enabled"]:
             raise PermissionError("sesión sin autorización de captura")
@@ -1098,7 +1098,7 @@ class TopicMemoryMixin:
                     processed=topic_file_progress.processed+excluded.processed,updated_at=excluded.updated_at""",
                     (session_id, last, len(batch), time.time()))
         return {"ok": True, "processed": total, "file_references_processed": file_references_processed,
-                "coverage": self.topic_coverage(), "extraction": "deterministic-limited"}
+                "coverage": self.topic_coverage() if coverage else None, "extraction": "deterministic-limited"}
 
     def _topic_source_snapshot(self, db, topic_id):
         """Hash every source message while retaining a bounded, useful context."""

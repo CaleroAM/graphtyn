@@ -21,6 +21,19 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Un ciclo de captura continua sin cambios ya no repite trabajo cuyo resultado no puede haber
+  cambiado. En un almacén real (147 sesiones, 1.371 sesiones de origen) pasa de unos 31 s de CPU
+  por ciclo (10 s de Python y 20 s de procesos `git`) a unos 1,8 s, con las mismas sesiones
+  descubiertas:
+  - El mapa de workspaces de Antigravity se reutiliza mientras su base de datos y su caché no
+    cambian. La raíz Git de cada workspace se recuerda 15 minutos, en vez de lanzar un `git` por
+    URI en cada ciclo (2.714 procesos para 327 rutas).
+  - Las fuentes por defecto de Antigravity incluían `antigravity-cli` y su subcarpeta `brain`, así
+    que cada historial se leía dos veces (498 sesiones duplicadas). Ahora se omite la raíz anidada.
+  - El alcance de memoria de un espacio se reutiliza mientras no cambien `registered_projects.json`
+    ni `history-sources.json`. Antes se releían en cada consulta, cientos de veces por ciclo.
+  - Solo se procesan los temas de las sesiones con mensajes pendientes. Antes se recorría cada
+    sesión y se recalculaba la cobertura de toda la tabla, que luego se descartaba.
 - La captura continua volvía a parsear en cada ciclo todos los historiales JSONL conocidos, aunque
   no hubieran cambiado. Ahora un archivo con el mismo tamaño y la misma fecha de modificación se
   responde de memoria. En un equipo real, con 581 historiales (2,9 GB), un ciclo pasa de unos 22 s a
