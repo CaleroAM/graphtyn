@@ -148,7 +148,7 @@ def service_artifact(project: Path, *, kind: str, output: Path, interval: float 
         # beside sys.executable even when it points into Nix/store or /usr.
         executable = _graphtyn_executable()
         watch_flag = " --watch" if watch else ""
-        content = f"""[Unit]\nDescription=Graphtyn persistent dashboard\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nEnvironment=GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}\n{environment}ExecStart=\"{executable}\" serve {host_flags} --port {port}{watch_flag} --path \"{project}\"\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
+        content = f"""[Unit]\nDescription=Graphtyn persistent dashboard\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironment=GRAPHTYN_HOME={data_home()}\nEnvironment=GRAPHTYN_WATCH_INTERVAL={max(1.0, float(interval)):g}\n{environment}ExecStart=\"{executable}\" serve {host_flags} --port {port}{watch_flag} --path \"{project}\"\nRestart=on-failure\nRestartSec=3\nCPUWeight=20\nIOWeight=20\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=default.target\n"""
     elif kind == "windows":
         executable = _graphtyn_executable()
         watch_flag = " --watch" if watch else ""

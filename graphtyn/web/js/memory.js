@@ -172,8 +172,12 @@ export async function loadMemoryOverview(append = false) {
       if (watchButton) {
         watchButton.textContent = watcher ? 'Desactivar captura continua' : 'Activar captura continua';
         watchButton.dataset.enabled = watcher ? 'true' : 'false';
-        watchButton.title = watcher ? `Activa · intervalo ${watcher.interval || 30}s` : 'La captura queda asociada a este espacio';
+        watchButton.title = watcher ? `Activa · intervalo ${watcher.interval || 30}s${watcher.priority ? ` · prioridad ${watcher.priority}` : ''}` : 'La captura queda asociada a este espacio';
+        watchButton.dataset.agentId = watcher?.agent_id || '';
+        watchButton.dataset.enrich = watcher?.enrich ? 'true' : 'false';
       }
+      const intervalSelect = document.getElementById('memory-watch-interval');
+      if (intervalSelect && watcher) setWatchInterval(intervalSelect, watcher.interval);
       const failed = info.topic_enrichment?.coverage?.failed || 0;
       const failureText = failed ? ` · ${failed} fallos de IA` : '';
       const capture = info.continuous_capture_active ? ' · captura continua activa' : ' · captura continua inactiva';
@@ -278,13 +282,36 @@ export async function retryMemoryEnrichment() {
   finally { if (button) { button.disabled = false; button.textContent = 'Reintentar IA'; } }
 }
 
+function setWatchInterval(select, seconds) {
+  const value = String(Math.round(Number(seconds) || 30));
+  if (![...select.options].some(option => option.value === value)) {
+    select.append(new Option(`${value} s`, value));
+  }
+  select.value = value;
+}
+
+function selectedWatchInterval() {
+  return Math.max(5, Number(document.getElementById('memory-watch-interval')?.value) || 30);
+}
+
+export async function changeMemoryWatchInterval() {
+  const button = document.getElementById('memory-watch-btn');
+  if (!state.activePath || button?.dataset.enabled !== 'true') return;
+  try {
+    await request('/api/memory/watch', {method:'POST', body:JSON.stringify({path:state.activePath, enabled:true, consent:true,
+      interval:selectedWatchInterval(), provider_model:'auto', agent_id:button.dataset.agentId || undefined,
+      enrich:button.dataset.enrich === 'true'})});
+    await loadMemoryOverview();
+  } catch (error) { document.getElementById('memory-status').textContent = `No se pudo cambiar el intervalo: ${error.message}`; }
+}
+
 export async function toggleMemoryWatch() {
   if (!state.activePath) { document.getElementById('memory-status').textContent = 'Selecciona un espacio de memoria.'; return; }
   const button = document.getElementById('memory-watch-btn');
   const enabled = button?.dataset.enabled !== 'true';
   if (button) { button.disabled = true; button.textContent = enabled ? 'Activando…' : 'Desactivando…'; }
   try {
-    await request('/api/memory/watch', {method:'POST', body:JSON.stringify({path:state.activePath, enabled, consent:true, interval:30, provider_model:'auto'})});
+    await request('/api/memory/watch', {method:'POST', body:JSON.stringify({path:state.activePath, enabled, consent:true, interval:selectedWatchInterval(), provider_model:'auto'})});
     await loadMemoryOverview();
   } catch (error) { document.getElementById('memory-status').textContent = `No se pudo cambiar la captura: ${error.message}`; }
   finally { if (button) button.disabled = false; }

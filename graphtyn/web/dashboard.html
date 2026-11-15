@@ -437,6 +437,10 @@
         <button class="btn-action" id="memory-sync-all-btn" onclick="syncAllMemorySpaces()">Actualizar todos los espacios</button>
         <button class="btn-action" id="memory-enrich-retry-btn" onclick="retryMemoryEnrichment()">Reintentar IA</button>
         <button class="btn-action" id="memory-watch-btn" onclick="toggleMemoryWatch()">Activar captura continua</button>
+        <label title="Cada cuánto revisa la captura continua los historiales de este espacio. Un intervalo mayor consume menos CPU">Cada
+          <select id="memory-watch-interval" class="text-inp" onchange="changeMemoryWatchInterval()">
+            <option value="30">30 s</option><option value="60">1 min</option><option value="300">5 min</option><option value="900">15 min</option>
+          </select></label>
         <button class="btn-action" id="memory-graph-btn" onclick="showSharedMemoryGraph()">Ver evidencia y relaciones</button>
       </div>
       <div class="memory-options">

@@ -94,6 +94,13 @@ graphtyn service install --path . --enable
 graphtyn service status
 ```
 
+`graphtyn serve` y `graphtyn memory sync --watch` corren con prioridad baja: en Linux y macOS
+con `nice 10` (en Linux el disco sigue esa misma prioridad) y en Windows con la clase
+«por debajo de lo normal». Usan solo la CPU que nada más necesita, así que no frenan el
+resto del equipo. Para mantener la prioridad normal, pase `--priority normal` o defina
+`GRAPHTYN_PRIORITY=normal`. Las unidades de systemd que genera el instalador añaden además
+`CPUWeight=20` e `IOWeight=20`.
+
 Para un cliente MCP en otra máquina o VM, exponga sólo la interfaz alcanzable y
 use un archivo de tokens. El instalador rechaza una interfaz no local sin
 autenticación:
@@ -192,7 +199,7 @@ graphtyn integrations verify --path .
 graphtyn mcp --tool-profile query --preload-index --path .
 # Importar o sincronizar historiales autorizados
 graphtyn memory bootstrap --path .
-graphtyn memory sync --path . --watch --interval 5 --consent
+graphtyn memory sync --path . --watch --interval 30 --consent
 graphtyn memory sync --all-spaces --consent
 graphtyn memory status --path .
 graphtyn memory scope show --path /ruta/al/cerebro
@@ -437,7 +444,7 @@ graphtyn setup --apply --memory ask
 graphtyn agent-install codex --path . --tool-profile intent
 graphtyn integrations status --path .
 # La captura continua se activa por separado
-graphtyn memory sync --path . --watch --interval 5 --consent
+graphtyn memory sync --path . --watch --interval 30 --consent
 ```
 
 Registrar un proyecto genera su identidad estable. `agent-install` configura

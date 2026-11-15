@@ -114,6 +114,7 @@ def _install_openclaw_capture_service(installation_id: str, interval: float = 30
         "[Unit]", "Description=Graphtyn OpenClaw conversation capture",
         "After=network-online.target", "Wants=network-online.target", "",
         "[Service]", "Type=simple", "Restart=on-failure", "RestartSec=15",
+        "CPUWeight=20", "IOWeight=20",
         f'Environment="GRAPHTYN_HOME={home}"',
         *ssh_config_env,
         f'ExecStart="{python}" -m graphtyn.cli memory sync --installation {installation_id} '
@@ -167,7 +168,7 @@ def _project_sync_watcher(root: Path) -> dict | None:
                  if isinstance(item, dict) and item.get("active")), None)
 
 
-def _start_project_memory_watch(root: Path, *, interval: float = 5) -> dict:
+def _start_project_memory_watch(root: Path, *, interval: float = 30) -> dict:
     """Start one detached project watcher and verify its first heartbeat."""
     root = Path(root).expanduser().resolve()
     existing = _project_sync_watcher(root)
@@ -373,9 +374,9 @@ def _command_setup(args, root: Path, parser) -> None:
                                                "ambiguous": len(imported.get("ambiguous", [])),
                                                "errors": discovery_errors})
             if args.memory_watch:
-                watch = _start_project_memory_watch(root, interval=5)
+                watch = _start_project_memory_watch(root, interval=30)
                 configured["memory"].update({
-                    "watch_command": f"graphtyn memory sync --path {root} --watch --interval 5 --consent",
+                    "watch_command": f"graphtyn memory sync --path {root} --watch --interval 30 --consent",
                     "watch_started": bool(watch.get("active")),
                     "watch": watch,
                     "continuous_capture_active": bool(watch.get("active")),
@@ -996,13 +997,15 @@ def _command_serve(args, root: Path, parser) -> None:
     if args.mcp_token:
         os.environ["GRAPHTYN_MCP_TOKEN"] = args.mcp_token
     os.environ["GRAPHTYN_MCP_PATH"] = str(root)
+    from .core.process_priority import lower_process_priority
+    priority = lower_process_priority(args.priority)
     from .core.listen import bind_socket, browser_host, listen_hosts
     hosts = listen_hosts(args.host)
     scheme = "https" if args.ssl_certfile and args.ssl_keyfile else "http"
     print("\n🌌 Graphtyn está listo")
     print(f"   Dashboard: {scheme}://{browser_host(hosts)}:{args.port}")
     print(f"   Proyecto:  {root}")
-    print(f"   Servidor:  {', '.join(hosts)}:{args.port} · Recarga={args.reload} · Watch={args.watch}\n", flush=True)
+    print(f"   Servidor:  {', '.join(hosts)}:{args.port} · Recarga={args.reload} · Watch={args.watch} · Prioridad={priority['mode']}\n", flush=True)
     if args.reload:
         if len(hosts) > 1:
             raise SystemExit("--reload admite un solo --host")

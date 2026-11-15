@@ -551,6 +551,8 @@ def _memory_sync_once(args):
     return _memory_sync_path(args, Path(args.path).expanduser().resolve())
 
 def _watch_memory_sync(args) -> None:
+    from .core.process_priority import lower_process_priority
+    lower_process_priority(getattr(args, "priority", None))
     watcher_id = f"cli-sync:{os.getpid()}"
     interval = max(1.0, float(args.interval))
 

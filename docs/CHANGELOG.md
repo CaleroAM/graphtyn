@@ -5,6 +5,20 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Cambiado
+
+- `graphtyn serve` y `graphtyn memory sync --watch` bajan su propia prioridad al arrancar: `nice 10`
+  en Linux y macOS, y la clase «por debajo de lo normal» en Windows. Así solo usan la CPU que nada
+  más necesita, sea cual sea el lanzador (systemd, tarea programada o terminal). `--priority normal`
+  o `GRAPHTYN_PRIORITY=normal` mantienen la prioridad normal. Nunca suben una prioridad que ya era
+  más baja.
+- Las unidades de systemd del dashboard y de la captura de OpenClaw incluyen `CPUWeight=20` e
+  `IOWeight=20`. No fijan un tope de CPU, porque el adecuado depende de cada equipo.
+- La captura continua revisa cada 30 s por defecto, en vez de cada 5 s, en `setup` y en
+  `memory sync --watch`. Es el mismo intervalo que ya usaba el dashboard. En el dashboard, un
+  selector junto a «Activar captura continua» cambia el intervalo de cada espacio (30 s, 1, 5 o
+  15 min) sin reiniciar el watcher, y el estado muestra la prioridad del servidor.
+
 ### Corregido
 
 - La captura continua de memoria ya no ocupa un núcleo de CPU en reposo. En cada ciclo se reimportan
