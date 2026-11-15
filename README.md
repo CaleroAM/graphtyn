@@ -101,6 +101,41 @@ resto del equipo. Para mantener la prioridad normal, pase `--priority normal` o 
 `GRAPHTYN_PRIORITY=normal`. Las unidades de systemd que genera el instalador añaden además
 `CPUWeight=20` e `IOWeight=20`.
 
+> [!IMPORTANT]
+> **Prioridad baja no es lo mismo que un tope de CPU.** Por defecto, Graphtyn cede la CPU y el disco
+> a cualquier otro programa, pero si el equipo está libre puede usar todos los núcleos que necesite
+> (por ejemplo, al importar historiales grandes o reindexar). Eso puede calentar un portátil. El
+> instalador no fija un tope porque el adecuado depende de cada equipo: **configúrelo en cada
+> máquina**. Un punto de partida razonable es una cuarta parte de los hilos lógicos (`nproc` en Linux;
+> en Windows, «Procesadores lógicos» en el Administrador de tareas).
+>
+> - **Linux con systemd:** cree `~/.config/systemd/user/graphtyn-.service.d/limits.conf`. Ese
+>   directorio se aplica a todos los servicios `graphtyn-*`, también a los que se instalen después,
+>   y sobrevive a un `graphtyn service install`. `CPUQuota` se mide en porcentaje de un núcleo:
+>   `200%` son dos núcleos.
+>
+>   ```ini
+>   [Service]
+>   CPUQuota=200%
+>   ```
+>
+>   ```bash
+>   systemctl --user daemon-reload   # el tope se aplica sin reiniciar
+>   systemctl --user show graphtyn-dashboard.service -p CPUQuotaPerSecUSec
+>   ```
+>
+>   Para quitarlo, borre el archivo y repita `daemon-reload`.
+> - **Windows:** las tareas programadas no admiten un tope de CPU. Restrinja el proceso a ciertos
+>   núcleos con una máscara de afinidad. En `%APPDATA%\Graphtyn\graphtyn-dashboard.cmd`, anteponga
+>   `start "" /b /wait /belownormal /affinity 3` a la línea que lanza `graphtyn` (`3` = núcleos 0 y 1;
+>   `F` = 0 a 3) y reinicie con `graphtyn service restart`. Vuelva a aplicarlo si regenera el archivo
+>   con `graphtyn service install`.
+> - **macOS:** no hay tope por proceso; la prioridad baja es lo que aplica Graphtyn.
+> - **Docker:** limite el contenedor con `cpus: "2"` en `compose.graphtyn.yml`.
+>
+> Para gastar menos, también puede subir el intervalo de la captura continua (selector «Cada» del
+> dashboard, o `--interval`).
+
 Para un cliente MCP en otra máquina o VM, exponga sólo la interfaz alcanzable y
 use un archivo de tokens. El instalador rechaza una interfaz no local sin
 autenticación:
