@@ -1,0 +1,82 @@
+{
+ "tasks": [
+  {
+   "id": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "request": "Si cambio ClassUtils.getShortClassName en commons-lang (cualquiera de sus sobrecargas), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "short_canonical_name",
+     "any": [
+      "getShortCanonicalName",
+      "ClassUtils.java:1130"
+     ]
+    },
+    {
+     "id": "overload_chain",
+     "any": [
+      "getShortClassName(Class",
+      "getShortClassName(Object",
+      "ClassUtils.java:1187",
+      "ClassUtils.java:1170"
+     ]
+    },
+    {
+     "id": "to_string_style",
+     "any": [
+      "ToStringStyle.getShortClassName",
+      "ToStringStyle.java:2186",
+      "appendClassName"
+     ]
+    },
+    {
+     "id": "exception_message",
+     "any": [
+      "ExceptionUtils.getMessage",
+      "ExceptionUtils.java:302"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "request": "Si cambio ObjectUtils.identityToString en commons-lang (cualquiera de sus sobrecargas), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "type_utils_cycle",
+     "any": [
+      "toCyclicString",
+      "TypeUtils.java:1690"
+     ]
+    },
+    {
+     "id": "type_utils_to_string",
+     "any": [
+      "TypeUtils.toString",
+      "TypeUtils.java:1766"
+     ]
+    },
+    {
+     "id": "cyclic_object",
+     "any": [
+      "appendCyclicObject",
+      "ToStringStyle.java:1369"
+     ]
+    },
+    {
+     "id": "as_object_to_string",
+     "any": [
+      "appendAsObjectToString",
+      "ToStringBuilder.java:997"
+     ]
+    },
+    {
+     "id": "event_proxy",
+     "any": [
+      "EventUtils",
+      "EventUtils.java:89"
+     ]
+    }
+   ]
+  }
+ ]
+}

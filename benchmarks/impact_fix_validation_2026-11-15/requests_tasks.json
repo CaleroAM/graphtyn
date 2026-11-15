@@ -1,0 +1,81 @@
+{
+ "tasks": [
+  {
+   "id": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "request": "Si cambio get_auth_from_url en requests (src/requests/utils.py), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "rebuild_proxies",
+     "any": [
+      "rebuild_proxies",
+      "sessions.py:359"
+     ]
+    },
+    {
+     "id": "proxy_manager_for",
+     "any": [
+      "proxy_manager_for",
+      "adapters.py:284"
+     ]
+    },
+    {
+     "id": "proxy_headers",
+     "any": [
+      "proxy_headers",
+      "Proxy-Authorization",
+      "adapters.py:627"
+     ]
+    },
+    {
+     "id": "prepare_auth",
+     "any": [
+      "prepare_auth",
+      "models.py:679"
+     ]
+    },
+    {
+     "id": "empty_credentials",
+     "any": [
+      "(\"\", \"\")",
+      "('', '')",
+      "AttributeError, TypeError"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "request": "Si cambio super_len en requests (src/requests/utils.py), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "prepare_body",
+     "any": [
+      "prepare_body",
+      "models.py:605"
+     ]
+    },
+    {
+     "id": "prepare_content_length",
+     "any": [
+      "prepare_content_length",
+      "models.py:657"
+     ]
+    },
+    {
+     "id": "content_length_header",
+     "any": [
+      "Content-Length"
+     ]
+    },
+    {
+     "id": "remaining_bytes",
+     "any": [
+      "total_length - current_position",
+      "current_position",
+      "tell()"
+     ]
+    }
+   ]
+  }
+ ]
+}

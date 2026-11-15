@@ -1,0 +1,104 @@
+{
+ "tasks": [
+  {
+   "id": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "request": "Si cambio mergeConfig en axios (lib/core/mergeConfig.js), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "request",
+     "any": [
+      "Axios.request",
+      "_request",
+      "Axios.js:138"
+     ]
+    },
+    {
+     "id": "get_uri",
+     "any": [
+      "getUri",
+      "Axios.js:317"
+     ]
+    },
+    {
+     "id": "method_aliases",
+     "any": [
+      "forEachMethodNoData",
+      "forEachMethodWithData",
+      "httpMethod",
+      "Axios.js:331",
+      "Axios.js:344"
+     ]
+    },
+    {
+     "id": "create_instance",
+     "any": [
+      "create",
+      "createInstance",
+      "axios.js:40"
+     ]
+    },
+    {
+     "id": "resolve_config",
+     "any": [
+      "resolveConfig",
+      "resolveConfig.js:28"
+     ]
+    },
+    {
+     "id": "public_export",
+     "any": [
+      "axios.mergeConfig",
+      "axios.js:76"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V1_AXIOS_SETTLE_IMPACT",
+   "request": "Si cambio settle en axios (lib/core/settle.js), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "fetch_adapter",
+     "any": [
+      "fetch.js",
+      "fetch adapter"
+     ]
+    },
+    {
+     "id": "xhr_adapter",
+     "any": [
+      "xhr.js",
+      "xhr adapter",
+      "XMLHttpRequest"
+     ]
+    },
+    {
+     "id": "http_data_uri",
+     "any": [
+      "data:",
+      "405",
+      "http.js:854",
+      "http.js:894"
+     ]
+    },
+    {
+     "id": "http_response",
+     "any": [
+      "http.js:1377",
+      "http.js:1437",
+      "handleStreamEnd",
+      "responseType === 'stream'"
+     ]
+    },
+    {
+     "id": "validate_status",
+     "any": [
+      "validateStatus",
+      "ERR_BAD_REQUEST",
+      "ERR_BAD_RESPONSE"
+     ]
+    }
+   ]
+  }
+ ]
+}
