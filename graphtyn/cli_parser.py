@@ -569,7 +569,9 @@ def _add_memory_registry_commands(memory_sub: argparse._SubParsersAction) -> Non
     sync_p.add_argument("--all-spaces", action="store_true", help="Sincronizar todos los espacios registrados con fuente asociada")
     sync_p.add_argument("--installation", default=None,
                         help="Sincronizar todos los cerebros privados de una instalación de harness")
-    sync_p.add_argument("--interval", type=float, default=5.0)
+    sync_p.add_argument("--interval", type=float, default=30.0, help="Segundos entre ciclos de --watch")
+    sync_p.add_argument("--priority", choices=["low", "normal"], default=None,
+                        help="low (predeterminado) cede CPU y disco al resto del equipo; normal la mantiene. También GRAPHTYN_PRIORITY")
     sync_p.add_argument("--path", default=".")
     sync_p.add_argument("--agent-id", default=None,
                         help="Identidad propietaria de la fuente (requerida para una raíz compartida)")
@@ -665,6 +667,8 @@ def _add_integration_commands(subparsers: argparse._SubParsersAction) -> None:
     serve_p.add_argument("--host", action="append", default=None,
                          help="Interfaz de escucha, repetible o separada por comas (predeterminado: 127.0.0.1)")
     serve_p.add_argument("--port", type=int, default=9210, help="Puerto")
+    serve_p.add_argument("--priority", choices=["low", "normal"], default=None,
+                         help="low (predeterminado) cede CPU y disco al resto del equipo; normal la mantiene. También GRAPHTYN_PRIORITY")
     serve_p.add_argument("--path", default=".", help="Ruta del proyecto")
     serve_p.add_argument("--ssl-certfile", default=None)
     serve_p.add_argument("--ssl-keyfile", default=None)

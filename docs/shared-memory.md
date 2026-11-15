@@ -265,6 +265,12 @@ están configuradas u observadas, con procedencia en sus metadatos.
 
 ## Operación
 
+La captura continua revisa los historiales cada 30 s por defecto (`--interval` en
+`memory sync --watch`; en el dashboard, el selector «Cada» junto a «Activar captura
+continua» lo cambia por espacio sin reiniciar). Con intervalos más largos, el consumo
+de CPU es menor. Los watchers corren con prioridad baja; `--priority normal` o
+`GRAPHTYN_PRIORITY=normal` la desactivan.
+
 ```bash
 graphtyn memory status --path .
 graphtyn memory doctor --path .
@@ -378,7 +384,7 @@ asociada explícitamente con `--workspace`):
 
 ```bash
 graphtyn memory sync --path . --consent
-graphtyn memory sync --path . --watch --interval 5 --consent
+graphtyn memory sync --path . --watch --interval 30 --consent
 graphtyn memory sync --all-spaces --consent
 ```
 

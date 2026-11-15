@@ -4,10 +4,12 @@ Explicit project/session selection is required. Native IDs survive rotation;
 without them a changed prefix is rejected for review instead of guessing identity.
 """
 from __future__ import annotations
+import copy
 import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
+import threading
 import time
 
 from .history_import import _walk_records, _role, _content, _workspace
@@ -146,9 +148,39 @@ def watch_jsonl(store, source, *, interval=10, **kwargs):
         heartbeat('stopped')
 
 
+_PREVIEW_CACHE: dict[tuple[str, str, int], tuple[tuple[int, int], dict]] = {}
+_PREVIEW_CACHE_LIMIT = 4096
+_PREVIEW_LOCK = threading.Lock()
+
+
 def preview_jsonl(path, provider, max_record_bytes=8 * 1024 * 1024):
-    """Discover session metadata without serializing transcripts into API jobs."""
+    """Discover session metadata without serializing transcripts into API jobs.
+
+    A memory watcher previews every known transcript each cycle, and almost none changed since the
+    last one. The result depends only on the file and the provider, so an unchanged file (same size
+    and mtime) is answered from memory. Callers get a copy, because they annotate the sessions.
+    """
     path=Path(path)
+    key=(str(path), str(provider), int(max_record_bytes))
+    try:
+        stat=path.stat(); version=(stat.st_size, stat.st_mtime_ns)
+    except OSError:
+        version=None
+    with _PREVIEW_LOCK:
+        cached=_PREVIEW_CACHE.get(key)
+    if version is not None and cached and cached[0]==version:
+        return copy.deepcopy(cached[1])
+    result=_preview_jsonl_uncached(path, provider, max_record_bytes)
+    if version is not None:
+        with _PREVIEW_LOCK:
+            _PREVIEW_CACHE.pop(key, None)
+            while len(_PREVIEW_CACHE)>=_PREVIEW_CACHE_LIMIT:
+                _PREVIEW_CACHE.pop(next(iter(_PREVIEW_CACHE)))
+            _PREVIEW_CACHE[key]=(version, copy.deepcopy(result))
+    return result
+
+
+def _preview_jsonl_uncached(path, provider, max_record_bytes):
     groups={}; file_session=None; workspace=None
     if provider == 'antigravity':
         import re

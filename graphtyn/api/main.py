@@ -18,6 +18,7 @@ from .. import __version__
 from . import web_assets
 from ..core.ast_parser import ASTParser
 from ..core.history import HistoryTracker
+from ..core.process_priority import current_priority
 from ..core.query_log import record_query
 from ..core.watcher import WatchManager
 from ..core.impact import analyze_impact
@@ -296,7 +297,7 @@ def _watcher_public(key: str, entry: dict) -> dict:
             "active": bool(entry.get("thread") and entry["thread"].is_alive()),
             "heartbeat": entry.get("heartbeat"), "interval": entry.get("interval"),
             "agent_id": entry.get("agent_id"), "enrich": bool(entry.get("enrich", False)),
-            "error": entry.get("error")}
+            "error": entry.get("error"), "priority": current_priority()}
 
 
 def _memory_watch_loop(path: str, options: dict, stop: threading.Event) -> None:
