@@ -83,8 +83,10 @@ def test_posix_child_ends_at_background_niceness_and_never_rises():
 def test_real_windows_process_reaches_below_normal():
     code = ("from graphtyn.core.process_priority import lower_process_priority as l, windows_kernel32; "
             "r = l('low'); k = windows_kernel32(); print(r['changed'], k.GetPriorityClass(k.GetCurrentProcess()))")
+    # Start the child at NORMAL explicitly: the CI runner may already run below normal.
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
-                         env={**os.environ, "GRAPHTYN_PRIORITY": "low"}).stdout.split()
+                         env={**os.environ, "GRAPHTYN_PRIORITY": "low"},
+                         creationflags=subprocess.NORMAL_PRIORITY_CLASS).stdout.split()
     assert out == ["True", str(WINDOWS_BELOW_NORMAL)]
 
 
