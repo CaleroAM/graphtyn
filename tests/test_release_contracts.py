@@ -38,11 +38,12 @@ def test_release_documents_and_workflows_exist():
 
 
 def test_readme_does_not_advertise_unpublished_or_legacy_install_sources():
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "CaleroAM/openclaw" not in readme
-    assert "pipx install graphtyn" not in readme
-    assert "pip install graphtyn" not in readme
-    assert "PyPI permanece deshabilitado" in readme
+    for name, notice in (("README.md", "PyPI is not enabled yet"), ("README.es.md", "PyPI permanece deshabilitado")):
+        readme = (ROOT / name).read_text(encoding="utf-8")
+        assert "CaleroAM/openclaw" not in readme
+        assert "pipx install graphtyn" not in readme
+        assert "pip install graphtyn" not in readme
+        assert notice in readme
 
 
 def test_ci_has_required_release_gates():
@@ -107,8 +108,10 @@ def test_architecture_is_canonical_and_readme_has_compact_map():
         assert concept in architecture
     assert f"`{graphtyn.__version__}`" in architecture
     assert architecture.count("```mermaid") >= 5
-    assert "## Arquitectura en un minuto" in readme
+    assert "## Architecture in one minute" in readme
     assert "[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)" in readme
+    spanish = (ROOT / "README.es.md").read_text(encoding="utf-8")
+    assert "## Arquitectura en un minuto" in spanish and "[English](README.md)" in spanish
 
 
 def test_serve_defaults_to_loopback_and_announces_dashboard_url():

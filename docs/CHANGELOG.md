@@ -7,6 +7,12 @@ compatibles con PEP 440.
 
 ### Cambiado
 
+- El README principal está en inglés, centrado en el grafo de código y en los resultados medidos
+  frente a Graphify. El README en español pasa a `README.es.md`, y cada uno enlaza al otro.
+- Un test de regresión (`tests/test_idle_cycle_regression.py`, también en el job de Windows) falla
+  si un segundo ciclo de captura sin datos nuevos lanza un proceso, vuelve a parsear un historial,
+  procesa temas o escribe un archivo.
+
 - `graphtyn serve` y `graphtyn memory sync --watch` bajan su propia prioridad al arrancar: `nice 10`
   en Linux y macOS, y la clase «por debajo de lo normal» en Windows. Así solo usan la CPU que nada
   más necesita, sea cual sea el lanzador (systemd, tarea programada o terminal). `--priority normal`
@@ -21,6 +27,15 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- Un ciclo de captura sin cambios todavía escribía y lanzaba un proceso, como detectó el test de
+  regresión nuevo:
+  - Lanzaba `git config --get remote.origin.url` y reescribía `project-identities.json` con una
+    fecha nueva y `fsync`. Ahora el remoto se recuerda 15 minutos y el archivo solo se reescribe si
+    cambian sus rutas o alias. El candado pasa a ser uno por proceso, en vez de uno por instancia, y
+    ya no se pierden actualizaciones entre watchers del mismo servidor.
+  - Volvía a guardar `history_stream_progress` al llegar al final de un historial sin leer nada.
+  - Volvía a guardar la misma `memory_space_policy` con otra fecha cada vez que se abría el
+    almacén.
 - Un ciclo de captura continua sin cambios ya no repite trabajo cuyo resultado no puede haber
   cambiado. En un almacén real (147 sesiones, 1.371 sesiones de origen) pasa de unos 31 s de CPU
   por ciclo (10 s de Python y 20 s de procesos `git`) a unos 1,8 s, con las mismas sesiones

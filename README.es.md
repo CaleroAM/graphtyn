@@ -1,0 +1,616 @@
+# 🌌 Graphtyn
+
+[![Release](https://img.shields.io/github/v/release/CaleroAM/graphtyn?label=release)](https://github.com/CaleroAM/graphtyn/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab.svg)](https://www.python.org/)
+[![MCP](https://img.shields.io/badge/MCP-compatible-10b981.svg)](https://modelcontextprotocol.io/)
+
+**Idioma:** [English](README.md) · Español
+
+Graphtyn crea un grafo local y auditable del código, calcula impacto y entrega
+contexto compacto a agentes mediante MCP. También conserva memoria semántica
+compartida entre sesiones y agentes sin mezclar conversaciones con dependencias
+estructurales.
+
+> Última versión estable publicada: [`0.13.1`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.13.1).
+> Graphtyn se distribuye por GitHub Releases; PyPI permanece deshabilitado. El
+> despliegue es self-hosted: los agentes pueden compartir memoria con permisos
+> por token y proyecto, pero no es un servicio SaaS multi-tenant.
+
+**Documentación:** [índice completo](docs/index.md) ·
+[arquitectura](docs/ARCHITECTURE.md) · [memoria](docs/shared-memory.md) ·
+[MCP por proyecto](docs/project-mcp-integrations.md) ·
+[conexión OpenClaw](docs/openclaw-native.md) ·
+[pruebas](docs/testing.md) · [benchmarks](docs/BENCHMARKS.md) ·
+[seguridad](docs/SECURITY.md)
+
+## Qué ofrece
+
+- Grafo determinista de archivos, símbolos, llamadas, herencia y relaciones de
+  framework, con evidencia `EXTRACTED`, `INFERRED` o `AMBIGUOUS`.
+- Paquetes Tree-sitter opcionales para C#, JavaScript, TypeScript/TSX, Python,
+  Java, Go, Rust, PHP, C, C++, Ruby, Kotlin, Swift y Scala; contrato y límites en
+  [`docs/language-packs.md`](docs/language-packs.md).
+- Radio de impacto para símbolos, cambios locales, ramas y pull requests.
+- Contexto por intención y presupuesto para evitar lecturas masivas del
+  repositorio.
+- Memoria compartida con SQLite, búsqueda híbrida FTS + embeddings, atribución
+  por agente, importación histórica y deduplicación.
+- Dashboard 2D/3D en `http://127.0.0.1:9210`, API y servidor MCP stdio/HTTP.
+- Indexación incremental: después del primer índice sólo procesa cambios y
+  reutiliza la caché estructural y semántica.
+- Código, índice y memoria locales por defecto; la IA local o cloud es opcional.
+
+## Arquitectura en un minuto
+
+```mermaid
+flowchart LR
+  AGENT[Agentes] --> MCP[MCP stdio / HTTP]
+  USER[Navegador] --> WEB[Dashboard] --> API[FastAPI · Starlette · Uvicorn]
+  MCP --> CORE[Núcleo Graphtyn]
+  API --> CORE
+  CORE --> CODE[Grafo de código<br/>AST · Tree-sitter · impacto]
+  CORE --> MEMORY[Grafo de memoria<br/>FTS · embeddings · sesiones]
+  CODE --> CACHE[Índice incremental]
+  MEMORY --> DB[SQLite local]
+```
+
+Son dos grafos vinculados mediante referencias explícitas: el de código modela
+la estructura del repositorio y el de memoria conserva hechos, decisiones y
+procedencia. El diseño completo está en
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Instalación rápida
+
+Graphtyn aún no está publicado en PyPI. Instala el wheel de
+[GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/latest):
+
+```bash
+python -m pip install "https://github.com/CaleroAM/graphtyn/releases/download/v0.13.1/graphtyn-0.13.1-py3-none-any.whl"
+```
+
+También puedes instalarlo en modo desarrollo desde un checkout:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+graphtyn onboard --path . --agent antigravity --tool-profile full
+graphtyn serve --path .
+```
+
+Para Claude Code, `graphtyn agent-install claude --path .` escribe `CLAUDE.md`,
+las skills `.claude/skills/graphtyn` y `.claude/skills/graphtyn-memory` y la entrada compartible
+`.mcp.json`. Si el ejecutable `claude` está disponible, registra además el mismo
+servidor en el ámbito `local` de Claude Code (privado para el usuario y el
+proyecto), porque Claude Code deja pendientes de aprobación interactiva los
+servidores de `.mcp.json`. Verifícalo con `claude mcp list`. La desinstalación
+revierte ambas entradas. Las conversaciones previas se importan con
+`graphtyn memory bootstrap --provider claude` (vista previa por defecto).
+
+El dashboard anuncia su URL al arrancar y escucha por defecto sólo en
+`127.0.0.1:9210`. Para mantenerlo disponible al iniciar sesión:
+
+```bash
+graphtyn service install --path . --enable
+graphtyn service status
+```
+
+`graphtyn serve` y `graphtyn memory sync --watch` corren con prioridad baja: en Linux y macOS
+con `nice 10` (en Linux el disco sigue esa misma prioridad) y en Windows con la clase
+«por debajo de lo normal». Usan solo la CPU que nada más necesita, así que no frenan el
+resto del equipo. Para mantener la prioridad normal, pase `--priority normal` o defina
+`GRAPHTYN_PRIORITY=normal`. Las unidades de systemd que genera el instalador añaden además
+`CPUWeight=20` e `IOWeight=20`. Un ciclo de captura continua sin datos nuevos no lanza procesos
+ni escribe nada; un test del CI lo comprueba.
+
+> [!IMPORTANT]
+> **Prioridad baja no es lo mismo que un tope de CPU.** Por defecto, Graphtyn cede la CPU y el disco
+> a cualquier otro programa, pero si el equipo está libre puede usar todos los núcleos que necesite
+> (por ejemplo, al importar historiales grandes o reindexar). Eso puede calentar un portátil. El
+> instalador no fija un tope porque el adecuado depende de cada equipo: **configúrelo en cada
+> máquina**. Un punto de partida razonable es una cuarta parte de los hilos lógicos (`nproc` en Linux;
+> en Windows, «Procesadores lógicos» en el Administrador de tareas).
+>
+> - **Linux con systemd:** cree `~/.config/systemd/user/graphtyn-.service.d/limits.conf`. Ese
+>   directorio se aplica a todos los servicios `graphtyn-*`, también a los que se instalen después,
+>   y sobrevive a un `graphtyn service install`. `CPUQuota` se mide en porcentaje de un núcleo:
+>   `200%` son dos núcleos.
+>
+>   ```ini
+>   [Service]
+>   CPUQuota=200%
+>   ```
+>
+>   ```bash
+>   systemctl --user daemon-reload   # el tope se aplica sin reiniciar
+>   systemctl --user show graphtyn-dashboard.service -p CPUQuotaPerSecUSec
+>   ```
+>
+>   Para quitarlo, borre el archivo y repita `daemon-reload`.
+> - **Windows:** las tareas programadas no admiten un tope de CPU. Restrinja el proceso a ciertos
+>   núcleos con una máscara de afinidad. En `%APPDATA%\Graphtyn\graphtyn-dashboard.cmd`, anteponga
+>   `start "" /b /wait /belownormal /affinity 3` a la línea que lanza `graphtyn` (`3` = núcleos 0 y 1;
+>   `F` = 0 a 3) y reinicie con `graphtyn service restart`. Vuelva a aplicarlo si regenera el archivo
+>   con `graphtyn service install`.
+> - **macOS:** no hay tope por proceso; la prioridad baja es lo que aplica Graphtyn.
+> - **Docker:** limite el contenedor con `cpus: "2"` en `compose.graphtyn.yml`.
+>
+> Para gastar menos, también puede subir el intervalo de la captura continua (selector «Cada» del
+> dashboard, o `--interval`).
+
+Para un cliente MCP en otra máquina o VM, exponga sólo la interfaz alcanzable y
+use un archivo de tokens. El instalador rechaza una interfaz no local sin
+autenticación:
+
+```bash
+graphtyn service install --kind systemd --path . --host 192.0.2.10 --port 9210 \
+  --tokens-file ~/.graphtyn/memory-tokens.json \
+  --embed-model nomic-embed-text:latest --ollama-host http://127.0.0.1:11434 --enable
+```
+
+En Windows, descargue `install.ps1` y el wheel de la misma versión, colóquelos
+en la misma carpeta y ejecute PowerShell:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\install.ps1 -ProjectPath "C:\ruta\al\proyecto"
+```
+
+El instalador es por usuario, crea el primer índice, configura Graphtyn,
+registra el dashboard y abre
+`http://127.0.0.1:9210`. Consulte instalación, Docker, VPS y desinstalación en
+[la guía de operación](docs/ARCHITECTURE.md#empaquetado-despliegue-y-entrega).
+
+Extras opcionales:
+
+```bash
+python -m pip install -e '.[multimodal]'
+python -m pip install -e '.[media]'
+```
+
+## Flujo habitual
+
+```bash
+# Crear o actualizar el índice
+graphtyn reindex --mode fast --path .
+graphtyn serve --watch --path .
+
+# Entender el repositorio y obtener contexto acotado
+graphtyn query-intent "¿De qué trata este repositorio?" --intent overview --path .
+graphtyn context GameManager PlayerService --depth 1 --limit 12 --path .
+
+# Planificar y verificar cambios
+graphtyn analyze-change "Cambiar el flujo de autenticación" --path .
+graphtyn diff --path .
+graphtyn pr-impact --path . --base main
+graphtyn verify-edit --base HEAD~1 --json --path .
+
+# Explorar símbolos (códigos de salida: 0 respuesta, 3 nombre ambiguo, 4 sin coincidencia)
+graphtyn explain processCommand --path .
+graphtyn path save insert_record --path .
+
+# Triaje de varias ramas o PR abiertos: conflictos, acoplamiento y orden de merge
+graphtyn prs --base main --branch feature/a --branch feature/b --path .
+graphtyn prs --base main --github --path .
+
+# Generar artefactos persistentes
+graphtyn export-md --path .
+graphtyn report --path . --output GRAPHTYN_REPORT.md
+graphtyn export-html --path . --output graph.html
+
+# Reindexar al hacer commit, cambiar de rama o hacer merge
+graphtyn hook install --path .
+```
+
+- `GRAPHTYN_REPORT.md` incluye comunidades (Louvain con semilla fija si
+  `networkx` está instalado; si no, propagación de etiquetas determinista),
+  *god nodes*, conexiones sorprendentes entre directorios no relacionados y
+  preguntas sugeridas. Excluye tests y código vendorizado, y descarta nombres
+  definidos en varios archivos cuyo grado mide ambigüedad, no centralidad.
+- `export-html` genera un `graph.html` autocontenido, sin red ni CDN, coloreado
+  por comunidad, con búsqueda y detalle `archivo:línea`. Con más símbolos que
+  `--node-limit` conserva los más conectados e indica cuántos omitió.
+- Los comentarios `WHY:`, `NOTE:`, `RATIONALE:`, `DECISION:`, `HACK:` e
+  `IMPORTANT:`, y las citas `ADR-n` o `RFC n`, se adjuntan como *rationale* al
+  símbolo que documentan. `explain` y los paquetes MCP (`why`) los muestran.
+- `prs` simula los merges con `git merge-tree --write-tree` sin tocar el árbol
+  de trabajo. Con `--github` descarga los PR abiertos en `refs/graphtyn/pr/<n>`.
+  Sale con código 2 si algún par tiene conflictos textuales.
+- `.graphtynignore` excluye rutas de la indexación con la sintaxis habitual de
+  `.gitignore` (`*`, `**`, `?`, `!`, `/` inicial y final). Se aplica en el
+  siguiente `reindex` y también al watcher.
+- `hook install` añade un bloque gestionado a `post-commit`, `post-checkout`
+  (sólo cambios de rama) y `post-merge`, conservando el contenido existente.
+
+Configuración y memoria conversacional:
+
+```bash
+# Configurar el proyecto y preguntar si se activa memoria
+graphtyn setup --apply --memory ask
+# Instalar MCP del proyecto sólo en los clientes elegidos
+graphtyn agent-install codex --path .
+graphtyn agent-install opencode --path .
+graphtyn integrations status --path .
+graphtyn integrations verify --path .
+# Servidor mínimo para consultas de código; precarga el índice una sola vez
+graphtyn mcp --tool-profile query --preload-index --path .
+# Importar o sincronizar historiales autorizados
+graphtyn memory bootstrap --path .
+graphtyn memory sync --path . --watch --interval 30 --consent
+graphtyn memory sync --all-spaces --consent
+graphtyn memory status --path .
+graphtyn memory scope show --path /ruta/al/cerebro
+graphtyn memory scope set --path /ruta/al/cerebro --space-type agent_brain --agent-id openclaw/main
+```
+
+`--memory off` instala Graphtyn sin captura conversacional. El ejecutable se
+instala una vez por usuario; registrar el proyecto asigna una identidad
+persistente y `agent-install` sólo genera la configuración MCP por proyecto
+para el cliente seleccionado, conservando las demás conexiones. La configuración usa el
+comando `graphtyn` en PATH y una ruta relativa al workspace. Codex también
+guarda la ruta absoluta del proyecto como `cwd` en `.codex/config.toml` para
+iniciar el MCP en el workspace correcto aunque Codex se haya abierto desde otra
+ruta. Regenera esa configuración local en cada máquina y revísala antes de
+compartirla o comitearla. En Codex, el proyecto debe estar marcado como confiable.
+Activar memoria no importa historiales ni inicia un watcher. La importación desde
+`setup` requiere `--import-history --consent-history`; `bootstrap` conserva su
+flujo de vista previa y consentimiento.
+
+Los cerebros `LEGADO` se muestran separados como archivos históricos. Para
+incorporar el historial al cerebro activo de cada agente, usa
+`graphtyn memory consolidate --source <archivo> --target <cerebro> --agent-id <identidad>`
+para revisar la vista previa; ejecuta con `--apply --consent` sólo después de
+comprobar el destino. La migración es incremental, conserva una copia SQLite del
+origen y del destino, y mantiene el archivo original intacto. El dashboard ofrece
+la misma acción con progreso y marca **RESPALDADA** cada identidad ya integrada
+desde ese archivo. Los chats nuevos entran directamente al cerebro activo cuando
+la captura del agente está activa; no se escriben en el archivo histórico.
+Consulta [`docs/shared-memory.md`](docs/shared-memory.md) para ver el contrato
+CLI/API y la procedencia que se conserva.
+
+`memory scope show|set` consulta y administra el tipo y los propietarios de un
+espacio registrado. `memory sync --all-spaces` incluye espacios con almacén o
+fuente asociada e informa conflictos sin detener la sincronización de los demás.
+OpenClaw puede descubrir rutas configuradas y seguir `trajectory-path.json` hasta
+el transcript canónico, limitado a la fuente seleccionada. `memory_status` está
+disponible por MCP; la búsqueda documental opera sobre el `path` indicado y no
+recorre automáticamente otros proyectos.
+
+Modos de reindexación:
+
+| Modo | Uso |
+|---|---|
+| `fast` | AST determinista, rápido y sin LLM |
+| `balanced` | Añade enriquecimiento local selectivo |
+| `deep` | Mayor cobertura semántica |
+| `verified` | Análisis profundo con verificaciones disponibles |
+
+Use `graphtyn --help` y `graphtyn <comando> --help` como referencia exacta de
+opciones. La [documentación completa](docs/index.md) agrupa los flujos avanzados
+sin convertir esta portada en un manual.
+
+## Integración con agentes
+
+Graphtyn es un producto independiente. `graphifyy`, `graphify-mcp` y
+`graphify-out/` pertenecen a otro producto y nunca deben instalarse o
+registrarse como si fueran Graphtyn. Si `graphtyn --version` no funciona,
+instale el wheel oficial de la release; no use un paquete con nombre parecido.
+
+### Un solo servidor, una entrada por cliente
+
+Graphtyn tiene **un único servidor MCP**: el comando `graphtyn mcp`. Lo que
+cambia entre clientes es dónde y en qué formato cada uno guarda la lista de
+servidores, así que `agent-install` escribe una *entrada* por cliente que
+apunta al mismo ejecutable y al mismo proyecto. OpenClaw es la excepción: una
+instalación de OpenClaw atiende varios proyectos y usa un servidor compartido
+que recibe el proyecto en cada llamada.
+
+| Cliente | Comando | Escribe | Verificar |
+|---|---|---|---|
+| Claude Code | `graphtyn agent-install claude --path .` | `CLAUDE.md`, `.claude/skills/graphtyn{,-memory}/`, `.mcp.json` y registro `local` con `claude mcp add` | `claude mcp list` |
+| Codex | `graphtyn agent-install codex --path .` | `AGENTS.md`, `.codex/config.toml` (requiere proyecto de confianza) | `codex mcp list` |
+| OpenCode | `graphtyn agent-install opencode --path .` | `AGENTS.md`, `opencode.json` | `opencode mcp list` |
+| Antigravity | `graphtyn agent-install antigravity --path .` | `GEMINI.md`, `.agents/skills/graphtyn{,-memory}/`, `.agents/mcp_config.json` | en una sesión de `agy` (`agy mcp list` sólo muestra los servidores globales) |
+| OpenClaw | `graphtyn harness openclaw connect` | servidor compartido de la instalación | ver [conexión OpenClaw](docs/openclaw-native.md) |
+| Copilot (VS Code) | `graphtyn agent-install copilot --path .` | `.github/copilot-instructions.md`, `.vscode/mcp.json` (formato contrastado con la referencia de VS Code; sin probar con un cliente real) | vista MCP de VS Code |
+| Cursor, Gemini | `graphtyn agent-install <cliente> --path .` | instrucciones (y `.cursor/mcp.json` en Cursor) | inspector MCP del cliente |
+
+Con `--path` cada entrada usa `graphtyn mcp --tool-profile <perfil> --path .`
+desde la raíz del proyecto. `graphtyn integrations status --path .` muestra el
+estado de todas y `graphtyn integrations remove --path . --agent <cliente>`
+retira sólo las que creó Graphtyn, junto con las skills que instaló para ese
+cliente y que nadie editó después.
+
+Para Copilot, la entrada sigue el formato de la
+[referencia MCP de VS Code](https://code.visualstudio.com/docs/agents/reference/mcp-configuration):
+`servers`, `type: "stdio"`, `command`, `args` y `cwd: ${workspaceFolder}`. VS Code
+mantiene `.vscode/mcp.json` por compatibilidad, aunque su asistente lo marca como
+obsoleto; no se ha probado con un cliente Copilot real.
+
+### Instalación hecha por un agente
+
+Cuando se pide a un agente (Claude Code, Codex, OpenCode, Antigravity u otro)
+que instale Graphtyn en un proyecto, debe seguir estos pasos y no otros:
+
+1. Comprobar `graphtyn --version`. Si falta, instalar sólo el wheel oficial de
+   [GitHub Releases](https://github.com/CaleroAM/graphtyn/releases); nunca
+   `graphifyy` ni paquetes de nombre parecido.
+2. Previsualizar sin escribir nada: `graphtyn setup --path <proyecto>`.
+3. Pedir consentimiento explícito al usuario antes de aplicar, indicando qué
+   archivos cambiarán (la tabla anterior) y, en Claude Code, que también se
+   modificará `~/.claude.json` mediante `claude mcp add --scope local`.
+4. Aplicar sólo para su propio cliente:
+   `graphtyn setup --path <proyecto> --agent <cliente> --apply --memory off`.
+   La memoria conversacional y la importación de historial son opt-in aparte.
+5. Verificar con `graphtyn integrations verify --path <proyecto>` y con el
+   comando de la columna «Verificar»; recargar el cliente si las herramientas
+   no aparecen.
+
+Para instalar todo de una vez sin el asistente:
+
+```bash
+graphtyn agent-install all --path .
+graphtyn mcp
+```
+
+### Captura de memoria en Claude Code
+
+Con memoria activa (`graphtyn setup ... --memory on`), o con
+`graphtyn memory claude-capture install --consent --path .`, Graphtyn registra un
+hook `Stop` en `.claude/settings.local.json`. Tras cada turno sincroniza el
+transcript de forma incremental e idempotente, sin bloquear al cliente, y guarda
+sólo los mensajes del usuario y las respuestas del asistente: excluye salida de
+herramientas, razonamiento y contexto inyectado (`<system-reminder>`,
+notificaciones de tareas). `graphtyn memory claude-capture uninstall --path .`
+lo retira conservando los hooks del usuario.
+
+### Contexto en el primer turno de Claude Code (opcional)
+
+Con el MCP, el agente gasta una llamada al modelo en pedir `graph_query_intent` y
+otra en responder, así que el prompt fijo de Claude Code se procesa dos veces.
+`graphtyn claude-context install --consent --path .` registra un hook
+`UserPromptSubmit` en `.claude/settings.local.json` que ejecuta esa misma
+consulta antes del primer turno y añade el resultado como bloque
+`<graphtyn-context>`; el agente responde en una sola llamada. El hook:
+
+- sólo actúa en mensajes sobre código (trazar, explicar, impacto, persistencia…)
+  que nombran un símbolo, archivo o el proyecto; no en saludos, comandos `/` ni
+  preguntas sobre sesiones anteriores, que siguen yendo a `memory_context`;
+- nunca construye el índice (`graphtyn reindex` debe existir) y abandona en
+  silencio si la recuperación supera 12 s (`--budget-seconds`);
+- no inyecta nada si el paquete no trae evidencia suficiente. Claude Code
+  guarda en disco el contexto de un hook que supera 10.000 caracteres y sólo
+  muestra la ruta al modelo, así que se registran dos hooks paralelos que
+  emiten cada uno una mitad (≤ 9.800 caracteres) del mismo paquete;
+- cuando el paquete está completo (`do_not_expand=true`), la cabecera aplica la
+  misma regla de parada que el resultado MCP: responder sin buscar ni releer.
+
+Medido en Redis, fmt y Rails, la sesión pasó con Claude Sonnet de ~61.000
+tokens (MCP) a ~34.000 (n=5, sin herramientas y en una sola llamada al modelo),
+con Codex de 29.000–51.000 a ~12.000 y con OpenCode de 26.000–64.000 a
+16.000–35.000, con la misma calidad en esas tres tareas
+([informe](benchmarks/real_multi_client_hook_2026-10-27/report.md)). Con seis
+tareas nuevas no se sostiene en general
+([informe](benchmarks/heldout_tasks_2026-10-27/report.md)). Cuando la
+recuperación omite parte de lo pedido pero el paquete se declara completo
+(`do_not_expand=true`), el agente responde sin buscar y pierde hechos. Por eso
+el hook es opcional y conviene usarlo sabiendo ese límite. Desde la regla de
+parada dirigida, el agente busca lo que falta. La calidad se mantiene (Claude,
+98 % en tareas nuevas), pero en esas tareas el ahorro es moderado: un 22 %
+menos con hook que con MCP lean
+([informe](benchmarks/heldout_v2_2026-10-27/report.md)).
+
+`graphtyn claude-context status|uninstall --path .` lo consulta o lo retira. La
+captura de memoria descarta estos bloques. El MCP devuelve por defecto el mismo
+paquete `lean` (sin diagnósticos ni entidades ajenas a la evidencia);
+`response_detail="debug"` (o `graphtyn mcp --response-detail debug`) conserva el
+paquete completo.
+
+El mismo hook existe para otros tres clientes, también opcional y reversible:
+
+- **Codex** — `graphtyn codex-context install --consent --path .` añade a
+  `.codex/hooks.json` un hook `UserPromptSubmit` con
+  `additionalContextLimit=8000` (Codex recorta por defecto el contexto de un hook
+  a ~2.500 tokens), así que basta un solo bloque. Codex sólo ejecuta hooks de
+  proyecto si la capa `.codex/` es de confianza y el hook se aprobó con `/hooks`.
+- **OpenCode** — `graphtyn opencode-context install --consent --path .` escribe
+  el plugin `.opencode/plugins/graphtyn-context.js`, que en `chat.message` llama
+  a `graphtyn opencode-context hook` y añade el bloque como parte de texto del
+  mensaje (OpenCode no envía al modelo las partes `synthetic`). `opencode run
+  --pure` desactiva los plugins y, con ellos, el hook.
+
+- **Antigravity** — `graphtyn antigravity-context install --consent --path .`
+  añade a `.agents/hooks.json` un hook `PreInvocation`, conservando los tuyos.
+  Ese evento se dispara antes de cada llamada al modelo y no recibe el mensaje,
+  así que el hook lo lee de la transcripción de la sesión e inyecta sólo en la
+  primera llamada de cada turno, como mensaje efímero. El formato de esa
+  transcripción no está documentado: si cambia, el hook no inyecta nada y el
+  agente sigue con el MCP. Probado con el CLI `agy` 1.3.5, no con el IDE ni con
+  Antigravity 2.0.
+  **Aquí no conviene activarlo para ahorrar:** frente a MCP lean, gastó un 4 %
+  menos en las tareas ya usadas y un 13 % más en tareas nuevas, con la misma
+  calidad; sólo redujo claramente el gasto cuando el paquete bastaba para
+  responder (−53 % en el flujo de comandos de Redis)
+  ([informe](benchmarks/antigravity_hook_2026-11-03/report.md)).
+
+El repositorio incluye [AGENTS.md](AGENTS.md) para descubrimiento automático y
+dos skills reutilizables con alcances separados:
+[`graphtyn`](skills/graphtyn/SKILL.md) para contexto e impacto de código (los
+flujos de cambio, overview y validación se cargan aparte desde
+[`references/change-workflow.md`](skills/graphtyn/references/change-workflow.md))
+y [`graphtyn-memory`](skills/graphtyn-memory/SKILL.md) para memoria compartida,
+brains de agentes y OpenClaw. `graphtyn agent-install` instala estas mismas
+skills; al actualizar sólo reemplaza los archivos que no se editaron, y migra la
+skill combinada anterior guardando una copia en `.graphtyn/legacy-skills/`. El patrón recomendado es:
+
+1. Pedir a Graphtyn un `overview`, `context`, `flow` o `impact` según la tarea.
+2. Leer sólo los puntos de entrada y fragmentos devueltos.
+3. Implementar el cambio.
+4. Reconsultar impacto y ejecutar las pruebas relevantes.
+5. Guardar únicamente decisiones o resultados útiles en memoria.
+
+Ejemplo de prompt:
+
+> Usa Graphtyn para localizar el flujo afectado, entrega evidencia de archivos y
+> símbolos, implementa el cambio y vuelve a medir el radio de impacto. No leas el
+> repositorio completo si el contexto acotado es suficiente.
+
+## Memoria compartida
+
+La memoria es opt-in, se almacena por proyecto y puede compartirse entre Codex,
+OpenCode, Antigravity, Claude Code, OpenClaw, Hermes u otros clientes MCP. `memory_context`
+puede recuperar trabajo reciente atribuido entre sesiones y agentes; las
+conversaciones ambiguas por proyecto permanecen pendientes:
+
+```bash
+graphtyn memory session-start --agent-id opencode --path .
+graphtyn memory checkpoint --agent-id opencode --kind decision \
+  --text "Se conservó compatibilidad con el formato anterior" --path .
+graphtyn memory session-end --agent-id opencode --summary "Cambio verificado" --path .
+```
+
+Las conversaciones anteriores pueden importarse mediante autodetección,
+manifiestos adaptadores o archivos exportados. Graphtyn sanea secretos,
+deduplica eventos y conserva procedencia; no intercepta conversaciones sin una
+integración explícita. Durante la instalación puedes activar la captura guiada:
+
+```bash
+# Pregunta en una terminal (predeterminado)
+graphtyn setup --apply --memory ask
+# Instalar MCP con memoria del proyecto para Codex
+graphtyn agent-install codex --path . --tool-profile intent
+graphtyn integrations status --path .
+# La captura continua se activa por separado
+graphtyn memory sync --path . --watch --interval 30 --consent
+```
+
+Registrar un proyecto genera su identidad estable. `agent-install` configura
+MCP sólo para los clientes seleccionados y conserva otros servidores; no vuelve
+a instalar el ejecutable global. La
+configuración usa el comando `graphtyn` en PATH y `--path .`; Codex además guarda
+un `cwd` absoluto en `.codex/config.toml`. Regenera y revisa esa configuración
+local antes de compartirla. Codex sólo carga un MCP de proyecto en carpetas de
+confianza. Captura e importación histórica se
+gestionan por separado: `setup --memory on` no importa chats ni inicia un
+watcher. Para importarlos explícitamente usa `setup --apply --memory on
+--import-history --consent-history` o `memory bootstrap`; para captura en vivo
+inicia `memory sync --watch` y confirma su estado con `memory status`.
+La opción `--memory off` conserva la instalación sin memoria conversacional.
+Configuración, recuperación, bootstrap histórico, backups y ejemplos están en
+[docs/shared-memory.md](docs/shared-memory.md).
+
+## Dashboard y API
+
+```bash
+graphtyn serve --host 127.0.0.1 --port 9210 --path .
+```
+
+El dashboard separa diseño del grafo, motor de índice, filtros y operación.
+Incluye vistas para código, semántica, memoria del proyecto, cerebros de agentes,
+impacto, calidad del índice y contexto para agentes. No exponga el puerto a una
+red pública sin autenticación y TLS.
+
+Para automatización remota use MCP HTTP con tokens por rol y proyecto:
+
+```bash
+graphtyn token rotate --role admin --path .
+graphtyn mcp --transport http --host 127.0.0.1 --port 9211 --path .
+```
+
+Consulte contratos y límites operativos en
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) y [docs/SECURITY.md](docs/SECURITY.md).
+
+## Calidad y benchmarks
+
+Las afirmaciones públicas se basan en artefactos reproducibles. Los resultados
+separan calidad, recall, tokens del contexto y tokens end-to-end; no presentan
+compresión de corpus como ahorro facturado ni extrapolan una prueba parcial a
+todos los repositorios.
+
+```bash
+python -m pytest -q
+graphtyn benchmark --path . --ground-truth benchmarks/ground_truth.json \
+  --output resultado.json
+graphtyn benchmark-suite --protocol benchmarks/statistical_protocol_36_tasks.json
+```
+
+Resultados, hardware, metodología y comparaciones anonimizadas:
+[docs/BENCHMARKS.md](docs/BENCHMARKS.md). Protocolo de verificación:
+[docs/testing.md](docs/testing.md).
+
+## Documentación
+
+| Tema | Documento |
+|---|---|
+| Arquitectura y despliegue | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Memoria multiagente | [docs/shared-memory.md](docs/shared-memory.md) |
+| MCP por proyecto y agentes | [docs/project-mcp-integrations.md](docs/project-mcp-integrations.md) |
+| Conexión nativa con OpenClaw | [docs/openclaw-native.md](docs/openclaw-native.md) |
+| Validación real OpenClaw host + VM | [docs/openclaw-native-validation-2026-09.md](docs/openclaw-native-validation-2026-09.md) |
+| Validación de 0.13.1 | [docs/release-validation-0.13.1.md](docs/release-validation-0.13.1.md) |
+| Validación de 0.13.0 | [docs/release-validation-0.13.0.md](docs/release-validation-0.13.0.md) |
+| Validación de 0.12.0 | [docs/release-validation-0.12.0.md](docs/release-validation-0.12.0.md) |
+| Validación de 0.11.0 | [docs/release-validation-0.11.0.md](docs/release-validation-0.11.0.md) |
+| Validación de 0.10.7 | [docs/release-validation-0.10.7.md](docs/release-validation-0.10.7.md) |
+| Dashboard | [docs/ui_ux_specification.md](docs/ui_ux_specification.md) |
+| Pruebas | [docs/testing.md](docs/testing.md) |
+| Benchmarks | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) |
+| Estudio de mercado | [docs/market-study.md](docs/market-study.md) |
+| Seguridad | [docs/SECURITY.md](docs/SECURITY.md) |
+| Contribución | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
+| Cambios | [docs/CHANGELOG.md](docs/CHANGELOG.md) |
+
+## Alcance de la versión
+
+Graphtyn está listo para uso público local y automatización controlada. Aún no
+ofrece control empresarial multi-tenant, SSO, alta disponibilidad ni una
+afirmación universal de superioridad frente a otras herramientas. Esos límites
+se mantienen explícitos para que cada adopción pueda evaluar el producto con su
+propio repositorio y ground truth.
+
+### Espacios de código y agentes
+
+El dashboard separa `PROYECTOS REGISTRADOS` (repositorios y workspaces con
+grafo AST, semántico y memoria del proyecto) de `CEREBROS REGISTRADOS`
+(espacios de memoria de Evi, Eve, Junio, Friday, Nex u otra identidad). Cada
+cerebro se asocia a una identidad propietaria (puede declarar alias explícitos),
+por lo que las sesiones de otro agente quedan fuera de su recuperación. Un
+agente puede tener varios espacios asociados para una consulta federada. Los
+agentes no se asumen como una identidad fija: se descubren y atribuyen por sus
+metadatos de sesión. Registra una identidad desde CLI con
+`graphtyn memory agents register --id friday --name Friday --provider openclaw`
+o desde `/api/agents/register`; consulta el catálogo con
+`graphtyn memory agents list` o `GET /api/agents`. Las fuentes de historial
+pueden asociarse a esa identidad con `memory sources add --agent-id friday
+--workspace /ruta/al/espacio`.
+
+`CEREBROS REGISTRADOS` se administra con `GET /api/brains` y el botón `+` de la
+barra lateral; registra un espacio mediante `POST /api/projects/register` con
+`space_type: "agent_brain"`. `Topología de agentes` representa identidades,
+fuentes, cerebros y vínculos observados o configurados. Una integración
+configurada no se presenta como actividad ejecutada. La memoria del cerebro se
+consulta dentro del espacio seleccionado y sólo incorpora fuentes con
+`agent_id` explícito; la memoria del proyecto mantiene la perspectiva del
+repositorio. Una fuente compartida (por ejemplo, la raíz `agents` de OpenClaw)
+debe dividirse en rutas por agente o asociarse con un filtro de propietario;
+nunca se enruta a un cerebro por defecto.
+
+## Licencia
+
+[MIT](LICENSE)
+# Memoria temática
+
+Graphtyn puede recuperar asuntos de conversaciones completas y asociarlos a elementos concretos del proyecto. Usa `graphtyn memory topics`, `graphtyn memory topic <id>`, `graphtyn memory node N-000001` y `graphtyn memory window <message_id>` para explorar títulos, episodios, referencias estables y el contexto acotado de un mensaje. Las candidatas léxicas se revisan con `graphtyn memory relation-candidates` y `graphtyn memory relation-review <id> --status accepted|rejected --reason "..."`; sólo las relaciones extraídas o aceptadas aparecen como aristas. Las interfaces MCP/API equivalentes exponen `memory_node`, `memory_relation_candidates` y `memory_relation_review`, además de `memory_entities` y `memory_entity` para localizar controles, pantallas, archivos y símbolos Python relacionados. En un proyecto Python, conversaciones sobre `reports.py`, `función calcular_reporte` o `clase ReportService` se enlazan por símbolo cuando representan trabajos distintos, mientras funciones diferentes permanecen separadas. Una petición sobre `botón de Jugar` se mantiene independiente de otra sobre `botón de Fichas`, aunque ambas compartan el tema de diseño. La captura continua sólo está activa cuando se inicia `memory sync --watch` o se activa el botón correspondiente, con consentimiento y una fuente asociada explícitamente al espacio; el estado real aparece en `memory status` y en el dashboard. “Actualizar memoria” sincroniza el espacio seleccionado y “Actualizar todos los espacios” recorre los espacios registrados que tienen una fuente asociada. Si se configura `GRAPHTYN_MEMORY_SUMMARY_MODEL` (o el `OLLAMA_MODEL` local ya usado por el índice), Ollama enriquece títulos y revisa candidatas en segundo plano; el estado del dashboard indica si está configurado y cuántos enriquecimientos se ejecutaron. `GRAPHTYN_MEMORY_AUTO_ENRICH=0` lo desactiva y no se usa una API externa como fallback silencioso.
+
+Para OpenClaw, Graphtyn reconoce tanto sesiones JSONL como el almacén SQLite
+`agent/openclaw-agent.sqlite` (`transcript_events`). Si el agente vive en otra
+máquina, publica `/mcp` con `GRAPHTYN_MCP_TOKEN`, comprueba desde ese runtime que
+`tools/list` incluye `memory_project_context`, `memory_message_window` y
+`memory_status`. Este perfil es de lectura; la captura de turnos corresponde al
+watcher autorizado y no a una herramienta MCP expuesta al agente.
+En el dashboard, “Memoria del proyecto” separa sesiones, temas, episodios y
+agentes: el catálogo de sesiones admite búsqueda y paginación, cada nodo muestra
+su referencia `N-xxxxxx` y el mapa puede enfocarse en una sesión o ampliarse por
+páginas. El panel “Diseño del grafo” ofrece colores de núcleo y halo exclusivos
+de esta vista; se conservan en el navegador y no cambian el grafo de código.
