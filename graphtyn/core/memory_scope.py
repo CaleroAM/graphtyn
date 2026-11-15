@@ -1,10 +1,15 @@
 """Resolve the explicit identity scope of a Graphtyn memory space."""
 from __future__ import annotations
 
+import copy
 import json
+import threading
 from pathlib import Path
 from collections.abc import Iterable
 from .storage import atomic_write_json, data_home
+
+_SCOPE_CACHE: dict[tuple, dict] = {}
+_SCOPE_LOCK = threading.Lock()
 
 
 AGENT_PLATFORM_ALIASES: dict[str, list[str]] = {
@@ -60,7 +65,37 @@ def ensure_project_memory_scope(workspace: str | Path, *, agent_ids=()) -> dict:
             "registered": True, "registry": str(registry_path)}
 
 
+def _file_version(path: Path) -> tuple:
+    try:
+        stat = path.stat()
+        return (stat.st_ino, stat.st_size, stat.st_mtime_ns)
+    except OSError:
+        return (None, None, None)
+
+
 def resolve_memory_scope(workspace: str | Path, *, registrations=None, sources=None) -> dict:
+    """The access scope of a memory space, from the project registry and the history sources.
+
+    A sync cycle asks for it hundreds of times. It depends only on those two files, so the answer is
+    reused while both keep the same inode, size and mtime. Explicit rows are never cached.
+    """
+    if registrations is not None or sources is not None:
+        return _resolve_memory_scope(workspace, registrations=registrations, sources=sources)
+    home = data_home()
+    key = (str(Path(workspace).expanduser().resolve()), str(home),
+           _file_version(home / "registered_projects.json"), _file_version(home / "history-sources.json"))
+    with _SCOPE_LOCK:
+        cached = _SCOPE_CACHE.get(key)
+    if cached is None:
+        cached = _resolve_memory_scope(workspace)
+        with _SCOPE_LOCK:
+            if len(_SCOPE_CACHE) >= 1024:
+                _SCOPE_CACHE.clear()
+            _SCOPE_CACHE[key] = copy.deepcopy(cached)
+    return copy.deepcopy(cached)
+
+
+def _resolve_memory_scope(workspace: str | Path, *, registrations=None, sources=None) -> dict:
     root = Path(workspace).expanduser().resolve()
     project_file = data_home() / "registered_projects.json"
     source_file = data_home() / "history-sources.json"

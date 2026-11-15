@@ -22,6 +22,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Iterable
 from urllib.parse import unquote, urlparse
 
+from .antigravity_workspaces import antigravity_workspace_map as _antigravity_workspace_map
 from .project_hints import ProjectHints, brain_refusal, is_path_hint
 from .shared_memory import SharedMemoryStore
 from .ssh import ssh_command
@@ -97,110 +98,13 @@ def default_sources() -> dict[str, list[Path]]:
     }
 
 
-def _antigravity_workspace_map(source_root: str | Path) -> dict[str, str]:
-    """Map AGY transcript UUIDs to their recorded workspace from its metadata DB.
+def _default_roots(provider: str) -> list[Path]:
+    """Default sources of a provider without one nested in another (AGY lists ``brain`` inside its root).
 
-    Antigravity's canonical transcript JSONL omits the workspace. Its adjacent
-    conversation_summaries.db carries workspace_uris, so use that metadata to
-    route a session without assigning every AGY conversation to one project.
+    Scanning both read every transcript twice and doubled the discovered sessions.
     """
-    root = Path(source_root).expanduser()
-    if root.is_file():
-        root = root.parent
-    if root.name == "brain":
-        root = root.parent
-    database = root / "conversation_summaries.db"
-    rows = []
-    if database.is_file():
-        try:
-            connection = sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True, timeout=1)
-            connection.execute("PRAGMA query_only=ON")
-            columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(conversation_summaries)")}
-            if not {"conversation_id", "workspace_uris"}.issubset(columns):
-                connection.close()
-            else:
-                rows = connection.execute(
-                    "SELECT conversation_id, workspace_uris FROM conversation_summaries"
-                ).fetchall()
-                connection.close()
-        except sqlite3.Error:
-            rows = []
-
-    def decode_workspace(value: str) -> str | None:
-        try:
-            parsed = urlparse(value)
-            if parsed.scheme == "file":
-                value = unquote(parsed.path)
-                if parsed.netloc and parsed.netloc.casefold() not in {"", "localhost"}:
-                    value = f"//{parsed.netloc}{value}"
-                elif re.match(r"^/[A-Za-z]:[\\/]", value):
-                    # RFC 8089 file URIs encode Windows drives as file:///C:/…;
-                    # pathlib on Windows expects C:/…, without the extra slash.
-                    value = value[1:]
-            path = Path(value).expanduser()
-            if not path.is_absolute():
-                return None
-            normalized = path.resolve()
-        except (OSError, RuntimeError, ValueError):
-            return None
-
-        # A workspace may be a subdirectory of its Git project. Normalize it
-        # to that checkout root so exact project identity checks remain safe.
-        try:
-            result = subprocess.run(
-                ["git", "-C", str(normalized), "rev-parse", "--show-toplevel"],
-                capture_output=True, text=True, timeout=2, check=False,
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                return str(Path(result.stdout.strip()).resolve())
-        except (OSError, subprocess.SubprocessError):
-            pass
-        return str(normalized)
-
-    workspaces: dict[str, str] = {}
-    ambiguous_sessions: set[str] = set()
-
-    def associate(session_id: Any, workspace: str | None) -> None:
-        if not session_id or not workspace or str(session_id) in ambiguous_sessions:
-            return
-        key = str(session_id)
-        previous = workspaces.get(key)
-        if previous and previous != workspace:
-            workspaces.pop(key, None)
-            ambiguous_sessions.add(key)
-        else:
-            workspaces[key] = workspace
-
-    for session_id, raw_uris in rows:
-        try:
-            uris = json.loads(raw_uris) if isinstance(raw_uris, str) else raw_uris
-        except (TypeError, ValueError):
-            continue
-        if isinstance(uris, str):
-            uris = [uris]
-        if not isinstance(uris, list):
-            continue
-        candidates = sorted({workspace for uri in uris if isinstance(uri, str)
-                             if (workspace := decode_workspace(uri))})
-        # Multiple distinct project roots are ambiguous and must stay pending.
-        if len(candidates) == 1 and session_id:
-            associate(session_id, candidates[0])
-
-    # The AGY CLI's non-interactive sessions may not yet have a row in
-    # conversation_summaries.db. Its cache maps each working directory to the
-    # latest native conversation id; this safely scopes an active/new session
-    # without importing the rest of the user's AGY history.
-    latest_file = root / "cache" / "last_conversations.json"
-    try:
-        latest = json.loads(latest_file.read_text(encoding="utf-8"))
-    except (OSError, ValueError, TypeError):
-        latest = {}
-    if isinstance(latest, dict):
-        for workspace_uri, session_id in latest.items():
-            if not isinstance(workspace_uri, str) or not isinstance(session_id, str):
-                continue
-            associate(session_id, decode_workspace(workspace_uri))
-    return workspaces
+    roots = [Path(value) for value in default_sources().get(provider, [])]
+    return [root for root in roots if not any(other != root and root.is_relative_to(other) for other in roots)]
 
 
 def sources_config_file() -> Path:
@@ -941,14 +845,14 @@ def discover_histories(provider: str | None = None, sources: list[str] | None = 
                                      for row in selected if isinstance(row.get("capture_from"), (int, float))})
             if (not roots and not is_agent_brain and
                     name in {"opencode", "codex", "claude", "antigravity"}):
-                roots = [str(value) for value in default_sources().get(name, [])]
+                roots = [str(value) for value in _default_roots(name)]
         else:
             roots = [row["source"] for row in configured if row["provider"] == name]
             associated_sources = set()
             source_baselines.update({row["source"]: float(row["capture_from"])
                                      for row in configured if row["provider"] == name
                                      and isinstance(row.get("capture_from"), (int, float))})
-            if not roots: roots = default_sources().get(name, [])
+            if not roots: roots = _default_roots(name)
         for source in roots:
             temp = None
             try:
@@ -1129,12 +1033,13 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
     # A brain may already contain captured sessions from MCP before a source
     # was configured. Advance their thematic cursors too, so synchronization
     # reports coverage for the whole space rather than only newly imported data.
+    # Only sessions with messages past either topic cursor have work; the rest would read and exit.
     processed_sessions, processed_messages = 0, 0
     with store._connect() as db:
-        existing_sessions = [row[0] for row in db.execute("SELECT id FROM sessions ORDER BY started_at,id")]
+        existing_sessions = [row[0] for row in db.execute(PENDING_TOPIC_SESSIONS)]
     for session_id in existing_sessions:
         try:
-            topic_result = store.process_topics(session_id)
+            topic_result = store.process_topics(session_id, coverage=False)
             processed_sessions += 1
             processed_messages += int(topic_result.get("processed") or 0)
         except PermissionError:
@@ -1157,6 +1062,14 @@ def sync_memory_workspace(workspace: str | Path, *, provider: str | None = None,
         result["enrichment"] = enrichment
     result["ok"] = not result["errors"] and bool(imported.get("ok", True))
     return result
+
+
+# Same cursors as process_topics: topic_progress (episodes) and topic_file_progress (file references).
+PENDING_TOPIC_SESSIONS = """SELECT s.id FROM sessions s WHERE EXISTS(
+        SELECT 1 FROM messages m WHERE m.session_id=s.id AND m.agent_id=s.agent_id AND m.rowid>MIN(
+            COALESCE((SELECT cursor FROM topic_progress WHERE session_id=s.id),0),
+            COALESCE((SELECT cursor FROM topic_file_progress WHERE session_id=s.id),0)))
+    ORDER BY s.started_at,s.id"""
 
 
 def _sync_openclaw_project_memories(store: SharedMemoryStore, sessions: list[dict[str, Any]], *,
