@@ -23,7 +23,7 @@ from typing import Any, Iterable
 from urllib.parse import unquote, urlparse
 
 from .antigravity_workspaces import antigravity_workspace_map as _antigravity_workspace_map
-from .project_hints import ProjectHints, brain_refusal, is_path_hint
+from .project_hints import ProjectHints, brain_refusal, git_origin, is_path_hint
 from .shared_memory import SharedMemoryStore
 from .ssh import ssh_command
 from .storage import data_home, atomic_write_json
@@ -1165,12 +1165,16 @@ def _sync_openclaw_project_memories(store: SharedMemoryStore, sessions: list[dic
     return summary
 
 
+_IDENTITY_LOCK = threading.Lock()
+
+
 class ProjectIdentityRegistry:
     """Global, portable project identity map used by historical imports."""
     def __init__(self, path: Path | None = None):
         self.path = path or data_home() / "project-identities.json"
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._lock = threading.Lock()
+        # One lock per process, not per instance: watcher threads build their own registries.
+        self._lock = _IDENTITY_LOCK
 
     def _read(self) -> dict[str, Any]:
         try: return json.loads(self.path.read_text(encoding="utf-8"))
@@ -1187,12 +1191,7 @@ class ProjectIdentityRegistry:
                 project_id = ""
         if project_id and not re.fullmatch(r"[a-f0-9]{20}", project_id):
             raise ValueError("project_id debe ser un identificador Graphtyn de 20 caracteres hexadecimales")
-        remote = ""
-        try:
-            import subprocess
-            remote = subprocess.run(["git", "-C", str(root), "config", "--get", "remote.origin.url"],
-                                    capture_output=True, text=True, timeout=3).stdout.strip()
-        except Exception: pass
+        remote = git_origin(root)
         key = hashlib.sha256((remote or str(root)).casefold().encode()).hexdigest()[:20]
         with self._lock:
             data = self._read()
@@ -1201,13 +1200,17 @@ class ProjectIdentityRegistry:
                          or p.get("id") == key
                          or remote and p.get("remote") == remote
                          or str(root) in p.get("paths", [])), None)
-            if not item:
+            created = item is None
+            if created:
                 item = {"id": project_id or key, "canonical_name": root.name, "aliases": [], "paths": [], "remote": remote,
                         "created_at": time.time(), "updated_at": time.time()}
                 data["projects"].append(item)
-            item["paths"] = sorted(set(item.get("paths", [])) | {str(root)})
-            item["aliases"] = sorted(set(item.get("aliases", [])) | set(aliases or []) | {root.name})
-            item["updated_at"] = time.time()
+            paths = sorted(set(item.get("paths", [])) | {str(root)})
+            aliases = sorted(set(item.get("aliases", [])) | set(aliases or []) | {root.name})
+            # A sync cycle registers the same project every time: rewrite only what changed.
+            if not created and paths == item.get("paths") and aliases == item.get("aliases"):
+                return item
+            item.update(paths=paths, aliases=aliases, updated_at=time.time())
             atomic_write_json(self.path, data)
         return item
 

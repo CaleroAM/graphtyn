@@ -788,12 +788,12 @@ class SharedMemoryStore(TopicMemoryMixin):
         with self._connect() as conn:
             initialize_memory_schema(conn, time.time())
             policy = resolve_memory_scope(self.workspace)
-            conn.execute("""INSERT INTO memory_space_policy
-                (id,workspace_path,space_type,agent_ids_json,restricted,policy_version,updated_at)
-                VALUES(1,?,?,?,?,1,?) ON CONFLICT(id) DO UPDATE SET
-                workspace_path=excluded.workspace_path,space_type=excluded.space_type,
-                agent_ids_json=excluded.agent_ids_json,restricted=excluded.restricted,
-                policy_version=excluded.policy_version,updated_at=excluded.updated_at""",
+            conn.execute("""INSERT INTO memory_space_policy (id,workspace_path,space_type,agent_ids_json,restricted,
+                policy_version,updated_at) VALUES(1,?,?,?,?,1,?) ON CONFLICT(id) DO UPDATE SET
+                (workspace_path,space_type,agent_ids_json,restricted,policy_version,updated_at)=(excluded.workspace_path,
+                excluded.space_type,excluded.agent_ids_json,excluded.restricted,excluded.policy_version,excluded.updated_at)
+                WHERE (workspace_path,space_type,agent_ids_json,restricted,policy_version) IS NOT (excluded.workspace_path,
+                excluded.space_type,excluded.agent_ids_json,excluded.restricted,excluded.policy_version)""",
                 (policy["workspace"], policy["space_type"],
                  json.dumps(policy["agent_ids"], ensure_ascii=False), int(policy["restricted"]), time.time()))
 

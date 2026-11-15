@@ -65,6 +65,8 @@ def ingest_jsonl(store, source, *, provider, external_session_id, agent_id,
         state.update(offset=offset, record_index=record_index, session_id=session['id'])
         batch, cost = [], 0
         if progress and progress(dict(state)) is False: raise InterruptedError('captura interrumpida; lote confirmado')
+    # An unchanged file reaches EOF without reading: then there is nothing new to acknowledge.
+    acknowledged = (state['offset'], state['record_index'], state['session_id']) if row else None
     with path.open('rb') as stream:
         stream.seek(state['offset'])
         index = state['record_index']
@@ -118,7 +120,8 @@ def ingest_jsonl(store, source, *, provider, external_session_id, agent_id,
             # The input record is atomic; do not checkpoint in the middle of it.
             if len(batch) >= batch_messages or cost >= batch_tokens or index % batch_messages == 0:
                 commit(stream.tell(), index)
-        if batch or stream.tell() == path.stat().st_size:
+        if batch or (stream.tell() == path.stat().st_size and
+                     acknowledged != (stream.tell(), index, session['id'])):
             # Do not consume an unterminated final line.
             commit(start if line and not line.endswith(b'\n') else stream.tell(), index - (1 if line and not line.endswith(b'\n') and len(line) > max_record_bytes else 0))
     return {'ok': True, **state, 'processed_this_run': state['processed'] - initial_processed, 'source': str(path), 'extraction': 'deterministic-limited',

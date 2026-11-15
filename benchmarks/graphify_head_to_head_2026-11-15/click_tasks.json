@@ -1,0 +1,107 @@
+{
+ "tasks": [
+  {
+   "id": "H3_CLICK_MAKE_CONTEXT_IMPACT",
+   "request": "Si cambio make_context en click, ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "command_main",
+     "any": [
+      "Command.main",
+      "self.make_context(prog_name"
+     ]
+    },
+    {
+     "id": "group_single_subcommand",
+     "any": [
+      "Group.invoke",
+      "cmd.make_context(cmd_name, args, parent=ctx)"
+     ]
+    },
+    {
+     "id": "group_chain_mode",
+     "any": [
+      "chain",
+      "allow_interspersed_args=False"
+     ]
+    },
+    {
+     "id": "completion_root_context",
+     "any": [
+      "_resolve_context",
+      "cli.make_context"
+     ]
+    },
+    {
+     "id": "completion_subcommand_contexts",
+     "any": [
+      "resilient_parsing=True",
+      "shell_completion.py"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "H3_CLICK_ARGS_FLOW",
+   "request": "Cuando se ejecuta un comando de click, ¿cómo llegan los argumentos de la línea de comandos hasta el callback? Traza el flujo desde Command.main, con archivo:línea.",
+   "rubric": [
+    {
+     "id": "main_context_then_invoke",
+     "any": [
+      "make_context",
+      "self.invoke(ctx)"
+     ]
+    },
+    {
+     "id": "context_settings_and_class",
+     "any": [
+      "context_settings",
+      "context_class"
+     ]
+    },
+    {
+     "id": "parser_parse_args",
+     "any": [
+      "make_parser",
+      "parser.parse_args"
+     ]
+    },
+    {
+     "id": "params_in_processing_order",
+     "any": [
+      "iter_params_for_processing",
+      "handle_parse_result"
+     ]
+    },
+    {
+     "id": "unset_becomes_none",
+     "any": [
+      "UNSET"
+     ]
+    },
+    {
+     "id": "extra_args_rejected",
+     "any": [
+      "allow_extra_args",
+      "unexpected extra argument"
+     ]
+    },
+    {
+     "id": "callback_invoked_with_params",
+     "any": [
+      "ctx.invoke(self.callback, **ctx.params)",
+      "Context.invoke"
+     ]
+    },
+    {
+     "id": "standalone_error_handling",
+     "any": [
+      "standalone_mode",
+      "ClickException",
+      "e.show"
+     ]
+    }
+   ]
+  }
+ ]
+}

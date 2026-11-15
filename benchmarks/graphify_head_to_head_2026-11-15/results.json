@@ -1,0 +1,124 @@
+{
+ "claude": {
+  "baseline": {
+   "sessions": 24,
+   "complete": 24,
+   "mean_tokens": 110610,
+   "median_tokens": 102232,
+   "mean_cost_usd": 0.0656,
+   "mean_tools": 2.9,
+   "facts": 155,
+   "facts_total": 162,
+   "consensus": 155,
+   "literal": 146
+  },
+  "graphtyn": {
+   "sessions": 24,
+   "complete": 24,
+   "mean_tokens": 102021,
+   "median_tokens": 93121,
+   "mean_cost_usd": 0.0742,
+   "mean_tools": 2.5,
+   "facts": 146,
+   "facts_total": 157,
+   "consensus": 145,
+   "literal": 150
+  },
+  "graphify": {
+   "sessions": 24,
+   "complete": 24,
+   "mean_tokens": 124032,
+   "median_tokens": 103380,
+   "mean_cost_usd": 0.0802,
+   "mean_tools": 3.6,
+   "facts": 150,
+   "facts_total": 162,
+   "consensus": 150,
+   "literal": 146
+  },
+  "comparisons": {
+   "graphtyn_vs_graphify": {
+    "pairs": 24,
+    "fewer_tokens_in": 21,
+    "median_token_change": -0.297,
+    "facts_left": 146,
+    "facts_right": 150
+   },
+   "graphtyn_vs_baseline": {
+    "pairs": 24,
+    "fewer_tokens_in": 16,
+    "median_token_change": -0.274,
+    "facts_left": 146,
+    "facts_right": 155
+   },
+   "graphify_vs_baseline": {
+    "pairs": 24,
+    "fewer_tokens_in": 6,
+    "median_token_change": 0.184,
+    "facts_left": 150,
+    "facts_right": 155
+   }
+  }
+ },
+ "codex": {
+  "baseline": {
+   "sessions": 24,
+   "complete": 24,
+   "mean_tokens": 119200,
+   "median_tokens": 99213,
+   "mean_cost_usd": null,
+   "mean_tools": 5.0,
+   "facts": 137,
+   "facts_total": 162,
+   "consensus": 137,
+   "literal": 114
+  },
+  "graphtyn": {
+   "sessions": 24,
+   "complete": 24,
+   "mean_tokens": 41882,
+   "median_tokens": 30999,
+   "mean_cost_usd": null,
+   "mean_tools": 1.6,
+   "facts": 90,
+   "facts_total": 162,
+   "consensus": 90,
+   "literal": 78
+  },
+  "graphify": {
+   "sessions": 24,
+   "complete": 24,
+   "mean_tokens": 204320,
+   "median_tokens": 176603,
+   "mean_cost_usd": null,
+   "mean_tools": 6.5,
+   "facts": 136,
+   "facts_total": 162,
+   "consensus": 135,
+   "literal": 114
+  },
+  "comparisons": {
+   "graphtyn_vs_graphify": {
+    "pairs": 24,
+    "fewer_tokens_in": 24,
+    "median_token_change": -0.798,
+    "facts_left": 90,
+    "facts_right": 136
+   },
+   "graphtyn_vs_baseline": {
+    "pairs": 24,
+    "fewer_tokens_in": 24,
+    "median_token_change": -0.663,
+    "facts_left": 90,
+    "facts_right": 137
+   },
+   "graphify_vs_baseline": {
+    "pairs": 24,
+    "fewer_tokens_in": 3,
+    "median_token_change": 0.603,
+    "facts_left": 136,
+    "facts_right": 137
+   }
+  }
+ }
+}

@@ -1,0 +1,119 @@
+{
+ "tasks": [
+  {
+   "id": "H3_KOA_ONERROR_IMPACT",
+   "request": "Si cambio ctx.onerror en Koa (lib/context.js), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "handle_request_catch",
+     "any": [
+      "handleRequest",
+      ".catch(onerror)"
+     ]
+    },
+    {
+     "id": "on_finished",
+     "any": [
+      "onFinished"
+     ]
+    },
+    {
+     "id": "stream_pipeline_errors",
+     "any": [
+      "Stream.pipeline",
+      "respond"
+     ]
+    },
+    {
+     "id": "app_error_event",
+     "any": [
+      "app.emit('error'",
+      "Application.onerror",
+      "listenerCount('error')"
+     ]
+    },
+    {
+     "id": "error_response_contract",
+     "any": [
+      "500",
+      "expose",
+      "err.headers",
+      "headerSent"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "H3_KOA_REQUEST_FLOW",
+   "request": "¿Cómo atiende Koa una petición desde app.callback() hasta escribir la respuesta? Incluye qué pasa con los errores. Cita archivo:línea.",
+   "rubric": [
+    {
+     "id": "compose_middleware",
+     "any": [
+      "compose",
+      "koa-compose",
+      "this.middleware"
+     ]
+    },
+    {
+     "id": "default_error_listener",
+     "any": [
+      "listenerCount('error')",
+      "this.on('error', this.onerror)"
+     ]
+    },
+    {
+     "id": "create_context",
+     "any": [
+      "createContext",
+      "Object.create"
+     ]
+    },
+    {
+     "id": "async_local_storage",
+     "any": [
+      "ctxStorage",
+      "AsyncLocalStorage",
+      "currentContext"
+     ]
+    },
+    {
+     "id": "default_404",
+     "any": [
+      "res.statusCode = 404",
+      "404"
+     ]
+    },
+    {
+     "id": "on_finished",
+     "any": [
+      "onFinished"
+     ]
+    },
+    {
+     "id": "respond_bypass_empty_head",
+     "any": [
+      "ctx.respond === false",
+      "statuses.empty",
+      "HEAD"
+     ]
+    },
+    {
+     "id": "body_types",
+     "any": [
+      "Buffer.isBuffer",
+      "Stream.pipeline",
+      "JSON.stringify"
+     ]
+    },
+    {
+     "id": "context_onerror",
+     "any": [
+      "ctx.onerror",
+      "context.js"
+     ]
+    }
+   ]
+  }
+ ]
+}

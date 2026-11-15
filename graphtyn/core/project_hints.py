@@ -7,8 +7,35 @@ thousand sessions kept a CPU core busy. These answers depend on the space and th
 
 from __future__ import annotations
 
+import subprocess
+import threading
+import time
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
+
+ORIGIN_TTL = 900.0
+_origins: dict[str, tuple[float, str]] = {}
+_origins_lock = threading.Lock()
+
+
+def git_origin(root: Path) -> str:
+    """``remote.origin.url`` of a checkout, or "" outside one; remembered for 15 minutes.
+
+    Every sync cycle registers its project identity, and each lookup started a ``git`` process.
+    """
+    key, now = str(root), time.monotonic()
+    with _origins_lock:
+        cached = _origins.get(key)
+    if cached and cached[0] > now:
+        return cached[1]
+    try:
+        value = subprocess.run(["git", "-C", key, "config", "--get", "remote.origin.url"],
+                               capture_output=True, text=True, timeout=3).stdout.strip()
+    except Exception:  # a missing or broken git only means "no remote", as before
+        value = ""
+    with _origins_lock:
+        _origins[key] = (now + ORIGIN_TTL, value)
+    return value
 
 
 def brain_refusal(root: Path) -> str:
