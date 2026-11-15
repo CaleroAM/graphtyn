@@ -198,7 +198,8 @@ def _set_tests_apart(data: dict[str, Any], consumers: dict[str, Any]) -> None:
     by_file: Counter[str] = Counter()
     for key in ("others", "text_references", "call_lines"):
         rows = consumers.get(key) or []
-        kept = [row for row in rows if _is_production({"file": str(row[1]).rsplit(":", 1)[0]})]
+        # A mention with no path (a document) is not a test.
+        kept = [row for row in rows if not TEST_PATH.search(str(row[1]).rsplit(":", 1)[0])]
         by_file.update(str(row[1]).rsplit(":", 1)[0] for row in rows if row not in kept)
         if len(kept) < len(rows):
             if kept:

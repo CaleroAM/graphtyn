@@ -1,5 +1,6 @@
 """Production consumers lead an impact package; tests are counted apart; textual leads are not proof."""
 from graphtyn.core.change_analyst import query_intent
+from graphtyn.core.impact_context import _set_tests_apart
 from graphtyn.core.source_evidence import attach_source_evidence
 
 _TESTS = 50
@@ -109,3 +110,12 @@ def test_package_paths_imports_and_comments_are_not_uses(tmp_path):
     package = attach_source_evidence(tmp_path, query_intent(graph, request, "impact", 10), request, graph=graph)
 
     assert [row[:2] for row in package["direct_consumers"]["text_references"]] == [["meta", "src/Util.java:8"]]
+
+
+def test_a_document_mention_is_not_counted_as_a_test():
+    consumers = {"others": [["README.md", ":"], ["case1", "tests/a.test.js:2"], ["run", "lib/a.js:4"]]}
+
+    _set_tests_apart({}, consumers)
+
+    assert consumers["others"] == [["README.md", ":"], ["run", "lib/a.js:4"]]
+    assert consumers["test_consumers"] == {"total": 1, "by_file": {"tests/a.test.js": 1}}

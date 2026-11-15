@@ -1,0 +1,3126 @@
+{
+ "summary": {
+  "codex/before/baseline": {
+   "runs": 24,
+   "facts": 117,
+   "tokens": 1827634,
+   "literal": 103,
+   "gemini": 115,
+   "gpt": 115,
+   "consensus": 115,
+   "majority": 115
+  },
+  "codex/before/graphtyn": {
+   "runs": 24,
+   "facts": 117,
+   "tokens": 813359,
+   "literal": 112,
+   "gemini": 103,
+   "gpt": 103,
+   "consensus": 101,
+   "majority": 102
+  },
+  "codex/after": {
+   "runs": 24,
+   "facts": 117,
+   "tokens": 1242521,
+   "literal": 111,
+   "gemini": 114,
+   "gpt": 112,
+   "consensus": 112,
+   "majority": 112
+  }
+ },
+ "kappa": {
+  "judges": 0.841,
+  "literal_consensus": 0.329
+ },
+ "runs": [
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 1,
+   "tokens": 67397,
+   "literal": {
+    "request": false,
+    "get_uri": true,
+    "method_aliases": false,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 2,
+   "tokens": 80632,
+   "literal": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": false,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 3,
+   "tokens": 93859,
+   "literal": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": false,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 1,
+   "tokens": 30511,
+   "literal": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 2,
+   "tokens": 31367,
+   "literal": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": false
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": false
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": false
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": false
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 3,
+   "tokens": 30847,
+   "literal": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 1,
+   "tokens": 58247,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": false,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 2,
+   "tokens": 52509,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": false,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 3,
+   "tokens": 53258,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": false,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 1,
+   "tokens": 29599,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": true,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "tiebreak": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   }
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 2,
+   "tokens": 29927,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": true,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "tiebreak": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   }
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 3,
+   "tokens": 29498,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": false,
+    "validate_status": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 1,
+   "tokens": 123580,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 2,
+   "tokens": 63302,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": false,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 3,
+   "tokens": 95188,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 1,
+   "tokens": 31736,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": false,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": false,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "tiebreak": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   }
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 2,
+   "tokens": 32592,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": false,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": false,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": false,
+    "write_header": true
+   },
+   "tiebreak": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": false,
+    "write_header": true
+   }
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 3,
+   "tokens": 33722,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": false,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 1,
+   "tokens": 103545,
+   "literal": {
+    "static_directory": false,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 2,
+   "tokens": 48207,
+   "literal": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 3,
+   "tokens": 68613,
+   "literal": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 1,
+   "tokens": 31359,
+   "literal": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 2,
+   "tokens": 30865,
+   "literal": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 3,
+   "tokens": 30893,
+   "literal": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 106271,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 2,
+   "tokens": 86379,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": false,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 3,
+   "tokens": 137900,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 40827,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 2,
+   "tokens": 48978,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 3,
+   "tokens": 40629,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 1,
+   "tokens": 68154,
+   "literal": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 2,
+   "tokens": 93114,
+   "literal": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 3,
+   "tokens": 101679,
+   "literal": {
+    "type_utils_cycle": false,
+    "type_utils_to_string": false,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 1,
+   "tokens": 48794,
+   "literal": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 2,
+   "tokens": 40020,
+   "literal": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 3,
+   "tokens": 41024,
+   "literal": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 1,
+   "tokens": 29282,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 2,
+   "tokens": 59703,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 3,
+   "tokens": 54496,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 1,
+   "tokens": 29432,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 2,
+   "tokens": 29212,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 3,
+   "tokens": 31195,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 1,
+   "tokens": 42728,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 2,
+   "tokens": 77672,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "baseline",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 3,
+   "tokens": 61919,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 1,
+   "tokens": 30002,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 2,
+   "tokens": 30326,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/before",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 3,
+   "tokens": 30004,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 1,
+   "tokens": 58579,
+   "literal": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 2,
+   "tokens": 59418,
+   "literal": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": false
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_MERGECONFIG_IMPACT",
+   "repetition": 3,
+   "tokens": 45302,
+   "literal": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gemini": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "gpt": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "consensus": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "majority": {
+    "request": true,
+    "get_uri": true,
+    "method_aliases": true,
+    "create_instance": true,
+    "resolve_config": true,
+    "public_export": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 1,
+   "tokens": 70320,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": false,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 2,
+   "tokens": 41390,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": true,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": true,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": true,
+    "validate_status": true
+   },
+   "tiebreak": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": false,
+    "http_response": true,
+    "validate_status": true
+   }
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_AXIOS_SETTLE_IMPACT",
+   "repetition": 3,
+   "tokens": 53908,
+   "literal": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gemini": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "gpt": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "consensus": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "majority": {
+    "fetch_adapter": true,
+    "xhr_adapter": true,
+    "http_data_uri": true,
+    "http_response": true,
+    "validate_status": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 1,
+   "tokens": 85186,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 2,
+   "tokens": 50498,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_NOCONTENT_IMPACT",
+   "repetition": 3,
+   "tokens": 62998,
+   "literal": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gemini": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "gpt": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "consensus": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "majority": {
+    "default_error_handler": true,
+    "problem_details": true,
+    "options_handler": true,
+    "cors_preflight": true,
+    "write_header": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 1,
+   "tokens": 44816,
+   "literal": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 2,
+   "tokens": 44775,
+   "literal": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": false,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_ECHO_REDIRECT_IMPACT",
+   "repetition": 3,
+   "tokens": 74351,
+   "literal": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "gemini": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "gpt": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "consensus": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "majority": {
+    "static_directory": true,
+    "redirect_middleware": true,
+    "add_trailing_slash": true,
+    "remove_trailing_slash": true,
+    "invalid_code": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 39766,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": false,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": false,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": false,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": {
+    "short_canonical_name": true,
+    "overload_chain": false,
+    "to_string_style": true,
+    "exception_message": true
+   }
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 2,
+   "tokens": 39620,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_LANG_GET_SHORT_CLASS_NAME_IMPACT",
+   "repetition": 3,
+   "tokens": 47949,
+   "literal": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gemini": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "gpt": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "consensus": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "majority": {
+    "short_canonical_name": true,
+    "overload_chain": true,
+    "to_string_style": true,
+    "exception_message": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 1,
+   "tokens": 39552,
+   "literal": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 2,
+   "tokens": 32004,
+   "literal": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_LANG_IDENTITY_TO_STRING_IMPACT",
+   "repetition": 3,
+   "tokens": 39746,
+   "literal": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gemini": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "gpt": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "consensus": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "majority": {
+    "type_utils_cycle": true,
+    "type_utils_to_string": true,
+    "cyclic_object": true,
+    "as_object_to_string": true,
+    "event_proxy": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 1,
+   "tokens": 57602,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 2,
+   "tokens": 71507,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_GET_AUTH_FROM_URL_IMPACT",
+   "repetition": 3,
+   "tokens": 58137,
+   "literal": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gemini": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "gpt": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "consensus": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "majority": {
+    "rebuild_proxies": true,
+    "proxy_manager_for": true,
+    "proxy_headers": true,
+    "prepare_auth": true,
+    "empty_credentials": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 1,
+   "tokens": 41583,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 2,
+   "tokens": 41829,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/after",
+   "arm": "graphtyn",
+   "task": "V1_REQUESTS_SUPER_LEN_IMPACT",
+   "repetition": 3,
+   "tokens": 41685,
+   "literal": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "gemini": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "gpt": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "consensus": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "majority": {
+    "prepare_body": true,
+    "prepare_content_length": true,
+    "content_length_header": true,
+    "remaining_bytes": false
+   },
+   "tiebreak": null
+  }
+ ]
+}

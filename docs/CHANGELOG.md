@@ -23,6 +23,10 @@ compatibles con PEP 440.
   - las aristas `contiene` ya no cuentan como consumidores resueltos;
   - no cuentan como usos las rutas de paquete (`org.jsoup.select.Elements`), los comentarios de
     bloque ni los nombres entre comillas.
+- Validado con 8 tareas de impacto nuevas en requests, axios, commons-lang y echo (72 sesiones de
+  Codex, mayoría de tres jueces). Graphtyn sube de 102 a 112 hechos de 117; sin grafo se llega a 115.
+  La mediana de tokens sube de 31k a 47k, todavía un 29 % por debajo de no usar grafo
+  (`benchmarks/impact_fix_validation_2026-11-15/report.md`).
 
 ### Cambiado
 
