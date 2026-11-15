@@ -22,6 +22,8 @@ _LISTED_REFERENCES = 40
 _LISTED_FILES = 40
 _COMMENT = ("//", "/*", "*", "#", "--", '"""', "'''")
 _ENCLOSING_KINDS = {"function", "method", "class", "struct", "interface", "module", "type"}
+_BLOCK_OPENERS = {"/*": "*/", '"""': '"""', "'''": "'''"}
+_DECLARATIONS = ("package ",)
 _SKIPPED_SUFFIXES = (".md", ".json", ".lock", ".txt", ".rst", ".yml", ".yaml", ".toml", ".svg", ".html", ".css")
 
 
@@ -152,17 +154,31 @@ def consumer_summary(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], s
             "omitted_by_file": dict(per_file.most_common(_LISTED_CONSUMERS)), "others": rows[:_LISTED_CONSUMERS]}
 
 
-def _symbols_by_file(graph: dict[str, Any]) -> dict[str, list[tuple[int, str]]]:
-    symbols: dict[str, list[tuple[int, str]]] = {}
+def _symbols_by_file(graph: dict[str, Any]) -> dict[str, list[tuple[int, str, int]]]:
+    symbols: dict[str, list[tuple[int, str, int]]] = {}
     for node in graph.get("nodes", []):
         if node.get("kind") in _ENCLOSING_KINDS and node.get("file") and node.get("line"):
-            symbols.setdefault(str(node["file"]), []).append((int(node["line"]), str(node.get("name") or "")))
+            start = int(node["line"])
+            symbols.setdefault(str(node["file"]), []).append(
+                (start, str(node.get("name") or ""), int(node.get("end_line") or 0)))
     return {path: sorted(items) for path, items in symbols.items()}
 
 
-def _enclosing(symbols: list[tuple[int, str]], line: int) -> str:
-    index = bisect.bisect_right(symbols, (line, "\U0010ffff")) - 1
-    return symbols[index][1] if index >= 0 else ""
+def _enclosing(symbols: list[tuple[int, str, int]], line: int, before: bool = False) -> str:
+    """The innermost symbol whose range holds `line`; with `before`, one that starts above it.
+
+    The nearest symbol above is not the owner: in Koa's `handleRequest`, the one-line arrow
+    `const handleResponse = () => respond(ctx)` precedes `.catch(onerror)`, which belongs to
+    `handleRequest`. Symbols without an end line keep the nearest-above rule.
+    """
+    index = bisect.bisect_left(symbols, (line if before else line + 1, "")) - 1
+    nearest = symbols[index][1] if index >= 0 else ""
+    while index >= 0:
+        _start, name, end = symbols[index]
+        if not end or end >= line:
+            return name
+        index -= 1
+    return nearest
 
 
 def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anchors: list[dict]) -> tuple[list[list[str]], bool]:
@@ -173,7 +189,8 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anc
     resolved_lines, resolved_symbols = set(), set()
     for link in graph.get("links", []):
         source = by_id.get(link.get("source"))
-        if source and link.get("target") in ids:
+        # Only a consumer edge resolves a use: `contiene` points at a definition, not at a call.
+        if source and link.get("target") in ids and str(link.get("label") or "") in CONSUMER_LABELS:
             # A file-level caller has no `file` of its own: the edge says where the call is.
             resolved_lines.add((str(link.get("file") or source.get("file")), int(link.get("line") or 0)))
             resolved_symbols.add((str(source.get("file")), str(source.get("name") or "")))
@@ -182,6 +199,12 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anc
     needles = [name.encode() for name in names]
     # `self.sink.matched(` is a use; "matched lines" in a message is not, and must not fill the list first.
     call = re.compile(r"(?:\.|::|->)\s*(?:" + "|".join(re.escape(name) for name in sorted(names)) + r")\s*[(<!]")
+    # `org.jsoup.select.Elements` names a package, not the `select` method.
+    alternatives = "|".join(re.escape(name) for name in sorted(names))
+    qualified = re.compile(r"\w\.(?:" + alternatives + r")\.[A-Z*{]")
+    # `"select"` in a list of HTML tag names is a string, not a use of `select`.
+    quoted = re.compile(r"([\"'`])(?:" + alternatives + r")\1")
+    bare_call = re.compile(r"(?<![\w.])(?:" + alternatives + r")\s*\(")
     # In a monorepo, uses inside the symbol's own component matter first and fill the list.
     homes = {package_root(node) for node in anchors if node.get("file")}
     paths = sorted({str(node.get("file")) for node in nodes if node.get("file")},
@@ -202,23 +225,43 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anc
             continue
         if not any(needle in raw for needle in needles):
             continue
+        closing = None
         for number, text in enumerate(raw.decode("utf-8", errors="replace").splitlines(), 1):
-            if not pattern.search(text) or text.lstrip().startswith(_COMMENT):
+            stripped = text.lstrip()
+            if closing:
+                # Inside a block comment or docstring: `<code>doc.select("b")</code>` is an example.
+                closing = None if closing in stripped else closing
                 continue
-            if (path, number) in definitions or (path, number) in resolved_lines:
+            opener = next((mark for mark in _BLOCK_OPENERS if stripped.startswith(mark)), None)
+            if opener and _BLOCK_OPENERS[opener] not in stripped[len(opener):]:
+                closing = _BLOCK_OPENERS[opener]
+            if not pattern.search(text) or stripped.startswith(_COMMENT) or stripped.startswith(_DECLARATIONS):
                 continue
-            owner = _enclosing(symbols.get(path, []), number)
+            if len(pattern.findall(text)) == len(qualified.findall(text)) + len(quoted.findall(text)):
+                continue
+            if (path, number) in resolved_lines:
+                continue
+            # `const onerror = (err) => ctx.onerror(err)` defines a homonym and calls the target.
+            defined = (path, number) in definitions
+            if defined and not call.search(text):
+                continue
+            owner = _enclosing(symbols.get(path, []), number, before=defined)
             key = (path, owner)
             if owner in names or key in resolved_symbols or key in seen:
                 continue
             seen.add(key)
-            references.append([owner, f"{path}:{number}", bool(call.search(text))])
+            references.append([owner, f"{path}:{number}", 0 if call.search(text) else 1 if bare_call.search(text) else 2])
     return _calls_first(references), False
 
 
 def _calls_first(references: list[list]) -> list[list[str]]:
-    """Member-call syntax first, in scan order; the flag is dropped."""
-    return [reference[:2] for reference in sorted(references, key=lambda reference: not reference[2])]
+    """Production code first, then member calls, bare calls and other mentions, in scan order.
+
+    Tests call a public method hundreds of times; their member calls must not fill the list
+    ahead of the production uses (jsoup `Element.select`). The rank is dropped.
+    """
+    return [reference[:2] for reference in sorted(
+        references, key=lambda reference: (bool(TEST_PATH.search(reference[1])), reference[2]))]
 
 
 def attach_text_references(root: Path, graph: dict[str, Any] | None, data: dict[str, Any]) -> None:

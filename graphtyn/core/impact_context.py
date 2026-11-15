@@ -9,6 +9,7 @@ read from the indexed files and bounded.
 from __future__ import annotations
 
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Any, Callable
 
@@ -19,6 +20,8 @@ _CODE_CHARS = 160
 _LISTED_CALL_LINES = 40
 _LISTED_INDIRECT = 12
 _LISTED_TESTS = 8
+_LISTED_TEST_FILES = 12
+_CHECKED_CONSUMERS = 12
 _EFFECTS_PER_TARGET = 6
 _TARGETS = 3
 # A return, a raise or an error the symbol hands back is what its callers depend on.
@@ -180,9 +183,44 @@ def _tests(anchors: list[dict], graph: dict[str, Any], rows: list[list[Any]], in
     return [[path, reason] for path, (_rank, reason) in sorted(reasons.items(), key=lambda item: (item[1][0], item[0]))][:_LISTED_TESTS]
 
 
+def _is_production(node: dict[str, Any]) -> bool:
+    path = str(node.get("file") or "")
+    return bool(path) and not TEST_PATH.search(path)
+
+
+def _set_tests_apart(data: dict[str, Any], consumers: dict[str, Any]) -> None:
+    """Uses from test files become per-file counts, so they cannot take the production rows' place.
+
+    A public method is called hundreds of times by its tests: in jsoup `Element.select` every
+    listed consumer was a test and the agent answered with them, missing the five production
+    callers. The tests that exercise the target stay in `related_tests`.
+    """
+    by_file: Counter[str] = Counter()
+    for key in ("others", "text_references", "call_lines"):
+        rows = consumers.get(key) or []
+        kept = [row for row in rows if _is_production({"file": str(row[1]).rsplit(":", 1)[0]})]
+        by_file.update(str(row[1]).rsplit(":", 1)[0] for row in rows if row not in kept)
+        if len(kept) < len(rows):
+            if kept:
+                consumers[key] = kept
+            else:
+                consumers.pop(key, None)
+    for key in ("omitted_by_file", "text_references_more_by_file"):
+        counts = consumers.get(key)
+        if isinstance(counts, dict):
+            tests = {path: count for path, count in counts.items() if TEST_PATH.search(path)}
+            by_file.update(tests)
+            consumers[key] = {path: count for path, count in counts.items() if path not in tests}
+    if by_file:
+        consumers["test_consumers"] = {"total": sum(by_file.values()),
+                                       "by_file": dict(by_file.most_common(_LISTED_TEST_FILES))}
+        data["guidance"] = (str(data.get("guidance") or "") + " direct_consumers.test_consumers counts uses in "
+                            "test files per file: those tests may need updating; they are not production consumers.").strip()
+
+
 def _answer_checks(rows: list[list[Any]], effects: list, target_calls: list, indirect: list, tests: list) -> list[str]:
     """What the answer must cover, from what this package found: an agent tends to stop at the caller list."""
-    consumers = list(dict.fromkeys(str(row[0]) for row in rows if row and row[0]))[:8]
+    consumers = list(dict.fromkeys(str(row[0]) for row in rows if row and row[0]))[:_CHECKED_CONSUMERS]
     checks = [f"consumers: name each direct consumer ({', '.join(consumers)}) and what it does with the result, from its call line"] \
         if consumers else []
     if effects or target_calls:
@@ -232,12 +270,22 @@ def attach_impact_context(root: Path, graph: dict[str, Any] | None, data: dict[s
     tests = _tests(anchors, graph, rows, indirect)
     if tests:
         data["related_tests"] = tests
+    if not _TESTS_REQUESTED.search(str(request or "")) and any(_is_production(node) for node in anchors):
+        _set_tests_apart(data, consumers)
+        rows = [*(consumers.get("others") or []), *(consumers.get("text_references") or []),
+                *(consumers.get("call_lines") or [])]
     data["answer_checks"] = _answer_checks(rows, effects, target_calls, indirect, tests)
     data["guidance"] = (str(data.get("guidance") or "") + " Each consumer row ends with the code at the call: say what "
                         "that caller does with the result. target_effects are the target's own returns and raises; "
                         "indirect_consumers call a direct consumer (last field); related_tests exercise them.").strip()
     gaps = [label for label, wanted, found in (("tests", _TESTS_REQUESTED, tests), ("indirect_consumers", _INDIRECT_REQUESTED, indirect))
             if wanted.search(str(request or "")) and not found]
+    if "consumers" not in (data.get("missing") or []) and any(
+            _is_production({"file": str(row[1]).rsplit(":", 1)[0]}) for row in consumers.get("text_references") or []):
+        # A textual use is a lead, not a resolved consumer: a package resting on one is not complete.
+        gaps.append("verify_text_references")
+        data["guidance"] += (" missing=verify_text_references: confirm each production text_references row from its "
+                             "attached code (or that exact line) before reporting it; do not search more widely.")
     if gaps:
         data["missing"] = list(dict.fromkeys([*data.get("missing", []), *gaps]))
         data["complete_for"] = []
