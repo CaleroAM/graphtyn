@@ -58,6 +58,12 @@ def test_windows_never_raises_a_lower_class(already):
     assert kernel.calls == []
 
 
+def test_windows_failed_lookup_changes_nothing():
+    kernel = FakeKernel32(current=0)
+    result = lower_process_priority("low", platform="win32", kernel32=kernel)
+    assert result["changed"] is False and kernel.calls == []
+
+
 def test_windows_refusal_keeps_running():
     result = lower_process_priority("low", platform="win32", kernel32=FakeKernel32(accept=False))
     assert result["changed"] is False and "rechazado" in result["error"]
@@ -75,8 +81,8 @@ def test_posix_child_ends_at_background_niceness_and_never_rises():
 
 @pytest.mark.skipif(sys.platform != "win32", reason="real Windows priority classes")
 def test_real_windows_process_reaches_below_normal():
-    code = ("import ctypes; from graphtyn.core.process_priority import lower_process_priority as l; "
-            "r = l('low'); k = ctypes.windll.kernel32; print(r['changed'], k.GetPriorityClass(k.GetCurrentProcess()))")
+    code = ("from graphtyn.core.process_priority import lower_process_priority as l, windows_kernel32; "
+            "r = l('low'); k = windows_kernel32(); print(r['changed'], k.GetPriorityClass(k.GetCurrentProcess()))")
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
                          env={**os.environ, "GRAPHTYN_PRIORITY": "low"}).stdout.split()
     assert out == ["True", str(WINDOWS_BELOW_NORMAL)]

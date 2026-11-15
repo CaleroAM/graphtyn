@@ -56,13 +56,31 @@ def current_priority() -> str | None:
     return _applied.get("mode")
 
 
+def windows_kernel32() -> Any:
+    """kernel32 with typed prototypes, in a private handle so global ``ctypes.windll`` is untouched.
+
+    Untyped, ctypes passes the pseudo-handle of ``GetCurrentProcess`` (-1, 64 bits) as a 32-bit int
+    and every call fails with an invalid handle.
+    """
+    import ctypes
+    from ctypes import wintypes
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)  # type: ignore[attr-defined]
+    kernel32.GetCurrentProcess.argtypes = []
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.GetPriorityClass.argtypes = [wintypes.HANDLE]
+    kernel32.GetPriorityClass.restype = wintypes.DWORD
+    kernel32.SetPriorityClass.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    kernel32.SetPriorityClass.restype = wintypes.BOOL
+    return kernel32
+
+
 def _lower_windows(mode: str, kernel32: Any) -> dict[str, Any]:
     try:
-        if kernel32 is None:
-            import ctypes
-            kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        kernel32 = kernel32 or windows_kernel32()
         process = kernel32.GetCurrentProcess()
         current = int(kernel32.GetPriorityClass(process))
+        if not current:
+            return {"mode": mode, "changed": False, "error": "GetPriorityClass falló"}
         if current in (WINDOWS_BELOW_NORMAL, 0x40):
             return {"mode": mode, "changed": False, "priority_class": WINDOWS_PRIORITY_NAMES[current]}
         if not kernel32.SetPriorityClass(process, WINDOWS_BELOW_NORMAL):
