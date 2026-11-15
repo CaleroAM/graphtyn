@@ -5,6 +5,25 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Corregido
+
+- **Paquetes de impacto: los tests ya no desplazan a los consumidores de producción.** Si el
+  objetivo es código de producción y la petición no pregunta por tests, los usos desde archivos de
+  test pasan a ser recuentos por archivo (`direct_consumers.test_consumers`). `answer_checks` nombra
+  solo consumidores de producción. Antes, en jsoup `Element.select`, todas las filas eran métodos de
+  test, y Codex respondió con ellas en las tres repeticiones (0/15).
+- **Un paquete que depende de usos textuales ya no se declara completo.** Si hay `text_references`
+  de producción, el paquete devuelve `missing=["verify_text_references"]` en vez de
+  `do_not_expand=true`, y pide confirmar solo esas filas.
+- **El escáner de usos textuales atribuye mejor y mete menos ruido:**
+  - el dueño de un uso es el símbolo más interno que contiene la línea, no el más cercano por
+    encima;
+  - la línea que define un homónimo y a la vez llama al objetivo cuenta como uso (Koa:
+    `const onerror = (err) => ctx.onerror(err)` dentro de `handleRequest`);
+  - las aristas `contiene` ya no cuentan como consumidores resueltos;
+  - no cuentan como usos las rutas de paquete (`org.jsoup.select.Elements`), los comentarios de
+    bloque ni los nombres entre comillas.
+
 ### Cambiado
 
 - Nueva comparación con Graphify 0.9.106 sobre repositorios y tareas nuevos (click, gin, koa y jsoup;
