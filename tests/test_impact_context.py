@@ -43,12 +43,12 @@ def test_an_impact_package_carries_call_lines_effects_indirect_callers_and_tests
 
     attach_impact_context(tmp_path, graph, package, request)
 
-    assert [row[:2] for row in package["direct_consumers"]["call_lines"]] == [["App.handle", "app/errors.py:9"]]
+    assert [row[:2] for row in package["direct_consumers"]["call_lines"]] == [["handle", "app/errors.py:9"]]
     assert package["direct_consumers"]["call_lines"][0][2] == "handler = self.find_handler(error)"
     # A raise split over lines arrives whole.
     assert ["find_handler", "app/errors.py:4", "raise TypeError( 'no error')"] in package["target_effects"]
     assert package["indirect_consumers"]["listed"] == [
-        ["App.dispatch", "app/errors.py:13", "return self.handle(error)", "App.handle"]]
+        ["dispatch", "app/errors.py:13", "return self.handle(error)", "handle"]]
     assert package["related_tests"] == [["tests/test_find_handler.py", "named after it"]]
     assert package["do_not_expand"] is not False
 

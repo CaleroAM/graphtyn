@@ -24,16 +24,6 @@ _COMMENT = ("//", "/*", "*", "#", "--", '"""', "'''")
 _ENCLOSING_KINDS = {"function", "method", "class", "struct", "interface", "module", "type"}
 _BLOCK_OPENERS = {"/*": "*/", '"""': '"""', "'''": "'''"}
 _DECLARATIONS = ("package ",)
-# `import settle from './settle.js'`, `from .utils import (`, `const { x } = require('x')`, `use a::b;`:
-# a module naming the target is not a use of it, and must not ask the agent to go and read it.
-_IMPORT = re.compile(
-    r"^(?:import\b|from\s+[\w.]+\s+import\b|use\s+[\w:{]|export\s+(?:\*|\{[^}]*\}?)\s*(?:from\b|;|$)|"
-    r"(?:const|let|var)\s+[\w${}\s,:]+=\s*require\s*\(|#\s*include\b|using\s+[\w.]+\s*;|require\s*\()")
-# Multi-line import lists: `from x import (` … `)`, Go `import (` … `)`, `import {` … `} from`, `use x::{` … `};`,
-# and a destructuring `const {` … `} = require(…)`.
-_IMPORT_BLOCK = re.compile(r"^(?:(?:from\s+\S+\s+)?import\s*\(|import\s*(?:type\s*)?\{[^}]*$|export\s*\{[^}]*$|"
-                           r"use\s+[\w:]*\{[^}]*$)")
-_DESTRUCTURING = re.compile(r"^(?:const|let|var)\s*\{[^}]*$")
 _SKIPPED_SUFFIXES = (".md", ".json", ".lock", ".txt", ".rst", ".yml", ".yaml", ".toml", ".svg", ".html", ".css")
 
 
@@ -146,7 +136,7 @@ def _consumer_rows(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], sho
         elif node_id in shown:
             covered += 1
         else:
-            rows.append([label(node), f"{path}:{edges[0].get('line') or node.get('line') or ''}"])
+            rows.append([node.get("name"), f"{path}:{edges[0].get('line') or node.get('line') or ''}"])
     return rows, covered
 
 
@@ -164,92 +154,31 @@ def consumer_summary(consumers: dict[Any, list[dict]], by_id: dict[Any, dict], s
             "omitted_by_file": dict(per_file.most_common(_LISTED_CONSUMERS)), "others": rows[:_LISTED_CONSUMERS]}
 
 
-def label(node: dict[str, Any]) -> str:
-    """`Owner.name` when the symbol has an owner: three `ToMiddleware` rows say nothing on their own."""
-    name = str(node.get("name") or "")
-    container = str(node.get("container") or "")
-    return f"{container}.{name}" if container and container != name else name
-
-
-def _symbols_by_file(graph: dict[str, Any]) -> dict[str, list[tuple[int, str, int, str]]]:
-    symbols: dict[str, list[tuple[int, str, int, str]]] = {}
+def _symbols_by_file(graph: dict[str, Any]) -> dict[str, list[tuple[int, str, int]]]:
+    symbols: dict[str, list[tuple[int, str, int]]] = {}
     for node in graph.get("nodes", []):
         if node.get("kind") in _ENCLOSING_KINDS and node.get("file") and node.get("line"):
             start = int(node["line"])
             symbols.setdefault(str(node["file"]), []).append(
-                (start, str(node.get("name") or ""), int(node.get("end_line") or 0), label(node)))
+                (start, str(node.get("name") or ""), int(node.get("end_line") or 0)))
     return {path: sorted(items) for path, items in symbols.items()}
 
 
-def _enclosing(symbols: list[tuple[int, str, int, str]], line: int, before: bool = False, labelled: bool = False) -> str:
+def _enclosing(symbols: list[tuple[int, str, int]], line: int, before: bool = False) -> str:
     """The innermost symbol whose range holds `line`; with `before`, one that starts above it.
 
     The nearest symbol above is not the owner: in Koa's `handleRequest`, the one-line arrow
     `const handleResponse = () => respond(ctx)` precedes `.catch(onerror)`, which belongs to
-    `handleRequest`. Symbols without an end line keep the nearest-above rule. With `labelled`,
-    the owner's own owner is included (`Application.handleRequest`).
+    `handleRequest`. Symbols without an end line keep the nearest-above rule.
     """
-    field = 3 if labelled else 1
     index = bisect.bisect_left(symbols, (line if before else line + 1, "")) - 1
-    nearest = symbols[index][field] if index >= 0 else ""
+    nearest = symbols[index][1] if index >= 0 else ""
     while index >= 0:
-        _start, _name, end, _label = symbols[index]
+        _start, name, end = symbols[index]
         if not end or end >= line:
-            return symbols[index][field]
+            return name
         index -= 1
     return nearest
-
-
-# `var handler = func(`, `func (r *Router) Find(`, `export default supported && function httpAdapter(`,
-# `utils.forEach([...], function forEachMethodNoData(`.
-_TOP_LEVEL = re.compile(r"^(?:export\s+)?(?:default\s+)?(?:var|let|const|type)\s+([A-Za-z_$][\w$]*)|"
-                        r"\b(?:function\*?|func|def|class)\s+(?:\([^)]*\)\s*)?([A-Za-z_$][\w$]*)")
-_CLOSER = re.compile(r"^[})\]]|^(?://|/\*|\*|#|@)")
-
-
-def owner_at(symbols: list[tuple[int, str, int, str]], lines: list[str], line: int) -> str:
-    """Who makes a call the graph attributes to a whole file.
-
-    The enclosing indexed symbol, else the top-level declaration above the line: Go's
-    `var optionsMethodHandler = func(...)` and similar function values have no symbol node,
-    and "router.go" left the agent reading the file to learn the caller's name.
-    """
-    owner = _enclosing(symbols, line, labelled=True) if any(
-        start <= line and (not end or end >= line) for start, _name, end, _label in symbols) else ""
-    if owner:
-        return owner
-    for number in range(min(line, len(lines)), 0, -1):
-        text = lines[number - 1]
-        if text and not text[0].isspace() and not _CLOSER.match(text):
-            # `export default supported &&` continues on the next line with the function itself.
-            declaration = " ".join(lines[number - 1:number + 2]) if text.rstrip().endswith(("&&", "||", "=", "(", ",")) else text
-            match = _TOP_LEVEL.search(declaration)
-            return (match.group(1) or match.group(2)) if match else ""
-    return ""
-
-
-def import_lines(lines: list[str]) -> set[int]:
-    """Line numbers of import, require and re-export statements, multi-line lists included."""
-    found, closing = set(), ""
-    for number, text in enumerate(lines, 1):
-        stripped = text.strip()
-        if closing:
-            found.add(number)
-            if closing in stripped:
-                closing = ""
-            continue
-        if _IMPORT.match(stripped) and not _IMPORT_BLOCK.match(stripped):
-            found.add(number)
-        elif _IMPORT_BLOCK.match(stripped):
-            found.add(number)
-            closing = ")" if stripped.endswith("(") else "}"
-        elif _DESTRUCTURING.match(stripped):
-            # Only an import when the list closes into `require(`; otherwise it is a plain destructuring use.
-            end = next((index for index in range(number, min(len(lines), number + 60))
-                        if "}" in lines[index]), None)
-            if end is not None and re.search(r"}\s*=\s*require\s*\(", lines[end]):
-                found.update(range(number, end + 2))
-    return found
 
 
 def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anchors: list[dict]) -> tuple[list[list[str]], bool]:
@@ -297,9 +226,7 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anc
         if not any(needle in raw for needle in needles):
             continue
         closing = None
-        lines = raw.decode("utf-8", errors="replace").splitlines()
-        imports = import_lines(lines)
-        for number, text in enumerate(lines, 1):
+        for number, text in enumerate(raw.decode("utf-8", errors="replace").splitlines(), 1):
             stripped = text.lstrip()
             if closing:
                 # Inside a block comment or docstring: `<code>doc.select("b")</code>` is an example.
@@ -308,8 +235,7 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anc
             opener = next((mark for mark in _BLOCK_OPENERS if stripped.startswith(mark)), None)
             if opener and _BLOCK_OPENERS[opener] not in stripped[len(opener):]:
                 closing = _BLOCK_OPENERS[opener]
-            if not pattern.search(text) or stripped.startswith(_COMMENT) or stripped.startswith(_DECLARATIONS) \
-                    or number in imports:
+            if not pattern.search(text) or stripped.startswith(_COMMENT) or stripped.startswith(_DECLARATIONS):
                 continue
             if len(pattern.findall(text)) == len(qualified.findall(text)) + len(quoted.findall(text)):
                 continue
@@ -324,8 +250,7 @@ def _scan(root: Path, graph: dict[str, Any], names: set[str], ids: set[Any], anc
             if owner in names or key in resolved_symbols or key in seen:
                 continue
             seen.add(key)
-            references.append([_enclosing(symbols.get(path, []), number, before=defined, labelled=True) or owner,
-                               f"{path}:{number}", 0 if call.search(text) else 1 if bare_call.search(text) else 2])
+            references.append([owner, f"{path}:{number}", 0 if call.search(text) else 1 if bare_call.search(text) else 2])
     return _calls_first(references), False
 
 
