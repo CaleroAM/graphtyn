@@ -56,17 +56,36 @@ def test_production_uses_lead_and_test_uses_are_counted_per_file(tmp_path):
 
     # The innermost enclosing symbol owns a use: not the one-line arrow declared just above it.
     assert [row[:2] for row in consumers["text_references"]] == [
-        ["handleRequest", "lib/app.js:3"], ["respond", "lib/app.js:12"]]
+        ["Application.handleRequest", "lib/app.js:3"], ["respond", "lib/app.js:12"]]
     listed = [row[1] for key in ("others", "text_references", "call_lines") for row in consumers.get(key) or []]
     assert not any(place.startswith("tests/") for place in listed)
     assert consumers["test_consumers"] == {"total": _TESTS, "by_file": {"tests/context.test.js": _TESTS}}
-    assert package["answer_checks"][0].startswith("consumers: name each direct consumer (handleRequest, respond)")
+    assert package["answer_checks"][0].startswith(
+        "consumers: name each direct consumer (Application.handleRequest, respond)")
 
 
-def test_a_package_resting_on_textual_uses_is_not_complete(tmp_path):
+def test_textual_uses_whose_code_shows_the_call_need_no_reading(tmp_path):
     package = _package(tmp_path, "Si cambio ctx.onerror en lib/context.js, ¿qué se rompe?")
 
+    assert "verify_text_references" not in package.get("missing", [])
+    assert "verify_lines" not in package["direct_consumers"]
+    # The branch that holds the call travels with it.
+    respond = next(row for row in package["direct_consumers"]["text_references"] if row[0] == "respond")
+    assert respond[2].startswith("stream(ctx, err => { if (err) ctx.onerror(err) })")
+
+
+def test_only_inconclusive_textual_uses_are_left_to_read(tmp_path):
+    graph = _project(tmp_path)
+    (tmp_path / "lib" / "hooks.js").write_text(
+        "function install (app) {\n  app.handlers = { onerror }\n}\n", encoding="utf-8")
+    graph["nodes"].append({"id": "install", "name": "install", "kind": "function", "file": "lib/hooks.js",
+                           "line": 1, "end_line": 3})
+    request = "Si cambio ctx.onerror en lib/context.js, ¿qué se rompe?"
+
+    package = attach_source_evidence(tmp_path, query_intent(graph, request, "impact", 10), request, graph=graph)
+
     assert "verify_text_references" in package["missing"]
+    assert package["direct_consumers"]["verify_lines"] == ["lib/hooks.js:2"]
     assert package["do_not_expand"] is False and package["complete_for"] == []
 
 
@@ -109,7 +128,7 @@ def test_package_paths_imports_and_comments_are_not_uses(tmp_path):
 
     package = attach_source_evidence(tmp_path, query_intent(graph, request, "impact", 10), request, graph=graph)
 
-    assert [row[:2] for row in package["direct_consumers"]["text_references"]] == [["meta", "src/Util.java:8"]]
+    assert [row[:2] for row in package["direct_consumers"]["text_references"]] == [["Util.meta", "src/Util.java:8"]]
 
 
 def test_a_document_mention_is_not_counted_as_a_test():
@@ -119,3 +138,28 @@ def test_a_document_mention_is_not_counted_as_a_test():
 
     assert consumers["others"] == [["README.md", ":"], ["run", "lib/a.js:4"]]
     assert consumers["test_consumers"] == {"total": 1, "by_file": {"tests/a.test.js": 1}}
+
+
+def test_import_lines_are_not_uses(tmp_path):
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "lib" / "settle.js").write_text("export default function settle (r) {\n  return r\n}\n", encoding="utf-8")
+    (tmp_path / "lib" / "http.js").write_text(
+        "import settle from './settle.js'\n"
+        "const {\n  other,\n  settle: done\n} = require('./x')\n"
+        "function send (res) {\n"
+        "  if (res.status === 405) {\n"
+        "    return settle(resolve, reject, {\n      status: 405\n    })\n"
+        "  }\n"
+        "}\n", encoding="utf-8")
+    graph = {"nodes": [
+        {"id": "s", "name": "settle", "kind": "function", "file": "lib/settle.js", "line": 1, "end_line": 3},
+        {"id": "send", "name": "send", "kind": "function", "file": "lib/http.js", "line": 6, "end_line": 12},
+    ], "links": []}
+    request = "Si cambio settle en lib/settle.js, ¿qué se rompe?"
+
+    package = attach_source_evidence(tmp_path, query_intent(graph, request, "impact", 10), request, graph=graph)
+
+    rows = package["direct_consumers"]["text_references"]
+    assert [row[:2] for row in rows] == [["send", "lib/http.js:8"]]
+    assert rows[0][2] == "if (res.status === 405) { … return settle(resolve, reject, { status: 405 })"
+    assert "verify_text_references" not in package.get("missing", [])

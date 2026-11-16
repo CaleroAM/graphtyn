@@ -97,8 +97,8 @@ def test_an_impact_package_lists_what_the_target_calls_and_who_reads_a_property(
     attach_impact_context(tmp_path, graph, package, request)
 
     assert ["split_path", "helpers.py:3", "rpartition"] in package["target_calls"]
-    assert ["handle", "app.py:3", "return request.blueprints", "blueprints"] in package["indirect_consumers"]["listed"]
-    assert any(check.startswith("consumers: name each direct consumer (blueprints") for check in package["answer_checks"])
+    assert ["App.handle", "app.py:3", "return request.blueprints", "Request.blueprints"] in package["indirect_consumers"]["listed"]
+    assert any(check.startswith("consumers: name each direct consumer (Request.blueprints") for check in package["answer_checks"])
 
 
 def test_a_bare_ruby_constant_does_not_reach_a_class_under_another_top_level_module(tmp_path):

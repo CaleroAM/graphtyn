@@ -13,7 +13,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Callable
 
-from .impact_references import _scan, direct_consumers
+from .impact_references import _scan, _symbols_by_file, direct_consumers, label, owner_at
 from .path_signals import TEST_PATH
 
 _CODE_CHARS = 160
@@ -32,6 +32,9 @@ _TRIVIAL_CALLS = {"Some", "None", "Ok", "Err", "is_some", "is_none", "is_ok", "i
                   "into", "as_ref", "to_string", "start", "end", "push", "append", "extend", "format", "print",
                   "println", "isinstance", "super", "self", "this", "String", "Vec", "Box", "new"}
 _NOT_CODE = {"documentation_section", "doc", "image", "media", "table"}
+# The branch a call sits in decides what it means: `if (responseType === 'stream')`, `case 405:`.
+_GUARD = re.compile(r"^(?:\}\s*)?(?:if|else\s+if|elif|else|case|catch|except|switch|when|match)\b")
+_GUARD_LOOKBACK = 12
 _GENERIC_TOKENS = {"find", "with", "from", "into", "self", "this", "value", "data", "make", "create", "update",
                    "handle", "process", "test", "tests", "spec", "main", "util", "utils", "helper", "base", "impl"}
 
@@ -68,6 +71,28 @@ class _Source:
             text = f"{text} {extra}"
         return text[:_CODE_CHARS * 2]
 
+    def context(self, path: str, number: int) -> str:
+        """The call's statement, after the branch that holds it when there is one.
+
+        An agent given only `return settle(resolve, reject, {` read the file to learn the status
+        it settles with and under which condition: one extra turn costs more than these words.
+        """
+        text, lines = self.statement(path, number), self.lines(path)
+        if not text or not 0 < number <= len(lines):
+            return text
+        indent = len(lines[number - 1]) - len(lines[number - 1].lstrip())
+        for above in range(number - 1, max(0, number - 1 - _GUARD_LOOKBACK), -1):
+            raw = lines[above - 1]
+            stripped = raw.strip()
+            if not stripped:
+                continue
+            depth = len(raw) - len(raw.lstrip())
+            if depth < indent:
+                if _GUARD.match(stripped):
+                    return f"{self.line(path, above)} … {text}"[:_CODE_CHARS * 3]
+                break
+        return text
+
 
 def _located(row: list[Any]) -> tuple[str, int] | None:
     path, _, number = str(row[1] if len(row) > 1 else "").rpartition(":")
@@ -79,26 +104,28 @@ def _with_code(rows: list[list[Any]], source: _Source) -> None:
     for row in rows:
         place = _located(row)
         if place and len(row) == 2:
-            code = source.line(*place)
+            code = source.context(*place)
             if code:
                 row.append(code)
 
 
 def _caller_rows(edges: dict[Any, list[dict]], by_id: dict[Any, dict], source: _Source,
-                 via: dict[Any, str] | None = None) -> list[list[str]]:
+                 via: dict[Any, str] | None = None, symbols: dict[str, list] | None = None) -> list[list[str]]:
     rows, seen = [], set()
     for node_id, links in edges.items():
         node = by_id[node_id]
         if node.get("kind") in _NOT_CODE:
             continue
         for link in links[:1] if node.get("kind") != "file" else links:
-            name = str((link.get("resolution") or {}).get("caller") or node.get("name") or "") \
-                if node.get("kind") == "file" else str(node.get("name") or "")
             path, number = str(link.get("file") or node.get("file") or ""), int(link.get("line") or node.get("line") or 0)
+            name = label(node)
+            if node.get("kind") == "file":
+                name = str((link.get("resolution") or {}).get("caller") or "") or owner_at(
+                    (symbols or {}).get(path, []), source.lines(path), number) or str(node.get("name") or "")
             if not number or (name, path, number) in seen:
                 continue
             seen.add((name, path, number))
-            row = [name, f"{path}:{number}", source.line(path, number)]
+            row = [name, f"{path}:{number}", source.context(path, number)]
             if via is not None:
                 row.append(via.get(link.get("target"), ""))
             rows.append(row)
@@ -146,7 +173,7 @@ def _property_readers(root: Path, graph: dict[str, Any], by_id: dict[Any, dict],
         found, _truncated = _scan(Path(root), graph, {str(node.get("name"))}, {node.get("id")}, [node])
         for owner, place in found[:_LISTED_INDIRECT]:
             path, _, number = place.rpartition(":")
-            rows.append([owner, place, source.line(path, int(number)) if number.isdigit() else "", str(node.get("name"))])
+            rows.append([owner, place, source.line(path, int(number)) if number.isdigit() else "", label(node)])
     return rows
 
 
@@ -221,7 +248,8 @@ def _set_tests_apart(data: dict[str, Any], consumers: dict[str, Any]) -> None:
 
 def _answer_checks(rows: list[list[Any]], effects: list, target_calls: list, indirect: list, tests: list) -> list[str]:
     """What the answer must cover, from what this package found: an agent tends to stop at the caller list."""
-    consumers = list(dict.fromkeys(str(row[0]) for row in rows if row and row[0]))[:_CHECKED_CONSUMERS]
+    # A document mention has no line: it is not a consumer the answer must name.
+    consumers = list(dict.fromkeys(str(row[0]) for row in rows if row and row[0] and _located(row)))[:_CHECKED_CONSUMERS]
     checks = [f"consumers: name each direct consumer ({', '.join(consumers)}) and what it does with the result, from its call line"] \
         if consumers else []
     if effects or target_calls:
@@ -244,13 +272,22 @@ def attach_impact_context(root: Path, graph: dict[str, Any] | None, data: dict[s
     if not anchor_ids:
         return
     source = _Source(root)
+    symbols = _symbols_by_file(graph)
     shown = {node.get("id") for node in data.get("nodes") or []}
     direct = direct_consumers(graph, by_id, anchor_ids)
+    _name_file_callers(consumers.get("others") or [], symbols, source)
     for key in ("others", "text_references"):
         _with_code(consumers.get(key) or [], source)
     covered = {node_id: links for node_id, links in direct.items() if node_id in shown}
     if covered:
-        consumers["call_lines"] = _caller_rows(covered, by_id, source)[:_LISTED_CALL_LINES]
+        consumers["call_lines"] = _caller_rows(covered, by_id, source, symbols=symbols)[:_LISTED_CALL_LINES]
+        listed = {row[1] for row in consumers["call_lines"]}
+        # A file-level call is both a covered consumer and an "other" row: list it once.
+        others = [row for row in consumers.get("others") or [] if row[1] not in listed]
+        if others:
+            consumers["others"] = others
+        else:
+            consumers.pop("others", None)
     effects = _effects(anchors, source)
     if effects:
         data["target_effects"] = effects
@@ -260,8 +297,8 @@ def attach_impact_context(root: Path, graph: dict[str, Any] | None, data: dict[s
     callers = {node_id for node_id in direct if by_id[node_id].get("kind") != "file"}
     second = {node_id: links for node_id, links in direct_consumers(graph, by_id, callers).items()
               if node_id not in anchor_ids and node_id not in callers}
-    names = {node_id: str(by_id[node_id].get("name") or "") for node_id in callers}
-    indirect = _caller_rows(second, by_id, source, via=names)
+    names = {node_id: label(by_id[node_id]) for node_id in callers}
+    indirect = _caller_rows(second, by_id, source, via=names, symbols=symbols)
     known = {(row[0], row[1]) for row in indirect}
     indirect += [row for row in _property_readers(root, graph, by_id, callers, source) if (row[0], row[1]) not in known]
     if indirect:
@@ -281,16 +318,42 @@ def attach_impact_context(root: Path, graph: dict[str, Any] | None, data: dict[s
                         "indirect_consumers call a direct consumer (last field); related_tests exercise them.").strip()
     gaps = [label for label, wanted, found in (("tests", _TESTS_REQUESTED, tests), ("indirect_consumers", _INDIRECT_REQUESTED, indirect))
             if wanted.search(str(request or "")) and not found]
-    if "consumers" not in (data.get("missing") or []) and any(
-            _is_production({"file": str(row[1]).rsplit(":", 1)[0]}) for row in consumers.get("text_references") or []):
-        # A textual use is a lead, not a resolved consumer: a package resting on one is not complete.
+    target_names = {str(node.get("name") or "") for node in anchors} - {""}
+    unsettled = [row[1] for row in consumers.get("text_references") or []
+                 if _is_production({"file": str(row[1]).rsplit(":", 1)[0]}) and not _conclusive(row, target_names)]
+    if "consumers" not in (data.get("missing") or []) and unsettled:
+        # A textual use is a lead; one whose own code shows a call or a reference is settled by that code.
+        # Only the others leave the package incomplete, and the agent reads just those lines.
         gaps.append("verify_text_references")
-        data["guidance"] += (" missing=verify_text_references: confirm each production text_references row from its "
-                             "attached code (or that exact line) before reporting it; do not search more widely.")
+        consumers["verify_lines"] = unsettled[:_CHECKED_CONSUMERS]
+        data["guidance"] += (" missing=verify_text_references: read only the direct_consumers.verify_lines, in one "
+                             "command with line numbers, and report what they do; do not search more widely.")
+    elif consumers.get("text_references"):
+        data["guidance"] += " The attached code of each text_references row shows the use: report it from that code."
     if gaps:
         data["missing"] = list(dict.fromkeys([*data.get("missing", []), *gaps]))
         data["complete_for"] = []
         data["do_not_expand"] = False
+
+
+def _name_file_callers(rows: list[list[Any]], symbols: dict[str, list], source: _Source) -> None:
+    """A row named after its file (a call the graph gave to the file) gets the function that makes it."""
+    for row in rows:
+        place = _located(row)
+        if place and str(row[0]) == Path(place[0]).name:
+            row[0] = owner_at(symbols.get(place[0], []), source.lines(place[0]), place[1]) or row[0]
+
+
+def _conclusive(row: list[Any], names: set[str]) -> bool:
+    """Whether a text reference's own code shows a use: a call, or the symbol passed or assigned as a value."""
+    code = str(row[2] if len(row) > 2 else "").split(" … ")[-1]
+    if not code or not names:
+        return False
+    alternatives = "|".join(re.escape(name) for name in sorted(names))
+    call = re.search(rf"(?<![\w$])(?:{alternatives})\s*(?:<[^>]*>)?\s*\(", code)
+    value = re.search(rf"(?:[=(,:?]|\b(?:return|typeof|keyof|instanceof)|=>|\|\||&&)\s*(?:[\w$]+\.)*(?:{alternatives})"
+                      rf"\s*(?:[),;}}\]]|$)", code)
+    return bool(call or value)
 
 
 def shrink_impact_context(output: dict[str, Any], over_budget: Callable[[], bool]) -> None:

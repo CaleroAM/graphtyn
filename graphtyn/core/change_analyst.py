@@ -974,6 +974,12 @@ def query_intent(graph: dict[str, Any], request: str, intent: str = "auto", max_
                              *(() if selected_intent == "impact" else ("field",))}
     named_nodes = _signals.named_nodes(all_nodes, symbol_terms, anchor_excluded_kinds, request)
     explicit_names = {str(node.get("name") or "").lower() for node in named_nodes}
+    if selected_intent == "impact" and qualified_nodes:
+        # `Context.NoContent in echo`: the qualified member is the target. The owner type and words
+        # matched only in lower case (the repository `echo` → method `Echo`, field `echo`) are not.
+        written = {word.lower().rstrip("()") for word in _signals.written_identifiers(request)}
+        explicit_names = {name for name in explicit_names
+                          if name in {str(node.get("name") or "").lower() for node in qualified_nodes} or name in written}
     anchor_files = ({str(node.get("file") or "") for node in qualified_nodes if node.get("file")}
                     if qualified_nodes else
                     {str(node.get("file") or "") for node in named_nodes if node.get("file")})
