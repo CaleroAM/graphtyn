@@ -1028,6 +1028,50 @@ def _command_gitignore(args, root: Path, parser) -> None:
     print(f"✓ .gitignore por proyecto: {state} para {root}")
     print("  Reindexa para aplicar: graphtyn reindex --path .")
 
+def _command_scope(args, root: Path, parser) -> None:
+    from collections import Counter
+
+    from .api.main import _load_project_config, _save_project_config
+    from .core.index_scope import CONFIG_KEY, IndexScope, is_text_file
+    current = [str(rule) for rule in _load_project_config(root).get(CONFIG_KEY) or []]
+    if args.action in {"set", "add", "remove"} and not args.rules:
+        parser.error(f"scope {args.action} necesita al menos una regla")
+    if args.action == "set":
+        current = list(dict.fromkeys(args.rules))
+    elif args.action == "add":
+        current = list(dict.fromkeys([*current, *args.rules]))
+    elif args.action == "remove":
+        current = [rule for rule in current if rule not in set(args.rules)]
+    elif args.action == "clear":
+        current = []
+    if args.action in {"set", "add", "remove", "clear"}:
+        _save_project_config(root, {CONFIG_KEY: current})
+        print(f"✓ Alcance de {root}: " + (", ".join(current) if current else "todo el directorio"))
+        print("  Reindexa para aplicar: graphtyn reindex --path .")
+        return
+    scope = IndexScope(current)
+    if args.action == "show":
+        print(f"Alcance de {root}: " + (", ".join(current) if current else "todo el directorio (sin reglas)"))
+        return
+    if not scope:
+        print("Sin reglas: se indexa todo el directorio. Define reglas con `graphtyn scope set ...`.")
+        return
+    from .core.ast_parser import VALID_EXTS
+    from .core.ignore_rules import IgnoreRules
+    from .core.watcher import _IGNORED_PARTS
+    ignores = IgnoreRules.load(root)
+    files = [relative for path, relative in scope.files(root, lambda name: name in _IGNORED_PARTS or name.startswith("."))
+             if not ignores.ignored(relative) and (path.suffix.lower() in VALID_EXTS or is_text_file(path))]
+    # Two levels, so one heavy application inside `.config/` stands out.
+    groups = Counter("/".join(relative.split("/")[:2]) if relative.count("/") >= 2 else relative.split("/")[0]
+                     if "/" in relative else "." for relative in files)
+    print(f"{len(files)} archivos entrarían en el índice de {root}:")
+    for group, count in groups.most_common(25):
+        print(f"  {count:6d}  {group}")
+    if len(groups) > 25:
+        print(f"  … y {len(groups) - 25} carpetas más")
+
+
 _HOOK_START = "# BEGIN GRAPHTYN REINDEX"
 _HOOK_END = "# END GRAPHTYN REINDEX"
 # post-checkout receives "<old> <new> <flag>"; flag=1 is a branch checkout,
@@ -1132,6 +1176,7 @@ def main():
         'mcp': _command_mcp,
         'serve': _command_serve,
         'gitignore': _command_gitignore,
+        'scope': _command_scope,
         'hook': _command_hook,
     }
     handler = handlers.get(args.command)

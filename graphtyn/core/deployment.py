@@ -36,12 +36,14 @@ def initialize_project(project: Path) -> dict[str, Any]:
 def build_local_index(project: Path, *, respect_git: bool = True) -> dict[str, Any]:
     """Build and persist the deterministic index without requiring the daemon."""
     from .ast_parser import ASTParser
+    from .index_scope import IndexScope
     from .storage import project_store_dir
     project = project.expanduser().resolve()
     index_dir = project_store_dir(data_home(), project)
     index_dir.mkdir(parents=True, exist_ok=True)
     graph = ASTParser().scan_directory(
-        project, respect_git=respect_git, cache_path=index_dir / "structural_cache.json"
+        project, respect_git=respect_git, cache_path=index_dir / "structural_cache.json",
+        scope=IndexScope.load(index_dir),
     )
     graph.setdefault("metadata", {}).update({
         "indexed_with": "onboarding_ast_pure", "status": "ok",

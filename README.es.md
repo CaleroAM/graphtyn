@@ -220,6 +220,25 @@ graphtyn hook install --path .
 - `.graphtynignore` excluye rutas de la indexación con la sintaxis habitual de
   `.gitignore` (`*`, `**`, `?`, `!`, `/` inicial y final). Se aplica en el
   siguiente `reindex` y también al watcher.
+- `graphtyn scope` limita el proyecto a las rutas que indiques. Sirve para un
+  directorio que contiene otros proyectos, como el home cuando solo importa la
+  configuración:
+
+  ```bash
+  graphtyn scope set .bashrc nixos/ '.config/**' '!.config/BraveSoftware/' --path ~
+  graphtyn scope preview --path ~   # archivos que entrarían, por carpeta
+  graphtyn reindex --path ~
+  ```
+
+  Las reglas usan la sintaxis de `.graphtynignore`, ancladas a la raíz del
+  proyecto. Las rutas ocultas entran cuando una regla las nombra, y los archivos
+  de texto incluidos se indexan aunque su extensión no sea de código. La
+  indexación solo recorre las carpetas a las que llega alguna regla. Un agente
+  que trabaja en una subcarpeta fuera del alcance (por ejemplo
+  `~/Documentos/app`) no recibe el grafo, los hooks ni la memoria de este
+  proyecto. Los almacenes de secretos (`.ssh`, `.gnupg`, `.aws`, claves,
+  archivos con nombre de token o credenciales) nunca se indexan.
+  `graphtyn scope clear` vuelve a indexar todo el directorio.
 - `hook install` añade un bloque gestionado a `post-commit`, `post-checkout`
   (sólo cambios de rama) y `post-merge`, conservando el contenido existente.
 

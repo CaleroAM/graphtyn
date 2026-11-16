@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .index_scope import covers
+
 HOOK_COMMAND = "graphtyn memory claude-hook"
 # Private to this user and project; Claude Code keeps it out of version control.
 SETTINGS = Path(".claude") / "settings.local.json"
@@ -103,7 +105,8 @@ def _project_root(cwd: str | None) -> Path | None:
         return None
     current = Path(cwd).expanduser().resolve()
     for candidate in (current, *current.parents):
-        if (candidate / ".graphtyn" / "graphtyn.json").is_file():
+        # A scoped project (a home directory limited to its config) does not own unrelated subdirectories.
+        if (candidate / ".graphtyn" / "graphtyn.json").is_file() and covers(candidate, current):
             return candidate
     return None
 

@@ -17,6 +17,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from .index_scope import covers
 from .storage import data_home, unsafe_project_root
 
 
@@ -223,7 +224,7 @@ def _workspace_target(value: str | None, targets: list[dict[str, Any]]) -> dict[
     matches = []
     for target in targets:
         path = Path(target["path"])
-        if workspace == path or path in workspace.parents:
+        if workspace == path or path in workspace.parents and covers(path, workspace):
             matches.append(target)
     return max(matches, key=lambda item: len(Path(item["path"]).parts), default=None)
 

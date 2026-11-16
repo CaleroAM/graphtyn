@@ -21,8 +21,14 @@ PROVIDERS = {
 }
 
 
-def provider_status(root: Path) -> list[dict[str, Any]]:
-    suffixes = {path.suffix.lower() for path in root.rglob("*") if path.is_file()}
+def provider_status(root: Path, suffixes: set[str] | None = None) -> list[dict[str, Any]]:
+    """Type providers for the languages present; ``suffixes`` are those of the files already indexed.
+
+    Without them every file below ``root`` is walked, caches and dependencies included: over a
+    million files when the project is a home directory.
+    """
+    if suffixes is None:
+        suffixes = {path.suffix.lower() for path in root.rglob("*") if path.is_file()}
     result = []
     for suffix, (provider, executable) in PROVIDERS.items():
         if suffix in suffixes and not any(item["provider"] == provider for item in result):
@@ -55,7 +61,9 @@ def apply_type_evidence(graph: dict[str, Any], root: Path) -> dict[str, Any]:
             })
             applied += 1
     graph.setdefault("metadata", {})["type_analysis"] = {
-        "providers": provider_status(root), "sidecar": str(sidecar.relative_to(root)),
+        "providers": provider_status(root, {Path(str(node["id"])[5:]).suffix.lower()
+                                            for node in graph.get("nodes", []) if str(node.get("id", "")).startswith("file:")}),
+        "sidecar": str(sidecar.relative_to(root)),
         "typed_relations": applied, "rejected_relations": rejected,
         "execution": "explicit; Graphtyn does not run project analyzers automatically",
     }
