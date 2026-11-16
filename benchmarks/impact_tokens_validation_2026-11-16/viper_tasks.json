@@ -1,0 +1,81 @@
+{
+ "tasks": [
+  {
+   "id": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "request": "Si cambio Viper.mergeWithEnvPrefix en viper (viper.go), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "is_path_shadowed_in_auto_env",
+     "any": [
+      "isPathShadowedInAutoEnv",
+      "viper.go:653"
+     ]
+    },
+    {
+     "id": "bind_env_default_name",
+     "any": [
+      "BindEnv",
+      "viper.go:1163"
+     ]
+    },
+    {
+     "id": "find_automatic_env",
+     "any": [
+      "find",
+      "AutomaticEnv",
+      "viper.go:1276"
+     ]
+    },
+    {
+     "id": "env_prefix_uppercase_effect",
+     "any": [
+      "SetEnvPrefix",
+      "envPrefix",
+      "ToUpper"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "request": "Si cambio Viper.getConfigType en viper (viper.go), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "read_in_config",
+     "any": [
+      "ReadInConfig",
+      "viper.go:1589"
+     ]
+    },
+    {
+     "id": "merge_in_config",
+     "any": [
+      "MergeInConfig",
+      "viper.go:1626"
+     ]
+    },
+    {
+     "id": "write_config_to",
+     "any": [
+      "WriteConfigTo",
+      "viper.go:1722"
+     ]
+    },
+    {
+     "id": "unmarshal_reader",
+     "any": [
+      "unmarshalReader",
+      "viper.go:1782"
+     ]
+    },
+    {
+     "id": "unsupported_config_error",
+     "any": [
+      "UnsupportedConfigError",
+      "SupportedExts"
+     ]
+    }
+   ]
+  }
+ ]
+}

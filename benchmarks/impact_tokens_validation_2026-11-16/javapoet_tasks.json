@@ -1,0 +1,81 @@
+{
+ "tasks": [
+  {
+   "id": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "request": "Si cambio CodeWriter.emitModifiers(Set, Set) en javapoet (src/main/java/com/squareup/javapoet/CodeWriter.java), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "single_argument_overload",
+     "any": [
+      "emitModifiers(Set<Modifier> modifiers)",
+      "CodeWriter.java:188"
+     ]
+    },
+    {
+     "id": "fieldspec_emit",
+     "any": [
+      "FieldSpec.emit",
+      "FieldSpec.java:58"
+     ]
+    },
+    {
+     "id": "methodspec_emit",
+     "any": [
+      "MethodSpec.emit",
+      "MethodSpec.java:87"
+     ]
+    },
+    {
+     "id": "typespec_emit",
+     "any": [
+      "TypeSpec.emit",
+      "TypeSpec.java:218"
+     ]
+    },
+    {
+     "id": "parameterspec_emit_via_overload",
+     "any": [
+      "ParameterSpec.emit",
+      "ParameterSpec.java:55"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "request": "Si cambio Util.characterLiteralWithoutSingleQuotes en javapoet (src/main/java/com/squareup/javapoet/Util.java), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "annotation_character_member",
+     "any": [
+      "addMemberForValue",
+      "AnnotationSpec.java:239"
+     ]
+    },
+    {
+     "id": "string_literal_escaping",
+     "any": [
+      "stringLiteralWithDoubleQuotes",
+      "Util.java:122"
+     ]
+    },
+    {
+     "id": "codewriter_dollar_s",
+     "any": [
+      "$S",
+      "CodeWriter.java:251",
+      "CodeWriter.emit"
+     ]
+    },
+    {
+     "id": "annotationspec_get_reaches_it",
+     "any": [
+      "AnnotationSpec.get",
+      "AnnotationSpec.java:128",
+      "AnnotationSpec.java:136"
+     ]
+    }
+   ]
+  }
+ ]
+}

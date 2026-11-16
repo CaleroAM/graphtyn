@@ -1,0 +1,83 @@
+{
+ "tasks": [
+  {
+   "id": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "request": "Si cambio peek_filelike_length en httpx (httpx/_utils.py), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "encode_content_uses_length",
+     "any": [
+      "encode_content",
+      "_content.py:121"
+     ]
+    },
+    {
+     "id": "encode_content_falls_back_to_chunked_when_none",
+     "any": [
+      "Transfer-Encoding",
+      "chunked",
+      "_content.py:123"
+     ]
+    },
+    {
+     "id": "filefield_get_length",
+     "any": [
+      "FileField.get_length",
+      "_multipart.py:177"
+     ]
+    },
+    {
+     "id": "multipart_get_content_length_propagates_none",
+     "any": [
+      "MultipartStream.get_content_length",
+      "get_content_length",
+      "_multipart.py:274"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "request": "Si cambio primitive_value_to_str en httpx (httpx/_utils.py), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "queryparams_init",
+     "any": [
+      "QueryParams.__init__",
+      "_urls.py:459"
+     ]
+    },
+    {
+     "id": "queryparams_set",
+     "any": [
+      "QueryParams.set",
+      "_urls.py:549"
+     ]
+    },
+    {
+     "id": "queryparams_add",
+     "any": [
+      "QueryParams.add",
+      "_urls.py:564"
+     ]
+    },
+    {
+     "id": "datafield_init",
+     "any": [
+      "DataField.__init__",
+      "DataField",
+      "_multipart.py:87"
+     ]
+    },
+    {
+     "id": "encode_urlencoded_data",
+     "any": [
+      "encode_urlencoded_data",
+      "_content.py:142",
+      "_content.py:144"
+     ]
+    }
+   ]
+  }
+ ]
+}
