@@ -1,0 +1,974 @@
+{
+ "00ac0ea7e45f280cc0d49dcb9c2ea2ab462daefb13bb299678a84cb9d3916beb": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": false,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "00bd8816a9329224e05b6b3b90e9c9aaafceee42c3bdb26bfbf8f5287f0dbd2c": {
+  "encode_content_falls_back_to_chunked_when_none": false,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "00e552dad7a8041fedb508f6bd9f6334dfcf1af76a15a5046471be7d1b6e38fb": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "0304c37d19474c1068160f4200dab1fc9255727a039c9cb27893f5569a322f8b": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "05f517f473c1daaae9363163800c73932b9384eba691840d446cdfa3819cf93c": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "07bf9bf8d7a65287d7e88c4a070a36fbb8f87071bf8c8020e6337b581a750122": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "09fc9a6ba059fda49d9f46169a6251e65a698726ada44344f078f1b890a4202c": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": true
+ },
+ "0a33d3e284e21f92eabba9775be1413328ae8c0b82ac715f33d6e307803f2785": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "0b1e4f2ee85d3796fb1c43e1159e9773a2cf0aa2a9f5726d3d92bf497cbd0f21": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "0b2067bdc0c63a914e75debd852e47bbd130ee53e674f0c1f339fc883b301ca0": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "0b728ba5cabd558b96cf92c9be331150bf933712544368e8cb04120124dcefed": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": true
+ },
+ "0d484505de29ad03c34ed34eb6dc72d759d43f28e3c7d25b653b3d0f4438e64c": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "0dc0f94629c536186e525ca709a9c6b4fa584f34f0517e4b8a694af950759320": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "0e0160521f8b667e4c8e77cf8a02623eccfd0f75e81efc688f595c23d5feef65": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "0fe3fa39a6730b861482fb93dc8b119664b1693320deb3963627622845dc9f3c": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "11928573997ec09a617a538dbd9564d2eab02089b278a4038c8f3430031a8386": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "13b6cac1957174e0b10d2a4ed43e485035a558be35421b1ac488d64c2e52c5f0": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "14490cde12b20cb9925473b58ff69737d4e79a59bef9e4d0a9ab4fe2f1bd5f1e": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": false,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "1573f0175dc8792d87e7de01b46a28de3c0c6e4ace7db74e0f5f885af601224b": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "19c04290485b1bd550ece2557f46494e342bfef4a18468fb410e26a4b2b2c93f": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "1b4dadd25f922767ab41775ac47e940dc3b1d4c4fc1e755bab9de7e2fa2df34a": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "1bb4ddb4ea13b03e2f71fc46897c6ca1f811ce3e40700ce570ec69bd349c0113": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "1e620dd5a3e78db44f1adfdbef7f649c81865300ecaf28f61d0a3c840738c21e": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "1e6dcb6d0db9b661b74f5ac03d4077e814262699cbb2c44b3ba4094533101910": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "1fb76ad59a05966811a472f8afdd29989ea9cdfd5e3db10818429d4cdcd5342c": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "248c0f1f8b97977d7b09221d789c59b48823284612aecd8f9770311c5a50d327": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "2cda4b64694fbe47e6814829edb0658bfb8e2b1d1f5588d4fbc00edd491d3126": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "3052d9e70eac8ecd44f385700142d2d7cd77de44520eb4a31149d34a262a06e9": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "3177ac78c88297e7dcb5dec08f6c85c757a3a5315299a848ffb9c03296a678cd": {
+  "encode_content_falls_back_to_chunked_when_none": false,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "32bdcb02e2bc143fc0397bcdb957668806a80a6bf30e3867ee1428a3f4f545bc": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "34adca211fb6830b1d869343ee0a8b65875bc194e01ea22dd5fc84fecccaf5fc": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "36e09ad59dcdb2cbc3003d28743b2979dcdd217f82febd2dbde2ddd93c7cec13": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": false,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "38b851f223ee7dee2e4f406179d23ae588b671a282e8b3bd88f14b84e9e5ee6e": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "3bf4d89086d85dff58ca5740d8fcad66aa83338ef1d839de181298ded7a34460": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "3ca7f9724f86b72d3465285389b90eacbc714ab06ac1359b33d10b545286048d": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "3d97d50cd716c7467bab7ed6a13da14d8392622c7574ab9e616676e13be57fd5": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "3dc54f80a704abb903de9060d9e5332a21e9ac42cf6ab5633ac6a2fdd78c6ee7": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "3de128b1e9848f8bcf98c16cabbef76d829179df6b5e42da72acf28a7caad5b7": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "4428309039127d9f7a12331084915f8400becc312e1a95bb04a2118b60c605db": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "4898479c7a15eba504b0c3c49dc1f22cd9ff0f9b80ea7707b43843737ab97373": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "49156c8093227e4f562d517522508bba18073d99df4793d19fe7725ff4bcddd6": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "4cdd84ab74527b3796e2c9dd27622920dcb2501158b9a5b8e08da001dbf275c3": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "4e31034afb25ef20ea897d760d347135d995be2ac33c6b4ba5089ae58743c1d2": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": true
+ },
+ "4e31d4f4d73b21224a35d79a61b516e1b03c62f521b08524a9de8599506f48ee": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "500818134cd5dbba1554c9cd4eb09f8f41ea1fb890006e2828b0052d67d0391c": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "516cd4e1d4042a9d5e4e52eb1d7259819a41334cfc5d8ce1717875295c68b4ab": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "5330151d1b7d74956edacb65a8550fd246f9e030b9d3cddd81467dc2570e0743": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": false,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "574e3f0f6bf0336446d015e5b82660023d493fff7ec7da4eb49ae270e3fcae7c": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "5a171460ed86953d72c8176897e72e0cc4e55546a8f07e903a0c2bb091aecc47": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "5f1bd0952978e4d8d1e81f3ce692e0bbcf52a06fd65544d8301464b3079c005e": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "5fc35494a4919c914f0b0ea5cd8c3430e5bfe6ccdfe9e1d121887451440000a4": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "60e3bd3857e9eb3de19668d6fef1cff4ec40b61bf8ada5013613300934dccc7b": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "63beb5b6a3767044ae6485819b7d76b207967c102b87f072bc4ba9a982a6eeae": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "66360302fa4a54ca5a072c14f0201d212fcb3dcd3a94cecf1f0033292f163927": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "6669583b5bc8ca8c50cb73ec02a149b593b58d32c91a4fe360c7975019d0b540": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "6746d28c11a4dc5a72b34712509d1c6931ba7689e0bd13c9b599c2120db9375d": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "68c32fc12d9237ad86f06cf6ae952e77a108a9732ac4ca3ffb3e3d132932f01f": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "6ace48828bf545b6da32fd907a05681b43fdceb85dbae54dceed73a09678e255": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "6bf4743ac07501f2ed7f082efda9889fe80f941bcb2706a04cd4c22aaf31b11d": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "6cbebbdf84b32b1221cc8c3577201823f01c6113bffdd159db24cc20fd1144ac": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "6f81cd8ef756af9e48cae3981958c9d9284cff57a0f4ae7346f17a6751c92200": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": true
+ },
+ "722527ee06d5906c1b839c27206891dc95bb4ff200faad4b4ea987215a2a15ca": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "74ce2d450d89df717cc65c8de367d6c48e88b5cfc55828e009c0d5c199085091": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "7545ae1b8e88be019e1a2651a149aa5d94b185501905a4db36ffbd86ca1da98a": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "768260dc4eff4986cbef5e1075bc4c1d2f10f6816a00ea14b2a45640f93c2297": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "78690c9a989740dfa2c8d3b74674952f4fd8087b17d715a29bd571a83cecaa8a": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "7bc78c6efdb2b21e5d73da46d5906d6efc85764a44a9d50210714da19adf9122": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "7f7b84117b1a7424e1b1742216b3e1be7b1e96b21c97d690a5803781ec00b26c": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "8485766b7237c67bc11b8d7b967fdf8acf6a27dc29a362dcc796be33573c9291": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "852272379f4525da5d64944d681261c9c6b8c541a1ab5bb36da3b2e265244cba": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": false,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "892cf98a411e526620dfe90419964f1dafa72dd70a1eb25fd0a5cc90c2c2a50e": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "8fc26498514bad86d3a7f4e822fc81c179e29840be32f237bd9d064a162a3940": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "90c3eca8808b9df49e606024ff792cd9d0cd8a6b365cb90db44a34b43a47cf58": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "90f25eb3166092c55501195593dc577e5cb497b3248bb042cdd965027464f382": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": false,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "93229d1bb78d1dd5f8ab2b3fd98a18ee860431f5a8e145113e572a523a0439fc": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "93ed5c90bb7178fddb46155fdeeeae8426553ae0f6ce14fa4c55cd81cf35d44c": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "95a14bcfb7e337ddf946b70369c6eb5f976e4b2999f740624ae8b3921d4cad06": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "9750ce779fa7783695da6fa8787f155ddd9aca024b69609b38b2faf6e4946c1b": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "97cf01474d9fb6e26133b9d5d69c202c83e520eae24a22cfd93873ee2c731299": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "98227a287888b06d74e2471aa9bef7f06b6c0217b8b185065022c5e89099326f": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "9a2ae3f129a701065cd51ce8a45dac18b5bd0e1828d919914911f34f54280367": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "9be3e4527dcd588c58aab22ee2d58bb39bdb23e1d4c5ef2a09ae5dcac1d06861": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "9cc43c4ce5427339de707d24a9c808c8c3073bd1c1cc6ee1dab7ecf805e58d93": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "9cfd763a767342f506dc283c007dc5fe4c3d6e50854b77b3265ab82a1be333b6": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": false,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "9d516957ff6e5dfc483d95ecc09804ca18e5ace8a84155996838a156f4b73254": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": true
+ },
+ "9f75cc1f2c3f9f4c4d5ee8ef3008f45262d5d684939e05811336f59cb4eb5565": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "a1486aa3c6b2dab15b8f37da1811cad770a78a73f1633e139a9352b56b6cca8d": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "a3c8c2ac5da14c2963eabf2a49e6f2799271c65db12d255f77ff0dfe7f33e37f": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "a5405db7c54ca9ca95ae1a1833491531a5d475324570a532e7e7fdf80b6c871b": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "a63be5197d542692f1b326adf619953ee89da0d356efabff1419cf9282c116fa": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "a6fd4c93c7f2533ecc40449f8c0ab8448fba80fb34361876422c171402b73167": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "a78e1e735bbb3b7516edb6263779d79dfbee3f5ab6eac2688402177ed07657dd": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "a928c22be1b16fc810f2e519ff6b450593c89851800c4ccb8f6ef955cadfd9d3": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "a944250f42be97ce798cfef6a7afbd98a93c0bc9787996a62474e4ea60f7e35f": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "a9d8964864bf1d67ec6351e76159168ddafc6e82d232c5b414974298654648b6": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "aa6c71fda8e38f28a8b39839dbef184bf8151be2ac5d19aaf31828540ccfc4f5": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "ab34746ebe1ae042da406d00ad5d7403b2c083d1bac71615adac3472eb2307bc": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "ac725c65064ded2bf14b254a389670adac0acc7c1c41d25c52640aef4bb30933": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "adc12018ec55de53e3ae9f2d7c7c0bec1e92f9f4c5a86dcb11532056be768568": {
+  "encode_content_falls_back_to_chunked_when_none": false,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "addd27bf95a6874116c43a6b393c746f05cbf0fa1a8c52982ad8628e3e91cb47": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "aec96089162d1a92597c4c66b84b945dd2e398e49d1b1ed8f44ee8917f18fd48": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "afe76c42a098c9220801087e51e4d1b11f8fdaf82c5e822df1366e60aecebd22": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": false,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "b1a1875612c7777835f3eb3c7939cc6028e56d0d29bbf84f3e68d429134559d2": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "b2a10bb6802b20608f0c161ef282ca7c877eab1bbd54f4a0f729254caa782725": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "b378339411fc5814132926aad591ca757d499023dc3a04e756f7ac8fcb6894e4": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "b70b2ff2f0f3856f469bd0a5aa8ad4f6ed3ae52a26f39b82973b4fa4a74a77d9": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "b9c700668ed5c9ebe354dfb1cfdbf8d3a974e011983b99c3440a01afbb5d1037": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "b9f08a5c8d8647831a68a8bab8d9dd31b9ec6a7de79acf1c6fffef50c1550c5e": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "ba8351103920211ff7665119f8f4936d5c2e4de417cec4df0ae2ab36708c0b56": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "babe63e3ad6c2089e9743059b0d368bfdb22d85c474ac226bc23a929277bc024": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "bda8be32cb377f1bcbf670eddaaf3d0ea9889a38a12405c3c4053372c0e84da6": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "c0eb559da03587a6f377a4d8322d404f4490438c4814b039a473df31b599af01": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "c2225e894f206c1a2924bbf6787d5ca0bbf34f307bea5d9d181366e54d4b45f9": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": true,
+  "string_literal_escaping": true
+ },
+ "c23baa4d5d68399fbac00a17abd9793dbd864c19597b2d62e1d9951e4216036d": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": true
+ },
+ "c263cb71a291dd0ad7ad654d749680b8ce9946b0c540711491e07dd367070f8a": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "c476f3751c80efde8c75533a387fda3e5178f813abb4a885a59629499bde8bcc": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "c669b6c92cbc2fac3226017c25a15d592252bf1dedb29adcb012d1c0cc86d9e0": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "c862ad7b9a9a2918783be3b54df23637bc3b36d2ff69e23501efac5f191a0769": {
+  "encode_content_falls_back_to_chunked_when_none": false,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "c917bead8d9c15799e49d95b57f29273d4f6db9c1a17100fcac14c037f48e2d5": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "c9811cfdcd3eb157af2a7a0fe61030bbfbf8f8552121e60670dbaf7bc5dd54e9": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "ca82781b9e36217876bd2c1449610793cccc47952947d7539badde700059196a": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "d0270a5d85925fcae413f9804b73c5f4340daaf5ef38867e9b565c26c18cafc8": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "d60b1d990323a4e61277a6207b41e9bbc25d37b75128a3fb18e9c65eb86bb4fa": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "d69220fd7641bb2260c14764c44fbf4cc0b217efe1a607eb92dd7f542381ac9e": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "dbd066413c8e9945f9e8c8d962fba7208f4eb86e7f614e1a87805754e7c31df2": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "dc13a56dfd3d9395c43bc443335899457396157448c0e484dc3c4666b2277855": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "dd5a10a6fc66409cb7401e8880aab9d8db0bb1284858834d4769edf0ae0df901": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": false,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "dd94dd27f1ed7e7ca1d16ea377762170c64c7c0277569145826adb6d5edede4d": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": true
+ },
+ "e2b9aa5c9bdc7bb1cba9caebdd846a2d4afad37f9bfc9192805841ac8d565402": {
+  "encode_content_falls_back_to_chunked_when_none": false,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "e5bb8bf6cff7d9d068dd715e1c1d3a05ea2d8b1b93ad9de404f18469a56d9540": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ },
+ "e629d0b6c01c2db436b20f9421192d70236c30b4014a840de3fa9c3028d360ac": {
+  "four_oh_four_fallback": true,
+  "on_async_constraint_error": true,
+  "on_bad_url": true,
+  "on_max_param_length": true,
+  "route_handler": true
+ },
+ "e7722cb51cf3af0f16c72abb1713590aa2ab190ab0b780e01e7dafb1d9112455": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "e7fb5d13b051dbb20cc1ca0f61604e866f46b539bf2870c9f98ef97c7e24bff6": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "e918e6edab9fa95b65120ba9cb9b61e7d7e58a9c1849591de7e8d49b2416c234": {
+  "encode_content_falls_back_to_chunked_when_none": true,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": true
+ },
+ "ea09113aca4b877ad503efdd8c4d9a4a075eb325738258f06142648141238500": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "ea3d51f91b7a601782c24e312925ad53a017ad8cdfa26ccb7cecb9f9b08b55c3": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "eb34baa1957ecf3be830b7bfe9aea8eace0401fa1635366d26fd308b254e4016": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "ed0df4c561ed9b29856f15ff67524438f454ec3283d5bb56a92443fadc4069f8": {
+  "annotation_character_member": true,
+  "annotationspec_get_reaches_it": true,
+  "codewriter_dollar_s": false,
+  "string_literal_escaping": true
+ },
+ "ed4598173acd7798796fe07437f06ec1146f8e6056145c2e7023115243710663": {
+  "encode_content_falls_back_to_chunked_when_none": false,
+  "encode_content_uses_length": true,
+  "filefield_get_length": true,
+  "multipart_get_content_length_propagates_none": false
+ },
+ "ef08aa48565566cdb3946dfe15f2de84bd41ee944e0334851f473af29aaac3e4": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "f0f171b4824c97c4dfd4e651b57f589205cb708ea542dad9a5f44bc278947988": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "f159cede7931d6c89feb4e7267e0a64de65bc22373d6596be131e64b48dd6424": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "f1d29ff83fd2391beb6ac8ee7a02b767a543550ba0fd0b3142b04e6f60a7e1a0": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "f42491904739f655bf2f8b5be596435bdd76ed9ff206296be6ca58e8badfead1": {
+  "merge_in_config": true,
+  "read_in_config": true,
+  "unmarshal_reader": true,
+  "unsupported_config_error": true,
+  "write_config_to": true
+ },
+ "f79c756e0566a72d37ec982a5983398c5a599bdc0b104fc5a9ca39b1abf5f684": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "f957ca9add8f677c71e2a2b5202865e53c64887efc1df4e16977eb350d5ef0df": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "fb0a404fccf0428e908ed95410d1c25c9164d6274fef0deec4b036a7ea1f71d0": {
+  "fieldspec_emit": true,
+  "methodspec_emit": true,
+  "parameterspec_emit_via_overload": true,
+  "single_argument_overload": true,
+  "typespec_emit": true
+ },
+ "fcdc25eae997a0cbe854d63d1214ef2b696c939c8a6198476cef6428427146c6": {
+  "datafield_init": true,
+  "encode_urlencoded_data": true,
+  "queryparams_add": true,
+  "queryparams_init": true,
+  "queryparams_set": true
+ },
+ "fd4d7ecc538ee8c365681bbeb379e33e06d235971cb2892876e9e9efd86cb810": {
+  "not_found_error_handler": true,
+  "root_instance_error_handler": true,
+  "route_level_error_handler": true,
+  "set_error_handler": true
+ },
+ "ffcecdf767e975fdcaf49549fe6b576eb9807990f3cf8457bb109ffebcaaa171": {
+  "bind_env_default_name": true,
+  "env_prefix_uppercase_effect": true,
+  "find_automatic_env": true,
+  "is_path_shadowed_in_auto_env": true
+ }
+}
