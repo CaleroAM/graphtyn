@@ -1,0 +1,96 @@
+{
+ "tasks": [
+  {
+   "id": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "request": "Si cambio getLevelValue en winston (lib/winston/logger.js), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "get_highest_log_level_uses_it_for_logger_and_each_transport",
+     "any": [
+      "getHighestLogLevel",
+      "logger.js:162",
+      "logger.js:170"
+     ]
+    },
+    {
+     "id": "get_highest_log_level_skips_null_transport_levels_in_reduce",
+     "any": [
+      "levelValue !== null",
+      "reduce",
+      "logger.js:171"
+     ]
+    },
+    {
+     "id": "is_level_enabled_returns_false_when_given_level_unknown",
+     "any": [
+      "isLevelEnabled",
+      "logger.js:176",
+      "givenLevelValue === null"
+     ]
+    },
+    {
+     "id": "is_level_enabled_returns_false_when_configured_level_unknown",
+     "any": [
+      "configuredLevelValue === null",
+      "logger.js:181",
+      "logger.js:182"
+     ]
+    },
+    {
+     "id": "transport_without_level_falls_back_to_configured_level",
+     "any": [
+      "transportLevelValue = configuredLevelValue",
+      "logger.js:191",
+      "logger.js:193"
+     ]
+    },
+    {
+     "id": "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled",
+     "any": [
+      "create-logger.js:99",
+      "isInfoEnabled",
+      "isLevelEnabledFunctionName",
+      "DerivedLogger"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "request": "Si cambio ExceptionHandler.getAllInfo en winston (lib/winston/exception-handler.js), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "uncaught_exception_handler_builds_info",
+     "any": [
+      "_uncaughtException",
+      "exception-handler.js:167"
+     ]
+    },
+    {
+     "id": "info_is_logged_through_logger_log",
+     "any": [
+      "this.logger.log(info)",
+      "exception-handler.js:220"
+     ]
+    },
+    {
+     "id": "uncaught_exception_is_bound_as_process_catcher",
+     "any": [
+      "this.catcher",
+      "exception-handler.js:50",
+      "process.on('uncaughtException'",
+      "uncaughtException"
+     ]
+    },
+    {
+     "id": "handler_test_calls_get_all_info",
+     "any": [
+      "handler-tests.js:52",
+      "test/helpers/handler-tests.js",
+      "handler-tests"
+     ]
+    }
+   ]
+  }
+ ]
+}

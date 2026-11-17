@@ -1,0 +1,116 @@
+{
+ "tasks": [
+  {
+   "id": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "request": "Si cambio is_aware en marshmallow (src/marshmallow/utils.py), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "naive_datetime_deserialize",
+     "any": [
+      "NaiveDateTime._deserialize",
+      "NaiveDateTime",
+      "fields.py:1372"
+     ]
+    },
+    {
+     "id": "naive_rejects_aware_without_timezone_else_converts_to_naive",
+     "any": [
+      "invalid_awareness",
+      "astimezone",
+      "fields.py:1374",
+      "fields.py:1379"
+     ]
+    },
+    {
+     "id": "aware_datetime_deserialize",
+     "any": [
+      "AwareDateTime._deserialize",
+      "AwareDateTime",
+      "fields.py:1409"
+     ]
+    },
+    {
+     "id": "aware_rejects_naive_without_default_timezone_else_sets_it",
+     "any": [
+      "default_timezone",
+      "replace(tzinfo=self.default_timezone)",
+      "fields.py:1416"
+     ]
+    },
+    {
+     "id": "timestamp_treats_naive_as_utc",
+     "any": [
+      "utils.timestamp",
+      "timestamp(",
+      "utils.py:67",
+      "dt.UTC"
+     ]
+    },
+    {
+     "id": "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly",
+     "any": [
+      "timestamp_ms",
+      "fields.py:1321",
+      "fields.py:1322",
+      "SERIALIZATION_FUNCS"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "request": "Si cambio callable_or_raise en marshmallow (src/marshmallow/utils.py), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "method_bind_to_schema",
+     "any": [
+      "Method._bind_to_schema",
+      "fields.py:2027",
+      "fields.py:2032"
+     ]
+    },
+    {
+     "id": "method_raises_type_error_when_schema_attribute_not_callable",
+     "any": [
+      "TypeError",
+      "getattr(parent"
+     ]
+    },
+    {
+     "id": "method_stored_callable_is_called_in_serialize_deserialize",
+     "any": [
+      "Method._serialize",
+      "Method._deserialize",
+      "fields.py:2040",
+      "fields.py:2045"
+     ]
+    },
+    {
+     "id": "function_init",
+     "any": [
+      "Function.__init__",
+      "fields.py:2090",
+      "fields.py:2091"
+     ]
+    },
+    {
+     "id": "function_skips_check_when_serialize_or_deserialize_not_given",
+     "any": [
+      "serialize and",
+      "deserialize and",
+      "None"
+     ]
+    },
+    {
+     "id": "function_stored_callable_is_called_in_serialize_deserialize",
+     "any": [
+      "Function._serialize",
+      "Function._deserialize",
+      "fields.py:2094",
+      "fields.py:2098"
+     ]
+    }
+   ]
+  }
+ ]
+}

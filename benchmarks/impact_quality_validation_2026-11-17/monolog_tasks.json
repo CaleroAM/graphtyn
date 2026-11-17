@@ -1,0 +1,95 @@
+{
+ "tasks": [
+  {
+   "id": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "request": "Si cambio Utils::unwrapFormatter en monolog (src/Monolog/Utils.php), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "elastica_handler_set_formatter",
+     "any": [
+      "ElasticaHandler::setFormatter",
+      "ElasticaHandler.php:93",
+      "ElasticaHandler"
+     ]
+    },
+    {
+     "id": "elasticsearch_handler_set_formatter",
+     "any": [
+      "ElasticsearchHandler::setFormatter",
+      "ElasticsearchHandler.php:118",
+      "ElasticsearchHandler"
+     ]
+    },
+    {
+     "id": "flowdock_handler_set_formatter",
+     "any": [
+      "FlowdockHandler::setFormatter",
+      "FlowdockHandler.php:71",
+      "FlowdockHandler"
+     ]
+    },
+    {
+     "id": "other_formatter_throws_invalid_argument_exception",
+     "any": [
+      "InvalidArgumentException"
+     ]
+    },
+    {
+     "id": "wrapped_formatter_is_accepted_after_unwrapping",
+     "any": [
+      "WrappingFormatterInterface",
+      "getWrappedFormatter",
+      "RedactingFormatter",
+      "wrapped"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "request": "Si cambio Utils::canonicalizePath en monolog (src/Monolog/Utils.php), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "stream_handler_constructor",
+     "any": [
+      "StreamHandler::__construct",
+      "StreamHandler.php:75"
+     ]
+    },
+    {
+     "id": "stream_url_is_opened_on_write",
+     "any": [
+      "StreamHandler::write",
+      "StreamHandler.php:147",
+      "fopen",
+      "$this->url"
+     ]
+    },
+    {
+     "id": "rotating_file_handler_constructor",
+     "any": [
+      "RotatingFileHandler::__construct",
+      "RotatingFileHandler.php:51"
+     ]
+    },
+    {
+     "id": "rotating_filename_drives_timed_filename_and_rotation_glob",
+     "any": [
+      "getTimedFilename",
+      "getGlobPattern",
+      "rotate",
+      "RotatingFileHandler.php:177",
+      "RotatingFileHandler.php:330"
+     ]
+    },
+    {
+     "id": "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again",
+     "any": [
+      "parent::__construct",
+      "RotatingFileHandler.php:56"
+     ]
+    }
+   ]
+  }
+ ]
+}

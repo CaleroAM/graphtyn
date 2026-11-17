@@ -1,0 +1,81 @@
+{
+ "tasks": [
+  {
+   "id": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "request": "Si cambio getPackageName en logrus (entry.go), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "get_caller_caches_logrus_package_once",
+     "any": [
+      "getCaller",
+      "entry.go:247",
+      "logrusPackage",
+      "callerInitOnce"
+     ]
+    },
+    {
+     "id": "get_caller_returns_first_frame_outside_logrus_package",
+     "any": [
+      "entry.go:261",
+      "pkg != logrusPackage",
+      "entry.go:264"
+     ]
+    },
+    {
+     "id": "entry_log_sets_caller_when_report_caller",
+     "any": [
+      "Entry.log",
+      "entry.go:330",
+      "ReportCaller",
+      "reportCaller"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "request": "Si cambio prefixFieldClashes en logrus (formatter.go), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "json_formatter_format",
+     "any": [
+      "JSONFormatter.Format",
+      "json_formatter.go:91"
+     ]
+    },
+    {
+     "id": "text_formatter_format",
+     "any": [
+      "TextFormatter.Format",
+      "text_formatter.go:154"
+     ]
+    },
+    {
+     "id": "text_formatter_collects_keys_after_prefixing_and_prints_them",
+     "any": [
+      "printPlain",
+      "printColored",
+      "text_formatter.go:155",
+      "keys"
+     ]
+    },
+    {
+     "id": "json_data_key_nests_user_fields_before_the_call",
+     "any": [
+      "DataKey",
+      "json_formatter.go:85",
+      "newData"
+     ]
+    },
+    {
+     "id": "has_caller_from_entry_caller_enables_func_file_prefixing",
+     "any": [
+      "hasCaller",
+      "caller != nil",
+      "entry.Caller"
+     ]
+    }
+   ]
+  }
+ ]
+}

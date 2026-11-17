@@ -1,0 +1,33 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada de la calidad de los paquetes de impacto con pocos tokens (rama exp/impact-quality-lowtoken a41fcb6) frente a main (PR #68) y c213b37, con tareas y repositorios nuevos.",
+ "repository": {
+  "name": "marshmallow-code/marshmallow",
+  "url": "https://github.com/marshmallow-code/marshmallow",
+  "commit": "777ff66039fd939fc509226a33586bc3209df301"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "Q_MARSHMALLOW_IS_AWARE_IMPACT"
+  ],
+  "arms": {
+   "graphtyn": "Graphtyn main 7ab006a (PR #68), c213b37 o a41fcb6, según el directorio de salida; MCP lean, regla targeted"
+  },
+  "repetitions": 3,
+  "order": "contrabalanceado por repetición entre los tres brazos",
+  "stop_rule": "targeted",
+  "grading": "Tres jueces sin herramientas por hecho: Gemini, GPT y Claude como desempate. Medida principal: mayoría de tres."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio; sin skill, hook ni instrucciones de proyecto.",
+ "independence": "Repositorios y tareas nuevos: ninguno se usó antes en benchmarks, en el gate, en las tareas held-out de Fable ni para ajustar Graphtyn. Rúbricas escritas leyendo el código con grep, sin Graphtyn y sin ver paquetes de ninguna rama, y congeladas en git antes de la primera sesión. La implementación a41fcb6 ya existía; su autor no vio estas tareas.",
+ "success_criterion": "Hechos de a41fcb6 ≥ los de main; ninguna tarea más de un hecho por debajo de main; mediana de tokens de a41fcb6 ≤ la de main."
+}
