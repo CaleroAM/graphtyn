@@ -1,0 +1,34 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada de la reducción de tokens en paquetes de impacto (propuestas de Fable sobre fix/impact-test-crowding) con tareas y repositorios nuevos.",
+ "repository": {
+  "name": "encode/httpx",
+  "url": "https://github.com/encode/httpx",
+  "commit": "7cff5f79bc78649bbcd3fd9aa7a74c86e0f63016"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT"
+  ],
+  "arms": {
+   "baseline": "sin grafo ni MCP",
+   "graphtyn": "Graphtyn fix (7ae4c27, rama del PR #68) o tokens (rama nueva sobre el PR #68), según el directorio de salida; MCP lean, regla targeted"
+  },
+  "repetitions": 3,
+  "order": "contrabalanceado por repetición entre los tres brazos",
+  "stop_rule": "targeted",
+  "grading": "Tres jueces sin herramientas por hecho: Gemini, GPT y Claude como desempate. Medida principal: mayoría de tres."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio; sin skill, hook ni instrucciones de proyecto.",
+ "independence": "Repositorios y tareas nuevos: ninguno se usó antes en benchmarks, en el gate ni para ajustar Graphtyn. Rúbricas escritas leyendo el código con grep, sin Graphtyn, y congeladas en git antes del primer commit de implementación. Objetivos elegidos por tener entre 2 y 6 consumidores de producción.",
+ "success_criterion": "Hechos de la rama nueva ≥ los de 7ae4c27 y a no más de 2 del brazo sin grafo; mediana de tokens ≤ 36k; ninguna tarea por debajo de 7ae4c27 en más de un hecho."
+}

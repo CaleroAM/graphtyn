@@ -1,0 +1,89 @@
+{
+ "tasks": [
+  {
+   "id": "V1_ECHO_NOCONTENT_IMPACT",
+   "request": "Si cambio Context.NoContent en echo (context.go), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "default_error_handler",
+     "any": [
+      "DefaultHTTPErrorHandler",
+      "echo.go:503"
+     ]
+    },
+    {
+     "id": "problem_details",
+     "any": [
+      "ProblemDetailsHTTPErrorHandler",
+      "rfc9457.go:125"
+     ]
+    },
+    {
+     "id": "options_handler",
+     "any": [
+      "optionsMethodHandler",
+      "router.go:909"
+     ]
+    },
+    {
+     "id": "cors_preflight",
+     "any": [
+      "cors.go:285",
+      "cors.go:237",
+      "CORS",
+      "preflight"
+     ]
+    },
+    {
+     "id": "write_header",
+     "any": [
+      "WriteHeader",
+      "return nil"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V1_ECHO_REDIRECT_IMPACT",
+   "request": "Si cambio Context.Redirect en echo (context.go), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "static_directory",
+     "any": [
+      "StaticDirectoryHandler",
+      "echo.go:699"
+     ]
+    },
+    {
+     "id": "redirect_middleware",
+     "any": [
+      "RedirectConfig",
+      "redirect.go:160"
+     ]
+    },
+    {
+     "id": "add_trailing_slash",
+     "any": [
+      "AddTrailingSlash",
+      "slash.go:69"
+     ]
+    },
+    {
+     "id": "remove_trailing_slash",
+     "any": [
+      "RemoveTrailingSlash",
+      "slash.go:138"
+     ]
+    },
+    {
+     "id": "invalid_code",
+     "any": [
+      "ErrInvalidRedirectCode",
+      "300",
+      "308"
+     ]
+    }
+   ]
+  }
+ ]
+}

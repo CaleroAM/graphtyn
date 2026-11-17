@@ -23,6 +23,26 @@ compatibles con PEP 440.
 
 ### Corregido
 
+- **Paquetes de impacto: los tests ya no desplazan a los consumidores de producción.** Si el
+  objetivo es código de producción y la petición no pregunta por tests, los usos desde archivos de
+  test pasan a ser recuentos por archivo (`direct_consumers.test_consumers`). `answer_checks` nombra
+  solo consumidores de producción. Antes, en jsoup `Element.select`, todas las filas eran métodos de
+  test, y Codex respondió con ellas en las tres repeticiones (0/15).
+- **Un paquete que depende de usos textuales ya no se declara completo.** Si hay `text_references`
+  de producción, el paquete devuelve `missing=["verify_text_references"]` en vez de
+  `do_not_expand=true`, y pide confirmar solo esas filas.
+- **El escáner de usos textuales atribuye mejor y mete menos ruido:**
+  - el dueño de un uso es el símbolo más interno que contiene la línea, no el más cercano por
+    encima;
+  - la línea que define un homónimo y a la vez llama al objetivo cuenta como uso (Koa:
+    `const onerror = (err) => ctx.onerror(err)` dentro de `handleRequest`);
+  - las aristas `contiene` ya no cuentan como consumidores resueltos;
+  - no cuentan como usos las rutas de paquete (`org.jsoup.select.Elements`), los comentarios de
+    bloque ni los nombres entre comillas.
+- Validado con 8 tareas de impacto nuevas en requests, axios, commons-lang y echo (72 sesiones de
+  Codex, mayoría de tres jueces). Graphtyn sube de 102 a 112 hechos de 117; sin grafo se llega a 115.
+  La mediana de tokens sube de 31k a 47k, todavía un 29 % por debajo de no usar grafo
+  (`benchmarks/impact_fix_validation_2026-11-15/report.md`).
 - La indexación ya no recorre todo el árbol para saber qué analizadores de tipos aplican: usa las
   extensiones de los archivos indexados. En un home recorría 1,15 millones de archivos y tardaba
   38 de los 40 s de la indexación. En un proyecto normal tampoco recorre ya `node_modules` ni los

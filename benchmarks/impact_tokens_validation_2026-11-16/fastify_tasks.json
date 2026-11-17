@@ -1,0 +1,81 @@
+{
+ "tasks": [
+  {
+   "id": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "request": "Si cambio buildErrorHandler en fastify (lib/error-handler.js), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "root_instance_error_handler",
+     "any": [
+      "fastify.js:178",
+      "kErrorHandler]: buildErrorHandler()"
+     ]
+    },
+    {
+     "id": "set_error_handler",
+     "any": [
+      "setErrorHandler",
+      "fastify.js:812"
+     ]
+    },
+    {
+     "id": "route_level_error_handler",
+     "any": [
+      "route.js:383",
+      "opts.errorHandler",
+      "addNewRoute"
+     ]
+    },
+    {
+     "id": "not_found_error_handler",
+     "any": [
+      "_setNotFoundHandler",
+      "four-oh-four.js:145"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "request": "Si cambio createChildLogger en fastify (lib/logger-factory.js), ¿qué se rompe? Enumera los consumidores directos con evidencia archivo:línea.",
+   "rubric": [
+    {
+     "id": "route_handler",
+     "any": [
+      "routeHandler",
+      "route.js:485"
+     ]
+    },
+    {
+     "id": "four_oh_four_fallback",
+     "any": [
+      "fourOhFourFallBack",
+      "four-oh-four.js:167"
+     ]
+    },
+    {
+     "id": "on_bad_url",
+     "any": [
+      "onBadUrl",
+      "fastify.js:681"
+     ]
+    },
+    {
+     "id": "on_max_param_length",
+     "any": [
+      "onMaxParamLength",
+      "fastify.js:706"
+     ]
+    },
+    {
+     "id": "on_async_constraint_error",
+     "any": [
+      "onAsyncConstraintError",
+      "buildAsyncConstraintCallback",
+      "fastify.js:734"
+     ]
+    }
+   ]
+  }
+ ]
+}

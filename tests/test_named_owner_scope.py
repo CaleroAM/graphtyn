@@ -21,8 +21,11 @@ def test_the_named_owner_keeps_its_member_and_what_implements_it():
 
 
 def test_member_calls_come_before_prose_mentions():
-    references = [["doc", "a.rs:1", False], ["run", "b.rs:2", True], ["log", "c.rs:3", False]]
-    assert _calls_first(references) == [["run", "b.rs:2"], ["doc", "a.rs:1"], ["log", "c.rs:3"]]
+    # Rank: 0 member call, 1 bare call, 2 other mention; production code before tests.
+    references = [["doc", "a.rs:1", 2], ["run", "b.rs:2", 0], ["log", "c.rs:3", 2], ["probe", "tests/t.rs:4", 0],
+                  ["make", "d.rs:5", 1]]
+    assert _calls_first(references) == [["run", "b.rs:2"], ["make", "d.rs:5"], ["doc", "a.rs:1"], ["log", "c.rs:3"],
+                                        ["probe", "tests/t.rs:4"]]
 
 
 def test_a_field_of_a_generic_type_takes_the_bound():

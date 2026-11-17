@@ -1,0 +1,2986 @@
+{
+ "summary": {
+  "codex/fix/baseline": {
+   "runs": 24,
+   "facts": 108,
+   "tokens": 1495754,
+   "literal": 81,
+   "gemini": 103,
+   "gpt": 104,
+   "consensus": 102,
+   "majority": 103
+  },
+  "codex/fix/graphtyn": {
+   "runs": 24,
+   "facts": 108,
+   "tokens": 1259236,
+   "literal": 105,
+   "gemini": 105,
+   "gpt": 106,
+   "consensus": 105,
+   "majority": 105
+  },
+  "codex/tokens": {
+   "runs": 24,
+   "facts": 108,
+   "tokens": 873457,
+   "literal": 104,
+   "gemini": 100,
+   "gpt": 100,
+   "consensus": 99,
+   "majority": 99
+  }
+ },
+ "kappa": {
+  "judges": 0.79,
+  "literal_consensus": 0.212
+ },
+ "runs": [
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 1,
+   "tokens": 47489,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": false
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 2,
+   "tokens": 62540,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": false
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 3,
+   "tokens": 62958,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": false
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 1,
+   "tokens": 156393,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 2,
+   "tokens": 60961,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 3,
+   "tokens": 63223,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": false,
+    "not_found_error_handler": true
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 1,
+   "tokens": 70249,
+   "literal": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 2,
+   "tokens": 62620,
+   "literal": {
+    "route_handler": false,
+    "four_oh_four_fallback": false,
+    "on_bad_url": false,
+    "on_max_param_length": false,
+    "on_async_constraint_error": false
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 3,
+   "tokens": 54672,
+   "literal": {
+    "route_handler": true,
+    "four_oh_four_fallback": false,
+    "on_bad_url": false,
+    "on_max_param_length": false,
+    "on_async_constraint_error": false
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 1,
+   "tokens": 62922,
+   "literal": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 2,
+   "tokens": 75297,
+   "literal": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 3,
+   "tokens": 46101,
+   "literal": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 1,
+   "tokens": 62455,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 2,
+   "tokens": 58183,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "tiebreak": {
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "encode_content_uses_length": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   }
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 3,
+   "tokens": 65140,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 1,
+   "tokens": 81549,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 2,
+   "tokens": 68334,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 3,
+   "tokens": 41635,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 1,
+   "tokens": 86199,
+   "literal": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 2,
+   "tokens": 126323,
+   "literal": {
+    "queryparams_init": false,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": false
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 3,
+   "tokens": 108783,
+   "literal": {
+    "queryparams_init": false,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": false
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 1,
+   "tokens": 56300,
+   "literal": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 2,
+   "tokens": 43306,
+   "literal": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 3,
+   "tokens": 42500,
+   "literal": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 1,
+   "tokens": 40724,
+   "literal": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": false
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": false
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": false
+   },
+   "tiebreak": {
+    "annotation_character_member": true,
+    "annotationspec_get_reaches_it": false,
+    "codewriter_dollar_s": false,
+    "string_literal_escaping": true
+   }
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 2,
+   "tokens": 44351,
+   "literal": {
+    "annotation_character_member": false,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 3,
+   "tokens": 57048,
+   "literal": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 1,
+   "tokens": 56271,
+   "literal": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 2,
+   "tokens": 57704,
+   "literal": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 3,
+   "tokens": 42706,
+   "literal": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "tiebreak": {
+    "annotation_character_member": true,
+    "annotationspec_get_reaches_it": true,
+    "codewriter_dollar_s": false,
+    "string_literal_escaping": true
+   }
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 1,
+   "tokens": 26149,
+   "literal": {
+    "single_argument_overload": false,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 2,
+   "tokens": 25840,
+   "literal": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 3,
+   "tokens": 47318,
+   "literal": {
+    "single_argument_overload": false,
+    "fieldspec_emit": false,
+    "methodspec_emit": false,
+    "typespec_emit": false,
+    "parameterspec_emit_via_overload": false
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 1,
+   "tokens": 42831,
+   "literal": {
+    "single_argument_overload": false,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 2,
+   "tokens": 42739,
+   "literal": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 3,
+   "tokens": 43420,
+   "literal": {
+    "single_argument_overload": false,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 1,
+   "tokens": 73149,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 2,
+   "tokens": 63866,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 3,
+   "tokens": 55368,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 1,
+   "tokens": 29139,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 2,
+   "tokens": 29194,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 3,
+   "tokens": 29376,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 1,
+   "tokens": 55022,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 2,
+   "tokens": 71680,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "baseline",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 3,
+   "tokens": 67628,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": false
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": false
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": false
+   },
+   "tiebreak": {
+    "bind_env_default_name": true,
+    "env_prefix_uppercase_effect": false,
+    "find_automatic_env": true,
+    "is_path_shadowed_in_auto_env": true
+   }
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 1,
+   "tokens": 29316,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 2,
+   "tokens": 29387,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/fix",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 3,
+   "tokens": 28632,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 1,
+   "tokens": 43645,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 2,
+   "tokens": 44780,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_BUILD_ERROR_HANDLER_IMPACT",
+   "repetition": 3,
+   "tokens": 56917,
+   "literal": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gemini": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "gpt": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "consensus": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "majority": {
+    "root_instance_error_handler": true,
+    "set_error_handler": true,
+    "route_level_error_handler": true,
+    "not_found_error_handler": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 1,
+   "tokens": 43932,
+   "literal": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 2,
+   "tokens": 43631,
+   "literal": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_FASTIFY_CREATE_CHILD_LOGGER_IMPACT",
+   "repetition": 3,
+   "tokens": 72406,
+   "literal": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gemini": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "gpt": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "consensus": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "majority": {
+    "route_handler": true,
+    "four_oh_four_fallback": true,
+    "on_bad_url": true,
+    "on_max_param_length": true,
+    "on_async_constraint_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 1,
+   "tokens": 29426,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 2,
+   "tokens": 28937,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": true
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PEEK_FILELIKE_LENGTH_IMPACT",
+   "repetition": 3,
+   "tokens": 29028,
+   "literal": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "gemini": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "gpt": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "consensus": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "majority": {
+    "encode_content_uses_length": true,
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   },
+   "tiebreak": {
+    "encode_content_falls_back_to_chunked_when_none": false,
+    "encode_content_uses_length": true,
+    "filefield_get_length": true,
+    "multipart_get_content_length_propagates_none": false
+   }
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 1,
+   "tokens": 29435,
+   "literal": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 2,
+   "tokens": 29965,
+   "literal": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_HTTPX_PRIMITIVE_VALUE_TO_STR_IMPACT",
+   "repetition": 3,
+   "tokens": 29285,
+   "literal": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gemini": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "gpt": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "consensus": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "majority": {
+    "queryparams_init": true,
+    "queryparams_set": true,
+    "queryparams_add": true,
+    "datafield_init": true,
+    "encode_urlencoded_data": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 1,
+   "tokens": 29588,
+   "literal": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 2,
+   "tokens": 29173,
+   "literal": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_CHAR_LITERAL_IMPACT",
+   "repetition": 3,
+   "tokens": 29809,
+   "literal": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "gemini": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "gpt": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": true,
+    "annotationspec_get_reaches_it": true
+   },
+   "consensus": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "majority": {
+    "annotation_character_member": true,
+    "string_literal_escaping": true,
+    "codewriter_dollar_s": false,
+    "annotationspec_get_reaches_it": true
+   },
+   "tiebreak": {
+    "annotation_character_member": true,
+    "annotationspec_get_reaches_it": true,
+    "codewriter_dollar_s": false,
+    "string_literal_escaping": true
+   }
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 1,
+   "tokens": 42570,
+   "literal": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 2,
+   "tokens": 43278,
+   "literal": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_JAVAPOET_EMIT_MODIFIERS_IMPACT",
+   "repetition": 3,
+   "tokens": 43632,
+   "literal": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gemini": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "gpt": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "consensus": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "majority": {
+    "single_argument_overload": true,
+    "fieldspec_emit": true,
+    "methodspec_emit": true,
+    "typespec_emit": true,
+    "parameterspec_emit_via_overload": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 1,
+   "tokens": 29170,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 2,
+   "tokens": 29270,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_GET_CONFIG_TYPE_IMPACT",
+   "repetition": 3,
+   "tokens": 29220,
+   "literal": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gemini": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "gpt": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "consensus": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "majority": {
+    "read_in_config": true,
+    "merge_in_config": true,
+    "write_config_to": true,
+    "unmarshal_reader": true,
+    "unsupported_config_error": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 1,
+   "tokens": 28897,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 2,
+   "tokens": 28727,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "V2_VIPER_MERGE_WITH_ENV_PREFIX_IMPACT",
+   "repetition": 3,
+   "tokens": 28736,
+   "literal": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gemini": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "gpt": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "consensus": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "majority": {
+    "is_path_shadowed_in_auto_env": true,
+    "bind_env_default_name": true,
+    "find_automatic_env": true,
+    "env_prefix_uppercase_effect": true
+   },
+   "tiebreak": null
+  }
+ ]
+}

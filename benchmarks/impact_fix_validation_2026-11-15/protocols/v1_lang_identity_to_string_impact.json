@@ -1,0 +1,37 @@
+{
+ "schema_version": "1.0",
+ "status": "AUTHORIZED_EXECUTION",
+ "purpose": "Validación preregistrada de la corrección de paquetes de impacto (tests separados de producción; usos textuales no dan completitud) con tareas y repositorios nuevos.",
+ "repository": {
+  "name": "apache/commons-lang",
+  "url": "https://github.com/apache/commons-lang",
+  "commit": "8fb5908762d48add7c2666dab9daffd1a63a6f97"
+ },
+ "design": {
+  "clients": [
+   "codex"
+  ],
+  "tasks": [
+   "V1_LANG_IDENTITY_TO_STRING_IMPACT"
+  ],
+  "arms": {
+   "baseline": "sin grafo ni MCP",
+   "graphtyn": "Graphtyn antes (f566ac4, el mismo binario de la comparación del 15-11; main 2ce9146 no cambia la recuperación) o después (rama fix/impact-test-crowding), según el directorio de salida; MCP lean, regla targeted"
+  },
+  "repetitions": 3,
+  "order": "contrabalanceado por repetición",
+  "stop_rule": "targeted",
+  "grading": "Tres jueces sin herramientas por hecho: Gemini, GPT y Claude como desempate. Medida principal: mayoría de tres."
+ },
+ "client_config": {
+  "models": {
+   "codex": "gpt-5.6-luna"
+  }
+ },
+ "isolation": "Cada sesión usa una copia del repositorio y un GRAPHTYN_HOME propio; sin skill, hook ni instrucciones de proyecto.",
+ "independence": "Repositorios y tareas nuevos: ninguno se usó antes en benchmarks, en el gate ni para ajustar Graphtyn. Rúbricas escritas leyendo el código, sin Graphtyn, y congeladas en git antes de ejecutar. Los objetivos se eligieron por tener entre 2 y 6 consumidores de producción, sin mirar paquetes de Graphtyn.",
+ "authorization": {
+  "source": "El usuario aprobó corregir los dos fallos y validarlos con tareas nuevas, sobre todo con Codex (2026-11-15).",
+  "total_token_ceiling": 9000000
+ }
+}
