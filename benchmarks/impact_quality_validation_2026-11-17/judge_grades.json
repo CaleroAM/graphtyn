@@ -1,0 +1,3193 @@
+{
+ "summary": {
+  "codex/main": {
+   "runs": 23,
+   "facts": 114,
+   "tokens": 892021,
+   "literal": 75,
+   "gemini": 56,
+   "gpt": 54,
+   "consensus": 50,
+   "majority": 55
+  },
+  "codex/tokens": {
+   "runs": 24,
+   "facts": 120,
+   "tokens": 743861,
+   "literal": 79,
+   "gemini": 55,
+   "gpt": 54,
+   "consensus": 52,
+   "majority": 53
+  },
+  "codex/final": {
+   "runs": 24,
+   "facts": 120,
+   "tokens": 683418,
+   "literal": 74,
+   "gemini": 64,
+   "gpt": 64,
+   "consensus": 61,
+   "majority": 64
+  }
+ },
+ "kappa": {
+  "judges": 0.881,
+  "literal_consensus": 0.497
+ },
+ "runs": [
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 27975,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "tiebreak": {
+    "entry_log_sets_caller_when_report_caller": false,
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true
+   }
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 2,
+   "tokens": 27857,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "tiebreak": {
+    "entry_log_sets_caller_when_report_caller": true,
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false
+   }
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 3,
+   "tokens": 27867,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "tiebreak": {
+    "entry_log_sets_caller_when_report_caller": true,
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true
+   }
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 1,
+   "tokens": 29675,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": true
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": {
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "json_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "text_formatter_format": true
+   }
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 2,
+   "tokens": 29699,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": true
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": {
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "json_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "text_formatter_format": true
+   }
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 3,
+   "tokens": 29530,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": true
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": {
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "json_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "text_formatter_format": true
+   }
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "repetition": 2,
+   "tokens": 38526,
+   "literal": {
+    "method_bind_to_schema": false,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gemini": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gpt": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "consensus": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "majority": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "tiebreak": {
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false,
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false
+   }
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "repetition": 3,
+   "tokens": 38246,
+   "literal": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gemini": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gpt": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "consensus": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "majority": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "tiebreak": {
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false,
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false
+   }
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 1,
+   "tokens": 38400,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 2,
+   "tokens": 39167,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 3,
+   "tokens": 38479,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 40605,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 2,
+   "tokens": 40374,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 3,
+   "tokens": 40543,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 1,
+   "tokens": 29085,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 2,
+   "tokens": 29493,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 3,
+   "tokens": 29199,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 1,
+   "tokens": 75632,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": false
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 2,
+   "tokens": 78123,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": true
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 3,
+   "tokens": 80036,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": true
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": true,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 1,
+   "tokens": 27814,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 2,
+   "tokens": 27775,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/main",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 3,
+   "tokens": 27921,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 27732,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": false
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "tiebreak": {
+    "entry_log_sets_caller_when_report_caller": true,
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false
+   }
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 2,
+   "tokens": 28274,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 3,
+   "tokens": 27818,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 1,
+   "tokens": 29944,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": true
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 2,
+   "tokens": 29450,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 3,
+   "tokens": 29533,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": true
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "repetition": 1,
+   "tokens": 27401,
+   "literal": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gemini": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gpt": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "consensus": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "majority": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "tiebreak": {
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false,
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false
+   }
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "repetition": 2,
+   "tokens": 27426,
+   "literal": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gemini": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gpt": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "consensus": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "majority": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "tiebreak": {
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false,
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false
+   }
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "repetition": 3,
+   "tokens": 27648,
+   "literal": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gemini": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gpt": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "consensus": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "majority": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 1,
+   "tokens": 27795,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 2,
+   "tokens": 27787,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 3,
+   "tokens": 27835,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 65508,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 2,
+   "tokens": 29092,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 3,
+   "tokens": 52604,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": true,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": true,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": true,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": true,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": {
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": true,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false
+   }
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 1,
+   "tokens": 29251,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 2,
+   "tokens": 29580,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 3,
+   "tokens": 29893,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 1,
+   "tokens": 28188,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": true
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 2,
+   "tokens": 28501,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": true
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "tiebreak": {
+    "handler_test_calls_get_all_info": false,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_handler_builds_info": true,
+    "uncaught_exception_is_bound_as_process_catcher": false
+   }
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 3,
+   "tokens": 28112,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": true
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 1,
+   "tokens": 27928,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 2,
+   "tokens": 28545,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": true,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/tokens",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 3,
+   "tokens": 28016,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": true,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": false,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 1,
+   "tokens": 27794,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 2,
+   "tokens": 27802,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "tiebreak": {
+    "entry_log_sets_caller_when_report_caller": true,
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true
+   }
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_GET_PACKAGE_NAME_IMPACT",
+   "repetition": 3,
+   "tokens": 27726,
+   "literal": {
+    "get_caller_caches_logrus_package_once": true,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gemini": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "gpt": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "consensus": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": false,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "majority": {
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true,
+    "entry_log_sets_caller_when_report_caller": true
+   },
+   "tiebreak": {
+    "entry_log_sets_caller_when_report_caller": true,
+    "get_caller_caches_logrus_package_once": false,
+    "get_caller_returns_first_frame_outside_logrus_package": true
+   }
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 1,
+   "tokens": 29482,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 2,
+   "tokens": 29785,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_LOGRUS_PREFIX_FIELD_CLASHES_IMPACT",
+   "repetition": 3,
+   "tokens": 29870,
+   "literal": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": true
+   },
+   "gemini": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "gpt": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "consensus": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "majority": {
+    "json_formatter_format": true,
+    "text_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false
+   },
+   "tiebreak": {
+    "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+    "json_data_key_nests_user_fields_before_the_call": false,
+    "json_formatter_format": true,
+    "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+    "text_formatter_format": true
+   }
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "repetition": 1,
+   "tokens": 27677,
+   "literal": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gemini": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gpt": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "consensus": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "majority": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "tiebreak": {
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false,
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": false,
+    "method_stored_callable_is_called_in_serialize_deserialize": false
+   }
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "repetition": 2,
+   "tokens": 27427,
+   "literal": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gemini": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gpt": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "consensus": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "majority": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_CALLABLE_OR_RAISE_IMPACT",
+   "repetition": 3,
+   "tokens": 28303,
+   "literal": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gemini": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "gpt": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "consensus": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "majority": {
+    "method_bind_to_schema": true,
+    "method_raises_type_error_when_schema_attribute_not_callable": true,
+    "method_stored_callable_is_called_in_serialize_deserialize": false,
+    "function_init": true,
+    "function_skips_check_when_serialize_or_deserialize_not_given": false,
+    "function_stored_callable_is_called_in_serialize_deserialize": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 1,
+   "tokens": 28306,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 2,
+   "tokens": 27789,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": false,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MARSHMALLOW_IS_AWARE_IMPACT",
+   "repetition": 3,
+   "tokens": 27932,
+   "literal": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": true
+   },
+   "gemini": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "gpt": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "consensus": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "majority": {
+    "naive_datetime_deserialize": true,
+    "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+    "aware_datetime_deserialize": false,
+    "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+    "timestamp_treats_naive_as_utc": true,
+    "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 1,
+   "tokens": 28607,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 2,
+   "tokens": 28607,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_CANONICALIZE_PATH_IMPACT",
+   "repetition": 3,
+   "tokens": 29004,
+   "literal": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": true,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gemini": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "gpt": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "consensus": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "majority": {
+    "stream_handler_constructor": true,
+    "stream_url_is_opened_on_write": false,
+    "rotating_file_handler_constructor": true,
+    "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+    "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 1,
+   "tokens": 29105,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": false
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 2,
+   "tokens": 29087,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": false
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": false
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": false
+   },
+   "tiebreak": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": false
+   }
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_MONOLOG_UNWRAP_FORMATTER_IMPACT",
+   "repetition": 3,
+   "tokens": 30071,
+   "literal": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gemini": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "gpt": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "consensus": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "majority": {
+    "elastica_handler_set_formatter": true,
+    "elasticsearch_handler_set_formatter": true,
+    "flowdock_handler_set_formatter": true,
+    "other_formatter_throws_invalid_argument_exception": true,
+    "wrapped_formatter_is_accepted_after_unwrapping": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 1,
+   "tokens": 28048,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": true
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 2,
+   "tokens": 28535,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": true
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_ALL_INFO_IMPACT",
+   "repetition": 3,
+   "tokens": 28208,
+   "literal": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": true,
+    "handler_test_calls_get_all_info": true
+   },
+   "gemini": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "gpt": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "consensus": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": false
+   },
+   "majority": {
+    "uncaught_exception_handler_builds_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_is_bound_as_process_catcher": false,
+    "handler_test_calls_get_all_info": true
+   },
+   "tiebreak": {
+    "handler_test_calls_get_all_info": true,
+    "info_is_logged_through_logger_log": false,
+    "uncaught_exception_handler_builds_info": true,
+    "uncaught_exception_is_bound_as_process_catcher": false
+   }
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 1,
+   "tokens": 28084,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 2,
+   "tokens": 28151,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": false,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  },
+  {
+   "variant": "codex/final",
+   "arm": "graphtyn",
+   "task": "Q_WINSTON_GET_LEVEL_VALUE_IMPACT",
+   "repetition": 3,
+   "tokens": 28018,
+   "literal": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": true,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gemini": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "gpt": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "consensus": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "majority": {
+    "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+    "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+    "is_level_enabled_returns_false_when_given_level_unknown": true,
+    "is_level_enabled_returns_false_when_configured_level_unknown": true,
+    "transport_without_level_falls_back_to_configured_level": false,
+    "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false
+   },
+   "tiebreak": null
+  }
+ ]
+}

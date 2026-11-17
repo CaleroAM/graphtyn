@@ -1,0 +1,1126 @@
+{
+ "0071e40ae696c3fcf8023827a8ecbd7139ac0066871b80af43110893638915ac": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": false
+ },
+ "01615a59e98fc3c38d7a50b691b574d9e705c9e982684fd00ce639a3e9c2bd4d": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "04f8adf4b259fa4cbfb6d092225b717ca64fb9b34de5b8381ff75572e9807dc4": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "06a1b04bfadec678ea6207787c1cad67e8e173beb62aa01ade60c30099b8399f": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "0876f041dff075d753ecd2c0a8c9442f67ef1e59a2f887411215fb674e38a0ba": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "0921c0857a3dfe4b8a240fd48f7ebc3233114861edfe6ee947033ba0772df412": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "0a2943610cc220a91fe4e458c309bc64ae3ee30ac9a2a1c06e70e0a00c6bc53e": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "0be4724ac7fe2c98a4fda4bb5cc2dedf1973a16bbf36e328f4ee60e8eccd46a1": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": true,
+  "is_level_enabled_returns_false_when_given_level_unknown": true,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "0cbd0bcdad9a5e20c9c0264d0363b2d81283ee7aa227917aa2996d7f24dad0a4": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": true,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": true
+ },
+ "0d1795c24d2211b174c65e90a1f3ee0bcbf6d843c04d79ec3716bf7093e9cf5c": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "0d9754101e9a0408a8e960b0fbc35a194a500aeaa3925cf28e3e1ac01d0339fd": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "0eaba5424757aa558290d30e0fd930e1d0f340eac3c91159d4a093a0196df470": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "0f757164a8d22c1fee0c748dd02e1beeebf61248a05b6db0b857f77077cbce00": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "0fcba32124dceedfaeb21e2398c2c06d1c27f21fabead7101c33a4f3a8466a98": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "12874de29e9a2988d8c95ff3635ce3a5d4e577020f0844936d9a69fb29508e02": {
+  "entry_log_sets_caller_when_report_caller": false,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "12cb0bb46a777ddc8b0581700aa99f00cb3f960626193fe01fa6ceae9098f91d": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "14ac6d7dd8f47aa8cce2de018eb707bc14399c33746d01eae01e8b995d5b9117": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "17c56a1cda3af5be15c0bf4597c2569313848359efc1d2bff0f17a9e31b40b55": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "1a5542b0abef64b4db748be8d472d3ff089381b8231e916dc54c215f9cea4cea": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "1ad12ef8732faab00a2a4a891accc9ed2e052f9f1edf3766e0f1d0c827ae22b1": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "1c7aadd3ad1e288ae8b6fe7161dc5e8db0de28010b2081c829fd657e7931777e": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "1cba186c079abb6edc414bdf25dee9597000f12733cbfb6c6c4db884124dda01": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "1cc4e26e4e6402b2ba697fb3c458563908ae509a80da16746af1a89f49ca5c43": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": true,
+  "is_level_enabled_returns_false_when_given_level_unknown": true,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "21785571ac2675e7ecdfbfef77c3f252438191fa1caec1dd33966ba0d7859a03": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "283eb016d7d39656d69f4042e08c2f3795870959a243cc1c126ca1e3680b0e01": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+  "text_formatter_format": true
+ },
+ "2ae1dee7e332e90a090061c76323e2321611f8dad7e11f6dfefe9e60b229c482": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "2d7812265185b5f366a18f979ce5835647a4f9d1176f580b48aca825d4588767": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "2f259ad66e87764adee57c591dcceabb2a784cfa640c0e5b5b27495c5a11cf61": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "3092d747a257905ca978cb480631c60575bb8c44f2012404dd6ef7a595e297c4": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "30e462b8904a5bb522aa08d733addfe083264b48159a5ebf67a5fa5198313bd7": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "319d38a7fa834301faa63a9806aa0b3238961a31fad98e808b070eaf8a3e554c": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "31f24e2c1fda678db76407b91d99a205ad636facb48ca6e2aa6b3814a657727c": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "32de1e14f49a18ffe3dc1b5f68273fe1561e4d01bb9f23669690cc00d339cbff": {
+  "entry_log_sets_caller_when_report_caller": false,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "3417230836087164fd541220222c5bf0acdf06a893acc3c4b62a4646f3f52de6": {
+  "entry_log_sets_caller_when_report_caller": false,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "353fc6de61ad53aa9c64af279ac680f8543e8b2f7e9da24d1bc4261a82573245": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "374c952c415f8d96c00d48e5419647d1deafe0ddc4d02ed90bc646d4cb3664cb": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "390f3b46290bbd57a16ee572a5f3ed404206699606bbb55350d2046a50860648": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "39b031e5a293ccdd62f6ab417bee0c7d6b677acaa189a594c6757cdfeb8da78c": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "3a77e838cc37deb33dd7e25047f11e33098abc177ef2ced16946abdca0159c03": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "3a9253c06d1029635e5564ccdf7feed3135e1d82655011c9881f623418330cb1": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "3c6fe2c5860f6fdde8dd25413611ca196079f927a1ab88ac0e4349ce2b9bb349": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+  "text_formatter_format": true
+ },
+ "408027997373a67838476061ca5b76e010c89892b5d37adf8769a303366b3524": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "417aba1dbe90d9771a6d9763c36e9c08fddd2d06ff2b38e91c3be24fce506655": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "426298896d5765aafd290e1b38c493d02dbd20dbea897276de4d2f9445d5b27c": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "42ce13006aad371356f174c088668ad7cf88ad8eba76ca00f6d03bbe320e3663": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "441cea0e469ec074f53e08d99fb00d1d8f223cac3eab35467b03bf68fd80f47a": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "444cb1ee0a5434702c1bff7b00b20d005c6804c3a4617ee147d66f995ab75ce3": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": true,
+  "is_level_enabled_returns_false_when_given_level_unknown": true,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "4452e9de42e1a04f57ba96a78b137569eaf048a57900f5f838688661476fab8a": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "4466f198e57b75c1505aee68ea0ba9ed09600d1c30d098fc84c35f9dcef6c1c4": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "45a60bf7516cc8ed7a544f37ded73b3440db45db3abbdbfad42105c2b10475fb": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "47327bba0281e257a197d72fd5a0670b2e19d661dfcbfcbeca14a4eb597b03bf": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "49ed28a25b3f873b59a21c0356b665f799807ede578e37b7e46f2f30d8f8f934": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "4fc9dab567064ed759a8b05e10efe00f85548e9171076266ba43e44f747332d5": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "500a43469144403e1368128abc06f53cfc439a66564f703662cf011ddd24a2bb": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "500b9c541c7b58ba96a845b16ea5cd2ded392b6eb10d43c4187a0303c662f508": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "508ae4d72193ae11130aad73d47a24e781f2b12910462c55b87ae080da9a818a": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "508dd8cc7cbb581e3b2932b51504a8c8705464b66011ce9966323e405259ac22": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "50dd1a1c357dd1095d565c6396d50032dac5e90db0930fc2f56ab41a76c3f2b5": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "54f0390075bcebfe6f1e2011da98c1f82e74c1bc118b2fbc1c7280dfecaa3c1c": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "55196017cafff6e4326a31e30360a74eb2c5dd72f55d5e4384d7fc46a6434b4d": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "55599e19575b1a5854ea208d5b4ccbb865c799f32f92623c17f8fd9d91b34174": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "5619e44f251ec5461f6104d4ba0b78daf9e1422f16e79f8bdb87e892ff21bd8c": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "570d63cf811ab2177ba74668ced931d325316e402229a88e9573d278a12e8c49": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "5795f0b45aad1563d7511b72473d8cd0068132effab7dcbd2a77edf368ee7bdc": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "57a9dafe3063a62d41cd3401bc861b000830b2de7dcbebac6299ed98abe1f4db": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+  "text_formatter_format": true
+ },
+ "585c33a5628cbe5b8f4992494b426c5cbd6b9ca5bc7d58f670d80b942a3312b1": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "58f21cd86565b742b92991eaa5652d0eec020a69e3b355a393a3207d03b00c03": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "5b00d09ce2e5ae0c548391b42261dbe88a8b3c5f308883aad3b2c362ebff7eb1": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "5cf99fe183c4c8d482654e8725b5f76ccc729624edf57f9855c4db9127396ef6": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "5fd9b7be9b33e01e702a412f8b28b575188735b5d659a8b8df74b84b6295f225": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "60e5d63d61feb22dcc6cbcd6c154dd4c7c93d523db118da000925c52bc426091": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "6116006028e60d02d41a3b671eaf8287993828884062aa20862a7b0cf6bd63d1": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "615b7fd4819498cd725564b45713b170176b9a18c558c23db11d6abac105443f": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": false
+ },
+ "64ec15c0c4edd927d509cce9f805e07aa1dcccce87b5b6ecf434a9a3eb405cc6": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "6514d43b79fefd0bdb79385ee2990623963cc95be95b8ebca1f524ed56658119": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+  "text_formatter_format": true
+ },
+ "66c7f4cbcb0db9be64e45850a3a3f5003bd89245556b842b74c19938c49c9864": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "6745b4fd8232412164156d8e912b7d78130706d7458d3d6e065e5dab7d4d74f2": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "6dc62b031f0700fe7f467035438b57d7ac9156245143ef296268d4e53bb9153d": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "6e2bc3652cdfd7a23dbfdf978a2d6db3c1dab495ca61a7daa3c62ed54f3ee1a9": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "6eaa5e60fa58e23bd7a53b94480b03526b05e59aa3741250d8cc4c8677dcab44": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "6f1191605bb73d1d7208a7bad8cf0063cd61495b9c1743a26f1261f481fc28e1": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": true,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "6f1552a95648d005ed2f6a0d9f818c6b7303815c49e355cd45f2eb7c2ff24f53": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "6f8dd458c7af5cbc716931a6fb08fad6e7b30a70ee985ef6f2e1f8fcf404c738": {
+  "entry_log_sets_caller_when_report_caller": false,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "711ebcf93897c862579c8c31919c0c8df7f3c679c2cb8112a80a1d0413da8317": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "76140b9c53f24055c7ffa702a5782bd9594d827f35fa2d53c483beb266b21b1d": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+  "text_formatter_format": true
+ },
+ "769fabf2460d827b4d1593810cf8209c48a175f2ba6a6c0000efe5450d8ebcc7": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "77dffc2acb724d8abae13cd9fadfe2533f9e27eb37e96fd3ac9d3d775d03fae9": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "7811b984c920f6757a17839723b7d91ec900d21e64fcd1a33fea424ca596f962": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": true,
+  "is_level_enabled_returns_false_when_given_level_unknown": true,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "79efc2dfe343956414cc7f928484f8a025870318555121d5ca33516de104ed91": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "7bacd75d32623e9706120b685fbf3f518ca3e87b50040d7b927e1583eab7ec5b": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "7bf86e5c654e8e12f7ccc2674123c0ba0e17f95d7f91bc5332801d4159d6cd77": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "7c087ed11ffdfe72e2d8234f11b8b848a4078d2f17f98106a220611eac7c3b0c": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "7f608e8cf729d11a919f8fc098ec7e4a85fab7022097315917876c4c1fafcf3d": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "819436c180930af7f86b17716a5aaa1f0282d2e2fb8f99d73205fadb08dcb3f2": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": true,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "83e0c14722715c2685a8c7220e2d0564b1f26290550e802bf98259e81bd5e303": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "84cea009a6dd38fac052c557bd0146622f00e597e99970650379b762e930d176": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "84d9e557bac44fa7ad429b0a0fdaab71dec89e5aec3cd18821c92178b5e1915b": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "854ebd25bca2172eea70326a63463126936d39793630833b26072e66e28e6572": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": true,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "856c3dafd1925373ca3b6a8bd2bcd2e0f9a24c97b86d7da431fcf851f6a9c5b2": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "861602879451aecf2a5111482ae3c337cb467ff6f454c101c18e6f0ea1707424": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "868e808c8f62ff6f67fe99f83ee4f6ec96759b96e91d45e773a4db1123b1afaf": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "8a36d83d45e4b1986508288a4e4fa7b54fa5ff53521f1a63eefcd466d8ca3b1a": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "8b35221fab7b755efe669fd2fe99cac0a2487a29c2b2959b20811ad8af4b35a4": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "8d5708d0a9e8c298298fdc4fe728bb922168edfd709a2149c2cc02ac61f0d12f": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "954d72272f6f10fdcb26ca44aa763850c620a9ab8558c9bd82bb461b66d7146f": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "96ef8dbfe8c9bab3185e14cf63f9717f4d63d31dc8c393eb2a425b3bf4c4ea80": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "975b09ef1555171630e6c38b6a672b4a6d35fcf84a9b01b9dcf3c3a1e3f8104a": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "9a7ba5ecba5afb5e9fd96a567ea8499b21d80dc0e791dba2145d88a8566e6afa": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "9c5a47e9934ce58e9608f515e6bb7f50204fc1b4a35a044237d5cba472c97b7a": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "9d7833809e8d1146572556b6e8cae705d092957244847a86611beafe86454440": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "a06133b0864fba14b9c812bf6d2d91b6c6563e5876da91c12ecc4c0793a7e833": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "a3600b058845d94d761677fbd488bb5c3881ea444194df5981c025e1bf186845": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "a47de45a15d2b02732f76f1e0affe3c57faa2a635a187dad3b4f9d2845eaed6d": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": true,
+  "is_level_enabled_returns_false_when_given_level_unknown": true,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "a58a09ab08a69984469b40021fa4c06cc2a61082d885cc1ca33ba0342b88b98b": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "a738f3892668ecb881a96457abcc1d5f19730e2ca833d7d8044176c0c64110ce": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": true,
+  "text_formatter_format": true
+ },
+ "abc60553120bc901afed2082825d9980b6254c497bf5cb582eeea93d237db53d": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "ae5a1b2cdc3887f84932abbef7353f9cbd1a9d1b1d4eeac1ee3792661fe4c79d": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": false,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "aef268ce63a9bde2c8b01148e39c2853626d3b152085f9d38e521534fca8dc58": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "b0962d3d097eba96db889b2356a919020f32e43dfe01c475872bed8febe5ca50": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "b1c7476bbd407626c150dc5893b8a911655cca77d94bc941b568cffd3bafe0b3": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "b36c42c71d2a568b87a2cd30df50d1555e285f0665d5579bcc5ece92f9ab3346": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "b39e985c9ea30138871af09fcf8ba8732421f58a842e14cb64cfe582d4267b22": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "b52ac1f7d6a7ded86213ba6701c5f714dc2dc552512d3ed155805c399b6389dc": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "b59e69b24081d863ec12bc365d2851ff42bec473e6cb222e3783db5b9caffce0": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "ba86b4fdc8303cb262c5c1f78421ef0785c66329aaa233602aa746df2d470b89": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "bee14b861b958ce010b65ce885d3a2baa0013a7a5cb05fa2a573eee13ed9a901": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "c0400821e3d64aa1a015ea9c52ad07041d33be3d253fce06704909884d3d47d0": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": true,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "c15a3719ff7daa5feaf1adef80f45c68c853bb182def0e67dfd1ed0e3ca9cf35": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": true,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "c1d16df01fc4d6963a698a4f54ac9a30d30f23dbd964764694bcf3f8e6a3c3ec": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "c471507600af0527480ff28ff8048894ce003d0efff17352f59c9bdad8acd7ff": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "c90a64cf8ebed595ecb71eb3d24b2b20dd98ab197c9d6db873818a5ec54b1013": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "ca149d69d4a84650188f0756d65b4669ce48e9b497bc30f65c01849292b76402": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "ca7aac4fab8eb23a73d8a9a72edf51bbeb2442e0ff27ffe375b3986dd1dbc090": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": true,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "cc096f3b06e03f9a17119d1a2aefc23c65a5ba13a629b2678328a182dc81d72c": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "cd37e0b468ff3d4ff273a619079816daffb059c1b49a73f8173ecde757f901c5": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "cd729fa661e2b91b588640e7a84653d55595bdef8c439c8fa85dfe881694c7cd": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "ce92a22d17aad0f6ec62f7a253c289eb031f5aa5b8fc751ecf503daf2a4e3b68": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "d2161ce1e423aafa95bdf604d958f88988c0cf86ada5deb35ffef5ebe7ef6ff6": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "da8db246ea12595d151a3b02c4a06c18d53c4e88af579a4f2465d250e0cc6154": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "dae5756aa80940d7815cd8fcdfcdc91a06ff797b9f6b3597123d152c31765fb7": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "db17b96dc6955051099b14bb93da7898609ebbd65dbe58a04eba92c61d79f4e9": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "dc6b9f1cee65d640df197d5ab8885dd04e0a1d99a0d1c7a4afbc417fe18048e3": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "dd3a10c56dfc4a51c080fb8bcaec40b89033604a5b586df178b26e65abaed4bf": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "dd45eee8f8ccfb26832651c89822c85fcd896a699e24278c686a36de3e6f2b45": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "e1c65962061a5c0a741f1bea6ab7472299db2f0607b757f9b028199cb7624531": {
+  "handler_test_calls_get_all_info": true,
+  "info_is_logged_through_logger_log": false,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "e2dc822969659d8e66f2630ef9f540ec110325a61cda5af6199da83a88fdebd9": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "e3cf3034723ac14ea18c5e67f613dd542e5bf907963ef60b202d0b1dc78fad28": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "e8815baec798303aed31967b0a6c0c5a2ee881495a76a68be48bbe4a7908498f": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "ebcdf0a174a8047632622375f232a442df0df4042263cdab1cf10d0b0507184b": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": true,
+  "is_level_enabled_returns_false_when_given_level_unknown": true,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "ec582af857c1197a0880befc839b780a677fd1c2d11b071f1471cf98e2e717a4": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "ecb0b7c5ca13dff7601fd8e3aba58e721278cd1bcc30e03a42551c364e8cac11": {
+  "derived_is_level_enabled_methods_reach_it_through_isLevelEnabled": false,
+  "get_highest_log_level_skips_null_transport_levels_in_reduce": true,
+  "get_highest_log_level_uses_it_for_logger_and_each_transport": true,
+  "is_level_enabled_returns_false_when_configured_level_unknown": false,
+  "is_level_enabled_returns_false_when_given_level_unknown": false,
+  "transport_without_level_falls_back_to_configured_level": false
+ },
+ "ed66e46fde5143085765032a5a37b09f92a2930a00835b6c8b1c50172b3adfb6": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": true,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "ef8a47e467ede44d3ffebbce84cf9af1e655c7acb0d43879264048c48f9a7976": {
+  "entry_log_sets_caller_when_report_caller": false,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": false
+ },
+ "efaaf08b77d2e960411c82e01305bed4b1581ecc4b6086304438dba5dd8def2c": {
+  "handler_test_calls_get_all_info": false,
+  "info_is_logged_through_logger_log": true,
+  "uncaught_exception_handler_builds_info": true,
+  "uncaught_exception_is_bound_as_process_catcher": false
+ },
+ "efe29f702bbfea591c1d24fcd02881dea6e3d0c8751b1141a2c3558a1e9bd737": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": true,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "f630125bf5c150da38be56acfb8de782d7dfb4d70fb58cfceb8b0c0e55744654": {
+  "has_caller_from_entry_caller_enables_func_file_prefixing": false,
+  "json_data_key_nests_user_fields_before_the_call": false,
+  "json_formatter_format": true,
+  "text_formatter_collects_keys_after_prefixing_and_prints_them": false,
+  "text_formatter_format": true
+ },
+ "f9f570e78c3b0bc5772b2dc28548379d307651975300eb67de91fbf193692a8a": {
+  "elastica_handler_set_formatter": true,
+  "elasticsearch_handler_set_formatter": true,
+  "flowdock_handler_set_formatter": true,
+  "other_formatter_throws_invalid_argument_exception": true,
+  "wrapped_formatter_is_accepted_after_unwrapping": true
+ },
+ "fb5f03542b368efc6a0533ec637ba52de7cb4dbed1814c9938bee6722a45e4ed": {
+  "rotating_file_handler_constructor": true,
+  "rotating_filename_drives_timed_filename_and_rotation_glob": false,
+  "rotating_passes_timed_filename_to_stream_handler_which_canonicalizes_again": false,
+  "stream_handler_constructor": true,
+  "stream_url_is_opened_on_write": false
+ },
+ "fb855971d3afee8fa85e8f53d79023dc4d4e37a818a7547d0a643cbe84a311ac": {
+  "function_init": true,
+  "function_skips_check_when_serialize_or_deserialize_not_given": false,
+  "function_stored_callable_is_called_in_serialize_deserialize": false,
+  "method_bind_to_schema": true,
+  "method_raises_type_error_when_schema_attribute_not_callable": false,
+  "method_stored_callable_is_called_in_serialize_deserialize": false
+ },
+ "fc05ae8cf3c21db1eaf40fd6eba07c13c2f912ca851cce94aa34873ec7f46851": {
+  "entry_log_sets_caller_when_report_caller": true,
+  "get_caller_caches_logrus_package_once": false,
+  "get_caller_returns_first_frame_outside_logrus_package": true
+ },
+ "fc76bae1fbbf245ce0266b0f8f063bbfa9ecc10424bd6d7d2c69a4b4bccb8dda": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ },
+ "fe70822a2ef5524f3073ee1e6410dccb934545c89c4455bf6b86cf23c028339c": {
+  "aware_datetime_deserialize": false,
+  "aware_rejects_naive_without_default_timezone_else_sets_it": false,
+  "naive_datetime_deserialize": true,
+  "naive_rejects_aware_without_timezone_else_converts_to_naive": false,
+  "timestamp_ms_and_datetime_timestamp_format_reach_it_indirectly": false,
+  "timestamp_treats_naive_as_utc": true
+ }
+}
