@@ -14,7 +14,10 @@ CLI = [sys.executable, "-m", "graphtyn.cli"]
 
 
 def _run_cli(args, cwd, home):
-    env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"))
+    # `agent-install` runs `claude mcp add`, which writes the user's own ~/.claude.json: the
+    # test's home must be HOME too, or every run registers a temporary project there.
+    env = dict(os.environ, GRAPHTYN_HOME=str(home / ".graphtyn"), HOME=str(home), USERPROFILE=str(home),
+               XDG_CONFIG_HOME=str(home / ".config"))
     return subprocess.run(CLI + args, cwd=str(cwd), env=env,
                           capture_output=True, text=True, timeout=90)
 
@@ -538,6 +541,10 @@ def test_agent_install_all_deduplicates_shared_instruction_files(git_repo, tmp_p
     files = json.loads(result.stdout)["files"]
     assert len(files) == len(set(files))
     assert files.count(str(git_repo / "AGENTS.md")) == 1
+    # Client registrations land in the test's home, never in the user's.
+    real = Path.home() / ".claude.json"
+    if real.exists():
+        assert str(git_repo) not in real.read_text(encoding="utf-8", errors="replace")
 
 
 def test_agent_install_upgrades_existing_graphtyn_policy(git_repo, tmp_path):
