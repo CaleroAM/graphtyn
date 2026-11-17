@@ -50,7 +50,7 @@ def judge(run_dir: Path, task: dict, model: str) -> dict | None:
     prompt = PROMPT.format(request=task["request"], facts=facts, answer=answer[:24000])
     # Outside any project, so no project instructions, hooks or MCP servers load.
     process = subprocess.run(["claude", "-p", "--model", model, "--output-format", "json", "--tools", "",
-                              "--strict-mcp-config"], input=prompt, capture_output=True, text=True,
+                              "--strict-mcp-config", "--no-session-persistence"], input=prompt, capture_output=True, text=True,
                              timeout=300, cwd=tempfile.gettempdir())
     try:
         text = json.loads(process.stdout)["result"]
