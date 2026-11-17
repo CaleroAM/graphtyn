@@ -82,10 +82,14 @@ def classify(tool_name: str, tool_input: dict[str, Any]) -> tuple[str, str, list
 
 def project_root(cwd: str | None, explicit: Path | None = None) -> Path | None:
     """The indexed project the hook runs in: the explicit path, or the nearest indexed ancestor."""
+    from .index_scope import IndexScope, covers
     from .storage import data_home, project_store_dir
     candidates = [explicit] if explicit else [Path(cwd or os.getcwd()).resolve(), *Path(cwd or os.getcwd()).resolve().parents][:8]
     for candidate in candidates:
-        if candidate and (project_store_dir(data_home(), candidate, create=False) / "index.json").is_file():
+        store = project_store_dir(data_home(), candidate, create=False) if candidate else None
+        # A scoped project (a home directory limited to its config) does not own unrelated subdirectories.
+        if store and (store / "index.json").is_file() and (
+                explicit or covers(candidate, cwd or os.getcwd(), IndexScope.load(store))):
             return candidate.resolve()
     return None
 

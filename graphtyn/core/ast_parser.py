@@ -15,6 +15,7 @@ from .graph_hygiene import normalize_graph
 from .relation_resolution import CandidateRanker, Implementations, go_implementations, unique_symbol_id
 from .ruby_mro import RubyAncestry, lexical_candidates as ruby_lexical_candidates, qualified_name as ruby_qualified_name
 from .source_files import git_visible_files
+from .index_scope import IndexScope, indexed_paths, is_text_file, store_scope
 from .type_evidence import apply_type_evidence
 
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp")
@@ -259,8 +260,10 @@ class ASTParser:
 
         return {"file": rel_path, "symbols": symbols, "calls": list(set(calls)), "imports": list(set(imports))}
 
-    def scan_directory(self, root_dir: Path, respect_git: bool = True, cache_path: Optional[Path] = None) -> Dict[str, Any]:
+    def scan_directory(self, root_dir: Path, respect_git: bool = True, cache_path: Optional[Path] = None,
+                       scope: Optional[IndexScope] = None) -> Dict[str, Any]:
         root_dir = Path(root_dir)
+        scope = store_scope(root_dir) if scope is None else scope  # the include rules saved for it
         nodes: List[Dict[str, Any]] = []
         links: List[Dict[str, Any]] = []
         node_ids: Set[str] = set()
@@ -480,27 +483,19 @@ class ASTParser:
         doc_files: List[tuple] = []
         other_code_files: List[tuple] = []
 
-        # Pass 1: Build folder hierarchy backbone & file/asset nodes
-        for path in root_dir.rglob("*"):
-            if not path.is_file():
-                continue
-            relative_parts = path.relative_to(root_dir).parts
-            github_workflow = len(relative_parts) >= 3 \
-                and relative_parts[0] == ".github" and relative_parts[1] == "workflows"
-            hidden_outside_workflow = any(
-                part.startswith(".") and not (github_workflow and index == 0)
-                for index, part in enumerate(relative_parts)
-            )
-            if any(part in ignored_parts for part in relative_parts) or hidden_outside_workflow:
-                continue
+        walked = list(indexed_paths(root_dir, scope, ignored_parts))
 
+        # Pass 1: Build folder hierarchy backbone & file/asset nodes
+        for path in walked:
+            rel_file = path.relative_to(root_dir).as_posix()
             ext = path.suffix.lower()
             lower_name = path.name.lower()
             extensionless_source = lower_name in _EXTENSIONLESS_SOURCE_NAMES
-            if ext not in VALID_EXTS and not extensionless_source:
+            # An included config file (`.bashrc`, `*.nix`, `*.conf`) is read as text.
+            scoped_text = bool(scope) and ext not in VALID_EXTS and not extensionless_source and is_text_file(path)
+            if ext not in VALID_EXTS and not extensionless_source and not scoped_text:
                 continue
 
-            rel_file = path.relative_to(root_dir).as_posix()
             if tracked_files is not None and rel_file not in tracked_files:
                 continue
             if project_ignores and project_ignores.ignored(rel_file):
@@ -543,7 +538,7 @@ class ASTParser:
             elif ext in (".tf", ".tfvars"):
                 terraform_files.append((path, rel_file, f_id))
             elif ext in (".md", ".mdx", ".rst", ".txt", ".yaml", ".yml", ".toml", ".ini", ".cfg") \
-                    or extensionless_source or lower_name in _STRUCTURED_SOURCE_NAMES:
+                    or extensionless_source or scoped_text or lower_name in _STRUCTURED_SOURCE_NAMES:
                 doc_files.append((path, rel_file, f_id))
             elif ext in TREE_SITTER_EXTENSIONS or ext in (".rb", ".kt", ".kts", ".swift", ".dart", ".sh", ".bash", ".sql", ".vue", ".svelte", ".scala", ".lua", ".jl", ".zig", ".ex", ".exs", ".cls", ".trigger"):
                 other_code_files.append((path, rel_file, f_id, ext))
@@ -553,7 +548,7 @@ class ASTParser:
         # Unity assembly boundaries (.asmdef). A C# file belongs to the
         # nearest ancestor definition; files without one use Assembly-CSharp.
         asmdefs: Dict[str, Dict[str, Any]] = {}
-        for asm_path in root_dir.rglob("*.asmdef"):
+        for asm_path in ([path for path in walked if path.suffix == ".asmdef"] if scope else root_dir.rglob("*.asmdef")):
             rel_asm = asm_path.relative_to(root_dir).as_posix()
             if tracked_files is not None and rel_asm not in tracked_files:
                 continue

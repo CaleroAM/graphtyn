@@ -16,6 +16,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from .index_scope import IndexScope, covers
 from .retrieval_signals import CODE_IDENTIFIER as _IDENTIFIER
 
 HOOK_COMMAND = "graphtyn claude-context hook"
@@ -81,7 +82,7 @@ def should_prefetch(prompt: str) -> tuple[bool, str]:
 
 def _index_path(root: Path) -> Path:
     from .storage import data_home, project_store_dir
-    return project_store_dir(data_home(), root) / "index.json"
+    return project_store_dir(data_home(), root, create=False) / "index.json"
 
 
 def _indexed_root(cwd: str | None) -> Path | None:
@@ -90,7 +91,8 @@ def _indexed_root(cwd: str | None) -> Path | None:
         return None
     current = Path(cwd).expanduser().resolve()
     for candidate in (current, *current.parents):
-        if _index_path(candidate).is_file():
+        # A scoped project (a home directory limited to its config) does not own unrelated subdirectories.
+        if _index_path(candidate).is_file() and covers(candidate, current, IndexScope.load(_index_path(candidate).parent)):
             return candidate
     return None
 
