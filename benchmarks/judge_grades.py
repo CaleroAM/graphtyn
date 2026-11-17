@@ -17,8 +17,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
+import shutil
 import subprocess
+import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -37,8 +40,30 @@ JUDGES = {
 # stated, and one judge crediting facts the answer never named (benchmarks/judge_calibration_2026-11-08).
 TIEBREAK = {
     "claude": lambda prompt, cwd: ["claude", "-p", prompt, "--model", "claude-sonnet-5-5", "--tools", "",
-                                   "--strict-mcp-config", "--setting-sources", "project", "--output-format", "text"],
+                                   "--strict-mcp-config", "--setting-sources", "project", "--output-format", "text",
+                                   "--no-session-persistence"],
 }
+
+# A judge call is not a conversation of the user's. Codex runs `--ephemeral` and Claude without session
+# persistence; Antigravity has no such option and keeps every `agy -p` in the user's history (901 of
+# 1367 conversations on the maintainer's machine), so it runs with its own HOME holding a copy of the
+# sign-in token, and its conversations go away with that directory. The copy lives outside the
+# judges' working directory, which the Codex judge can read.
+_AGY_STATE = Path(".gemini") / "antigravity-cli"
+_AGY_TOKEN = "antigravity-oauth-token"
+_JUDGE_ENV: dict[str, dict[str, str]] = {}
+
+
+def _agy_env(home: Path) -> dict[str, str] | None:
+    token = Path.home() / _AGY_STATE / _AGY_TOKEN
+    if not token.is_file():
+        print(f"judge_grades: no {token}; Antigravity's judge calls stay in its history", file=sys.stderr)
+        return None
+    (home / _AGY_STATE).mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(token, home / _AGY_STATE / _AGY_TOKEN)
+    os.chmod(home / _AGY_STATE / _AGY_TOKEN, 0o600)
+    return dict(os.environ, HOME=str(home), USERPROFILE=str(home), XDG_CONFIG_HOME=str(home / ".config"),
+                XDG_CACHE_HOME=str(home / ".cache"), XDG_DATA_HOME=str(home / ".local" / "share"))
 
 
 def _specs(root: Path) -> dict[str, dict]:
@@ -101,10 +126,11 @@ def _prompt(task: dict, answer: str, citations: list[str] | None = None) -> str:
 
 def _ask(judge: str, prompt: str, cwd: str) -> dict[str, bool] | None:
     command = (JUDGES.get(judge) or TIEBREAK[judge])(prompt, cwd)
+    env = _JUDGE_ENV.get(judge)
     for _attempt in range(2):
         try:
             output = subprocess.run(command, capture_output=True, text=True, timeout=240,
-                                    stdin=subprocess.DEVNULL, cwd=cwd).stdout
+                                    stdin=subprocess.DEVNULL, cwd=cwd, env=env).stdout
             match = re.search(r"\{[^{}]*\}", output, re.S)
             if match:
                 return {key: bool(value) for key, value in json.loads(match.group(0)).items()}
@@ -154,6 +180,10 @@ def main() -> int:
                          "facts": [fact["id"] for fact in task["rubric"]]})
     jobs = [(run, judge) for run in runs for judge in JUDGES
             if hashlib.sha256(f"{judge}\n{run['prompt']}".encode()).hexdigest() not in cache]
+    agy_home = tempfile.TemporaryDirectory(prefix="graphtyn-agy-home-")
+    gemini_env = _agy_env(Path(agy_home.name)) if any(judge == "gemini" for _run, judge in jobs) else None
+    if gemini_env:
+        _JUDGE_ENV["gemini"] = gemini_env
     with tempfile.TemporaryDirectory(prefix="graphtyn-judge-") as cwd, ThreadPoolExecutor(args.workers) as pool:
         for (run, judge), verdict in zip(jobs, pool.map(lambda job: _ask(job[1], job[0]["prompt"], cwd), jobs)):
             if verdict is not None:
@@ -166,6 +196,7 @@ def main() -> int:
         for run, verdict in zip(split, pool.map(lambda run: _ask("claude", run["prompt"], cwd), split)):
             if verdict is not None:
                 cache[key("claude", run)] = verdict
+    agy_home.cleanup()
     cache_path.write_text(json.dumps(cache, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     rows, pairs = [], {"judges": ([], []), "literal_consensus": ([], [])}
     for run in runs:

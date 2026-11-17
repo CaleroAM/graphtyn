@@ -12,6 +12,7 @@ from typing import Any
 
 from .ast_parser import ASTParser, VALID_EXTS
 from .source_files import git_visible_files
+from .index_scope import IndexScope, is_text_file
 
 
 _IGNORED_PARTS = {
@@ -43,10 +44,23 @@ class ProjectWatcher:
         except (OSError, ValueError, TypeError):
             return True
 
+    def _scope(self) -> IndexScope:
+        return IndexScope.load(self.index_dir)
+
     def _eligible_files(self) -> list[Path]:
         from .ignore_rules import IgnoreRules
         ignores = IgnoreRules.load(self.root)
         visible = git_visible_files(self.root) if self._respect_git() else None
+        scope = self._scope()
+        if scope:
+            # The same files the scoped indexer reads, so the watcher wakes for them and nothing else.
+            graph_files = []
+            for path, relative in scope.files(self.root, lambda name: name.startswith(".") or name in _IGNORED_PARTS):
+                if visible is not None and relative not in visible or ignores.ignored(relative):
+                    continue
+                if path.suffix.lower() in VALID_EXTS or is_text_file(path):
+                    graph_files.append(path)
+            return graph_files
         if visible is not None:
             return [
                 self.root / rel for rel in sorted(visible)
@@ -100,7 +114,7 @@ class ProjectWatcher:
             except (OSError, ValueError):
                 pass
         graph = ASTParser().scan_directory(
-            self.root, respect_git=self._respect_git(), cache_path=self.cache_path
+            self.root, respect_git=self._respect_git(), cache_path=self.cache_path, scope=self._scope()
         )
         graph.setdefault("metadata", {}).update({
             "indexed_with": "watch_ast_pure",

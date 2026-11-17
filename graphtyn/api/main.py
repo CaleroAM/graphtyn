@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingRes
 from .. import __version__
 from . import web_assets
 from ..core.ast_parser import ASTParser
+from ..core.index_scope import IndexScope
 from ..core.history import HistoryTracker
 from ..core.process_priority import current_priority
 from ..core.query_log import record_query
@@ -1112,7 +1113,8 @@ def _execute_reindex(payload: dict, update=lambda _progress, _message: True) -> 
             prev = None
 
     update(5, "Escaneando estructura")
-    graph = parser.scan_directory(root, respect_git=respect_git, cache_path=dot_dir / "structural_cache.json")
+    graph = parser.scan_directory(root, respect_git=respect_git, cache_path=dot_dir / "structural_cache.json",
+                                  scope=IndexScope.load(dot_dir))
     graph.setdefault("metadata", {}).update({
         "indexed_with": engine, "status": "structural_ready", "path": str(root),
         "respect_git": respect_git, "vision_enabled": allow_vision,
@@ -1326,6 +1328,7 @@ def get_diff(path: str = ".", base: str | None = None):
             root,
             respect_git=bool(_load_project_config(root).get("respect_git", True)),
             cache_path=dot_dir / "structural_cache.json",
+            scope=IndexScope.load(dot_dir),
         )
 
     report = analyze_impact(root, data, base=base)
@@ -1545,6 +1548,7 @@ def get_graph(path: str = ".", view: str = "code"):
             root,
             respect_git=bool(_load_project_config(root).get("respect_git", True)),
             cache_path=dot_dir / "structural_cache.json",
+            scope=IndexScope.load(dot_dir),
         )
         try:
             (dot_dir / "index.json").write_text(json.dumps(data, indent=2))
@@ -1590,7 +1594,8 @@ def _load_index_for_api(project_path: str) -> tuple[Path, dict]:
             return root, graph
         except (OSError, json.JSONDecodeError):
             pass
-    graph = parser.scan_directory(root, respect_git=bool(_load_project_config(root).get("respect_git", True)))
+    graph = parser.scan_directory(root, respect_git=bool(_load_project_config(root).get("respect_git", True)),
+                                  scope=IndexScope.load(_index_dir(root)))
     return root, graph
 
 

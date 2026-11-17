@@ -61,3 +61,19 @@ def test_a_finished_run_is_recognised_for_resuming(tmp_path):
 
     assert runner._complete_run(tmp_path / "done")
     assert not runner._complete_run(tmp_path / "failed") and not runner._complete_run(tmp_path / "absent")
+
+
+def test_judges_leave_no_conversation_in_the_users_history(tmp_path, monkeypatch):
+    judge = _module("judge_grades")
+    home = tmp_path / "home"
+    (home / ".gemini" / "antigravity-cli").mkdir(parents=True)
+    (home / ".gemini" / "antigravity-cli" / "antigravity-oauth-token").write_text("token", encoding="utf-8")
+    monkeypatch.setattr(judge.Path, "home", classmethod(lambda cls: home))
+
+    env = judge._agy_env(tmp_path / "agy-home")
+
+    # Antigravity writes its conversations under HOME: a private copy of the sign-in, not the user's state.
+    assert env["HOME"] == str(tmp_path / "agy-home")
+    assert (tmp_path / "agy-home" / ".gemini" / "antigravity-cli" / "antigravity-oauth-token").read_text() == "token"
+    assert "--ephemeral" in judge.JUDGES["gpt"]("p", "/w")
+    assert "--no-session-persistence" in judge.TIEBREAK["claude"]("p", "/w")

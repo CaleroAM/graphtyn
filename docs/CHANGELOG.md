@@ -5,6 +5,22 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+### Añadido
+
+- `graphtyn scope set|add|remove|clear|show|preview` limita qué rutas de un proyecto indexa
+  Graphtyn. Pensado para un home del que solo interesa la configuración.
+  - La indexación y el watcher solo recorren carpetas a las que llega alguna regla. Las rutas
+    ocultas nombradas en una regla entran, y los archivos de texto incluidos se indexan como
+    documentación aunque su extensión no sea de código (`.bashrc`, `*.nix`, `*.conf`).
+  - Los secretos nunca entran: `.ssh`, `.gnupg`, `.aws`, `.kube`, `.docker`, el almacén de
+    Graphtyn, claves y archivos con nombre de token, credenciales o contraseña.
+  - Una subcarpeta fuera del alcance ya no pertenece al proyecto: los hooks de Claude Code, el
+    contexto de prompt, la captura y el enrutado de OpenClaw siguen buscando más arriba en vez de
+    adjudicarla al home.
+  - Medido en un home real: sin alcance, el índice existente tenía 289.010 nodos y 1,9 GB (Unity,
+    proyectos de `Documentos`) y ningún archivo de configuración. Con un alcance de configuración:
+    591 archivos, 2.709 nodos, 4,7 MB, indexado en 0,9 s.
+
 ### Corregido
 
 - **Paquetes de impacto: los tests ya no desplazan a los consumidores de producción.** Si el
@@ -27,6 +43,12 @@ compatibles con PEP 440.
   Codex, mayoría de tres jueces). Graphtyn sube de 102 a 112 hechos de 117; sin grafo se llega a 115.
   La mediana de tokens sube de 31k a 47k, todavía un 29 % por debajo de no usar grafo
   (`benchmarks/impact_fix_validation_2026-11-15/report.md`).
+- La indexación ya no recorre todo el árbol para saber qué analizadores de tipos aplican: usa las
+  extensiones de los archivos indexados. En un home recorría 1,15 millones de archivos y tardaba
+  38 de los 40 s de la indexación. En un proyecto normal tampoco recorre ya `node_modules` ni los
+  entornos virtuales para esto.
+- El contexto de prompt ya no crea un directorio vacío en el almacén por cada carpeta superior que
+  comprueba.
 
 ### Cambiado
 

@@ -172,6 +172,21 @@ graphtyn hook install --path .
 - **Rationale comments:** `WHY:`, `NOTE:`, `DECISION:` and similar comments, as well as `ADR-n`
   citations, are attached to the symbol they document.
 - **`.graphtynignore`:** excludes paths from the index, using `.gitignore` syntax.
+- **`graphtyn scope`:** limits a project to the paths you name. Useful for a directory that holds
+  other projects, such as a home directory where only the configuration matters:
+
+  ```bash
+  graphtyn scope set .bashrc nixos/ '.config/**' '!.config/BraveSoftware/' --path ~
+  graphtyn scope preview --path ~   # files that would be indexed, per folder
+  graphtyn reindex --path ~
+  ```
+
+  Rules use `.graphtynignore` syntax anchored at the project root; hidden paths count when a rule
+  names them, and included text files are indexed whatever their extension. Indexing walks only
+  directories a rule can reach. An agent working in a subdirectory outside the scope (for example
+  `~/Documents/app`) is not given this project's graph, hooks or memory. Secret stores (`.ssh`,
+  `.gnupg`, `.aws`, keys, files named like tokens or credentials) are never indexed.
+  `graphtyn scope clear` returns to indexing the whole directory.
 
 Use `graphtyn --help` and `graphtyn <command> --help` for the exact options.
 

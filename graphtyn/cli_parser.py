@@ -683,6 +683,14 @@ def _add_integration_commands(subparsers: argparse._SubParsersAction) -> None:
     git_p.add_argument("value", choices=["on", "off"], help="on = solo archivos versionados · off = incluir todo")
     git_p.add_argument("--path", default=".", help="Ruta del proyecto")
 
+    # scope
+    scope_p = subparsers.add_parser(
+        "scope", help="Limita qué rutas del proyecto indexa Graphtyn (p. ej. solo la configuración de un home)")
+    scope_p.add_argument("action", nargs="?", default="show", choices=["show", "set", "add", "remove", "clear", "preview"],
+                         help="show · set/add/remove reglas · clear (todo el directorio) · preview (archivos que entrarían)")
+    scope_p.add_argument("rules", nargs="*", help="Reglas relativas a la raíz: .bashrc, nixos/, .config/nvim/**/*.lua, !ruta")
+    scope_p.add_argument("--path", default=".", help="Ruta del proyecto")
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
