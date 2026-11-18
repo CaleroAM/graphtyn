@@ -5,6 +5,10 @@ compatibles con PEP 440.
 
 ## [Sin publicar]
 
+## [0.14.0] - 2026-11-17
+
+Validación de la versión: `docs/release-validation-0.14.0.md`.
+
 ### Añadido
 
 - `graphtyn scope set|add|remove|clear|show|preview` limita qué rutas de un proyecto indexa
@@ -20,6 +24,30 @@ compatibles con PEP 440.
   - Medido en un home real: sin alcance, el índice existente tenía 289.010 nodos y 1,9 GB (Unity,
     proyectos de `Documentos`) y ningún archivo de configuración. Con un alcance de configuración:
     591 archivos, 2.709 nodos, 4,7 MB, indexado en 0,9 s.
+
+### Cambiado
+
+- Nueva comparación con Graphify 0.9.106 sobre repositorios y tareas nuevos (click, gin, koa y jsoup;
+  144 sesiones). Graphtyn es el que menos tokens gasta, pero pierde calidad: con Claude, 146/157
+  hechos frente a 155 sin grafo; con Codex, 90/162 frente a 137. El README lo publica tal cual
+  (`benchmarks/graphify_head_to_head_2026-11-15/report.md`).
+- El README principal está en inglés, centrado en el grafo de código y en los resultados medidos
+  frente a Graphify. El README en español pasa a `README.es.md`, y cada uno enlaza al otro.
+- Un test de regresión (`tests/test_idle_cycle_regression.py`, también en el job de Windows) falla
+  si un segundo ciclo de captura sin datos nuevos lanza un proceso, vuelve a parsear un historial,
+  procesa temas o escribe un archivo.
+
+- `graphtyn serve` y `graphtyn memory sync --watch` bajan su propia prioridad al arrancar: `nice 10`
+  en Linux y macOS, y la clase «por debajo de lo normal» en Windows. Así solo usan la CPU que nada
+  más necesita, sea cual sea el lanzador (systemd, tarea programada o terminal). `--priority normal`
+  o `GRAPHTYN_PRIORITY=normal` mantienen la prioridad normal. Nunca suben una prioridad que ya era
+  más baja.
+- Las unidades de systemd del dashboard y de la captura de OpenClaw incluyen `CPUWeight=20` e
+  `IOWeight=20`. No fijan un tope de CPU, porque el adecuado depende de cada equipo.
+- La captura continua revisa cada 30 s por defecto, en vez de cada 5 s, en `setup` y en
+  `memory sync --watch`. Es el mismo intervalo que ya usaba el dashboard. En el dashboard, un
+  selector junto a «Activar captura continua» cambia el intervalo de cada espacio (30 s, 1, 5 o
+  15 min) sin reiniciar el watcher, y el estado muestra la prioridad del servidor.
 
 ### Corregido
 
@@ -49,33 +77,6 @@ compatibles con PEP 440.
   entornos virtuales para esto.
 - El contexto de prompt ya no crea un directorio vacío en el almacén por cada carpeta superior que
   comprueba.
-
-### Cambiado
-
-- Nueva comparación con Graphify 0.9.106 sobre repositorios y tareas nuevos (click, gin, koa y jsoup;
-  144 sesiones). Graphtyn es el que menos tokens gasta, pero pierde calidad: con Claude, 146/157
-  hechos frente a 155 sin grafo; con Codex, 90/162 frente a 137. El README lo publica tal cual
-  (`benchmarks/graphify_head_to_head_2026-11-15/report.md`).
-- El README principal está en inglés, centrado en el grafo de código y en los resultados medidos
-  frente a Graphify. El README en español pasa a `README.es.md`, y cada uno enlaza al otro.
-- Un test de regresión (`tests/test_idle_cycle_regression.py`, también en el job de Windows) falla
-  si un segundo ciclo de captura sin datos nuevos lanza un proceso, vuelve a parsear un historial,
-  procesa temas o escribe un archivo.
-
-- `graphtyn serve` y `graphtyn memory sync --watch` bajan su propia prioridad al arrancar: `nice 10`
-  en Linux y macOS, y la clase «por debajo de lo normal» en Windows. Así solo usan la CPU que nada
-  más necesita, sea cual sea el lanzador (systemd, tarea programada o terminal). `--priority normal`
-  o `GRAPHTYN_PRIORITY=normal` mantienen la prioridad normal. Nunca suben una prioridad que ya era
-  más baja.
-- Las unidades de systemd del dashboard y de la captura de OpenClaw incluyen `CPUWeight=20` e
-  `IOWeight=20`. No fijan un tope de CPU, porque el adecuado depende de cada equipo.
-- La captura continua revisa cada 30 s por defecto, en vez de cada 5 s, en `setup` y en
-  `memory sync --watch`. Es el mismo intervalo que ya usaba el dashboard. En el dashboard, un
-  selector junto a «Activar captura continua» cambia el intervalo de cada espacio (30 s, 1, 5 o
-  15 min) sin reiniciar el watcher, y el estado muestra la prioridad del servidor.
-
-### Corregido
-
 - Un ciclo de captura sin cambios todavía escribía y lanzaba un proceso, como detectó el test de
   regresión nuevo:
   - Lanzaba `git config --get remote.origin.url` y reescribía `project-identities.json` con una
