@@ -13,7 +13,7 @@ change this?" or "how does this request flow?" from `file:line` evidence instead
 whole repository. Optionally, it also keeps a shared memory of past sessions across agents,
 separate from the code graph.
 
-> Latest stable release: [`0.13.1`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.13.1).
+> Latest stable release: [`0.14.0`](https://github.com/CaleroAM/graphtyn/releases/tag/v0.14.0).
 > Graphtyn is distributed through GitHub Releases; PyPI is not enabled yet. It is self-hosted:
 > agents can share memory with per-token, per-project permissions, but it is not a multi-tenant
 > SaaS.
@@ -106,7 +106,7 @@ design is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Install the wheel from [GitHub Releases](https://github.com/CaleroAM/graphtyn/releases/latest):
 
 ```bash
-python -m pip install "https://github.com/CaleroAM/graphtyn/releases/download/v0.13.1/graphtyn-0.13.1-py3-none-any.whl"
+python -m pip install "https://github.com/CaleroAM/graphtyn/releases/download/v0.14.0/graphtyn-0.14.0-py3-none-any.whl"
 graphtyn --version
 ```
 
